@@ -1,0 +1,1689 @@
+openapi: 3.0.3
+info:
+  description: 'This OAS file describes the NGSI-LD API defined by the ETSI ISG CIM group. This Cross-domain Context Information Management API allows to provide, consume and subscribe to context information in multiple scenarios and involving multiple stakeholders'
+  version: latest
+  title: ETSI ISG CIM / NGSI-LD API
+  contact:
+    email: NGSI-LD@etsi.org
+externalDocs:
+  description: Find out more about the ETSI ISG Context Information Management
+  url: 'https://portal.etsi.org/tb.aspx?tbid=854&SubTB=854'
+tags:
+  - name: ETSI
+    description: European Telecommunications Standards Institute
+    externalDocs:
+      description: Find out more
+      url: 'http://www.etsi.org'
+  - name: CIM
+    description: Context Information Management
+    externalDocs:
+      description: Find out more
+      url: 'https://portal.etsi.org/tb.aspx?tbid=854&SubTB=854'
+  - name: JSON-LD
+    description: JSON for Linked Data
+    externalDocs:
+      description: Find out more
+      url: 'https://json-ld.org/'
+  - name: NGSI-LD API
+    description: API defined by the ETSI ISG CIM
+    externalDocs:
+      description: Preliminary Specification
+      url: 'http://www.etsi.org/deliver/etsi_gs/CIM/001_099/004/01.01.01_60/gs_CIM004v010101p.pdf'
+paths:
+  '/entities/':
+    parameters:
+      - $ref: '#/components/parameters/tenantHeader'
+    get:
+      description: Retrieve a set of entities which matches a specific query from an NGSI-LD system
+      operationId: queryEntities
+      tags:
+        - Context Information
+        - Entities
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idPattern'
+        - $ref: '#/components/parameters/type'
+        - $ref: '#/components/parameters/attrs'
+        - $ref: '#/components/parameters/q'
+        - $ref: '#/components/parameters/georel'
+        - $ref: '#/components/parameters/geometry'
+        - $ref: '#/components/parameters/coordinates'
+        - $ref: '#/components/parameters/geoproperty'
+        - $ref: '#/components/parameters/csf'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/options'
+        - $ref: '#/components/parameters/link'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/EntityList'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/EntityList-example.json'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    post:
+      description: Create a new Entity within an NGSI-LD system
+      operationId: createEntity
+      tags:
+        - Context Information
+        - Entities
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/Entity'
+      responses:
+        '201':
+          description: Created. Contains the resource URI of the created Entity
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Already exists
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/entities/{entityId}':
+    parameters:
+      - $ref: '#/components/parameters/tenantHeader'
+    get:
+      description: Retrieve an specific Entity from an NGSI-LD system. It's possible to specify the Entity attributes to be retrieved by using query parameters
+      operationId: retrieveEntityById
+      tags:
+        - Context Information
+        - Entities
+      parameters:
+        - $ref: '#/components/parameters/entityId'
+        - $ref: '#/components/parameters/attrs'
+        - $ref: '#/components/parameters/parameters-type'
+        - $ref: '#/components/parameters/options'
+        - $ref: '#/components/parameters/link'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/Entity'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/Entity-example.json'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    delete:
+      description: Removes an specific Entity from an NGSI-LD system
+      operationId: removeEntityById
+      tags:
+        - Context Information
+        - Entities
+      parameters:
+        - $ref: '#/components/parameters/entityId'
+        - $ref: '#/components/parameters/parameters-type'
+      responses:
+        '204':
+          description: No Content. The entity was removed successfully
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/entities/{entityId}/attrs/{attrId}':
+    parameters:
+      - $ref: '#/components/parameters/tenantHeader'
+    patch:
+      description: Update existing Entity attributes within an NGSI-LD system
+      operationId: partialAttrUpdate
+      tags:
+        - Context Information
+        - Entities
+      parameters:
+        - $ref: '#/components/parameters/entityId'
+        - $ref: '#/components/parameters/attrId'
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/EntityFragment'
+      responses:
+        '204':
+          description: No Content.
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    delete:
+      description: Removes an existing Entity attribute within an NGSI-LD system
+      operationId: removeEntityAttr
+      tags:
+        - Context Information
+        - Entities
+      parameters:
+        - $ref: '#/components/parameters/entityId'
+        - $ref: '#/components/parameters/attrId'
+      responses:
+        '204':
+          description: No Content.
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /subscriptions/:
+    get:
+      description: Retrieves the subscriptions available in an NGSI-LD system
+      operationId: retrieveSubscriptions
+      tags:
+        - Context Subscription
+        - Subscriptions
+      parameters:
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionList'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/SubscriptionList-example.json'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    post:
+      parameters:
+        - $ref: '#/components/parameters/tenantHeader'
+      description: Creates a new Subscription within an NGSI-LD system
+      operationId: createSubscription
+      tags:
+        - Context Subscription
+        - Subscriptions
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+      responses:
+        '201':
+          description: Created. Contains the resource URI of the created Subscription
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Already exists
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/subscriptions/{subscriptionId}':
+    get:
+      description: Retrieves a specific Subscription from an NGSI-LD system
+      operationId: retrieveSubscriptionById
+      tags:
+        - Context Subscription
+        - Subscriptions
+      parameters:
+        - $ref: '#/components/parameters/subscriptionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/Subscription-example_C.4.json'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    patch:
+      description: Updates a specific Subscription within an NGSI-LD system
+      operationId: updateSubscription
+      tags:
+        - Context Subscription
+        - Subscriptions
+      parameters:
+        - $ref: '#/components/parameters/subscriptionId'
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionFragment'
+      responses:
+        '204':
+          description: No Content. The Subscription was updated successfully
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    delete:
+      description: Removes a specific Subscription from an NGSI-LD system
+      operationId: removeSubscription
+      tags:
+        - Context Subscription
+        - Subscriptions
+      parameters:
+        - $ref: '#/components/parameters/subscriptionId'
+      responses:
+        '204':
+          description: No Content. The Subscription was removed successfully
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /csourceRegistrations/:
+    get:
+      description: Retrieve a set of context sources which matches a specific query from an NGSI-LD system
+      operationId: queryCsources
+      tags:
+        - Context Sources
+        - CSourceRegistrations
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idPattern'
+        - $ref: '#/components/parameters/type'
+        - $ref: '#/components/parameters/attrs'
+        - $ref: '#/components/parameters/q'
+        - $ref: '#/components/parameters/georel'
+        - $ref: '#/components/parameters/geometry'
+        - $ref: '#/components/parameters/coordinates'
+        - $ref: '#/components/parameters/geoproperty'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ContextSourceRegistrationList'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/ContextSourceRegistrationList-example.json'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    post:
+      description: Registers a new context source within an NGSI-LD system
+      operationId: registerCsource
+      tags:
+        - Context Sources
+        - CSourceRegistrations
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/ContextSourceRegistration'
+      responses:
+        '201':
+          description: Created. Contains the resource URI of the created Registration
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Already exists
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/csourceRegistrations/{registrationId}':
+    get:
+      description: Retrieves a specific context source registration from an NGSI-LD system
+      operationId: retrieveCsource
+      tags:
+        - Context Sources
+        - CSourceRegistrations
+      parameters:
+        - $ref: '#/components/parameters/registrationId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ContextSourceRegistration'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    delete:
+      description: Removes an specific context source registration within an NGSI-LD system
+      operationId: removeCsource
+      tags:
+        - Context Sources
+        - CSourceRegistrations
+      parameters:
+        - $ref: '#/components/parameters/registrationId'
+      responses:
+        '204':
+          description: No Content. The Registration was removed successfully
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /csourceSubscriptions/:
+    get:
+      description: Retrieves the context source discovery subscriptions available in an NGSI-LD system
+      operationId: retrieveCSourceSubscriptions
+      tags:
+        - Context Sources
+        - CSourceSubscriptions
+      parameters:
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionList'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/SubscriptionList-example.json'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    post:
+      description: Creates a context source discovery Subscription within an NGSI-LD system
+      operationId: createCSourceSubscription
+      tags:
+        - Context Sources
+        - CSourceSubscriptions
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+      responses:
+        '201':
+          description: Created. Contains the resource URI of the created Subscription
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Already exists
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  '/csourceSubscriptions/{subscriptionId}':
+    get:
+      description: Retrieves a specific Subscription from an NGSI-LD system
+      operationId: retrieveCSourceSubscriptionsById
+      tags:
+        - Context Sources
+        - CSourceSubscriptions
+      parameters:
+        - $ref: '#/components/parameters/subscriptionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+              examples:
+                simple:
+                  externalValue: 'http://localhost:8090/examples/Subscription-example_C.4.json'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    patch:
+      description: Updates a specific context source discovery Subscription within an NGSI-LD system
+      operationId: updateCSourceSubscription
+      tags:
+        - Context Sources
+        - CSourceSubscriptions
+      parameters:
+        - $ref: '#/components/parameters/subscriptionId'
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionFragment'
+      responses:
+        '204':
+          description: No Content. The Subscription was updated successfully
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    delete:
+      description: Removes a specific Context Source Subscription from an NGSI-LD system
+      operationId: removeCSourceSubscription
+      tags:
+        - Context Sources
+        - CSourceSubscriptions
+      parameters:
+        - $ref: '#/components/parameters/subscriptionId'
+      responses:
+        '204':
+          description: No Content. The Subscription was removed successfully
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /entityOperations/create:
+    post:
+      description: Batch Entity creation
+      operationId: batchEntityCreation
+      tags:
+        - Batch Operations
+        - Entities
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/EntityList'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/BatchOperationResult'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /entityOperations/update:
+    post:
+      description: Batch Entity update
+      operationId: batchEntityUpdate
+      tags:
+        - Batch Operations
+        - Entities
+      parameters:
+        - name: options
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - noOverwrite
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/EntityList'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/BatchOperationResult'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /entityOperations/upsert:
+    post:
+      description: Batch Entity upsert
+      operationId: batchEntityUpsert
+      tags:
+        - Batch Operations
+        - Entities
+      parameters:
+        - name: options
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - replace
+              - update
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/EntityList'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/BatchOperationResult'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /entityOperations/delete:
+    post:
+      description: Batch Entity delete
+      operationId: batchEntityDelete
+      tags:
+        - Batch Operations
+        - Entities
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uri
+              minItems: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/BatchOperationResult'
+        '400':
+          description: Bad request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+components:
+  parameters:
+    id:
+      name: id
+      description: Comma separated list of URIs to be retrieved
+      in: query
+      required: false
+      schema:
+        type: string
+    idPattern:
+      name: idPattern
+      description: Regular expression that must be matched by Entity ids
+      in: query
+      required: false
+      schema:
+        type: string
+        format: regexp
+    type:
+      name: type
+      description: Comma separated list of Entity type names to be retrieved
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+    attrs:
+      name: attrs
+      description: Comma separated list of attribute names (properties or relationships) to be retrieved
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+    q:
+      name: q
+      description: Query
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+    georel:
+      name: georel
+      description: Geo-relationship
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/georel'
+    geometry:
+      name: geometry
+      description: Geometry
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/geometryEnum'
+    tenantHeader:
+      name: NGSILD-Tenant
+      in: header
+      schema:
+        type: string
+        default: "orion"
+      required: false
+    coordinates:
+      name: coordinates
+      description: Coordinates serialized as a string
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+    geoproperty:
+      name: geoproperty
+      description: The name of the property that contains the geo-spatial data that will be used to resolve the geoquery
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+    csf:
+      name: csf
+      description: Context Source Filter
+      in: query
+      required: false
+      schema:
+        type: string
+        minLength: 1
+    limit:
+      name: limit
+      description: Pagination limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    pageAnchor:
+      name: pageAnchor
+      description: Size of the page to be returned
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uri
+    pageSize:
+      name: pageSize
+      description: Size of the page to be returned
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    offset:
+      name: offset
+      description: Pagination offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+    options:
+      name: options
+      description: Options dictionary
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - keyValues
+          - sysAttrs
+    entityId:
+      name: entityId
+      description: Entity Id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uri
+    parameters-type:
+      name: type
+      description: Entity Type
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Name'
+    parameters-options:
+      name: options
+      description: Indicates that no attribute overwrite shall be performed
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - noOverwrite
+    attrId:
+      name: attrId
+      description: Attribute Id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Name'
+    subscriptionId:
+      name: subscriptionId
+      description: Subscription Id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uri
+    registrationId:
+      name: registrationId
+      description: Registration Id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uri
+    link:
+      name: Link
+      description: Link header to be used as described in the json-ld spec.
+      in: header
+      required: false
+      schema:
+        type: string
+    timerel:
+      name: timerel
+      description: Time relationship
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/timerel'
+    timeproperty:
+      name: timeproperty
+      description: The name of the property that contains the temporal data that will be used to resolve the temporal query
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Name'
+    time:
+      name: timeAt
+      description: start time for temporal query
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+    endTime:
+      name: endTimeAt
+      description: end time for temporal query
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+    components-parameters-options:
+      name: options
+      description: Options dictionary
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - temporalValues
+          - sysAttrs
+    lastN:
+      name: lastN
+      description: Only retrieve last N instances
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+    instanceId:
+      name: instanceId
+      description: Instance Id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uri
+  schemas:
+    georelEnum:
+      type: string
+      enum:
+        - equals
+        - disjoint
+        - intersects
+        - within
+        - contains
+        - overlaps
+        - ^near;((maxDistance==\d+)|(minDistance==\d+))$
+    georel:
+      type: string
+    geometryEnum:
+      type: string
+    geometryType:
+      type: string
+    positionDefinition:
+      description: A single position
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        type: number
+      additionalProperties: false
+    positionArrayDefinition:
+      description: An array of positions
+      type: array
+      items:
+        $ref: '#/components/schemas/positionDefinition'
+    lineStringDefinition:
+      description: An array of two or more positions
+      type: array
+      items:
+        $ref: '#/components/schemas/positionDefinition'
+      minItems: 2
+    linearRingDefinition:
+      description: An array of four positions where the first equals the last
+      type: array
+      items:
+        $ref: '#/components/schemas/positionDefinition'
+      minItems: 4
+    polygonDefinition:
+      description: An array of linear rings
+      type: array
+      items:
+        $ref: '#/components/schemas/linearRingDefinition'
+    coordinates:
+      oneOf:
+        - $ref: '#/components/schemas/positionDefinition'
+        - $ref: '#/components/schemas/positionArrayDefinition'
+        - $ref: '#/components/schemas/polygonDefinition'
+        - $ref: '#/components/schemas/lineStringDefinition'
+    LdContext:
+      type: object
+    Point:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - Point
+        coordinates:
+          $ref: '#/components/schemas/positionDefinition'
+    MultiPoint:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - MultiPoint
+        coordinates:
+          $ref: '#/components/schemas/positionArrayDefinition'
+    Polygon:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - Polygon
+        coordinates:
+          $ref: '#/components/schemas/polygonDefinition'
+    LineString:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - LineString
+        coordinates:
+          $ref: '#/components/schemas/lineStringDefinition'
+    MultiLineString:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - MultiLineString
+        coordinates:
+          type: array
+          items:
+            $ref: '#/components/schemas/lineStringDefinition'
+    MultiPolygon:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - MultiPolygon
+        coordinates:
+          type: array
+          items:
+            $ref: '#/components/schemas/polygonDefinition'
+    Geometry:
+      description: ' Avalid GeoJSON geometry object'
+      oneOf:
+        - $ref: '#/components/schemas/Point'
+        - $ref: '#/components/schemas/MultiPoint'
+        - $ref: '#/components/schemas/Polygon'
+        - $ref: '#/components/schemas/LineString'
+        - $ref: '#/components/schemas/MultiLineString'
+        - $ref: '#/components/schemas/MultiPolygon'
+    observedAt:
+      type: string
+      format: date-time
+    createdAt:
+      type: string
+      format: date-time
+    modifiedAt:
+      type: string
+      format: date-time
+    datasetId:
+      type: string
+      format: uri
+    instanceId:
+      type: string
+      format: uri
+    Property:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - Property
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: object
+            - type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+                  - type: object
+        observedAt:
+          $ref: '#/components/schemas/observedAt'
+        createdAt:
+          $ref: '#/components/schemas/createdAt'
+        modifiedAt:
+          $ref: '#/components/schemas/modifiedAt'
+        datasetId:
+          $ref: '#/components/schemas/datasetId'
+        instanceId:
+          $ref: '#/components/schemas/instanceId'
+        unitCode:
+          type: string
+      required:
+        - type
+        - value
+      additionalProperties:
+        oneOf:
+          - $ref: '#/components/schemas/Property'
+          - $ref: '#/components/schemas/Relationship'
+    Relationship:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - Relationship
+        object:
+          type: string
+          format: uri
+        observedAt:
+          $ref: '#/components/schemas/observedAt'
+        createdAt:
+          $ref: '#/components/schemas/createdAt'
+        modifiedAt:
+          $ref: '#/components/schemas/modifiedAt'
+        datasetId:
+          $ref: '#/components/schemas/datasetId'
+        instanceId:
+          $ref: '#/components/schemas/instanceId'
+      required:
+        - type
+        - object
+      additionalProperties:
+        oneOf:
+          - $ref: '#/components/schemas/Property'
+          - $ref: '#/components/schemas/Relationship'
+    GeoProperty:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - GeoProperty
+        value:
+          type: object
+        observedAt:
+          $ref: '#/components/schemas/observedAt'
+        createdAt:
+          $ref: '#/components/schemas/createdAt'
+        modifiedAt:
+          $ref: '#/components/schemas/modifiedAt'
+        datasetId:
+          $ref: '#/components/schemas/datasetId'
+        instanceId:
+          $ref: '#/components/schemas/instanceId'
+        unitCode:
+          type: string
+      required:
+        - type
+        - value
+      additionalProperties:
+        oneOf:
+          - $ref: '#/components/schemas/Geometry'
+          - $ref: '#/components/schemas/Property'
+          - $ref: '#/components/schemas/Relationship'
+    Name:
+      type: string
+      pattern: '^((\d|[a-zA-Z]|_)+(:(\d|[a-zA-Z]|_)+)?(#\d+)?)$'
+      minLength: 1
+      description: NGSI-LD Name
+    EntityFragment:
+      type: object
+      properties:
+        '@context':
+          $ref: '#/components/schemas/LdContext'
+        location:
+          $ref: '#/components/schemas/GeoProperty'
+        observationSpace:
+          $ref: '#/components/schemas/GeoProperty'
+        operationSpace:
+          $ref: '#/components/schemas/GeoProperty'
+        id:
+          type: string
+          format: uri
+        type:
+          $ref: '#/components/schemas/Name'
+        createdAt:
+          $ref: '#/components/schemas/createdAt'
+        modifiedAt:
+          $ref: '#/components/schemas/modifiedAt'
+      additionalProperties:
+        oneOf:
+          - $ref: '#/components/schemas/Property'
+          - $ref: '#/components/schemas/Relationship'
+          - $ref: '#/components/schemas/GeoProperty'
+    Entity:
+      type: object
+      properties:
+        '@context':
+          $ref: '#/components/schemas/LdContext'
+        location:
+          $ref: '#/components/schemas/GeoProperty'
+        observationSpace:
+          $ref: '#/components/schemas/GeoProperty'
+        operationSpace:
+          $ref: '#/components/schemas/GeoProperty'
+        id:
+          type: string
+          format: uri
+        type:
+          $ref: '#/components/schemas/Name'
+        createdAt:
+          $ref: '#/components/schemas/createdAt'
+        modifiedAt:
+          $ref: '#/components/schemas/modifiedAt'
+      additionalProperties:
+        oneOf:
+          - $ref: '#/components/schemas/Property'
+          - $ref: '#/components/schemas/Relationship'
+          - $ref: '#/components/schemas/GeoProperty'
+    EntityList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Entity'
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        detail:
+          type: string
+      required:
+        - type
+    NotUpdatedDetails:
+      type: object
+      properties:
+        attributeName:
+          type: string
+          pattern: ''
+        reason:
+          type: string
+          minLength: 1
+    UpdateResult:
+      type: object
+      properties:
+        updated:
+          type: array
+          items:
+            type: string
+            pattern: ''
+        notUpdated:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotUpdatedDetails'
+    EntityInfo:
+      type: object
+      properties:
+        id:
+          type: object
+        type:
+          type: string
+        idPattern:
+          type: string
+          format: regex
+      required:
+        - type
+    GeoQuery:
+      type: object
+      required:
+        - geometry
+        - coordinates
+        - georel
+      properties:
+        georel:
+          $ref: '#/components/schemas/georel'
+        coordinates:
+          type: array
+          items:
+            oneOf:
+              - type: integer
+              - $ref: '#/components/schemas/coordinates'
+        geometry:
+          $ref: '#/components/schemas/geometryType'
+        geoproperty:
+          type: string
+    SubscriptionFragment:
+      type: object
+      properties:
+        '@context':
+          $ref: '#/components/schemas/LdContext'
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityInfo'
+          minItems: 1
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          minLength: 1
+        watchedAttributes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Name'
+          uniqueItems: true
+        timeInterval:
+          type: number
+          minimum: 0
+        expires:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+        throttling:
+          type: number
+          minimum: 1
+        q:
+          type: string
+        geoQ:
+          $ref: '#/components/schemas/GeoQuery'
+        csf:
+          type: string
+    Endpoint:
+      type: object
+      required:
+        - uri
+      properties:
+        uri:
+          type: string
+          format: uri
+        accept:
+          type: string
+          enum:
+            - application/ld+json
+    NotificationParams:
+      type: object
+      properties:
+        attributes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+          uniqueItems: true
+        format:
+          type: string
+        endpoint:
+          $ref: '#/components/schemas/Endpoint'
+        status:
+          type: string
+          enum:
+            - ok
+            - failed
+        timesSent:
+          type: number
+          minimum: 1
+        lastNotification:
+          type: string
+          format: date-time
+        lastFailure:
+          type: string
+          format: date-time
+        lastSuccess:
+          type: string
+          format: date-time
+      required:
+        - endpoint
+    Subscription:
+      allOf:
+        - $ref: '#/components/schemas/SubscriptionFragment'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uri
+            type:
+              type: string
+              enum:
+                - Subscription
+            notification:
+              $ref: '#/components/schemas/NotificationParams'
+            status:
+              type: string
+              enum:
+                - active
+                - paused
+                - expired
+            createdAt:
+              $ref: '#/components/schemas/createdAt'
+            modifiedAt:
+              $ref: '#/components/schemas/modifiedAt'
+          allOf:
+            - required:
+                - id
+                - type
+                - notification
+            - anyOf:
+                - required:
+                    - entities
+                - required:
+                    - watchedAttributes
+    SubscriptionList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Subscription'
+    RegistrationInfo:
+      type: object
+      properties:
+        entities:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/EntityInfo'
+        properties:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Name'
+          uniqueItems: true
+        relationships:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Name'
+          uniqueItems: true
+    TimeInterval:
+      type: object
+      required:
+        - start
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+    ContextSourceRegistrationFragment:
+      type: object
+      properties:
+        '@context':
+          $ref: '#/components/schemas/LdContext'
+        information:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/RegistrationInfo'
+        observationInterval:
+          $ref: '#/components/schemas/TimeInterval'
+        managementInterval:
+          $ref: '#/components/schemas/TimeInterval'
+        location:
+          $ref: '#/components/schemas/Geometry'
+        observationSpace:
+          $ref: '#/components/schemas/Geometry'
+        operationSpace:
+          $ref: '#/components/schemas/Geometry'
+        expires:
+          type: string
+          format: date-time
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          minLength: 1
+        endpoint:
+          type: string
+          format: uri
+      additionalProperties: true
+    ContextSourceRegistration:
+      allOf:
+        - $ref: '#/components/schemas/ContextSourceRegistrationFragment'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uri
+            type:
+              type: string
+              enum:
+                - ContextSourceRegistration
+            createdAt:
+              $ref: '#/components/schemas/createdAt'
+            modifiedAt:
+              $ref: '#/components/schemas/modifiedAt'
+          required:
+            - id
+            - type
+            - endpoint
+            - information
+    ContextSourceRegistrationList:
+      type: array
+      items:
+        $ref: '#/components/schemas/ContextSourceRegistration'
+    BatchEntityError:
+      type: object
+      properties:
+        entityId:
+          type: string
+          format: uri
+        error:
+          $ref: '#/components/schemas/ProblemDetails'
+    BatchOperationResult:
+      type: object
+      properties:
+        success:
+          type: array
+          items:
+            type: string
+            format: uri
+        error:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchEntityError'
+    timerel:
+      type: string
+      enum:
+        - before
+        - after
+        - between
+    EntityTemporalFragment:
+      type: object
+      properties:
+        '@context':
+          $ref: '#/components/schemas/LdContext'
+        location:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoProperty'
+          minItems: 1
+        observationSpace:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoProperty'
+          minItems: 1
+        operationSpace:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoProperty'
+          minItems: 1
+        id:
+          type: string
+          format: uri
+        type:
+          $ref: '#/components/schemas/Name'
+      additionalProperties:
+        oneOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/Property'
+            minItems: 1
+          - type: array
+            items:
+              $ref: '#/components/schemas/Relationship'
+            minItems: 1
+          - type: array
+            items:
+              $ref: '#/components/schemas/GeoProperty'
+            minItems: 1
+    EntityTemporal:
+      type: object
+      properties:
+        '@context':
+          $ref: '#/components/schemas/LdContext'
+        location:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoProperty'
+          minItems: 1
+        observationSpace:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoProperty'
+          minItems: 1
+        operationSpace:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeoProperty'
+          minItems: 1
+        id:
+          type: string
+          format: uri
+        type:
+          $ref: '#/components/schemas/Name'
+        createdAt:
+          $ref: '#/components/schemas/createdAt'
+        modifiedAt:
+          $ref: '#/components/schemas/modifiedAt'
+      additionalProperties:
+        oneOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/Property'
+            minItems: 1
+          - type: array
+            items:
+              $ref: '#/components/schemas/Relationship'
+            minItems: 1
+          - type: array
+            items:
+              $ref: '#/components/schemas/GeoProperty'
+            minItems: 1
+      required:
+        - type
+        - id
+    EntityTemporalList:
+      type: array
+      items:
+        $ref: '#/components/schemas/EntityTemporal'
+    TemporalQuery:
+      type: object
+      properties:
+        timerel:
+          type: string
+        timeAt:
+          type: string
+          format: date-time
+        endTimeAt:
+          type: string
+          format: date-time
+        timeproperty:
+          type: string
+    Query:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - Query
+        entities:
+          $ref: '#/components/schemas/EntityInfo'
+        attrs:
+          type: array
+          items:
+            type: string
+        q:
+          type: string
+        geoQ:
+          $ref: '#/components/schemas/GeoQuery'
+        temporalQ:
+          $ref: '#/components/schemas/TemporalQuery'
+        csf:
+          type: string
