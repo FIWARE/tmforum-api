@@ -52,6 +52,7 @@ public class JavaObjectMapper extends Mapper {
 		List<Method> entityIdMethod = new ArrayList<>();
 		List<Method> entityTypeMethod = new ArrayList<>();
 		List<Method> propertyMethods = new ArrayList<>();
+		List<Method> propertyListMethods = new ArrayList<>();
 		List<Method> relationshipMethods = new ArrayList<>();
 		List<Method> relationshipListMethods = new ArrayList<>();
 		List<Method> geoPropertyMethods = new ArrayList<>();
@@ -66,6 +67,9 @@ public class JavaObjectMapper extends Mapper {
 				getAttributeGetter(method.getAnnotations()).ifPresent(annotation -> {
 					switch (annotation.value()) {
 						case PROPERTY -> propertyMethods.add(method);
+						// We handle property lists the same way as properties, since it is mapped as a property which value is a json array.
+						// A real NGSI-LD property list would require a datasetId, that is not provided here.
+						case PROPERTY_LIST -> propertyMethods.add(method);
 						case GEO_PROPERTY -> geoPropertyMethods.add(method);
 						case RELATIONSHIP -> relationshipMethods.add(method);
 						case GEO_PROPERTY_LIST -> geoPropertyListMethods.add(method);
@@ -83,13 +87,13 @@ public class JavaObjectMapper extends Mapper {
 			throw new IllegalArgumentException(String.format("The provided object declares %s type methods, exactly one is expected.", entityTypeMethod.size()));
 		}
 
-		return buildEntity(entity, entityIdMethod.get(0), entityTypeMethod.get(0), propertyMethods, geoPropertyMethods, relationshipMethods, relationshipListMethods);
+		return buildEntity(entity, entityIdMethod.get(0), entityTypeMethod.get(0), propertyMethods, propertyListMethods, geoPropertyMethods, relationshipMethods, relationshipListMethods);
 	}
 
 	/**
 	 * Build the entity from its declared methods.
 	 */
-	private <T> EntityVO buildEntity(T entity, Method entityIdMethod, Method entityTypeMethod, List<Method> propertyMethods, List<Method> geoPropertyMethods, List<Method> relationshipMethods, List<Method> relationshipListMethods) {
+	private <T> EntityVO buildEntity(T entity, Method entityIdMethod, Method entityTypeMethod, List<Method> propertyMethods, List<Method> propertyListMethods, List<Method> geoPropertyMethods, List<Method> relationshipMethods, List<Method> relationshipListMethods) {
 
 		EntityVO entityVO = new EntityVO();
 		// TODO: Check if we need that configurable
@@ -119,6 +123,7 @@ public class JavaObjectMapper extends Mapper {
 
 		Map<String, Object> additionalProperties = new LinkedHashMap<>();
 		additionalProperties.putAll(buildProperties(entity, propertyMethods));
+		additionalProperties.putAll(buildPropertyList(entity, propertyListMethods));
 		additionalProperties.putAll(buildGeoProperties(entity, geoPropertyMethods));
 		additionalProperties.putAll(buildRelationships(entity, relationshipMethods));
 		additionalProperties.putAll(buildRelationshipList(entity, relationshipListMethods));
@@ -265,6 +270,7 @@ public class JavaObjectMapper extends Mapper {
 			throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
 		}
 	}
+
 	/**
 	 * Build a geo-property entry from the given method on the entity
 	 */
@@ -399,6 +405,7 @@ public class JavaObjectMapper extends Mapper {
 						return propertyVO;
 					})
 					.toList();
+
 			return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), propertyVOList));
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));

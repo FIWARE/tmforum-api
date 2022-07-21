@@ -4,6 +4,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.fiware.ngsi.api.EntitiesApi;
+import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.CommonTemplates;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.repository.NgsiLdBaseRepository;
@@ -16,10 +17,12 @@ import org.fiware.tmforum.party.domain.organization.Organization;
 
 import javax.inject.Singleton;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Repository implementation to serve as backend for the party-api
@@ -60,14 +63,15 @@ public class PartyRepository extends NgsiLdBaseRepository {
 						null,
 						getLinkHeader())
 				.map(List::stream)
-				.map(entityVOStream -> entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, Organization.class)).toList());
+				.flatMap(entityVOStream -> zipToList(entityVOStream, Organization.class));
 
 	}
 
 	public Maybe<Organization> getOrganization(String id) {
 		return retrieveEntityById(URI.create(id))
-				.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, Organization.class));
+				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, Organization.class).toMaybe());
 	}
+
 
 	public Completable createIndividual(Individual individual) {
 		return createEntity(javaObjectMapper.toEntityVO(individual), generalProperties.getTenant());
@@ -75,7 +79,7 @@ public class PartyRepository extends NgsiLdBaseRepository {
 
 	public Maybe<Individual> getIndividual(String id) {
 		return retrieveEntityById(URI.create(id))
-				.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, Individual.class));
+				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, Individual.class).toMaybe());
 	}
 
 
@@ -95,8 +99,15 @@ public class PartyRepository extends NgsiLdBaseRepository {
 						null,
 						getLinkHeader())
 				.map(List::stream)
-				.map(entityVOStream -> entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, Individual.class)).toList());
+				.flatMap(entityVOStream -> zipToList(entityVOStream, Individual.class));
 
+	}
+
+	private <T> Single<List<T>> zipToList(Stream<EntityVO> entityVOStream, Class<T> targetClass) {
+		return Single.zip(
+				entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
+				oList -> Arrays.stream(oList).map(targetClass::cast).toList()
+		);
 	}
 
 	public Completable createTaxExemptionCertificate(TaxExemptionCertificate taxExemptionCertificate) {
@@ -105,7 +116,7 @@ public class PartyRepository extends NgsiLdBaseRepository {
 
 	public Maybe<TaxExemptionCertificate> getTaxExemptionCertificate(String id) {
 		return retrieveEntityById(URI.create(id))
-				.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxExemptionCertificate.class));
+				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxExemptionCertificate.class).toMaybe());
 	}
 
 
@@ -125,7 +136,7 @@ public class PartyRepository extends NgsiLdBaseRepository {
 						null,
 						getLinkHeader())
 				.map(List::stream)
-				.map(entityVOStream -> entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxExemptionCertificate.class)).toList());
+				.flatMap(entityVOStream -> zipToList(entityVOStream, TaxExemptionCertificate.class));
 
 	}
 
@@ -135,7 +146,7 @@ public class PartyRepository extends NgsiLdBaseRepository {
 
 	public Maybe<TaxDefinition> getTaxDefinition(String id) {
 		return retrieveEntityById(URI.create(id))
-				.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxDefinition.class));
+				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxDefinition.class).toMaybe());
 	}
 
 
@@ -155,7 +166,7 @@ public class PartyRepository extends NgsiLdBaseRepository {
 						null,
 						getLinkHeader())
 				.map(List::stream)
-				.map(entityVOStream -> entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxDefinition.class)).toList());
+				.flatMap(entityVOStream -> zipToList(entityVOStream, TaxDefinition.class));
 
 	}
 

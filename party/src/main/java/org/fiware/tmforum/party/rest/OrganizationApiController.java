@@ -4,6 +4,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.party.api.OrganizationApi;
@@ -68,6 +69,7 @@ public class OrganizationApiController implements OrganizationApi {
 				.flatMap(orgToCreate -> partyRepository.createOrganization(orgToCreate).toSingleDefault(orgToCreate))
 				.cast(Organization.class)
 				.map(tmForumMapper::map)
+				.subscribeOn(Schedulers.io())
 				.map(HttpResponse::created);
 	}
 

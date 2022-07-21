@@ -6,6 +6,7 @@ package org.fiware.tmforum.mapping.annotations;
 public enum AttributeType {
 
 	PROPERTY,
+	PROPERTY_LIST,
 	GEO_PROPERTY,
 	GEO_PROPERTY_LIST,
 	RELATIONSHIP,

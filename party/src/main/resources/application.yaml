@@ -23,7 +23,10 @@ micronaut:
         path: ngsi-ld/v1
         url: http://localhost:1026
         read-timeout: 30
-
+---
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
 ---
 endpoints:
   metrics:

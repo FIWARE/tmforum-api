@@ -13,7 +13,7 @@ import org.fiware.tmforum.party.domain.organization.Organization;
 
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = {Individual.TYPE_INDIVIDUAL, Organization.TYPE_ORGANIZATION})
 @EqualsAndHashCode(callSuper = true)
 public class RelatedParty extends RefEntity {
 

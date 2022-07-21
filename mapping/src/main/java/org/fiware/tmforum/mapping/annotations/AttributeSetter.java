@@ -28,4 +28,10 @@ public @interface AttributeSetter {
 	 */
 	Class<?> targetClass() default Object.class;
 
+	/**
+	 * Should the field be constructed from the properties? Does only apply for AttributeType.RELATIONSHIP or AttributeType.RELATIONSHIP_LIST.
+	 * If set to false, the field will be filled from the related entity.
+	 */
+	boolean fromProperties() default false;
+
 }

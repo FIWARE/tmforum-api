@@ -12,6 +12,7 @@ import org.fiware.party.model.DisabilityVO;
 import org.fiware.party.model.ExternalReferenceVO;
 import org.fiware.party.model.IndividualCreateVO;
 import org.fiware.party.model.IndividualIdentificationVO;
+import org.fiware.party.model.IndividualVO;
 import org.fiware.party.model.LanguageAbilityVO;
 import org.fiware.party.model.MediumCharacteristicVO;
 import org.fiware.party.model.OrganizationCreateVO;
@@ -26,6 +27,7 @@ import org.fiware.party.model.SkillVO;
 import org.fiware.party.model.TaxDefinitionVO;
 import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TimePeriodVO;
+import org.fiware.tmforum.party.rest.IndividualApiController;
 import org.fiware.tmforum.party.rest.OrganizationApiController;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +39,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
 @MicronautTest(packages = {"org.fiware.tmforum.party"})
@@ -45,7 +47,7 @@ public class PartyApiIT {
 
 	private final ObjectMapper objectMapper;
 	private final OrganizationApiController organizationApiController;
-//	private final IndividualApiController individualApiController;
+	private final IndividualApiController individualApiController;
 
 
 	@Test
@@ -56,6 +58,25 @@ public class PartyApiIT {
 		assertEquals(HttpStatus.CREATED, myFancyCompanyCreateResponse.getStatus(), "Company should have been created.");
 		OrganizationVO myFancyCompany = myFancyCompanyCreateResponse.body();
 
+		IndividualCreateVO earlMustermannCreate = getIndividualEmployee(myFancyCompany.getId());
+		HttpResponse<IndividualVO> earlMustermannCreateResponse = individualApiController.createIndividual(earlMustermannCreate).blockingGet();
+		assertEquals(HttpStatus.CREATED, earlMustermannCreateResponse.getStatus(), "Individual should have been created.");
+		IndividualVO earlMustermann = earlMustermannCreateResponse.body();
+
+		HttpResponse<OrganizationVO> organizationVOHttpResponse = organizationApiController.retrieveOrganization(myFancyCompany.getId(), null).blockingGet();
+
+		assertEquals(HttpStatus.OK, organizationVOHttpResponse.getStatus(), "An organization response is expected.");
+		assertTrue(organizationVOHttpResponse.getBody().isPresent(), "An organization response is expected.");
+		// this is a valid assertion, since "myFancyCompany" is constructed form the request-body(e.g. myFancyCompanyCreate) and persisted to the broker
+		// while the response body is retrieved from the broker and constructed from the entity retrieved.
+		// Both have to be equal, thus it actually tests something.
+		assertEquals(myFancyCompany, organizationVOHttpResponse.getBody().get(), "The full organization should be retrieved");
+
+		HttpResponse<IndividualVO> individualVOHttpResponse = individualApiController.retrieveIndividual(earlMustermann.getId(), null).blockingGet();
+
+		assertEquals(HttpStatus.OK, individualVOHttpResponse.getStatus(), "An individual response is expected.");
+		assertTrue(individualVOHttpResponse.getBody().isPresent(), "An individual response is expected.");
+		assertEquals(earlMustermann, individualVOHttpResponse.getBody().get(), "The full individual should be retrieved");
 	}
 
 	private OrganizationCreateVO getMyFancyCompany() throws JsonProcessingException {
@@ -121,9 +142,12 @@ public class PartyApiIT {
 		TaxDefinitionVO taxDefinitionVO = new TaxDefinitionVO();
 		taxDefinitionVO.setName("Gewerbe-Steuer");
 		taxDefinitionVO.setTaxType("Gewerbe-Steuer");
+		TaxDefinitionVO taxDefinitionVO2 = new TaxDefinitionVO();
+		taxDefinitionVO2.setName("Gewerbe-Steuer2");
+		taxDefinitionVO2.setTaxType("Gewerbe-Steuer2");
 
 		TaxExemptionCertificateVO taxExemptionCertificateVO = new TaxExemptionCertificateVO();
-		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
+		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO, taxDefinitionVO2));
 		taxExemptionCertificateVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(20, ChronoUnit.DAYS))));
 
 		organizationVO.setContactMedium(List.of(contactMediumVO));

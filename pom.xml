@@ -407,7 +407,7 @@
                                 <goal>start</goal>
                                 <goal>image</goal>
                                 <goal>kubectl</goal>
-                                <goal>rm</goal>
+<!--                                <goal>rm</goal>-->
                             </goals>
                             <configuration>
                                 <manifests>${project.parent.basedir}/k3s</manifests>
