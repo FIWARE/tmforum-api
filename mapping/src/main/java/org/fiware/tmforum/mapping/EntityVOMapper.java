@@ -58,11 +58,27 @@ public class EntityVOMapper extends Mapper {
 
 	}
 
+	/**
+	 * Return a single, emitting the enitites associated with relationships in the given properties maps
+	 *
+	 * @param propertiesMap properties map to evaluate
+	 * @param targetClass   class of the target object
+	 * @param <T>           the class
+	 * @return a single, emitting the map of related entities
+	 */
 	private <T> Single<Map<String, EntityVO>> getRelationshipMap(Map<String, Object> propertiesMap, Class<T> targetClass) {
 		return entitiesRepository.getEntities(getRelationshipObjects(propertiesMap, targetClass))
 				.map(relationshipsList -> relationshipsList.stream().collect(Collectors.toMap(e -> e.getId().toString(), e -> e)));
 	}
 
+	/**
+	 * Create the actual entity, after its relations are evaluated.
+	 * @param entityVO
+	 * @param targetClass
+	 * @param relationShipMap
+	 * @param <T>
+	 * @return
+	 */
 	private <T> Single<T> fromEntityVO(EntityVO entityVO, Class<T> targetClass, Map<String, EntityVO> relationShipMap) {
 		try {
 			Constructor<T> objectConstructor = targetClass.getDeclaredConstructor(String.class);
@@ -285,6 +301,8 @@ public class EntityVOMapper extends Mapper {
 					}
 					return false;
 				})
+				// we don't need to retrieve entities that should be filled from the properties.
+				.filter(a -> !a.fromProperties())
 				.flatMap(attributeSetter -> getEntityURIsByAttributeSetter(attributeSetter, propertiesMap).stream())
 				.toList();
 
