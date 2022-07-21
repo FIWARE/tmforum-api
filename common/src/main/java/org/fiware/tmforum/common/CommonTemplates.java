@@ -1,6 +1,14 @@
 package org.fiware.tmforum.common;
 
-public interface CommonTemplates {
+/**
+ * Utility class to provide common templates
+ */
+public class CommonTemplates {
 
-	String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
+	private CommonTemplates() {
+		//prevent instantiation
+		throw new IllegalStateException("Utility class");
+	}
+
+	public static final String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
 }

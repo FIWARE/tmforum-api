@@ -2,7 +2,6 @@ package org.fiware.tmforum.party.rest;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Post;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import lombok.RequiredArgsConstructor;

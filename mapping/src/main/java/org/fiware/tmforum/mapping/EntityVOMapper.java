@@ -72,12 +72,13 @@ public class EntityVOMapper extends Mapper {
 	}
 
 	/**
-	 * Create the actual entity, after its relations are evaluated.
-	 * @param entityVO
-	 * @param targetClass
-	 * @param relationShipMap
-	 * @param <T>
-	 * @return
+	 * Create the actual object from the entity, after its relations are evaluated.
+	 *
+	 * @param entityVO        entity to create the object from
+	 * @param targetClass     class of the object to be created
+	 * @param relationShipMap all entities (directly) related to the objects. Sub relationships(e.g. relationships of properties) will be evaluated downstream.
+	 * @param <T>             the class
+	 * @return a single, emitting the actual object.
 	 */
 	private <T> Single<T> fromEntityVO(EntityVO entityVO, Class<T> targetClass, Map<String, EntityVO> relationShipMap) {
 		try {
@@ -101,71 +102,163 @@ public class EntityVOMapper extends Mapper {
 	/**
 	 * Get the invocation on the object to be constructed.
 	 *
-	 * @param entry             additional properties entry
-	 * @param constructedObject the new object, to be filled with the values
-	 * @param relationShipMap   map of preevaluated realtions
-	 * @param entityId          id of the entity
-	 * @param <T>               class of the constructed object
+	 * @param entry                   additional properties entry
+	 * @param objectUnderConstruction the new object, to be filled with the values
+	 * @param relationShipMap         map of preevaluated realtions
+	 * @param entityId                id of the entity
+	 * @param <T>                     class of the constructed object
 	 * @return single, emmiting the constructed object
 	 */
-	private <T> Single<T> getObjectInvocation(Map.Entry<String, Object> entry, T constructedObject, Map<String, EntityVO> relationShipMap, String entityId) {
-		Optional<Method> optionalSetter = getCorrespondingSetterMethod(constructedObject, entry.getKey());
+	private <T> Single<T> getObjectInvocation(Map.Entry<String, Object> entry, T objectUnderConstruction, Map<String, EntityVO> relationShipMap, String entityId) {
+		Optional<Method> optionalSetter = getCorrespondingSetterMethod(objectUnderConstruction, entry.getKey());
 		if (optionalSetter.isEmpty()) {
 			log.warn("Ignoring property {} for entity {} since there is no mapping configured.", entry.getKey(), entityId);
-			return Single.just(constructedObject);
+			return Single.just(objectUnderConstruction);
 		}
 		Method setterMethod = optionalSetter.get();
 		Optional<AttributeSetter> optionalAttributeSetter = getAttributeSetterAnnotation(setterMethod);
 		if (optionalAttributeSetter.isEmpty()) {
 			log.warn("Ignoring property {} for entity {} since there is no attribute setter configured.", entry.getKey(), entityId);
-			return Single.just(constructedObject);
+			return Single.just(objectUnderConstruction);
 		}
 		AttributeSetter setterAnnotation = optionalAttributeSetter.get();
 
 		Class<?> parameterType = getParameterType(setterMethod.getParameterTypes());
 
-		switch (setterAnnotation.value()) {
-			case PROPERTY, GEO_PROPERTY -> {
-				return handleProperty(entry, constructedObject, optionalSetter.get(), parameterType);
-			}
-			case PROPERTY_LIST -> {
-				return handlePropertyList(entry, constructedObject, optionalSetter.get(), setterAnnotation);
-			}
-			case RELATIONSHIP -> {
-				return handleRelationship(entry, constructedObject, relationShipMap, optionalSetter.get(), setterAnnotation, parameterType);
-			}
-			case RELATIONSHIP_LIST -> {
-				return handleRelationshipList(entry, constructedObject, relationShipMap, optionalSetter.get(), setterAnnotation, parameterType);
-			}
-			case GEO_PROPERTY_LIST -> log.info("Geo property Lists are not supported yet.");
+		return switch (setterAnnotation.value()) {
+			case PROPERTY, GEO_PROPERTY -> handleProperty(entry, objectUnderConstruction, optionalSetter.get(), parameterType);
+			case PROPERTY_LIST -> handlePropertyList(entry, objectUnderConstruction, optionalSetter.get(), setterAnnotation);
+			case RELATIONSHIP -> handleRelationship(entry, objectUnderConstruction, relationShipMap, optionalSetter.get(), setterAnnotation);
+			case RELATIONSHIP_LIST -> handleRelationshipList(entry, objectUnderConstruction, relationShipMap, optionalSetter.get(), setterAnnotation);
 			default -> throw new MappingException(String.format("Received type %s is not supported.", setterAnnotation.value()));
-		}
-		return Single.just(constructedObject);
+		};
 	}
 
-	private <T> Single<T> handleProperty(Map.Entry<String, Object> entry, T constructedObject, Method setter, Class<?> parameterType) {
+	/**
+	 * Handle the evaluation of a property entry. Returns a single, emitting the target object, while invoking the property setting method.
+	 *
+	 * @param entry                   the entry containing the property
+	 * @param objectUnderConstruction the object under construction
+	 * @param setter                  the setter to be used for the property
+	 * @param parameterType           type of the property in the target object
+	 * @param <T>                     class of the object under construction
+	 * @return the single, emitting the objectUnderConstruction
+	 */
+	private <T> Single<T> handleProperty(Map.Entry<String, Object> entry, T objectUnderConstruction, Method setter, Class<?> parameterType) {
 		if (entry.getValue() instanceof Map propertyMap) {
 			return Single.fromCallable(() -> {
-				setter.invoke(constructedObject, objectMapper.convertValue(propertyMap.get(PROPERTY_VALUE_KEY), parameterType));
-				return constructedObject;
+				setter.invoke(objectUnderConstruction, objectMapper.convertValue(propertyMap.get(PROPERTY_VALUE_KEY), parameterType));
+				return objectUnderConstruction;
 			});
 		} else {
 			throw new MappingException(String.format("Value of the property %s was not a map.", entry));
 		}
 	}
 
-	private <T> Single<T> handlePropertyList(Map.Entry<String, Object> entry, T constructedObject, Method setter, AttributeSetter setterAnnotation) {
+	/**
+	 * Handle the evaluation of a property-list entry. Returns a single, emitting the target object, while invoking the property setting method.
+	 *
+	 * @param entry                   the entry containing the property-list
+	 * @param objectUnderConstruction the object under construction
+	 * @param setter                  the setter to be used for the property
+	 * @param <T>                     class of the object under construction
+	 * @return the single, emitting the objectUnderConstruction
+	 */
+	private <T> Single<T> handlePropertyList(Map.Entry<String, Object> entry, T objectUnderConstruction, Method setter, AttributeSetter setterAnnotation) {
 		Class<?> targetClassMapping = setterAnnotation.targetClass();
 		return Single.fromCallable(() -> {
-			setter.invoke(constructedObject, propertyListToTargetClass(entry, targetClassMapping));
-			return constructedObject;
+			setter.invoke(objectUnderConstruction, propertyListToTargetClass(entry, targetClassMapping));
+			return objectUnderConstruction;
 		});
 	}
 
-	private <T> Single<T> relationshipFromProperties(Map<String, Object> relationShipRepresentation, Class<T> targetClass) {
+	/**
+	 * Handle the evaluation of a relationship-list entry. Returns a single, emitting the target object, while invoking the property setting method.
+	 *
+	 * @param entry                   the entry containing the relationship-list
+	 * @param objectUnderConstruction the object under construction
+	 * @param relationShipMap         a map containing the pre-evaluated relationships
+	 * @param setter                  the setter to be used for the property
+	 * @param setterAnnotation        attribute setter annotation on the method
+	 * @param <T>                     class of the objectUnderConstruction
+	 * @return the single, emitting the objectUnderConstruction
+	 */
+	private <T> Single<T> handleRelationshipList(Map.Entry<String, Object> entry, T objectUnderConstruction, Map<String, EntityVO> relationShipMap, Method setter, AttributeSetter setterAnnotation) {
+		Class<?> targetClass = setterAnnotation.targetClass();
+		if (setterAnnotation.fromProperties()) {
+			if (entry.getValue() instanceof Map singlePropertyMap) {
+				return relationshipFromProperties(singlePropertyMap, targetClass)
+						.map(relationship -> {
+							// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
+							// a list is created, since we have a relationship-list defined by the annotation
+							setter.invoke(objectUnderConstruction, List.of(relationship));
+							return objectUnderConstruction;
+						});
+			} else if (entry.getValue() instanceof List multiPropertyList) {
+				return Single.zip(multiPropertyList.stream().map(property -> {
+							if (entry.getValue() instanceof Map relationshipRepresentation) {
+								return relationshipFromProperties(relationshipRepresentation, targetClass);
+							}
+							throw new MappingException(String.format("Did not receive a valid relationship: %s", entry));
+						}).toList(),
+						oList -> Arrays.asList(oList).stream().map(targetClass::cast).toList()).map(relationshipList -> {
+					// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
+					setter.invoke(objectUnderConstruction, relationshipList);
+					return objectUnderConstruction;
+				});
 
+			} else {
+				throw new MappingException(String.format("Value of the relationship %s is invalid.", entry));
+			}
+		} else {
+			return relationshipListToTargetClass(entry, targetClass, relationShipMap)
+					.map(relatedEntities -> {
+						// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
+						setter.invoke(objectUnderConstruction, relatedEntities);
+						return objectUnderConstruction;
+					});
+		}
+	}
+
+	/**
+	 * Handle the evaluation of a relationship entry. Returns a single, emitting the target object, while invoking the property setting method.
+	 *
+	 * @param entry                   the entry containing the relationship-list
+	 * @param objectUnderConstruction the object under construction
+	 * @param relationShipMap         a map containing the pre-evaluated relationships
+	 * @param setter                  the setter to be used for the property
+	 * @param setterAnnotation        attribute setter annotation on the method
+	 * @param <T>                     class of the objectUnderConstruction
+	 * @return the single, emitting the objectUnderConstruction
+	 */
+	private <T> Single<T> handleRelationship(Map.Entry<String, Object> entry, T objectUnderConstruction, Map<String, EntityVO> relationShipMap, Method setter, AttributeSetter setterAnnotation) {
+		Class<?> targetClass = setterAnnotation.targetClass();
+		if (setterAnnotation.fromProperties()) {
+			if (entry.getValue() instanceof Map relationshipRepresentation) {
+				return relationshipFromProperties(relationshipRepresentation, targetClass);
+			}
+			throw new MappingException(String.format("Did not receive a valid relationship: %s", entry));
+		} else {
+			return getObjectFromRelationship(entry, targetClass, relationShipMap)
+					.map(relatedEntity -> {
+						// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
+						setter.invoke(objectUnderConstruction, relatedEntity);
+						return objectUnderConstruction;
+					});
+		}
+	}
+
+	/**
+	 * Create the target object of a relationship from its properties(instead of entities additionally retrieved)
+	 *
+	 * @param relationShipRepresentation representation of the current relationship(as provided by the original entitiy)
+	 * @param targetClass                class of the target object to be created(e.g. the object representing the relationship)
+	 * @param <T>                        the class
+	 * @return a single emitting the object representing the relationship
+	 */
+	private <T> Single<T> relationshipFromProperties(Map<String, Object> relationShipRepresentation, Class<T> targetClass) {
 		try {
-			String entityID = null;
+			String entityID;
 			if (relationShipRepresentation.get(REALTIONSHIP_OBJECT_KEY) instanceof String id) {
 				entityID = id;
 			} else {
@@ -194,91 +287,26 @@ public class EntityVOMapper extends Mapper {
 						AttributeSetter attributeSetterAnnotation = optionalAttributeSetterAnnotation.get();
 
 						Class<?> parameterType = getParameterType(setter.getParameterTypes());
-						switch (attributeSetterAnnotation.value()) {
-							case RELATIONSHIP_LIST -> {
-								return getRelationshipMap(relationShipRepresentation, targetClass)
-										.flatMap(relationShips -> handleRelationshipList(
-												entry,
-												constructedObject,
-												relationShips,
-												setter,
-												attributeSetterAnnotation,
-												parameterType));
-							}
-							case RELATIONSHIP -> {
-								return getRelationshipMap(relationShipRepresentation, targetClass)
-										.flatMap(relationShips -> handleRelationship(entry, constructedObject, relationShips, setter, attributeSetterAnnotation, parameterType));
-							}
-							case PROPERTY, GEO_PROPERTY -> {
-								return handleProperty(entry, constructedObject, setter, parameterType);
-							}
-							case PROPERTY_LIST -> {
-								return handlePropertyList(entry, constructedObject, setter, attributeSetterAnnotation);
-							}
-							case GEO_PROPERTY_LIST -> log.info("Geo property Lists are not supported yet.");
+						return switch (attributeSetterAnnotation.value()) {
+							case RELATIONSHIP_LIST -> getRelationshipMap(relationShipRepresentation, targetClass)
+									.flatMap(relationShips -> handleRelationshipList(
+											entry,
+											constructedObject,
+											relationShips,
+											setter,
+											attributeSetterAnnotation));
+							case RELATIONSHIP -> getRelationshipMap(relationShipRepresentation, targetClass)
+									.flatMap(relationShips -> handleRelationship(entry, constructedObject, relationShips, setter, attributeSetterAnnotation));
+							case PROPERTY, GEO_PROPERTY -> handleProperty(entry, constructedObject, setter, parameterType);
+							case PROPERTY_LIST -> handlePropertyList(entry, constructedObject, setter, attributeSetterAnnotation);
 							default -> throw new MappingException(String.format("Received type %s is not supported.", attributeSetterAnnotation.value()));
-						}
-						return Single.just(constructedObject);
+						};
 					}).toList(), constructedObjects -> constructedObject);
 
 		} catch (NoSuchMethodException e) {
 			throw new MappingException(String.format("The class %s does not declare the required String id constructor.", targetClass));
 		} catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
 			throw new MappingException(String.format("Was not able to create instance of %s.", targetClass), e);
-		}
-	}
-
-	private <T> Single<T> handleRelationshipList(Map.Entry<String, Object> entry, T constructedObject, Map<String, EntityVO> relationShipMap, Method setter, AttributeSetter setterAnnotation, Class<?> parameterType) {
-		Class<?> targetClass = setterAnnotation.targetClass();
-		if (setterAnnotation.fromProperties()) {
-			if (entry.getValue() instanceof Map singlePropertyMap) {
-				return relationshipFromProperties(singlePropertyMap, targetClass)
-						.map(relationship -> {
-							// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
-							// a list is created, since we have a relationship-list defined by the annotation
-							setter.invoke(constructedObject, List.of(relationship));
-							return constructedObject;
-						});
-			} else if (entry.getValue() instanceof List multiPropertyList) {
-				return Single.zip(multiPropertyList.stream().map(property -> {
-							if (entry.getValue() instanceof Map relationshipRepresentation) {
-								return relationshipFromProperties(relationshipRepresentation, targetClass);
-							}
-							throw new MappingException(String.format("Did not receive a valid relationship: %s", entry));
-						}).toList(),
-						oList -> Arrays.asList(oList).stream().map(targetClass::cast).toList()).map(relationshipList -> {
-					// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
-					setter.invoke(constructedObject, relationshipList);
-					return constructedObject;
-				});
-
-			} else {
-				throw new MappingException(String.format("Value of the relationship %s is invalid.", entry));
-			}
-		} else {
-			return relationshipListToTargetClass(entry, targetClass, relationShipMap)
-					.map(relatedEntities -> {
-						// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
-						setter.invoke(constructedObject, relatedEntities);
-						return constructedObject;
-					});
-		}
-	}
-
-	private <T> Single<T> handleRelationship(Map.Entry<String, Object> entry, T constructedObject, Map<String, EntityVO> relationShipMap, Method setter, AttributeSetter setterAnnotation, Class<?> parameterType) {
-		Class<?> targetClass = setterAnnotation.targetClass();
-		if (setterAnnotation.fromProperties()) {
-			if (entry.getValue() instanceof Map relationshipRepresentation) {
-				return relationshipFromProperties(relationshipRepresentation, targetClass);
-			}
-			throw new MappingException(String.format("Did not receive a valid relationship: %s", entry));
-		} else {
-			return getObjectFromRelationship(entry, targetClass, relationShipMap)
-					.map(relatedEntity -> {
-						// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
-						setter.invoke(constructedObject, relatedEntity);
-						return constructedObject;
-					});
 		}
 	}
 
@@ -295,12 +323,7 @@ public class EntityVOMapper extends Mapper {
 				.map(this::getAttributeSetterAnnotation)
 				.filter(Optional::isPresent)
 				.map(Optional::get)
-				.filter(a -> {
-					if (a.value().equals(AttributeType.RELATIONSHIP) || a.value().equals(AttributeType.RELATIONSHIP_LIST)) {
-						return true;
-					}
-					return false;
-				})
+				.filter(a -> (a.value().equals(AttributeType.RELATIONSHIP) || a.value().equals(AttributeType.RELATIONSHIP_LIST)))
 				// we don't need to retrieve entities that should be filled from the properties.
 				.filter(a -> !a.fromProperties())
 				.flatMap(attributeSetter -> getEntityURIsByAttributeSetter(attributeSetter, propertiesMap).stream())
@@ -366,7 +389,7 @@ public class EntityVOMapper extends Mapper {
 	 * @param <T>                     target class of the relationship
 	 * @return a single emitting the full list
 	 */
-	private <T> Single<List<T>> zipToList(Stream<Map> entries, Class<T> targetClass, Map<String, EntityVO> relationShipEntitiesMap) {
+	private <T> Single<List<T>> zipToList(Stream<Map<String, Object>> entries, Class<T> targetClass, Map<String, EntityVO> relationShipEntitiesMap) {
 		return Single.zip(
 				entries.map(map -> map.get(REALTIONSHIP_OBJECT_KEY))
 						.filter(Objects::nonNull)

@@ -50,7 +50,6 @@ import org.fiware.tmforum.party.domain.organization.OrganizationParentRelationsh
 import org.fiware.tmforum.party.domain.organization.OtherOrganizationName;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -64,55 +63,43 @@ public interface TMForumMapper {
 
 	String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
 
-	@Mappings({
-			// using inline expression, since else it might overwrite the String-String mapping
-			@Mapping(target = "id", expression = "java(java.lang.String.format(ID_TEMPLATE, \"organization\", java.util.UUID.randomUUID()))"),
-			@Mapping(target = "href", ignore = true)
-	})
+
+	// using inline expression, since else it might overwrite the String-String mapping
+	@Mapping(target = "id", expression = "java(java.lang.String.format(ID_TEMPLATE, \"organization\", java.util.UUID.randomUUID()))")
+	@Mapping(target = "href", ignore = true)
 	OrganizationVO map(OrganizationCreateVO organizationCreateVO);
 
-	@Mappings({
-			@Mapping(target = "isHeadOffice", source = "headOffice"),
-			@Mapping(target = "isLegalEntity", source = "legalEntity"),
-			@Mapping(target = "status", source = "organizationState")
-	})
+
+	@Mapping(target = "isHeadOffice", source = "headOffice")
+	@Mapping(target = "isLegalEntity", source = "legalEntity")
+	@Mapping(target = "status", source = "organizationState")
 	OrganizationVO map(Organization organization);
 
-	@Mappings({
-			@Mapping(target = "organizationState", source = "status")
-	})
+	@Mapping(target = "organizationState", source = "status")
 	Organization map(OrganizationVO organizationVO);
 
-	@Mappings({
-			// using inline expression, since else it might overwrite the String-String mapping
-			@Mapping(target = "id", expression = "java(java.lang.String.format(ID_TEMPLATE, \"individual\", java.util.UUID.randomUUID()))"),
-			@Mapping(target = "href", ignore = true)
-	})
+
+	// using inline expression, since else it might overwrite the String-String mapping
+	@Mapping(target = "id", expression = "java(java.lang.String.format(ID_TEMPLATE, \"individual\", java.util.UUID.randomUUID()))")
+	@Mapping(target = "href", ignore = true)
 	IndividualVO map(IndividualCreateVO individualCreateVO);
 
-	@Mappings({
-			@Mapping(target = "status", source = "individualState")
-	})
+	@Mapping(target = "status", source = "individualState")
 	IndividualVO map(Individual individual);
 
-	@Mappings({
-			@Mapping(target = "individualState", source = "status")
-	})
+
+	@Mapping(target = "individualState", source = "status")
 	Individual map(IndividualVO individualVO);
 
 	RelatedParty map(RelatedPartyVO relatedPartyVO);
 
 	RelatedPartyVO map(RelatedParty relatedParty);
 
-	@Mappings({
-			@Mapping(source = "characteristic", target = "mediumCharacteristic")
-	})
+	@Mapping(source = "characteristic", target = "mediumCharacteristic")
 	ContactMedium map(ContactMediumVO contactMediumVO);
 
-	@Mappings({
-			@Mapping(target = "characteristic", source = "mediumCharacteristic"),
-			@Mapping(target = "validFor", source = "validFor")
-	})
+	@Mapping(target = "characteristic", source = "mediumCharacteristic")
+	@Mapping(target = "validFor", source = "validFor")
 	ContactMediumVO map(ContactMedium contactMedium);
 
 	CharacteristicVO map(Characteristic characteristic);
@@ -163,9 +150,7 @@ public interface TMForumMapper {
 
 	LanguageAbility map(LanguageAbilityVO languageAbilityVO);
 
-	@Mappings({
-			@Mapping(target = "isFavouriteLanguage", source = "favouriteLanguage")
-	})
+	@Mapping(target = "isFavouriteLanguage", source = "favouriteLanguage")
 	LanguageAbilityVO map(LanguageAbility languageAbility);
 
 	OtherIndividualName map(OtherNameIndividualVO otherNameIndividualVO);

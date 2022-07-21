@@ -104,7 +104,6 @@ public class JavaObjectMapper extends Mapper {
 		entityVO.setObservationSpace(null);
 		entityVO.setLocation(null);
 
-
 		try {
 			Object entityIdObject = entityIdMethod.invoke(entity);
 			if (!(entityIdObject instanceof URI)) {

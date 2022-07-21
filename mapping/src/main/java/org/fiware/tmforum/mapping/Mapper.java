@@ -5,6 +5,9 @@ import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 import java.util.Arrays;
 import java.util.Optional;
 
+/**
+ * Abstract superclass for mappers between NGSI-LD and the annotated objects
+ */
 public abstract class Mapper {
 
 	/**

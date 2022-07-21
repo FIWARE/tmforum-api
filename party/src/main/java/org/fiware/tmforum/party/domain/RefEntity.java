@@ -1,5 +1,6 @@
 package org.fiware.tmforum.party.domain;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.Entity;
@@ -12,6 +13,7 @@ import org.fiware.tmforum.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
 
+@EqualsAndHashCode
 public abstract class RefEntity extends Entity implements ReferencedEntity {
 
 	@Getter(onMethod = @__({@RelationshipObject, @DatasetId}))

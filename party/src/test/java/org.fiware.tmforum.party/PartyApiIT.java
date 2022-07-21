@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
 @MicronautTest(packages = {"org.fiware.tmforum.party"})
-public class PartyApiIT {
+class PartyApiIT {
 
 	private final ObjectMapper objectMapper;
 	private final OrganizationApiController organizationApiController;
@@ -51,7 +51,7 @@ public class PartyApiIT {
 
 
 	@Test
-	public void test() throws JsonProcessingException, ParseException {
+	void test() throws JsonProcessingException, ParseException {
 		OrganizationCreateVO myFancyCompanyCreate = getMyFancyCompany();
 
 		HttpResponse<OrganizationVO> myFancyCompanyCreateResponse = organizationApiController.createOrganization(myFancyCompanyCreate).blockingGet();
