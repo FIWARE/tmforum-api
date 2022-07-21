@@ -345,8 +345,8 @@ With the value ```fromProperties=true``` on the [@AttributeSetter](src/main/java
 the mapper will read out the properties and put them in the object:  
 
 ```java
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity", fromProperties = true)}))
-    private MySubPropertyEntityEmbed mySubProperty;
+@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity", fromProperties = true)}))
+private MySubPropertyEntityEmbed mySubProperty;
 ```
 The result is an object, containing values from the parent and the actual entity:
 ```json
