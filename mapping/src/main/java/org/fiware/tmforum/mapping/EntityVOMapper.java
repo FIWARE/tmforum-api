@@ -235,7 +235,12 @@ public class EntityVOMapper extends Mapper {
 		Class<?> targetClass = setterAnnotation.targetClass();
 		if (setterAnnotation.fromProperties()) {
 			if (entry.getValue() instanceof Map relationshipRepresentation) {
-				return relationshipFromProperties(relationshipRepresentation, targetClass);
+				return relationshipFromProperties(relationshipRepresentation, targetClass)
+						.map(relatedEntity -> {
+							// we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
+							setter.invoke(objectUnderConstruction, relatedEntity);
+							return objectUnderConstruction;
+						});
 			}
 			throw new MappingException(String.format("Did not receive a valid relationship: %s", entry));
 		} else {

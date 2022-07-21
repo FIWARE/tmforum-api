@@ -23,8 +23,8 @@ public @interface AttributeSetter {
 	String targetName();
 
 	/**
-	 * Type of the entries to be used when the attribute is a list. This is required, since the concrete class is hidden at runtime
-	 * due to type-erasure.
+	 * Type of the entries to be used when the attribute is a list or a relationship. This is required, since the concrete class is hidden
+	 * at runtime due to type-erasure.
 	 */
 	Class<?> targetClass() default Object.class;
 

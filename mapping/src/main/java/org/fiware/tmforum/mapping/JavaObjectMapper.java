@@ -370,7 +370,7 @@ public class JavaObjectMapper extends Mapper {
 	 */
 	private Optional<Map.Entry<String, Object>> getAdditionalPropertyEntryFromMethod(Object relationShipObject, Method getterMethod) {
 		Optional<AttributeGetter> optionalAttributeGetter = getAttributeGetter(getterMethod.getAnnotations());
-		if (optionalAttributeGetter.isEmpty()) {
+		if (optionalAttributeGetter.isEmpty() || !optionalAttributeGetter.get().embedProperty()) {
 			return Optional.empty();
 		}
 		if (optionalAttributeGetter.get().value().equals(AttributeType.PROPERTY)) {

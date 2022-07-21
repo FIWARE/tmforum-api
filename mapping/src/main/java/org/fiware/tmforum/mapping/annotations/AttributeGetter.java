@@ -22,6 +22,12 @@ public @interface AttributeGetter {
 	 */
 	String targetName();
 
+	/**
+	 * In case the entity is used as a relationship, should the field be embedded into
+	 * the relationship or is it only relevant for serialization to a full entity?
+	 */
+	boolean embedProperty() default false;
+
 }
 
 
