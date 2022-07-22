@@ -26,7 +26,7 @@ In order to ease the implementation of the apis, a mapper from java-objects to N
 ## Testing
 
 The current implementation supports multiple layers of testing:
-- Unit-Tests, using [JUnit5](https://junit.org/junit5/docs/current/user-guide/) to test on a function-level
+- Unit-Tests, using [JUnit5](https://junit.org/junit5/docs/current/user-guide/) and [Mockito](https://site.mockito.org/) to test on a function-level
 - Unit-Tests, using [JUnit5](https://junit.org/junit5/docs/current/user-guide/),[Micronaut-Test](https://micronaut-projects.github.io/micronaut-test/latest/guide/) and [Mockito](https://site.mockito.org/) to test on component level(e.g. running parts of the application, while mocking all external dependencies)
 - Integration-Tests, using [JUnit5](https://junit.org/junit5/docs/current/user-guide/),[Micronaut-Test](https://micronaut-projects.github.io/micronaut-test/latest/guide/) and [k3s](https://k3s.io/) to test the application with its real external dependencies running
 
