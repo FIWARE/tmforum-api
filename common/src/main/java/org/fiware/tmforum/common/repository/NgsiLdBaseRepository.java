@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import java.net.URI;
 
 /**
- * Base-Repository implementation for using the NGSI-LD API as a storage backend.
+ * Base-Repository implementation for using the NGSI-LD API as a storage backend. Supports caching and asynchronous retrieval of entities.
  */
 @RequiredArgsConstructor
 public abstract class NgsiLdBaseRepository {

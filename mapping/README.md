@@ -363,5 +363,8 @@ The result is an object, containing values from the parent and the actual entity
 ```
 
 
+## Referential integrity
+
+The mapping itself does not handle referential-integrity checks. However, the [common-module](../common) offers such functionality.
 
 

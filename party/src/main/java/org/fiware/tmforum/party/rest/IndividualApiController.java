@@ -9,10 +9,12 @@ import org.fiware.party.api.IndividualApi;
 import org.fiware.party.model.IndividualCreateVO;
 import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.party.model.IndividualVO;
-import org.fiware.tmforum.common.ValidationService;
+import org.fiware.tmforum.common.exception.NonExistentReferenceException;
+import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.party.TMForumMapper;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.party.domain.individual.Individual;
+import org.fiware.tmforum.party.exception.PartyCreationException;
 import org.fiware.tmforum.party.repository.PartyRepository;
 
 import javax.annotation.Nullable;
@@ -27,7 +29,7 @@ public class IndividualApiController implements IndividualApi {
 
 	private final TMForumMapper tmForumMapper;
 	private final PartyRepository partyRepository;
-	private final ValidationService validationService;
+	private final ReferenceValidationService validationService;
 
 	@Override
 	public Single<HttpResponse<IndividualVO>> createIndividual(@Valid IndividualCreateVO individualCreateVO) {
@@ -37,7 +39,12 @@ public class IndividualApiController implements IndividualApi {
 		Single<Individual> individualSingle = Single.just(individual);
 
 		if (individual.getRelatedParty() != null && !individual.getRelatedParty().isEmpty()) {
-			Single<Individual> checkingSingle = validationService.getCheckingSingle(individual.getRelatedParty(), individual);
+			Single<Individual> checkingSingle;
+			try {
+				checkingSingle = validationService.getCheckingSingleOrThrow(individual.getRelatedParty(), individual);
+			} catch (NonExistentReferenceException e) {
+				throw new PartyCreationException(String.format("Was not able to create individual %s", individual.getId()), e);
+			}
 			individualSingle = Single.zip(individualSingle, checkingSingle, (p1, p2) -> p1);
 		}
 

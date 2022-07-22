@@ -8,7 +8,7 @@ import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.DatasetId;
-import org.fiware.tmforum.mapping.annotations.ReferencedEntity;
+import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.mapping.annotations.RelationshipObject;
 
 import java.net.URI;

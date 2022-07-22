@@ -1,25 +1,21 @@
 package org.fiware.tmforum.common.repository;
 
 import io.reactivex.Maybe;
-import lombok.extern.slf4j.Slf4j;
-import org.fiware.ngsi.api.EntitiesApi;
 import org.fiware.ngsi.model.EntityVO;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
 
-import javax.inject.Singleton;
-import java.net.URI;
 import java.util.List;
 
-@Slf4j
-@Singleton
-public class ReferencesRepository extends NgsiLdBaseRepository {
+/**
+ * Repostiory interface , focusing on the existence of entities.
+ */
+public interface ReferencesRepository {
 
-	public ReferencesRepository(GeneralProperties generalProperties, EntitiesApi entitiesApi) {
-		// this repo is only for validating referential integrity and does not change anything, therefor canismajor is not required.
-		super(generalProperties, entitiesApi);
-	}
-
-	public Maybe<EntityVO> referenceExists(String id, List<String> acceptedTypes) {
-		return retrieveEntityById(URI.create(id)).filter(e -> acceptedTypes.contains(e.getType()));
-	}
+	/**
+	 * Returns the entity if it exists and has the expected type.
+	 *
+	 * @param id            id of the entity to check
+	 * @param acceptedTypes list of types accepted for the entity
+	 * @return a Maybe emitting the entiy, in case it exists.
+	 */
+	Maybe<EntityVO> referenceExists(String id, List<String> acceptedTypes);
 }

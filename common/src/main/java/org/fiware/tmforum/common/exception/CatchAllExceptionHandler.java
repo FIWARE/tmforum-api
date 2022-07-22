@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Singleton;
 import java.util.Optional;
 
-
+/**
+ * Handler to catch and log all unexpected exceptions and translate them into a proper 500 response.
+ */
 @Produces
 @Singleton
 @Requires(classes = {Exception.class, ExceptionHandler.class})

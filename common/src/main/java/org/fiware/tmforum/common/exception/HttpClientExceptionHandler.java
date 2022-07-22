@@ -13,7 +13,7 @@ import javax.inject.Singleton;
 import java.util.Optional;
 
 /**
- * General handler for all un-catched {@link  HttpClientException}.
+ * General handler for all un-catched {@link  HttpClientException}. Translates them into a proper 503.
  */
 @Produces
 @Singleton

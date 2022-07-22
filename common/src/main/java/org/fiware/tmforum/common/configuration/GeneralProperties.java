@@ -6,7 +6,7 @@ import lombok.Data;
 import java.net.URL;
 
 /**
- * General properties to be used for the server.
+ * General properties to be used for the applications.
  */
 @ConfigurationProperties("general")
 @Data

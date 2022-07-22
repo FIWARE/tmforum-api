@@ -1,4 +1,4 @@
-package org.fiware.tmforum.mapping.annotations;
+package org.fiware.tmforum.common.validation;
 
 import java.net.URI;
 import java.util.List;

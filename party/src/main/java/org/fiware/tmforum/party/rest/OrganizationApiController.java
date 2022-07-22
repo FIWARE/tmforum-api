@@ -10,10 +10,12 @@ import org.fiware.party.api.OrganizationApi;
 import org.fiware.party.model.OrganizationCreateVO;
 import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
-import org.fiware.tmforum.common.ValidationService;
+import org.fiware.tmforum.common.exception.NonExistentReferenceException;
+import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.party.TMForumMapper;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.party.domain.organization.Organization;
+import org.fiware.tmforum.party.exception.PartyCreationException;
 import org.fiware.tmforum.party.repository.PartyRepository;
 
 import javax.annotation.Nullable;
@@ -28,7 +30,7 @@ public class OrganizationApiController implements OrganizationApi {
 
 	private final TMForumMapper tmForumMapper;
 	private final PartyRepository partyRepository;
-	private final ValidationService validationService;
+	private final ReferenceValidationService validationService;
 
 	@Override
 	public Single<HttpResponse<OrganizationVO>> createOrganization(OrganizationCreateVO organizationCreateVO) {
@@ -37,18 +39,25 @@ public class OrganizationApiController implements OrganizationApi {
 		Organization organization = tmForumMapper.map(organizationVO);
 
 		Single<Organization> organizationSingle = Single.just(organization);
-		if (organization.getOrganizationChildRelationship() != null && !organization.getOrganizationChildRelationship().isEmpty()) {
-			Single<Organization> checkingSingle = validationService.getCheckingSingle(organization.getOrganizationChildRelationship(), organization);
-			organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
-		}
-		if (organization.getOrganizationParentRelationship() != null) {
-			Single<Organization> checkingSingle = validationService.getCheckingSingle(List.of(organization.getOrganizationParentRelationship()), organization);
-			organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
-		}
+		Single<Organization> checkingSingle;
+		try {
 
-		if (organization.getRelatedParty() != null && !organization.getRelatedParty().isEmpty()) {
-			Single<Organization> checkingSingle = validationService.getCheckingSingle(organization.getRelatedParty(), organization);
-			organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
+			if (organization.getOrganizationChildRelationship() != null && !organization.getOrganizationChildRelationship().isEmpty()) {
+				checkingSingle = validationService.getCheckingSingleOrThrow(organization.getOrganizationChildRelationship(), organization);
+
+				organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
+			}
+			if (organization.getOrganizationParentRelationship() != null) {
+				checkingSingle = validationService.getCheckingSingleOrThrow(List.of(organization.getOrganizationParentRelationship()), organization);
+				organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
+			}
+
+			if (organization.getRelatedParty() != null && !organization.getRelatedParty().isEmpty()) {
+				checkingSingle = validationService.getCheckingSingleOrThrow(organization.getRelatedParty(), organization);
+				organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
+			}
+		} catch (NonExistentReferenceException e) {
+			throw new PartyCreationException(String.format("Was not able to create organization %s", organization.getId()), e);
 		}
 
 		List<TaxExemptionCertificate> taxExemptionCertificates = Optional.ofNullable(organization.getTaxExemptionCertificate()).orElseGet(List::of);

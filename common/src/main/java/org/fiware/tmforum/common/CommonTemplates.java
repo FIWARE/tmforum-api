@@ -10,5 +10,8 @@ public class CommonTemplates {
 		throw new IllegalStateException("Utility class");
 	}
 
+	/**
+	 * String template for an NGSI-LD compatible id
+	 */
 	public static final String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
 }

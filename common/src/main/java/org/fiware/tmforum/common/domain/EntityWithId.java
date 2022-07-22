@@ -15,7 +15,7 @@ import javax.annotation.Nullable;
 import java.net.URI;
 
 /**
- * Abstract superclass for all entities witha n id
+ * Abstract superclass for all entities with an id
  */
 public abstract class EntityWithId {
 

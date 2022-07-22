@@ -3,7 +3,7 @@ package org.fiware.tmforum.common.exception;
 /**
  * Exception to be thrown if a reference does not exist
  */
-public class NonExistentReferenceException extends RuntimeException {
+public class NonExistentReferenceException extends Exception {
 
 	public NonExistentReferenceException(String message) {
 		super(message);

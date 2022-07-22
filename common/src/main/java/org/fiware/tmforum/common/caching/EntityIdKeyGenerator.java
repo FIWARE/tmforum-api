@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.exception.CachingException;
 
+/**
+ * Generator for cache keys to be used for entity caches. It will use the entity-id as a cache-key.
+ */
 @Slf4j
 public class EntityIdKeyGenerator implements CacheKeyGenerator {
 
