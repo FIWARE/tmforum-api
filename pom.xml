@@ -395,34 +395,78 @@
                         <failIfNoTests>true</failIfNoTests>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>io.kokuwa.maven</groupId>
-                    <artifactId>k3s-maven-plugin</artifactId>
-                    <version>${version.io.kokuwa.maven.k3s-plugin}</version>
-                    <executions>
-                        <execution>
-                            <id>prepare-test-cluster</id>
-                            <goals>
-                                <goal>create</goal>
-                                <goal>start</goal>
-                                <goal>image</goal>
-                                <goal>kubectl</goal>
-<!--                                <goal>rm</goal>-->
-                            </goals>
-                            <configuration>
-                                <manifests>${project.parent.basedir}/k3s</manifests>
-                                <streamLogs>true</streamLogs>
-                                <portBindings>
-                                    <portBinding>1026:1026</portBinding>
-                                </portBindings>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
             </plugins>
         </pluginManagement>
     </build>
     <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>io.kokuwa.maven</groupId>
+                            <artifactId>k3s-maven-plugin</artifactId>
+                            <version>${version.io.kokuwa.maven.k3s-plugin}</version>
+                            <executions>
+                                <execution>
+                                    <id>prepare-test-cluster</id>
+                                    <goals>
+                                        <goal>create</goal>
+                                        <goal>start</goal>
+                                        <goal>image</goal>
+                                        <goal>kubectl</goal>
+                                        <goal>rm</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s</manifests>
+                                        <streamLogs>true</streamLogs>
+                                        <portBindings>
+                                            <portBinding>1026:1026</portBinding>
+                                        </portBindings>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>io.kokuwa.maven</groupId>
+                            <artifactId>k3s-maven-plugin</artifactId>
+                            <version>${version.io.kokuwa.maven.k3s-plugin}</version>
+                            <executions>
+                                <execution>
+                                    <id>prepare-test-cluster</id>
+                                    <goals>
+                                        <goal>create</goal>
+                                        <goal>start</goal>
+                                        <goal>image</goal>
+                                        <goal>kubectl</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s</manifests>
+                                        <streamLogs>true</streamLogs>
+                                        <portBindings>
+                                            <portBinding>1026:1026</portBinding>
+                                        </portBindings>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
         <profile>
             <id>oci</id>
             <build>
