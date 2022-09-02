@@ -3,6 +3,7 @@ package org.fiware.tmforum.customer;
 import org.fiware.customer.model.*;
 import org.fiware.tmforum.customer.domain.ContactMedium;
 import org.fiware.tmforum.customer.domain.MediumCharacteristic;
+import org.fiware.tmforum.customer.domain.RelatedParty;
 import org.fiware.tmforum.customer.domain.TimePeriod;
 import org.fiware.tmforum.customer.domain.customer.Customer;
 import org.fiware.tmforum.mapping.MappingException;
@@ -30,6 +31,10 @@ public interface TMForumMapper {
     CustomerVO map(Customer customer);
 
     Customer map(CustomerVO customerVO);
+
+    RelatedParty map(RelatedPartyVO relatedPartyVO);
+
+    RelatedPartyVO map(RelatedParty relatedParty);
 
     @Mapping(source = "characteristic", target = "mediumCharacteristic")
     ContactMedium map(ContactMediumVO contactMediumVO);
