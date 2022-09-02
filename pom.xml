@@ -33,6 +33,7 @@
         <module>mapping</module>
         <module>common</module>
         <module>party</module>
+        <module>customer</module>
     </modules>
 
     <properties>
