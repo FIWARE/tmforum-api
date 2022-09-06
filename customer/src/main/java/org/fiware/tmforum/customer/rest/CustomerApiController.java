@@ -56,21 +56,28 @@ public class CustomerApiController implements CustomerApi {
 
     @Override
     public Single<HttpResponse<Object>> deleteCustomer(String id) {
-        return null;
+        return customerRepository.deleteCustomer(id).toSingleDefault(HttpResponse.noContent());
     }
 
     @Override
     public Single<HttpResponse<List<CustomerVO>>> listCustomer(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
-        return null;
+        return customerRepository.findCustomers()
+                .map(List::stream)
+                .map(customerStream -> customerStream.map(tmForumMapper::map).toList())
+                .map(HttpResponse::ok);
     }
 
     @Override
     public Single<HttpResponse<CustomerVO>> patchCustomer(String id, CustomerUpdateVO customer) {
+        // implement proper patch
         return null;
     }
 
     @Override
     public Single<HttpResponse<CustomerVO>> retrieveCustomer(String id, @Nullable String fields) {
-        return null;
+        return customerRepository.getCustomer(id)
+                .map(tmForumMapper::map)
+                .toSingle()
+                .map(HttpResponse::ok);
     }
 }

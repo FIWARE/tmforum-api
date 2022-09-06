@@ -16,6 +16,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
 @MicronautTest(packages = {"org.fiware.tmforum.customer"})
@@ -28,9 +29,21 @@ class CustomerApiIT {
     void test() throws JsonProcessingException, ParseException {
         CustomerCreateVO myFancyCustomerCreate = getMyFancyCustomer();
 
+        // Test create
         HttpResponse<CustomerVO> myFancyCustomerCreateResponse = customerApiController.createCustomer(myFancyCustomerCreate).blockingGet();
         assertEquals(HttpStatus.CREATED, myFancyCustomerCreateResponse.getStatus(), "Customer should have been created");
         CustomerVO myFancyCustomer = myFancyCustomerCreateResponse.body();
+
+        // Test retrieve
+        HttpResponse<CustomerVO> customerVOHttpResponse = customerApiController.retrieveCustomer(myFancyCustomer.getId(), null).blockingGet();
+        assertEquals(HttpStatus.OK, customerVOHttpResponse.getStatus(), "A customer response is expected.");
+        assertTrue(customerVOHttpResponse.getBody().isPresent(), "A customer response is expected.");
+        assertEquals(myFancyCustomer, customerVOHttpResponse.getBody().get(), "The full customer should be retrieved");
+
+        // Test delete
+        HttpResponse<Object> customerDeleteResponse = customerApiController.deleteCustomer(myFancyCustomer.getId()).blockingGet();
+        assertEquals(HttpStatus.NO_CONTENT, customerDeleteResponse.getStatus(), "A NO_CONTENT response is expected");
+        
     }
 
     private CustomerCreateVO getMyFancyCustomer() throws JsonProcessingException {
@@ -58,7 +71,39 @@ class CustomerApiIT {
         contactMediumVO.setCharacteristic(mediumCharacteristicVO);
         contactMediumVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
 
+        AccountRefVO accountRefVO = new AccountRefVO();
+        accountRefVO.setId("urn:ngsi-ld:AccountRef:MyAccountRef001");
+        accountRefVO.setName("My AccountRef name");
+        accountRefVO.setDescription("My AccountRef description");
+
+        AgreementRefVO agreementRefVO = new AgreementRefVO();
+        agreementRefVO.setId("urn:ngsi-ld:AgreementRef:MyAgreementRef001");
+        agreementRefVO.setName("My AgreementRef name");
+
+        CharacteristicVO characteristicVO = new CharacteristicVO();
+        characteristicVO.setName("My customer characteristic name");
+        characteristicVO.setValue("My customer characteristic value");
+        characteristicVO.setValueType("String");
+
+        CreditProfileVO creditProfileVO = new CreditProfileVO();
+        creditProfileVO.setCreditScore(6);
+        creditProfileVO.setCreditRiskRating(4);
+        creditProfileVO.setCreditProfileDate(Instant.now());
+
+        PaymentMethodRefVO paymentMethodRefVO = new PaymentMethodRefVO();
+        paymentMethodRefVO.setId("urn:ngsi-ld:PaymentMethodRef:MyPaymentMethodRef001");
+        paymentMethodRefVO.setName("My PaymentMethodRef name");
+
         customerVO.setContactMedium(List.of(contactMediumVO));
+        customerVO.setAccount(List.of(accountRefVO));
+        customerVO.setAgreement(List.of(agreementRefVO));
+        customerVO.setCharacteristic(List.of(characteristicVO));
+        customerVO.setCreditProfile(List.of(creditProfileVO));
+        customerVO.setPaymentMethod(List.of(paymentMethodRefVO));
+        customerVO.setValidFor(
+                new TimePeriodVO().startDateTime(Instant.now())
+                        .endDateTime(Instant.now()
+                                .plus(Duration.of(10, ChronoUnit.DAYS))));
 
         return customerVO;
     }

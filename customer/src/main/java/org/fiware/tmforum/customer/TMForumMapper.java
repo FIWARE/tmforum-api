@@ -1,10 +1,7 @@
 package org.fiware.tmforum.customer;
 
 import org.fiware.customer.model.*;
-import org.fiware.tmforum.customer.domain.ContactMedium;
-import org.fiware.tmforum.customer.domain.MediumCharacteristic;
-import org.fiware.tmforum.customer.domain.RelatedParty;
-import org.fiware.tmforum.customer.domain.TimePeriod;
+import org.fiware.tmforum.customer.domain.*;
 import org.fiware.tmforum.customer.domain.customer.Customer;
 import org.fiware.tmforum.mapping.MappingException;
 import org.mapstruct.Mapper;
@@ -35,6 +32,21 @@ public interface TMForumMapper {
     RelatedParty map(RelatedPartyVO relatedPartyVO);
 
     RelatedPartyVO map(RelatedParty relatedParty);
+
+    AccountRef map(AccountRefVO accountRefVO);
+    AccountRefVO map(AccountRef accountRef);
+
+    AgreementRef map(AgreementRefVO agreementRefVO);
+    AgreementRefVO map(AgreementRef agreementRef);
+
+    CharacteristicVO map(Characteristic characteristic);
+    Characteristic map(CharacteristicVO characteristicVO);
+
+    CreditProfileVO map(CreditProfile creditProfile);
+    CreditProfile map(CreditProfileVO creditProfileVO);
+
+    PaymentMethodRef map(PaymentMethodRefVO paymentMethodRefVO);
+    PaymentMethodRefVO map(PaymentMethodRef paymentMethodRef);
 
     @Mapping(source = "characteristic", target = "mediumCharacteristic")
     ContactMedium map(ContactMediumVO contactMediumVO);

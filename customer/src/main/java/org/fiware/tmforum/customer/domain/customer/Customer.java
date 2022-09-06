@@ -5,8 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.fiware.customer.model.RelatedPartyVO;
 import org.fiware.tmforum.common.domain.EntityWithId;
-import org.fiware.tmforum.customer.domain.ContactMedium;
-import org.fiware.tmforum.customer.domain.RelatedParty;
+import org.fiware.tmforum.customer.domain.*;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
@@ -37,29 +36,41 @@ public class Customer extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "statusReason")}))
     private String statusReason;
 
-    // 	private java.util.List<AccountRefVO> account;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "account")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "account", targetClass = AccountRef.class, fromProperties = true)}))
+    private List<AccountRef> account;
 
-    // 	private java.util.List<AgreementRefVO> agreement;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class, fromProperties = true)}))
+    private List<AgreementRef> agreement;
 
-    // 	private java.util.List<CharacteristicVO> characteristic;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "customerCharacteristic")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "customerCharacteristic", targetClass = Characteristic.class)}))
+    private List<Characteristic> customerCharacteristic;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "contactMedium")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "contactMedium", targetClass = ContactMedium.class)}))
     private List<ContactMedium> contactMedium;
 
-    // 	private java.util.List<CreditProfileVO> creditProfile;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "creditProfile")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "creditProfile", targetClass = CreditProfile.class)}))
+    private List<CreditProfile> creditProfile;
 
-    //  private RelatedPartyVO engagedParty;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "engagedParty")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "engagedParty", targetClass = RelatedParty.class, fromProperties = true)}))
+    private RelatedPartyVO engagedParty;
 
-    // 	private java.util.List<PaymentMethodRefVO> paymentMethod;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "paymentMethod")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "paymentMethod", targetClass = PaymentMethodRef.class, fromProperties = true)}))
+    private List<PaymentMethodRef> paymentMethod;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class, fromProperties = true)}))
     private List<RelatedParty> relatedParty;
 
-    // 	private TimePeriodVO validFor;
-
-
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor", targetClass = TimePeriod.class)}))
+    private TimePeriod validFor;
 
     public Customer(String id) {
         super(TYPE_CUSTOMER, id);

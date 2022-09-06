@@ -1,0 +1,15 @@
+package org.fiware.tmforum.customer.domain;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.Entity;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Characteristic extends Entity {
+
+    private String name;
+    private String valueType;
+    private Object value;
+
+}
