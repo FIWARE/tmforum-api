@@ -8,6 +8,9 @@ import org.fiware.tmforum.customer.domain.customer.Customer;
 import org.fiware.tmforum.mapping.EntityVOMapper;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class CustomerRepository extends NgsiLdBaseRepository {
 
     private final EntityVOMapper entityVOMapper;
