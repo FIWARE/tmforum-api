@@ -43,7 +43,7 @@ class CustomerApiIT {
         // Test delete
         HttpResponse<Object> customerDeleteResponse = customerApiController.deleteCustomer(myFancyCustomer.getId()).blockingGet();
         assertEquals(HttpStatus.NO_CONTENT, customerDeleteResponse.getStatus(), "A NO_CONTENT response is expected");
-        
+
     }
 
     private CustomerCreateVO getMyFancyCustomer() throws JsonProcessingException {
