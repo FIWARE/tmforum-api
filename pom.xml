@@ -34,6 +34,7 @@
         <module>common</module>
         <module>party</module>
         <module>customer</module>
+        <module>customer-bill</module>
     </modules>
 
     <properties>

@@ -58,7 +58,7 @@ public class Customer extends EntityWithId {
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "engagedParty")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "engagedParty", targetClass = RelatedParty.class, fromProperties = true)}))
-    private RelatedPartyVO engagedParty;
+    private RelatedParty engagedParty;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "paymentMethod")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "paymentMethod", targetClass = PaymentMethodRef.class, fromProperties = true)}))
