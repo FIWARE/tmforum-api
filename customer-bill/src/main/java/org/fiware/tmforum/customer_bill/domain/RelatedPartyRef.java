@@ -3,7 +3,9 @@ package org.fiware.tmforum.customer_bill.domain;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.fiware.tmforum.customer_bill.domain.customer_bill.AppliedCustomerBillingRate;
 import org.fiware.tmforum.customer_bill.domain.customer_bill.CustomerBill;
+import org.fiware.tmforum.customer_bill.domain.customer_bill.CustomerBillOnDemand;
 import org.fiware.tmforum.mapping.annotations.*;
 
 import java.util.List;
@@ -27,7 +29,13 @@ public class RelatedPartyRef extends RefEntity {
     @Override
     @Ignore
     public List<String> getReferencedTypes() {
-        return List.of(CustomerBill.TYPE_CUSTOMER_BILL);
+        /**
+         * TODO: Check if list is correct
+         */
+        return List.of(
+                CustomerBill.TYPE_CUSTOMER_BILL,
+                CustomerBillOnDemand.TYPE_CUSTOMER_BILL_ON_DEMAND,
+                AppliedCustomerBillingRate.TYPE_APPLIED_CUSTOMER_BILLING_RATE);
     }
 
 }

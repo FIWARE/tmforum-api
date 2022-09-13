@@ -13,6 +13,7 @@ import org.fiware.tmforum.common.exception.NonExistentReferenceException;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.customer_bill.TMForumMapper;
 import org.fiware.tmforum.customer_bill.domain.customer_bill.CustomerBillOnDemand;
+import org.fiware.tmforum.customer_bill.exception.CustomerBillOnDemandCreationException;
 import org.fiware.tmforum.customer_bill.repository.CustomerBillOnDemandRepository;
 
 import javax.annotation.Nullable;
@@ -36,6 +37,33 @@ public class CustomerBillOnDemandApiController implements CustomerBillOnDemandAp
 
         Single<CustomerBillOnDemand> customerBillOnDemandSingle = Single.just(customerBillOnDemand);
         Single<CustomerBillOnDemand> checkingSingle;
+
+        /**
+         * Validate references
+         *
+         * TODO: Need to check if and how to validate:
+         * - BillRef
+         * - BillingAccountRef
+         * --> also check if these should extend RefEntity and what are allowed ref types in this case
+         *
+         * TODO: Check if relatedParty object is correct
+         * - what are allowed ref types?
+         */
+        try {
+            if (customerBillOnDemand.getRelatedParty() != null) {
+                checkingSingle =
+                        validationService.getCheckingSingleOrThrow(
+                                List.of(customerBillOnDemand.getRelatedParty()),
+                                customerBillOnDemand);
+                customerBillOnDemandSingle =
+                        Single.zip(customerBillOnDemandSingle, checkingSingle, (p1, p2) -> p1);
+            }
+        } catch (NonExistentReferenceException e) {
+            throw new CustomerBillOnDemandCreationException(
+                    String.format("Was not able to create customer bill on demand %s",
+                            customerBillOnDemand.getId()),
+                    e);
+        }
 
         return customerBillOnDemandSingle
                 .flatMap(customerBillOnDemandToCreate -> customerBillOnDemandRepository.createCustomerBillOnDemand(customerBillOnDemandToCreate).toSingleDefault(customerBillOnDemandToCreate))

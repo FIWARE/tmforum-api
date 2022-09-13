@@ -36,7 +36,7 @@ public class CustomerBillApiController implements CustomerBillApi {
 
     @Override
     public Single<HttpResponse<CustomerBillVO>> patchCustomerBill(String id, CustomerBillUpdateVO customerBill) {
-        // implement proper patch
+        // TODO: implement proper patch
         return null;
     }
 

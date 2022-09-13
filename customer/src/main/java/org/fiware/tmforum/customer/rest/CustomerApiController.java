@@ -37,9 +37,28 @@ public class CustomerApiController implements CustomerApi {
         Single<Customer> customerSingle = Single.just(customer);
         Single<Customer> checkingSingle;
 
+        /**
+         * Validate references
+         *
+         * TODO: Need to check if and how to validate:
+         * - PaymentMethodRef
+         * - AgreementRef
+         * - AccountRef
+         * --> also check if these should extend RefEntity and what are allowed ref types in this case
+         *
+         * TODO: Check if relatedParty and engagedParty object is correct
+         * - what are allowed ref types?
+         */
         try {
             if (customer.getRelatedParty() != null && !customer.getRelatedParty().isEmpty()) {
                 checkingSingle = validationService.getCheckingSingleOrThrow(customer.getRelatedParty(), customer);
+                customerSingle = Single.zip(customerSingle, checkingSingle, (p1, p2) -> p1);
+            }
+            if (customer.getEngagedParty() != null) {
+                checkingSingle =
+                        validationService.getCheckingSingleOrThrow(
+                                List.of(customer.getEngagedParty()),
+                                customer);
                 customerSingle = Single.zip(customerSingle, checkingSingle, (p1, p2) -> p1);
             }
         } catch (NonExistentReferenceException e) {
@@ -69,7 +88,7 @@ public class CustomerApiController implements CustomerApi {
 
     @Override
     public Single<HttpResponse<CustomerVO>> patchCustomer(String id, CustomerUpdateVO customer) {
-        // implement proper patch
+        // TODO: implement proper patch
         return null;
     }
 

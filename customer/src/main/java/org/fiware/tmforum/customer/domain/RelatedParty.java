@@ -27,6 +27,9 @@ public class RelatedParty extends RefEntity {
     @Override
     @Ignore
     public List<String> getReferencedTypes() {
+        /**
+         * TODO: Check if list is correct
+         */
         return List.of(Customer.TYPE_CUSTOMER);
     }
 

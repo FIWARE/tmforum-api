@@ -18,6 +18,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Tests for Customer Management API
+ *
+ * TODO:
+ * - Implement EventsSubscriptionApi + Tests
+ * - Implement NotificationListenersClientSideApi + Tests
+ * - Implement TimeTypeConverterRegistrar + Tests
+ */
 @RequiredArgsConstructor
 @MicronautTest(packages = {"org.fiware.tmforum.customer"})
 class CustomerApiIT {
@@ -27,29 +35,58 @@ class CustomerApiIT {
 
     @Test
     void test() throws JsonProcessingException, ParseException {
-        CustomerCreateVO myFancyCustomerCreate = getMyFancyCustomer();
+        CustomerCreateVO myFancyFirstCustomerCreate = getMyFancyCustomer(
+                "My Fancy first Customer", null
+        );
 
         // Test create
-        HttpResponse<CustomerVO> myFancyCustomerCreateResponse = customerApiController.createCustomer(myFancyCustomerCreate).blockingGet();
-        assertEquals(HttpStatus.CREATED, myFancyCustomerCreateResponse.getStatus(), "Customer should have been created");
-        CustomerVO myFancyCustomer = myFancyCustomerCreateResponse.body();
+        HttpResponse<CustomerVO> myFancyCustomerCreateResponse =
+                customerApiController.createCustomer(myFancyFirstCustomerCreate).blockingGet();
+        assertEquals(HttpStatus.CREATED,
+                myFancyCustomerCreateResponse.getStatus(),
+                "Customer should have been created");
+        CustomerVO myFancyFirstCustomer = myFancyCustomerCreateResponse.body();
 
-        // Test retrieve
-        HttpResponse<CustomerVO> customerVOHttpResponse = customerApiController.retrieveCustomer(myFancyCustomer.getId(), null).blockingGet();
-        assertEquals(HttpStatus.OK, customerVOHttpResponse.getStatus(), "A customer response is expected.");
+        // Test create 2nd customer with related party
+        RelatedPartyVO relatedPartyVO = new RelatedPartyVO();
+        relatedPartyVO.setId(myFancyFirstCustomer.getId());
+        relatedPartyVO.setRole("My fancy related party role");
+        relatedPartyVO.setName("My fancy related party");
+        CustomerCreateVO myFancySecondCustomerCreate = getMyFancyCustomer(
+                "My fancy 2nd customer",
+                relatedPartyVO
+        );
+        HttpResponse<CustomerVO> myFancySecondCustomerCreateResponse =
+                customerApiController.createCustomer(myFancySecondCustomerCreate).blockingGet();
+        assertEquals(HttpStatus.CREATED,
+                myFancySecondCustomerCreateResponse.getStatus(),
+                "2nd Customer should have been created");
+        CustomerVO myFancySecondCustomer = myFancySecondCustomerCreateResponse.body();
+
+        // Test retrieve of 2nd customer
+        HttpResponse<CustomerVO> customerVOHttpResponse =
+                customerApiController.retrieveCustomer(myFancySecondCustomer.getId(), null).blockingGet();
+        assertEquals(HttpStatus.OK,
+                customerVOHttpResponse.getStatus(),
+                "A customer response is expected.");
         assertTrue(customerVOHttpResponse.getBody().isPresent(), "A customer response is expected.");
-        assertEquals(myFancyCustomer, customerVOHttpResponse.getBody().get(), "The full customer should be retrieved");
+        assertEquals(myFancySecondCustomer,
+                customerVOHttpResponse.getBody().get(),
+                "The full 2nd customer should be retrieved");
 
-        // Test delete
-        HttpResponse<Object> customerDeleteResponse = customerApiController.deleteCustomer(myFancyCustomer.getId()).blockingGet();
-        assertEquals(HttpStatus.NO_CONTENT, customerDeleteResponse.getStatus(), "A NO_CONTENT response is expected");
+        // Test delete 2nd customer
+        HttpResponse<Object> customerDeleteResponse =
+                customerApiController.deleteCustomer(myFancySecondCustomer.getId()).blockingGet();
+        assertEquals(HttpStatus.NO_CONTENT,
+                customerDeleteResponse.getStatus(),
+                "A NO_CONTENT response is expected");
 
     }
 
-    private CustomerCreateVO getMyFancyCustomer() throws JsonProcessingException {
+    private CustomerCreateVO getMyFancyCustomer(String name, RelatedPartyVO relatedPartyVO) throws JsonProcessingException {
 
         CustomerCreateVO customerVO = new CustomerCreateVO();
-        customerVO.setName("My Fancy Customer");
+        customerVO.setName(name);
         customerVO.setStatus("My fancy status");
         customerVO.setStatusReason("Fancy reason for my fancy status");
 
@@ -69,7 +106,11 @@ class CustomerApiIT {
         contactMediumVO.setMediumType("postal address");
         contactMediumVO.setPreferred(true);
         contactMediumVO.setCharacteristic(mediumCharacteristicVO);
-        contactMediumVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
+        contactMediumVO.setValidFor(
+                new TimePeriodVO()
+                        .startDateTime(Instant.now())
+                        .endDateTime(Instant.now()
+                                .plus(Duration.of(10, ChronoUnit.DAYS))));
 
         AccountRefVO accountRefVO = new AccountRefVO();
         accountRefVO.setId("urn:ngsi-ld:AccountRef:MyAccountRef001");
@@ -93,6 +134,11 @@ class CustomerApiIT {
         PaymentMethodRefVO paymentMethodRefVO = new PaymentMethodRefVO();
         paymentMethodRefVO.setId("urn:ngsi-ld:PaymentMethodRef:MyPaymentMethodRef001");
         paymentMethodRefVO.setName("My PaymentMethodRef name");
+
+        if (relatedPartyVO != null) {
+            customerVO.setRelatedParty(List.of(relatedPartyVO));
+            customerVO.setEngagedParty(relatedPartyVO);
+        }
 
         customerVO.setContactMedium(List.of(contactMediumVO));
         customerVO.setAccount(List.of(accountRefVO));
