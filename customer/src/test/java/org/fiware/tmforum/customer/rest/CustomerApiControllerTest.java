@@ -30,8 +30,9 @@ import static org.mockito.Mockito.when;
  * Unit Tests for CustomerApiController
  *
  * TODO:
- * * Tests for listCustomer
- * * Tests for delete
+ * - Tests for listCustomer
+ * - Tests for delete
+ * - Tests for patch
  */
 public class CustomerApiControllerTest {
 
