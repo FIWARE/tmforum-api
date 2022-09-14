@@ -74,6 +74,10 @@ class CustomerApiIT {
                 customerVOHttpResponse.getBody().get(),
                 "The full 2nd customer should be retrieved");
 
+        // TODO: implement test for patch
+
+        // TODO: implement test for listCustomer
+
         // Test delete 2nd customer
         HttpResponse<Object> customerDeleteResponse =
                 customerApiController.deleteCustomer(myFancySecondCustomer.getId()).blockingGet();
