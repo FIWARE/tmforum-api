@@ -19,11 +19,16 @@ jobs:
           java-version: '17'
           java-package: jdk
 
+      - name: Compile
+        run: |
+          mvn clean package
+        
+
       - name: Execute tests
         id: test
         run: |
           cd ${{matrix.module}}
-          mvn clean test integration-test -Pconformance-test
+          mvn test integration-test -Pconformance-test
 
       - name: Collect results
         shell: bash
