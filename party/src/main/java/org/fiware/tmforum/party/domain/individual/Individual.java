@@ -15,7 +15,7 @@ import org.fiware.tmforum.party.domain.PartyCreditProfile;
 import org.fiware.tmforum.party.domain.RelatedParty;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 
-import java.net.URL;
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class Individual extends EntityWithId {
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
-	private URL href;
+	private URI href;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "aristocraticTitle")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "aristocraticTitle")}))

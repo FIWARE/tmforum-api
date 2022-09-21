@@ -1,14 +1,20 @@
 package org.fiware.tmforum.common.repository;
 
+import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
 import io.micronaut.cache.annotation.Cacheable;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApi;
+import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
 
 import java.net.URI;
 
@@ -32,7 +38,8 @@ public abstract class NgsiLdBaseRepository {
 
 	/**
 	 * Create an entity at the broker and cahce it.
-	 * @param entityVO - the entity to be created
+	 *
+	 * @param entityVO     - the entity to be created
 	 * @param ngsiLDTenant - tenant the entity belongs to
 	 * @return completable with the result
 	 */
@@ -43,6 +50,7 @@ public abstract class NgsiLdBaseRepository {
 
 	/**
 	 * Retrieve entity from the broker or from the cache if they are available there.
+	 *
 	 * @param entityId id of the entity
 	 * @return the entity
 	 */
@@ -52,10 +60,31 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	/**
+	 * Patch an entity, using the "overwrite" option.
+	 *
+	 * @param entityId         id of the entity
+	 * @param entityFragmentVO the entity elements to be updated
+	 * @return the entity.
+	 */
+	@CacheInvalidate(value = ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
+	public Completable patchEntity(URI entityId, EntityFragmentVO entityFragmentVO) {
+		return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null);
+	}
+
+	/**
 	 * Uncached call to the broker
 	 */
 	private Maybe<EntityVO> asyncRetrieveEntityById(URI entityId, String ngSILDTenant, String attrs, String type, String options, String link) {
-		return entitiesApi.retrieveEntityById(entityId, ngSILDTenant, attrs, type, options, link);
+		return entitiesApi
+				.retrieveEntityById(entityId, ngSILDTenant, attrs, type, options, link)
+				.onErrorResumeNext(this::handleClientException);
+	}
+
+	private Maybe<EntityVO> handleClientException(Throwable e) {
+		if (e instanceof HttpClientResponseException httpException && httpException.getStatus().equals(HttpStatus.NOT_FOUND)) {
+			return Maybe.empty();
+		}
+		throw new NgsiLdRepositoryException("Was not able to successfully call the broker.", e);
 	}
 
 }

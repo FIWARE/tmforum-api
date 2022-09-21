@@ -7,6 +7,7 @@ import org.fiware.ngsi.api.EntitiesApi;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.CommonTemplates;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.repository.NgsiLdBaseRepository;
 import org.fiware.tmforum.mapping.EntityVOMapper;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
@@ -30,11 +31,13 @@ import java.util.stream.Stream;
 public class PartyRepository extends NgsiLdBaseRepository {
 
 	private final EntityVOMapper entityVOMapper;
+	private final NGSIMapper ngsiMapper;
 	private final JavaObjectMapper javaObjectMapper;
 
-	public PartyRepository(GeneralProperties generalProperties, EntitiesApi entitiesApi, EntityVOMapper entityVOMapper, JavaObjectMapper javaObjectMapper) {
+	public PartyRepository(GeneralProperties generalProperties, EntitiesApi entitiesApi, EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
 		super(generalProperties, entitiesApi);
 		this.entityVOMapper = entityVOMapper;
+		this.ngsiMapper = ngsiMapper;
 		this.javaObjectMapper = javaObjectMapper;
 	}
 
@@ -42,8 +45,8 @@ public class PartyRepository extends NgsiLdBaseRepository {
 		return createEntity(javaObjectMapper.toEntityVO(organization), generalProperties.getTenant());
 	}
 
-	public Completable deleteParty(String id) {
-		return entitiesApi.removeEntityById(URI.create(id), generalProperties.getTenant(), null);
+	public Completable deleteParty(URI id) {
+		return entitiesApi.removeEntityById(id, generalProperties.getTenant(), null);
 	}
 
 	public Single<List<Organization>> findOrganizations() {
@@ -66,9 +69,9 @@ public class PartyRepository extends NgsiLdBaseRepository {
 
 	}
 
-	public Maybe<Organization> getOrganization(String id) {
-		return retrieveEntityById(URI.create(id))
-				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, Organization.class).toMaybe());
+	public Maybe<Organization> getOrganization(URI id) {
+		return retrieveEntityById(id)
+				.flatMapSingleElement(entityVO -> entityVOMapper.fromEntityVO(entityVO, Organization.class));
 	}
 
 
@@ -76,9 +79,9 @@ public class PartyRepository extends NgsiLdBaseRepository {
 		return createEntity(javaObjectMapper.toEntityVO(individual), generalProperties.getTenant());
 	}
 
-	public Maybe<Individual> getIndividual(String id) {
-		return retrieveEntityById(URI.create(id))
-				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, Individual.class).toMaybe());
+	public Maybe<Individual> getIndividual(URI id) {
+		return retrieveEntityById(id)
+				.flatMapSingleElement(entityVO -> entityVOMapper.fromEntityVO(entityVO, Individual.class));
 	}
 
 
@@ -102,6 +105,10 @@ public class PartyRepository extends NgsiLdBaseRepository {
 
 	}
 
+	public Completable updateIndividual(String id, Individual individual) {
+		return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(individual)));
+	}
+
 	private <T> Single<List<T>> zipToList(Stream<EntityVO> entityVOStream, Class<T> targetClass) {
 		return Single.zip(
 				entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
@@ -109,97 +116,39 @@ public class PartyRepository extends NgsiLdBaseRepository {
 		);
 	}
 
-	public Completable createTaxExemptionCertificate(TaxExemptionCertificate taxExemptionCertificate) {
-		return createEntity(javaObjectMapper.toEntityVO(taxExemptionCertificate), generalProperties.getTenant());
+	public Single<TaxExemptionCertificate> updateTaxExemptionCertificate(TaxExemptionCertificate taxExemptionCertificate) {
+		return patchEntity(taxExemptionCertificate.getId(), ngsiMapper.map(javaObjectMapper.toEntityVO(taxExemptionCertificate)))
+				.andThen(getTaxExemptionCertificate(taxExemptionCertificate.getId()).toSingle());
 	}
 
-	public Maybe<TaxExemptionCertificate> getTaxExemptionCertificate(String id) {
-		return retrieveEntityById(URI.create(id))
-				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxExemptionCertificate.class).toMaybe());
+	public Maybe<TaxExemptionCertificate> getTaxExemptionCertificate(URI id) {
+		return retrieveEntityById(id)
+				.flatMapSingleElement(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxExemptionCertificate.class));
 	}
 
-
-	public Single<List<TaxExemptionCertificate>> findTaxExemptionCertificates() {
-		return entitiesApi.queryEntities(generalProperties.getTenant(),
-						null,
-						null,
-						TaxExemptionCertificate.TYPE_TAX_EXEMPTION_CERTIFICATE,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						getLinkHeader())
-				.map(List::stream)
-				.flatMap(entityVOStream -> zipToList(entityVOStream, TaxExemptionCertificate.class));
-
+	public Maybe<TaxDefinition> getTaxDefinition(URI id) {
+		return retrieveEntityById(id)
+				.flatMapSingleElement(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxDefinition.class));
 	}
 
-	public Completable createTaxDefinition(TaxDefinition taxDefinition) {
-		return createEntity(javaObjectMapper.toEntityVO(taxDefinition), generalProperties.getTenant());
+	public Single<TaxDefinition> createTaxDefinition(TaxDefinition taxDefinition) {
+
+		return createEntity(javaObjectMapper.toEntityVO(taxDefinition), generalProperties.getTenant())
+				.toSingleDefault(taxDefinition);
 	}
 
-	public Maybe<TaxDefinition> getTaxDefinition(String id) {
-		return retrieveEntityById(URI.create(id))
-				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, TaxDefinition.class).toMaybe());
-	}
+	public Single<TaxExemptionCertificate> createTaxExemptionCertificate(TaxExemptionCertificate taxExemptionCertificate) {
 
+		List<TaxDefinition> taxDefinitions = Optional.ofNullable(taxExemptionCertificate.getTaxDefinition()).orElseGet(List::of);
+		Single<List<TaxDefinition>> taxDefSingle = Single.zip(
+				taxDefinitions.stream().map(this::createTaxDefinition).toList(),
+				t -> Arrays.stream(t).map(TaxDefinition.class::cast).toList());
 
-	public Single<List<TaxDefinition>> findTaxDefinitions() {
-		return entitiesApi.queryEntities(generalProperties.getTenant(),
-						null,
-						null,
-						TaxDefinition.TYPE_TAX_DEFINITION,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						null,
-						getLinkHeader())
-				.map(List::stream)
-				.flatMap(entityVOStream -> zipToList(entityVOStream, TaxDefinition.class));
-
-	}
-
-	public Single<TaxDefinition> getOrCreate(TaxDefinition taxDefinition) {
-		Optional<URI> optionalID = Optional.ofNullable(taxDefinition.getId());
-		if (optionalID.isPresent()) {
-			return getTaxDefinition(optionalID.get().toString())
-					.toSingle();
-
-		} else {
-			URI specID = URI.create(String.format(CommonTemplates.ID_TEMPLATE, TaxDefinition.TYPE_TAX_DEFINITION, UUID.randomUUID()));
-			taxDefinition.setId(specID);
-			return createTaxDefinition(taxDefinition).toSingleDefault(taxDefinition);
-		}
-	}
-
-	public Single<TaxExemptionCertificate> getOrCreate(TaxExemptionCertificate taxExemptionCertificate) {
-		Optional<URI> optionalCertID = Optional.ofNullable(taxExemptionCertificate.getId());
-		if (optionalCertID.isPresent()) {
-			return getTaxExemptionCertificate(optionalCertID.get().toString())
-					.toSingle();
-		} else {
-			URI specID = URI.create(String.format(CommonTemplates.ID_TEMPLATE, TaxExemptionCertificate.TYPE_TAX_EXEMPTION_CERTIFICATE, UUID.randomUUID()));
-			taxExemptionCertificate.setId(specID);
-
-			List<TaxDefinition> taxDefinitions = Optional.ofNullable(taxExemptionCertificate.getTaxDefinition()).orElseGet(List::of);
-			Single<List<TaxDefinition>> taxDefSingle = Single.zip(taxDefinitions.stream().map(this::getOrCreate).toList(), t -> Arrays.stream(t).map(TaxDefinition.class::cast).toList());
-
-			return taxDefSingle
-					.map(updatedTaxDefinitions -> {
-						taxExemptionCertificate.setTaxDefinition(updatedTaxDefinitions);
-						return taxExemptionCertificate;
-					})
-					.flatMap(cert -> createTaxExemptionCertificate(cert).toSingleDefault(cert));
-		}
+		return taxDefSingle
+				.map(updatedTaxDefinitions -> {
+					taxExemptionCertificate.setTaxDefinition(updatedTaxDefinitions);
+					return taxExemptionCertificate;
+				})
+				.flatMap(cert -> createEntity(javaObjectMapper.toEntityVO(taxExemptionCertificate), generalProperties.getTenant()).toSingleDefault(cert));
 	}
 }

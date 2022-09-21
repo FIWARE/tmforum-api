@@ -18,6 +18,11 @@ public class GeneralProperties {
 	private URL contextUrl;
 
 	/**
+	 * Base path for the controllers to be deployed at. If nothing is set, the project-individual defaults will be used
+	 */
+	private String basePath;
+
+	/**
 	 * Tenant to be used by the tmforum api.
 	 */
 	private String tenant = null;

@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.domain;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
@@ -35,8 +36,10 @@ public abstract class EntityWithId {
 
 	protected EntityWithId(String type, String id) {
 		this.type = type;
-		if (id != null) {
+		if (IdHelper.isNgsiLdId(id)) {
 			this.id = URI.create(id);
+		} else {
+			this.id = IdHelper.toNgsiLd(id, type);
 		}
 	}
 

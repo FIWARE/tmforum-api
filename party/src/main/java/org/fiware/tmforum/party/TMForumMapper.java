@@ -8,6 +8,7 @@ import org.fiware.party.model.ExternalReferenceVO;
 import org.fiware.party.model.IndividualCreateVO;
 import org.fiware.party.model.IndividualIdentificationVO;
 import org.fiware.party.model.IndividualStateTypeVO;
+import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.party.model.IndividualVO;
 import org.fiware.party.model.LanguageAbilityVO;
 import org.fiware.party.model.MediumCharacteristicVO;
@@ -15,6 +16,7 @@ import org.fiware.party.model.OrganizationChildRelationshipVO;
 import org.fiware.party.model.OrganizationCreateVO;
 import org.fiware.party.model.OrganizationParentRelationshipVO;
 import org.fiware.party.model.OrganizationRefVO;
+import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
 import org.fiware.party.model.OtherNameIndividualVO;
 import org.fiware.party.model.OtherNameOrganizationVO;
@@ -25,6 +27,7 @@ import org.fiware.party.model.SkillVO;
 import org.fiware.party.model.TaxDefinitionVO;
 import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TimePeriodVO;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.party.domain.Attachment;
 import org.fiware.tmforum.party.domain.Characteristic;
@@ -48,6 +51,7 @@ import org.fiware.tmforum.party.domain.organization.Organization;
 import org.fiware.tmforum.party.domain.organization.OrganizationChildRelationship;
 import org.fiware.tmforum.party.domain.organization.OrganizationParentRelationship;
 import org.fiware.tmforum.party.domain.organization.OtherOrganizationName;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -58,16 +62,13 @@ import java.net.URL;
 /**
  * Mapper between the internal model and api-domain objects
  */
-@Mapper(componentModel = "jsr330")
+@Mapper(componentModel = "jsr330", uses = IdHelper.class)
 public interface TMForumMapper {
 
-	String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
-
-
 	// using inline expression, since else it might overwrite the String-String mapping
-	@Mapping(target = "id", expression = "java(java.lang.String.format(ID_TEMPLATE, \"organization\", java.util.UUID.randomUUID()))")
-	@Mapping(target = "href", ignore = true)
-	OrganizationVO map(OrganizationCreateVO organizationCreateVO);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	OrganizationVO map(OrganizationCreateVO organizationCreateVO, URI id);
 
 
 	@Mapping(target = "isHeadOffice", source = "headOffice")
@@ -76,19 +77,27 @@ public interface TMForumMapper {
 	OrganizationVO map(Organization organization);
 
 	@Mapping(target = "organizationState", source = "status")
+	@Mapping(target = "href", source = "id")
 	Organization map(OrganizationVO organizationVO);
 
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	OrganizationVO map(OrganizationUpdateVO organizationUpdateVO, String id);
 
-	// using inline expression, since else it might overwrite the String-String mapping
-	@Mapping(target = "id", expression = "java(java.lang.String.format(ID_TEMPLATE, \"individual\", java.util.UUID.randomUUID()))")
-	@Mapping(target = "href", ignore = true)
-	IndividualVO map(IndividualCreateVO individualCreateVO);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	IndividualVO map(IndividualCreateVO individualCreateVO, URI id);
+
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	IndividualVO map(IndividualUpdateVO individualUpdateVO, String id);
+
 
 	@Mapping(target = "status", source = "individualState")
 	IndividualVO map(Individual individual);
 
-
 	@Mapping(target = "individualState", source = "status")
+	@Mapping(target = "href", source = "id")
 	Individual map(IndividualVO individualVO);
 
 	RelatedParty map(RelatedPartyVO relatedPartyVO);
@@ -130,12 +139,15 @@ public interface TMForumMapper {
 
 	QuantityVO map(Quantity quantity);
 
+
 	TaxDefinition map(TaxDefinitionVO taxDefinitionVO);
 
+	@Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
 	TaxDefinitionVO map(TaxDefinition taxDefinition);
 
 	TaxExemptionCertificate map(TaxExemptionCertificateVO taxExemptionCertificateVO);
 
+	@Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
 	TaxExemptionCertificateVO map(TaxExemptionCertificate taxExemptionCertificate);
 
 	TimePeriodVO map(TimePeriod timePeriod);
@@ -249,6 +261,7 @@ public interface TMForumMapper {
 		}
 		return value.toString();
 	}
+
 }
 
 

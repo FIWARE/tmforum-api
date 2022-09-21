@@ -107,7 +107,7 @@ public class JavaObjectMapper extends Mapper {
 		try {
 			Object entityIdObject = entityIdMethod.invoke(entity);
 			if (!(entityIdObject instanceof URI)) {
-				throw new IllegalArgumentException("The entityId method does not return a valid URI.");
+				throw new IllegalArgumentException(String.format("The entityId method does not return a valid URI for entity %s.", entity));
 			}
 			entityVO.id((URI) entityIdObject);
 
@@ -256,14 +256,16 @@ public class JavaObjectMapper extends Mapper {
 	 */
 	private <T> Optional<Map.Entry<String, Object>> methodToPropertyEntry(T entity, Method method) {
 		try {
-			Object o = method.invoke(entity);
-			if (o == null) {
+			Object propertyObject = method.invoke(entity);
+			if (propertyObject == null) {
 				return Optional.empty();
 			}
 			AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
+
 			PropertyVO propertyVO = new PropertyVO();
 			propertyVO.setType(PropertyVO.Type.PROPERTY);
-			propertyVO.setValue(o);
+			propertyVO.setValue(propertyObject);
+
 			return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), propertyVO));
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));

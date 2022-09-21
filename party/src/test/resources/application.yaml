@@ -1,4 +1,8 @@
 micronaut:
+
+  server:
+    port: 8632
+
   caches:
     entities:
       maximumSize: 1000

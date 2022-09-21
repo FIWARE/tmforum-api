@@ -12,6 +12,7 @@ import org.fiware.party.model.DisabilityVO;
 import org.fiware.party.model.ExternalReferenceVO;
 import org.fiware.party.model.IndividualCreateVO;
 import org.fiware.party.model.IndividualIdentificationVO;
+import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.party.model.IndividualVO;
 import org.fiware.party.model.LanguageAbilityVO;
 import org.fiware.party.model.MediumCharacteristicVO;
@@ -27,6 +28,7 @@ import org.fiware.party.model.SkillVO;
 import org.fiware.party.model.TaxDefinitionVO;
 import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TimePeriodVO;
+import org.fiware.tmforum.common.mapping.NGSIMapperImpl;
 import org.fiware.tmforum.party.rest.IndividualApiController;
 import org.fiware.tmforum.party.rest.OrganizationApiController;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
@@ -51,7 +54,7 @@ class PartyApiIT {
 
 
 	@Test
-	void test() throws JsonProcessingException, ParseException {
+	void simpleFullUserUpdate() throws JsonProcessingException, ParseException {
 		OrganizationCreateVO myFancyCompanyCreate = getMyFancyCompany();
 
 		HttpResponse<OrganizationVO> myFancyCompanyCreateResponse = organizationApiController.createOrganization(myFancyCompanyCreate).blockingGet();
@@ -77,6 +80,21 @@ class PartyApiIT {
 		assertEquals(HttpStatus.OK, individualVOHttpResponse.getStatus(), "An individual response is expected.");
 		assertTrue(individualVOHttpResponse.getBody().isPresent(), "An individual response is expected.");
 		assertEquals(earlMustermann, individualVOHttpResponse.getBody().get(), "The full individual should be retrieved");
+
+		IndividualUpdateVO individualUpdateVO = getIndividualEmployeeUpdate("Musterfrau");
+		HttpResponse<IndividualVO> individualUpdateVOHttpResponse = individualApiController.patchIndividual(earlMustermann.getId(), individualUpdateVO).blockingGet();
+
+		assertEquals(HttpStatus.OK, individualUpdateVOHttpResponse.getStatus(), "An individual response is expected.");
+		assertTrue(individualVOHttpResponse.getBody().isPresent(), "An individual response is expected.");
+		assertEquals(earlMustermann.setFamilyName("Musterfrau"), individualUpdateVOHttpResponse.getBody().get(), "The updated individual should be retrieved");
+
+		HttpResponse<List<IndividualVO>> indvidualListResponse = individualApiController.listIndividual(null, null, null).blockingGet();
+		assertEquals(HttpStatus.OK, indvidualListResponse.getStatus(), "An individual list response is expected.");
+		assertFalse(indvidualListResponse.body().isEmpty(), "Some indivuals should exist.");
+
+		HttpResponse<List<OrganizationVO>> organizationListResponse = organizationApiController.listOrganization(null, null, null).blockingGet();
+		assertEquals(HttpStatus.OK, organizationListResponse.getStatus(), "An organization list response is expected.");
+		assertFalse(organizationListResponse.body().isEmpty(), "Some organizations should exist.");
 	}
 
 	private OrganizationCreateVO getMyFancyCompany() throws JsonProcessingException {
@@ -161,6 +179,12 @@ class PartyApiIT {
 		organizationVO.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
 
 		return organizationVO;
+	}
+
+	private IndividualUpdateVO getIndividualEmployeeUpdate(String newFamilyName) {
+		IndividualUpdateVO individualUpdateVO = new IndividualUpdateVO();
+		individualUpdateVO.setFamilyName(newFamilyName);
+		return individualUpdateVO;
 	}
 
 	private IndividualCreateVO getIndividualEmployee(String orgId) throws ParseException {
@@ -311,6 +335,5 @@ class PartyApiIT {
 			this.unit = unit;
 		}
 	}
-
 
 }

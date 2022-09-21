@@ -1,7 +1,9 @@
 package org.fiware.tmforum.mapping.desc;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithListOfSubProperty;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntity;
@@ -27,6 +29,7 @@ class JavaObjectMapperTest {
 	@BeforeEach
 	public void setup() {
 		javaObjectMapper = new JavaObjectMapper();
+		OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 	}
 
 	@DisplayName("Simple pojo mapping.")
@@ -38,7 +41,12 @@ class JavaObjectMapperTest {
 		myPojo.setNumbers(List.of(1, 2, 3));
 		myPojo.setMyName("The test pojo.");
 
-		assertEquals(expectedJson, OBJECT_MAPPER.writeValueAsString(javaObjectMapper.toEntityVO(myPojo)), "The pojo should have been translated into a valid entity");
+		EntityVO expectedEntity = OBJECT_MAPPER.readValue(expectedJson, EntityVO.class);
+		expectedEntity.setLocation(null);
+		expectedEntity.setOperationSpace(null);
+		expectedEntity.setObservationSpace(null);
+
+		assertEquals(expectedEntity, javaObjectMapper.toEntityVO(myPojo), "The pojo should have been translated into a valid entity");
 	}
 
 	@DisplayName("Map Pojo with a field that is an object.")

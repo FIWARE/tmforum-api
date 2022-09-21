@@ -12,6 +12,13 @@
         <version>0.1</version>
     </parent>
 
+    <properties>
+        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF632-Party-v4.0.0.zip</module.ctk.url>
+        <module.ctk.script-folder>TMF632-Party</module.ctk.script-folder>
+        <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
+        <module.ctk.base-path>/tmf-api/party/v4</module.ctk.base-path>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
@@ -183,7 +190,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.parent.basedir}/api/party.yaml</inputSpec>
+                            <inputSpec>${tmforum.party-api.url}</inputSpec>
                             <apiPackage>org.fiware.party.api</apiPackage>
                             <strictSpec>true</strictSpec>
                             <modelPackage>org.fiware.party.model</modelPackage>
@@ -245,6 +252,13 @@
             <plugin>
                 <groupId>io.kokuwa.maven</groupId>
                 <artifactId>k3s-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
             </plugin>
 
             <!-- build image -->
