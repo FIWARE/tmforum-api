@@ -1,0 +1,21 @@
+package org.fiware.tmforum.common.repository;
+
+import io.reactivex.Maybe;
+import org.fiware.ngsi.model.EntityVO;
+
+import java.util.List;
+
+/**
+ * Repostiory interface , focusing on the existence of entities.
+ */
+public interface ReferencesRepository {
+
+	/**
+	 * Returns the entity if it exists and has the expected type.
+	 *
+	 * @param id            id of the entity to check
+	 * @param acceptedTypes list of types accepted for the entity
+	 * @return a Maybe emitting the entiy, in case it exists.
+	 */
+	Maybe<EntityVO> referenceExists(String id, List<String> acceptedTypes);
+}
