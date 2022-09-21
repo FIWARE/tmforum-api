@@ -7,7 +7,7 @@ micronaut:
       maximumSize: 1000
 
   server:
-    port: 8080
+    port: 8632
 
   metrics:
     enabled: true
@@ -42,3 +42,4 @@ loggers:
 ---
 general:
   contextUrl: https://smartdatamodels.org/context.jsonld
+  serverHost: http://localhost:8632

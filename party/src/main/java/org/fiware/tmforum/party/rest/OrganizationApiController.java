@@ -3,7 +3,6 @@ package org.fiware.tmforum.party.rest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.party.api.OrganizationApi;
@@ -11,6 +10,7 @@ import org.fiware.party.model.OrganizationCreateVO;
 import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.party.TMForumMapper;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
@@ -19,12 +19,14 @@ import org.fiware.tmforum.party.exception.PartyCreationException;
 import org.fiware.tmforum.party.repository.PartyRepository;
 
 import javax.annotation.Nullable;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
-@Controller
+@Controller("${general.basepath:/}")
 @RequiredArgsConstructor
 public class OrganizationApiController implements OrganizationApi {
 
@@ -35,7 +37,7 @@ public class OrganizationApiController implements OrganizationApi {
 	@Override
 	public Single<HttpResponse<OrganizationVO>> createOrganization(OrganizationCreateVO organizationCreateVO) {
 
-		OrganizationVO organizationVO = tmForumMapper.map(organizationCreateVO);
+		OrganizationVO organizationVO = tmForumMapper.map(organizationCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Organization.TYPE_ORGANIZATION));
 		Organization organization = tmForumMapper.map(organizationVO);
 
 		Single<Organization> organizationSingle = Single.just(organization);
@@ -63,7 +65,11 @@ public class OrganizationApiController implements OrganizationApi {
 		List<TaxExemptionCertificate> taxExemptionCertificates = Optional.ofNullable(organization.getTaxExemptionCertificate()).orElseGet(List::of);
 		if (!taxExemptionCertificates.isEmpty()) {
 			Single<List<TaxExemptionCertificate>> taxExemptionCertificatesSingles =
-					Single.zip(taxExemptionCertificates.stream().map(partyRepository::getOrCreate).toList(), t -> Arrays.stream(t).map(TaxExemptionCertificate.class::cast).toList());
+					Single.zip(
+							taxExemptionCertificates.stream()
+									.map(partyRepository::createTaxExemptionCertificate)
+									.toList(),
+							t -> Arrays.stream(t).map(TaxExemptionCertificate.class::cast).toList());
 
 			Single<Organization> updatingSingle = taxExemptionCertificatesSingles
 					.map(updatedTaxExemptions -> {
@@ -77,14 +83,13 @@ public class OrganizationApiController implements OrganizationApi {
 				.flatMap(orgToCreate -> partyRepository.createOrganization(orgToCreate).toSingleDefault(orgToCreate))
 				.cast(Organization.class)
 				.map(tmForumMapper::map)
-				.subscribeOn(Schedulers.io())
 				.map(HttpResponse::created);
 	}
 
 
 	@Override
 	public Single<HttpResponse<Object>> deleteOrganization(String id) {
-		return partyRepository.deleteParty(id).toSingleDefault(HttpResponse.noContent());
+		return partyRepository.deleteParty(IdHelper.toNgsiLd(id, Organization.TYPE_ORGANIZATION)).toSingleDefault(HttpResponse.noContent());
 	}
 
 	@Override
@@ -104,10 +109,17 @@ public class OrganizationApiController implements OrganizationApi {
 
 	@Override
 	public Single<HttpResponse<OrganizationVO>> retrieveOrganization(String id, @Nullable String fields) {
+		// non-ngsi-ld ids cannot exist.
+		if (!IdHelper.isNgsiLdId(id)) {
+			return Single.just(HttpResponse.notFound());
+		}
+
+
 		return partyRepository
-				.getOrganization(id)
+				.getOrganization(URI.create(id))
 				.map(tmForumMapper::map)
-				.toSingle()
-				.map(HttpResponse::ok);
+				.map(HttpResponse::ok)
+				.switchIfEmpty(Single.just(HttpResponse.notFound()))
+				.map(HttpResponse.class::cast);
 	}
 }

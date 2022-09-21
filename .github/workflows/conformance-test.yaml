@@ -1,0 +1,35 @@
+name: Conformance Test
+
+on:
+  push
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        module: [party]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+          java-package: jdk
+
+      - name: Execute tests
+        id: test
+        run: |
+          cd ${{matrix.module}}
+          mvn clean test integration-test -Pconformance-test
+
+      - name: Collect results
+        shell: bash
+        run: |
+          if $(cat jsonResults.json | jq '.run.failures') == [] then
+            exit 0;
+          elif
+            exit 1;
+          fi

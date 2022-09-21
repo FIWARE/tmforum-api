@@ -16,7 +16,7 @@ import org.fiware.tmforum.party.domain.RelatedParty;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.party.domain.TimePeriod;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -27,7 +27,7 @@ public class Organization extends EntityWithId {
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
-	private URL href;
+	private URI href;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "isHeadOffice")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "isHeadOffice")}))

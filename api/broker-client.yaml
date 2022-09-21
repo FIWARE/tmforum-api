@@ -163,6 +163,45 @@ paths:
             application/ld+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
+  '/entities/{entityId}/attrs':
+    parameters:
+      - $ref: '#/components/parameters/tenantHeader'
+    post:
+      description: Update existing Entity attributes within an NGSI-LD system
+      operationId: updateEntity
+      tags:
+        - Context Information
+        - Entities
+      parameters:
+        - $ref: '#/components/parameters/entityId'
+        - name: options
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - noOverwrite
+      requestBody:
+        required: true
+        content:
+          application/ld+json:
+            schema:
+              $ref: '#/components/schemas/EntityFragment'
+      responses:
+        '204':
+          description: No Content.
+        '400':
+          description: Bad Request
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
   '/entities/{entityId}/attrs/{attrId}':
     parameters:
       - $ref: '#/components/parameters/tenantHeader'

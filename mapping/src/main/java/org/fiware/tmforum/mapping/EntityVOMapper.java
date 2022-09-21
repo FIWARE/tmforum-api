@@ -1,10 +1,7 @@
 package org.fiware.tmforum.mapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.reactivex.Maybe;
 import io.reactivex.Single;
-import io.reactivex.functions.BiFunction;
-import io.reactivex.functions.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.EntityVO;
