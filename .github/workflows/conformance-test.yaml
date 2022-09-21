@@ -28,8 +28,9 @@ jobs:
       - name: Collect results
         shell: bash
         run: |
-          if $(cat jsonResults.json | jq '.run.failures') == [] then
-            exit 0;
+          if $(cat target/jsonResults.json | jq '.run.failures') == [] then
+            exit 0
           elif
-            exit 1;
+            cat target/jsonResults.json
+            exit 1
           fi
