@@ -1,16 +1,14 @@
 package org.fiware.tmforum.common.repository;
 
-import io.reactivex.Maybe;
-import io.reactivex.Single;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.ngsi.api.EntitiesApi;
+import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.mapping.EntitiesRepository;
+import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,20 +19,20 @@ import java.util.List;
 @Singleton
 public class BrokerBackedEntitiesRepository extends NgsiLdBaseRepository implements EntitiesRepository {
 
-	public BrokerBackedEntitiesRepository(GeneralProperties generalProperties, EntitiesApi entitiesApi) {
+	public BrokerBackedEntitiesRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
 		super(generalProperties, entitiesApi);
 	}
 
 	@Override
-	public Single<List<EntityVO>> getEntities(List<URI> entityIds) {
+	public Mono<List<EntityVO>> getEntities(List<URI> entityIds) {
 
 		// this can be replaced in the futures, when the brokers properly implement the retrieval of entities with multiple sub-properties, with an idPattern query
 		// Currently:
 		// * orion-ld: does not properly handle datasetIDs, thus omits such properties and relationships on retrieval
 		// * scoprio: declares query parameters as mandatory, that are optional in the spec
 		// * stellio: not tested yet
-		return Maybe.zip(
+		return Mono.zip(
 				entityIds.stream().map(this::retrieveEntityById).toList(),
-				eVOs -> Arrays.stream(eVOs).map(EntityVO.class::cast).toList()).toSingle(new ArrayList<>());
+				eVOs -> Arrays.stream(eVOs).map(EntityVO.class::cast).toList());
 	}
 }
