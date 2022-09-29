@@ -1,7 +1,7 @@
 package org.fiware.tmforum.mapping;
 
-import io.reactivex.Single;
 import org.fiware.ngsi.model.EntityVO;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.List;
@@ -11,5 +11,5 @@ import java.util.List;
  */
 public interface EntitiesRepository {
 
-	Single<List<EntityVO>> getEntities(List<URI> entityIds);
+	Mono<List<EntityVO>> getEntities(List<URI> entityIds);
 }

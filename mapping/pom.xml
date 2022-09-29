@@ -110,16 +110,17 @@
                                 <fullJavaUtil>true</fullJavaUtil>
                                 <useOptional>false</useOptional>
                                 <useGenericResponse>false</useGenericResponse>
-                                <useReferencedSchemaAsDefault>true</useReferencedSchemaAsDefault>
                                 <useLombokGenerated>true</useLombokGenerated>
                                 <introspected>true</introspected>
+                                <generateAliasAsModel>false</generateAliasAsModel>
                                 <useBeanValidation>false</useBeanValidation>
                                 <jacksonDatabindNullable>false</jacksonDatabindNullable>
                                 <supportAsync>true</supportAsync>
-                                <supportsAdditionalPropertiesWithComposedSchema>true</supportsAdditionalPropertiesWithComposedSchema>
                             </configOptions>
+                            <languageSpecificPrimitives>PropertyValueVO</languageSpecificPrimitives>
                             <typeMappings>
                                 <typeMapping>java.util.Date=java.time.Instant</typeMapping>
+                                <typeMapping>PropertyValueVO=java.lang.Object</typeMapping>
                             </typeMappings>
                         </configuration>
                     </execution>
@@ -128,7 +129,7 @@
                     <dependency>
                         <groupId>io.kokuwa.micronaut</groupId>
                         <artifactId>micronaut-openapi-codegen</artifactId>
-                        <version>${version.io.kokuwa.micronaut.codegen}</version>
+                        <version>3.0.5-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
             </plugin>
