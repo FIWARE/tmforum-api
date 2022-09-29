@@ -70,7 +70,7 @@
 
         <!-- code gen -->
         <version.org.openapitools.generator-maven-plugin>6.1.0</version.org.openapitools.generator-maven-plugin>
-        <version.io.kokuwa.micronaut.codegen>3.0.5-SNAPSHOT</version.io.kokuwa.micronaut.codegen>
+        <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
