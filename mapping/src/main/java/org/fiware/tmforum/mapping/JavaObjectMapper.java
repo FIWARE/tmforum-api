@@ -2,9 +2,12 @@ package org.fiware.tmforum.mapping;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
+import org.fiware.ngsi.model.PropertyListVO;
 import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
@@ -13,6 +16,7 @@ import org.fiware.tmforum.mapping.annotations.EntityId;
 import org.fiware.tmforum.mapping.annotations.EntityType;
 import org.fiware.tmforum.mapping.annotations.RelationshipObject;
 
+import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -30,6 +34,7 @@ import java.util.stream.Collectors;
  * Mapper to handle translation from Java-Objects into NGSI-LD entities.
  */
 @Slf4j
+@Singleton
 @RequiredArgsConstructor
 public class JavaObjectMapper extends Mapper {
 
@@ -120,14 +125,14 @@ public class JavaObjectMapper extends Mapper {
 			throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, "unknown-method", entity), e);
 		}
 
-		Map<String, Object> additionalProperties = new LinkedHashMap<>();
+		Map<String, AdditionalPropertyVO> additionalProperties = new LinkedHashMap<>();
 		additionalProperties.putAll(buildProperties(entity, propertyMethods));
 		additionalProperties.putAll(buildPropertyList(entity, propertyListMethods));
 		additionalProperties.putAll(buildGeoProperties(entity, geoPropertyMethods));
 		additionalProperties.putAll(buildRelationships(entity, relationshipMethods));
 		additionalProperties.putAll(buildRelationshipList(entity, relationshipListMethods));
-		//TODO: add handling for geoproperty lists
-		entityVO.setAdditionalProperties(additionalProperties);
+
+		additionalProperties.forEach(entityVO::setAdditionalProperties);
 
 		return entityVO;
 	}
@@ -149,7 +154,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build a relationship from the declared methods
 	 */
-	private <T> Map<String, Object> buildRelationships(T entity, List<Method> relationshipMethods) {
+	private <T> Map<String, RelationshipVO> buildRelationships(T entity, List<Method> relationshipMethods) {
 		return relationshipMethods.stream()
 				.map(method -> methodToRelationshipEntry(entity, method))
 				.filter(Optional::isPresent)
@@ -160,7 +165,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build a list of relationships from the declared methods
 	 */
-	private <T> Map<String, Object> buildRelationshipList(T entity, List<Method> relationshipListMethods) {
+	private <T> Map<String, RelationshipListVO> buildRelationshipList(T entity, List<Method> relationshipListMethods) {
 		return relationshipListMethods.stream()
 				.map(relationshipMethod -> methodToRelationshipListEntry(entity, relationshipMethod))
 				.filter(Optional::isPresent)
@@ -171,7 +176,7 @@ public class JavaObjectMapper extends Mapper {
 	/*
 	 * Build a list of properties from the declared methods
 	 */
-	private <T> Map<String, Object> buildPropertyList(T entity, List<Method> propertyListMethods) {
+	private <T> Map<String, PropertyListVO> buildPropertyList(T entity, List<Method> propertyListMethods) {
 		return propertyListMethods.stream()
 				.map(propertyListMethod -> methodToPropertyListEntry(entity, propertyListMethod))
 				.filter(Optional::isPresent)
@@ -182,7 +187,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build geoproperties from the declared methods
 	 */
-	private <T> Map<String, Object> buildGeoProperties(T entity, List<Method> geoPropertyMethods) {
+	private <T> Map<String, GeoPropertyVO> buildGeoProperties(T entity, List<Method> geoPropertyMethods) {
 		return geoPropertyMethods.stream()
 				.map(geoPropertyMethod -> methodToGeoPropertyEntry(entity, geoPropertyMethod))
 				.filter(Optional::isPresent)
@@ -193,7 +198,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build properies from the declared methods
 	 */
-	private <T> Map<String, Object> buildProperties(T entity, List<Method> propertyMethods) {
+	private <T> Map<String, PropertyVO> buildProperties(T entity, List<Method> propertyMethods) {
 		return propertyMethods.stream()
 				.map(propertyMethod -> methodToPropertyEntry(entity, propertyMethod))
 				.filter(Optional::isPresent)
@@ -254,7 +259,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build a property entry from the given method on the entity
 	 */
-	private <T> Optional<Map.Entry<String, Object>> methodToPropertyEntry(T entity, Method method) {
+	private <T> Optional<Map.Entry<String, PropertyVO>> methodToPropertyEntry(T entity, Method method) {
 		try {
 			Object propertyObject = method.invoke(entity);
 			if (propertyObject == null) {
@@ -263,7 +268,6 @@ public class JavaObjectMapper extends Mapper {
 			AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
 
 			PropertyVO propertyVO = new PropertyVO();
-			propertyVO.setType(PropertyVO.Type.PROPERTY);
 			propertyVO.setValue(propertyObject);
 
 			return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), propertyVO));
@@ -275,7 +279,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build a geo-property entry from the given method on the entity
 	 */
-	private <T> Optional<Map.Entry<String, Object>> methodToGeoPropertyEntry(T entity, Method method) {
+	private <T> Optional<Map.Entry<String, GeoPropertyVO>> methodToGeoPropertyEntry(T entity, Method method) {
 		try {
 			Object o = method.invoke(entity);
 			if (o == null) {
@@ -283,7 +287,6 @@ public class JavaObjectMapper extends Mapper {
 			}
 			AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
 			GeoPropertyVO geoPropertyVO = new GeoPropertyVO();
-			geoPropertyVO.setType(GeoPropertyVO.Type.GEOPROPERTY);
 			geoPropertyVO.setValue(o);
 			return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), geoPropertyVO));
 		} catch (IllegalAccessException | InvocationTargetException e) {
@@ -294,7 +297,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build a relationship entry from the given method on the entity
 	 */
-	private <T> Optional<Map.Entry<String, Object>> methodToRelationshipEntry(T entity, Method method) {
+	private <T> Optional<Map.Entry<String, RelationshipVO>> methodToRelationshipEntry(T entity, Method method) {
 		try {
 			Object relationShipObject = method.invoke(entity);
 			if (relationShipObject == null) {
@@ -311,7 +314,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build a relationship list entry from the given method on the entity
 	 */
-	private <T> Optional<Map.Entry<String, Object>> methodToRelationshipListEntry(T entity, Method method) {
+	private <T> Optional<Map.Entry<String, RelationshipListVO>> methodToRelationshipListEntry(T entity, Method method) {
 		try {
 			Object o = method.invoke(entity);
 			if (o == null) {
@@ -323,10 +326,11 @@ public class JavaObjectMapper extends Mapper {
 			List<Object> entityObjects = (List) o;
 
 			AttributeGetter attributeGetter = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
-			List<RelationshipVO> relationshipVOList = entityObjects.stream()
+			RelationshipListVO relationshipVOS = new RelationshipListVO();
+			relationshipVOS.addAll(entityObjects.stream()
 					.map(entityObject -> getRelationshipVO(method, entityObject))
-					.toList();
-			return Optional.of(new AbstractMap.SimpleEntry<>(attributeGetter.targetName(), relationshipVOList));
+					.toList());
+			return Optional.of(new AbstractMap.SimpleEntry<>(attributeGetter.targetName(), relationshipVOS));
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
 		}
@@ -350,17 +354,18 @@ public class JavaObjectMapper extends Mapper {
 				throw new MappingException(String.format("The datasetId %s of the relationship is not a URI.", relationShipObject));
 			}
 			RelationshipVO relationshipVO = new RelationshipVO();
-			relationshipVO.setType(RelationshipVO.Type.RELATIONSHIP);
 			relationshipVO.setObject((URI) objectObject);
 			relationshipVO.setDatasetId((URI) datasetIdObject);
 
 			// get additional properties. We do not support more depth/complexity for now
-			Map<String, Object> additionalProperties = getAttributeGettersMethods(relationShipObject).stream()
+			Map<String, AdditionalPropertyVO> additionalProperties = getAttributeGettersMethods(relationShipObject).stream()
 					.map(getterMethod -> getAdditionalPropertyEntryFromMethod(relationShipObject, getterMethod))
 					.filter(Optional::isPresent)
 					.map(Optional::get)
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-			relationshipVO.setAdditionalProperties(additionalProperties);
+
+			additionalProperties.forEach(relationshipVO::setAdditionalProperties);
+
 			return relationshipVO;
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new MappingException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, relationShipObject));
@@ -370,7 +375,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Get all additional properties for the object of the relationship
 	 */
-	private Optional<Map.Entry<String, Object>> getAdditionalPropertyEntryFromMethod(Object relationShipObject, Method getterMethod) {
+	private Optional<Map.Entry<String, PropertyVO>> getAdditionalPropertyEntryFromMethod(Object relationShipObject, Method getterMethod) {
 		Optional<AttributeGetter> optionalAttributeGetter = getAttributeGetter(getterMethod.getAnnotations());
 		if (optionalAttributeGetter.isEmpty() || !optionalAttributeGetter.get().embedProperty()) {
 			return Optional.empty();
@@ -386,7 +391,7 @@ public class JavaObjectMapper extends Mapper {
 	/**
 	 * Build a property list entry from the given method on the entity
 	 */
-	private <T> Optional<Map.Entry<String, Object>> methodToPropertyListEntry(T entity, Method method) {
+	private <T> Optional<Map.Entry<String, PropertyListVO>> methodToPropertyListEntry(T entity, Method method) {
 		try {
 			Object o = method.invoke(entity);
 			if (o == null) {
@@ -398,16 +403,17 @@ public class JavaObjectMapper extends Mapper {
 			AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
 			List<Object> entityObjects = (List) o;
 
-			List<PropertyVO> propertyVOList = entityObjects.stream()
+			PropertyListVO propertyVOS = new PropertyListVO();
+
+			propertyVOS.addAll(entityObjects.stream()
 					.map(propertyObject -> {
 						PropertyVO propertyVO = new PropertyVO();
-						propertyVO.setType(PropertyVO.Type.PROPERTY);
 						propertyVO.setValue(propertyObject);
 						return propertyVO;
 					})
-					.toList();
+					.toList());
 
-			return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), propertyVOList));
+			return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), propertyVOS));
 		} catch (IllegalAccessException | InvocationTargetException e) {
 			throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
 		}

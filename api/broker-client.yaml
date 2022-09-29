@@ -1070,45 +1070,35 @@ components:
       type: object
       properties:
         type:
-          type: string
-          enum:
-            - Point
+          $ref: '#/components/schemas/GeometryType'
         coordinates:
           $ref: '#/components/schemas/positionDefinition'
     MultiPoint:
       type: object
       properties:
         type:
-          type: string
-          enum:
-            - MultiPoint
+          $ref: '#/components/schemas/GeometryType'
         coordinates:
           $ref: '#/components/schemas/positionArrayDefinition'
     Polygon:
       type: object
       properties:
         type:
-          type: string
-          enum:
-            - Polygon
+          $ref: '#/components/schemas/GeometryType'
         coordinates:
           $ref: '#/components/schemas/polygonDefinition'
     LineString:
       type: object
       properties:
         type:
-          type: string
-          enum:
-            - LineString
+          $ref: '#/components/schemas/GeometryType'
         coordinates:
           $ref: '#/components/schemas/lineStringDefinition'
     MultiLineString:
       type: object
       properties:
         type:
-          type: string
-          enum:
-            - MultiLineString
+          $ref: '#/components/schemas/GeometryType'
         coordinates:
           type: array
           items:
@@ -1117,15 +1107,22 @@ components:
       type: object
       properties:
         type:
-          type: string
-          enum:
-            - MultiPolygon
+          $ref: '#/components/schemas/GeometryType'
         coordinates:
           type: array
           items:
             $ref: '#/components/schemas/polygonDefinition'
     Geometry:
       description: ' Avalid GeoJSON geometry object'
+      discriminator:
+        propertyName: type
+        mapping:
+          Point: '#/components/schemas/Point'
+          MultiPoint: '#/components/schemas/MultiPoint'
+          Polygon: '#/components/schemas/Polygon'
+          LineString: '#/components/schemas/LineString'
+          MultiLineString: '#/components/schemas/MultiLineString'
+          MultiPolygon: '#/components/schemas/MultiPolygon'
       oneOf:
         - $ref: '#/components/schemas/Point'
         - $ref: '#/components/schemas/MultiPoint'
@@ -1133,6 +1130,15 @@ components:
         - $ref: '#/components/schemas/LineString'
         - $ref: '#/components/schemas/MultiLineString'
         - $ref: '#/components/schemas/MultiPolygon'
+    GeometryType:
+      type: string
+      enum:
+        - Point
+        - MultiPoint
+        - Polygon
+        - LineString
+        - MultiLineString
+        - MultiPolygon
     observedAt:
       type: string
       format: date-time
@@ -1148,13 +1154,38 @@ components:
     instanceId:
       type: string
       format: uri
+    AdditionalProperty:
+      oneOf:
+        - $ref: '#/components/schemas/AdditionalPropertyList'
+        - $ref: '#/components/schemas/AdditionalPropertyObject'
+    AdditionalPropertyList:
+      oneOf:
+        - $ref: '#/components/schemas/PropertyList'
+        - $ref: '#/components/schemas/GeoPropertyList'
+        - $ref: '#/components/schemas/RelationshipList'
+    AdditionalPropertyObject:
+      discriminator:
+        propertyName: type
+        mapping:
+          Property: '#/components/schemas/Property'
+          GeoProperty: '#/components/schemas/GeoProperty'
+          Relationship: '#/components/schemas/Relationship'
+        properties:
+          type:
+            $ref: '#/components/schemas/PropertyType'
+      oneOf:
+        - $ref: '#/components/schemas/Property'
+        - $ref: '#/components/schemas/GeoProperty'
+        - $ref: '#/components/schemas/Relationship'
+    PropertyType:
+      type: string
+      enum:
+        - Property
+        - GeoProperty
+        - Relationship
     Property:
       type: object
       properties:
-        type:
-          type: string
-          enum:
-            - Property
         value:
           oneOf:
             - type: string
@@ -1184,16 +1215,10 @@ components:
         - type
         - value
       additionalProperties:
-        oneOf:
-          - $ref: '#/components/schemas/Property'
-          - $ref: '#/components/schemas/Relationship'
+        $ref: '#/components/schemas/AdditionalProperty'
     Relationship:
       type: object
       properties:
-        type:
-          type: string
-          enum:
-            - Relationship
         object:
           type: string
           format: uri
@@ -1211,16 +1236,10 @@ components:
         - type
         - object
       additionalProperties:
-        oneOf:
-          - $ref: '#/components/schemas/Property'
-          - $ref: '#/components/schemas/Relationship'
+        $ref: '#/components/schemas/AdditionalProperty'
     GeoProperty:
       type: object
       properties:
-        type:
-          type: string
-          enum:
-            - GeoProperty
         value:
           type: object
         observedAt:
@@ -1239,10 +1258,7 @@ components:
         - type
         - value
       additionalProperties:
-        oneOf:
-          - $ref: '#/components/schemas/Geometry'
-          - $ref: '#/components/schemas/Property'
-          - $ref: '#/components/schemas/Relationship'
+        $ref: '#/components/schemas/AdditionalProperty'
     Name:
       type: string
       pattern: '^((\d|[a-zA-Z]|_)+(:(\d|[a-zA-Z]|_)+)?(#\d+)?)$'
@@ -1269,10 +1285,19 @@ components:
         modifiedAt:
           $ref: '#/components/schemas/modifiedAt'
       additionalProperties:
-        oneOf:
-          - $ref: '#/components/schemas/Property'
-          - $ref: '#/components/schemas/Relationship'
-          - $ref: '#/components/schemas/GeoProperty'
+        $ref: '#/components/schemas/AdditionalProperty'
+    PropertyList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Property'
+    GeoPropertyList:
+      type: array
+      items:
+        $ref: '#/components/schemas/GeoProperty'
+    RelationshipList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Relationship'
     Entity:
       type: object
       properties:
@@ -1294,10 +1319,7 @@ components:
         modifiedAt:
           $ref: '#/components/schemas/modifiedAt'
       additionalProperties:
-        oneOf:
-          - $ref: '#/components/schemas/Property'
-          - $ref: '#/components/schemas/Relationship'
-          - $ref: '#/components/schemas/GeoProperty'
+        $ref: '#/components/schemas/AdditionalProperty'
     EntityList:
       type: array
       items:
@@ -1603,95 +1625,6 @@ components:
         - before
         - after
         - between
-    EntityTemporalFragment:
-      type: object
-      properties:
-        '@context':
-          $ref: '#/components/schemas/LdContext'
-        location:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeoProperty'
-          minItems: 1
-        observationSpace:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeoProperty'
-          minItems: 1
-        operationSpace:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeoProperty'
-          minItems: 1
-        id:
-          type: string
-          format: uri
-        type:
-          $ref: '#/components/schemas/Name'
-      additionalProperties:
-        oneOf:
-          - type: array
-            items:
-              $ref: '#/components/schemas/Property'
-            minItems: 1
-          - type: array
-            items:
-              $ref: '#/components/schemas/Relationship'
-            minItems: 1
-          - type: array
-            items:
-              $ref: '#/components/schemas/GeoProperty'
-            minItems: 1
-    EntityTemporal:
-      type: object
-      properties:
-        '@context':
-          $ref: '#/components/schemas/LdContext'
-        location:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeoProperty'
-          minItems: 1
-        observationSpace:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeoProperty'
-          minItems: 1
-        operationSpace:
-          type: array
-          items:
-            $ref: '#/components/schemas/GeoProperty'
-          minItems: 1
-        id:
-          type: string
-          format: uri
-        type:
-          $ref: '#/components/schemas/Name'
-        createdAt:
-          $ref: '#/components/schemas/createdAt'
-        modifiedAt:
-          $ref: '#/components/schemas/modifiedAt'
-      additionalProperties:
-        oneOf:
-          - type: array
-            items:
-              $ref: '#/components/schemas/Property'
-            minItems: 1
-          - type: array
-            items:
-              $ref: '#/components/schemas/Relationship'
-            minItems: 1
-          - type: array
-            items:
-              $ref: '#/components/schemas/GeoProperty'
-            minItems: 1
-      required:
-        - type
-        - id
-    EntityTemporalList:
-      type: array
-      items:
-        $ref: '#/components/schemas/EntityTemporal'
     TemporalQuery:
       type: object
       properties:

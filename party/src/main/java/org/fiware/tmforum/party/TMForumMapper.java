@@ -208,7 +208,7 @@ public interface TMForumMapper {
 		if (organizationParentRelationshipVO == null) {
 			return null;
 		}
-		OrganizationParentRelationship organizationParentRelationship = new OrganizationParentRelationship(organizationParentRelationshipVO.getOrganization().id());
+		OrganizationParentRelationship organizationParentRelationship = new OrganizationParentRelationship(organizationParentRelationshipVO.getOrganization().getId());
 		organizationParentRelationship.setRelationshipType(organizationParentRelationshipVO.getRelationshipType());
 		organizationParentRelationship.setAtType(organizationParentRelationshipVO.getAtType());
 		organizationParentRelationship.setAtSchemaLocation(organizationParentRelationshipVO.getAtSchemaLocation());
@@ -220,7 +220,7 @@ public interface TMForumMapper {
 		if (organizationChildRelationshipVO == null) {
 			return null;
 		}
-		OrganizationChildRelationship organizationChildRelationship = new OrganizationChildRelationship(organizationChildRelationshipVO.getOrganization().id());
+		OrganizationChildRelationship organizationChildRelationship = new OrganizationChildRelationship(organizationChildRelationshipVO.getOrganization().getId());
 		organizationChildRelationship.setRelationshipType(organizationChildRelationshipVO.getRelationshipType());
 		organizationChildRelationship.setAtType(organizationChildRelationshipVO.getAtType());
 		organizationChildRelationship.setAtSchemaLocation(organizationChildRelationshipVO.getAtSchemaLocation());

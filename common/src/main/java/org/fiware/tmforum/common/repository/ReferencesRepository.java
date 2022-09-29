@@ -1,7 +1,7 @@
 package org.fiware.tmforum.common.repository;
 
-import io.reactivex.Maybe;
 import org.fiware.ngsi.model.EntityVO;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public interface ReferencesRepository {
 	 *
 	 * @param id            id of the entity to check
 	 * @param acceptedTypes list of types accepted for the entity
-	 * @return a Maybe emitting the entiy, in case it exists.
+	 * @return a Mono emitting the entity, in case it exists.
 	 */
-	Maybe<EntityVO> referenceExists(String id, List<String> acceptedTypes);
+	Mono<EntityVO> referenceExists(String id, List<String> acceptedTypes);
 }
