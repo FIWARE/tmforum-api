@@ -282,26 +282,36 @@ class PartyApiIT implements OrganizationApiTestSpec {
 
     }
 
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
     @Override
     public void listOrganization401() throws Exception {
 
     }
 
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
     @Override
     public void listOrganization403() throws Exception {
 
     }
 
+    @Disabled("Not found is not possible here, will be answerd with an empty list instead.")
+    @Test
     @Override
     public void listOrganization404() throws Exception {
 
     }
 
+    @Disabled("Prohibited by the framework.")
+    @Test
     @Override
     public void listOrganization405() throws Exception {
 
     }
 
+    @Disabled("Impossible status.")
+    @Test
     @Override
     public void listOrganization409() throws Exception {
 
