@@ -116,6 +116,7 @@
                                 <useBeanValidation>false</useBeanValidation>
                                 <jacksonDatabindNullable>false</jacksonDatabindNullable>
                                 <supportAsync>true</supportAsync>
+                                <generateExamples>true</generateExamples>
                             </configOptions>
                             <languageSpecificPrimitives>PropertyValueVO</languageSpecificPrimitives>
                             <typeMappings>
@@ -129,7 +130,7 @@
                     <dependency>
                         <groupId>io.kokuwa.micronaut</groupId>
                         <artifactId>micronaut-openapi-codegen</artifactId>
-                        <version>3.0.5-SNAPSHOT</version>
+                        <version>${version.io.kokuwa.micronaut.codegen}</version>
                     </dependency>
                 </dependencies>
             </plugin>

@@ -1,11 +1,11 @@
 package org.fiware.tmforum.party.repository;
 
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.repository.NgsiLdBaseRepository;
 import org.fiware.tmforum.mapping.EntityVOMapper;
@@ -14,6 +14,10 @@ import org.fiware.tmforum.party.domain.TaxDefinition;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.organization.Organization;
+import org.fiware.tmforum.party.exception.PartyCreationException;
+import org.fiware.tmforum.party.exception.PartyDeletionException;
+import org.fiware.tmforum.party.exception.PartyExceptionReason;
+import org.fiware.tmforum.party.exception.PartyListException;
 import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
@@ -45,10 +49,20 @@ public class PartyRepository extends NgsiLdBaseRepository {
     }
 
     public Mono<Void> deleteParty(URI id) {
-        return entitiesApi.removeEntityById(id, generalProperties.getTenant(), null);
+        return entitiesApi
+                .removeEntityById(id, generalProperties.getTenant(), null)
+                .onErrorResume(t -> {
+                    if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
+                        throw new PartyDeletionException(String.format("Was not able to delete %s, since it does not exist.", id),
+                                PartyExceptionReason.NOT_FOUND);
+                    }
+                    throw new PartyDeletionException(String.format("Was not able to delete %s.", id),
+                            t,
+                            PartyExceptionReason.UNKNOWN);
+                });
     }
 
-    public Mono<List<Organization>> findOrganizations() {
+    public Mono<List<Organization>> findOrganizations(Integer offset, Integer limit) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         null,
                         null,
@@ -60,11 +74,16 @@ public class PartyRepository extends NgsiLdBaseRepository {
                         null,
                         null,
                         null,
-                        null,
+                        limit,
+                        offset,
                         null,
                         getLinkHeader())
                 .map(List::stream)
-                .flatMap(entityVOStream -> zipToList(entityVOStream, Organization.class));
+                .flatMap(entityVOStream -> zipToList(entityVOStream, Organization.class))
+                .onErrorResume(t -> {
+                    throw new PartyListException("Was not able to list parties.", t);
+                });
+
 
     }
 
@@ -84,7 +103,7 @@ public class PartyRepository extends NgsiLdBaseRepository {
     }
 
 
-    public Mono<List<Individual>> findIndividuals() {
+    public Mono<List<Individual>> findIndividuals(Integer offset, Integer limit) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         null,
                         null,
@@ -96,7 +115,8 @@ public class PartyRepository extends NgsiLdBaseRepository {
                         null,
                         null,
                         null,
-                        null,
+                        limit,
+                        offset,
                         null,
                         getLinkHeader())
                 .map(List::stream)

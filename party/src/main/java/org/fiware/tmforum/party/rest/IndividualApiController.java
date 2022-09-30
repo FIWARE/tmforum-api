@@ -15,6 +15,7 @@ import org.fiware.tmforum.party.TMForumMapper;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.exception.PartyCreationException;
+import org.fiware.tmforum.party.exception.PartyExceptionReason;
 import org.fiware.tmforum.party.repository.PartyRepository;
 import reactor.core.publisher.Mono;
 
@@ -25,6 +26,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
+import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -83,7 +87,7 @@ public class IndividualApiController implements IndividualApi {
         if (individual.getRelatedParty() != null && !individual.getRelatedParty().isEmpty()) {
             Mono<Individual> checkingMono;
             checkingMono = validationService.getCheckingMono(individual.getRelatedParty(), individual)
-                    .onErrorMap(throwable -> new PartyCreationException(String.format("Was not able to create individual %s", individual.getId()), throwable));
+                    .onErrorMap(throwable -> new PartyCreationException(String.format("Was not able to create individual %s", individual.getId()), throwable, PartyExceptionReason.INVALID_RELATIONSHIP));
             individualMono = Mono.zip(individualMono, checkingMono, (p1, p2) -> p1);
         }
 
@@ -100,8 +104,11 @@ public class IndividualApiController implements IndividualApi {
 
     @Override
     public Mono<HttpResponse<List<IndividualVO>>> listIndividual(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
+        offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
+        limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+
         return partyRepository
-                .findIndividuals()
+                .findIndividuals(offset, limit)
                 .map(List::stream)
                 .map(organizationStream -> organizationStream.map(tmForumMapper::map).toList())
                 .map(HttpResponse::ok);

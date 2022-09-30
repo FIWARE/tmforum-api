@@ -24,6 +24,10 @@ public class HttpClientExceptionHandler implements ExceptionHandler<HttpClientEx
 	@Override
 	public HttpResponse<ErrorDetails> handle(HttpRequest request, HttpClientException exception) {
 		log.info("The context broker was not reachable. Request: {}, ClientExeption: {}.", request, exception);
-		return HttpResponse.status(HttpStatus.BAD_GATEWAY).body(new ErrorDetails(Optional.empty(), "Context Broker unreachable."));
+		return HttpResponse.status(HttpStatus.BAD_GATEWAY).body(new ErrorDetails(HttpStatus.BAD_GATEWAY.toString(),
+				HttpStatus.BAD_GATEWAY.getReason(),
+				"Context broker is not reachable.",
+				HttpStatus.BAD_GATEWAY.toString(),
+				null));
 	}
 }

@@ -194,12 +194,10 @@
                             <apiPackage>org.fiware.party.api</apiPackage>
                             <strictSpec>true</strictSpec>
                             <modelPackage>org.fiware.party.model</modelPackage>
-                            <generateAliasAsModel>false</generateAliasAsModel>
                             <generatorName>micronaut</generatorName>
-                            <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>
                             <modelNameSuffix>VO</modelNameSuffix>
                             <output>${project.build.directory}</output>
+                            <generateSupportingFiles>false</generateSupportingFiles>
                             <configOptions>
                                 <fullJavaUtil>true</fullJavaUtil>
                                 <useOptional>false</useOptional>

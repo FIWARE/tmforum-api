@@ -1,329 +1,395 @@
 package org.fiware.tmforum.party;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
-import org.fiware.party.model.CharacteristicVO;
-import org.fiware.party.model.ContactMediumVO;
-import org.fiware.party.model.DisabilityVO;
-import org.fiware.party.model.ExternalReferenceVO;
-import org.fiware.party.model.IndividualCreateVO;
-import org.fiware.party.model.IndividualIdentificationVO;
-import org.fiware.party.model.IndividualUpdateVO;
-import org.fiware.party.model.IndividualVO;
-import org.fiware.party.model.LanguageAbilityVO;
-import org.fiware.party.model.MediumCharacteristicVO;
+import net.bytebuddy.matcher.FilterableList;
+import org.fiware.party.api.OrganizationApiTestClient;
+import org.fiware.party.api.OrganizationApiTestSpec;
 import org.fiware.party.model.OrganizationCreateVO;
-import org.fiware.party.model.OrganizationIdentificationVO;
-import org.fiware.party.model.OrganizationStateTypeVO;
+import org.fiware.party.model.OrganizationCreateVOTestExample;
 import org.fiware.party.model.OrganizationVO;
-import org.fiware.party.model.OtherNameIndividualVO;
-import org.fiware.party.model.OtherNameOrganizationVO;
-import org.fiware.party.model.PartyCreditProfileVO;
+import org.fiware.party.model.OrganizationVOTestExample;
 import org.fiware.party.model.RelatedPartyVO;
-import org.fiware.party.model.SkillVO;
+import org.fiware.party.model.RelatedPartyVOTestExample;
 import org.fiware.party.model.TaxDefinitionVO;
+import org.fiware.party.model.TaxDefinitionVOTestExample;
 import org.fiware.party.model.TaxExemptionCertificateVO;
-import org.fiware.party.model.TimePeriodVO;
-import org.fiware.tmforum.party.rest.IndividualApiController;
-import org.fiware.tmforum.party.rest.OrganizationApiController;
+import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
+import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
 @MicronautTest(packages = {"org.fiware.tmforum.party"})
-class PartyApiIT {
+class PartyApiIT implements OrganizationApiTestSpec {
 
     private final ObjectMapper objectMapper;
-    private final OrganizationApiController organizationApiController;
-    private final IndividualApiController individualApiController;
-
+    private final OrganizationApiTestClient organizationApiTestClient;
 
     @Test
-    void simpleFullUserUpdate() throws JsonProcessingException, ParseException {
-        OrganizationCreateVO myFancyCompanyCreate = getMyFancyCompany();
+    @Override
+    public void createOrganization201() throws Exception {
 
-        HttpResponse<OrganizationVO> myFancyCompanyCreateResponse = organizationApiController.createOrganization(myFancyCompanyCreate).block();
-        assertEquals(HttpStatus.CREATED, myFancyCompanyCreateResponse.getStatus(), "Company should have been created.");
-        OrganizationVO myFancyCompany = myFancyCompanyCreateResponse.body();
+        OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
+        organizationCreateVO.setOrganizationParentRelationship(null);
 
-        IndividualCreateVO earlMustermannCreate = getIndividualEmployee(myFancyCompany.getId());
-        HttpResponse<IndividualVO> earlMustermannCreateResponse = individualApiController.createIndividual(earlMustermannCreate).block();
-        assertEquals(HttpStatus.CREATED, earlMustermannCreateResponse.getStatus(), "Individual should have been created.");
-        IndividualVO earlMustermann = earlMustermannCreateResponse.body();
+        OrganizationVO expectedOrganization = OrganizationVOTestExample.build();
+        expectedOrganization.setOrganizationParentRelationship(null);
 
-        HttpResponse<OrganizationVO> organizationVOHttpResponse = organizationApiController.retrieveOrganization(myFancyCompany.getId(), null).block();
+        HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(() -> organizationApiTestClient.createOrganization(organizationCreateVO));
+        assertEquals(HttpStatus.CREATED, organizationCreateResponse.getStatus(), "Organization should have been created.");
 
-        assertEquals(HttpStatus.OK, organizationVOHttpResponse.getStatus(), "An organization response is expected.");
-        assertTrue(organizationVOHttpResponse.getBody().isPresent(), "An organization response is expected.");
-        // this is a valid assertion, since "myFancyCompany" is constructed form the request-body(e.g. myFancyCompanyCreate) and persisted to the broker
-        // while the response body is retrieved from the broker and constructed from the entity retrieved.
-        // Both have to be equal, thus it actually tests something.
-        assertEquals(myFancyCompany, organizationVOHttpResponse.getBody().get(), "The full organization should be retrieved");
-
-        HttpResponse<IndividualVO> individualVOHttpResponse = individualApiController.retrieveIndividual(earlMustermann.getId(), null).block();
-
-        assertEquals(HttpStatus.OK, individualVOHttpResponse.getStatus(), "An individual response is expected.");
-        assertTrue(individualVOHttpResponse.getBody().isPresent(), "An individual response is expected.");
-        assertEquals(earlMustermann, individualVOHttpResponse.getBody().get(), "The full individual should be retrieved");
-
-        IndividualUpdateVO individualUpdateVO = getIndividualEmployeeUpdate("Musterfrau");
-        HttpResponse<IndividualVO> individualUpdateVOHttpResponse = individualApiController.patchIndividual(earlMustermann.getId(), individualUpdateVO).block();
-
-        assertEquals(HttpStatus.OK, individualUpdateVOHttpResponse.getStatus(), "An individual response is expected.");
-        assertTrue(individualVOHttpResponse.getBody().isPresent(), "An individual response is expected.");
-        earlMustermann.setFamilyName("Musterfrau");
-        assertEquals(earlMustermann, individualUpdateVOHttpResponse.getBody().get(), "The updated individual should be retrieved");
-
-        HttpResponse<List<IndividualVO>> indvidualListResponse = individualApiController.listIndividual(null, null, null).block();
-        assertEquals(HttpStatus.OK, indvidualListResponse.getStatus(), "An individual list response is expected.");
-        assertFalse(indvidualListResponse.body().isEmpty(), "Some indivuals should exist.");
-
-        HttpResponse<List<OrganizationVO>> organizationListResponse = organizationApiController.listOrganization(null, null, null).block();
-        assertEquals(HttpStatus.OK, organizationListResponse.getStatus(), "An organization list response is expected.");
-        assertFalse(organizationListResponse.body().isEmpty(), "Some organizations should exist.");
+        OrganizationVO createdOrganizationVO = organizationCreateResponse.body();
+        expectedOrganization.setId(createdOrganizationVO.getId());
+        expectedOrganization.setHref(createdOrganizationVO.getId());
+        assertEquals(expectedOrganization, createdOrganizationVO, "The created organization should have been returned.");
     }
 
-    private OrganizationCreateVO getMyFancyCompany() throws JsonProcessingException {
-        // create the organization
-        OrganizationCreateVO organizationVO = new OrganizationCreateVO();
-        organizationVO.setIsHeadOffice(true);
-        organizationVO.setIsLegalEntity(true);
-        organizationVO.setName("My Fancy Company");
-        organizationVO.setNameType("Inc");
-        organizationVO.setOrganizationType("Company");
-        organizationVO.setTradingName("My Fancy Company");
-
-        MediumCharacteristicVO mediumCharacteristicVO = new MediumCharacteristicVO();
-        mediumCharacteristicVO.setCity("Dresden");
-        mediumCharacteristicVO.setContactType("postal address");
-        mediumCharacteristicVO.setCountry("Germany");
-        mediumCharacteristicVO.setEmailAddress("my-fancy@company.org");
-        mediumCharacteristicVO.setPhoneNumber("0123/4567890-0");
-        mediumCharacteristicVO.setFaxNumber("0123/4567890-1");
-        mediumCharacteristicVO.setPostCode("01189");
-        mediumCharacteristicVO.setSocialNetworkId("@fancy");
-        mediumCharacteristicVO.setStateOrProvince("Saxony");
-        mediumCharacteristicVO.street1("Prager Straße 1");
-
-        PartyCreditProfileVO partyCreditProfileVO = new PartyCreditProfileVO();
-        partyCreditProfileVO.setCreditAgencyName("Experian");
-        partyCreditProfileVO.setCreditAgencyType("Rating-Agency");
-        partyCreditProfileVO.setRatingReference("Rating ref");
-        partyCreditProfileVO.setRatingScore(100);
-        partyCreditProfileVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
-
-        PartyCreditProfileVO partyCreditProfileVO2 = new PartyCreditProfileVO();
-        partyCreditProfileVO2.setCreditAgencyName("TransUnion");
-        partyCreditProfileVO2.setCreditAgencyType("Rating-Agency");
-        partyCreditProfileVO2.setRatingReference("Rating ref");
-        partyCreditProfileVO2.setRatingScore(100);
-        partyCreditProfileVO2.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
-
-        ContactMediumVO contactMediumVO = new ContactMediumVO();
-        contactMediumVO.setMediumType("postal address");
-        contactMediumVO.setPreferred(true);
-        contactMediumVO.setCharacteristic(mediumCharacteristicVO);
-        contactMediumVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
-
-        OrganizationIdentificationVO organizationIdentificationVO = new OrganizationIdentificationVO();
-        organizationIdentificationVO.setIdentificationId("My-Fancy-Company-ID");
-        organizationIdentificationVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(20, ChronoUnit.DAYS))));
-        organizationIdentificationVO.setIdentificationType("Country-ID");
-        organizationIdentificationVO.setIssuingAuthority("Gewerbeamt Dresden");
-        organizationIdentificationVO.setIssuingDate(Instant.now().minus(Duration.of(1, ChronoUnit.DAYS)));
-
-        OtherNameOrganizationVO otherOrganizationName = new OtherNameOrganizationVO();
-        otherOrganizationName.setName("My-Other-Company");
-        otherOrganizationName.setNameType("Ldt.");
-        otherOrganizationName.setTradingName("My-Other-Company");
-        otherOrganizationName.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(20, ChronoUnit.DAYS))));
-
-        CharacteristicVO characteristicVO = new CharacteristicVO();
-        characteristicVO.setName("My-Company-Valuation");
-        characteristicVO.setValueType("valuation");
-        characteristicVO.setValue(objectMapper.writeValueAsString(new TestCharacteristic(1000000l, "Euro")));
-
-        TaxDefinitionVO taxDefinitionVO = new TaxDefinitionVO();
-        taxDefinitionVO.setName("Gewerbe-Steuer");
-        taxDefinitionVO.setTaxType("Gewerbe-Steuer");
-        TaxDefinitionVO taxDefinitionVO2 = new TaxDefinitionVO();
-        taxDefinitionVO2.setName("Gewerbe-Steuer2");
-        taxDefinitionVO2.setTaxType("Gewerbe-Steuer2");
-
-        TaxExemptionCertificateVO taxExemptionCertificateVO = new TaxExemptionCertificateVO();
-        taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO, taxDefinitionVO2));
-        taxExemptionCertificateVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(20, ChronoUnit.DAYS))));
-
-        organizationVO.setContactMedium(List.of(contactMediumVO));
-        organizationVO.setCreditRating(List.of(partyCreditProfileVO, partyCreditProfileVO2));
-        organizationVO.setExistsDuring(new TimePeriodVO().startDateTime(Instant.now().minus(Duration.of(100, ChronoUnit.DAYS))).endDateTime(Instant.now().plus(Duration.of(100, ChronoUnit.DAYS))));
-        organizationVO.setExternalReference(List.of(new ExternalReferenceVO().name("Ext-Ref").externalReferenceType("Ref")));
-        organizationVO.setOrganizationIdentification(List.of(organizationIdentificationVO));
-        organizationVO.setOtherName(List.of(otherOrganizationName));
-        organizationVO.setPartyCharacteristic(List.of(characteristicVO));
-        organizationVO.setStatus(OrganizationStateTypeVO.VALIDATED);
-        organizationVO.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
-
-        return organizationVO;
+    @Test
+    @Override
+    public void createOrganization400() throws Exception {
+        for (OrganizationCreateVO ocVO : provideInvalidOrganizationCreate()) {
+            HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(() -> organizationApiTestClient.createOrganization(ocVO));
+            assertEquals(HttpStatus.BAD_REQUEST, organizationCreateResponse.getStatus(), "Organization should not have been created.");
+        }
     }
 
-    private IndividualUpdateVO getIndividualEmployeeUpdate(String newFamilyName) {
-        IndividualUpdateVO individualUpdateVO = new IndividualUpdateVO();
-        individualUpdateVO.setFamilyName(newFamilyName);
-        return individualUpdateVO;
+    // Helper method to catch potential http exceptions and return the status code.
+    private <T> HttpResponse<T> callAndCatch(Callable<HttpResponse<T>> request) throws Exception {
+        try {
+            return request.call();
+        } catch (HttpClientResponseException e) {
+            return HttpResponse.status(e.getStatus());
+        }
     }
 
-    private IndividualCreateVO getIndividualEmployee(String orgId) throws ParseException {
-        IndividualCreateVO individualCreateVO = new IndividualCreateVO();
-        individualCreateVO.setAristocraticTitle("Earl");
-        individualCreateVO.setBirthDate(new SimpleDateFormat("yyyy-MM-dd").parse("1970-01-01").toInstant());
-        individualCreateVO.setCountryOfBirth("Germany");
-        individualCreateVO.setFamilyName("Mustermann");
-        individualCreateVO.setFormattedName("Max Markus Mustermann, Earl of Saxony");
-        individualCreateVO.setFullName("Max Markus Mustermann");
-        individualCreateVO.setGender("male");
-        individualCreateVO.setGeneration("III.");
-        individualCreateVO.setGivenName("Max");
-        individualCreateVO.setLegalName("Mustermann");
-        individualCreateVO.setLocation("Schloßstraße 1, Dresden");
-        individualCreateVO.setMaritalStatus("married");
-        individualCreateVO.setMiddleName("Markus");
-        individualCreateVO.setNationality("German");
-        individualCreateVO.setPlaceOfBirth("Dresden");
-        individualCreateVO.setPreferredGivenName("The earl");
-        individualCreateVO.setTitle("Dr.");
+    public static List<OrganizationCreateVO> provideInvalidOrganizationCreate() {
+        OrganizationCreateVO nonExistentParentCreateVO = OrganizationCreateVOTestExample.build();
+        nonExistentParentCreateVO.getOrganizationParentRelationship().getOrganization().setId("urn:ngsi-ld:organization:valid-but-not-existent");
 
-        MediumCharacteristicVO mediumCharacteristicVO = new MediumCharacteristicVO();
-        mediumCharacteristicVO.setCity("Dresden");
-        mediumCharacteristicVO.setContactType("postal address");
-        mediumCharacteristicVO.setCountry("Germany");
-        mediumCharacteristicVO.setEmailAddress("the-earl@company.org");
-        mediumCharacteristicVO.setPhoneNumber("0123/4567890-2");
-        mediumCharacteristicVO.setFaxNumber("0123/4567890-3");
-        mediumCharacteristicVO.setPostCode("01189");
-        mediumCharacteristicVO.setSocialNetworkId("@earl");
-        mediumCharacteristicVO.setStateOrProvince("Saxony");
-        mediumCharacteristicVO.street1("Schlossstraße 1");
+        OrganizationCreateVO invalidRelatedPartyOrg = OrganizationCreateVOTestExample.build();
+        RelatedPartyVO invalidRelatedPartyRef = RelatedPartyVOTestExample.build();
+        invalidRelatedPartyOrg.setRelatedParty(List.of(invalidRelatedPartyRef));
 
+        OrganizationCreateVO nonExistentRelatedPartyOrg = OrganizationCreateVOTestExample.build();
+        RelatedPartyVO nonExistentRelatedPartyRef = RelatedPartyVOTestExample.build();
+        nonExistentRelatedPartyRef.setId("urn:ngsi-ld:individual:non-existent");
+        nonExistentRelatedPartyOrg.setRelatedParty(List.of(nonExistentRelatedPartyRef));
 
-        ContactMediumVO contactMediumVO = new ContactMediumVO();
-        contactMediumVO.setMediumType("postal address");
-        contactMediumVO.setPreferred(true);
-        contactMediumVO.setCharacteristic(mediumCharacteristicVO);
-        contactMediumVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
+        return List.of(
+                // invalid parent org
+                OrganizationCreateVOTestExample.build(),
+                nonExistentParentCreateVO,
+                invalidRelatedPartyOrg,
+                nonExistentRelatedPartyOrg
+        );
+    }
 
-        ContactMediumVO contactMediumVO2 = new ContactMediumVO();
-        contactMediumVO2.setMediumType("email");
-        contactMediumVO2.setPreferred(false);
-        contactMediumVO2.setCharacteristic(mediumCharacteristicVO);
-        contactMediumVO2.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
+    @Override
+    public void createOrganization401() throws Exception {
+    }
 
-        individualCreateVO.setContactMedium(List.of(contactMediumVO, contactMediumVO2));
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
+    @Override
+    public void createOrganization403() throws Exception {
+    }
 
-        PartyCreditProfileVO partyCreditProfileVO = new PartyCreditProfileVO();
-        partyCreditProfileVO.setCreditAgencyName("Experian");
-        partyCreditProfileVO.setCreditAgencyType("Rating-Agency");
-        partyCreditProfileVO.setRatingReference("Rating ref");
-        partyCreditProfileVO.setRatingScore(100);
-        partyCreditProfileVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
+    @Disabled("Prohibited by the framework.")
+    @Test
+    @Override
+    public void createOrganization405() throws Exception {
 
-        individualCreateVO.setCreditRating(List.of(partyCreditProfileVO));
+    }
 
-        DisabilityVO disabilityVO = new DisabilityVO();
-        disabilityVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
-        disabilityVO.setDisabilityCode("02");
-        disabilityVO.setDisabilityName("Hearing");
+    @Test
+    @Override
+    public void createOrganization409() throws Exception {
+        TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build();
+        // make the test repeatable
+        taxDefinitionVO.setId(UUID.randomUUID().toString());
+        TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build();
+        taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
+        // make the test repeatable
+        taxExemptionCertificateVO.setId(UUID.randomUUID().toString());
+        // workaround for the bad example
+        taxExemptionCertificateVO.setAttachment(null);
+        OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
+        organizationCreateVO.setOrganizationParentRelationship(null);
+        organizationCreateVO.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
 
-        DisabilityVO disabilityVO2 = new DisabilityVO();
-        disabilityVO2.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
-        disabilityVO2.setDisabilityCode("03");
-        disabilityVO2.setDisabilityName("Manual Dexterity");
+        // first create should succeed
+        assertEquals(
+                HttpStatus.CREATED,
+                callAndCatch(() -> organizationApiTestClient.createOrganization(organizationCreateVO)).getStatus(),
+                "Organization should have been created.");
 
-        DisabilityVO disabilityVO3 = new DisabilityVO();
-        disabilityVO3.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
-        disabilityVO3.setDisabilityCode("09");
-        disabilityVO3.setDisabilityName("Sight");
+        // second should be a conflict, since the tax-exemption already exists.
+        assertEquals(
+                HttpStatus.CONFLICT,
+                callAndCatch(() -> organizationApiTestClient.createOrganization(organizationCreateVO)).getStatus(),
+                "Organization should not have been created, due to the conflicting tax-exemption.");
 
-        individualCreateVO.setDisability(List.of(disabilityVO, disabilityVO2, disabilityVO3));
+    }
 
-        ExternalReferenceVO externalReferenceVO = new ExternalReferenceVO();
-        externalReferenceVO.setExternalReferenceType("ext");
-        externalReferenceVO.setName("My-Ref");
+    @Override
+    public void createOrganization500() throws Exception {
 
-        individualCreateVO.setExternalReference(List.of(externalReferenceVO));
+    }
 
-        IndividualIdentificationVO individualIdentificationVO = new IndividualIdentificationVO();
-        individualIdentificationVO.setIdentificationId("T22000129");
-        individualIdentificationVO.setIdentificationType("Passport");
-        individualIdentificationVO.setIssuingAuthority("Einwohnermeldeamt Dresden");
-        individualIdentificationVO.setIssuingDate(Instant.now());
-        individualIdentificationVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
+    @Test
+    @Override
+    public void deleteOrganization204() throws Exception {
+        // first create one
+        OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
+        organizationCreateVO.setOrganizationParentRelationship(null);
+        HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(() -> organizationApiTestClient.createOrganization(organizationCreateVO));
+        assertEquals(HttpStatus.CREATED, organizationCreateResponse.getStatus(), "The organization should have been created first.");
 
-        individualCreateVO.setIndividualIdentification(List.of(individualIdentificationVO));
+        String orgId = organizationCreateResponse.body().getId();
 
-        LanguageAbilityVO languageAbilityVO = new LanguageAbilityVO();
-        languageAbilityVO.isFavouriteLanguage(true);
-        languageAbilityVO.setLanguageCode("DE");
-        languageAbilityVO.setLanguageName("German");
-        languageAbilityVO.setListeningProficiency("C2");
-        languageAbilityVO.setReadingProficiency("C2");
-        languageAbilityVO.setSpeakingProficiency("C2");
-        languageAbilityVO.setWritingProficiency("C2");
-        languageAbilityVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(100, ChronoUnit.DAYS))));
+        assertEquals(HttpStatus.NO_CONTENT,
+                callAndCatch(() -> organizationApiTestClient.deleteOrganization(orgId)).getStatus(),
+                "The organization should have been deleted.");
 
-        individualCreateVO.setLanguageAbility(List.of(languageAbilityVO));
+        assertEquals(HttpStatus.NOT_FOUND,
+                callAndCatch(() -> organizationApiTestClient.retrieveOrganization(orgId, null)).status(),
+                "The organization should not exist anymore.");
 
-        OtherNameIndividualVO otherNameIndividualVO = new OtherNameIndividualVO();
-        otherNameIndividualVO.setFamilyName("Mannmuster");
-        otherNameIndividualVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(10, ChronoUnit.DAYS))));
-        otherNameIndividualVO.setFormattedName("Max Markus Mustermann, Earl of Saxony");
-        otherNameIndividualVO.setFullName("Max Markus Mustermann");
-        otherNameIndividualVO.setGeneration("III.");
-        otherNameIndividualVO.setGivenName("Max");
-        otherNameIndividualVO.setLegalName("Mustermann");
-        otherNameIndividualVO.setMiddleName("Markus");
-        otherNameIndividualVO.setPreferredGivenName("The earl");
-        otherNameIndividualVO.setTitle("Dr.");
+    }
 
-        individualCreateVO.setOtherName(List.of(otherNameIndividualVO));
+    @Disabled("400 is impossible to happen on deletion with the current implementation.")
+    @Test
+    @Override
+    public void deleteOrganization400() throws Exception {
+    }
 
-        CharacteristicVO characteristicVO = new CharacteristicVO();
-        characteristicVO.setName("Position");
-        characteristicVO.setValueType("String");
-        characteristicVO.setValue("CEO");
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
+    @Override
+    public void deleteOrganization401() throws Exception {
 
-        individualCreateVO.setPartyCharacteristic(List.of(characteristicVO));
+    }
 
-        RelatedPartyVO partyVO = new RelatedPartyVO();
-        partyVO.setRole("Employer");
-        partyVO.setId(orgId);
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
+    @Override
+    public void deleteOrganization403() throws Exception {
 
-        individualCreateVO.setRelatedParty(List.of(partyVO));
+    }
 
-        SkillVO skillVO = new SkillVO();
-        skillVO.setComment("Programming proficiency.");
-        skillVO.setEvaluatedLevel("High");
-        skillVO.setSkillCode("0123");
-        skillVO.setSkillName("Java");
-        skillVO.setValidFor(new TimePeriodVO().startDateTime(Instant.now()).endDateTime(Instant.now().plus(Duration.of(100, ChronoUnit.DAYS))));
+    @Test
+    @Override
+    public void deleteOrganization404() throws Exception {
+        String ngsiLdOrgId = "urn:ngsi-ld:organization:valid";
+        String nonNgsiLdOrgId = "non-ngsi";
+        assertEquals(HttpStatus.NOT_FOUND,
+                callAndCatch(() -> organizationApiTestClient.deleteOrganization(ngsiLdOrgId)).getStatus(),
+                "No such organization should exist.");
+        assertEquals(HttpStatus.NOT_FOUND,
+                callAndCatch(() -> organizationApiTestClient.deleteOrganization(nonNgsiLdOrgId)).getStatus(),
+                "No such organization should exist.");
+    }
 
-        individualCreateVO.setSkill(List.of(skillVO));
+    @Disabled("Prohibited by the framework.")
+    @Test
+    @Override
+    public void deleteOrganization405() throws Exception {
 
-        return individualCreateVO;
+    }
+
+    @Disabled("Impossible status.")
+    @Test
+    @Override
+    public void deleteOrganization409() throws Exception {
+
+    }
+
+    @Override
+    public void deleteOrganization500() throws Exception {
+
+    }
+
+    @Disabled("Needs db cleaning.")
+    @Test
+    @Override
+    public void listOrganization200() throws Exception {
+        // find a way to clean before
+        List<OrganizationVO> expectedOrganizations = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
+            organizationCreateVO.setOrganizationParentRelationship(null);
+            String id = organizationApiTestClient.createOrganization(organizationCreateVO).body().getId();
+            OrganizationVO organizationVO = OrganizationVOTestExample.build();
+            organizationVO.setId(id);
+            organizationVO.setHref(id);
+            expectedOrganizations.add(organizationVO);
+        }
+
+        HttpResponse<List<OrganizationVO>> organizationListResponse = callAndCatch(() -> organizationApiTestClient.listOrganization(null, null, null));
+        assertEquals(HttpStatus.OK, organizationListResponse.getStatus(), "The list should be accessible.");
+
+        // ignore order
+        List<OrganizationVO> organizationVOS = organizationListResponse.body();
+        assertEquals(expectedOrganizations.size(), organizationVOS.size(), "All organizations should be returned.");
+        expectedOrganizations
+                .forEach(organizationVO ->
+                        assertTrue(organizationVOS.contains(organizationVO),
+                                String.format("All organizations should be contained. Missing: %s", organizationVO)));
+
+        // get with pagination
+        Integer limit = 5;
+        HttpResponse<List<OrganizationVO>> firstPartResponse = callAndCatch(() -> organizationApiTestClient.listOrganization(null, 0, limit));
+        assertEquals(limit, firstPartResponse.body(), "Only the requested number of entries should be returend.");
+        HttpResponse<List<OrganizationVO>> secondPartResponse = callAndCatch(() -> organizationApiTestClient.listOrganization(null, 0 + limit, limit));
+        assertEquals(limit, secondPartResponse.body(), "Only the requested number of entries should be returend.");
+
+        List<OrganizationVO> retrievedOrganizations = firstPartResponse.body();
+        retrievedOrganizations.addAll(secondPartResponse.body());
+        expectedOrganizations
+                .forEach(organizationVO ->
+                        assertTrue(retrievedOrganizations.contains(organizationVO),
+                                String.format("All organizations should be contained. Missing: %s", organizationVO)));
+
+    }
+
+    @Test
+    @Override
+    public void listOrganization400() throws Exception {
+        assertEquals(HttpStatus.BAD_REQUEST,
+                callAndCatch(() -> organizationApiTestClient.listOrganization(null, -1, null)).getStatus(),
+                "Negative offsets are impossible.");
+        assertEquals(HttpStatus.BAD_REQUEST,
+                callAndCatch(() -> organizationApiTestClient.listOrganization(null, null, -1)).getStatus(),
+                "Negative limits are impossible.");
+
+    }
+
+    @Override
+    public void listOrganization401() throws Exception {
+
+    }
+
+    @Override
+    public void listOrganization403() throws Exception {
+
+    }
+
+    @Override
+    public void listOrganization404() throws Exception {
+
+    }
+
+    @Override
+    public void listOrganization405() throws Exception {
+
+    }
+
+    @Override
+    public void listOrganization409() throws Exception {
+
+    }
+
+    @Override
+    public void listOrganization500() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization200() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization400() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization401() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization403() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization404() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization405() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization409() throws Exception {
+
+    }
+
+    @Override
+    public void patchOrganization500() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization200() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization400() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization401() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization403() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization404() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization405() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization409() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveOrganization500() throws Exception {
+
     }
 
     class TestCharacteristic {

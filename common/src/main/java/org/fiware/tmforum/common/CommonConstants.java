@@ -1,18 +1,18 @@
 package org.fiware.tmforum.common;
 
-import java.net.URI;
-import java.util.Optional;
-import java.util.UUID;
-
 /**
  * Utility class to provide common templates
  */
-public class CommonTemplates {
+public class CommonConstants {
 
-	private CommonTemplates() {
+	private CommonConstants() {
 		//prevent instantiation
 		throw new IllegalStateException("Utility class");
 	}
+
+
+	public static final int DEFAULT_OFFSET = 0;
+	public static final int DEFAULT_LIMIT = 10;
 
 	/**
 	 * String template for an NGSI-LD compatible id
