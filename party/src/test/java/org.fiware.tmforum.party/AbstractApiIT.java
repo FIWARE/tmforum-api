@@ -8,8 +8,7 @@ import java.util.concurrent.Callable;
 /**
  * Common super class for the api tests
  */
-public abstract class AbstractApiTest {
-
+public abstract class AbstractApiIT {
 
     // Helper method to catch potential http exceptions and return the status code.
     public <T> HttpResponse<T> callAndCatch(Callable<HttpResponse<T>> request) throws Exception {

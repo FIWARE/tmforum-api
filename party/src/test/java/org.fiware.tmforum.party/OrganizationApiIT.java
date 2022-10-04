@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
 @MicronautTest(packages = {"org.fiware.tmforum.party"})
-class OrganizationApiTest extends AbstractApiTest implements OrganizationApiTestSpec {
+class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec {
 
     private final OrganizationApiTestClient organizationApiTestClient;
 

@@ -56,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
 @MicronautTest(packages = {"org.fiware.tmforum.party"})
-public class IndividualApiTest extends AbstractApiTest implements IndividualApiTestSpec {
+public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestSpec {
 
     private final IndividualApiTestClient individualApiTestClient;
 
