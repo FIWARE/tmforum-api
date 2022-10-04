@@ -120,12 +120,14 @@ public class PartyRepository extends NgsiLdBaseRepository {
                         null,
                         getLinkHeader())
                 .map(List::stream)
-                .flatMap(entityVOStream -> zipToList(entityVOStream, Individual.class));
-
+                .flatMap(entityVOStream -> zipToList(entityVOStream, Individual.class))
+                .onErrorResume(t -> {
+                    throw new PartyListException("Was not able to list parties.", t);
+                });
     }
 
-    public Mono<Void> updateIndividual(String id, Individual individual) {
-        return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(individual)));
+    public <T> Mono<Void> updateParty(String id, T party) {
+        return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(party)));
     }
 
     private <T> Mono<List<T>> zipToList(Stream<EntityVO> entityVOStream, Class<T> targetClass) {
