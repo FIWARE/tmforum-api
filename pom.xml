@@ -33,6 +33,7 @@
         <module>mapping</module>
         <module>common</module>
         <module>party</module>
+        <module>product-catalog</module>
     </modules>
 
     <properties>

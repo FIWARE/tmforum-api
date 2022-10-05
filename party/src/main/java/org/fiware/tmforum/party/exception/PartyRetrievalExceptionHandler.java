@@ -5,22 +5,22 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 
 import javax.inject.Singleton;
 
 @Produces
 @Singleton
-@Requires(classes = {DeletionException.class, ExceptionHandler.class})
+@Requires(classes = {PartyRetrievalException.class, ExceptionHandler.class})
 @Slf4j
-public class PartyDeletionExceptionHandler implements ExceptionHandler<DeletionException, HttpResponse<ErrorDetails>> {
+public class PartyRetrievalExceptionHandler implements ExceptionHandler<PartyRetrievalException, HttpResponse<ErrorDetails>> {
 
     @Override
-    public HttpResponse<ErrorDetails> handle(HttpRequest request, DeletionException exception) {
-        log.warn("The party could not have been deleted.", exception);
+    public HttpResponse<ErrorDetails> handle(HttpRequest request, PartyRetrievalException exception) {
+        log.warn("The party could not have been retrieved.", exception);
         return switch (exception.getReason()) {
             case NOT_FOUND -> HttpResponse.status(HttpStatus.NOT_FOUND).body(new ErrorDetails(HttpStatus.NOT_FOUND.toString(),
                     HttpStatus.NOT_FOUND.getReason(),
@@ -34,4 +34,5 @@ public class PartyDeletionExceptionHandler implements ExceptionHandler<DeletionE
                     null));
         };
     }
+
 }

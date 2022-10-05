@@ -38,6 +38,7 @@ import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -312,7 +313,6 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
                 notFoundResponse.getStatus(),
                 "No such individual should exist.");
         optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
-        assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
     }
 
     @Disabled("Prohibited by the framework.")

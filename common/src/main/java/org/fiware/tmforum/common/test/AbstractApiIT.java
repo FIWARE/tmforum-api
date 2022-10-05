@@ -1,4 +1,4 @@
-package org.fiware.tmforum.party;
+package org.fiware.tmforum.common.test;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
