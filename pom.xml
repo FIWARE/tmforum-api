@@ -700,23 +700,5 @@
                 </pluginManagement>
             </build>
         </profile>
-        <profile>
-            <id>coveralls</id>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.eluder.coveralls</groupId>
-                            <artifactId>coveralls-maven-plugin</artifactId>
-                            <version>${version.org.eluder.coveralls.maven-plugin}</version>
-                            <configuration>
-                                <repoToken>${coveralls.token}</repoToken>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
-        </profile>
     </profiles>
 </project>
-
