@@ -17,7 +17,7 @@ The project also contains 2 non-module folders:
 - [k3s](k3s) - contains kubernetes manifests to be used in the integration-test environments or for setting up a dev-environment. Currently includes:
   - [Orion-LD Context Broker](https://github.com/FIWARE/context.Orion-LD)
   - [MongoDB](https://www.mongodb.com/)
-  - 
+  
 ## Mapping between TMFORUM Objects and NGSI-LD
 
 In order to ease the implementation of the apis, a mapper from java-objects to NGSI-LD objects is part of the project:
@@ -29,6 +29,10 @@ The current implementation supports multiple layers of testing:
 - Unit-Tests, using [JUnit5](https://junit.org/junit5/docs/current/user-guide/) and [Mockito](https://site.mockito.org/) to test on a function-level
 - Unit-Tests, using [JUnit5](https://junit.org/junit5/docs/current/user-guide/),[Micronaut-Test](https://micronaut-projects.github.io/micronaut-test/latest/guide/) and [Mockito](https://site.mockito.org/) to test on component level(e.g. running parts of the application, while mocking all external dependencies)
 - Integration-Tests, using [JUnit5](https://junit.org/junit5/docs/current/user-guide/),[Micronaut-Test](https://micronaut-projects.github.io/micronaut-test/latest/guide/) and [k3s](https://k3s.io/) to test the application with its real external dependencies running
+
+In order to reduce the overhead of test implementation, the OpenAPI-Generator provides the following test-helpers:
+- Test-Interface: an interface, defining a test for all endpoint-response combinations possible from the OpenAPI-spec - see [OrganizationApiIT](party/src/test/java/org.fiware.tmforum.party/OrganizationApiIT.java) as an example
+- Test-Examples: for each model generated(f.e. ```Organization```), a test example builder is generated, that provides pre-filled(from the spec-examples and default values) test-objects - see   [OrganizationApiIT](party/src/test/java/org.fiware.tmforum.party/OrganizationApiIT.java) as an example
 
 ### Running unit-tests
 
@@ -47,6 +51,23 @@ In order to run the tests from the IDE, you have to setup an environment before 
 With ```mvn install -Pdev```, a k3s-cluster will be setup but not destroyed after running the tests. 
 In order to connect to the cluster, install the [kubectl-client](https://kubernetes.io/docs/tasks/tools/#kubectl) and run ```export KUBECONFIG=/tmp/k3s-maven-plugin/mount/kubeconfig.yaml && kubectl get all --all-namespaces```.
 To clean up the environment, use ```mvn clean k3s:rm -Pdev```.
+
+### Running conformance-tests
+
+TMForum does provide conformance-test tooling for the API-implementations: [Open API Conformance](https://projects.tmforum.org/wiki/display/API/Open+API+Conformance)
+The tests are integrated into the maven lifecycle with the "conformance-test" profile. To execute them, run "mvn clean install -Pconformance-test --projects common,mapping,<THE_MODULE> -DskipTests -DskipITs".
+The tests are mounted into a docker container and executed using them, after the API-implementation and Orion-LD are started. Currently, they need to run individually for each API-Module, since the tests expect
+them under the same port on localhost.
+To integrate a new module into the tests:
+- set find the test url of the module(at the [TMForum OpenAPI table](https://projects.tmforum.org/wiki/display/API/Open+API+Table) in the column "CTK")
+- insert it to the property <module.ctk.url> in your module
+- check the structure of the zip-file, containing the test and set the following properties accordingly(example from the parties-api)
+```xml
+        <module.ctk.script-folder>TMF632-Party</module.ctk.script-folder>
+        <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
+        <module.ctk.base-path>/tmf-api/party/v4</module.ctk.base-path>
+```
+- add the module to the matrix input of the [conformance-test](.github/workflows/conformance-test.yaml) workflow
 
 ## Dev-Environment
 
