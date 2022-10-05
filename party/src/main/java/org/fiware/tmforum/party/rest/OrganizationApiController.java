@@ -17,6 +17,7 @@ import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.party.domain.organization.Organization;
 import org.fiware.tmforum.party.exception.PartyCreationException;
 import org.fiware.tmforum.party.repository.PartyRepository;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -30,96 +31,94 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrganizationApiController implements OrganizationApi {
 
-	private final TMForumMapper tmForumMapper;
-	private final PartyRepository partyRepository;
-	private final ReferenceValidationService validationService;
+    private final TMForumMapper tmForumMapper;
+    private final PartyRepository partyRepository;
+    private final ReferenceValidationService validationService;
 
-	@Override
-	public Single<HttpResponse<OrganizationVO>> createOrganization(OrganizationCreateVO organizationCreateVO) {
+    @Override
+    public Mono<HttpResponse<OrganizationVO>> createOrganization(OrganizationCreateVO organizationCreateVO) {
 
-		OrganizationVO organizationVO = tmForumMapper.map(organizationCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Organization.TYPE_ORGANIZATION));
-		Organization organization = tmForumMapper.map(organizationVO);
+        OrganizationVO organizationVO = tmForumMapper.map(organizationCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Organization.TYPE_ORGANIZATION));
+        Organization organization = tmForumMapper.map(organizationVO);
 
-		Single<Organization> organizationSingle = Single.just(organization);
-		Single<Organization> checkingSingle;
-		try {
+        Mono<Organization> organizationMono = Mono.just(organization);
+        Mono<Organization> checkingMono;
 
-			if (organization.getOrganizationChildRelationship() != null && !organization.getOrganizationChildRelationship().isEmpty()) {
-				checkingSingle = validationService.getCheckingSingleOrThrow(organization.getOrganizationChildRelationship(), organization);
+        if (organization.getOrganizationChildRelationship() != null && !organization.getOrganizationChildRelationship().isEmpty()) {
+            checkingMono = validationService.getCheckingMono(organization.getOrganizationChildRelationship(), organization)
+                    .onErrorMap(throwable -> new PartyCreationException(String.format("Was not able to create organization %s", organization.getId()), throwable));
 
-				organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
-			}
-			if (organization.getOrganizationParentRelationship() != null) {
-				checkingSingle = validationService.getCheckingSingleOrThrow(List.of(organization.getOrganizationParentRelationship()), organization);
-				organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
-			}
+            organizationMono = Mono.zip(organizationMono, checkingMono, (p1, p2) -> p1);
+        }
+        if (organization.getOrganizationParentRelationship() != null) {
+            checkingMono = validationService.getCheckingMono(List.of(organization.getOrganizationParentRelationship()), organization)
+                    .onErrorMap(throwable -> new PartyCreationException(String.format("Was not able to create organization %s", organization.getId()), throwable));
+            organizationMono = Mono.zip(organizationMono, checkingMono, (p1, p2) -> p1);
+        }
 
-			if (organization.getRelatedParty() != null && !organization.getRelatedParty().isEmpty()) {
-				checkingSingle = validationService.getCheckingSingleOrThrow(organization.getRelatedParty(), organization);
-				organizationSingle = Single.zip(organizationSingle, checkingSingle, (p1, p2) -> p1);
-			}
-		} catch (NonExistentReferenceException e) {
-			throw new PartyCreationException(String.format("Was not able to create organization %s", organization.getId()), e);
-		}
+        if (organization.getRelatedParty() != null && !organization.getRelatedParty().isEmpty()) {
+            checkingMono = validationService.getCheckingMono(organization.getRelatedParty(), organization)
+                    .onErrorMap(throwable -> new PartyCreationException(String.format("Was not able to create organization %s", organization.getId()), throwable));
+            organizationMono = Mono.zip(organizationMono, checkingMono, (p1, p2) -> p1);
+        }
 
-		List<TaxExemptionCertificate> taxExemptionCertificates = Optional.ofNullable(organization.getTaxExemptionCertificate()).orElseGet(List::of);
-		if (!taxExemptionCertificates.isEmpty()) {
-			Single<List<TaxExemptionCertificate>> taxExemptionCertificatesSingles =
-					Single.zip(
-							taxExemptionCertificates.stream()
-									.map(partyRepository::createTaxExemptionCertificate)
-									.toList(),
-							t -> Arrays.stream(t).map(TaxExemptionCertificate.class::cast).toList());
+        List<TaxExemptionCertificate> taxExemptionCertificates = Optional.ofNullable(organization.getTaxExemptionCertificate()).orElseGet(List::of);
+        if (!taxExemptionCertificates.isEmpty()) {
+            Mono<List<TaxExemptionCertificate>> taxExemptionCertificatesSingles =
+                    Mono.zip(
+                            taxExemptionCertificates.stream()
+                                    .map(partyRepository::createTaxExemptionCertificate)
+                                    .toList(),
+                            t -> Arrays.stream(t).map(TaxExemptionCertificate.class::cast).toList());
 
-			Single<Organization> updatingSingle = taxExemptionCertificatesSingles
-					.map(updatedTaxExemptions -> {
-						organization.setTaxExemptionCertificate(updatedTaxExemptions);
-						return organization;
-					});
-			organizationSingle = Single.zip(organizationSingle, updatingSingle, (p1, p2) -> p1);
-		}
+            Mono<Organization> updatingSingle = taxExemptionCertificatesSingles
+                    .map(updatedTaxExemptions -> {
+                        organization.setTaxExemptionCertificate(updatedTaxExemptions);
+                        return organization;
+                    });
+            organizationMono = Mono.zip(organizationMono, updatingSingle, (p1, p2) -> p1);
+        }
 
-		return organizationSingle
-				.flatMap(orgToCreate -> partyRepository.createOrganization(orgToCreate).toSingleDefault(orgToCreate))
-				.cast(Organization.class)
-				.map(tmForumMapper::map)
-				.map(HttpResponse::created);
-	}
-
-
-	@Override
-	public Single<HttpResponse<Object>> deleteOrganization(String id) {
-		return partyRepository.deleteParty(IdHelper.toNgsiLd(id, Organization.TYPE_ORGANIZATION)).toSingleDefault(HttpResponse.noContent());
-	}
-
-	@Override
-	public Single<HttpResponse<List<OrganizationVO>>> listOrganization(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
-		return partyRepository.findOrganizations()
-				.map(List::stream)
-				.map(organizationStream -> organizationStream.map(tmForumMapper::map).toList())
-				.map(HttpResponse::ok);
-
-	}
-
-	@Override
-	public Single<HttpResponse<OrganizationVO>> patchOrganization(String id, OrganizationUpdateVO organization) {
-		// implement proper patch
-		return null;
-	}
-
-	@Override
-	public Single<HttpResponse<OrganizationVO>> retrieveOrganization(String id, @Nullable String fields) {
-		// non-ngsi-ld ids cannot exist.
-		if (!IdHelper.isNgsiLdId(id)) {
-			return Single.just(HttpResponse.notFound());
-		}
+        return organizationMono
+                .flatMap(orgToCreate -> partyRepository.createOrganization(orgToCreate).then(Mono.just(orgToCreate)))
+                .cast(Organization.class)
+                .map(tmForumMapper::map)
+                .map(HttpResponse::created);
+    }
 
 
-		return partyRepository
-				.getOrganization(URI.create(id))
-				.map(tmForumMapper::map)
-				.map(HttpResponse::ok)
-				.switchIfEmpty(Single.just(HttpResponse.notFound()))
-				.map(HttpResponse.class::cast);
-	}
+    @Override
+    public Mono<HttpResponse<Object>> deleteOrganization(String id) {
+        return partyRepository.deleteParty(IdHelper.toNgsiLd(id, Organization.TYPE_ORGANIZATION)).then(Mono.just(HttpResponse.noContent()));
+    }
+
+    @Override
+    public Mono<HttpResponse<List<OrganizationVO>>> listOrganization(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
+        return partyRepository.findOrganizations()
+                .map(List::stream)
+                .map(organizationStream -> organizationStream.map(tmForumMapper::map).toList())
+                .map(HttpResponse::ok);
+
+    }
+
+    @Override
+    public Mono<HttpResponse<OrganizationVO>> patchOrganization(String id, OrganizationUpdateVO organization) {
+        // implement proper patch
+        return null;
+    }
+
+    @Override
+    public Mono<HttpResponse<OrganizationVO>> retrieveOrganization(String id, @Nullable String fields) {
+        // non-ngsi-ld ids cannot exist.
+        if (!IdHelper.isNgsiLdId(id)) {
+            return Mono.just(HttpResponse.notFound());
+        }
+
+        return partyRepository
+                .getOrganization(URI.create(id))
+                .map(tmForumMapper::map)
+                .map(HttpResponse::ok)
+                .switchIfEmpty(Mono.just(HttpResponse.notFound()))
+                .map(HttpResponse.class::cast);
+    }
 }

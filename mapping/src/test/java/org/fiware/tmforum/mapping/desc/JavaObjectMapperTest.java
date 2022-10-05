@@ -3,13 +3,15 @@ package org.fiware.tmforum.mapping.desc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
+import org.fiware.tmforum.mapping.desc.pojos.MyPojo;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithListOfSubProperty;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntity;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntityEmbed;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubProperty;
-import org.fiware.tmforum.mapping.desc.pojos.MyPojo;
 import org.fiware.tmforum.mapping.desc.pojos.MySubProperty;
 import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntity;
 import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntityEmbed;
@@ -30,6 +32,8 @@ class JavaObjectMapperTest {
 	public void setup() {
 		javaObjectMapper = new JavaObjectMapper();
 		OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		OBJECT_MAPPER
+				.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
 	}
 
 	@DisplayName("Simple pojo mapping.")
@@ -52,7 +56,7 @@ class JavaObjectMapperTest {
 	@DisplayName("Map Pojo with a field that is an object.")
 	@Test
 	void testSubPropertyMapping() throws JsonProcessingException {
-		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"mySubProperty\":{\"type\":\"Property\",\"value\":{\"propertyName\":\"My property\"}}}";
+		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"mySubProperty\":{\"value\":{\"propertyName\":\"My property\"},\"type\":\"Property\"}}";
 
 		MyPojoWithSubProperty myComplexPojo = new MyPojoWithSubProperty("urn:ngsi-ld:complex-pojo:the-test-pojo");
 		MySubProperty mySubProperty = new MySubProperty();
@@ -64,7 +68,7 @@ class JavaObjectMapperTest {
 	@DisplayName("Map Pojo with a field that is a list of objects.")
 	@Test
 	void testListOfSubPropertyMapping() throws JsonProcessingException {
-		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"mySubProperty\":{\"type\":\"Property\",\"value\":[{\"propertyName\":\"My property 1\"},{\"propertyName\":\"My property 2\"}]}}";
+		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"mySubProperty\":{\"value\":[{\"propertyName\":\"My property 1\"},{\"propertyName\":\"My property 2\"}],\"type\":\"Property\"}}";
 
 		MyPojoWithListOfSubProperty myComplexPojo = new MyPojoWithListOfSubProperty("urn:ngsi-ld:complex-pojo:the-test-pojo");
 		MySubProperty mySubProperty1 = new MySubProperty();
@@ -79,7 +83,7 @@ class JavaObjectMapperTest {
 	@DisplayName("Map Pojo with a field that is a relationship.")
 	@Test
 	void testSubEntityMapping() throws JsonProcessingException {
-		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"sub-entity\":{\"object\":\"urn:ngsi-ld:sub-entity:the-sub-entity\",\"type\":\"Relationship\",\"datasetId\":\"urn:ngsi-ld:sub-entity:the-sub-entity\"}}";
+		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"sub-entity\":{\"object\":\"urn:ngsi-ld:sub-entity:the-sub-entity\",\"datasetId\":\"urn:ngsi-ld:sub-entity:the-sub-entity\",\"type\":\"Relationship\"}}";
 
 		MySubPropertyEntity mySubProperty = new MySubPropertyEntity("urn:ngsi-ld:sub-entity:the-sub-entity");
 		MyPojoWithSubEntity myComplexPojo = new MyPojoWithSubEntity("urn:ngsi-ld:complex-pojo:the-test-pojo");
@@ -90,7 +94,7 @@ class JavaObjectMapperTest {
 	@DisplayName("Map Pojo with a field that is a relationship with additional attributes.")
 	@Test
 	void testSubEntityEmbedMapping() throws JsonProcessingException {
-		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"sub-entity\":{\"object\":\"urn:ngsi-ld:sub-entity:the-sub-entity\",\"type\":\"Relationship\",\"datasetId\":\"urn:ngsi-ld:sub-entity:the-sub-entity\",\"role\":{\"type\":\"Property\",\"value\":\"Sub-Entity\"}}}";
+		String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:complex-pojo:the-test-pojo\",\"type\":\"complex-pojo\",\"sub-entity\":{\"object\":\"urn:ngsi-ld:sub-entity:the-sub-entity\",\"datasetId\":\"urn:ngsi-ld:sub-entity:the-sub-entity\",\"type\":\"Relationship\",\"role\":{\"value\":\"Sub-Entity\",\"type\":\"Property\"}}}";
 
 		MySubPropertyEntityEmbed mySubProperty = new MySubPropertyEntityEmbed("urn:ngsi-ld:sub-entity:the-sub-entity");
 		MyPojoWithSubEntityEmbed myComplexPojo = new MyPojoWithSubEntityEmbed("urn:ngsi-ld:complex-pojo:the-test-pojo");
