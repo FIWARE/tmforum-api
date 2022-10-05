@@ -65,202 +65,217 @@ import java.net.URL;
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
 public interface TMForumMapper {
 
-	// using inline expression, since else it might overwrite the String-String mapping
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "href", source = "id")
-	OrganizationVO map(OrganizationCreateVO organizationCreateVO, URI id);
+    // using inline expression, since else it might overwrite the String-String mapping
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    OrganizationVO map(OrganizationCreateVO organizationCreateVO, URI id);
 
 
-	@Mapping(target = "isHeadOffice", source = "headOffice")
-	@Mapping(target = "isLegalEntity", source = "legalEntity")
-	@Mapping(target = "status", source = "organizationState")
-	OrganizationVO map(Organization organization);
+    @Mapping(target = "isHeadOffice", source = "headOffice")
+    @Mapping(target = "isLegalEntity", source = "legalEntity")
+    @Mapping(target = "status", source = "organizationState")
+    OrganizationVO map(Organization organization);
 
-	@Mapping(target = "organizationState", source = "status")
-	@Mapping(target = "href", source = "id")
-	Organization map(OrganizationVO organizationVO);
+    @Mapping(target = "organizationState", source = "status")
+    @Mapping(target = "href", source = "id")
+    Organization map(OrganizationVO organizationVO);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "href", source = "id")
-	OrganizationVO map(OrganizationUpdateVO organizationUpdateVO, String id);
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    OrganizationVO map(OrganizationUpdateVO organizationUpdateVO, String id);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "href", source = "id")
-	IndividualVO map(IndividualCreateVO individualCreateVO, URI id);
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    IndividualVO map(IndividualCreateVO individualCreateVO, URI id);
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "href", source = "id")
-	IndividualVO map(IndividualUpdateVO individualUpdateVO, String id);
-
-
-	@Mapping(target = "status", source = "individualState")
-	IndividualVO map(Individual individual);
-
-	@Mapping(target = "individualState", source = "status")
-	@Mapping(target = "href", source = "id")
-	Individual map(IndividualVO individualVO);
-
-	RelatedParty map(RelatedPartyVO relatedPartyVO);
-
-	RelatedPartyVO map(RelatedParty relatedParty);
-
-	@Mapping(source = "characteristic", target = "mediumCharacteristic")
-	ContactMedium map(ContactMediumVO contactMediumVO);
-
-	@Mapping(target = "characteristic", source = "mediumCharacteristic")
-	@Mapping(target = "validFor", source = "validFor")
-	ContactMediumVO map(ContactMedium contactMedium);
-
-	CharacteristicVO map(Characteristic characteristic);
-
-	Characteristic map(CharacteristicVO characteristicVO);
-
-	Attachment map(AttachmentVO attachmentVO);
-
-	AttachmentVO map(Attachment attachment);
-
-	ExternalReference map(ExternalReferenceVO externalReferenceVO);
-
-	ExternalReferenceVO map(ExternalReference externalReference);
-
-	MediumCharacteristic map(MediumCharacteristicVO mediumCharacteristicVO);
-
-	MediumCharacteristicVO map(MediumCharacteristic mediumCharacteristic);
-
-	OtherOrganizationName map(OtherNameOrganizationVO otherNameOrganizationVO);
-
-	OtherNameOrganizationVO map(OtherOrganizationName otherOrganizationName);
-
-	PartyCreditProfile map(PartyCreditProfileVO value);
-
-	PartyCreditProfileVO map(PartyCreditProfile partyCreditProfile);
-
-	Quantity map(QuantityVO quantityVO);
-
-	QuantityVO map(Quantity quantity);
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    IndividualVO map(IndividualUpdateVO individualUpdateVO, String id);
 
 
-	TaxDefinition map(TaxDefinitionVO taxDefinitionVO);
+    @Mapping(target = "status", source = "individualState")
+    IndividualVO map(Individual individual);
 
-	@Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
-	TaxDefinitionVO map(TaxDefinition taxDefinition);
+    @Mapping(target = "individualState", source = "status")
+    @Mapping(target = "href", source = "id")
+    Individual map(IndividualVO individualVO);
 
-	TaxExemptionCertificate map(TaxExemptionCertificateVO taxExemptionCertificateVO);
+    RelatedParty map(RelatedPartyVO relatedPartyVO);
 
-	@Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
-	TaxExemptionCertificateVO map(TaxExemptionCertificate taxExemptionCertificate);
+    RelatedPartyVO map(RelatedParty relatedParty);
 
-	TimePeriodVO map(TimePeriod timePeriod);
+    @Mapping(source = "characteristic", target = "mediumCharacteristic")
+    ContactMedium map(ContactMediumVO contactMediumVO);
 
-	Disability map(DisabilityVO disabilityVO);
+    @Mapping(target = "characteristic", source = "mediumCharacteristic")
+    @Mapping(target = "validFor", source = "validFor")
+    ContactMediumVO map(ContactMedium contactMedium);
 
-	DisabilityVO map(Disability disability);
+    CharacteristicVO map(Characteristic characteristic);
 
-	IndividualIdentification map(IndividualIdentificationVO individualIdentificationVO);
+    Characteristic map(CharacteristicVO characteristicVO);
 
-	IndividualIdentificationVO map(IndividualIdentification individualIdentification);
+    Attachment map(AttachmentVO attachmentVO);
 
-	LanguageAbility map(LanguageAbilityVO languageAbilityVO);
+    AttachmentVO map(Attachment attachment);
 
-	@Mapping(target = "isFavouriteLanguage", source = "favouriteLanguage")
-	LanguageAbilityVO map(LanguageAbility languageAbility);
+    ExternalReference map(ExternalReferenceVO externalReferenceVO);
 
-	OtherIndividualName map(OtherNameIndividualVO otherNameIndividualVO);
+    ExternalReferenceVO map(ExternalReference externalReference);
 
-	OtherNameIndividualVO map(OtherIndividualName otherIndividualName);
+    MediumCharacteristic map(MediumCharacteristicVO mediumCharacteristicVO);
 
-	Skill map(SkillVO skillVO);
+    MediumCharacteristicVO map(MediumCharacteristic mediumCharacteristic);
 
-	SkillVO map(Skill skill);
+    OtherOrganizationName map(OtherNameOrganizationVO otherNameOrganizationVO);
 
-	IndividualState map(IndividualStateTypeVO individualStateTypeVO);
+    OtherNameOrganizationVO map(OtherOrganizationName otherOrganizationName);
 
-	IndividualStateTypeVO map(IndividualState individualState);
+    PartyCreditProfile map(PartyCreditProfileVO value);
+
+    PartyCreditProfileVO map(PartyCreditProfile partyCreditProfile);
+
+    Quantity map(QuantityVO quantityVO);
+
+    QuantityVO map(Quantity quantity);
 
 
-	default OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
-		if (organizationParentRelationship == null) {
-			return null;
-		}
-		OrganizationParentRelationshipVO organizationParentRelationshipVO = new OrganizationParentRelationshipVO();
-		organizationParentRelationshipVO.setRelationshipType(organizationParentRelationship.getRelationshipType());
-		organizationParentRelationshipVO.setAtBaseType(organizationParentRelationship.getAtBaseType());
-		organizationParentRelationshipVO.setAtSchemaLocation(organizationParentRelationship.getAtSchemaLocation());
-		organizationParentRelationshipVO.setAtType(organizationParentRelationship.getAtType());
-		organizationParentRelationshipVO.setOrganization(new OrganizationRefVO().id(organizationParentRelationship.getId().toString()));
-		return organizationParentRelationshipVO;
-	}
+    TaxDefinition map(TaxDefinitionVO taxDefinitionVO);
 
-	default OrganizationChildRelationshipVO map(OrganizationChildRelationship organizationChildRelationship) {
-		if (organizationChildRelationship == null) {
-			return null;
-		}
-		OrganizationChildRelationshipVO organizationChildRelationshipVO = new OrganizationChildRelationshipVO();
-		organizationChildRelationshipVO.setRelationshipType(organizationChildRelationship.getRelationshipType());
-		organizationChildRelationshipVO.setAtBaseType(organizationChildRelationship.getAtBaseType());
-		organizationChildRelationshipVO.setAtSchemaLocation(organizationChildRelationship.getAtSchemaLocation());
-		organizationChildRelationshipVO.setAtType(organizationChildRelationship.getAtType());
-		organizationChildRelationshipVO.setOrganization(new OrganizationRefVO().id(organizationChildRelationship.getId().toString()));
-		return organizationChildRelationshipVO;
-	}
+    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
+    TaxDefinitionVO map(TaxDefinition taxDefinition);
 
-	default OrganizationParentRelationship map(OrganizationParentRelationshipVO organizationParentRelationshipVO) {
-		if (organizationParentRelationshipVO == null) {
-			return null;
-		}
-		OrganizationParentRelationship organizationParentRelationship = new OrganizationParentRelationship(organizationParentRelationshipVO.getOrganization().getId());
-		organizationParentRelationship.setRelationshipType(organizationParentRelationshipVO.getRelationshipType());
-		organizationParentRelationship.setAtType(organizationParentRelationshipVO.getAtType());
-		organizationParentRelationship.setAtSchemaLocation(organizationParentRelationshipVO.getAtSchemaLocation());
-		organizationParentRelationship.setAtBaseType(organizationParentRelationshipVO.getAtBaseType());
-		return organizationParentRelationship;
-	}
+    TaxExemptionCertificate map(TaxExemptionCertificateVO taxExemptionCertificateVO);
 
-	default OrganizationChildRelationship map(OrganizationChildRelationshipVO organizationChildRelationshipVO) {
-		if (organizationChildRelationshipVO == null) {
-			return null;
-		}
-		OrganizationChildRelationship organizationChildRelationship = new OrganizationChildRelationship(organizationChildRelationshipVO.getOrganization().getId());
-		organizationChildRelationship.setRelationshipType(organizationChildRelationshipVO.getRelationshipType());
-		organizationChildRelationship.setAtType(organizationChildRelationshipVO.getAtType());
-		organizationChildRelationship.setAtSchemaLocation(organizationChildRelationshipVO.getAtSchemaLocation());
-		organizationChildRelationship.setAtBaseType(organizationChildRelationshipVO.getAtBaseType());
-		return organizationChildRelationship;
-	}
+    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
+    TaxExemptionCertificateVO map(TaxExemptionCertificate taxExemptionCertificate);
 
-	TimePeriod map(TimePeriodVO value);
+    TimePeriodVO map(TimePeriod timePeriod);
 
-	default URL map(String value) {
-		if (value == null) {
-			return null;
-		}
-		try {
-			return new URL(value);
-		} catch (MalformedURLException e) {
-			throw new MappingException(String.format("%s is not a URL.", value), e);
-		}
-	}
+    Disability map(DisabilityVO disabilityVO);
 
-	default String map(URL value) {
-		if (value == null) {
-			return null;
-		}
-		return value.toString();
-	}
+    DisabilityVO map(Disability disability);
 
-	default URI mapToURI(String value) {
-		if (value == null) {
-			return null;
-		}
-		return URI.create(value);
-	}
+    IndividualIdentification map(IndividualIdentificationVO individualIdentificationVO);
 
-	default String mapFromURI(URI value) {
-		if (value == null) {
-			return null;
-		}
-		return value.toString();
-	}
+    IndividualIdentificationVO map(IndividualIdentification individualIdentification);
+
+    LanguageAbility map(LanguageAbilityVO languageAbilityVO);
+
+    @Mapping(target = "isFavouriteLanguage", source = "favouriteLanguage")
+    LanguageAbilityVO map(LanguageAbility languageAbility);
+
+    OtherIndividualName map(OtherNameIndividualVO otherNameIndividualVO);
+
+    OtherNameIndividualVO map(OtherIndividualName otherIndividualName);
+
+    Skill map(SkillVO skillVO);
+
+    SkillVO map(Skill skill);
+
+    IndividualState map(IndividualStateTypeVO individualStateTypeVO);
+
+    IndividualStateTypeVO map(IndividualState individualState);
+
+
+    default OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
+        if (organizationParentRelationship == null) {
+            return null;
+        }
+        OrganizationParentRelationshipVO organizationParentRelationshipVO = new OrganizationParentRelationshipVO();
+        organizationParentRelationshipVO.setRelationshipType(organizationParentRelationship.getRelationshipType());
+        organizationParentRelationshipVO.setAtBaseType(organizationParentRelationship.getAtBaseType());
+        organizationParentRelationshipVO.setAtSchemaLocation(organizationParentRelationship.getAtSchemaLocation());
+        organizationParentRelationshipVO.setAtType(organizationParentRelationship.getAtType());
+        OrganizationRefVO organizationRefVO = new OrganizationRefVO();
+        organizationRefVO.setId(organizationParentRelationship.getId().toString());
+        organizationRefVO.setName(organizationParentRelationship.getName());
+        if(organizationParentRelationship.getHref() != null) {
+            organizationRefVO.setHref(organizationParentRelationship.getHref().toString());
+        }
+        organizationParentRelationshipVO.setOrganization(organizationRefVO);
+        return organizationParentRelationshipVO;
+    }
+
+    default OrganizationChildRelationshipVO map(OrganizationChildRelationship organizationChildRelationship) {
+        if (organizationChildRelationship == null) {
+            return null;
+        }
+        OrganizationChildRelationshipVO organizationChildRelationshipVO = new OrganizationChildRelationshipVO();
+        organizationChildRelationshipVO.setRelationshipType(organizationChildRelationship.getRelationshipType());
+        organizationChildRelationshipVO.setAtBaseType(organizationChildRelationship.getAtBaseType());
+        organizationChildRelationshipVO.setAtSchemaLocation(organizationChildRelationship.getAtSchemaLocation());
+        organizationChildRelationshipVO.setAtType(organizationChildRelationship.getAtType());
+        OrganizationRefVO organizationRefVO = new OrganizationRefVO();
+        organizationRefVO.setId(organizationChildRelationship.getId().toString());
+        organizationRefVO.setName(organizationChildRelationship.getName());
+        if (organizationChildRelationship.getHref() != null) {
+            organizationRefVO.setHref(organizationChildRelationship.getHref().toString());
+        }
+        organizationChildRelationshipVO.setOrganization(organizationRefVO);
+        return organizationChildRelationshipVO;
+    }
+
+    default OrganizationParentRelationship map(OrganizationParentRelationshipVO organizationParentRelationshipVO) {
+        if (organizationParentRelationshipVO == null) {
+            return null;
+        }
+        OrganizationParentRelationship organizationParentRelationship = new OrganizationParentRelationship(organizationParentRelationshipVO.getOrganization().getId());
+        organizationParentRelationship.setRelationshipType(organizationParentRelationshipVO.getRelationshipType());
+        organizationParentRelationship.setAtType(organizationParentRelationshipVO.getAtType());
+        organizationParentRelationship.setAtSchemaLocation(organizationParentRelationshipVO.getAtSchemaLocation());
+        organizationParentRelationship.setAtBaseType(organizationParentRelationshipVO.getAtBaseType());
+        organizationParentRelationship.setName(organizationParentRelationshipVO.getOrganization().getName());
+        return organizationParentRelationship;
+    }
+
+    default OrganizationChildRelationship map(OrganizationChildRelationshipVO organizationChildRelationshipVO) {
+        if (organizationChildRelationshipVO == null) {
+            return null;
+        }
+        OrganizationChildRelationship organizationChildRelationship = new OrganizationChildRelationship(organizationChildRelationshipVO.getOrganization().getId());
+        organizationChildRelationship.setRelationshipType(organizationChildRelationshipVO.getRelationshipType());
+        organizationChildRelationship.setAtType(organizationChildRelationshipVO.getAtType());
+        organizationChildRelationship.setAtSchemaLocation(organizationChildRelationshipVO.getAtSchemaLocation());
+        organizationChildRelationship.setAtBaseType(organizationChildRelationshipVO.getAtBaseType());
+        organizationChildRelationship.setName(organizationChildRelationshipVO.getOrganization().getName());
+        organizationChildRelationship.setHref(URI.create(organizationChildRelationshipVO.getOrganization().getHref()));
+        return organizationChildRelationship;
+    }
+
+    TimePeriod map(TimePeriodVO value);
+
+    default URL map(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new URL(value);
+        } catch (MalformedURLException e) {
+            throw new MappingException(String.format("%s is not a URL.", value), e);
+        }
+    }
+
+    default String map(URL value) {
+        if (value == null) {
+            return null;
+        }
+        return value.toString();
+    }
+
+    default URI mapToURI(String value) {
+        if (value == null) {
+            return null;
+        }
+        return URI.create(value);
+    }
+
+    default String mapFromURI(URI value) {
+        if (value == null) {
+            return null;
+        }
+        return value.toString();
+    }
 
 }
 

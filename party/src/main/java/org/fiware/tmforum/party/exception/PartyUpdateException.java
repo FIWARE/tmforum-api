@@ -5,17 +5,17 @@ import lombok.Getter;
 /**
  * Exception to be thrown in case a party could not have been created.
  */
-public class PartyCreationException extends RuntimeException {
+public class PartyUpdateException extends RuntimeException {
 
 	@Getter
 	private final PartyExceptionReason partyExceptionReason;
 
-	public PartyCreationException(String message, PartyExceptionReason partyExceptionReason) {
+	public PartyUpdateException(String message, PartyExceptionReason partyExceptionReason) {
 		super(message);
 		this.partyExceptionReason = partyExceptionReason;
 	}
 
-	public PartyCreationException(String message, Throwable cause, PartyExceptionReason partyExceptionReason) {
+	public PartyUpdateException(String message, Throwable cause, PartyExceptionReason partyExceptionReason) {
 		super(message, cause);
 		this.partyExceptionReason = partyExceptionReason;
 	}
