@@ -280,11 +280,13 @@ public class EntityVOMapper extends Mapper {
                             return invokeWithExceptionHandling(setter, objectUnderConstruction, relatedEntity);
                         });
             } else {
-                return getObjectFromRelationship(relationshipVO, targetClass, relationShipMap)
+                return getObjectFromRelationship(relationshipVO, targetClass, relationShipMap, relationshipVO.getAdditionalProperties())
                         .flatMap(relatedEntity -> {
                             // we return the constructed object, since invoke most likely returns null, which is not allowed on mapper functions
                             return invokeWithExceptionHandling(setter, objectUnderConstruction, relatedEntity);
                         });
+                // handle overwrites from property
+
             }
         } else {
             return Mono.error(new MappingException(String.format("Did not receive a valid relationship: %s", relationShip)));
@@ -344,7 +346,7 @@ public class EntityVOMapper extends Mapper {
                         };
 
                         // try to find the attribute from the additional properties
-                        if (optionalProperty.isEmpty() && relationshipVO.getAdditionalProperties().containsKey(field)) {
+                        if (optionalProperty.isEmpty() && relationshipVO.getAdditionalProperties() != null && relationshipVO.getAdditionalProperties().containsKey(field)) {
                             optionalProperty = Optional.ofNullable(relationshipVO.getAdditionalProperties().get(field));
                         }
 
@@ -431,7 +433,7 @@ public class EntityVOMapper extends Mapper {
      */
     private <T> Mono<List<T>> relationshipListToTargetClass(AdditionalPropertyVO entry, Class<T> targetClass, Map<String, EntityVO> relationShipEntitiesMap) {
         if (entry instanceof RelationshipVO relationshipVO) {
-            return getObjectFromRelationship(relationshipVO, targetClass, relationShipEntitiesMap).map(List::of);
+            return getObjectFromRelationship(relationshipVO, targetClass, relationShipEntitiesMap, relationshipVO.getAdditionalProperties()).map(List::of);
         } else if (entry instanceof RelationshipListVO relationshipMap) {
             return zipToList(relationshipMap.stream(), targetClass, relationShipEntitiesMap);
 
@@ -480,8 +482,13 @@ public class EntityVOMapper extends Mapper {
      * @param <T>            the class
      * @return the actual object
      */
-    private <T> Mono<T> getObjectFromRelationship(RelationshipVO relationshipVO, Class<T> targetClass, Map<String, EntityVO> relationShipEntitiesMap) {
-        return fromEntityVO(relationShipEntitiesMap.get(relationshipVO.getObject().toString()), targetClass);
+    private <T> Mono<T> getObjectFromRelationship(RelationshipVO relationshipVO, Class<T> targetClass, Map<String, EntityVO> relationShipEntitiesMap, Map<String, AdditionalPropertyVO> additionalPropertyVOMap) {
+        EntityVO entityVO = relationShipEntitiesMap.get(relationshipVO.getObject().toString());
+        //merge with override properties
+        if (additionalPropertyVOMap != null) {
+            entityVO.getAdditionalProperties().putAll(additionalPropertyVOMap);
+        }
+        return fromEntityVO(entityVO, targetClass);
 
     }
 
