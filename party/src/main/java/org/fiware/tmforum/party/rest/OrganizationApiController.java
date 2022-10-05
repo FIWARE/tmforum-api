@@ -138,7 +138,7 @@ public class OrganizationApiController extends AbstractApiController implements 
                                         .then(partyRepository.getOrganization(idUri))
                                         .map(tmForumMapper::map)
                                         .map(HttpResponse::ok)
-                                        .onErrorMap(error -> new PartyUpdateException("Was not able to update organization.", PartyExceptionReason.UNKNOWN)))
+                                        .onErrorMap(error -> new PartyUpdateException("Was not able to update organization.", error, PartyExceptionReason.UNKNOWN)))
                 )
                 .map(HttpResponse.class::cast);
     }

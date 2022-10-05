@@ -447,9 +447,9 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
     @Override
     public void patchIndividual200() throws Exception {
 
-        IndividualCreateVO IndividualCreateVO = IndividualCreateVOTestExample.build();
+        IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
 
-        HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(() -> individualApiTestClient.createIndividual(IndividualCreateVO));
+        HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(() -> individualApiTestClient.createIndividual(individualCreateVO));
         assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(), message);
 
         String individualId = individualCreateResponse.body().getId();
