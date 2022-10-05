@@ -13,6 +13,7 @@
     </parent>
 
     <properties>
+        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632-Party-v4.0.0.swagger.json</tmforum.api.url>
         <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF632-Party-v4.0.0.zip</module.ctk.url>
         <module.ctk.script-folder>TMF632-Party</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
@@ -190,7 +191,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${tmforum.party-api.url}</inputSpec>
+                            <inputSpec>${tmforum.api.url}</inputSpec>
                             <apiPackage>org.fiware.party.api</apiPackage>
                             <strictSpec>true</strictSpec>
                             <modelPackage>org.fiware.party.model</modelPackage>
