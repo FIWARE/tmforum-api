@@ -20,9 +20,15 @@ import java.util.Optional;
 @Slf4j
 public class CatchAllExceptionHandler implements ExceptionHandler<Exception, HttpResponse<ErrorDetails>> {
 
-	@Override
-	public HttpResponse<ErrorDetails> handle(HttpRequest request, Exception exception) {
-		log.warn("Received unexpected exception {} for request {}.", exception.getMessage(), request, exception);
-		return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorDetails(Optional.empty(), "Request could not be answered due to an unexpected internal error."));
-	}
+    @Override
+    public HttpResponse<ErrorDetails> handle(HttpRequest request, Exception exception) {
+        log.warn("Received unexpected exception {} for request {}.", exception.getMessage(), request, exception);
+        return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        new ErrorDetails(HttpStatus.INTERNAL_SERVER_ERROR.toString(),
+                                HttpStatus.INTERNAL_SERVER_ERROR.getReason(),
+                                "Request could not be answered due to an unexpected internal error.",
+                                HttpStatus.INTERNAL_SERVER_ERROR.toString(),
+                                null));
+    }
 }

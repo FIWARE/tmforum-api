@@ -15,6 +15,7 @@ import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.Optional;
 
 /**
  * Base-Repository implementation for using the NGSI-LD API as a storage backend. Supports caching and asynchronous retrieval of entities.
@@ -82,7 +83,7 @@ public abstract class NgsiLdBaseRepository {
         if (e instanceof HttpClientResponseException httpException && httpException.getStatus().equals(HttpStatus.NOT_FOUND)) {
             return Mono.empty();
         }
-        throw new NgsiLdRepositoryException("Was not able to successfully call the broker.", e);
+        throw new NgsiLdRepositoryException("Was not able to successfully call the broker.", Optional.of(e));
     }
 
 }

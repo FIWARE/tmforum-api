@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static org.fiware.tmforum.common.CommonTemplates.ID_TEMPLATE;
+import static org.fiware.tmforum.common.CommonConstants.ID_TEMPLATE;
 
 @Named("IdHelper")
 public class IdHelper {
