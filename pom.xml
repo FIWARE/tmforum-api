@@ -256,6 +256,60 @@
                 <version>${version.org.apache.maven.plugins.maven-site-plugin}</version>
             </plugin>
             <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${version.com.github.spotbugs.maven-plugin}</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <failOnError>false</failOnError>
+                    <xmlOutputDirectory>${spotbugs.reportFolder}</xmlOutputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${version.org.jacoco.maven-plugin}</version>
+                <configuration>
+                    <!-- exclude generated code -->
+                    <excludes>
+                        <exclude>org/fiware/ngsi/**/*</exclude>
+                        <exclude>org/fiware/tmforum/**/*</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pre-unit-tests</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Sets the path to the file which contains the execution data. -->
+                            <destFile>${jacoco.utReportFile}</destFile>
+                        </configuration>
+                    </execution>
+                    <!-- Ensures that the code coverage report for unit tests is created after unit tests have been run -->
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${jacoco.utReportFile}</dataFile>
+                            <outputDirectory>${jacoco.reportFolder}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>${version.org.eluder.coveralls.maven-plugin}</version>
+                <configuration>
+                    <repoToken>${coveralls.token}</repoToken>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${version.org.apache.maven.plugins.maven-javadoc-plugin}</version>
@@ -357,53 +411,6 @@
                         <failIfNoTests>true</failIfNoTests>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>com.github.spotbugs</groupId>
-                    <artifactId>spotbugs-maven-plugin</artifactId>
-                    <version>${version.com.github.spotbugs.maven-plugin}</version>
-                    <configuration>
-                        <xmlOutput>true</xmlOutput>
-                        <failOnError>false</failOnError>
-                        <xmlOutputDirectory>${spotbugs.reportFolder}</xmlOutputDirectory>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>${version.org.jacoco.maven-plugin}</version>
-                    <configuration>
-                        <!-- exclude generated code -->
-                        <excludes>
-                            <exclude>org/fiware/ngsi/**/*</exclude>
-                            <exclude>org/fiware/tmforum/**/*</exclude>
-                        </excludes>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>pre-unit-tests</id>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                            <configuration>
-                                <!-- Sets the path to the file which contains the execution data. -->
-                                <destFile>${jacoco.utReportFile}</destFile>
-                            </configuration>
-                        </execution>
-                        <!-- Ensures that the code coverage report for unit tests is created after unit tests have been run -->
-                        <execution>
-                            <id>post-unit-test</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                            <configuration>
-                                <dataFile>${jacoco.utReportFile}</dataFile>
-                                <outputDirectory>${jacoco.reportFolder}</outputDirectory>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-
             </plugins>
         </pluginManagement>
     </build>
@@ -710,9 +717,6 @@
                 </pluginManagement>
             </build>
         </profile>
-
-
-
     </profiles>
 </project>
 
