@@ -1,15 +1,19 @@
 package org.fiware.tmforum.customer.repository;
 
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import org.fiware.ngsi.api.EntitiesApi;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.repository.NgsiLdBaseRepository;
 import org.fiware.tmforum.customer.domain.customer.Customer;
+import org.fiware.tmforum.customer.exception.CustomerDeletionException;
+import org.fiware.tmforum.customer.exception.CustomerExceptionReason;
+import org.fiware.tmforum.customer.exception.CustomerListException;
 import org.fiware.tmforum.mapping.EntityVOMapper;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
+import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
 import java.net.URI;
@@ -21,27 +25,38 @@ import java.util.stream.Stream;
 public class CustomerRepository extends NgsiLdBaseRepository {
 
     private final EntityVOMapper entityVOMapper;
+    private final NGSIMapper ngsiMapper;
     private final JavaObjectMapper javaObjectMapper;
 
-    public CustomerRepository(GeneralProperties generalProperties, EntitiesApi entitiesApi, EntityVOMapper entityVOMapper, JavaObjectMapper javaObjectMapper) {
+    public CustomerRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi, EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
         super(generalProperties, entitiesApi);
         this.entityVOMapper = entityVOMapper;
+        this.ngsiMapper = ngsiMapper;
         this.javaObjectMapper = javaObjectMapper;
     }
 
-    public Completable createCustomer(Customer customer) {
+    public Mono<Void> createCustomer(Customer customer) {
         return createEntity(javaObjectMapper.toEntityVO(customer), generalProperties.getTenant());
     }
 
-    public Completable deleteCustomer(String id) {
-        return entitiesApi.removeEntityById(URI.create(id), generalProperties.getTenant(), null);
+    public Mono<Void> deleteCustomer(URI id) {
+        return entitiesApi.removeEntityById(id, generalProperties.getTenant(), null)
+                .onErrorResume(t -> {
+                    if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
+                        throw new CustomerDeletionException(String.format("Was not able to delete %s, since it does not exist.", id),
+                                CustomerExceptionReason.NOT_FOUND);
+                    }
+                    throw new CustomerDeletionException(String.format("Was not able to delete %s.", id),
+                            t,
+                            CustomerExceptionReason.UNKNOWN);
+                });
     }
 
-    public Single<List<Customer>> findCustomers() {
+    public Mono<List<Customer>> findCustomers(Integer offset, Integer limit) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
-                null,
-                null,
-                Customer.TYPE_CUSTOMER,
+                        null,
+                        null,
+                        Customer.TYPE_CUSTOMER,
                         null,
                         null,
                         null,
@@ -49,20 +64,28 @@ public class CustomerRepository extends NgsiLdBaseRepository {
                         null,
                         null,
                         null,
-                        null,
+                        limit,
+                        offset,
                         null,
                         getLinkHeader())
                 .map(List::stream)
-                .flatMap(entityVOStream -> zipToList(entityVOStream, Customer.class));
+                .flatMap(entityVOStream -> zipToList(entityVOStream, Customer.class))
+                .onErrorResume(t -> {
+                    throw new CustomerListException("Was not able to list customers.", t);
+                });
     }
 
-    public Maybe<Customer> getCustomer(String id) {
-        return retrieveEntityById(URI.create(id))
-                .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, Customer.class).toMaybe());
+    public <T> Mono<Void> updateCustomer(String id, T customer) {
+        return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(customer)));
     }
 
-    private <T> Single<List<T>> zipToList(Stream<EntityVO> entityVOStream, Class<T> targetClass) {
-        return Single.zip(
+    public Mono<Customer> getCustomer(URI id) {
+        return retrieveEntityById(id)
+                .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, Customer.class));
+    }
+
+    private <T> Mono<List<T>> zipToList(Stream<EntityVO> entityVOStream, Class<T> targetClass) {
+        return Mono.zip(
                 entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
                 oList -> Arrays.stream(oList).map(targetClass::cast).toList()
         );

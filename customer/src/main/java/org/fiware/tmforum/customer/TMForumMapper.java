@@ -21,12 +21,17 @@ public interface TMForumMapper {
 
 
     // using inline expression, since else it might overwrite the String-String mapping
-    @Mapping(target = "id", expression = "java(java.lang.String.format(ID_TEMPLATE, \"customer\", java.util.UUID.randomUUID()))")
-    @Mapping(target = "href", ignore = true)
-    CustomerVO map(CustomerCreateVO customerCreateVO);
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    CustomerVO map(CustomerCreateVO customerCreateVO, URI id);
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    CustomerVO map(CustomerUpdateVO customerUpdateVO, String id);
 
     CustomerVO map(Customer customer);
 
+    @Mapping(target = "href", source = "id")
     Customer map(CustomerVO customerVO);
 
     RelatedParty map(RelatedPartyVO relatedPartyVO);

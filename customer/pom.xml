@@ -12,6 +12,14 @@
         <version>0.1</version>
     </parent>
 
+    <properties>
+        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF629-Customer-v4.0.0.swagger.json</tmforum.api.url>
+        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF629-Customer-v4.0.0.zip</module.ctk.url>
+        <module.ctk.script-folder>TMF629-Customer-v4.0.0</module.ctk.script-folder>
+        <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
+        <module.ctk.base-path>/tmf-api/customerManagement/v4</module.ctk.base-path>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
@@ -78,13 +86,13 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.micronaut.rxjava2</groupId>
-            <artifactId>micronaut-rxjava2</artifactId>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-jackson-core</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-jackson-core</artifactId>
+            <groupId>io.micronaut.reactor</groupId>
+            <artifactId>micronaut-reactor</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -183,16 +191,14 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.parent.basedir}/api/customer.yaml</inputSpec>
+                            <inputSpec>${tmforum.api.url}</inputSpec>
                             <apiPackage>org.fiware.customer.api</apiPackage>
                             <strictSpec>true</strictSpec>
                             <modelPackage>org.fiware.customer.model</modelPackage>
-                            <generateAliasAsModel>true</generateAliasAsModel>
                             <generatorName>micronaut</generatorName>
-                            <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>
                             <modelNameSuffix>VO</modelNameSuffix>
                             <output>${project.build.directory}</output>
+                            <generateSupportingFiles>false</generateSupportingFiles>
                             <configOptions>
                                 <fullJavaUtil>true</fullJavaUtil>
                                 <useOptional>false</useOptional>
@@ -202,7 +208,7 @@
                                 <useBeanValidation>false</useBeanValidation>
                                 <supportAsync>true</supportAsync>
                                 <jacksonDatabindNullable>false</jacksonDatabindNullable>
-                                <supportsAdditionalPropertiesWithComposedSchema>true</supportsAdditionalPropertiesWithComposedSchema>
+                                <generateExamples>true</generateExamples>
                             </configOptions>
                             <typeMappings>
                                 <typeMapping>java.util.Date=java.time.Instant</typeMapping>

@@ -6,6 +6,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.fiware.customer.model.*;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.repository.ReferencesRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.customer.TMForumMapper;
@@ -17,8 +18,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,7 +60,7 @@ public class CustomerApiControllerTest {
     void testCreateCustomer() {
         CustomerCreateVO customerCreateVO = new CustomerCreateVO();
         customerCreateVO.setName("Customer Name");
-        CustomerVO customerMockVO = tmForumMapper.map(customerCreateVO);
+        CustomerVO customerMockVO = tmForumMapper.map(customerCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Customer.TYPE_CUSTOMER));
 
         RelatedPartyVO relatedPartyVO = new RelatedPartyVO();
         relatedPartyVO.setName("Related party name");
@@ -67,20 +71,21 @@ public class CustomerApiControllerTest {
 
         // Stub customer repo create
         when(customerRepository.createCustomer(anyObject()))
-                .thenReturn(Completable.fromAction(() -> getCustomer(customerMockVO)));
+                .thenReturn(Mono.empty());
+                //.thenReturn(Completable.fromAction(() -> getCustomer(customerMockVO)));
 
         // Stub references repo ref exists
         when(referencesRepository.referenceExists(anyString(), anyList()))
-                .thenReturn(Maybe.just(relatedPartyVO));
+                .thenReturn(Mono.just(relatedPartyVO));
 
-        Single<HttpResponse<CustomerVO>> singleResponse =
+        Mono<HttpResponse<CustomerVO>> monoResponse =
                 customerApiController.createCustomer(customerCreateVO);
-        CustomerVO customerResponseVO = singleResponse.blockingGet().body();
+        CustomerVO customerResponseVO = monoResponse.block().body();
 
         assertEquals(HttpStatus.CREATED,
-                singleResponse.blockingGet().getStatus(),
+                monoResponse.block().getStatus(),
                 "A customer response with status CREATED is expected.");
-        assertTrue(singleResponse.blockingGet().getBody().isPresent(),
+        assertTrue(monoResponse.block().getBody().isPresent(),
                 "A customer response contains object");
         assertEquals(customerCreateVO.getName(),
                 customerResponseVO.getName(),
@@ -96,12 +101,12 @@ public class CustomerApiControllerTest {
         Customer customer = tmForumMapper.map(customerVO);
 
         // Stub customer repo receive
-        when(customerRepository.getCustomer("id1"))
-                .thenReturn(Maybe.just(customer));
+        when(customerRepository.getCustomer(URI.create("id1")))
+                .thenReturn(Mono.just(customer));
 
         // Retrieve customer
         HttpResponse<CustomerVO> customerVOHttpResponse =
-                customerApiController.retrieveCustomer("id1", null).blockingGet();
+                customerApiController.retrieveCustomer("id1", null).block();
         assertEquals(HttpStatus.OK,
                 customerVOHttpResponse.getStatus(),
                 "A customer response has OK status");
