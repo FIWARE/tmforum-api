@@ -19,4 +19,3 @@ jobs:
         id: test
         run: |
           mvn clean test integration-test
-          mvn coveralls:jacoco -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Pcoveralls
