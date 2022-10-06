@@ -1,6 +1,6 @@
 package org.fiware.tmforum.productcatalog.exception;
 
-public enum CatalogExceptionReason {
+public enum ProductCatalogExceptionReason {
 
     CONFLICT,
     INVALID_DATA,

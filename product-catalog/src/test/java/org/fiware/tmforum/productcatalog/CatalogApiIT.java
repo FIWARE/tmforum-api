@@ -4,6 +4,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
+import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.productcatalog.api.CatalogApiTestClient;
 import org.fiware.productcatalog.api.CatalogApiTestSpec;
 import org.fiware.productcatalog.model.CatalogCreateVO;
@@ -269,9 +270,9 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<CatalogVO>> firstPartResponse = callAndCatch(() -> catalogApiTestClient.listCatalog(null, 0, limit));
-        assertEquals(limit, firstPartResponse.body(), "Only the requested number of entries should be returend.");
+        assertEquals(limit, firstPartResponse.body().size(), "Only the requested number of entries should be returend.");
         HttpResponse<List<CatalogVO>> secondPartResponse = callAndCatch(() -> catalogApiTestClient.listCatalog(null, 0 + limit, limit));
-        assertEquals(limit, secondPartResponse.body(), "Only the requested number of entries should be returend.");
+        assertEquals(limit, secondPartResponse.body().size(), "Only the requested number of entries should be returend.");
 
         List<CatalogVO> retrievedCatalogs = firstPartResponse.body();
         retrievedCatalogs.addAll(secondPartResponse.body());
@@ -472,27 +473,39 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         return testEntries.stream();
     }
 
-
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
     @Override
     public void patchCatalog401() throws Exception {
 
     }
 
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+    @Test
     @Override
     public void patchCatalog403() throws Exception {
 
     }
 
+    @Test
     @Override
     public void patchCatalog404() throws Exception {
-
+        CatalogUpdateVO catalogUpdateVO = CatalogUpdateVOTestExample.build();
+        assertEquals(
+                HttpStatus.NOT_FOUND,
+                callAndCatch(() -> catalogApiTestClient.patchCatalog("urn:ngsi-ld:catalog:not-existent", catalogUpdateVO)).getStatus(),
+                "Non existent catalogs should not be updated.");
     }
 
+    @Disabled("Prohibited by the framework.")
+    @Test
     @Override
     public void patchCatalog405() throws Exception {
 
     }
 
+    @Disabled("No implicit creations, cannot happen.")
+    @Test
     @Override
     public void patchCatalog409() throws Exception {
 

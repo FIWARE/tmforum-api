@@ -363,9 +363,9 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<IndividualVO>> firstPartResponse = callAndCatch(() -> individualApiTestClient.listIndividual(null, 0, limit));
-        assertEquals(limit, firstPartResponse.body(), "Only the requested number of entries should be returend.");
+        assertEquals(limit, firstPartResponse.body().size(), "Only the requested number of entries should be returend.");
         HttpResponse<List<IndividualVO>> secondPartResponse = callAndCatch(() -> individualApiTestClient.listIndividual(null, 0 + limit, limit));
-        assertEquals(limit, secondPartResponse.body(), "Only the requested number of entries should be returend.");
+        assertEquals(limit, secondPartResponse.body().size(), "Only the requested number of entries should be returend.");
 
         List<IndividualVO> retrievedIndividuals = firstPartResponse.body();
         retrievedIndividuals.addAll(secondPartResponse.body());
@@ -620,7 +620,6 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
     }
 
-    @Disabled("Not implemented yet")
     @Test
     @Override
     public void patchIndividual404() throws Exception {

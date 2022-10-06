@@ -13,12 +13,12 @@ import javax.inject.Singleton;
 
 @Produces
 @Singleton
-@Requires(classes = {CatalogException.class, ExceptionHandler.class})
+@Requires(classes = {ProductCatalogException.class, ExceptionHandler.class})
 @Slf4j
-public class CatalogExceptionHandler implements ExceptionHandler<CatalogException, HttpResponse<ErrorDetails>> {
+public class ProductCatalogExceptionHandler implements ExceptionHandler<ProductCatalogException, HttpResponse<ErrorDetails>> {
 
     @Override
-    public HttpResponse<ErrorDetails> handle(HttpRequest request, CatalogException exception) {
+    public HttpResponse<ErrorDetails> handle(HttpRequest request, ProductCatalogException exception) {
         log.warn("The party could not have been created.", exception);
         return switch (exception.getCatalogExceptionReason()) {
             case CONFLICT -> HttpResponse.status(HttpStatus.CONFLICT).body(new ErrorDetails(HttpStatus.CONFLICT.toString(),

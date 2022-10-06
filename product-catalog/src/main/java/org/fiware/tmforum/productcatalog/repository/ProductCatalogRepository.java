@@ -6,12 +6,9 @@ import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.repository.NgsiLdBaseRepository;
 import org.fiware.tmforum.mapping.EntityVOMapper;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
-import org.fiware.tmforum.party.domain.individual.Individual;
-import org.fiware.tmforum.party.domain.organization.Organization;
-import org.fiware.tmforum.party.exception.PartyListException;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
-import org.fiware.tmforum.productcatalog.exception.CatalogException;
-import org.fiware.tmforum.productcatalog.exception.CatalogExceptionReason;
+import org.fiware.tmforum.productcatalog.exception.ProductCatalogException;
+import org.fiware.tmforum.productcatalog.exception.ProductCatalogExceptionReason;
 import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
@@ -29,17 +26,16 @@ public class ProductCatalogRepository extends NgsiLdBaseRepository {
         super(generalProperties, entitiesApi, javaObjectMapper, ngsiMapper, entityVOMapper);
     }
 
-    public Mono<Catalog> getCatalog(URI id) {
+    public <T> Mono<T> get(URI id, Class<T> entityClass) {
         return retrieveEntityById(id)
-                .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, Catalog.class));
+                .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
     }
 
-
-    public Mono<List<Catalog>> findCatalogs(Integer offset, Integer limit) {
+    public <T> Mono<List<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         null,
                         null,
-                        Catalog.TYPE_CATALOGUE,
+                        entityType,
                         null,
                         null,
                         null,
@@ -52,9 +48,9 @@ public class ProductCatalogRepository extends NgsiLdBaseRepository {
                         null,
                         getLinkHeader())
                 .map(List::stream)
-                .flatMap(entityVOStream -> zipToList(entityVOStream, Catalog.class))
+                .flatMap(entityVOStream -> zipToList(entityVOStream, entityClass))
                 .onErrorResume(t -> {
-                    throw new CatalogException("Was not able to list parties.", t, CatalogExceptionReason.UNKNOWN);
+                    throw new ProductCatalogException("Was not able to list entities.", t, ProductCatalogExceptionReason.UNKNOWN);
                 });
     }
 

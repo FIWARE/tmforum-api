@@ -11,6 +11,7 @@ import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.party.domain.Quantity;
 import org.fiware.tmforum.party.domain.TimePeriod;
 
+import java.net.URI;
 import java.net.URL;
 import java.time.Instant;
 import java.util.List;
@@ -23,7 +24,7 @@ public class ProductOfferingPrice extends EntityWithId {
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
-	private URL href;
+	private URI href;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "description")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description")}))
