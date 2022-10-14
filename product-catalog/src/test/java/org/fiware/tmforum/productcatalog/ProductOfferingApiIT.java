@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.fiware.productcatalog.api.ProductOfferingApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestSpec;
 import org.fiware.productcatalog.model.AgreementRefVOTestExample;
+import org.fiware.productcatalog.model.BundledProductOfferingVO;
 import org.fiware.productcatalog.model.BundledProductOfferingVOTestExample;
 import org.fiware.productcatalog.model.CategoryRefVOTestExample;
 import org.fiware.productcatalog.model.ChannelRefVOTestExample;
@@ -86,9 +87,11 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         productOfferingCreateVO.setResourceCandidate(null);
         productOfferingCreateVO.setServiceCandidate(null);
         productOfferingCreateVO.setServiceLevelAgreement(null);
+
         HttpResponse<ProductOfferingVO> productOfferingVOHttpResponse = callAndCatch(() -> productOfferingApiTestClient.createProductOffering(productOfferingCreateVO));
         assertEquals(HttpStatus.CREATED, productOfferingVOHttpResponse.getStatus(), message);
         String productOfferingId = productOfferingVOHttpResponse.body().getId();
+
         expectedProductOffering.setId(productOfferingId);
         expectedProductOffering.setHref(productOfferingId);
         expectedProductOffering.setLastUpdate(currentTimeInstant);
@@ -96,6 +99,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         expectedProductOffering.setServiceCandidate(null);
         expectedProductOffering.setResourceCandidate(null);
         expectedProductOffering.setServiceLevelAgreement(null);
+
         assertEquals(expectedProductOffering, productOfferingVOHttpResponse.body(), message);
     }
 
@@ -277,7 +281,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
     @Test
     @Override
     public void deleteProductOffering404() throws Exception {
-        HttpResponse<?> notFoundResponse = callAndCatch(() -> productOfferingApiTestClient.deleteProductOffering("urn:ngsi-ld:productOffering:no-catalog"));
+        HttpResponse<?> notFoundResponse = callAndCatch(() -> productOfferingApiTestClient.deleteProductOffering("urn:ngsi-ld:product-offering:no-catalog"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such catalog should exist.");
@@ -433,7 +437,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         productOfferingCreateVO.setServiceLevelAgreement(null);
 
         HttpResponse<ProductOfferingVO> createResponse = callAndCatch(() -> productOfferingApiTestClient.createProductOffering(productOfferingCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The product offering should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
@@ -520,7 +524,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         productOfferingCreateVO.setServiceCandidate(null);
         productOfferingCreateVO.setServiceLevelAgreement(null);
         HttpResponse<ProductOfferingVO> createResponse = callAndCatch(() -> productOfferingApiTestClient.createProductOffering(productOfferingCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The product offering should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
@@ -622,7 +626,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         ProductOfferingUpdateVO productOfferingUpdateVO = ProductOfferingUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> productOfferingApiTestClient.patchProductOffering("urn:ngsi-ld:productOffering:not-existent", productOfferingUpdateVO)).getStatus(),
+                callAndCatch(() -> productOfferingApiTestClient.patchProductOffering("urn:ngsi-ld:product-offering:not-existent", productOfferingUpdateVO)).getStatus(),
                 "Non existent categories should not be updated.");
     }
 
@@ -661,7 +665,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         productOfferingCreateVO.setServiceLevelAgreement(null);
         // we dont have a parent
         HttpResponse<ProductOfferingVO> createResponse = callAndCatch(() -> productOfferingApiTestClient.createProductOffering(productOfferingCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The productOffering should have been created first.");
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The product offering should have been created first.");
         String id = createResponse.body().getId();
 
         ProductOfferingVO expectedProductOffering = ProductOfferingVOTestExample.build();
@@ -712,7 +716,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
     @Test
     @Override
     public void retrieveProductOffering404() throws Exception {
-        HttpResponse<ProductOfferingVO> response = callAndCatch(() -> productOfferingApiTestClient.retrieveProductOffering("urn:ngsi-ld:productOffering:non-existent", null));
+        HttpResponse<ProductOfferingVO> response = callAndCatch(() -> productOfferingApiTestClient.retrieveProductOffering("urn:ngsi-ld:product-offering:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such productOffering should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

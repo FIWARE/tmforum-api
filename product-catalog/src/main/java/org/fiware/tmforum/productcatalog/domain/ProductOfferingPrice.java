@@ -32,7 +32,7 @@ public class ProductOfferingPrice extends EntityWithId {
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "isBundle")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "isBundle")}))
-	private boolean isBundle;
+	private Boolean isBundle;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "lastUpdate")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "lastUpdate")}))
@@ -67,7 +67,7 @@ public class ProductOfferingPrice extends EntityWithId {
 	private String version;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "bundledPopRelationship")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "bundledPopRelationship", targetClass = BundledProductOfferingPriceRelationship.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "bundledPopRelationship", targetClass = BundledProductOfferingPriceRelationship.class, fromProperties = true)}))
 	private List<BundledProductOfferingPriceRelationship> bundledPopRelationship;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint")}))

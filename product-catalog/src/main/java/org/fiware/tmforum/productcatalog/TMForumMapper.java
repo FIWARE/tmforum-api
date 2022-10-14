@@ -27,15 +27,24 @@ import org.fiware.party.model.SkillVO;
 import org.fiware.party.model.TaxDefinitionVO;
 import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TimePeriodVO;
+import org.fiware.productcatalog.model.BundledProductOfferingVO;
 import org.fiware.productcatalog.model.CatalogCreateVO;
 import org.fiware.productcatalog.model.CatalogUpdateVO;
 import org.fiware.productcatalog.model.CatalogVO;
 import org.fiware.productcatalog.model.CategoryCreateVO;
 import org.fiware.productcatalog.model.CategoryUpdateVO;
 import org.fiware.productcatalog.model.CategoryVO;
+import org.fiware.productcatalog.model.PricingLogicAlgorithmVO;
 import org.fiware.productcatalog.model.ProductOfferingCreateVO;
+import org.fiware.productcatalog.model.ProductOfferingPriceCreateVO;
+import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVO;
+import org.fiware.productcatalog.model.ProductOfferingPriceVO;
 import org.fiware.productcatalog.model.ProductOfferingUpdateVO;
 import org.fiware.productcatalog.model.ProductOfferingVO;
+import org.fiware.productcatalog.model.ProductSpecificationCreateVO;
+import org.fiware.productcatalog.model.ProductSpecificationUpdateVO;
+import org.fiware.productcatalog.model.ProductSpecificationVO;
+import org.fiware.productcatalog.model.TaxItemVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.party.domain.Attachment;
@@ -60,10 +69,15 @@ import org.fiware.tmforum.party.domain.organization.Organization;
 import org.fiware.tmforum.party.domain.organization.OrganizationChildRelationship;
 import org.fiware.tmforum.party.domain.organization.OrganizationParentRelationship;
 import org.fiware.tmforum.party.domain.organization.OtherOrganizationName;
+import org.fiware.tmforum.productcatalog.domain.BundleProductOffering;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.productcatalog.domain.Category;
 import org.fiware.tmforum.productcatalog.domain.CategoryRef;
+import org.fiware.tmforum.productcatalog.domain.PricingLogicAlgorithm;
 import org.fiware.tmforum.productcatalog.domain.ProductOffering;
+import org.fiware.tmforum.productcatalog.domain.ProductOfferingPrice;
+import org.fiware.tmforum.productcatalog.domain.ProductSpecification;
+import org.fiware.tmforum.productcatalog.domain.TaxItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -79,6 +93,8 @@ import java.net.URL;
 @Mapper(componentModel = "jsr330", uses = {IdHelper.class, MappingHelper.class})
 public interface TMForumMapper {
 
+    // catalog
+
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
     CatalogVO map(CatalogCreateVO catalogCreateVO, URI id);
@@ -91,6 +107,8 @@ public interface TMForumMapper {
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
     CatalogVO map(CatalogUpdateVO catalogUpdateVO, String id);
+
+    // category
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
@@ -107,6 +125,7 @@ public interface TMForumMapper {
     @Mapping(target = "href", source = "id")
     CategoryVO map(CategoryUpdateVO categoryUpdateVO, String id);
 
+    // product offering
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
@@ -115,11 +134,52 @@ public interface TMForumMapper {
     ProductOfferingVO map(ProductOffering productOfferingVO);
 
     @Mapping(target = "href", source = "id")
-    ProductOffering map(ProductOfferingVO categoryVO);
+    ProductOffering map(ProductOfferingVO productOfferingVO);
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    ProductOfferingVO map(ProductOfferingUpdateVO categoryUpdateVO, String id);
+    ProductOfferingVO map(ProductOfferingUpdateVO productOfferingUpdateVO, String id);
+
+    // product offering price
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    ProductOfferingPriceVO map(ProductOfferingPriceCreateVO productOfferingPriceCreateVO, URI id);
+
+    ProductOfferingPriceVO map(ProductOfferingPrice productOfferingPrice);
+
+    @Mapping(target = "href", source = "id")
+    ProductOfferingPrice map(ProductOfferingPriceVO productOfferingPriceVO);
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    ProductOfferingPriceVO map(ProductOfferingPriceUpdateVO productOfferingPriceUpdateVO, String id);
+
+    // product specification
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    ProductSpecificationVO map(ProductSpecificationCreateVO productSpecificationCreateVO, URI id);
+
+    ProductSpecificationVO map(ProductSpecification productSpecification);
+
+    @Mapping(target = "href", source = "id")
+    ProductSpecification map(ProductSpecificationVO productSpecificationVO);
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    ProductSpecificationVO map(ProductSpecificationUpdateVO productSpecificationUpdateVO, String id);
+
+    // sub-entities
+
+    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
+    BundledProductOfferingVO map(BundleProductOffering bundleProductOffering);
+
+    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
+    PricingLogicAlgorithmVO map(PricingLogicAlgorithm pricingLogicAlgorithm);
+
+    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
+    TaxItemVO map(TaxItem taxItem);
 
     default URL map(String value) {
         if (value == null) {

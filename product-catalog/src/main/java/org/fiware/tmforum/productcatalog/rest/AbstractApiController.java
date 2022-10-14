@@ -3,11 +3,15 @@ package org.fiware.tmforum.productcatalog.rest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.RequiredArgsConstructor;
+import org.fiware.productcatalog.model.BundledProductOfferingVO;
 import org.fiware.productcatalog.model.CategoryVO;
+import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.productcatalog.TMForumMapper;
+import org.fiware.tmforum.productcatalog.domain.BundleProductOffering;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.productcatalog.domain.Category;
 import org.fiware.tmforum.productcatalog.exception.ProductCatalogException;
@@ -16,8 +20,10 @@ import org.fiware.tmforum.productcatalog.repository.ProductCatalogRepository;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
@@ -99,5 +105,32 @@ public abstract class AbstractApiController {
                 .flatMap(entity -> productCatalogRepository.updateDomainEntity(id, updatedObject)
                         .then(productCatalogRepository.get(idUri, entityClass)));
     }
+
+
+    protected <T, R extends EntityWithId> Mono<T> relatedEntityHandlingMono(T offering, Mono<T> offeringMono, List<R> bundleProductOfferingsList, Consumer<List<R>> offeringUpdater, Class<R> relatedEntityClass) {
+        List<R> bundleProductOfferings = Optional.ofNullable(bundleProductOfferingsList).orElseGet(List::of);
+        if (!bundleProductOfferings.isEmpty()) {
+            Mono<List<R>> bundleProductOfferingsMono = Mono.zip(
+                    bundleProductOfferings
+                            .stream()
+                            .map(bpo ->
+                                    productCatalogRepository
+                                            .updateDomainEntity(bpo.getId().toString(), bpo)
+                                            .onErrorResume(t -> productCatalogRepository.createDomainEntity(bpo))
+                                            .then(Mono.just(bpo))
+                            )
+                            .toList(),
+                    t -> Arrays.stream(t).map(relatedEntityClass::cast).toList());
+
+            Mono<T> updatingMono = bundleProductOfferingsMono
+                    .map(updatedTaxExemptions -> {
+                        offeringUpdater.accept(updatedTaxExemptions);
+                        return offering;
+                    });
+            offeringMono = Mono.zip(offeringMono, updatingMono, (offering1, offering2) -> offering1);
+        }
+        return offeringMono;
+    }
+
 
 }

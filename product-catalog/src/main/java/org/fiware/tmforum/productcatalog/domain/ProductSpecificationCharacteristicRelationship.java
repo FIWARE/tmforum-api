@@ -11,28 +11,28 @@ import org.fiware.tmforum.party.domain.TimePeriod;
 
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = ProductSpecificationCharacteristic.TYPE_PRODUCT_SPECIFICATION_CHARACTERISTIC)
 @EqualsAndHashCode(callSuper = true)
 public class ProductSpecificationCharacteristicRelationship extends RefEntity {
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "charSpecSeq")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "charSpecSeq")}))
-	private Integer charSpecSeq;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "charSpecSeq")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "charSpecSeq")}))
+    private Integer charSpecSeq;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "relationshipType")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "relationshipType")}))
-	private String relationshipType;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "relationshipType")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "relationshipType")}))
+    private String relationshipType;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
-	private TimePeriod validFor;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
+    private TimePeriod validFor;
 
-	public ProductSpecificationCharacteristicRelationship(String id) {
-		super(id);
-	}
+    public ProductSpecificationCharacteristicRelationship(String id) {
+        super(id);
+    }
 
-	@Override
-	public List<String> getReferencedTypes() {
-		return List.of(ProductSpecificationCharacteristic.TYPE_PRODUCT_SPECIFICATION_CHARACTERISTIC);
-	}
+    @Override
+    public List<String> getReferencedTypes() {
+        return List.of(ProductSpecificationCharacteristic.TYPE_PRODUCT_SPECIFICATION_CHARACTERISTIC);
+    }
 }

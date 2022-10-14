@@ -8,25 +8,32 @@ import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
+import org.fiware.tmforum.party.domain.individual.Individual;
+import org.fiware.tmforum.party.domain.organization.Organization;
 
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 
-@MappingEnabled(entityType = BundledProductOfferingPriceRelationship.TYPE_BUNDLE_POP_RELATIONSHIP)
+@MappingEnabled(entityType = {ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE})
 @EqualsAndHashCode(callSuper = true)
-public class BundledProductOfferingPriceRelationship extends EntityWithId {
+public class BundledProductOfferingPriceRelationship extends RefEntity {
 
-	public static final String TYPE_BUNDLE_POP_RELATIONSHIP = "bundle-pop-relationship";
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
-	private URI href;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
+    private URI href;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "name")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "name")}))
-	private String name;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "name")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "name")}))
+    private String name;
 
-	public BundledProductOfferingPriceRelationship(String id) {
-		super(TYPE_BUNDLE_POP_RELATIONSHIP, id);
-	}
+    public BundledProductOfferingPriceRelationship(String id) {
+        super(id);
+    }
+
+    @Override
+    public List<String> getReferencedTypes() {
+        return List.of(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE);
+    }
 }
