@@ -1,4 +1,4 @@
-package org.fiware.tmforum.party.exception;
+package org.fiware.tmforum.common.exception;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
@@ -7,8 +7,6 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Produces;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.exception.DeletionException;
-import org.fiware.tmforum.common.exception.ErrorDetails;
 
 import javax.inject.Singleton;
 
@@ -16,11 +14,11 @@ import javax.inject.Singleton;
 @Singleton
 @Requires(classes = {DeletionException.class, ExceptionHandler.class})
 @Slf4j
-public class PartyDeletionExceptionHandler implements ExceptionHandler<DeletionException, HttpResponse<ErrorDetails>> {
+public class DeletionExceptionHandler implements ExceptionHandler<DeletionException, HttpResponse<ErrorDetails>> {
 
     @Override
     public HttpResponse<ErrorDetails> handle(HttpRequest request, DeletionException exception) {
-        log.warn("The party could not have been deleted.", exception);
+        log.warn("The entity could not have been deleted.", exception);
         return switch (exception.getReason()) {
             case NOT_FOUND -> HttpResponse.status(HttpStatus.NOT_FOUND).body(new ErrorDetails(HttpStatus.NOT_FOUND.toString(),
                     HttpStatus.NOT_FOUND.getReason(),
