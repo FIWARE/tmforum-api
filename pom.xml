@@ -409,6 +409,7 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
+                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
                     </configuration>
                 </plugin>
             </plugins>

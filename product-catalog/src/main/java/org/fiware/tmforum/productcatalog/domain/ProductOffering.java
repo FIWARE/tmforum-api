@@ -3,17 +3,15 @@ package org.fiware.tmforum.productcatalog.domain;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.productcatalog.model.MarketSegmentRefVO;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
-import org.fiware.tmforum.party.domain.AttachmentRefOrValue;
-import org.fiware.tmforum.party.domain.TimePeriod;
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.net.URI;
-import java.net.URL;
 import java.time.Instant;
 import java.util.List;
 

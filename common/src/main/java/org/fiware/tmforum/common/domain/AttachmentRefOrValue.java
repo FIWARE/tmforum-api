@@ -1,8 +1,10 @@
-package org.fiware.tmforum.party.domain;
+package org.fiware.tmforum.common.domain;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.Entity;
+import org.fiware.tmforum.common.domain.Quantity;
+import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.net.URL;
 

@@ -3,16 +3,12 @@ package org.fiware.tmforum.productcatalog.domain;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
-import org.fiware.tmforum.party.domain.individual.Individual;
-import org.fiware.tmforum.party.domain.organization.Organization;
 
 import java.net.URI;
-import java.net.URL;
 import java.util.List;
 
 @MappingEnabled(entityType = {ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE})

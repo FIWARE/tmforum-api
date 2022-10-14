@@ -4,7 +4,6 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
-import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.productcatalog.api.CatalogApiTestClient;
 import org.fiware.productcatalog.api.CatalogApiTestSpec;
 import org.fiware.productcatalog.model.CatalogCreateVO;

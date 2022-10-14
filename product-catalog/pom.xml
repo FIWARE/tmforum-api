@@ -34,13 +34,6 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
-        <!-- we need the parties here. -->
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>party</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- lazy dev -->
         <dependency>

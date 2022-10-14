@@ -8,11 +8,10 @@ import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
-import org.fiware.tmforum.party.domain.Quantity;
-import org.fiware.tmforum.party.domain.TimePeriod;
+import org.fiware.tmforum.common.domain.Quantity;
+import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.net.URI;
-import java.net.URL;
 import java.time.Instant;
 import java.util.List;
 
