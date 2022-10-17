@@ -24,6 +24,7 @@ import org.fiware.party.model.OrganizationVO;
 import org.fiware.party.model.OrganizationVOTestExample;
 import org.fiware.party.model.RelatedPartyVO;
 import org.fiware.party.model.RelatedPartyVOTestExample;
+import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

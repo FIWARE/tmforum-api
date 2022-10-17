@@ -206,7 +206,7 @@ public class JavaObjectMapper extends Mapper {
     }
 
     /**
-     * Build properies from the declared methods
+     * Build properties from the declared methods
      */
     private <T> Map<String, PropertyVO> buildProperties(T entity, List<Method> propertyMethods) {
         return propertyMethods.stream()
