@@ -1,7 +1,6 @@
 package org.fiware.tmforum.party.rest;
 
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.extern.slf4j.Slf4j;
@@ -9,13 +8,15 @@ import org.fiware.party.api.IndividualApi;
 import org.fiware.party.model.IndividualCreateVO;
 import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.party.model.IndividualVO;
+import org.fiware.tmforum.common.exception.DeletionException;
+import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.party.TMForumMapper;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.exception.PartyCreationException;
-import org.fiware.tmforum.party.exception.PartyDeletionException;
 import org.fiware.tmforum.party.exception.PartyExceptionReason;
+import org.fiware.tmforum.party.exception.PartyRetrievalException;
 import org.fiware.tmforum.party.exception.PartyUpdateException;
 import org.fiware.tmforum.party.repository.PartyRepository;
 import reactor.core.publisher.Mono;
@@ -53,7 +54,7 @@ public class IndividualApiController extends AbstractApiController implements In
                 false);
 
         return individualMono
-                .flatMap(individualToCreate -> partyRepository.createIndividual(individualToCreate).then(Mono.just(individualToCreate)))
+                .flatMap(individualToCreate -> partyRepository.createDomainEntity(individualToCreate).then(Mono.just(individualToCreate)))
                 .onErrorMap(t -> {
                     if (t instanceof HttpClientResponseException e) {
                         return switch (e.getStatus()) {
@@ -89,10 +90,9 @@ public class IndividualApiController extends AbstractApiController implements In
     public Mono<HttpResponse<Object>> deleteIndividual(String id) {
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
-            throw new PartyDeletionException("Did not receive a valid id, such individual cannot exist.", PartyExceptionReason.NOT_FOUND);
+            throw new DeletionException("Did not receive a valid id, such individual cannot exist.", DeletionExceptionReason.NOT_FOUND);
         }
-        return partyRepository
-                .deleteParty(URI.create(id))
+        return partyRepository.deleteDomainEntity(URI.create(id))
                 .then(Mono.just(HttpResponse.noContent()));
     }
 
@@ -128,7 +128,7 @@ public class IndividualApiController extends AbstractApiController implements In
                                 individual::setTaxExemptionCertificate,
                                 true)
                                 .flatMap(ui -> partyRepository
-                                        .updateParty(id, updatedIndividual)
+                                        .updateDomainEntity(id, updatedIndividual)
                                         .then(partyRepository.getIndividual(idUri))
                                         .map(tmForumMapper::map)
                                         .map(HttpResponse::ok)
@@ -142,14 +142,14 @@ public class IndividualApiController extends AbstractApiController implements In
 
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
-            throw new PartyDeletionException("Did not receive a valid id, such individual cannot exist.", PartyExceptionReason.NOT_FOUND);
+            throw new PartyRetrievalException("Did not receive a valid id, such individual cannot exist.", PartyExceptionReason.NOT_FOUND);
         }
 
         return partyRepository
                 .getIndividual(URI.create(id))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok)
-                .switchIfEmpty(Mono.error(new PartyDeletionException("No such individual exists.", PartyExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new PartyRetrievalException("No such individual exists.", PartyExceptionReason.NOT_FOUND)))
                 .map(HttpResponse.class::cast);
 
     }

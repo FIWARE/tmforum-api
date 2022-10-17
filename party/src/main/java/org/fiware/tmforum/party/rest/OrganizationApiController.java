@@ -3,28 +3,26 @@ package org.fiware.tmforum.party.rest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.party.api.OrganizationApi;
 import org.fiware.party.model.OrganizationCreateVO;
 import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
+import org.fiware.tmforum.common.exception.DeletionException;
+import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.party.TMForumMapper;
-import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
-import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.organization.Organization;
 import org.fiware.tmforum.party.exception.PartyCreationException;
-import org.fiware.tmforum.party.exception.PartyDeletionException;
 import org.fiware.tmforum.party.exception.PartyExceptionReason;
+import org.fiware.tmforum.party.exception.PartyRetrievalException;
 import org.fiware.tmforum.party.exception.PartyUpdateException;
 import org.fiware.tmforum.party.repository.PartyRepository;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,7 +49,7 @@ public class OrganizationApiController extends AbstractApiController implements 
         checkingMono = taxExemptionHandlingMono(organization, checkingMono, organization.getTaxExemptionCertificate(), organization::setTaxExemptionCertificate, false);
 
         return checkingMono
-                .flatMap(orgToCreate -> partyRepository.createOrganization(orgToCreate).then(Mono.just(orgToCreate)))
+                .flatMap(orgToCreate -> partyRepository.createDomainEntity(orgToCreate).then(Mono.just(orgToCreate)))
                 .onErrorMap(t -> {
                     if (t instanceof HttpClientResponseException e) {
                         return switch (e.getStatus()) {
@@ -96,10 +94,10 @@ public class OrganizationApiController extends AbstractApiController implements 
     public Mono<HttpResponse<Object>> deleteOrganization(String id) {
 
         if (!IdHelper.isNgsiLdId(id)) {
-            throw new PartyDeletionException("Did not receive a valid id, such organization cannot exist.", PartyExceptionReason.NOT_FOUND);
+            throw new DeletionException("Did not receive a valid id, such organization cannot exist.", DeletionExceptionReason.NOT_FOUND);
         }
 
-        return partyRepository.deleteParty(URI.create(id))
+        return partyRepository.deleteDomainEntity(URI.create(id))
                 .then(Mono.just(HttpResponse.noContent()));
     }
 
@@ -134,7 +132,7 @@ public class OrganizationApiController extends AbstractApiController implements 
                                 updatedOrganization.getTaxExemptionCertificate(),
                                 organization::setTaxExemptionCertificate,
                                 true)
-                                .flatMap(uo -> partyRepository.updateParty(id, updatedOrganization)
+                                .flatMap(uo -> partyRepository.updateDomainEntity(id, updatedOrganization)
                                         .then(partyRepository.getOrganization(idUri))
                                         .map(tmForumMapper::map)
                                         .map(HttpResponse::ok)
@@ -147,14 +145,14 @@ public class OrganizationApiController extends AbstractApiController implements 
     public Mono<HttpResponse<OrganizationVO>> retrieveOrganization(String id, @Nullable String fields) {
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
-            throw new PartyDeletionException("Did not receive a valid id, such organization cannot exist.", PartyExceptionReason.NOT_FOUND);
+            throw new PartyRetrievalException("Did not receive a valid id, such organization cannot exist.", PartyExceptionReason.NOT_FOUND);
         }
 
         return partyRepository
                 .getOrganization(URI.create(id))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok)
-                .switchIfEmpty(Mono.error(new PartyDeletionException("No such organization exists.", PartyExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new PartyRetrievalException("No such organization exists.", PartyExceptionReason.NOT_FOUND)))
                 .map(HttpResponse.class::cast);
     }
 }

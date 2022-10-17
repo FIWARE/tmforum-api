@@ -12,7 +12,7 @@ import org.fiware.tmforum.party.domain.Characteristic;
 import org.fiware.tmforum.party.domain.ContactMedium;
 import org.fiware.tmforum.party.domain.ExternalReference;
 import org.fiware.tmforum.party.domain.PartyCreditProfile;
-import org.fiware.tmforum.party.domain.RelatedParty;
+import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
 
 import java.net.URI;

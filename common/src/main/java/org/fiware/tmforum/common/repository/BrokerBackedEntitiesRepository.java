@@ -19,20 +19,21 @@ import java.util.List;
 @Singleton
 public class BrokerBackedEntitiesRepository extends NgsiLdBaseRepository implements EntitiesRepository {
 
-	public BrokerBackedEntitiesRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
-		super(generalProperties, entitiesApi);
-	}
+    public BrokerBackedEntitiesRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
+        // only used for retrieval, so no such mappers required
+        super(generalProperties, entitiesApi, null, null, null);
+    }
 
-	@Override
-	public Mono<List<EntityVO>> getEntities(List<URI> entityIds) {
+    @Override
+    public Mono<List<EntityVO>> getEntities(List<URI> entityIds) {
 
-		// this can be replaced in the futures, when the brokers properly implement the retrieval of entities with multiple sub-properties, with an idPattern query
-		// Currently:
-		// * orion-ld: does not properly handle datasetIDs, thus omits such properties and relationships on retrieval
-		// * scoprio: declares query parameters as mandatory, that are optional in the spec
-		// * stellio: not tested yet
-		return Mono.zip(
-				entityIds.stream().map(this::retrieveEntityById).toList(),
-				eVOs -> Arrays.stream(eVOs).map(EntityVO.class::cast).toList());
-	}
+        // this can be replaced in the futures, when the brokers properly implement the retrieval of entities with multiple sub-properties, with an idPattern query
+        // Currently:
+        // * orion-ld: does not properly handle datasetIDs, thus omits such properties and relationships on retrieval
+        // * scoprio: declares query parameters as mandatory, that are optional in the spec
+        // * stellio: not tested yet
+        return Mono.zip(
+                entityIds.stream().map(this::retrieveEntityById).toList(),
+                eVOs -> Arrays.stream(eVOs).map(EntityVO.class::cast).toList());
+    }
 }
