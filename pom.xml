@@ -32,8 +32,9 @@
     <modules>
         <module>mapping</module>
         <module>common</module>
-        <module>party</module>
+        <module>party-catalog</module>
         <module>product-catalog</module>
+        <module>resource-catalog</module>
     </modules>
 
     <properties>

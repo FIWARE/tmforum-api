@@ -1,10 +1,11 @@
-package org.fiware.tmforum.productcatalog.domain;
+package org.fiware.tmforum.common.domain;
 
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 
+// TODO: Concrete implementations are GeoAddress, Site and Location. Need to be fullfilled in the future.
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled
 public class PlaceRef extends RefEntity {

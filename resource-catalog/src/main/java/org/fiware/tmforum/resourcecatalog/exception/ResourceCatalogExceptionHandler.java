@@ -1,4 +1,4 @@
-package org.fiware.tmforum.productcatalog.exception;
+package org.fiware.tmforum.resourcecatalog.exception;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpRequest;
@@ -13,13 +13,13 @@ import javax.inject.Singleton;
 
 @Produces
 @Singleton
-@Requires(classes = {ProductCatalogException.class, ExceptionHandler.class})
+@Requires(classes = {ResourceCatalogException.class, ExceptionHandler.class})
 @Slf4j
-public class ProductCatalogExceptionHandler implements ExceptionHandler<ProductCatalogException, HttpResponse<ErrorDetails>> {
+public class ResourceCatalogExceptionHandler implements ExceptionHandler<ResourceCatalogException, HttpResponse<ErrorDetails>> {
 
     @Override
-    public HttpResponse<ErrorDetails> handle(HttpRequest request, ProductCatalogException exception) {
-        log.warn("The product could not have been created.", exception);
+    public HttpResponse<ErrorDetails> handle(HttpRequest request, ResourceCatalogException exception) {
+        log.warn("The resource could not have been created.", exception);
         return switch (exception.getCatalogExceptionReason()) {
             case CONFLICT -> HttpResponse.status(HttpStatus.CONFLICT).body(new ErrorDetails(HttpStatus.CONFLICT.toString(),
                     HttpStatus.CONFLICT.getReason(),

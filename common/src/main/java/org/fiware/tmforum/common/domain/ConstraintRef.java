@@ -1,4 +1,4 @@
-package org.fiware.tmforum.productcatalog.domain;
+package org.fiware.tmforum.common.domain;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
