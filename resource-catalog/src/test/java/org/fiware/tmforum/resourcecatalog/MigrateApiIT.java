@@ -69,7 +69,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
     private static Stream<Arguments> provideValidMigrates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().resourceFunction(null);
+        MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().resourceFunction(null).place(null);
         MigrateVO expectedMigrateVO = MigrateVOTestExample.build().resourceFunction(null).place(null);
         testEntries.add(Arguments.of("An empty migrate should have been created.", migrateCreateVO, expectedMigrateVO));
 
@@ -310,7 +310,14 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         assertEquals(HttpStatus.CREATED, migrateVOHttpResponse.getStatus(), "The initial create should be successfully.");
         String migrateId = migrateVOHttpResponse.body().getId();
 
-        MigrateVO expectedMigrate = MigrateVOTestExample.build().id(migrateId).href(URI.create(migrateId)).place(null).resourceFunction(null).characteristics(null);
+        MigrateVO expectedMigrate = MigrateVOTestExample.build()
+                .id(migrateId)
+                .href(URI.create(migrateId))
+                .place(null)
+                .resourceFunction(null)
+                .characteristics(null)
+                .addConnectionPoint(null)
+                .removeConnectionPoint(null);
 
         HttpResponse<MigrateVO> retrieveResponse = callAndCatch(() -> migrateApiTestClient.retrieveMigrate(migrateId, null));
         assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), "The retrieval should be successfully.");

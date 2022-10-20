@@ -2,6 +2,7 @@ package org.fiware.tmforum.resourcecatalog.rest;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
+import org.checkerframework.checker.units.qual.N;
 import org.fiware.resourcecatalog.api.MigrateApi;
 import org.fiware.resourcecatalog.model.MigrateCreateVO;
 import org.fiware.resourcecatalog.model.MigrateVO;
@@ -83,7 +84,7 @@ public class MigrateApiController extends AbstractApiController implements Migra
     }
 
     @Override
-    public Mono<HttpResponse<MigrateVO>> retrieveMigrate(String id, String fields) {
+    public Mono<HttpResponse<MigrateVO>> retrieveMigrate(String id, @Nullable String fields) {
         return retrieve(id, Migrate.class)
                 .switchIfEmpty(Mono.error(new ResourceCatalogException("No such migrate exists.", ResourceCatalogExceptionReason.NOT_FOUND)))
                 .map(tmForumMapper::map)
