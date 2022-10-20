@@ -206,38 +206,41 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
         if (!IdHelper.isNgsiLdId(id)) {
             throw new ResourceCatalogException("Did not receive a valid id, such resource cannot exist.", ResourceCatalogExceptionReason.NOT_FOUND);
         }
-        ResourceFunction resourceFunction = tmForumMapper.map(resourceFunctionUpdateVO, id);
+        ResourceFunction updatedResourceFunction = tmForumMapper.map(resourceFunctionUpdateVO, id);
 
-        Mono<ResourceFunction> checkingMono = getCheckingMono(resourceFunction);
+        Mono<ResourceFunction> checkingMono = getCheckingMono(updatedResourceFunction);
+
 
         Mono<ResourceFunction> activationFeatureHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
+                updatedResourceFunction,
                 checkingMono,
-                resourceFunction.getActivationFeature(),
-                resourceFunction::setActivationFeature,
+                updatedResourceFunction.getActivationFeature(),
+                updatedResourceFunction::setActivationFeature,
                 Feature.class);
         Mono<ResourceFunction> autoModificationHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
-                activationFeatureHandlingMono,
-                resourceFunction.getAutoModification(),
-                resourceFunction::setAutoModification,
+                updatedResourceFunction,
+                checkingMono,
+                updatedResourceFunction.getAutoModification(),
+                updatedResourceFunction::setAutoModification,
                 Characteristic.class);
         Mono<ResourceFunction> characteristicHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
-                autoModificationHandlingMono,
-                resourceFunction.getResourceCharacteristic(),
-                resourceFunction::setResourceCharacteristic,
+                updatedResourceFunction,
+                checkingMono,
+                updatedResourceFunction.getResourceCharacteristic(),
+                updatedResourceFunction::setResourceCharacteristic,
                 Characteristic.class);
         Mono<ResourceFunction> connectivityHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
-                characteristicHandlingMono,
-                resourceFunction.getConnectivity(),
-                resourceFunction::setConnectivity,
+                updatedResourceFunction,
+                checkingMono,
+                updatedResourceFunction.getConnectivity(),
+                updatedResourceFunction::setConnectivity,
                 ResourceGraph.class);
 
-        Mono<ResourceFunction> resourceRelationshipHandlingMono = handleResourceRelationship(resourceFunction);
+        Mono<ResourceFunction> relatedEntityHandlingMono = Mono.zip(List.of(activationFeatureHandlingMono, autoModificationHandlingMono, characteristicHandlingMono, connectivityHandlingMono), m1 -> updatedResourceFunction);
 
-        return patch(id, resourceFunction, Mono.zip(connectivityHandlingMono, resourceRelationshipHandlingMono, (p1, p2) -> resourceFunction), ResourceFunction.class)
+        Mono<ResourceFunction> resourceRelationshipHandlingMono = handleResourceRelationship(updatedResourceFunction);
+
+        return patch(id, updatedResourceFunction, Mono.zip(relatedEntityHandlingMono, resourceRelationshipHandlingMono, (p1, p2) -> updatedResourceFunction), ResourceFunction.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }
