@@ -38,7 +38,7 @@ public class Monitor extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "response")}))
     private Response response;
 
-    protected Monitor(String id) {
+    public Monitor(String id) {
         super(TYPE_MONITOR, id);
     }
 }

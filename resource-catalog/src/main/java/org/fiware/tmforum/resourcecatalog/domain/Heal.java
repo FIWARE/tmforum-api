@@ -56,7 +56,7 @@ public class Heal extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceFunction", targetClass = ResourceFunctionRef.class)}))
     private ResourceFunctionRef resourceFunction;
 
-    protected Heal(String id) {
+    public Heal(String id) {
         super(TYPE_HEAL, id);
     }
 }

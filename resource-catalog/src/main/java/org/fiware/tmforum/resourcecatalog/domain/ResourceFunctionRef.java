@@ -17,7 +17,7 @@ public class ResourceFunctionRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version")}))
     private String version;
 
-    protected ResourceFunctionRef(String id) {
+    public ResourceFunctionRef(String id) {
         super(id);
     }
 
