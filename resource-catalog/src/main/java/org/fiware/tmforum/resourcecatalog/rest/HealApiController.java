@@ -1,6 +1,7 @@
 package org.fiware.tmforum.resourcecatalog.rest;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.Controller;
 import org.fiware.resourcecatalog.api.HealApi;
 import org.fiware.resourcecatalog.model.HealCreateVO;
 import org.fiware.resourcecatalog.model.HealVO;
@@ -10,7 +11,6 @@ import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
 import org.fiware.tmforum.resourcecatalog.domain.Characteristic;
 import org.fiware.tmforum.resourcecatalog.domain.Heal;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceFunction;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogException;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReason;
 import org.fiware.tmforum.resourcecatalog.repository.ResourceCatalogRepository;
@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Controller("${general.basepath:/}")
 public class HealApiController extends AbstractApiController implements HealApi {
-
 
     public HealApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceCatalogRepository resourceCatalogRepository) {
         super(tmForumMapper, validationService, resourceCatalogRepository);

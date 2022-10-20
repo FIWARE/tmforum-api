@@ -580,12 +580,13 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
                 .resourceSpecification(null);
         testEntries.add(Arguments.of("The activation feature should have been updated.", featureUpdate, expectedFeatureUpdate));
 
+        String charId = UUID.randomUUID().toString();
         ResourceFunctionUpdateVO autoModificationUpdate = ResourceFunctionUpdateVOTestExample.build()
-                .autoModification(List.of(CharacteristicVOTestExample.build()))
+                .autoModification(List.of(CharacteristicVOTestExample.build().id(charId)))
                 .place(null)
                 .resourceSpecification(null);
         ResourceFunctionVO expectedAutoModificationUpdate = ResourceFunctionVOTestExample.build()
-                .autoModification(List.of(CharacteristicVOTestExample.build().characteristicRelationship(null)))
+                .autoModification(List.of(CharacteristicVOTestExample.build().id(charId).characteristicRelationship(null)))
                 .place(null)
                 .resourceSpecification(null);
         testEntries.add(Arguments.of("The autoModification should have been updated.", autoModificationUpdate, expectedAutoModificationUpdate));

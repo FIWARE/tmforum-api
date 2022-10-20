@@ -115,8 +115,6 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
         Optional.ofNullable(resourceFunction.getPlace()).ifPresent(placeRef -> references.add(List.of(placeRef)));
         Optional.ofNullable(resourceFunction.getResourceSpecification()).ifPresent(resourceSpecificationRef -> references.add(List.of(resourceSpecificationRef)));
 
-
-        // check feature rels
         Mono<ResourceFunction> checkingMono = getCheckingMono(resourceFunction, references);
 
         //Feature handling

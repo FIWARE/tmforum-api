@@ -4,6 +4,8 @@ import org.fiware.resourcecatalog.model.CharacteristicVO;
 import org.fiware.resourcecatalog.model.FeatureVO;
 import org.fiware.resourcecatalog.model.HealCreateVO;
 import org.fiware.resourcecatalog.model.HealVO;
+import org.fiware.resourcecatalog.model.MigrateCreateVO;
+import org.fiware.resourcecatalog.model.MigrateVO;
 import org.fiware.resourcecatalog.model.MonitorVO;
 import org.fiware.resourcecatalog.model.ResourceFunctionCreateVO;
 import org.fiware.resourcecatalog.model.ResourceFunctionUpdateVO;
@@ -17,6 +19,7 @@ import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.resourcecatalog.domain.Characteristic;
 import org.fiware.tmforum.resourcecatalog.domain.Feature;
 import org.fiware.tmforum.resourcecatalog.domain.Heal;
+import org.fiware.tmforum.resourcecatalog.domain.Migrate;
 import org.fiware.tmforum.resourcecatalog.domain.Monitor;
 import org.fiware.tmforum.resourcecatalog.domain.Resource;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceFunction;
@@ -61,7 +64,17 @@ public interface TMForumMapper {
 
     HealVO map(Heal heal);
 
-    Heal map(HealVO resourceFunctionVO);
+    Heal map(HealVO healVO);
+
+    // migrate
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    MigrateVO map(MigrateCreateVO migrateCreateVO, URI id);
+
+    MigrateVO map(Migrate migrate);
+
+    Migrate map(MigrateVO migrateVO);
 
     // sub-entities
 
