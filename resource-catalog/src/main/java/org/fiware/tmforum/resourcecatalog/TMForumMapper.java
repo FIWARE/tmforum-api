@@ -14,6 +14,8 @@ import org.fiware.resourcecatalog.model.ResourceGraphRelationshipVO;
 import org.fiware.resourcecatalog.model.ResourceGraphVO;
 import org.fiware.resourcecatalog.model.ResourceRefOrValueVO;
 import org.fiware.resourcecatalog.model.ResourceRelationshipVO;
+import org.fiware.resourcecatalog.model.ScaleCreateVO;
+import org.fiware.resourcecatalog.model.ScaleVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.resourcecatalog.domain.Characteristic;
@@ -26,6 +28,7 @@ import org.fiware.tmforum.resourcecatalog.domain.ResourceFunction;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceGraph;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceGraphRelationship;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceRelationship;
+import org.fiware.tmforum.resourcecatalog.domain.Scale;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -76,6 +79,16 @@ public interface TMForumMapper {
 
     Migrate map(MigrateVO migrateVO);
 
+    // scale
+
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    ScaleVO map(ScaleCreateVO scaleCreateVOVO, URI id);
+
+    ScaleVO map(Scale scale);
+
+    Scale map(ScaleVO scaleVO);
+    
     // sub-entities
 
     @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
