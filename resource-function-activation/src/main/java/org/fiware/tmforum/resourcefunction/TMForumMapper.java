@@ -1,5 +1,6 @@
 package org.fiware.tmforum.resourcefunction;
 
+import org.fiware.resourcefunction.model.AttachmentRefOrValueVO;
 import org.fiware.resourcefunction.model.CharacteristicVO;
 import org.fiware.resourcefunction.model.FeatureVO;
 import org.fiware.resourcefunction.model.HealCreateVO;
@@ -16,6 +17,7 @@ import org.fiware.resourcefunction.model.ResourceRefOrValueVO;
 import org.fiware.resourcefunction.model.ResourceRelationshipVO;
 import org.fiware.resourcefunction.model.ScaleCreateVO;
 import org.fiware.resourcefunction.model.ScaleVO;
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.resourcefunction.domain.Characteristic;
@@ -110,9 +112,11 @@ public interface TMForumMapper {
         if (resourceGraphRelationshipVO.getResourceGraph() == null || resourceGraphRelationshipVO.getResourceGraph().getId() == null) {
             throw new MappingException("No graph relationship without referencing a graph should exist.");
         }
-        ResourceGraphRelationship resourceGraphRelationship = new ResourceGraphRelationship(resourceGraphRelationshipVO.getId());
+
+        ResourceGraphRelationship resourceGraphRelationship = new ResourceGraphRelationship(resourceGraphRelationshipVO.getResourceGraph().getId());
+
         resourceGraphRelationship.setRelationshipType(resourceGraphRelationshipVO.getRelationshipType());
-        resourceGraphRelationship.setHref(resourceGraphRelationshipVO.getHref());
+        resourceGraphRelationship.setHref(URI.create(resourceGraphRelationshipVO.getResourceGraph().getHref()));
         resourceGraphRelationship.setAtBaseType(resourceGraphRelationshipVO.getAtBaseType());
         resourceGraphRelationship.setAtType(resourceGraphRelationshipVO.getAtType());
         resourceGraphRelationship.setAtReferredType(resourceGraphRelationshipVO.getResourceGraph().getAtReferredType());

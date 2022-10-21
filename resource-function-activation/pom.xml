@@ -13,11 +13,11 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF664-ResourceFunctionActivation-v4.0.0.swagger.json</tmforum.api.url>
+        <tmforum.api.url>https://raw.githubusercontent.com/wistefan/TMF664_ResourceFunctionActivationConfiguration/master/TMF664-ResourceFunctionActivation-v4.0.0.swagger.json</tmforum.api.url>
         <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF664-ResourceFunctionActivation.zip</module.ctk.url>
-        <module.ctk.script-folder>TMF634-ResourceFunctionActivation</module.ctk.script-folder>
+        <module.ctk.script-folder>TMF664-ResourceFunctionActivation</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
-        <module.ctk.base-path>/tmf-api/resourceCatalog/v4</module.ctk.base-path>
+        <module.ctk.base-path>/tmf-api/resourceFunctionActivation/v4</module.ctk.base-path>
         <module.ctk.additionalCommands>sed -i 's/8664/8632/g' /opt/ctk/TMF664-ResourceFunctionActivation/config.json</module.ctk.additionalCommands>
     </properties>
 

@@ -41,6 +41,9 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
 
     @Override
     public Mono<HttpResponse<ResourceFunctionVO>> createResourceFunction(ResourceFunctionCreateVO resourceFunctionCreateVO) {
+        if (resourceFunctionCreateVO.getLifecycleState() == null) {
+            throw new ResourceCatalogException("No lifecycleState was set.", ResourceCatalogExceptionReason.INVALID_DATA);
+        }
         ResourceFunction resourceFunction = tmForumMapper.map(
                 tmForumMapper.map(resourceFunctionCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), ResourceFunction.TYPE_RESOURCE_FUNCTION)));
 

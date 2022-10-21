@@ -33,6 +33,10 @@ public class ResourceFunction extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description")}))
     private String description;
 
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "lifecycleState")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "lifecycleState")}))
+    private String lifecycleState;
+
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "startOperatingDate")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "startOperatingDate")}))
     private Instant startOperatingDate;

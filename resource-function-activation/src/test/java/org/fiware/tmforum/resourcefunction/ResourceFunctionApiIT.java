@@ -24,6 +24,7 @@ import org.fiware.resourcefunction.model.ResourceFunctionUpdateVO;
 import org.fiware.resourcefunction.model.ResourceFunctionUpdateVOTestExample;
 import org.fiware.resourcefunction.model.ResourceFunctionVO;
 import org.fiware.resourcefunction.model.ResourceFunctionVOTestExample;
+import org.fiware.resourcefunction.model.ResourceGraphRefVOTestExample;
 import org.fiware.resourcefunction.model.ResourceGraphRelationshipVOTestExample;
 import org.fiware.resourcefunction.model.ResourceGraphVOTestExample;
 import org.fiware.resourcefunction.model.ResourceOperationalStateTypeVO;
@@ -80,7 +81,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         assertEquals(HttpStatus.CREATED, resourceFunctionVOHttpResponse.getStatus(), message);
         String rfId = resourceFunctionVOHttpResponse.body().getId();
         expectedResourceFunction.setId(rfId);
-        expectedResourceFunction.setHref(URI.create(rfId));
+        expectedResourceFunction.setHref(rfId);
 
         assertEquals(expectedResourceFunction, resourceFunctionVOHttpResponse.body(), message);
     }
@@ -127,6 +128,9 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 
     private static Stream<Arguments> provideInvalidResourceFunctions() {
         List<Arguments> testEntries = new ArrayList<>();
+
+        testEntries.add(Arguments.of("A resource function without a lifecycleState should not be created.",
+                ResourceFunctionCreateVOTestExample.build().lifecycleState(null)));
 
         testEntries.add(Arguments.of("A resource functions with invalid connection points should not be created.",
                 ResourceFunctionCreateVOTestExample.build().connectionPoint(List.of(ConnectionPointRefVOTestExample.build()))));
@@ -303,7 +307,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
             resourceFunctionCreateVO.place(null).resourceSpecification(null);
             String id = resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO).body().getId();
             ResourceFunctionVO resourceFunctionVO = ResourceFunctionVOTestExample.build();
-            resourceFunctionVO.id(id).href(URI.create(id)).place(null).resourceSpecification(null);
+            resourceFunctionVO.id(id).href(id).place(null).resourceSpecification(null);
             expectedResourceFunctions.add(resourceFunctionVO);
         }
 
@@ -415,7 +419,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ResourceFunctionVO updatedResourceFunction = updateResponse.body();
-        expectedResourceFunction.href(URI.create(resourceId)).id(resourceId);
+        expectedResourceFunction.href(resourceId).id(resourceId);
 
         if (expectedResourceFunction.getActivationFeature() != null && expectedResourceFunction.getActivationFeature().isEmpty()) {
             expectedResourceFunction.activationFeature(null);
@@ -560,11 +564,18 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         testEntries.add(Arguments.of("The administrative state should have been updated.", adminStateUpdate, expectedAdminStateUpdate));
 
         ResourceFunctionUpdateVO attachmentUpdate = ResourceFunctionUpdateVOTestExample.build()
-                .attachment(List.of(AttachmentRefOrValueVOTestExample.build()))
+                .attachment(List.of(AttachmentRefOrValueVOTestExample.build()
+                        .id("urn:ngsi-ld:attachment:a")
+                        .url("http://my-attachment.com")
+                        .href("urn:ngsi-ld:attachment:a")))
                 .place(null)
                 .resourceSpecification(null);
         ResourceFunctionVO expectedAttachmentUpdate = ResourceFunctionVOTestExample.build()
-                .attachment(List.of(AttachmentRefOrValueVOTestExample.build().validFor(null)))
+                .attachment(List.of(AttachmentRefOrValueVOTestExample.build()
+                        .id("urn:ngsi-ld:attachment:a")
+                        .url("http://my-attachment.com")
+                        .href("urn:ngsi-ld:attachment:a")
+                        .validFor(null)))
                 .place(null)
                 .resourceSpecification(null);
         testEntries.add(Arguments.of("The attachments should have been updated.", attachmentUpdate, expectedAttachmentUpdate));
@@ -757,10 +768,10 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 
         testEntries.add(Arguments.of("An update with an invalid connectivity graph rel is not allowed.",
                 ResourceFunctionUpdateVOTestExample.build()
-                        .connectivity(List.of(ResourceGraphVOTestExample.build().graphRelationship(List.of(ResourceGraphRelationshipVOTestExample.build()))))));
+                        .connectivity(List.of(ResourceGraphVOTestExample.build().graphRelationship(List.of(ResourceGraphRelationshipVOTestExample.build().resourceGraph(ResourceGraphRefVOTestExample.build())))))));
         testEntries.add(Arguments.of("An update with an non existent connectivity graph rel connection is not allowed.",
                 ResourceFunctionUpdateVOTestExample.build()
-                        .connectivity(List.of(ResourceGraphVOTestExample.build().graphRelationship(List.of(ResourceGraphRelationshipVOTestExample.build().id("urn:ngsi-ld:graph:non-existent")))))));
+                        .connectivity(List.of(ResourceGraphVOTestExample.build().graphRelationship(List.of(ResourceGraphRelationshipVOTestExample.build().resourceGraph(ResourceGraphRefVOTestExample.build().id("urn:ngsi-ld:graph:non-existent"))))))));
 
         return testEntries.stream();
     }
@@ -818,7 +829,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         ResourceFunctionVO expectedResourceFunctionVO = ResourceFunctionVOTestExample.build();
         expectedResourceFunctionVO
                 .id(id)
-                .href(URI.create(id))
+                .href(id)
                 .place(null)
                 .resourceSpecification(null)
                 .activationFeature(null)

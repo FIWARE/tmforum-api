@@ -61,7 +61,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         assertEquals(HttpStatus.CREATED, migrateVOHttpResponse.getStatus(), message);
         String migrateId = migrateVOHttpResponse.body().getId();
 
-        expectedMigrateVO.id(migrateId).href(URI.create(migrateId));
+        expectedMigrateVO.id(migrateId).href(migrateId);
 
         assertEquals(expectedMigrateVO, migrateVOHttpResponse.body(), message);
     }
@@ -209,7 +209,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
             String id = migrateApiTestClient.createMigrate(migrateCreateVO).body().getId();
             MigrateVO migrateVO = MigrateVOTestExample.build()
                     .id(id)
-                    .href(URI.create(id))
+                    .href(id)
                     .resourceFunction(null)
                     .place(null);
             expectedMigrates.add(migrateVO);
@@ -312,7 +312,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 
         MigrateVO expectedMigrate = MigrateVOTestExample.build()
                 .id(migrateId)
-                .href(URI.create(migrateId))
+                .href(migrateId)
                 .place(null)
                 .resourceFunction(null)
                 .characteristics(null)

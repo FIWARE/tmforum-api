@@ -59,7 +59,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
         assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), message);
         String healId = healVOHttpResponse.body().getId();
 
-        expectedHealVO.id(healId).href(URI.create(healId));
+        expectedHealVO.id(healId).href(healId);
 
         assertEquals(expectedHealVO, healVOHttpResponse.body(), message);
     }
@@ -192,7 +192,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
             String id = healApiTestClient.createHeal(healCreateVO).body().getId();
             HealVO healVO = HealVOTestExample.build()
                     .id(id)
-                    .href(URI.create(id))
+                    .href(id)
                     .resourceFunction(null)
                     .healPolicy(null);
             expectedHeals.add(healVO);
@@ -293,7 +293,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
         assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), "The initial create should be successfully.");
         String healId = healVOHttpResponse.body().getId();
 
-        HealVO expectedHeal = HealVOTestExample.build().id(healId).href(URI.create(healId)).healPolicy(null).resourceFunction(null).additionalParms(null);
+        HealVO expectedHeal = HealVOTestExample.build().id(healId).href(healId).healPolicy(null).resourceFunction(null).additionalParms(null);
 
         HttpResponse<HealVO> retreiveResponse = callAndCatch(() -> healApiTestClient.retrieveHeal(healId, null));
         assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");

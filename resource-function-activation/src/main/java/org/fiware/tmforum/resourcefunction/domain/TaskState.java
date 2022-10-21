@@ -2,7 +2,7 @@ package org.fiware.tmforum.resourcefunction.domain;
 
 public enum TaskState {
 
-    ACCEPTED("accepted"),
+    ACKNOWLEDGED("acknowledged"),
     TERMINATEDWITHERROR("terminatedWithError"),
     INPROGRESS("inProgress"),
     DONE("done");
