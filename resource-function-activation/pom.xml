@@ -193,9 +193,9 @@
                         </goals>
                         <configuration>
                             <inputSpec>${tmforum.api.url}</inputSpec>
-                            <apiPackage>org.fiware.resourcecatalog.api</apiPackage>
+                            <apiPackage>org.fiware.resourcefunction.api</apiPackage>
                             <strictSpec>true</strictSpec>
-                            <modelPackage>org.fiware.resourcecatalog.model</modelPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
                             <generatorName>micronaut</generatorName>
                             <modelNameSuffix>VO</modelNameSuffix>
                             <output>${project.build.directory}</output>
