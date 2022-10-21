@@ -34,7 +34,7 @@
         <module>common</module>
         <module>party-catalog</module>
         <module>product-catalog</module>
-        <module>resource-catalog</module>
+        <module>resource-function-activation</module>
     </modules>
 
     <properties>
@@ -595,7 +595,7 @@
                                             <image>
                                                 <name>ctk</name>
                                                 <build>
-                                                    <dockerFile>${project.parent.basedir}/conformance-test/Dockerfile</dockerFile>
+                                                    <dockerFile>${project.build.directory}/conformance-test/Dockerfile</dockerFile>
                                                     <args>
                                                         <CTK_URL>${module.ctk.url}</CTK_URL>
                                                         <CTK_SCRIPT_FOLDER>${module.ctk.script-folder}</CTK_SCRIPT_FOLDER>
