@@ -4,18 +4,18 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
-import org.fiware.resourcecatalog.api.MigrateApiTestClient;
-import org.fiware.resourcecatalog.api.MigrateApiTestSpec;
-import org.fiware.resourcecatalog.model.CharacteristicRelationshipVOTestExample;
-import org.fiware.resourcecatalog.model.CharacteristicVOTestExample;
-import org.fiware.resourcecatalog.model.ConnectionPointRefVOTestExample;
-import org.fiware.resourcecatalog.model.MigrateCreateVO;
-import org.fiware.resourcecatalog.model.MigrateCreateVOTestExample;
-import org.fiware.resourcecatalog.model.MigrateVO;
-import org.fiware.resourcecatalog.model.MigrateVOTestExample;
-import org.fiware.resourcecatalog.model.PlaceRefVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceFunctionRefVOTestExample;
-import org.fiware.resourcecatalog.model.TaskStateTypeVO;
+import org.fiware.resourcefunction.api.MigrateApiTestClient;
+import org.fiware.resourcefunction.api.MigrateApiTestSpec;
+import org.fiware.resourcefunction.model.CharacteristicRelationshipVOTestExample;
+import org.fiware.resourcefunction.model.CharacteristicVOTestExample;
+import org.fiware.resourcefunction.model.ConnectionPointRefVOTestExample;
+import org.fiware.resourcefunction.model.MigrateCreateVO;
+import org.fiware.resourcefunction.model.MigrateCreateVOTestExample;
+import org.fiware.resourcefunction.model.MigrateVO;
+import org.fiware.resourcefunction.model.MigrateVOTestExample;
+import org.fiware.resourcefunction.model.PlaceRefVOTestExample;
+import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
+import org.fiware.resourcefunction.model.TaskStateTypeVO;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"})
 public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 
     public final MigrateApiTestClient migrateApiTestClient;

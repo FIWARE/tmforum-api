@@ -4,15 +4,15 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
-import org.fiware.resourcecatalog.api.ScaleApiTestClient;
-import org.fiware.resourcecatalog.api.ScaleApiTestSpec;
-import org.fiware.resourcecatalog.model.ResourceFunctionRefVOTestExample;
-import org.fiware.resourcecatalog.model.ScaleCreateVO;
-import org.fiware.resourcecatalog.model.ScaleCreateVOTestExample;
-import org.fiware.resourcecatalog.model.ScaleVO;
-import org.fiware.resourcecatalog.model.ScaleVOTestExample;
-import org.fiware.resourcecatalog.model.ScheduleRefVOTestExample;
-import org.fiware.resourcecatalog.model.TaskStateTypeVO;
+import org.fiware.resourcefunction.api.ScaleApiTestClient;
+import org.fiware.resourcefunction.api.ScaleApiTestSpec;
+import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
+import org.fiware.resourcefunction.model.ScaleCreateVO;
+import org.fiware.resourcefunction.model.ScaleCreateVOTestExample;
+import org.fiware.resourcefunction.model.ScaleVO;
+import org.fiware.resourcefunction.model.ScaleVOTestExample;
+import org.fiware.resourcefunction.model.ScheduleRefVOTestExample;
+import org.fiware.resourcefunction.model.TaskStateTypeVO;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"})
 public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
 
     public final ScaleApiTestClient scaleApiTestClient;

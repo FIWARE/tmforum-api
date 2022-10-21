@@ -4,17 +4,17 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
-import org.fiware.resourcecatalog.api.HealApiTestClient;
-import org.fiware.resourcecatalog.api.HealApiTestSpec;
-import org.fiware.resourcecatalog.model.CharacteristicRelationshipVOTestExample;
-import org.fiware.resourcecatalog.model.CharacteristicVOTestExample;
-import org.fiware.resourcecatalog.model.HealCreateVO;
-import org.fiware.resourcecatalog.model.HealCreateVOTestExample;
-import org.fiware.resourcecatalog.model.HealPolicyRefVOTestExample;
-import org.fiware.resourcecatalog.model.HealVO;
-import org.fiware.resourcecatalog.model.HealVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceFunctionRefVOTestExample;
-import org.fiware.resourcecatalog.model.TaskStateTypeVO;
+import org.fiware.resourcefunction.api.HealApiTestClient;
+import org.fiware.resourcefunction.api.HealApiTestSpec;
+import org.fiware.resourcefunction.model.CharacteristicRelationshipVOTestExample;
+import org.fiware.resourcefunction.model.CharacteristicVOTestExample;
+import org.fiware.resourcefunction.model.HealCreateVO;
+import org.fiware.resourcefunction.model.HealCreateVOTestExample;
+import org.fiware.resourcefunction.model.HealPolicyRefVOTestExample;
+import org.fiware.resourcefunction.model.HealVO;
+import org.fiware.resourcefunction.model.HealVOTestExample;
+import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
+import org.fiware.resourcefunction.model.TaskStateTypeVO;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"})
 public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 
     public final HealApiTestClient healApiTestClient;

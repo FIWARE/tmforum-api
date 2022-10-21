@@ -2,8 +2,8 @@ package org.fiware.tmforum.resourcefunction.rest;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
-import org.fiware.resourcecatalog.api.MonitorApi;
-import org.fiware.resourcecatalog.model.MonitorVO;
+import org.fiware.resourcefunction.api.MonitorApi;
+import org.fiware.resourcefunction.model.MonitorVO;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
 import org.fiware.tmforum.resourcefunction.domain.Monitor;

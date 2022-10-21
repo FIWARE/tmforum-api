@@ -1,21 +1,21 @@
 package org.fiware.tmforum.resourcefunction;
 
-import org.fiware.resourcecatalog.model.CharacteristicVO;
-import org.fiware.resourcecatalog.model.FeatureVO;
-import org.fiware.resourcecatalog.model.HealCreateVO;
-import org.fiware.resourcecatalog.model.HealVO;
-import org.fiware.resourcecatalog.model.MigrateCreateVO;
-import org.fiware.resourcecatalog.model.MigrateVO;
-import org.fiware.resourcecatalog.model.MonitorVO;
-import org.fiware.resourcecatalog.model.ResourceFunctionCreateVO;
-import org.fiware.resourcecatalog.model.ResourceFunctionUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceFunctionVO;
-import org.fiware.resourcecatalog.model.ResourceGraphRelationshipVO;
-import org.fiware.resourcecatalog.model.ResourceGraphVO;
-import org.fiware.resourcecatalog.model.ResourceRefOrValueVO;
-import org.fiware.resourcecatalog.model.ResourceRelationshipVO;
-import org.fiware.resourcecatalog.model.ScaleCreateVO;
-import org.fiware.resourcecatalog.model.ScaleVO;
+import org.fiware.resourcefunction.model.CharacteristicVO;
+import org.fiware.resourcefunction.model.FeatureVO;
+import org.fiware.resourcefunction.model.HealCreateVO;
+import org.fiware.resourcefunction.model.HealVO;
+import org.fiware.resourcefunction.model.MigrateCreateVO;
+import org.fiware.resourcefunction.model.MigrateVO;
+import org.fiware.resourcefunction.model.MonitorVO;
+import org.fiware.resourcefunction.model.ResourceFunctionCreateVO;
+import org.fiware.resourcefunction.model.ResourceFunctionUpdateVO;
+import org.fiware.resourcefunction.model.ResourceFunctionVO;
+import org.fiware.resourcefunction.model.ResourceGraphRelationshipVO;
+import org.fiware.resourcefunction.model.ResourceGraphVO;
+import org.fiware.resourcefunction.model.ResourceRefOrValueVO;
+import org.fiware.resourcefunction.model.ResourceRelationshipVO;
+import org.fiware.resourcefunction.model.ScaleCreateVO;
+import org.fiware.resourcefunction.model.ScaleVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.resourcefunction.domain.Characteristic;
@@ -88,7 +88,7 @@ public interface TMForumMapper {
     ScaleVO map(Scale scale);
 
     Scale map(ScaleVO scaleVO);
-    
+
     // sub-entities
 
     @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})

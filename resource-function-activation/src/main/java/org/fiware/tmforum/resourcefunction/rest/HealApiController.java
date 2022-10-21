@@ -2,9 +2,9 @@ package org.fiware.tmforum.resourcefunction.rest;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
-import org.fiware.resourcecatalog.api.HealApi;
-import org.fiware.resourcecatalog.model.HealCreateVO;
-import org.fiware.resourcecatalog.model.HealVO;
+import org.fiware.resourcefunction.api.HealApi;
+import org.fiware.resourcefunction.model.HealCreateVO;
+import org.fiware.resourcefunction.model.HealVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;

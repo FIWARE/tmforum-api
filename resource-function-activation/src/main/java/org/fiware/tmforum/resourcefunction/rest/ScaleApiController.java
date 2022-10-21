@@ -2,9 +2,9 @@ package org.fiware.tmforum.resourcefunction.rest;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
-import org.fiware.resourcecatalog.api.ScaleApi;
-import org.fiware.resourcecatalog.model.ScaleCreateVO;
-import org.fiware.resourcecatalog.model.ScaleVO;
+import org.fiware.resourcefunction.api.ScaleApi;
+import org.fiware.resourcefunction.model.ScaleCreateVO;
+import org.fiware.resourcefunction.model.ScaleVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;

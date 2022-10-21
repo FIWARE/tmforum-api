@@ -186,7 +186,7 @@
                 <version>${version.org.openapitools.generator-maven-plugin}</version>
                 <executions>
                     <execution>
-                        <id>openapi-resource-catalog-api</id>
+                        <id>openapi-resource-function-api</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
