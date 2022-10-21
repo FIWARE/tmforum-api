@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcefunction.domain;
+package org.fiware.tmforum.common.domain;
 
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
@@ -6,8 +6,7 @@ import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 
-//Map to ResourceSpecification when exists
-@MappingEnabled
+@MappingEnabled(entityType = "resource-specification")
 @EqualsAndHashCode(callSuper = true)
 public class ResourceSpecificationRef extends RefEntity {
 

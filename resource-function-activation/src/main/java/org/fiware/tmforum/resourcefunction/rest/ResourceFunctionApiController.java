@@ -16,9 +16,9 @@ import org.fiware.tmforum.resourcefunction.domain.Feature;
 import org.fiware.tmforum.resourcefunction.domain.Resource;
 import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
 import org.fiware.tmforum.resourcefunction.domain.ResourceGraph;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogException;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogExceptionReason;
-import org.fiware.tmforum.resourcefunction.repository.ResourceCatalogRepository;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
+import org.fiware.tmforum.resourcefunction.repository.ResourceFunctionRepository;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -32,17 +32,14 @@ import java.util.UUID;
 @Controller("${general.basepath:/}")
 public class ResourceFunctionApiController extends AbstractApiController implements ResourceFunctionApi {
 
-    private final Clock clock;
-
-    public ResourceFunctionApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceCatalogRepository resourceCatalogRepository, Clock clock) {
+    public ResourceFunctionApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceFunctionRepository resourceCatalogRepository) {
         super(tmForumMapper, validationService, resourceCatalogRepository);
-        this.clock = clock;
     }
 
     @Override
     public Mono<HttpResponse<ResourceFunctionVO>> createResourceFunction(ResourceFunctionCreateVO resourceFunctionCreateVO) {
         if (resourceFunctionCreateVO.getLifecycleState() == null) {
-            throw new ResourceCatalogException("No lifecycleState was set.", ResourceCatalogExceptionReason.INVALID_DATA);
+            throw new ResourceFunctionException("No lifecycleState was set.", ResourceFunctionExceptionReason.INVALID_DATA);
         }
         ResourceFunction resourceFunction = tmForumMapper.map(
                 tmForumMapper.map(resourceFunctionCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), ResourceFunction.TYPE_RESOURCE_FUNCTION)));
@@ -90,7 +87,7 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
                 .stream()
                 .map(resourceRelationship -> {
                     if (resourceRelationship.getId() == null) {
-                        throw new ResourceCatalogException("A resource relationship without an ID cannot exist.", ResourceCatalogExceptionReason.INVALID_DATA);
+                        throw new ResourceFunctionException("A resource relationship without an ID cannot exist.", ResourceFunctionExceptionReason.INVALID_DATA);
                     }
 
                     return validationService.checkReferenceExists(List.of(resourceRelationship))
@@ -186,7 +183,7 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
             checkingMono = Mono.zip(graphRelCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
         }
         return checkingMono
-                .onErrorMap(throwable -> new ResourceCatalogException(String.format("Was not able to create resource function %s", resourceFunction.getId()), throwable, ResourceCatalogExceptionReason.INVALID_RELATIONSHIP));
+                .onErrorMap(throwable -> new ResourceFunctionException(String.format("Was not able to create resource function %s", resourceFunction.getId()), throwable, ResourceFunctionExceptionReason.INVALID_RELATIONSHIP));
     }
 
     @Override
@@ -205,7 +202,7 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
     public Mono<HttpResponse<ResourceFunctionVO>> patchResourceFunction(String id, ResourceFunctionUpdateVO resourceFunctionUpdateVO) {
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
-            throw new ResourceCatalogException("Did not receive a valid id, such resource cannot exist.", ResourceCatalogExceptionReason.NOT_FOUND);
+            throw new ResourceFunctionException("Did not receive a valid id, such resource cannot exist.", ResourceFunctionExceptionReason.NOT_FOUND);
         }
         ResourceFunction updatedResourceFunction = tmForumMapper.map(resourceFunctionUpdateVO, id);
 
@@ -249,7 +246,7 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
     @Override
     public Mono<HttpResponse<ResourceFunctionVO>> retrieveResourceFunction(String id, @Nullable String fields) {
         return retrieve(id, ResourceFunction.class)
-                .switchIfEmpty(Mono.error(new ResourceCatalogException("No such resources function exists.", ResourceCatalogExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new ResourceFunctionException("No such resources function exists.", ResourceFunctionExceptionReason.NOT_FOUND)))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }

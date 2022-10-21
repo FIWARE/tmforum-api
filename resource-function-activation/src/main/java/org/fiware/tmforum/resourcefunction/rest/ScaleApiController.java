@@ -10,9 +10,9 @@ import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
 import org.fiware.tmforum.resourcefunction.domain.Scale;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogException;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogExceptionReason;
-import org.fiware.tmforum.resourcefunction.repository.ResourceCatalogRepository;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
+import org.fiware.tmforum.resourcefunction.repository.ResourceFunctionRepository;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Controller("${general.basepath:/}")
 public class ScaleApiController extends AbstractApiController implements ScaleApi {
 
-    public ScaleApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceCatalogRepository resourceCatalogRepository) {
+    public ScaleApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceFunctionRepository resourceCatalogRepository) {
         super(tmForumMapper, validationService, resourceCatalogRepository);
     }
 
@@ -48,8 +48,8 @@ public class ScaleApiController extends AbstractApiController implements ScaleAp
         Optional.ofNullable(scale.getResourceFunction()).ifPresent(resourceFunctionRef -> references.add(List.of(resourceFunctionRef)));
 
         return getCheckingMono(scale, references)
-                .onErrorMap(throwable -> new ResourceCatalogException(
-                        String.format("Was not able to create scale %s", scale.getId()), throwable, ResourceCatalogExceptionReason.INVALID_RELATIONSHIP));
+                .onErrorMap(throwable -> new ResourceFunctionException(
+                        String.format("Was not able to create scale %s", scale.getId()), throwable, ResourceFunctionExceptionReason.INVALID_RELATIONSHIP));
     }
 
     @Override
@@ -62,7 +62,7 @@ public class ScaleApiController extends AbstractApiController implements ScaleAp
     @Override
     public Mono<HttpResponse<ScaleVO>> retrieveScale(String id, @Nullable String fields) {
         return retrieve(id, Scale.class)
-                .switchIfEmpty(Mono.error(new ResourceCatalogException("No such scale exists.", ResourceCatalogExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new ResourceFunctionException("No such scale exists.", ResourceFunctionExceptionReason.NOT_FOUND)))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }

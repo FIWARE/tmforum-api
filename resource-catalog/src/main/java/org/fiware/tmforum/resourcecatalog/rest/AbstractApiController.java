@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcefunction.rest;
+package org.fiware.tmforum.resourcecatalog.rest;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -8,10 +8,10 @@ import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.resourcefunction.TMForumMapper;
-import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
-import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
-import org.fiware.tmforum.resourcefunction.repository.ResourceFunctionRepository;
+import org.fiware.tmforum.resourcecatalog.TMForumMapper;
+import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogException;
+import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReason;
+import org.fiware.tmforum.resourcecatalog.repository.ResourceCatalogRepository;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -31,7 +31,7 @@ public abstract class AbstractApiController {
 
     protected final TMForumMapper tmForumMapper;
     protected final ReferenceValidationService validationService;
-    protected final ResourceFunctionRepository resourceCatalogRepository;
+    protected final ResourceCatalogRepository resourceCatalogRepository;
 
     protected <T> Mono<T> getCheckingMono(T entityToCheck, List<List<? extends ReferencedEntity>> referencedEntities) {
         Mono<T> checkingMono = Mono.just(entityToCheck);
@@ -49,9 +49,9 @@ public abstract class AbstractApiController {
                 .onErrorMap(t -> {
                     if (t instanceof HttpClientResponseException e) {
                         return switch (e.getStatus()) {
-                            case CONFLICT -> new ResourceFunctionException(String.format("Conflict on creating the entity: %s", e.getMessage()), ResourceFunctionExceptionReason.CONFLICT);
-                            case BAD_REQUEST -> new ResourceFunctionException(String.format("Did not receive a valid entity: %s.", e.getMessage()), ResourceFunctionExceptionReason.INVALID_DATA);
-                            default -> new ResourceFunctionException(String.format("Unspecified downstream error: %s", e.getMessage()), ResourceFunctionExceptionReason.UNKNOWN);
+                            case CONFLICT -> new ResourceCatalogException(String.format("Conflict on creating the entity: %s", e.getMessage()), ResourceCatalogExceptionReason.CONFLICT);
+                            case BAD_REQUEST -> new ResourceCatalogException(String.format("Did not receive a valid entity: %s.", e.getMessage()), ResourceCatalogExceptionReason.INVALID_DATA);
+                            default -> new ResourceCatalogException(String.format("Unspecified downstream error: %s", e.getMessage()), ResourceCatalogExceptionReason.UNKNOWN);
                         };
                     } else {
                         return t;
@@ -63,7 +63,7 @@ public abstract class AbstractApiController {
     protected Mono<HttpResponse<Object>> delete(String id) {
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
-            throw new ResourceFunctionException("Did not receive a valid id, such entity cannot exist.", ResourceFunctionExceptionReason.NOT_FOUND);
+            throw new ResourceCatalogException("Did not receive a valid id, such entity cannot exist.", ResourceCatalogExceptionReason.NOT_FOUND);
         }
         return resourceCatalogRepository.deleteDomainEntity(URI.create(id))
                 .then(Mono.just(HttpResponse.noContent()));
@@ -74,7 +74,7 @@ public abstract class AbstractApiController {
         limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
 
         if (offset < 0 || limit < 1) {
-            throw new ResourceFunctionException(String.format("Invalid offset %s or limit %s.", offset, limit), ResourceFunctionExceptionReason.INVALID_DATA);
+            throw new ResourceCatalogException(String.format("Invalid offset %s or limit %s.", offset, limit), ResourceCatalogExceptionReason.INVALID_DATA);
         }
 
         return resourceCatalogRepository
@@ -85,7 +85,7 @@ public abstract class AbstractApiController {
     protected <R> Mono<R> retrieve(String id, Class<R> entityClass) {
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
-            throw new ResourceFunctionException("Did not receive a valid id, such catalog cannot exist.", ResourceFunctionExceptionReason.NOT_FOUND);
+            throw new ResourceCatalogException("Did not receive a valid id, such catalog cannot exist.", ResourceCatalogExceptionReason.NOT_FOUND);
         }
         return resourceCatalogRepository
                 .get(URI.create(id), entityClass);
@@ -96,7 +96,7 @@ public abstract class AbstractApiController {
 
         return resourceCatalogRepository
                 .get(idUri, entityClass)
-                .switchIfEmpty(Mono.error(new ResourceFunctionException("No such entity exists.", ResourceFunctionExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new ResourceCatalogException("No such entity exists.", ResourceCatalogExceptionReason.NOT_FOUND)))
                 .flatMap(entity -> checkingMono)
                 .flatMap(entity -> resourceCatalogRepository.updateDomainEntity(id, updatedObject)
                         .then(resourceCatalogRepository.get(idUri, entityClass)));

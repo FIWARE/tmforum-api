@@ -7,9 +7,9 @@ import org.fiware.resourcefunction.model.MonitorVO;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
 import org.fiware.tmforum.resourcefunction.domain.Monitor;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogException;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogExceptionReason;
-import org.fiware.tmforum.resourcefunction.repository.ResourceCatalogRepository;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
+import org.fiware.tmforum.resourcefunction.repository.ResourceFunctionRepository;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -19,7 +19,7 @@ import java.util.List;
 @Controller("${general.basepath:/}")
 public class MonitorApiController extends AbstractApiController implements MonitorApi {
 
-    public MonitorApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceCatalogRepository resourceCatalogRepository) {
+    public MonitorApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceFunctionRepository resourceCatalogRepository) {
         super(tmForumMapper, validationService, resourceCatalogRepository);
     }
 
@@ -33,7 +33,7 @@ public class MonitorApiController extends AbstractApiController implements Monit
     @Override
     public Mono<HttpResponse<MonitorVO>> retrieveMonitor(String id, @Nullable String fields) {
         return retrieve(id, Monitor.class)
-                .switchIfEmpty(Mono.error(new ResourceCatalogException("No such monitor exists.", ResourceCatalogExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new ResourceFunctionException("No such monitor exists.", ResourceFunctionExceptionReason.NOT_FOUND)))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }

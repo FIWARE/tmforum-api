@@ -13,12 +13,12 @@ import javax.inject.Singleton;
 
 @Produces
 @Singleton
-@Requires(classes = {ResourceCatalogException.class, ExceptionHandler.class})
+@Requires(classes = {ResourceFunctionException.class, ExceptionHandler.class})
 @Slf4j
-public class ResourceCatalogExceptionHandler implements ExceptionHandler<ResourceCatalogException, HttpResponse<ErrorDetails>> {
+public class ResourceFunctionExceptionHandler implements ExceptionHandler<ResourceFunctionException, HttpResponse<ErrorDetails>> {
 
     @Override
-    public HttpResponse<ErrorDetails> handle(HttpRequest request, ResourceCatalogException exception) {
+    public HttpResponse<ErrorDetails> handle(HttpRequest request, ResourceFunctionException exception) {
         log.warn("The resource could not have been created.", exception);
         return switch (exception.getCatalogExceptionReason()) {
             case CONFLICT -> HttpResponse.status(HttpStatus.CONFLICT).body(new ErrorDetails(HttpStatus.CONFLICT.toString(),

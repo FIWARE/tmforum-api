@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
+import org.fiware.tmforum.common.domain.ResourceSpecificationRef;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;

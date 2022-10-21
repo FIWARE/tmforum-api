@@ -11,9 +11,9 @@ import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
 import org.fiware.tmforum.resourcefunction.domain.Characteristic;
 import org.fiware.tmforum.resourcefunction.domain.Migrate;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogException;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogExceptionReason;
-import org.fiware.tmforum.resourcefunction.repository.ResourceCatalogRepository;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
+import org.fiware.tmforum.resourcefunction.repository.ResourceFunctionRepository;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @Controller("${general.basepath:/}")
 public class MigrateApiController extends AbstractApiController implements MigrateApi {
 
-    public MigrateApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceCatalogRepository resourceCatalogRepository) {
+    public MigrateApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceFunctionRepository resourceCatalogRepository) {
         super(tmForumMapper, validationService, resourceCatalogRepository);
     }
 
@@ -70,8 +70,8 @@ public class MigrateApiController extends AbstractApiController implements Migra
             checkingMono = Mono.zip(characteristicsCheckingMono, checkingMono, (p1, p2) -> migrate);
         }
         return checkingMono
-                .onErrorMap(throwable -> new ResourceCatalogException(
-                        String.format("Was not able to create migrate %s", migrate.getId()), throwable, ResourceCatalogExceptionReason.INVALID_RELATIONSHIP));
+                .onErrorMap(throwable -> new ResourceFunctionException(
+                        String.format("Was not able to create migrate %s", migrate.getId()), throwable, ResourceFunctionExceptionReason.INVALID_RELATIONSHIP));
     }
 
     @Override
@@ -84,7 +84,7 @@ public class MigrateApiController extends AbstractApiController implements Migra
     @Override
     public Mono<HttpResponse<MigrateVO>> retrieveMigrate(String id, @Nullable String fields) {
         return retrieve(id, Migrate.class)
-                .switchIfEmpty(Mono.error(new ResourceCatalogException("No such migrate exists.", ResourceCatalogExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new ResourceFunctionException("No such migrate exists.", ResourceFunctionExceptionReason.NOT_FOUND)))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }

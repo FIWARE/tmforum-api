@@ -1,6 +1,6 @@
 package org.fiware.tmforum.resourcefunction.exception;
 
-public enum ResourceCatalogExceptionReason {
+public enum ResourceFunctionExceptionReason {
 
     CONFLICT,
     INVALID_DATA,

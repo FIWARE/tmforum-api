@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcefunction.exception;
+package org.fiware.tmforum.resourcecatalog.exception;
 
 import lombok.Getter;
 

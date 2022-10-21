@@ -11,9 +11,9 @@ import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
 import org.fiware.tmforum.resourcefunction.domain.Characteristic;
 import org.fiware.tmforum.resourcefunction.domain.Heal;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogException;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogExceptionReason;
-import org.fiware.tmforum.resourcefunction.repository.ResourceCatalogRepository;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
+import org.fiware.tmforum.resourcefunction.repository.ResourceFunctionRepository;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @Controller("${general.basepath:/}")
 public class HealApiController extends AbstractApiController implements HealApi {
 
-    public HealApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceCatalogRepository resourceCatalogRepository) {
+    public HealApiController(TMForumMapper tmForumMapper, ReferenceValidationService validationService, ResourceFunctionRepository resourceCatalogRepository) {
         super(tmForumMapper, validationService, resourceCatalogRepository);
     }
 
@@ -68,8 +68,8 @@ public class HealApiController extends AbstractApiController implements HealApi 
         }
 
         return checkingMono
-                .onErrorMap(throwable -> new ResourceCatalogException(
-                        String.format("Was not able to create heal %s", heal.getId()), throwable, ResourceCatalogExceptionReason.INVALID_RELATIONSHIP));
+                .onErrorMap(throwable -> new ResourceFunctionException(
+                        String.format("Was not able to create heal %s", heal.getId()), throwable, ResourceFunctionExceptionReason.INVALID_RELATIONSHIP));
     }
 
     @Override
@@ -82,7 +82,7 @@ public class HealApiController extends AbstractApiController implements HealApi 
     @Override
     public Mono<HttpResponse<HealVO>> retrieveHeal(String id, @Nullable String fields) {
         return retrieve(id, Heal.class)
-                .switchIfEmpty(Mono.error(new ResourceCatalogException("No such heal exists.", ResourceCatalogExceptionReason.NOT_FOUND)))
+                .switchIfEmpty(Mono.error(new ResourceFunctionException("No such heal exists.", ResourceFunctionExceptionReason.NOT_FOUND)))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }

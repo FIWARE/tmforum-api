@@ -35,6 +35,7 @@
         <module>party-catalog</module>
         <module>product-catalog</module>
         <module>resource-function-activation</module>
+        <module>resource-catalog</module>
     </modules>
 
     <properties>

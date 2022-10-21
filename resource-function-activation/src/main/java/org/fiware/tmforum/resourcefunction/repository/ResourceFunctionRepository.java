@@ -6,8 +6,8 @@ import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.repository.NgsiLdBaseRepository;
 import org.fiware.tmforum.mapping.EntityVOMapper;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogException;
-import org.fiware.tmforum.resourcefunction.exception.ResourceCatalogExceptionReason;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
+import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
 import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
@@ -15,10 +15,10 @@ import java.net.URI;
 import java.util.List;
 
 @Singleton
-public class ResourceCatalogRepository extends NgsiLdBaseRepository {
+public class ResourceFunctionRepository extends NgsiLdBaseRepository {
 
 
-    public ResourceCatalogRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi, EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
+    public ResourceFunctionRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi, EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
         super(generalProperties, entitiesApi, javaObjectMapper, ngsiMapper, entityVOMapper);
     }
 
@@ -46,7 +46,7 @@ public class ResourceCatalogRepository extends NgsiLdBaseRepository {
                 .map(List::stream)
                 .flatMap(entityVOStream -> zipToList(entityVOStream, entityClass))
                 .onErrorResume(t -> {
-                    throw new ResourceCatalogException("Was not able to list entities.", t, ResourceCatalogExceptionReason.UNKNOWN);
+                    throw new ResourceFunctionException("Was not able to list entities.", t, ResourceFunctionExceptionReason.UNKNOWN);
                 });
     }
 
