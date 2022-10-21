@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.fiware.tmforum</groupId>
-    <artifactId>resource-catalog</artifactId>
+    <artifactId>resource-function-activation</artifactId>
     <version>0.1</version>
 
     <parent>
@@ -15,10 +15,10 @@
     <properties>
         <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF664-ResourceFunctionActivation-v4.0.0.swagger.json</tmforum.api.url>
         <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF664-ResourceFunctionActivation.zip</module.ctk.url>
-        <module.ctk.script-folder>TMF634-ResourceCatalog</module.ctk.script-folder>
+        <module.ctk.script-folder>TMF634-ResourceFunctionActivation</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/resourceCatalog/v4</module.ctk.base-path>
-        <module.ctk.additionalCommands>sed -i 's/tmf634:8080/localhost:8632/g' /opt/ctk/TMF664-ResourceFunctionActivation/config.json</module.ctk.additionalCommands>
+        <module.ctk.additionalCommands>sed -i 's/8664/8632/g' /opt/ctk/TMF664-ResourceFunctionActivation/config.json</module.ctk.additionalCommands>
     </properties>
 
     <dependencies>
