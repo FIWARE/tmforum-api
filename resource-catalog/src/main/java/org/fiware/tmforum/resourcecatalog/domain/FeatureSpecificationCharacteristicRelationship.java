@@ -1,6 +1,7 @@
 package org.fiware.tmforum.resourcecatalog.domain;
 
 import lombok.Data;
+import org.fiware.tmforum.common.domain.FeatureRef;
 import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.net.URI;
@@ -9,7 +10,7 @@ import java.net.URI;
 public class FeatureSpecificationCharacteristicRelationship {
 
     private String characteristicId;
-    private String featureId;
+    private FeatureRef featureId;
     private String name;
     private String relationshipType;
     private String resourceSpecificationHref;

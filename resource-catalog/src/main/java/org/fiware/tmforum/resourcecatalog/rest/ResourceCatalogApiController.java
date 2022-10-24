@@ -3,6 +3,8 @@ package org.fiware.tmforum.resourcecatalog.rest;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.Controller;
+import lombok.extern.slf4j.Slf4j;
 import org.fiware.resourcecatalog.api.ResourceCatalogApi;
 import org.fiware.resourcecatalog.model.ResourceCatalogCreateVO;
 import org.fiware.resourcecatalog.model.ResourceCatalogUpdateVO;
@@ -22,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
+@Controller("${general.basepath:/}")
 public class ResourceCatalogApiController extends AbstractApiController implements ResourceCatalogApi {
 
     private final Clock clock;
@@ -64,7 +68,7 @@ public class ResourceCatalogApiController extends AbstractApiController implemen
     @Override
     public Mono<HttpResponse<List<ResourceCatalogVO>>> listResourceCatalog(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ResourceCatalog.TYPE_RESOURCE_CATALOG, ResourceCatalog.class)
-                .map(resourceFunctionStream -> resourceFunctionStream.map(tmForumMapper::map).toList())
+                .map(resourceCatalogStream -> resourceCatalogStream.map(tmForumMapper::map).toList())
                 .map(HttpResponse::ok);
     }
 
@@ -75,6 +79,7 @@ public class ResourceCatalogApiController extends AbstractApiController implemen
             throw new ResourceCatalogException("Did not receive a valid id, such resource catalog cannot exist.", ResourceCatalogExceptionReason.NOT_FOUND);
         }
         ResourceCatalog updatedResourceCatalog = tmForumMapper.map(resourceCatalogUpdateVO, id);
+        updatedResourceCatalog.setLastUpdate(clock.instant());
 
         return patch(id, updatedResourceCatalog, getCheckingMono(updatedResourceCatalog), ResourceCatalog.class)
                 .map(tmForumMapper::map)
