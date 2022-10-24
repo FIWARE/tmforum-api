@@ -7,11 +7,13 @@ import org.fiware.resourcecatalog.model.AttachmentRefOrValueVO;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
+import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 
@@ -20,6 +22,10 @@ import java.util.List;
 public class ResourceSpecification extends EntityWithId {
 
     public static final String TYPE_RESOURCE_SPECIFICATION = "resource-specification";
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
+    private URI href;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "category")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "category")}))
@@ -37,9 +43,9 @@ public class ResourceSpecification extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "lastUpdate")}))
     private Instant lastUpdate;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "lifecycleState")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "lifecycleState")}))
-    private String lifecycleState;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus")}))
+    private String lifecycleStatus;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "name")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "name")}))
@@ -68,8 +74,12 @@ public class ResourceSpecification extends EntityWithId {
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "targetResourceSchema")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetResourceSchema")}))
     private TargetResourceSchema targetResourceSchema;
-    
-    protected ResourceSpecification(String id) {
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
+    private TimePeriod validFor;
+
+    public ResourceSpecification(String id) {
         super(TYPE_RESOURCE_SPECIFICATION, id);
     }
 }

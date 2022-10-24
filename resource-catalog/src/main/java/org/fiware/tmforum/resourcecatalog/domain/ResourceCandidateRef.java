@@ -20,7 +20,7 @@ public class ResourceCandidateRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version", targetClass = String.class)}))
     private String version;
 
-    protected ResourceCandidateRef(String id) {
+    public ResourceCandidateRef(String id) {
         super(id);
     }
 

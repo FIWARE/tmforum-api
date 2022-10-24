@@ -10,6 +10,7 @@ import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.Ignore;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
+import java.net.URI;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -20,7 +21,7 @@ public class ResourceCategoryRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version", targetClass = String.class)}))
     private String version;
 
-    protected ResourceCategoryRef(String id) {
+    public ResourceCategoryRef(URI id) {
         super(id);
     }
 

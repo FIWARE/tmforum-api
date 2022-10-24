@@ -18,6 +18,7 @@
         <module.ctk.script-folder>TMF634-ResourceCatalog</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/resourceCatalog/v4</module.ctk.base-path>
+        <module.ctk.additionalCommands>sed -i 's/tmf634:8080/localhost:8632/g' /opt/ctk/TMF634-ResourceCatalog/config.json</module.ctk.additionalCommands>
     </properties>
 
     <dependencies>

@@ -55,18 +55,30 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
     }
 
     private Mono<ResourceSpecification> validateSpec(ResourceSpecification resourceSpecification) {
+        Mono<ResourceSpecification> validatingMono = Mono.just(resourceSpecification);
+
         List<Mono<FeatureSpecification>> fsCheckingMonos = resourceSpecification.getFeatureSpecification()
                 .stream()
                 .map(this::validateFeatureSpecification)
                 .toList();
-        Mono<ResourceSpecification> fsCheckingMono = Mono.zip(fsCheckingMonos, (p1) -> resourceSpecification);
+
+        if (!fsCheckingMonos.isEmpty()) {
+            Mono<ResourceSpecification> fsCheckingMono = Mono.zip(fsCheckingMonos, p1 -> resourceSpecification);
+            validatingMono = Mono.zip(validatingMono, fsCheckingMono, (p1, p2) -> resourceSpecification);
+        }
+
         List<Mono<ResourceSpecificationCharacteristic>> rscCheckingMonos = resourceSpecification.getResourceSpecCharacteristic()
                 .stream()
                 .map(this::validateResourceSpecChar)
                 .toList();
-        Mono<ResourceSpecification> rscCheckingMono = Mono.zip(rscCheckingMonos, (p1) -> resourceSpecification);
 
-        return Mono.zip(fsCheckingMono, rscCheckingMono, (p1, p2) -> resourceSpecification);
+        if (!rscCheckingMonos.isEmpty()) {
+            Mono<ResourceSpecification> rscCheckingMono = Mono.zip(rscCheckingMonos, p1 -> resourceSpecification);
+            validatingMono = Mono.zip(validatingMono, rscCheckingMono, (p1, p2) -> resourceSpecification);
+
+        }
+
+        return validatingMono;
     }
 
     private Mono<ResourceSpecificationCharacteristic> validateResourceSpecChar(ResourceSpecificationCharacteristic resourceSpecificationCharacteristic) {

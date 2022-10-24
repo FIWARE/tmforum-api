@@ -13,9 +13,7 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCategory;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceSpecification;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogException;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReason;
 import org.fiware.tmforum.resourcecatalog.repository.ResourceCatalogRepository;
@@ -24,6 +22,7 @@ import reactor.core.publisher.Mono;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -54,6 +53,8 @@ public class ResourceCategoryApiController extends AbstractApiController impleme
         references.add(resourceCategory.getCategory());
         references.add(resourceCategory.getRelatedParty());
         references.add(resourceCategory.getResourceCandidate());
+
+        Optional.ofNullable(resourceCategory.getParentId()).map(List::of).ifPresent(references::add);
 
         return getCheckingMono(resourceCategory, references)
                 .onErrorMap(throwable ->
