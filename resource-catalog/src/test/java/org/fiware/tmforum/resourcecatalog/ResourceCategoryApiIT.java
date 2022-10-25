@@ -17,6 +17,8 @@ import org.fiware.resourcecatalog.model.ResourceCategoryVO;
 import org.fiware.resourcecatalog.model.ResourceCategoryVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceCategoryRefVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceSpecificationRefVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
+import org.fiware.resourcecatalog.model.ResourceSpecificationVOTestExample;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -46,6 +48,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
     public final ResourceCategoryApiTestClient resourceCategoryApiTestClient;
 
     private String message;
+    private String fieldsParameter;
     private ResourceCategoryCreateVO resourceCategoryCreateVO;
     private ResourceCategoryUpdateVO resourceCategoryUpdateVO;
     private ResourceCategoryVO expectedResourceCategory;
@@ -533,7 +536,15 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideFieldParameters")
+    public void retrieveResourceCategory200(String message, String fields, ResourceCategoryVO expectedResourceCategory) throws Exception {
+        this.fieldsParameter = fields;
+        this.message = message;
+        this.expectedResourceCategory = expectedResourceCategory;
+        retrieveResourceCategory200();
+    }
+
     @Override
     public void retrieveResourceCategory200() throws Exception {
 
@@ -556,6 +567,56 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedResourceCategoryVO, retrievedRF.body(), "The correct resource category should be returned.");
     }
+
+
+    private static Stream<Arguments> provideFieldParameters() {
+        return Stream.of(
+                Arguments.of("Without a fields parameter everything should be returned.", null, ResourceCategoryVOTestExample.build().relatedParty(null).category(null).resourceCandidate(null)),
+                Arguments.of("Only version and the mandatory parameters should have been included.", "version", ResourceCategoryVOTestExample.build()
+                        .relatedParty(null)
+                        .lastUpdate(null)
+                        .isRoot(null)
+                        .category(null)
+                        .relatedParty(null)
+                        .resourceCandidate(null)
+                        .description(null)
+                        .lifecycleStatus(null)
+                        .name(null)
+                        .parentId(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)),
+                Arguments.of("Only the mandatory parameters should have been included when a non-existent field was requested.", "nothingToSeeHere", ResourceCategoryVOTestExample.build()
+                        .relatedParty(null)
+                        .lastUpdate(null)
+                        .isRoot(null)
+                        .category(null)
+                        .relatedParty(null)
+                        .resourceCandidate(null)
+                        .description(null)
+                        .lifecycleStatus(null)
+                        .name(null)
+                        .version(null)
+                        .parentId(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)),
+                Arguments.of("Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.", "version,lastUpdate,lifecycleStatus,description", ResourceCategoryVOTestExample.build()
+                        .relatedParty(null)
+                        .isRoot(null)
+                        .category(null)
+                        .relatedParty(null)
+                        .resourceCandidate(null)
+                        .name(null)
+                        .parentId(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)));
+    }
+
 
     @Disabled("400 cannot happen, only 404")
     @Test

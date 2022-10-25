@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        module: [party-catalog, resource-function-activation]
+        module: [party-catalog, resource-function-activation, resource-catalog]
 
     steps:
       - uses: actions/checkout@v2

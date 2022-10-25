@@ -56,6 +56,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
     private ResourceSpecificationCreateVO resourceSpecificationCreateVO;
     private ResourceSpecificationUpdateVO resourceSpecificationUpdateVO;
     private ResourceSpecificationVO expectedResourceSpecification;
+    private String fieldsParameter;
 
     private Clock clock = mock(Clock.class);
 
@@ -596,26 +597,85 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideFieldParameters")
+    public void retrieveResourceSpecification200(String message, String fields, ResourceSpecificationVO expectedResourceSpecification) throws Exception {
+        this.fieldsParameter = fields;
+        this.message = message;
+        this.expectedResourceSpecification = expectedResourceSpecification;
+        retrieveResourceSpecification200();
+    }
+
     @Override
     public void retrieveResourceSpecification200() throws Exception {
 
         ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build();
         HttpResponse<ResourceSpecificationVO> createResponse = callAndCatch(() -> resourceSpecificationApiTestClient.createResourceSpecification(resourceSpecificationCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The productSpecification should have been created first.");
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
-        ResourceSpecificationVO expectedResourceSpecificationVO = ResourceSpecificationVOTestExample.build();
-        expectedResourceSpecificationVO
+        expectedResourceSpecification
                 .id(id)
-                .href(id)
-                .relatedParty(null)
-                .resourceSpecRelationship(null);
+                .href(id);
 
         //then retrieve
-        HttpResponse<ResourceSpecificationVO> retrievedRF = callAndCatch(() -> resourceSpecificationApiTestClient.retrieveResourceSpecification(id, null));
-        assertEquals(HttpStatus.OK, retrievedRF.getStatus(), "The retrieval should be ok.");
-        assertEquals(expectedResourceSpecificationVO, retrievedRF.body(), "The correct resource function should be returned.");
+        HttpResponse<ResourceSpecificationVO> retrievedResourceSpec = callAndCatch(() -> resourceSpecificationApiTestClient.retrieveResourceSpecification(id, fieldsParameter));
+        assertEquals(HttpStatus.OK, retrievedResourceSpec.getStatus(), message);
+        assertEquals(expectedResourceSpecification, retrievedResourceSpec.body(), message);
+    }
+
+    private static Stream<Arguments> provideFieldParameters() {
+        return Stream.of(
+                Arguments.of("Without a fields parameter everything should be returned.", null, ResourceSpecificationVOTestExample.build().relatedParty(null).resourceSpecRelationship(null)),
+                Arguments.of("Only version and the mandatory parameters should have been included.", "version", ResourceSpecificationVOTestExample.build()
+                        .relatedParty(null)
+                        .lastUpdate(null)
+                        .isBundle(null)
+                        .resourceSpecRelationship(null)
+                        .featureSpecification(null)
+                        .category(null)
+                        .description(null)
+                        .lifecycleStatus(null)
+                        .name(null)
+                        .attachment(null)
+                        .resourceSpecCharacteristic(null)
+                        .targetResourceSchema(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)),
+                Arguments.of("Only the mandatory parameters should have been included when a non-existent field was requested.", "nothingToSeeHere", ResourceSpecificationVOTestExample.build()
+                        .relatedParty(null)
+                        .lastUpdate(null)
+                        .isBundle(null)
+                        .resourceSpecRelationship(null)
+                        .featureSpecification(null)
+                        .category(null)
+                        .description(null)
+                        .lifecycleStatus(null)
+                        .name(null)
+                        .version(null)
+                        .attachment(null)
+                        .resourceSpecCharacteristic(null)
+                        .targetResourceSchema(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)),
+                Arguments.of("Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.", "version,lastUpdate,lifecycleStatus,description", ResourceSpecificationVOTestExample.build()
+                        .relatedParty(null)
+                        .isBundle(null)
+                        .resourceSpecRelationship(null)
+                        .featureSpecification(null)
+                        .category(null)
+                        .name(null)
+                        .attachment(null)
+                        .resourceSpecCharacteristic(null)
+                        .targetResourceSchema(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)));
     }
 
     @Disabled("400 cannot happen, only 404")

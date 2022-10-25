@@ -44,6 +44,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     public final ResourceCatalogApiTestClient resourceCatalogApiTestClient;
 
     private String message;
+    private String fieldParameters;
     private ResourceCatalogCreateVO resourceCatalogCreateVO;
     private ResourceCatalogUpdateVO resourceCatalogUpdateVO;
     private ResourceCatalogVO expectedResourceCatalog;

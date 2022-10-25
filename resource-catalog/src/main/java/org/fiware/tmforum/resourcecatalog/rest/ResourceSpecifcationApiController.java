@@ -1,5 +1,6 @@
 package org.fiware.tmforum.resourcecatalog.rest;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -22,8 +23,11 @@ import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReas
 import org.fiware.tmforum.resourcecatalog.repository.ResourceCatalogRepository;
 import reactor.core.publisher.Mono;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,9 +45,22 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
 
     @Override
     public Mono<HttpResponse<ResourceSpecificationVO>> createResourceSpecification(@NonNull ResourceSpecificationCreateVO resourceSpecificationCreateVO) {
+        if (resourceSpecificationCreateVO.getName() == null) {
+            throw new ResourceCatalogException(String.format("The specification create does not contain all mandatory values: %s.", resourceSpecificationCreateVO), ResourceCatalogExceptionReason.INVALID_DATA);
+        }
+        if (resourceSpecificationCreateVO.getIsBundle() == null) {
+            // set default required by the conformance
+            resourceSpecificationCreateVO.isBundle(false);
+        }
+        if (resourceSpecificationCreateVO.getLifecycleStatus() == null) {
+            // set default required by the conformance
+            resourceSpecificationCreateVO.lifecycleStatus("created");
+        }
+
         ResourceSpecification resourceSpecification = tmForumMapper.map(
                 tmForumMapper.map(resourceSpecificationCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)));
         resourceSpecification.setLastUpdate(clock.instant());
+
 
         Mono<ResourceSpecification> checkingMono = getCheckingMono(resourceSpecification);
         checkingMono = Mono.zip(checkingMono, validateSpec(resourceSpecification), (p1, p2) -> resourceSpecification);
@@ -57,25 +74,29 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
     private Mono<ResourceSpecification> validateSpec(ResourceSpecification resourceSpecification) {
         Mono<ResourceSpecification> validatingMono = Mono.just(resourceSpecification);
 
-        List<Mono<FeatureSpecification>> fsCheckingMonos = resourceSpecification.getFeatureSpecification()
-                .stream()
-                .map(this::validateFeatureSpecification)
-                .toList();
+        if (resourceSpecification.getFeatureSpecification() != null && !resourceSpecification.getFeatureSpecification().isEmpty()) {
 
-        if (!fsCheckingMonos.isEmpty()) {
-            Mono<ResourceSpecification> fsCheckingMono = Mono.zip(fsCheckingMonos, p1 -> resourceSpecification);
-            validatingMono = Mono.zip(validatingMono, fsCheckingMono, (p1, p2) -> resourceSpecification);
+            List<Mono<FeatureSpecification>> fsCheckingMonos = resourceSpecification.getFeatureSpecification()
+                    .stream()
+                    .map(this::validateFeatureSpecification)
+                    .toList();
+            if (!fsCheckingMonos.isEmpty()) {
+                Mono<ResourceSpecification> fsCheckingMono = Mono.zip(fsCheckingMonos, p1 -> resourceSpecification);
+                validatingMono = Mono.zip(validatingMono, fsCheckingMono, (p1, p2) -> resourceSpecification);
+            }
         }
 
-        List<Mono<ResourceSpecificationCharacteristic>> rscCheckingMonos = resourceSpecification.getResourceSpecCharacteristic()
-                .stream()
-                .map(this::validateResourceSpecChar)
-                .toList();
+        if (resourceSpecification.getResourceSpecCharacteristic() != null && !resourceSpecification.getResourceSpecCharacteristic().isEmpty()) {
 
-        if (!rscCheckingMonos.isEmpty()) {
-            Mono<ResourceSpecification> rscCheckingMono = Mono.zip(rscCheckingMonos, p1 -> resourceSpecification);
-            validatingMono = Mono.zip(validatingMono, rscCheckingMono, (p1, p2) -> resourceSpecification);
+            List<Mono<ResourceSpecificationCharacteristic>> rscCheckingMonos = resourceSpecification.getResourceSpecCharacteristic()
+                    .stream()
+                    .map(this::validateResourceSpecChar)
+                    .toList();
+            if (!rscCheckingMonos.isEmpty()) {
+                Mono<ResourceSpecification> rscCheckingMono = Mono.zip(rscCheckingMonos, p1 -> resourceSpecification);
+                validatingMono = Mono.zip(validatingMono, rscCheckingMono, (p1, p2) -> resourceSpecification);
 
+            }
         }
 
         return validatingMono;
@@ -144,12 +165,17 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
 
     private Mono<ResourceSpecification> getCheckingMono(ResourceSpecification resourceSpecification) {
 
-        return getCheckingMono(resourceSpecification, List.of(resourceSpecification.getRelatedParty()))
-                .onErrorMap(throwable ->
-                        new ResourceCatalogException(
-                                String.format("Was not able to create resource specification %s", resourceSpecification.getId()),
-                                throwable,
-                                ResourceCatalogExceptionReason.INVALID_RELATIONSHIP));
+        if (resourceSpecification.getRelatedParty() != null && !resourceSpecification.getRelatedParty().isEmpty()) {
+            return getCheckingMono(resourceSpecification, List.of(resourceSpecification.getRelatedParty()))
+                    .onErrorMap(throwable ->
+                            new ResourceCatalogException(
+                                    String.format("Was not able to create resource specification %s", resourceSpecification.getId()),
+                                    throwable,
+                                    ResourceCatalogExceptionReason.INVALID_RELATIONSHIP));
+        } else {
+            return Mono.just(resourceSpecification);
+        }
+
     }
 
     @Override
@@ -160,7 +186,9 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
     @Override
     public Mono<HttpResponse<List<ResourceSpecificationVO>>> listResourceSpecification(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ResourceSpecification.TYPE_RESOURCE_SPECIFICATION, ResourceSpecification.class)
-                .map(resourceFunctionStream -> resourceFunctionStream.map(tmForumMapper::map).toList())
+                .map(resourceFunctionStream -> resourceFunctionStream
+                        .map(tmForumMapper::map)
+                        .toList())
                 .map(HttpResponse::ok);
     }
 
@@ -189,4 +217,5 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }
+
 }
