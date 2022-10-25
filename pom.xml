@@ -37,7 +37,7 @@
         <module>product-catalog</module>
         <module>resource-function-activation</module>
         <module>resource-catalog</module>
-        <module>resource-inventory</module>
+<!--        <module>resource-inventory</module>-->
     </modules>
 
     <properties>
