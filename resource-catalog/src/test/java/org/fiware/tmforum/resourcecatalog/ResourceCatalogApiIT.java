@@ -15,6 +15,8 @@ import org.fiware.resourcecatalog.model.ResourceCatalogUpdateVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceCatalogVO;
 import org.fiware.resourcecatalog.model.ResourceCatalogVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceCategoryRefVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceCategoryVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -44,7 +46,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     public final ResourceCatalogApiTestClient resourceCatalogApiTestClient;
 
     private String message;
-    private String fieldParameters;
+    private String fieldsParameter;
     private ResourceCatalogCreateVO resourceCatalogCreateVO;
     private ResourceCatalogUpdateVO resourceCatalogUpdateVO;
     private ResourceCatalogVO expectedResourceCatalog;
@@ -493,26 +495,73 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideFieldParameters")
+    public void retrieveResourceCatalog200(String message, String fields, ResourceCatalogVO expectedResourceCatalog) throws Exception {
+        this.fieldsParameter = fields;
+        this.message = message;
+        this.expectedResourceCatalog = expectedResourceCatalog;
+        retrieveResourceCatalog200();
+    }
+
     @Override
     public void retrieveResourceCatalog200() throws Exception {
 
         ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build();
         HttpResponse<ResourceCatalogVO> createResponse = callAndCatch(() -> resourceCatalogApiTestClient.createResourceCatalog(resourceCatalogCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The productSpecification should have been created first.");
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
-        ResourceCatalogVO expectedResourceCatalogVO = ResourceCatalogVOTestExample.build();
-        expectedResourceCatalogVO
+        expectedResourceCatalog
                 .id(id)
-                .href(id)
-                .relatedParty(null)
-                .category(null);
+                .href(id);
 
         //then retrieve
-        HttpResponse<ResourceCatalogVO> retrievedRF = callAndCatch(() -> resourceCatalogApiTestClient.retrieveResourceCatalog(id, null));
-        assertEquals(HttpStatus.OK, retrievedRF.getStatus(), "The retrieval should be ok.");
-        assertEquals(expectedResourceCatalogVO, retrievedRF.body(), "The correct resource function should be returned.");
+        HttpResponse<ResourceCatalogVO> retrievedRF = callAndCatch(() -> resourceCatalogApiTestClient.retrieveResourceCatalog(id, fieldsParameter));
+        assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
+        assertEquals(expectedResourceCatalog, retrievedRF.body(), message);
+    }
+
+    private static Stream<Arguments> provideFieldParameters() {
+        return Stream.of(
+                Arguments.of("Without a fields parameter everything should be returned.", null, ResourceCatalogVOTestExample.build()
+                        // get nulled without values
+                        .relatedParty(null)
+                        .category(null)),
+                Arguments.of("Only version and the mandatory parameters should have been included.", "version", ResourceCatalogVOTestExample.build()
+                        .relatedParty(null)
+                        .lastUpdate(null)
+                        .category(null)
+                        .relatedParty(null)
+                        .description(null)
+                        .lifecycleStatus(null)
+                        .name(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)),
+                Arguments.of("Only the mandatory parameters should have been included when a non-existent field was requested.", "nothingToSeeHere", ResourceCatalogVOTestExample.build()
+                        .relatedParty(null)
+                        .lastUpdate(null)
+                        .category(null)
+                        .relatedParty(null)
+                        .description(null)
+                        .lifecycleStatus(null)
+                        .name(null)
+                        .version(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)),
+                Arguments.of("Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.", "version,lastUpdate,lifecycleStatus,description", ResourceCatalogVOTestExample.build()
+                        .relatedParty(null)
+                        .category(null)
+                        .relatedParty(null)
+                        .name(null)
+                        .validFor(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)
+                        .atType(null)));
     }
 
     @Disabled("400 cannot happen, only 404")

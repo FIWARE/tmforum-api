@@ -550,28 +550,27 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 
         ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().parentId(null);
         HttpResponse<ResourceCategoryVO> createResponse = callAndCatch(() -> resourceCategoryApiTestClient.createResourceCategory(resourceCategoryCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The productSpecification should have been created first.");
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
-        ResourceCategoryVO expectedResourceCategoryVO = ResourceCategoryVOTestExample.build();
-        expectedResourceCategoryVO
+        expectedResourceCategory
                 .id(id)
-                .href(id)
-                .parentId(null)
-                .category(null)
-                .relatedParty(null)
-                .resourceCandidate(null);
+                .href(id);
 
         //then retrieve
-        HttpResponse<ResourceCategoryVO> retrievedRF = callAndCatch(() -> resourceCategoryApiTestClient.retrieveResourceCategory(id, null));
-        assertEquals(HttpStatus.OK, retrievedRF.getStatus(), "The retrieval should be ok.");
-        assertEquals(expectedResourceCategoryVO, retrievedRF.body(), "The correct resource category should be returned.");
+        HttpResponse<ResourceCategoryVO> retrievedRF = callAndCatch(() -> resourceCategoryApiTestClient.retrieveResourceCategory(id, fieldsParameter));
+        assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
+        assertEquals(expectedResourceCategory, retrievedRF.body(), message);
     }
-
 
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
-                Arguments.of("Without a fields parameter everything should be returned.", null, ResourceCategoryVOTestExample.build().relatedParty(null).category(null).resourceCandidate(null)),
+                Arguments.of("Without a fields parameter everything should be returned.", null, ResourceCategoryVOTestExample.build()
+                        // get nulled without values
+                        .relatedParty(null)
+                        .category(null)
+                        .resourceCandidate(null)
+                        .parentId(null)),
                 Arguments.of("Only version and the mandatory parameters should have been included.", "version", ResourceCategoryVOTestExample.build()
                         .relatedParty(null)
                         .lastUpdate(null)
@@ -616,7 +615,6 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
                         .atSchemaLocation(null)
                         .atType(null)));
     }
-
 
     @Disabled("400 cannot happen, only 404")
     @Test

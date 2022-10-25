@@ -15,6 +15,8 @@ import org.fiware.resourcecatalog.model.ResourceCandidateUpdateVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceCandidateVO;
 import org.fiware.resourcecatalog.model.ResourceCandidateVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceCategoryRefVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceCategoryVO;
+import org.fiware.resourcecatalog.model.ResourceCategoryVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceSpecificationRefVOTestExample;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
@@ -45,6 +47,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
     public final ResourceCandidateApiTestClient resourceCandidateApiTestClient;
 
     private String message;
+    private String fieldsParameter;
     private ResourceCandidateCreateVO resourceCandidateCreateVO;
     private ResourceCandidateUpdateVO resourceCandidateUpdateVO;
     private ResourceCandidateVO expectedResourceCandidate;
@@ -501,26 +504,77 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideFieldParameters")
+    public void retrieveResourceCategory200(String message, String fields, ResourceCandidateVO expectedResourceCandidate) throws Exception {
+        this.fieldsParameter = fields;
+        this.message = message;
+        this.expectedResourceCandidate = expectedResourceCandidate;
+        retrieveResourceCandidate200();
+    }
+
     @Override
     public void retrieveResourceCandidate200() throws Exception {
 
         ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build().resourceSpecification(null);
         HttpResponse<ResourceCandidateVO> createResponse = callAndCatch(() -> resourceCandidateApiTestClient.createResourceCandidate(resourceCandidateCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The productSpecification should have been created first.");
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
-        ResourceCandidateVO expectedResourceCandidateVO = ResourceCandidateVOTestExample.build();
-        expectedResourceCandidateVO
+        expectedResourceCandidate
                 .id(id)
-                .href(id)
-                .resourceSpecification(null)
-                .category(null);
+                .href(id);
 
         //then retrieve
-        HttpResponse<ResourceCandidateVO> retrievedRF = callAndCatch(() -> resourceCandidateApiTestClient.retrieveResourceCandidate(id, null));
-        assertEquals(HttpStatus.OK, retrievedRF.getStatus(), "The retrieval should be ok.");
-        assertEquals(expectedResourceCandidateVO, retrievedRF.body(), "The correct resource function should be returned.");
+        HttpResponse<ResourceCandidateVO> retrievedRF = callAndCatch(() -> resourceCandidateApiTestClient.retrieveResourceCandidate(id, fieldsParameter));
+        assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
+        assertEquals(expectedResourceCandidate, retrievedRF.body(), message);
+    }
+
+    private static Stream<Arguments> provideFieldParameters() {
+        return Stream.of(
+                Arguments.of("Without a fields parameter everything should be returned.",
+                        null,
+                        ResourceCandidateVOTestExample.build()
+                                // get nulled without values
+                                .category(null)
+                                .resourceSpecification(null)),
+                Arguments.of("Only version and the mandatory parameters should have been included.",
+                        "version",
+                        ResourceCandidateVOTestExample.build()
+                                .lastUpdate(null)
+                                .category(null)
+                                .description(null)
+                                .lifecycleStatus(null)
+                                .name(null)
+                                .validFor(null)
+                                .atBaseType(null)
+                                .atSchemaLocation(null)
+                                .atType(null)
+                                .resourceSpecification(null)),
+                Arguments.of("Only the mandatory parameters should have been included when a non-existent field was requested.",
+                        "nothingToSeeHere",
+                        ResourceCandidateVOTestExample.build()
+                                .lastUpdate(null)
+                                .category(null)
+                                .description(null)
+                                .lifecycleStatus(null)
+                                .name(null)
+                                .version(null)
+                                .validFor(null)
+                                .atBaseType(null)
+                                .atSchemaLocation(null)
+                                .atType(null)
+                                .resourceSpecification(null)),
+                Arguments.of("Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.", "version,lastUpdate,lifecycleStatus,description",
+                        ResourceCandidateVOTestExample.build()
+                                .category(null)
+                                .name(null)
+                                .validFor(null)
+                                .atBaseType(null)
+                                .atSchemaLocation(null)
+                                .atType(null)
+                                .resourceSpecification(null)));
     }
 
     @Disabled("400 cannot happen, only 404")
