@@ -1,8 +1,10 @@
-package org.fiware.tmforum.common.domain;
+package org.fiware.tmforum.resource;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.fiware.tmforum.common.domain.Entity;
+import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;

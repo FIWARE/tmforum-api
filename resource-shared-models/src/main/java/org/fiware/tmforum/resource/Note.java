@@ -1,6 +1,5 @@
-package org.fiware.tmforum.resourcefunction.domain;
+package org.fiware.tmforum.resource;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 import java.net.URI;
@@ -13,11 +12,8 @@ public class Note {
     private String author;
     private Instant date;
     private String text;
-    @JsonAlias("@baseType")
     private String atBaseType;
-    @JsonAlias("@schemaLocation")
     private URI atSchemaLocation;
-    @JsonAlias("@type")
     private String atType;
 
 }

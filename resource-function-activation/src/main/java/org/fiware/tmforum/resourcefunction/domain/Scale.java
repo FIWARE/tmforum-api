@@ -8,6 +8,7 @@ import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
+import org.fiware.tmforum.resource.ScheduleRef;
 
 import java.net.URI;
 import java.util.List;

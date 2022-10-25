@@ -49,6 +49,7 @@ public class Application {
             fieldParamModule.addSerializer(ResourceCategoryVO.class, new FieldCleaningSerializer<>());
             fieldParamModule.addSerializer(ResourceCatalogVO.class, new FieldCleaningSerializer<>());
             fieldParamModule.addSerializer(ResourceCandidateVO.class, new FieldCleaningSerializer<>());
+            objectMapper.registerModule(fieldParamModule);
             return objectMapper;
         }
     }

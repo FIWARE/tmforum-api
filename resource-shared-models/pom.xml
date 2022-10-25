@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.fiware.tmforum.resource</groupId>
-    <artifactId>shared-models</artifactId>
+    <groupId>org.fiware.tmforum</groupId>
+    <artifactId>resource-shared-models</artifactId>
     <version>0.1</version>
 
     <parent>
@@ -11,7 +11,6 @@
         <artifactId>tmforum</artifactId>
         <version>0.1</version>
     </parent>
-
 
     <dependencies>
         <dependency>
@@ -21,13 +20,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-http-server</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.cache</groupId>
-            <artifactId>micronaut-cache-core</artifactId>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

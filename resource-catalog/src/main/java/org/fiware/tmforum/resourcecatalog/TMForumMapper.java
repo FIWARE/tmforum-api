@@ -12,10 +12,9 @@ import org.fiware.resourcecatalog.model.ResourceCategoryVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
-import org.fiware.tmforum.common.domain.FeatureRef;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.mapping.MappingException;
+import org.fiware.tmforum.resource.FeatureRef;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCandidate;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCategory;
@@ -28,7 +27,6 @@ import org.mapstruct.Mapping;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.stream.Stream;
 
 /**
  * Mapper between the internal model and api-domain objects

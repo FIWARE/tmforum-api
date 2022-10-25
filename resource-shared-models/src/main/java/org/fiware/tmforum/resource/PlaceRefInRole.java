@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcefunction.domain;
+package org.fiware.tmforum.resource;
 
 import lombok.Getter;
 import lombok.Setter;

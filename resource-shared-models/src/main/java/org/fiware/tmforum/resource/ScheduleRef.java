@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcefunction.domain;
+package org.fiware.tmforum.resource;
 
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
