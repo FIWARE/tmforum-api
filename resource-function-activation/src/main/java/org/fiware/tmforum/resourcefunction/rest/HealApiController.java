@@ -9,7 +9,7 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
-import org.fiware.tmforum.resourcefunction.domain.Characteristic;
+import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.resourcefunction.domain.Heal;
 import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
 import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;

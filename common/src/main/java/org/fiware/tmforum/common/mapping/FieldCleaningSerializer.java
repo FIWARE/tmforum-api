@@ -1,16 +1,16 @@
-package org.fiware.tmforum.resourcecatalog.rest;
+package org.fiware.tmforum.common.mapping;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.context.ServerRequestContext;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogException;
-import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReason;
+import org.fiware.tmforum.common.exception.JsonException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,6 +30,7 @@ public class FieldCleaningSerializer<T> extends JsonSerializer<T> {
 
     {
         OBJECT_MAPPER.findAndRegisterModules();
+        OBJECT_MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class FieldCleaningSerializer<T> extends JsonSerializer<T> {
             }
             jsonGenerator.writeObject(objectNode);
         } else {
-            throw new ResourceCatalogException("Was not able to read the json node.", ResourceCatalogExceptionReason.UNKNOWN);
+            throw new JsonException("Was not able to read the json node.");
         }
     }
 }

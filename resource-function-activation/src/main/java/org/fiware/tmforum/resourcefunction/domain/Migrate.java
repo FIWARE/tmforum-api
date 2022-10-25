@@ -3,6 +3,7 @@ package org.fiware.tmforum.resourcefunction.domain;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.PlaceRef;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;

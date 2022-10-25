@@ -1,6 +1,5 @@
 package org.fiware.tmforum.resourcefunction;
 
-import org.fiware.resourcefunction.model.AttachmentRefOrValueVO;
 import org.fiware.resourcefunction.model.CharacteristicVO;
 import org.fiware.resourcefunction.model.FeatureVO;
 import org.fiware.resourcefunction.model.HealCreateVO;
@@ -17,11 +16,10 @@ import org.fiware.resourcefunction.model.ResourceRefOrValueVO;
 import org.fiware.resourcefunction.model.ResourceRelationshipVO;
 import org.fiware.resourcefunction.model.ScaleCreateVO;
 import org.fiware.resourcefunction.model.ScaleVO;
-import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
-import org.fiware.tmforum.resourcefunction.domain.Characteristic;
-import org.fiware.tmforum.resourcefunction.domain.Feature;
+import org.fiware.tmforum.common.domain.Characteristic;
+import org.fiware.tmforum.common.domain.Feature;
 import org.fiware.tmforum.resourcefunction.domain.Heal;
 import org.fiware.tmforum.resourcefunction.domain.Migrate;
 import org.fiware.tmforum.resourcefunction.domain.Monitor;
