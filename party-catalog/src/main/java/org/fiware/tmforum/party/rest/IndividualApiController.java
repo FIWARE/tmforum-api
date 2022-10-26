@@ -105,6 +105,7 @@ public class IndividualApiController extends AbstractApiController implements In
                 .findIndividuals(offset, limit)
                 .map(List::stream)
                 .map(organizationStream -> organizationStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

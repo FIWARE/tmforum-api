@@ -97,13 +97,17 @@ public class ResourceApiController extends AbstractApiController implements Reso
     }
 
     private void validateInternalRefs(Resource resource) {
-        List<URI> noteIds = resource.getNote().stream().map(Note::getId).toList();
-        if (noteIds.size() != new HashSet<>(noteIds).size()) {
-            throw new ResourceInventoryException(
-                    String.format("Duplicate note ids are not allowed: %s", noteIds), ResourceInventoryExceptionReason.INVALID_DATA);
+        if (resource.getNote() != null) {
+            List<URI> noteIds = resource.getNote().stream().map(Note::getId).toList();
+            if (noteIds.size() != new HashSet<>(noteIds).size()) {
+                throw new ResourceInventoryException(
+                        String.format("Duplicate note ids are not allowed: %s", noteIds), ResourceInventoryExceptionReason.INVALID_DATA);
+            }
         }
-        resource.getResourceCharacteristic()
-                .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic, resource.getResourceCharacteristic()));
+        if (resource.getResourceCharacteristic() != null) {
+            resource.getResourceCharacteristic()
+                    .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic, resource.getResourceCharacteristic()));
+        }
 
     }
 
@@ -166,6 +170,7 @@ public class ResourceApiController extends AbstractApiController implements Reso
                 .map(resourceStream -> resourceStream
                         .map(tmForumMapper::map)
                         .toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

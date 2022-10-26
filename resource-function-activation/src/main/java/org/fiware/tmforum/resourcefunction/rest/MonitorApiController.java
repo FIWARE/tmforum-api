@@ -27,6 +27,7 @@ public class MonitorApiController extends AbstractApiController implements Monit
     public Mono<HttpResponse<List<MonitorVO>>> listMonitor(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, Monitor.TYPE_MONITOR, Monitor.class)
                 .map(monitorStream -> monitorStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

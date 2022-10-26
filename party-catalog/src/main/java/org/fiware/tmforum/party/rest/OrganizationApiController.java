@@ -109,6 +109,7 @@ public class OrganizationApiController extends AbstractApiController implements 
         return partyRepository.findOrganizations(offset, limit)
                 .map(List::stream)
                 .map(organizationStream -> organizationStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
 
     }

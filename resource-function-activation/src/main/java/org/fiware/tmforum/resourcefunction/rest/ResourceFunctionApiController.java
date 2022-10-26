@@ -138,6 +138,7 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
     public Mono<HttpResponse<List<ResourceFunctionVO>>> listResourceFunction(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ResourceFunction.TYPE_RESOURCE_FUNCTION, ResourceFunction.class)
                 .map(resourceFunctionStream -> resourceFunctionStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

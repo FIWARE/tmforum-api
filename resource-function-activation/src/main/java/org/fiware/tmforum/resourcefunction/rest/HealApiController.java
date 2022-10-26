@@ -54,6 +54,7 @@ public class HealApiController extends AbstractApiController implements HealApi 
     public Mono<HttpResponse<List<HealVO>>> listHeal(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, Heal.TYPE_HEAL, Heal.class)
                 .map(healStream -> healStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

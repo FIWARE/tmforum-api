@@ -57,6 +57,7 @@ public class MigrateApiController extends AbstractApiController implements Migra
     public Mono<HttpResponse<List<MigrateVO>>> listMigrate(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, Migrate.TYPE_MIGRATE, Migrate.class)
                 .map(migrateStream -> migrateStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

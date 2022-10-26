@@ -576,6 +576,7 @@
                                         </dockerImages>
                                         <portBindings>
                                             <portBinding>8632:8632</portBinding>
+                                            <portBinding>1026:1026</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>

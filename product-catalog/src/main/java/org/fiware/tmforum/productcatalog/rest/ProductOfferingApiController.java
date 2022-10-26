@@ -100,6 +100,7 @@ public class ProductOfferingApiController extends AbstractApiController implemen
     public Mono<HttpResponse<List<ProductOfferingVO>>> listProductOffering(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ProductOffering.TYPE_PRODUCT_OFFERING, ProductOffering.class)
                 .map(productOfferingStream -> productOfferingStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

@@ -56,6 +56,7 @@ public class ScaleApiController extends AbstractApiController implements ScaleAp
     public Mono<HttpResponse<List<ScaleVO>>> listScale(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, Scale.TYPE_SCALE, Scale.class)
                 .map(scaleStream -> scaleStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

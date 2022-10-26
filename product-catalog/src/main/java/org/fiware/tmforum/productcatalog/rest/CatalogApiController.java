@@ -58,6 +58,7 @@ public class CatalogApiController extends AbstractApiController implements Catal
     public Mono<HttpResponse<List<CatalogVO>>> listCatalog(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, Catalog.TYPE_CATALOGUE, Catalog.class)
                 .map(categoryStream -> categoryStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

@@ -74,6 +74,7 @@ public class ResourceCandidateApiController extends AbstractApiController implem
     public Mono<HttpResponse<List<ResourceCandidateVO>>> listResourceCandidate(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ResourceCandidate.TYPE_RESOURCE_CANDIDATE, ResourceCandidate.class)
                 .map(resourceFunctionStream -> resourceFunctionStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

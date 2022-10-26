@@ -69,6 +69,7 @@ public class ResourceCatalogApiController extends AbstractApiController implemen
     public Mono<HttpResponse<List<ResourceCatalogVO>>> listResourceCatalog(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ResourceCatalog.TYPE_RESOURCE_CATALOG, ResourceCatalog.class)
                 .map(resourceCatalogStream -> resourceCatalogStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

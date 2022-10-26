@@ -181,6 +181,7 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
                 .map(resourceFunctionStream -> resourceFunctionStream
                         .map(tmForumMapper::map)
                         .toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 
