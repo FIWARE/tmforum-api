@@ -7,6 +7,8 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
+import org.fiware.customer.api.CustomerApiTestClient;
+import org.fiware.customer.api.CustomerApiTestSpec;
 import org.fiware.customer.model.*;
 import org.fiware.tmforum.customer.rest.CustomerApiController;
 import org.fiware.tmforum.customer.rest.CustomerApiControllerTest;
@@ -66,6 +68,196 @@ class CustomerApiIT implements CustomerApiTestSpec {
         expectedCustomer.setId(createdCustomerVO.getId());
         expectedCustomer.setHref(createdCustomerVO.getId());
         assertEquals(expectedCustomer, createdCustomerVO, message);
+
+    }
+
+    @Override
+    public void createCustomer400() throws Exception {
+
+    }
+
+    @Override
+    public void createCustomer401() throws Exception {
+
+    }
+
+    @Override
+    public void createCustomer403() throws Exception {
+
+    }
+
+    @Override
+    public void createCustomer405() throws Exception {
+
+    }
+
+    @Override
+    public void createCustomer409() throws Exception {
+
+    }
+
+    @Override
+    public void createCustomer500() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer204() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer400() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer401() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer403() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer404() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer405() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer409() throws Exception {
+
+    }
+
+    @Override
+    public void deleteCustomer500() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer200() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer400() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer401() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer403() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer404() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer405() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer409() throws Exception {
+
+    }
+
+    @Override
+    public void listCustomer500() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer200() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer400() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer401() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer403() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer404() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer405() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer409() throws Exception {
+
+    }
+
+    @Override
+    public void patchCustomer500() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer200() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer400() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer401() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer403() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer404() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer405() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer409() throws Exception {
+
+    }
+
+    @Override
+    public void retrieveCustomer500() throws Exception {
 
     }
 
