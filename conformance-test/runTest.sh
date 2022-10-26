@@ -1,5 +1,7 @@
 #!/bin/bash
 
+${module.ctk.additionalCommands}
+
 sh /opt/ctk/$CTK_SCRIPT_FOLDER/$CTK_RUN_SCRIPT
 
 cp /opt/ctk/$CTK_SCRIPT_FOLDER/htmlResults.html /results/htmlResults.html

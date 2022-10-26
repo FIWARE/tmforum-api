@@ -93,6 +93,7 @@ public class ProductSpecificationApiController extends AbstractApiController imp
     public Mono<HttpResponse<List<ProductSpecificationVO>>> listProductSpecification(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ProductSpecification.TYPE_PRODUCT_SPECIFICATION, ProductSpecification.class)
                 .map(productSpecificationStream -> productSpecificationStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

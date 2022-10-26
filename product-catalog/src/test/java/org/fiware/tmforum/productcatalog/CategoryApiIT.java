@@ -1,6 +1,5 @@
 package org.fiware.tmforum.productcatalog;
 
-import io.micronaut.context.annotation.Bean;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;

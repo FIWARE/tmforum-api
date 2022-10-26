@@ -9,6 +9,7 @@ import org.fiware.productcatalog.model.CatalogUpdateVO;
 import org.fiware.productcatalog.model.CatalogVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
+import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.productcatalog.TMForumMapper;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.productcatalog.exception.ProductCatalogException;
@@ -17,6 +18,7 @@ import org.fiware.tmforum.productcatalog.repository.ProductCatalogRepository;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,7 +41,10 @@ public class CatalogApiController extends AbstractApiController implements Catal
     }
 
     private Mono<Catalog> getCheckingMono(Catalog catalog) {
-        return getCheckingMono(catalog, List.of(catalog.getRelatedParty(), catalog.getCategory()))
+        List<List<? extends ReferencedEntity>> references = new ArrayList<>();
+        references.add(catalog.getCategory());
+        references.add(catalog.getRelatedParty());
+        return getCheckingMono(catalog, references)
                 .onErrorMap(throwable -> new ProductCatalogException(String.format("Was not able to create category %s", catalog.getId()), throwable, ProductCatalogExceptionReason.INVALID_RELATIONSHIP));
     }
 
@@ -53,6 +58,7 @@ public class CatalogApiController extends AbstractApiController implements Catal
     public Mono<HttpResponse<List<CatalogVO>>> listCatalog(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, Catalog.TYPE_CATALOGUE, Catalog.class)
                 .map(categoryStream -> categoryStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 
