@@ -91,7 +91,6 @@ public class ProductOfferingPriceApiController extends AbstractApiController imp
 
     @Override
     public Mono<HttpResponse<Object>> deleteProductOfferingPrice(String id) {
-        // TODO: what should be done with implicitly created entities?
         return delete(id);
     }
 
@@ -99,6 +98,7 @@ public class ProductOfferingPriceApiController extends AbstractApiController imp
     public Mono<HttpResponse<List<ProductOfferingPriceVO>>> listProductOfferingPrice(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE, ProductOfferingPrice.class)
                 .map(productOfferingPriceStream -> productOfferingPriceStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 

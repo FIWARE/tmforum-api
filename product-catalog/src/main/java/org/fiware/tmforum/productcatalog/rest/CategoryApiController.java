@@ -65,6 +65,7 @@ public class CategoryApiController extends AbstractApiController implements Cate
     public Mono<HttpResponse<List<CategoryVO>>> listCategory(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
         return list(offset, limit, Category.TYPE_CATEGORY, Category.class)
                 .map(categoryStream -> categoryStream.map(tmForumMapper::map).toList())
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
 
