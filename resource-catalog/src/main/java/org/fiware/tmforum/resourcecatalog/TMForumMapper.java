@@ -14,7 +14,6 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
-import org.fiware.tmforum.resource.FeatureRef;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCandidate;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCategory;
@@ -118,13 +117,6 @@ public interface TMForumMapper {
         return value.toString();
     }
 
-    default FeatureRef mapFromFeatureId(String id) {
-        if (id == null) {
-            return null;
-        }
-        return new FeatureRef(IdHelper.toNgsiLd(id, "feature"));
-    }
-
     default ResourceSpecificationRef mapFromResourceSpecId(String id) {
         if (id == null) {
             return null;
@@ -137,13 +129,6 @@ public interface TMForumMapper {
             return null;
         }
         return new ResourceCategoryRef(IdHelper.toNgsiLd(id, ResourceCategory.TYPE_RESOURCE_CATEGORY));
-    }
-
-    default String mapFromFeatureRef(FeatureRef featureRef) {
-        if (featureRef == null) {
-            return null;
-        }
-        return IdHelper.fromNgsiLd(featureRef.getId());
     }
 
     default String mapFromCategoryRef(ResourceCategoryRef categoryRef) {

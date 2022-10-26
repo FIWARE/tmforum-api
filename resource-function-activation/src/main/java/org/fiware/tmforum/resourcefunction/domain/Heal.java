@@ -45,8 +45,8 @@ public class Heal extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "startTime")}))
     private String startTime;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "additionalParms")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "additionalParms", targetClass = Characteristic.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "additionalParms")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "additionalParms", targetClass = Characteristic.class)}))
     private List<Characteristic> additionalParms;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "healPolicy")}))

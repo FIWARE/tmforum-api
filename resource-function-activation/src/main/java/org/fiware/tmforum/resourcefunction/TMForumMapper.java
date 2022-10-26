@@ -91,55 +91,7 @@ public interface TMForumMapper {
 
     // sub-entities
 
-    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
-    FeatureVO map(Feature feature);
-
-    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
-    CharacteristicVO map(Characteristic characteristic);
-
-    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
-    ResourceGraphVO map(ResourceGraph resourceGraph);
-
-    @Mapping(target = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
-    @Mapping(target = "href", source = "id", qualifiedByName = {"IdHelper", "FromNgsiLd"})
-    ResourceRefOrValueVO map(Resource resource);
-
     Resource map(ResourceRefOrValueVO resourceRefOrValueVO);
-
-    default ResourceGraphRelationship map(ResourceGraphRelationshipVO resourceGraphRelationshipVO) {
-        if (resourceGraphRelationshipVO.getResourceGraph() == null || resourceGraphRelationshipVO.getResourceGraph().getId() == null) {
-            throw new MappingException("No graph relationship without referencing a graph should exist.");
-        }
-
-        ResourceGraphRelationship resourceGraphRelationship = new ResourceGraphRelationship(resourceGraphRelationshipVO.getResourceGraph().getId());
-
-        resourceGraphRelationship.setRelationshipType(resourceGraphRelationshipVO.getRelationshipType());
-        resourceGraphRelationship.setHref(URI.create(resourceGraphRelationshipVO.getResourceGraph().getHref()));
-        resourceGraphRelationship.setAtBaseType(resourceGraphRelationshipVO.getAtBaseType());
-        resourceGraphRelationship.setAtType(resourceGraphRelationshipVO.getAtType());
-        resourceGraphRelationship.setAtReferredType(resourceGraphRelationshipVO.getResourceGraph().getAtReferredType());
-        resourceGraphRelationship.setName(resourceGraphRelationshipVO.getResourceGraph().getName());
-        return resourceGraphRelationship;
-    }
-
-    default ResourceRelationship map(ResourceRelationshipVO resourceRelationshipVO) {
-        if (resourceRelationshipVO.getResource() == null) {
-            throw new MappingException("A resource relationship need to have a resource or a reference.");
-        }
-        if (resourceRelationshipVO.getResource().getId() == null) {
-            throw new MappingException("A resource needs to have an id.");
-        }
-
-        Resource resource = map(resourceRelationshipVO.getResource());
-        // relationship gets the same id to allow easier resolution
-        ResourceRelationship resourceRelationship = new ResourceRelationship(resource.getId());
-        resourceRelationship.setResource(resource);
-        resourceRelationship.setRelationshipType(resourceRelationshipVO.getRelationshipType());
-        resourceRelationship.setAtBaseType(resourceRelationshipVO.getAtBaseType());
-        resourceRelationship.setAtType(resourceRelationshipVO.getAtType());
-        resourceRelationship.setAtSchemaLocation(resourceRelationshipVO.getAtSchemaLocation());
-        return resourceRelationship;
-    }
 
     default URL map(String value) {
         if (value == null) {

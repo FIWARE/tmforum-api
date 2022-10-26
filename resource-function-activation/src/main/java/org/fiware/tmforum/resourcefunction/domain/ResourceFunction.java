@@ -80,8 +80,8 @@ public class ResourceFunction extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "value")}))
     private String value;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "activationFeature")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "activationFeature", targetClass = Feature.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "activationFeature")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "activationFeature", targetClass = Feature.class)}))
     private List<Feature> activationFeature;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "administrativeState")}))
@@ -92,16 +92,16 @@ public class ResourceFunction extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment", targetClass = AttachmentRefOrValue.class)}))
     private List<AttachmentRefOrValue> attachment;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "autoModification")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "autoModification", targetClass = Characteristic.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "autoModification")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "autoModification", targetClass = Characteristic.class)}))
     private List<Characteristic> autoModification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "connectionPoint")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "connectionPoint", targetClass = ConnectionPointRef.class)}))
     private List<ConnectionPointRef> connectionPoint;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceGraph")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceGraph", targetClass = ResourceGraph.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceGraph")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceGraph", targetClass = ResourceGraph.class)}))
     private List<ResourceGraph> connectivity;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "note")}))
@@ -120,12 +120,12 @@ public class ResourceFunction extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class, fromProperties = true)}))
     private List<RelatedParty> relatedParty;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceCharacteristic")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceCharacteristic", targetClass = Characteristic.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceCharacteristic")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceCharacteristic", targetClass = Characteristic.class)}))
     private List<Characteristic> resourceCharacteristic;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceRelationship")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceRelationship", targetClass = ResourceRelationship.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceRelationship")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceRelationship", targetClass = ResourceRelationship.class)}))
     private List<ResourceRelationship> resourceRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification")}))

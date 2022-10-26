@@ -10,20 +10,20 @@ import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 
-@MappingEnabled
 @EqualsAndHashCode(callSuper = true)
 public class ConstraintRef extends RefEntity {
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "version")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version")}))
-	private String version;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "version")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version")}))
+    private String version;
 
-	public ConstraintRef(String id) {
-		super(id);
-	}
+    public ConstraintRef(String id) {
+        super(id);
+    }
 
-	@Override
-	public List<String> getReferencedTypes() {
-		return List.of("constraint");
-	}
+    // TODO: map between tmforum types and ngsi-ld types
+    @Override
+    public List<String> getReferencedTypes() {
+        return List.of(getAtReferredType());
+    }
 }

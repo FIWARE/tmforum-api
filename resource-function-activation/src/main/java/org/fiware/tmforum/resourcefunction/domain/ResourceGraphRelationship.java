@@ -1,5 +1,6 @@
 package org.fiware.tmforum.resourcefunction.domain;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.Entity;
@@ -16,19 +17,12 @@ import javax.annotation.Nullable;
 import java.net.URI;
 import java.util.List;
 
-@MappingEnabled(entityType = ResourceGraph.TYPE_RESOURCE_GRAPH)
-public class ResourceGraphRelationship extends RefEntity {
+@Data
+public class ResourceGraphRelationship {
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "relationshipType", embedProperty = true)}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "relationshipType", fromProperties = true)}))
     private String relationshipType;
-
-    public ResourceGraphRelationship(String id) {
-        super(id);
-    }
-
-    @Override
-    public List<String> getReferencedTypes() {
-        return List.of(ResourceGraph.TYPE_RESOURCE_GRAPH);
-    }
+    private ResourceGraphRef resourceGraph;
+    private String atBaseType;
+    private String atSchemaLocation;
+    private String atType;
 }

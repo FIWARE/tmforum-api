@@ -131,21 +131,6 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
         testEntries.add(Arguments.of("A heal with a non existent resource function should not have been created.",
                 HealCreateVOTestExample.build().healPolicy(null).resourceFunction(ResourceFunctionRefVOTestExample.build().id("urn:ngsi-ld:resource-function:non-existent"))));
 
-        testEntries.add(Arguments.of("A heal wit an invalid characteristic should not be created.",
-                HealCreateVOTestExample.build()
-                        .healPolicy(null)
-                        .resourceFunction(null)
-                        .additionalParms(List.of(
-                                CharacteristicVOTestExample.build()
-                                        .characteristicRelationship(List.of(CharacteristicRelationshipVOTestExample.build()))))));
-        testEntries.add(Arguments.of("A heal wit an invalid characteristic should not be created.",
-                HealCreateVOTestExample.build()
-                        .healPolicy(null)
-                        .resourceFunction(null)
-                        .additionalParms(List.of(
-                                CharacteristicVOTestExample.build()
-                                        .characteristicRelationship(List.of(CharacteristicRelationshipVOTestExample.build().id("urn:ngsi-ld:characteristic:non-existent")))))));
-
         return testEntries.stream();
     }
 
@@ -293,7 +278,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
         assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), "The initial create should be successfully.");
         String healId = healVOHttpResponse.body().getId();
 
-        HealVO expectedHeal = HealVOTestExample.build().id(healId).href(healId).healPolicy(null).resourceFunction(null).additionalParms(null);
+        HealVO expectedHeal = HealVOTestExample.build().id(healId).href(healId).healPolicy(null).resourceFunction(null);
 
         HttpResponse<HealVO> retreiveResponse = callAndCatch(() -> healApiTestClient.retrieveHeal(healId, null));
         assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");

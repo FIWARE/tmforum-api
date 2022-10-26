@@ -11,6 +11,8 @@ import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
 import lombok.RequiredArgsConstructor;
+import org.fiware.resourceinventory.model.ResourceVO;
+import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
 import javax.inject.Singleton;
 import java.time.Clock;
@@ -40,14 +42,8 @@ public class Application {
             final ObjectMapper objectMapper = event.getBean();
             SimpleModule fieldParamModule = new SimpleModule();
             // we need to register per class, in order to use the generic serializer
-//            fieldParamModule.addSerializer(ResourceSpecificationVO.class, new FieldCleaningSerializer<>());
-//            fieldParamModule.addSerializer(ResourceCategoryVO.class, new FieldCleaningSerializer<>());
-//            fieldParamModule.addSerializer(ResourceCatalogVO.class, new FieldCleaningSerializer<>());
-//            fieldParamModule.addSerializer(ResourceCandidateVO.class, new FieldCleaningSerializer<>());
+            fieldParamModule.addSerializer(ResourceVO.class, new FieldCleaningSerializer<>());
             objectMapper.registerModule(fieldParamModule);
-            objectMapper.registerModule(new JavaTimeModule());
-            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             return objectMapper;
         }
     }

@@ -34,16 +34,7 @@ public class HealApiController extends AbstractApiController implements HealApi 
         Heal heal = tmForumMapper
                 .map(tmForumMapper.map(healCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Heal.TYPE_HEAL)));
 
-        Mono<Heal> checkingMono = getCheckingMono(heal);
-
-        Mono<Heal> characteristicHandlingMono = relatedEntityHandlingMono(
-                heal,
-                checkingMono,
-                heal.getAdditionalParms(),
-                heal::setAdditionalParms,
-                Characteristic.class);
-
-        return create(characteristicHandlingMono, Heal.class)
+        return create(getCheckingMono(heal), Heal.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::created);
     }
@@ -54,20 +45,7 @@ public class HealApiController extends AbstractApiController implements HealApi 
         Optional.ofNullable(heal.getHealPolicy()).ifPresent(healPolicyRef -> references.add(List.of(healPolicyRef)));
         Optional.ofNullable(heal.getResourceFunction()).ifPresent(resourceFunctionRef -> references.add(List.of(resourceFunctionRef)));
 
-        Mono<Heal> checkingMono = getCheckingMono(heal, references);
-
-        if (heal.getAdditionalParms() != null && !heal.getAdditionalParms().isEmpty()) {
-            List<Mono<Characteristic>> additionalParamCheckingMonos = heal
-                    .getAdditionalParms()
-                    .stream()
-                    .filter(rc -> rc.getCharacteristicRelationship() != null)
-                    .map(rc -> getCheckingMono(rc, List.of(rc.getCharacteristicRelationship())))
-                    .toList();
-            Mono<Heal> additionalParamCheckingMono = Mono.zip(additionalParamCheckingMonos, (m1) -> heal);
-            checkingMono = Mono.zip(additionalParamCheckingMono, checkingMono, (p1, p2) -> heal);
-        }
-
-        return checkingMono
+        return getCheckingMono(heal, references)
                 .onErrorMap(throwable -> new ResourceFunctionException(
                         String.format("Was not able to create heal %s", heal.getId()), throwable, ResourceFunctionExceptionReason.INVALID_RELATIONSHIP));
     }

@@ -28,6 +28,6 @@ public class EndpointRef extends RefEntity {
 
     @Override
     public List<String> getReferencedTypes() {
-        return null;
+        return List.of(getAtReferredType());
     }
 }

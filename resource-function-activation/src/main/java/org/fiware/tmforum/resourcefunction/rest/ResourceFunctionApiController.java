@@ -16,6 +16,7 @@ import org.fiware.tmforum.resource.Resource;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
 import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
 import org.fiware.tmforum.resourcefunction.domain.ResourceGraph;
+import org.fiware.tmforum.resourcefunction.domain.ResourceGraphRelationship;
 import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionException;
 import org.fiware.tmforum.resourcefunction.exception.ResourceFunctionExceptionReason;
 import org.fiware.tmforum.resourcefunction.repository.ResourceFunctionRepository;
@@ -43,65 +44,9 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
         ResourceFunction resourceFunction = tmForumMapper.map(
                 tmForumMapper.map(resourceFunctionCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), ResourceFunction.TYPE_RESOURCE_FUNCTION)));
 
-        Mono<ResourceFunction> checkingMono = getCheckingMono(resourceFunction);
-
-        Mono<ResourceFunction> activationFeatureHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
-                checkingMono,
-                resourceFunction.getActivationFeature(),
-                resourceFunction::setActivationFeature,
-                Feature.class);
-        Mono<ResourceFunction> autoModificationHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
-                activationFeatureHandlingMono,
-                resourceFunction.getAutoModification(),
-                resourceFunction::setAutoModification,
-                Characteristic.class);
-        Mono<ResourceFunction> characteristicHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
-                autoModificationHandlingMono,
-                resourceFunction.getResourceCharacteristic(),
-                resourceFunction::setResourceCharacteristic,
-                Characteristic.class);
-        Mono<ResourceFunction> connectivityHandlingMono = relatedEntityHandlingMono(
-                resourceFunction,
-                characteristicHandlingMono,
-                resourceFunction.getConnectivity(),
-                resourceFunction::setConnectivity,
-                ResourceGraph.class);
-
-        Mono<ResourceFunction> resourceRelationshipHandlingMono = handleResourceRelationship(resourceFunction);
-
-        return create(Mono.zip(connectivityHandlingMono, resourceRelationshipHandlingMono, (p1, p2) -> resourceFunction), ResourceFunction.class)
+        return create(getCheckingMono(resourceFunction), ResourceFunction.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::created);
-
-    }
-
-    private Mono<ResourceFunction> handleResourceRelationship(ResourceFunction resourceFunction) {
-        if (resourceFunction.getResourceRelationship() == null || resourceFunction.getResourceRelationship().isEmpty()) {
-            return Mono.just(resourceFunction);
-        }
-        List<Mono<Resource>> relationshipHandlingMonos = resourceFunction.getResourceRelationship()
-                .stream()
-                .map(resourceRelationship -> {
-                    if (resourceRelationship.getId() == null) {
-                        throw new ResourceFunctionException("A resource relationship without an ID cannot exist.", ResourceFunctionExceptionReason.INVALID_DATA);
-                    }
-
-                    return validationService.checkReferenceExists(List.of(resourceRelationship))
-                            .flatMap(res -> {
-                                if (res) {
-                                    return resourceCatalogRepository.get(resourceRelationship.getId(), Resource.class);
-                                } else {
-                                    return resourceCatalogRepository
-                                            .createDomainEntity(resourceRelationship.getResource())
-                                            .then(Mono.just(resourceRelationship.getResource()));
-                                }
-                            });
-                })
-                .toList();
-        return Mono.zip(relationshipHandlingMonos, (m1) -> resourceFunction);
 
     }
 
@@ -126,61 +71,60 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
                     .toList();
             Mono<ResourceFunction> constraintCheckingMono = Mono.zip(constraintCheckingMonos, (m1) -> resourceFunction);
             checkingMono = Mono.zip(constraintCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
-            List<Mono<Feature>> relCheckingMonos = resourceFunction
-                    .getActivationFeature()
-                    .stream()
-                    .filter(af -> af.getFeatureRelationship() != null)
-                    .map(af -> getCheckingMono(af, List.of(af.getFeatureRelationship())))
-                    .toList();
-            Mono<ResourceFunction> relCheckingMono = Mono.zip(relCheckingMonos, (m1) -> resourceFunction);
-            checkingMono = Mono.zip(relCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
-        }
-
-        // auto modification handling
-        if (resourceFunction.getAutoModification() != null && !resourceFunction.getAutoModification().isEmpty()) {
-            List<Mono<Characteristic>> autoModCheckingMonos = resourceFunction
-                    .getAutoModification()
-                    .stream()
-                    .filter(rc -> rc.getCharacteristicRelationship() != null)
-                    .map(rc -> getCheckingMono(rc, List.of(rc.getCharacteristicRelationship())))
-                    .toList();
-            Mono<ResourceFunction> autoModCheckingMono = Mono.zip(autoModCheckingMonos, (m1) -> resourceFunction);
-            checkingMono = Mono.zip(autoModCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
-        }
-
-        // characteristic handling
-        if (resourceFunction.getResourceCharacteristic() != null && !resourceFunction.getResourceCharacteristic().isEmpty()) {
-            List<Mono<Characteristic>> characteristicCheckingMonos = resourceFunction
-                    .getResourceCharacteristic()
-                    .stream()
-                    .filter(rc -> rc.getCharacteristicRelationship() != null)
-                    .map(rc -> getCheckingMono(rc, List.of(rc.getCharacteristicRelationship())))
-                    .toList();
-            Mono<ResourceFunction> characteristicCheckingMono = Mono.zip(characteristicCheckingMonos, (m1) -> resourceFunction);
-            checkingMono = Mono.zip(characteristicCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
         }
 
         // resource graph handling
         if (resourceFunction.getConnectivity() != null && !resourceFunction.getConnectivity().isEmpty()) {
 
-            List<Mono<ResourceGraph>> connectionCheckingMonos = resourceFunction
+            List<Mono<ResourceFunction>> endpointRefCheckingMonos = resourceFunction
                     .getConnectivity()
                     .stream()
                     .filter(rg -> rg.getConnection() != null)
-                    .map(rg -> getCheckingMono(rg, List.of(rg.getConnection())))
+                    .flatMap(resourceGraph -> resourceGraph.getConnection().stream())
+                    .filter(connection -> connection.getEndpoint() != null)
+                    .map(connection -> getCheckingMono(resourceFunction, List.of(connection.getEndpoint())))
                     .toList();
-            Mono<ResourceFunction> connectionCheckingMono = Mono.zip(connectionCheckingMonos, (m1) -> resourceFunction);
-            checkingMono = Mono.zip(connectionCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
-
-            List<Mono<ResourceGraph>> graphRelCheckingMonos = resourceFunction
+            if (!endpointRefCheckingMonos.isEmpty()) {
+                Mono<ResourceFunction> endpointRefCheckingMono = Mono.zip(endpointRefCheckingMonos, (m1) -> resourceFunction);
+                checkingMono = Mono.zip(endpointRefCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
+            }
+            List<Mono<ResourceFunction>> connectionPointCheckingMonos = resourceFunction
+                    .getConnectivity()
+                    .stream()
+                    .filter(rg -> rg.getConnection() != null)
+                    .flatMap(resourceGraph -> resourceGraph.getConnection().stream())
+                    .filter(connection -> connection.getEndpoint() != null)
+                    .flatMap(connection -> connection.getEndpoint().stream())
+                    .map(endpointRef -> getCheckingMono(resourceFunction, List.of(List.of(endpointRef.getConnectionPoint()))))
+                    .toList();
+            if (!connectionPointCheckingMonos.isEmpty()) {
+                Mono<ResourceFunction> connectionPointCheckingMono = Mono.zip(connectionPointCheckingMonos, (m1) -> resourceFunction);
+                checkingMono = Mono.zip(connectionPointCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
+            }
+            List<Mono<ResourceFunction>> graphRelCheckingMonos = resourceFunction
                     .getConnectivity()
                     .stream()
                     .filter(rg -> rg.getGraphRelationship() != null)
-                    .map(rg -> getCheckingMono(rg, List.of(rg.getGraphRelationship())))
+                    .flatMap(rg -> rg.getGraphRelationship().stream())
+                    .map(ResourceGraphRelationship::getResourceGraph)
+                    .map(rgr -> getCheckingMono(resourceFunction, List.of(List.of(rgr))))
                     .toList();
-            Mono<ResourceFunction> graphRelCheckingMono = Mono.zip(graphRelCheckingMonos, (m1) -> resourceFunction);
-            checkingMono = Mono.zip(graphRelCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
+            if (!graphRelCheckingMonos.isEmpty()) {
+                Mono<ResourceFunction> graphRelCheckingMono = Mono.zip(graphRelCheckingMonos, (m1) -> resourceFunction);
+                checkingMono = Mono.zip(graphRelCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
+            }
         }
+        if (resourceFunction.getResourceRelationship() != null && !resourceFunction.getResourceRelationship().isEmpty()) {
+            List<Mono<ResourceFunction>> resourceRelCheckingMonos = resourceFunction
+                    .getResourceRelationship()
+                    .stream()
+                    .filter(af -> af.getResource() != null)
+                    .map(af -> getCheckingMono(resourceFunction, List.of(List.of(af.getResource()))))
+                    .toList();
+            Mono<ResourceFunction> resourceRelCheckingMono = Mono.zip(resourceRelCheckingMonos, (m1) -> resourceFunction);
+            checkingMono = Mono.zip(resourceRelCheckingMono, checkingMono, (p1, p2) -> resourceFunction);
+        }
+
         return checkingMono
                 .onErrorMap(throwable -> new ResourceFunctionException(String.format("Was not able to create resource function %s", resourceFunction.getId()), throwable, ResourceFunctionExceptionReason.INVALID_RELATIONSHIP));
     }
@@ -205,39 +149,7 @@ public class ResourceFunctionApiController extends AbstractApiController impleme
         }
         ResourceFunction updatedResourceFunction = tmForumMapper.map(resourceFunctionUpdateVO, id);
 
-        Mono<ResourceFunction> checkingMono = getCheckingMono(updatedResourceFunction);
-
-
-        Mono<ResourceFunction> activationFeatureHandlingMono = relatedEntityHandlingMono(
-                updatedResourceFunction,
-                checkingMono,
-                updatedResourceFunction.getActivationFeature(),
-                updatedResourceFunction::setActivationFeature,
-                Feature.class);
-        Mono<ResourceFunction> autoModificationHandlingMono = relatedEntityHandlingMono(
-                updatedResourceFunction,
-                checkingMono,
-                updatedResourceFunction.getAutoModification(),
-                updatedResourceFunction::setAutoModification,
-                Characteristic.class);
-        Mono<ResourceFunction> characteristicHandlingMono = relatedEntityHandlingMono(
-                updatedResourceFunction,
-                checkingMono,
-                updatedResourceFunction.getResourceCharacteristic(),
-                updatedResourceFunction::setResourceCharacteristic,
-                Characteristic.class);
-        Mono<ResourceFunction> connectivityHandlingMono = relatedEntityHandlingMono(
-                updatedResourceFunction,
-                checkingMono,
-                updatedResourceFunction.getConnectivity(),
-                updatedResourceFunction::setConnectivity,
-                ResourceGraph.class);
-
-        Mono<ResourceFunction> relatedEntityHandlingMono = Mono.zip(List.of(activationFeatureHandlingMono, autoModificationHandlingMono, characteristicHandlingMono, connectivityHandlingMono), m1 -> updatedResourceFunction);
-
-        Mono<ResourceFunction> resourceRelationshipHandlingMono = handleResourceRelationship(updatedResourceFunction);
-
-        return patch(id, updatedResourceFunction, Mono.zip(relatedEntityHandlingMono, resourceRelationshipHandlingMono, (p1, p2) -> updatedResourceFunction), ResourceFunction.class)
+        return patch(id, updatedResourceFunction, getCheckingMono(updatedResourceFunction), ResourceFunction.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }

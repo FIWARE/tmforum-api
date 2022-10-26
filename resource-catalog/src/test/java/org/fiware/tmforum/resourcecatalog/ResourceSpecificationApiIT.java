@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resourcecatalog;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.context.annotation.Bean;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -27,7 +29,10 @@ import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.resourcecatalog.domain.FeatureSpecification;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,6 +64,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
     private String fieldsParameter;
 
     private Clock clock = mock(Clock.class);
+
+    private ObjectMapper objectMapper;
 
     @MockBean(Clock.class)
     public Clock clock() {
@@ -100,9 +107,44 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
         ResourceSpecificationVO expectedValidFor = ResourceSpecificationVOTestExample.build().validFor(timePeriodVO).lifecycleStatus("created");
         testEntries.add(Arguments.of("An resource specification with a validFor should have been created.", createValidFor, expectedValidFor));
 
+        provideValidFeatureSpecs().map(ap ->
+                        Arguments.of(
+                                ap.message(),
+                                ResourceSpecificationCreateVOTestExample.build().lifecycleStatus("created").featureSpecification(List.of(ap.value())),
+                                ResourceSpecificationVOTestExample.build().lifecycleStatus("created").featureSpecification(List.of(ap.value()))))
+                .forEach(testEntries::add);
+
         return testEntries.stream();
     }
 
+    private static Stream<ArgumentPair<FeatureSpecificationVO>> provideValidFeatureSpecs() {
+        List<ArgumentPair<FeatureSpecificationVO>> validFeatureSpecs = new ArrayList<>();
+
+        validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec char rel should be created.",
+                FeatureSpecificationVOTestExample.build()
+                        .constraint(null)
+                        .validFor(null)
+                        .featureSpecRelationship(null)
+                        .featureSpecCharacteristic(List.of(
+                                FeatureSpecificationCharacteristicVOTestExample.build()
+                                        .validFor(null)
+                                        .featureSpecCharacteristicValue(null)
+                                        .featureSpecCharRelationship(List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
+                                                .validFor(null)
+                                                .resourceSpecificationId(null)))
+                        ))));
+        validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec rel should be created.",
+                FeatureSpecificationVOTestExample.build()
+                        .constraint(null)
+                        .validFor(null)
+                        .featureSpecCharacteristic(null)
+                        .featureSpecRelationship(List.of(
+                                FeatureSpecificationRelationshipVOTestExample.build()
+                                        .validFor(null)
+                                        .resourceSpecificationId(null)))));
+
+        return validFeatureSpecs.stream();
+    }
 
     @ParameterizedTest
     @MethodSource("provideInvalidResourceSpecifications")
@@ -141,7 +183,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
                                         .resourceSpecificationId("urn:ngsi-ld:resource-specification:non-existent")))))));
         testEntries
                 .addAll(provideInvalidFeatureSpecs()
-                        .map(ap -> Arguments.of(ap.message, ResourceSpecificationCreateVOTestExample.build().featureSpecification(List.of(ap.value))))
+                        .map(ap -> Arguments.of(ap.message(), ResourceSpecificationCreateVOTestExample.build().featureSpecification(List.of(ap.value()))))
                         .toList());
 
         return testEntries.stream();
@@ -149,25 +191,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
     private static Stream<ArgumentPair<FeatureSpecificationVO>> provideInvalidFeatureSpecs() {
         List<ArgumentPair<FeatureSpecificationVO>> invalidFeatureSpecs = new ArrayList<>();
-
-        // char rel
-        invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with invalid feature id on spec char rel should fail.",
-                FeatureSpecificationVOTestExample.build()
-                        .featureSpecCharacteristic(List.of(
-                                FeatureSpecificationCharacteristicVOTestExample.build()
-                                        .featureSpecCharRelationship(List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
-                                                .featureId("invalid")
-                                                .resourceSpecificationId(null)))
-                        ))));
-
-        invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with non-existent feature id on spec char rel should fail.",
-                FeatureSpecificationVOTestExample.build()
-                        .featureSpecCharacteristic(List.of(
-                                FeatureSpecificationCharacteristicVOTestExample.build()
-                                        .featureSpecCharRelationship(List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
-                                                .featureId("urn:ngsi-ld:feature:non-existent")
-                                                .resourceSpecificationId(null)))
-                        ))));
 
         invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with invalid resource spec id on spec char rel should fail.",
                 FeatureSpecificationVOTestExample.build()
@@ -195,18 +218,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
         invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with non-existent constraint ref should fail.",
                 FeatureSpecificationVOTestExample.build()
                         .constraint(List.of(ConstraintRefVOTestExample.build().id("urn:ngsi-ld:constraint:non-existent")))));
-
-        // spec rel
-        invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with invalid feature id on spec rel should fail.",
-                FeatureSpecificationVOTestExample.build()
-                        .featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
-                                .featureId("invalid")
-                                .resourceSpecificationId(null)))));
-        invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with invalid feature id on spec rel should fail.",
-                FeatureSpecificationVOTestExample.build()
-                        .featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
-                                .resourceSpecificationId(null)
-                                .featureId("urn:ngsi-ld:feature:non-existent")))));
 
         invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with invalid resource id on spec rel should fail.",
                 FeatureSpecificationVOTestExample.build()
@@ -497,6 +508,14 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
         ResourceSpecificationVO expectedValidForUpdate = ResourceSpecificationVOTestExample.build().validFor(timePeriodVO);
         testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
+
+        provideValidFeatureSpecs().map(ap ->
+                        Arguments.of(
+                                ap.message(),
+                                ResourceSpecificationUpdateVOTestExample.build().lifecycleStatus("created").featureSpecification(List.of(ap.value())),
+                                ResourceSpecificationVOTestExample.build().lifecycleStatus("created").featureSpecification(List.of(ap.value()))))
+                .forEach(testEntries::add);
+
         return testEntries.stream();
     }
 
@@ -537,7 +556,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
                         .relatedParty(List.of(RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organization:non-existent")))));
         testEntries
                 .addAll(provideInvalidFeatureSpecs()
-                        .map(ap -> Arguments.of(ap.message, ResourceSpecificationUpdateVOTestExample.build().featureSpecification(List.of(ap.value))))
+                        .map(ap -> Arguments.of(ap.message(), ResourceSpecificationUpdateVOTestExample.build().featureSpecification(List.of(ap.value()))))
                         .toList());
 
 
@@ -727,8 +746,4 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
     public void retrieveResourceSpecification500() throws Exception {
 
     }
-
-    private record ArgumentPair<T>(String message, T value) {
-    }
-
 }

@@ -95,17 +95,6 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         expectedEmptyRF.place(null).resourceSpecification(null);
         testEntries.add(Arguments.of("An empty resource function should have been created.", emptyCreate, expectedEmptyRF));
 
-        ResourceFunctionCreateVO withResRel = ResourceFunctionCreateVOTestExample.build();
-        ResourceRelationshipVO resourceRelationshipVO = ResourceRelationshipVOTestExample.build();
-        resourceRelationshipVO.getResource().resourceSpecification(null).place(null);
-        withResRel.setResourceRelationship(List.of(resourceRelationshipVO));
-        withResRel.place(null).resourceSpecification(null);
-
-        ResourceFunctionVO expectedWithResRel = ResourceFunctionVOTestExample.build();
-        expectedWithResRel.place(null).resourceSpecification(null);
-        expectedWithResRel.resourceRelationship(List.of(resourceRelationshipVO));
-        testEntries.add(Arguments.of("A resource function with a related resource should have been created.", withResRel, expectedWithResRel));
-
         return testEntries.stream();
     }
 
@@ -421,26 +410,11 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         ResourceFunctionVO updatedResourceFunction = updateResponse.body();
         expectedResourceFunction.href(resourceId).id(resourceId);
 
-        if (expectedResourceFunction.getActivationFeature() != null && expectedResourceFunction.getActivationFeature().isEmpty()) {
-            expectedResourceFunction.activationFeature(null);
-        }
-        if (expectedResourceFunction.getAutoModification() != null && expectedResourceFunction.getAutoModification().isEmpty()) {
-            expectedResourceFunction.autoModification(null);
-        }
         if (expectedResourceFunction.getConnectionPoint() != null && expectedResourceFunction.getConnectionPoint().isEmpty()) {
             expectedResourceFunction.connectionPoint(null);
         }
-        if (expectedResourceFunction.getConnectivity() != null && expectedResourceFunction.getConnectivity().isEmpty()) {
-            expectedResourceFunction.connectivity(null);
-        }
         if (expectedResourceFunction.getRelatedParty() != null && expectedResourceFunction.getRelatedParty().isEmpty()) {
             expectedResourceFunction.relatedParty(null);
-        }
-        if (expectedResourceFunction.getResourceCharacteristic() != null && expectedResourceFunction.getResourceCharacteristic().isEmpty()) {
-            expectedResourceFunction.resourceCharacteristic(null);
-        }
-        if (expectedResourceFunction.getResourceRelationship() != null && expectedResourceFunction.getResourceRelationship().isEmpty()) {
-            expectedResourceFunction.resourceRelationship(null);
         }
         if (expectedResourceFunction.getSchedule() != null && expectedResourceFunction.getSchedule().isEmpty()) {
             expectedResourceFunction.schedule(null);
@@ -832,13 +806,8 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
                 .href(id)
                 .place(null)
                 .resourceSpecification(null)
-                .activationFeature(null)
-                .autoModification(null)
                 .connectionPoint(null)
-                .connectivity(null)
                 .relatedParty(null)
-                .resourceCharacteristic(null)
-                .resourceRelationship(null)
                 .schedule(null);
 
         //then retrieve

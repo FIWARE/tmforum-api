@@ -57,8 +57,8 @@ public class Migrate extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "removeConnectionPoint", targetClass = ConnectionPointRef.class)}))
     private List<ConnectionPointRef> removeConnectionPoint;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "characteristics")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "characteristics", targetClass = Characteristic.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristics")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristics", targetClass = Characteristic.class)}))
     private List<Characteristic> characteristics;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "place")}))

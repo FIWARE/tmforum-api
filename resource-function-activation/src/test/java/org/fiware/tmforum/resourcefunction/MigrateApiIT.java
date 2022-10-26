@@ -148,21 +148,6 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         testEntries.add(Arguments.of("A migrate with nonexitent remove connection points should not have been created.",
                 MigrateCreateVOTestExample.build().place(null).resourceFunction(null).removeConnectionPoint(List.of(ConnectionPointRefVOTestExample.build().id("urn:ngsi-ld:connection-point:non-existent")))));
 
-        testEntries.add(Arguments.of("A migrate wit an invalid characteristic should not be created.",
-                MigrateCreateVOTestExample.build()
-                        .place(null)
-                        .resourceFunction(null)
-                        .characteristics(List.of(
-                                CharacteristicVOTestExample.build()
-                                        .characteristicRelationship(List.of(CharacteristicRelationshipVOTestExample.build()))))));
-        testEntries.add(Arguments.of("A migrate wit an invalid characteristic should not be created.",
-                MigrateCreateVOTestExample.build()
-                        .place(null)
-                        .resourceFunction(null)
-                        .characteristics(List.of(
-                                CharacteristicVOTestExample.build()
-                                        .characteristicRelationship(List.of(CharacteristicRelationshipVOTestExample.build().id("urn:ngsi-ld:characteristic:non-existent")))))));
-
         return testEntries.stream();
     }
 
@@ -315,7 +300,6 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
                 .href(migrateId)
                 .place(null)
                 .resourceFunction(null)
-                .characteristics(null)
                 .addConnectionPoint(null)
                 .removeConnectionPoint(null);
 

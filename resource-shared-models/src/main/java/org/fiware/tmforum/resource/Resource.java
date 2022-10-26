@@ -50,8 +50,8 @@ public class Resource extends EntityWithId implements ReferencedEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "resourceVersion")}))
     private String resourceVersion;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "activationFeature")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "activationFeature", targetClass = Feature.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "activationFeature")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "activationFeature", targetClass = Feature.class)}))
     private List<Feature> activationFeature;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "administrativeState")}))
@@ -63,7 +63,7 @@ public class Resource extends EntityWithId implements ReferencedEntity {
     private List<AttachmentRefOrValue> attachment;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "note")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "note")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "note", targetClass = Note.class)}))
     private List<Note> note;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "operationalState")}))
@@ -78,8 +78,8 @@ public class Resource extends EntityWithId implements ReferencedEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class, fromProperties = true)}))
     private List<RelatedParty> relatedParty;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceCharacteristic")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceCharacteristic", targetClass = Characteristic.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceCharacteristic")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceCharacteristic", targetClass = Characteristic.class)}))
     private List<Characteristic> resourceCharacteristic;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceRelationship")}))
@@ -98,13 +98,9 @@ public class Resource extends EntityWithId implements ReferencedEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "schedule", targetClass = ScheduleRef.class)}))
     private List<ScheduleRef> schedule;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "resourceUsage")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "resourceUsage")}))
-    private ResourceUsageType resourceUsage;
-
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "@referredType")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "@referredType")}))
-    private String atReferredType;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "usageState")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "usageState")}))
+    private ResourceUsageType usageState;
 
     public Resource(String id) {
         super(TYPE_RESOURCE, id);

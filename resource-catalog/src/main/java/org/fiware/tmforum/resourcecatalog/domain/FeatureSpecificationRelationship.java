@@ -2,14 +2,13 @@ package org.fiware.tmforum.resourcecatalog.domain;
 
 import lombok.Data;
 import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.tmforum.resource.FeatureRef;
 
 import java.net.URI;
 
 @Data
 public class FeatureSpecificationRelationship {
 
-    private FeatureRef featureId;
+    private String featureId;
     private String name;
     private String relationshipType;
     private String resourceSpecificationHref;

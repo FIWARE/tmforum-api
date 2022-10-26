@@ -127,14 +127,9 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
 
         if (featureSpecification.getFeatureSpecRelationship() != null) {
             featureSpecification.getFeatureSpecRelationship().forEach(fsr ->
-            {
-                Optional.ofNullable(fsr.getResourceSpecificationId())
-                        .map(List::of)
-                        .ifPresent(references::add);
-                Optional.ofNullable(fsr.getFeatureId())
-                        .map(List::of)
-                        .ifPresent(references::add);
-            });
+                    Optional.ofNullable(fsr.getResourceSpecificationId())
+                            .map(List::of)
+                            .ifPresent(references::add));
         }
 
         if (featureSpecification.getFeatureSpecCharacteristic() != null) {
@@ -155,9 +150,6 @@ public class ResourceSpecifcationApiController extends AbstractApiController imp
 
     private void addReferencesForFSCR(FeatureSpecificationCharacteristicRelationship fscr, List<List<? extends ReferencedEntity>> references) {
         Optional.ofNullable(fscr.getResourceSpecificationId())
-                .map(List::of)
-                .ifPresent(references::add);
-        Optional.ofNullable(fscr.getFeatureId())
                 .map(List::of)
                 .ifPresent(references::add);
     }

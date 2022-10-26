@@ -34,16 +34,7 @@ public class MigrateApiController extends AbstractApiController implements Migra
         Migrate migrate = tmForumMapper
                 .map(tmForumMapper.map(migrateCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Migrate.TYPE_MIGRATE)));
 
-        Mono<Migrate> checkingMono = getCheckingMono(migrate);
-
-        Mono<Migrate> characteristicHandlingMono = relatedEntityHandlingMono(
-                migrate,
-                checkingMono,
-                migrate.getCharacteristics(),
-                migrate::setCharacteristics,
-                Characteristic.class);
-
-        return create(characteristicHandlingMono, Migrate.class)
+        return create(getCheckingMono(migrate), Migrate.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::created);
     }
@@ -57,19 +48,7 @@ public class MigrateApiController extends AbstractApiController implements Migra
         Optional.ofNullable(migrate.getPlace()).ifPresent(placeRef -> references.add(List.of(placeRef)));
         Optional.ofNullable(migrate.getResourceFunction()).ifPresent(resourceFunctionRef -> references.add(List.of(resourceFunctionRef)));
 
-        Mono<Migrate> checkingMono = getCheckingMono(migrate, references);
-
-        if (migrate.getCharacteristics() != null && !migrate.getCharacteristics().isEmpty()) {
-            List<Mono<Characteristic>> characteristicsCheckingMonos = migrate
-                    .getCharacteristics()
-                    .stream()
-                    .filter(rc -> rc.getCharacteristicRelationship() != null)
-                    .map(rc -> getCheckingMono(rc, List.of(rc.getCharacteristicRelationship())))
-                    .toList();
-            Mono<Migrate> characteristicsCheckingMono = Mono.zip(characteristicsCheckingMonos, (m1) -> migrate);
-            checkingMono = Mono.zip(characteristicsCheckingMono, checkingMono, (p1, p2) -> migrate);
-        }
-        return checkingMono
+        return getCheckingMono(migrate, references)
                 .onErrorMap(throwable -> new ResourceFunctionException(
                         String.format("Was not able to create migrate %s", migrate.getId()), throwable, ResourceFunctionExceptionReason.INVALID_RELATIONSHIP));
     }
