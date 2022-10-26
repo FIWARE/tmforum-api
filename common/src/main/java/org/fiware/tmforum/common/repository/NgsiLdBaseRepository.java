@@ -11,11 +11,19 @@ import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.DeletionException;
+import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
+import org.fiware.tmforum.common.mapping.NGSIMapper;
+import org.fiware.tmforum.mapping.EntityVOMapper;
+import org.fiware.tmforum.mapping.JavaObjectMapper;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Base-Repository implementation for using the NGSI-LD API as a storage backend. Supports caching and asynchronous retrieval of entities.
@@ -30,6 +38,10 @@ public abstract class NgsiLdBaseRepository {
 
     protected final GeneralProperties generalProperties;
     protected final EntitiesApiClient entitiesApi;
+    protected final JavaObjectMapper javaObjectMapper;
+    protected final NGSIMapper ngsiMapper;
+    protected final EntityVOMapper entityVOMapper;
+
 
     protected String getLinkHeader() {
         return String.format("<%s>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json", generalProperties.getContextUrl());
@@ -63,11 +75,69 @@ public abstract class NgsiLdBaseRepository {
      *
      * @param entityId         id of the entity
      * @param entityFragmentVO the entity elements to be updated
-     * @return the entity.
+     * @return an empty mono
      */
     @CacheInvalidate(value = ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
     public Mono<Void> patchEntity(URI entityId, EntityFragmentVO entityFragmentVO) {
         return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null);
+    }
+
+    /**
+     * Create a domain entity
+     *
+     * @param domainEntity the entity to be created
+     * @param <T>          the type of the object
+     * @return an empty mono
+     */
+    public <T> Mono<Void> createDomainEntity(T domainEntity) {
+        return createEntity(javaObjectMapper.toEntityVO(domainEntity), generalProperties.getTenant());
+    }
+
+    /**
+     * Update a domain entity
+     *
+     * @param id           id of the entity to be updated
+     * @param domainEntity the entity to be created
+     * @param <T>          the type of the object
+     * @return an empty mono
+     */
+    public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
+        return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(domainEntity)));
+    }
+
+    /**
+     * Delete a domain entity
+     *
+     * @param id id of the entity to be deleted
+     * @return an empty mono
+     */
+    public Mono<Void> deleteDomainEntity(URI id) {
+        return entitiesApi
+                .removeEntityById(id, generalProperties.getTenant(), null)
+                .onErrorResume(t -> {
+                    if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
+                        throw new DeletionException(String.format("Was not able to delete %s, since it does not exist.", id),
+                                DeletionExceptionReason.NOT_FOUND);
+                    }
+                    throw new DeletionException(String.format("Was not able to delete %s.", id),
+                            t,
+                            DeletionExceptionReason.UNKNOWN);
+                });
+    }
+
+    /**
+     * Helper method for combining a stream of entites to a single mono.
+     *
+     * @param entityVOStream stream of entites
+     * @param targetClass    target class to map them
+     * @param <T>            type of the target
+     * @return a mono, emitting a list of mapped entities
+     */
+    protected <T> Mono<List<T>> zipToList(Stream<EntityVO> entityVOStream, Class<T> targetClass) {
+        return Mono.zip(
+                entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
+                oList -> Arrays.stream(oList).map(targetClass::cast).toList()
+        );
     }
 
     /**

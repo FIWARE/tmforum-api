@@ -31,6 +31,7 @@ import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -357,9 +358,9 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<OrganizationVO>> firstPartResponse = callAndCatch(() -> organizationApiTestClient.listOrganization(null, 0, limit));
-        assertEquals(limit, firstPartResponse.body(), "Only the requested number of entries should be returend.");
+        assertEquals(limit, firstPartResponse.body().size(), "Only the requested number of entries should be returend.");
         HttpResponse<List<OrganizationVO>> secondPartResponse = callAndCatch(() -> organizationApiTestClient.listOrganization(null, 0 + limit, limit));
-        assertEquals(limit, secondPartResponse.body(), "Only the requested number of entries should be returend.");
+        assertEquals(limit, secondPartResponse.body().size(), "Only the requested number of entries should be returend.");
 
         List<OrganizationVO> retrievedOrganizations = firstPartResponse.body();
         retrievedOrganizations.addAll(secondPartResponse.body());

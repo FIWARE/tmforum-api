@@ -18,7 +18,8 @@ import java.util.List;
 public class BrokerBackedReferencesRepository extends NgsiLdBaseRepository implements ReferencesRepository {
 
 	public BrokerBackedReferencesRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
-		super(generalProperties, entitiesApi);
+		// only used for retrieval, so no such mappers required
+		super(generalProperties, entitiesApi, null, null, null);
 	}
 
 	/**

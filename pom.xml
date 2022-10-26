@@ -35,6 +35,7 @@
         <module>party</module>
         <module>customer</module>
         <module>customer-bill</module>
+        <module>product-catalog</module>
     </modules>
 
     <properties>
@@ -393,7 +394,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
-                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -410,6 +411,7 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
+                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
                     </configuration>
                 </plugin>
             </plugins>
@@ -703,4 +705,3 @@
         </profile>
     </profiles>
 </project>
-
