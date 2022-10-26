@@ -32,10 +32,14 @@
     <modules>
         <module>mapping</module>
         <module>common</module>
-        <module>party</module>
         <module>customer</module>
         <module>customer-bill</module>
+        <module>resource-shared-models</module>
+        <module>party-catalog</module>
         <module>product-catalog</module>
+        <module>resource-function-activation</module>
+        <module>resource-catalog</module>
+        <module>resource-inventory</module>
     </modules>
 
     <properties>
@@ -574,6 +578,7 @@
                                         </dockerImages>
                                         <portBindings>
                                             <portBinding>8632:8632</portBinding>
+                                            <portBinding>1026:1026</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -596,7 +601,7 @@
                                             <image>
                                                 <name>ctk</name>
                                                 <build>
-                                                    <dockerFile>${project.parent.basedir}/conformance-test/Dockerfile</dockerFile>
+                                                    <dockerFile>${project.build.directory}/conformance-test/Dockerfile</dockerFile>
                                                     <args>
                                                         <CTK_URL>${module.ctk.url}</CTK_URL>
                                                         <CTK_SCRIPT_FOLDER>${module.ctk.script-folder}</CTK_SCRIPT_FOLDER>
@@ -634,6 +639,20 @@
             <build>
                 <pluginManagement>
                     <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-failsafe-plugin</artifactId>
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </plugin>
                         <plugin>
                             <groupId>com.google.cloud.tools</groupId>
                             <artifactId>jib-maven-plugin</artifactId>

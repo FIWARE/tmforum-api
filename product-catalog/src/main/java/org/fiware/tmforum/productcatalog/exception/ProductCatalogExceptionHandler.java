@@ -19,7 +19,7 @@ public class ProductCatalogExceptionHandler implements ExceptionHandler<ProductC
 
     @Override
     public HttpResponse<ErrorDetails> handle(HttpRequest request, ProductCatalogException exception) {
-        log.warn("The party could not have been created.", exception);
+        log.warn("The product could not have been created.", exception);
         return switch (exception.getCatalogExceptionReason()) {
             case CONFLICT -> HttpResponse.status(HttpStatus.CONFLICT).body(new ErrorDetails(HttpStatus.CONFLICT.toString(),
                     HttpStatus.CONFLICT.getReason(),

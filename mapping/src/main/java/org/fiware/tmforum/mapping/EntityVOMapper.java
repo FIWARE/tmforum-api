@@ -36,9 +36,6 @@ import java.util.stream.Stream;
 @Singleton
 public class EntityVOMapper extends Mapper {
 
-    public static final String REALTIONSHIP_OBJECT_KEY = "object";
-    public static final String PROPERTY_VALUE_KEY = "value";
-
     private final ObjectMapper objectMapper;
     private final EntitiesRepository entitiesRepository;
 

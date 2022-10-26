@@ -18,5 +18,4 @@ public abstract class AbstractApiIT {
             return (HttpResponse<T>) e.getResponse();
         }
     }
-
 }
