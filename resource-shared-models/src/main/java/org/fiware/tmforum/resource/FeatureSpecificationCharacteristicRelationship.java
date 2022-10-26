@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcecatalog.domain;
+package org.fiware.tmforum.resource;
 
 import lombok.Data;
 import org.fiware.tmforum.common.domain.TimePeriod;
@@ -6,8 +6,9 @@ import org.fiware.tmforum.common.domain.TimePeriod;
 import java.net.URI;
 
 @Data
-public class FeatureSpecificationRelationship {
+public class FeatureSpecificationCharacteristicRelationship {
 
+    private String characteristicId;
     private String featureId;
     private String name;
     private String relationshipType;
@@ -17,4 +18,5 @@ public class FeatureSpecificationRelationship {
     private String atBaseType;
     private URI atSchemaLocation;
     private String atType;
+
 }

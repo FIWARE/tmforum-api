@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcecatalog.domain;
+package org.fiware.tmforum.servicecatalog.domain;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -19,18 +19,14 @@ import java.time.Instant;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled(entityType = ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)
-public class ResourceSpecification extends EntityWithId {
+@MappingEnabled(entityType = ServiceSpecification.TYPE_SERVICE_SPECIFICATION)
+public class ServiceSpecification extends EntityWithId {
 
-    public static final String TYPE_RESOURCE_SPECIFICATION = "resource-specification";
+    public static final String TYPE_SERVICE_SPECIFICATION = "service-specification";
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
     private URI href;
-
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "category")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "category")}))
-    private String category;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "description")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description")}))
@@ -72,15 +68,27 @@ public class ResourceSpecification extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceSpecCharacteristic", targetClass = ResourceSpecificationCharacteristic.class)}))
     private List<ResourceSpecificationCharacteristic> resourceSpecCharacteristic;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "targetResourceSchema")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetResourceSchema")}))
-    private TargetResourceSchema targetResourceSchema;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceLevelSpecification")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceLevelSpecification", targetClass = ServiceLevelSpecificationRef.class)}))
+    private List<ServiceLevelSpecificationRef> serviceLevelSpecification;
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "serviceSpecRelationship")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "serviceSpecRelationship", targetClass = ServiceSpecificationRelationship.class)}))
+    private List<ServiceSpecificationRelationship> serviceSpecRelationship;
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic", targetClass = CharacteristicSpecification.class)}))
+    private List<CharacteristicSpecification> specCharacteristic;
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "targetEntitySchema")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetEntitySchema")}))
+    private TargetEntitySchema targetEntitySchema;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
     private TimePeriod validFor;
 
-    public ResourceSpecification(String id) {
-        super(TYPE_RESOURCE_SPECIFICATION, id);
+    protected ServiceSpecification(String id) {
+        super(TYPE_SERVICE_SPECIFICATION, id);
     }
 }

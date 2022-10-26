@@ -38,6 +38,7 @@
         <module>resource-function-activation</module>
         <module>resource-catalog</module>
         <module>resource-inventory</module>
+        <module>service-catalog</module>
     </modules>
 
     <properties>

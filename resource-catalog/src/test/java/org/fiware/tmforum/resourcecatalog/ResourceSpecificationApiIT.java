@@ -1,7 +1,6 @@
 package org.fiware.tmforum.resourcecatalog;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micronaut.context.annotation.Bean;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -12,7 +11,6 @@ import org.fiware.resourcecatalog.api.ResourceSpecificationApiTestSpec;
 import org.fiware.resourcecatalog.model.ConstraintRefVOTestExample;
 import org.fiware.resourcecatalog.model.FeatureSpecificationCharacteristicRelationshipVOTestExample;
 import org.fiware.resourcecatalog.model.FeatureSpecificationCharacteristicVOTestExample;
-import org.fiware.resourcecatalog.model.FeatureSpecificationRelationshipVO;
 import org.fiware.resourcecatalog.model.FeatureSpecificationRelationshipVOTestExample;
 import org.fiware.resourcecatalog.model.FeatureSpecificationVO;
 import org.fiware.resourcecatalog.model.FeatureSpecificationVOTestExample;
@@ -30,9 +28,6 @@ import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
-import org.fiware.tmforum.resourcecatalog.domain.FeatureSpecification;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

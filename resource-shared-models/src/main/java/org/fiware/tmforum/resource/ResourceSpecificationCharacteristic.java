@@ -1,7 +1,7 @@
-package org.fiware.tmforum.resourcecatalog.domain;
+package org.fiware.tmforum.resource;
 
 import lombok.Data;
-import org.fiware.resourcecatalog.model.TimePeriodVO;
+import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.util.List;
 
@@ -19,6 +19,6 @@ public class ResourceSpecificationCharacteristic {
     private Integer minCardinality;
     private List<ResourceSpecificationCharacteristicRelationship> resourceSpecCharRelationship;
     private List<CharacteristicValue> resourceSpecCharacteristicValue;
-    private TimePeriodVO validFor;
+    private TimePeriod validFor;
 
 }
