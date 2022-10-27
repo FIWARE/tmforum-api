@@ -18,7 +18,7 @@
         <module.ctk.script-folder>TMF633-ServiceCatalog</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/serviceCatalogManagement/v4</module.ctk.base-path>
-        <module.ctk.additionalCommands>sed -i 's/:8633/8632/g' /opt/ctk/TMF633-ServiceCatalog/config.json</module.ctk.additionalCommands>
+        <module.ctk.additionalCommands>sed -i 's/8633/8632/g' /opt/ctk/TMF633-ServiceCatalog/config.json</module.ctk.additionalCommands>
     </properties>
 
     <dependencies>
