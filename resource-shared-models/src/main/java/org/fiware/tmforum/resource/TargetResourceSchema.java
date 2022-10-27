@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcecatalog.domain;
+package org.fiware.tmforum.resource;
 
 import lombok.Data;
 

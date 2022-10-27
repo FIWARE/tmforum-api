@@ -15,7 +15,7 @@ import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
 import org.fiware.tmforum.resource.FeatureSpecification;
 import org.fiware.tmforum.resource.FeatureSpecificationCharacteristicRelationship;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceSpecification;
+import org.fiware.tmforum.resource.ResourceSpecification;
 import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogException;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReason;

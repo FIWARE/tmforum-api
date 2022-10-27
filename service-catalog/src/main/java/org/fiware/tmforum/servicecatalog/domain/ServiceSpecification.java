@@ -11,8 +11,7 @@ import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
-import org.fiware.tmforum.resource.FeatureSpecification;
-import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
+import org.fiware.tmforum.resource.ResourceSpecificationRef;
 
 import java.net.URI;
 import java.time.Instant;
@@ -56,6 +55,10 @@ public class ServiceSpecification extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment", targetClass = AttachmentRefOrValue.class)}))
     private List<AttachmentRefOrValue> attachment;
 
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class)}))
+    private List<EntitySpecificationRelationship> entitySpecRelationship;
+
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "featureSpecification")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "featureSpecification", targetClass = FeatureSpecification.class)}))
     private List<FeatureSpecification> featureSpecification;
@@ -64,16 +67,16 @@ public class ServiceSpecification extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class)}))
     private List<RelatedParty> relatedParty;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceSpecCharacteristic")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceSpecCharacteristic", targetClass = ResourceSpecificationCharacteristic.class)}))
-    private List<ResourceSpecificationCharacteristic> resourceSpecCharacteristic;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceSpecification")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceSpecification", targetClass = ResourceSpecificationRef.class)}))
+    private List<ResourceSpecificationRef> resourceSpecification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceLevelSpecification")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceLevelSpecification", targetClass = ServiceLevelSpecificationRef.class)}))
     private List<ServiceLevelSpecificationRef> serviceLevelSpecification;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "serviceSpecRelationship")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "serviceSpecRelationship", targetClass = ServiceSpecificationRelationship.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceSpecRelationship")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceSpecRelationship", targetClass = ServiceSpecificationRelationship.class)}))
     private List<ServiceSpecificationRelationship> serviceSpecRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic")}))
@@ -88,7 +91,7 @@ public class ServiceSpecification extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
     private TimePeriod validFor;
 
-    protected ServiceSpecification(String id) {
+    public ServiceSpecification(String id) {
         super(TYPE_SERVICE_SPECIFICATION, id);
     }
 }

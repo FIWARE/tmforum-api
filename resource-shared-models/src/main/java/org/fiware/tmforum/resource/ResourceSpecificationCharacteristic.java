@@ -8,6 +8,7 @@ import java.util.List;
 @Data
 public class ResourceSpecificationCharacteristic {
 
+    private String id;
     private Boolean configurable;
     private Boolean extensible;
     private Boolean isUnique;

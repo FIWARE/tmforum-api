@@ -14,6 +14,9 @@ import org.fiware.servicecatalog.model.ServiceSpecificationUpdateVO;
 import org.fiware.servicecatalog.model.ServiceSpecificationVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
+import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.resource.ResourceSpecificationRef;
+import org.fiware.tmforum.servicecatalog.domain.AssociationSpecificationRef;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCandidate;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCandidateRef;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCatalog;
@@ -21,6 +24,7 @@ import org.fiware.tmforum.servicecatalog.domain.ServiceCategory;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCategoryRef;
 import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
 import org.fiware.tmforum.servicecatalog.domain.ServiceSpecificationRef;
+import org.fiware.tmforum.servicecatalog.domain.ServiceSpecificationRelationship;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -118,48 +122,48 @@ public interface TMForumMapper {
         return value.toString();
     }
 
-    default ServiceSpecificationRef mapFromServiceSpecId(String id) {
+    default ResourceSpecificationRef mapFromResourceSpecId(String id) {
         if (id == null) {
             return null;
         }
-        return new ServiceSpecificationRef(IdHelper.toNgsiLd(id, ServiceSpecification.TYPE_SERVICE_SPECIFICATION));
+        return new ResourceSpecificationRef(URI.create(id));
     }
 
-    default ServiceCategoryRef mapFromCategoryId(String id) {
+    default ServiceCategoryRef mapFromServiceCategoryRefId(String id) {
         if (id == null) {
             return null;
         }
-        return new ServiceCategoryRef(IdHelper.toNgsiLd(id, ServiceCategory.TYPE_SERVICE_CATEGORY));
+        return new ServiceCategoryRef(URI.create(id));
     }
 
-    default ServiceCandidateRef mapFromServiceCandidateId(String id) {
+    default ServiceSpecificationRelationship mapFromServiceSpecificationRelationshipId(String id) {
         if (id == null) {
             return null;
         }
-        return new ServiceCandidateRef(IdHelper.toNgsiLd(id, ServiceCandidate.TYPE_SERVICE_CANDIDATE));
+        return new ServiceSpecificationRelationship(URI.create(id));
     }
 
-
-    default String mapFromCandidateRef(ServiceCandidateRef candidateRef) {
-        if (candidateRef == null) {
+    default String mapFromServiceSpecificationRelationship(ServiceSpecificationRelationship serviceSpecificationRelationship) {
+        if (serviceSpecificationRelationship == null) {
             return null;
         }
-        return IdHelper.fromNgsiLd(candidateRef.getId());
+        return serviceSpecificationRelationship.getId().toString();
     }
 
-    default String mapFromCategoryRef(ServiceCategoryRef categoryRef) {
-        if (categoryRef == null) {
+    default String mapFromServiceCategoryRef(ServiceCategoryRef serviceCategoryRef) {
+        if (serviceCategoryRef == null) {
             return null;
         }
-        return IdHelper.fromNgsiLd(categoryRef.getId());
+        return serviceCategoryRef.getId().toString();
     }
 
-    default String mapFromServiceSpecificationRef(ServiceSpecificationRef resourceSpecificationRef) {
+    default String mapFromResourceSpecificationRef(ResourceSpecificationRef resourceSpecificationRef) {
         if (resourceSpecificationRef == null) {
             return null;
         }
-        return IdHelper.fromNgsiLd(resourceSpecificationRef.getId());
+        return resourceSpecificationRef.getId().toString();
     }
+
 
 }
 

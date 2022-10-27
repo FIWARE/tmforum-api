@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcecatalog.domain;
+package org.fiware.tmforum.resource;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,8 +11,6 @@ import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
-import org.fiware.tmforum.resource.FeatureSpecification;
-import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
 
 import java.net.URI;
 import java.time.Instant;

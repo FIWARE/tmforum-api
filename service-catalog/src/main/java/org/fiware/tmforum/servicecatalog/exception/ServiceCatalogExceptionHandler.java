@@ -22,27 +22,27 @@ public class ServiceCatalogExceptionHandler implements ExceptionHandler<ServiceC
         return switch (exception.getInventoryExceptionReason()) {
             case CONFLICT -> HttpResponse.status(HttpStatus.CONFLICT).body(new ErrorDetails(HttpStatus.CONFLICT.toString(),
                     HttpStatus.CONFLICT.getReason(),
-                    "At least one of the entities already exists.",
+                    String.format("At least one of the entities already exists - %s", exception.getMessage()),
                     HttpStatus.CONFLICT.toString(),
                     null));
             case INVALID_RELATIONSHIP -> HttpResponse.status(HttpStatus.BAD_REQUEST).body(new ErrorDetails(HttpStatus.BAD_REQUEST.toString(),
                     HttpStatus.BAD_REQUEST.getReason(),
-                    "At least one of the references does not exist.",
+                    String.format("At least one of the references does not exist - %s", exception.getMessage()),
                     HttpStatus.BAD_REQUEST.toString(),
                     null));
             case INVALID_DATA -> HttpResponse.status(HttpStatus.BAD_REQUEST).body(new ErrorDetails(HttpStatus.BAD_REQUEST.toString(),
                     HttpStatus.BAD_REQUEST.getReason(),
-                    "The request contained invalid data.",
+                    String.format("The request contained invalid data - %s", exception.getMessage()),
                     HttpStatus.BAD_REQUEST.toString(),
                     null));
             case NOT_FOUND -> HttpResponse.status(HttpStatus.NOT_FOUND).body(new ErrorDetails(HttpStatus.NOT_FOUND.toString(),
                     HttpStatus.NOT_FOUND.getReason(),
-                    "The requested object could not be found",
+                    String.format("The requested object could not be found - %s", exception.getMessage()),
                     HttpStatus.NOT_FOUND.toString(),
                     null));
             default -> HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorDetails(HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR.getReason(),
-                    "An unexpected error happened.",
+                    String.format("An unexpected error happened - %s", exception.getMessage()),
                     HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                     null));
         };

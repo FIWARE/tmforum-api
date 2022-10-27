@@ -42,7 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RequiredArgsConstructor
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecategory"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
 public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCategoryApiTestSpec {
 
     public final ResourceCategoryApiTestClient resourceCategoryApiTestClient;

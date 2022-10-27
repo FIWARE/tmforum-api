@@ -47,7 +47,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RequiredArgsConstructor
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecandidate"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
 public class ResourceSpecificationApiIT extends AbstractApiIT implements ResourceSpecificationApiTestSpec {
 
     public final ResourceSpecificationApiTestClient resourceSpecificationApiTestClient;

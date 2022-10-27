@@ -57,7 +57,7 @@ public class ServiceCandidate extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
     private TimePeriod validFor;
 
-    protected ServiceCandidate(String id) {
+    public ServiceCandidate(String id) {
         super(TYPE_SERVICE_CANDIDATE, id);
     }
 }

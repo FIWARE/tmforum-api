@@ -27,6 +27,6 @@ public class ServiceLevelSpecificationRef extends RefEntity {
     @Override
     @Ignore
     public List<String> getReferencedTypes() {
-        return List.of("");
+        return List.of("service-level-specification");
     }
 }

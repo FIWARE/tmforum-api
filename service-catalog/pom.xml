@@ -17,8 +17,8 @@
         <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF633-ServiceCatalog-v4.0.0.zip</module.ctk.url>
         <module.ctk.script-folder>TMF633-ServiceCatalog</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
-        <module.ctk.base-path>/tmf-api/serviceCatalog/v4</module.ctk.base-path>
-        <module.ctk.additionalCommands>sed -i 's/tmf634:8080/localhost:8632/g' /opt/ctk/TMF633-ServiceCatalog/config.json</module.ctk.additionalCommands>
+        <module.ctk.base-path>/tmf-api/serviceCatalogManagement/v4</module.ctk.base-path>
+        <module.ctk.additionalCommands>sed -i 's/:8633/8632/g' /opt/ctk/TMF633-ServiceCatalog/config.json</module.ctk.additionalCommands>
     </properties>
 
     <dependencies>

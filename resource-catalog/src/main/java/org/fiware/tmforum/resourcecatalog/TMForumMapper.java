@@ -14,12 +14,12 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceCandidate;
+import org.fiware.tmforum.resource.ResourceCandidate;
+import org.fiware.tmforum.resource.ResourceCategory;
+import org.fiware.tmforum.resource.ResourceCategoryRef;
+import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.resource.ResourceSpecificationRef;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceCategory;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceCategoryRef;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceSpecification;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceSpecificationRef;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -121,28 +121,28 @@ public interface TMForumMapper {
         if (id == null) {
             return null;
         }
-        return new ResourceSpecificationRef(IdHelper.toNgsiLd(id, ResourceSpecification.TYPE_RESOURCE_SPECIFICATION));
+        return new ResourceSpecificationRef(URI.create(id));
     }
 
     default ResourceCategoryRef mapFromCategoryId(String id) {
         if (id == null) {
             return null;
         }
-        return new ResourceCategoryRef(IdHelper.toNgsiLd(id, ResourceCategory.TYPE_RESOURCE_CATEGORY));
+        return new ResourceCategoryRef(URI.create(id));
     }
 
     default String mapFromCategoryRef(ResourceCategoryRef categoryRef) {
         if (categoryRef == null) {
             return null;
         }
-        return IdHelper.fromNgsiLd(categoryRef.getId());
+        return categoryRef.getId().toString();
     }
 
     default String mapFromResourceSpecificationRef(ResourceSpecificationRef resourceSpecificationRef) {
         if (resourceSpecificationRef == null) {
             return null;
         }
-        return IdHelper.fromNgsiLd(resourceSpecificationRef.getId());
+        return resourceSpecificationRef.getId().toString();
     }
 }
 
