@@ -127,7 +127,7 @@ public class ServiceSpecificationApiController extends AbstractApiController imp
     }
 
     private Mono<ServiceSpecification> validateFeatureSpecification(ServiceSpecification serviceSpecification, Mono<ServiceSpecification> checkingMono) {
-        if (serviceSpecification.getFeatureSpecification() == null && serviceSpecification.getFeatureSpecification().isEmpty()) {
+        if (serviceSpecification.getFeatureSpecification() == null || serviceSpecification.getFeatureSpecification().isEmpty()) {
             // early exit
             return checkingMono;
         }

@@ -103,6 +103,14 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
         ServiceSpecificationVO expectedEmpty = ServiceSpecificationVOTestExample.build().lifecycleStatus("created");
         testEntries.add(Arguments.of("An empty service specification should have been created.", emptyCreate, expectedEmpty));
 
+        testEntries.add(Arguments.of("A service without feature specs should have been created.",
+                ServiceSpecificationCreateVOTestExample.build().lifecycleStatus("created").featureSpecification(null),
+                ServiceSpecificationVOTestExample.build().lifecycleStatus("created").featureSpecification(null)));
+
+        testEntries.add(Arguments.of("A service without characteristic specs should have been created.",
+                ServiceSpecificationCreateVOTestExample.build().lifecycleStatus("created").specCharacteristic(null),
+                ServiceSpecificationVOTestExample.build().lifecycleStatus("created").specCharacteristic(null)));
+
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now()).startDateTime(Instant.now());
         ServiceSpecificationCreateVO createValidFor = ServiceSpecificationCreateVOTestExample.build().validFor(timePeriodVO).lifecycleStatus("created");
         ServiceSpecificationVO expectedValidFor = ServiceSpecificationVOTestExample.build().validFor(timePeriodVO).lifecycleStatus("created");
