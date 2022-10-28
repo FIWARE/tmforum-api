@@ -9,7 +9,7 @@ import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.party.domain.Characteristic;
-import org.fiware.tmforum.party.domain.ContactMedium;
+import org.fiware.tmforum.common.domain.ContactMedium;
 import org.fiware.tmforum.party.domain.ExternalReference;
 import org.fiware.tmforum.party.domain.PartyCreditProfile;
 import org.fiware.tmforum.common.domain.RelatedParty;
