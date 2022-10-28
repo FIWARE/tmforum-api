@@ -1,4 +1,4 @@
-package org.fiware.tmforum.mapping.desc.pojos;
+package org.fiware.tmforum.mapping.desc.pojos.invalid;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -6,27 +6,24 @@ import lombok.Setter;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
+import org.fiware.tmforum.mapping.annotations.DatasetId;
 import org.fiware.tmforum.mapping.annotations.EntityId;
 import org.fiware.tmforum.mapping.annotations.EntityType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
+import org.fiware.tmforum.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
 
 @EqualsAndHashCode
-@MappingEnabled(entityType = "complex-pojo")
-public class MyPojoWithSubEntity<T> {
+@MappingEnabled(entityType = "sub-entity")
+public class MySubEntityWithoutRelationshipObject {
 
-    @Getter(onMethod = @__({@EntityId}))
+
+    @Getter(onMethod = @__({@EntityId, @DatasetId}))
     private URI id;
 
     @Getter(onMethod = @__({@EntityType}))
-    private String type = "complex-pojo";
+    private String type = "sub-entity";
 
-    public MyPojoWithSubEntity(String id) {
-        this.id = URI.create(id);
-    }
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity")}))
-    private T mySubProperty;
 }

@@ -90,6 +90,7 @@ public class JavaObjectMapper extends Mapper {
         }
         if (entityTypeMethod.size() != 1) {
             throw new IllegalArgumentException(String.format("The provided object declares %s type methods, exactly one is expected.", entityTypeMethod.size()));
+
         }
 
         return buildEntity(entity, entityIdMethod.get(0), entityTypeMethod.get(0), propertyMethods, propertyListMethods, geoPropertyMethods, relationshipMethods, relationshipListMethods);
@@ -337,6 +338,11 @@ public class JavaObjectMapper extends Mapper {
 
             AttributeGetter attributeGetter = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
             RelationshipListVO relationshipVOS = new RelationshipListVO();
+            entityObjects.stream().forEach(eO -> {
+                if (eO == null) {
+                    throw new MappingException("Null objects inside the relationship list are not allowed");
+                }
+            });
             relationshipVOS.addAll(entityObjects.stream()
                     .map(entityObject -> getRelationshipVO(method, entityObject))
                     .toList());

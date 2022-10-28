@@ -28,4 +28,5 @@ public class MyPojoWithListOfSubEntity {
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "sub-entity")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "sub-entity", targetClass = MySubPropertyEntity.class)}))
 	private List<MySubPropertyEntity> mySubProperty;
+
 }
