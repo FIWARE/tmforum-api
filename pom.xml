@@ -682,7 +682,7 @@
                                     <image>registry.access.redhat.com/ubi8/openjdk-17:1.11-2</image>
                                 </from>
                                 <to>
-                                    <image>${image.registry}/${image.repository}/${project.artifactId}</image>
+                                    <image>${image.registry}/${image.repository}/tmforum-${project.artifactId}</image>
                                     <tags>
                                         <tag>${image.tag}</tag>
                                         <tag>latest</tag>
