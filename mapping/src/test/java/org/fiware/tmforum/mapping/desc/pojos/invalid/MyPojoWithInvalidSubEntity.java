@@ -1,4 +1,4 @@
-package org.fiware.tmforum.mapping.desc.pojos;
+package org.fiware.tmforum.mapping.desc.pojos.invalid;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -14,7 +14,7 @@ import java.net.URI;
 
 @EqualsAndHashCode
 @MappingEnabled(entityType = "complex-pojo")
-public class MyPojoWithSubEntity {
+public class MyPojoWithInvalidSubEntity<T> {
 
     @Getter(onMethod = @__({@EntityId}))
     private URI id;
@@ -22,11 +22,11 @@ public class MyPojoWithSubEntity {
     @Getter(onMethod = @__({@EntityType}))
     private String type = "complex-pojo";
 
-    public MyPojoWithSubEntity(String id) {
+    public MyPojoWithInvalidSubEntity(String id) {
         this.id = URI.create(id);
     }
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity")}))
-    private MySubPropertyEntity mySubProperty;
+    private T mySubProperty;
 }

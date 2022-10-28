@@ -66,7 +66,9 @@ public class EntityVOMapper extends Mapper {
         if (!Arrays.stream(mappingEnabled.entityType()).toList().contains(entityVO.getType())) {
             return Mono.error(new MappingException(String.format("Entity and Class type do not match - %s vs %s.", entityVO.getType(), Arrays.asList(mappingEnabled.entityType()))));
         }
-        return getRelationshipMap(entityVO.getAdditionalProperties(), targetClass)
+        Map<String, AdditionalPropertyVO> additionalPropertyVOMap = Optional.ofNullable(entityVO.getAdditionalProperties()).orElse(Map.of());
+
+        return getRelationshipMap(additionalPropertyVOMap, targetClass)
                 .flatMap(relationshipMap -> fromEntityVO(entityVO, targetClass, relationshipMap));
 
     }
@@ -80,7 +82,9 @@ public class EntityVOMapper extends Mapper {
      * @return a single, emitting the map of related entities
      */
     private <T> Mono<Map<String, EntityVO>> getRelationshipMap(Map<String, AdditionalPropertyVO> propertiesMap, Class<T> targetClass) {
-        return entitiesRepository.getEntities(getRelationshipObjects(propertiesMap, targetClass))
+        return Optional.ofNullable(entitiesRepository.getEntities(getRelationshipObjects(propertiesMap, targetClass)))
+                .orElse(Mono.just(List.of()))
+                .switchIfEmpty(Mono.just(List.of()))
                 .map(relationshipsList -> relationshipsList.stream().map(EntityVO.class::cast).collect(Collectors.toMap(e -> e.getId().toString(), e -> e)))
                 .defaultIfEmpty(Map.of());
     }

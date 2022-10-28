@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -338,12 +339,9 @@ public class JavaObjectMapper extends Mapper {
 
             AttributeGetter attributeGetter = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new MappingException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
             RelationshipListVO relationshipVOS = new RelationshipListVO();
-            entityObjects.stream().forEach(eO -> {
-                if (eO == null) {
-                    throw new MappingException("Null objects inside the relationship list are not allowed");
-                }
-            });
+
             relationshipVOS.addAll(entityObjects.stream()
+                    .filter(Objects::nonNull)
                     .map(entityObject -> getRelationshipVO(method, entityObject))
                     .toList());
             return Optional.of(new AbstractMap.SimpleEntry<>(attributeGetter.targetName(), relationshipVOS));

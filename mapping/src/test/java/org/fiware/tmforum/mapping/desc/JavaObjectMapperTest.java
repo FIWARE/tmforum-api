@@ -19,6 +19,7 @@ import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntity;
 import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntityEmbed;
 import org.fiware.tmforum.mapping.desc.pojos.invalid.MyInvalidListRelationshipPojo;
 import org.fiware.tmforum.mapping.desc.pojos.invalid.MyInvalidRelationshipPojo;
+import org.fiware.tmforum.mapping.desc.pojos.invalid.MyPojoWithInvalidSubEntity;
 import org.fiware.tmforum.mapping.desc.pojos.invalid.MyPojoWithMultipleIds;
 import org.fiware.tmforum.mapping.desc.pojos.invalid.MyPojoWithMultipleTypes;
 import org.fiware.tmforum.mapping.desc.pojos.invalid.MyPojoWithPrivateId;
@@ -39,6 +40,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -224,10 +226,21 @@ class JavaObjectMapperTest {
         assertEquals(expectedJson, OBJECT_MAPPER.writeValueAsString(javaObjectMapper.toEntityVO(myPojoWithListOfSubEntity)), "A pojo with a null relationship list should be mapped.");
     }
 
+    @DisplayName("Pojo with null entry in relationship-list should be mapped.")
+    @Test
+    void testWithNullInRelList() throws JsonProcessingException {
+        String expectedJson = "{\"@context\":\"https://smartdatamodels.org/context.jsonld\",\"id\":\"urn:ngsi-ld:entity:the-entity\",\"type\":\"complex-pojo\",\"sub-entity\":[]}";
+        MyPojoWithListOfSubEntity myPojoWithListOfSubEntity = new MyPojoWithListOfSubEntity("urn:ngsi-ld:entity:the-entity");
+        List<MySubPropertyEntity> listWithNull = new ArrayList<>();
+        listWithNull.add(null);
+        myPojoWithListOfSubEntity.setMySubProperty(listWithNull);
+        assertEquals(expectedJson, OBJECT_MAPPER.writeValueAsString(javaObjectMapper.toEntityVO(myPojoWithListOfSubEntity)), "A pojo with a null entry in the relationship list should be mapped.");
+    }
+
     @DisplayName("Pojo with sub-entity with invalid dataset id should not be mapped.")
     @Test
     void testWithInvalidSubEntityDatasetId() throws JsonProcessingException {
-        MyPojoWithSubEntity myPojoWithSubEntity = new MyPojoWithSubEntity("urn:ngsi-ld:entity:entity");
+        MyPojoWithInvalidSubEntity myPojoWithSubEntity = new MyPojoWithInvalidSubEntity("urn:ngsi-ld:entity:entity");
         myPojoWithSubEntity.setMySubProperty(new MySubEntityWithNonURIDatasetId("urn:ngsi-ld:sub-entity:sub-entity"));
         assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithSubEntity), "A sub entity with a invalid dataset id should not be mapped.");
     }
@@ -235,7 +248,7 @@ class JavaObjectMapperTest {
     @DisplayName("Pojo with sub-entity with invalid relationship object should not be mapped.")
     @Test
     void testWithInvalidSubEntityRelObject() throws JsonProcessingException {
-        MyPojoWithSubEntity myPojoWithSubEntity = new MyPojoWithSubEntity("urn:ngsi-ld:entity:entity");
+        MyPojoWithInvalidSubEntity myPojoWithSubEntity = new MyPojoWithInvalidSubEntity("urn:ngsi-ld:entity:entity");
         myPojoWithSubEntity.setMySubProperty(new MySubEntityWithNonURIRelObject("urn:ngsi-ld:sub-entity:sub-entity"));
         assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithSubEntity), "A sub entity with an invalid relationship object should not be mapped.");
     }
@@ -245,6 +258,12 @@ class JavaObjectMapperTest {
     @MethodSource("provideThrowingPojos")
     void testFailWithThrowingPojos(MyThrowingPojo myThrowingPojo) {
         assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myThrowingPojo), "A entity with an annotated method throwing exceptions should not be mapped.");
+    }
+
+    @DisplayName("Mapping should only happen when its enabled.")
+    @Test
+    void testNoMappingEnabledShouldFail() {
+        assertThrows(UnsupportedOperationException.class, () -> javaObjectMapper.toEntityVO(new Object()), "Mapping should only happen when its enabled.");
     }
 
     private static Stream<Arguments> provideThrowingPojos() {
