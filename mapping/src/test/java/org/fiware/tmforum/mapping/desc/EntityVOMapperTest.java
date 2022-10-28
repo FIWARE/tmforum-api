@@ -14,6 +14,7 @@ import org.fiware.tmforum.mapping.EntitiesRepository;
 import org.fiware.tmforum.mapping.EntityVOMapper;
 import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojo;
+import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithListOfSubProperty;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntity;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntityEmbed;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntityFrom;
@@ -290,6 +291,20 @@ class EntityVOMapperTest {
         myPojoWithSubEntityWellKnown.setMySubProperty(mySubPropertyEntityWithWellKnown);
 
         assertEquals(myPojoWithSubEntityWellKnown, entityVOMapper.fromEntityVO(entityVO, MyPojoWithSubEntityWellKnown.class).block(), "Well known properties should properly be mapped.");
+    }
+
+    @Test
+    void testSubPropertyWorkaround() {
+        MyPojoWithListOfSubProperty myPojoWithListOfSubProperty = new MyPojoWithListOfSubProperty("urn:ngsi-ld:complex-pojo:entity");
+        MySubProperty prop1 = new MySubProperty();
+        MySubProperty prop2 = new MySubProperty();
+        myPojoWithListOfSubProperty.setMySubProperties(List.of(prop1, prop2));
+        EntityVO entityVO = new EntityVO().id(URI.create("urn:ngsi-ld:complex-pojo:entity")).type("complex-pojo");
+        PropertyVO propertyVO = new PropertyVO().value(List.of(prop1, prop2));
+
+        entityVO.setAdditionalProperties("mySubProperty", propertyVO);
+
+        assertEquals(myPojoWithListOfSubProperty, entityVOMapper.fromEntityVO(entityVO, MyPojoWithListOfSubProperty.class).block(), "The sub property should be mapped to a list.");
     }
 
 }
