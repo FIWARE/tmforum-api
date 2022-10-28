@@ -86,10 +86,10 @@ public class JavaObjectMapper extends Mapper {
         });
 
         if (entityIdMethod.size() != 1) {
-            throw new IllegalArgumentException(String.format("The provided object declares %s id methods, exactly one is expected.", entityIdMethod.size()));
+            throw new MappingException(String.format("The provided object declares %s id methods, exactly one is expected.", entityIdMethod.size()));
         }
         if (entityTypeMethod.size() != 1) {
-            throw new IllegalArgumentException(String.format("The provided object declares %s type methods, exactly one is expected.", entityTypeMethod.size()));
+            throw new MappingException(String.format("The provided object declares %s type methods, exactly one is expected.", entityTypeMethod.size()));
 
         }
 
@@ -113,17 +113,17 @@ public class JavaObjectMapper extends Mapper {
         try {
             Object entityIdObject = entityIdMethod.invoke(entity);
             if (!(entityIdObject instanceof URI)) {
-                throw new IllegalArgumentException(String.format("The entityId method does not return a valid URI for entity %s.", entity));
+                throw new MappingException(String.format("The entityId method does not return a valid URI for entity %s.", entity));
             }
             entityVO.id((URI) entityIdObject);
 
             Object entityTypeObject = entityTypeMethod.invoke(entity);
             if (!(entityTypeObject instanceof String)) {
-                throw new IllegalArgumentException("The entityType method does not return a valid String.");
+                throw new MappingException("The entityType method does not return a valid String.");
             }
             entityVO.setType((String) entityTypeObject);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, "unknown-method", entity), e);
+            throw new MappingException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, "unknown-method", entity), e);
         }
 
         Map<String, AdditionalPropertyVO> additionalProperties = new LinkedHashMap<>();
@@ -276,14 +276,14 @@ public class JavaObjectMapper extends Mapper {
             if (propertyObject == null) {
                 return Optional.empty();
             }
-            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
+            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new MappingException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
 
             PropertyVO propertyVO = new PropertyVO();
             propertyVO.setValue(propertyObject);
 
             return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), propertyVO));
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
+            throw new MappingException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
         }
     }
 
@@ -296,12 +296,12 @@ public class JavaObjectMapper extends Mapper {
             if (o == null) {
                 return Optional.empty();
             }
-            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
+            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new MappingException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
             GeoPropertyVO geoPropertyVO = new GeoPropertyVO();
             geoPropertyVO.setValue(o);
             return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), geoPropertyVO));
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
+            throw new MappingException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
         }
     }
 
@@ -315,7 +315,7 @@ public class JavaObjectMapper extends Mapper {
                 return Optional.empty();
             }
             RelationshipVO relationshipVO = getRelationshipVO(method, relationShipObject);
-            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
+            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new MappingException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
             return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), relationshipVO));
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new MappingException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
@@ -332,11 +332,11 @@ public class JavaObjectMapper extends Mapper {
                 return Optional.empty();
             }
             if (!(o instanceof List)) {
-                throw new IllegalArgumentException(String.format("Relationship list method %s::%s did not return a List.", entity, method));
+                throw new MappingException(String.format("Relationship list method %s::%s did not return a List.", entity, method));
             }
             List<Object> entityObjects = (List) o;
 
-            AttributeGetter attributeGetter = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
+            AttributeGetter attributeGetter = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new MappingException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
             RelationshipListVO relationshipVOS = new RelationshipListVO();
             entityObjects.stream().forEach(eO -> {
                 if (eO == null) {
@@ -348,7 +348,7 @@ public class JavaObjectMapper extends Mapper {
                     .toList());
             return Optional.of(new AbstractMap.SimpleEntry<>(attributeGetter.targetName(), relationshipVOS));
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
+            throw new MappingException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
         }
     }
 
@@ -414,9 +414,9 @@ public class JavaObjectMapper extends Mapper {
                 return Optional.empty();
             }
             if (!(o instanceof List)) {
-                throw new IllegalArgumentException(String.format("Property list method %s::%s did not return a List.", entity, method));
+                throw new MappingException(String.format("Property list method %s::%s did not return a List.", entity, method));
             }
-            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new IllegalArgumentException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
+            AttributeGetter attributeMapping = getAttributeGetter(method.getAnnotations()).orElseThrow(() -> new MappingException(String.format(NO_MAPPING_DEFINED_FOR_METHOD_TEMPLATE, method)));
             List<Object> entityObjects = (List) o;
 
             PropertyListVO propertyVOS = new PropertyListVO();
@@ -431,7 +431,7 @@ public class JavaObjectMapper extends Mapper {
 
             return Optional.of(new AbstractMap.SimpleEntry<>(attributeMapping.targetName(), propertyVOS));
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalArgumentException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
+            throw new MappingException(String.format(WAS_NOT_ABLE_INVOKE_METHOD_TEMPLATE, method, entity));
         }
     }
 

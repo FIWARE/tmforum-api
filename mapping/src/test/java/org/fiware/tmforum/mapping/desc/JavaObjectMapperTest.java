@@ -142,7 +142,7 @@ class JavaObjectMapperTest {
     @Test
     void testFailWithoutId() throws JsonProcessingException {
         MyPojoWithoutId myPojoWithoutId = new MyPojoWithoutId();
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithoutId), "A pojo without an entity id method should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithoutId), "A pojo without an entity id method should not be mapped.");
     }
 
 
@@ -150,7 +150,7 @@ class JavaObjectMapperTest {
     @Test
     void testFailWithWrongIdType() throws JsonProcessingException {
         MyPojoWithWrongIdType myPojoWithWrongIdType = new MyPojoWithWrongIdType(3);
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithWrongIdType), "A pojo without a non uri id should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithWrongIdType), "A pojo without a non uri id should not be mapped.");
     }
 
 
@@ -158,28 +158,28 @@ class JavaObjectMapperTest {
     @Test
     void testFailWithoutType() throws JsonProcessingException {
         MyPojoWithoutType myPojoWithoutType = new MyPojoWithoutType(URI.create("urn:ngsi-ld:entity:the-entity"));
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithoutType), "A pojo without an entity type method should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithoutType), "A pojo without an entity type method should not be mapped.");
     }
 
     @DisplayName("Pojo with a non-string entity-type method should not be mapped.")
     @Test
     void testFailWithWrongTypeType() throws JsonProcessingException {
         MyPojoWithWrongTypeType myPojoWithWrongTypeType = new MyPojoWithWrongTypeType(URI.create("urn:ngsi-ld:entity:the-entity"));
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithWrongTypeType), "A pojo without a non string type should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithWrongTypeType), "A pojo without a non string type should not be mapped.");
     }
 
     @DisplayName("Pojo with more than one entity-type methods should not be mapped.")
     @Test
     void testFailWithMulitpleTypes() throws JsonProcessingException {
         MyPojoWithMultipleTypes myPojoWithMultipleTypes = new MyPojoWithMultipleTypes(URI.create("urn:ngsi-ld:entity:the-entity"));
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithMultipleTypes), "A pojo without more than one type should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithMultipleTypes), "A pojo without more than one type should not be mapped.");
     }
 
     @DisplayName("Pojo with more than one entity-id methods should not be mapped.")
     @Test
     void testFailWithMulitpleIds() throws JsonProcessingException {
         MyPojoWithMultipleIds myPojoWithMultipleIds = new MyPojoWithMultipleIds();
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithMultipleIds), "A pojo without more than one id should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithMultipleIds), "A pojo without more than one id should not be mapped.");
     }
 
 
@@ -187,14 +187,14 @@ class JavaObjectMapperTest {
     @Test
     void testFailWithPrivateType() throws JsonProcessingException {
         MyPojoWithPrivateType myPojoWithPrivateType = new MyPojoWithPrivateType();
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithPrivateType), "A pojo with a private type should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithPrivateType), "A pojo with a private type should not be mapped.");
     }
 
     @DisplayName("Pojo with a private entity-id methods should not be mapped.")
     @Test
     void testFailWithPrivateId() throws JsonProcessingException {
         MyPojoWithPrivateId myPojoWithPrivateId = new MyPojoWithPrivateId();
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myPojoWithPrivateId), "A pojo with a private id should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myPojoWithPrivateId), "A pojo with a private id should not be mapped.");
     }
 
     @DisplayName("Pojo with a sub-entity without relationship object should not be mapped.")
@@ -212,7 +212,7 @@ class JavaObjectMapperTest {
         MySubPropertyEntity mySubPropertyEntity = new MySubPropertyEntity("urn:ngsi-ld:entity:the-entity");
         MyInvalidListRelationshipPojo myInvalidListRelationshipPojo = new MyInvalidListRelationshipPojo("urn:ngsi-ld:entity:the-entity");
         myInvalidListRelationshipPojo.setMySubPropertyEntity(mySubPropertyEntity);
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myInvalidListRelationshipPojo), "A pojo with a non-list relationship list should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myInvalidListRelationshipPojo), "A pojo with a non-list relationship list should not be mapped.");
     }
 
     @DisplayName("Pojo with null relationship-list should be mapped.")
@@ -244,7 +244,7 @@ class JavaObjectMapperTest {
     @ParameterizedTest
     @MethodSource("provideThrowingPojos")
     void testFailWithThrowingPojos(MyThrowingPojo myThrowingPojo) {
-        assertThrows(IllegalArgumentException.class, () -> javaObjectMapper.toEntityVO(myThrowingPojo), "A entity with an annotated method throwing exceptions should not be mapped.");
+        assertThrows(MappingException.class, () -> javaObjectMapper.toEntityVO(myThrowingPojo), "A entity with an annotated method throwing exceptions should not be mapped.");
     }
 
     private static Stream<Arguments> provideThrowingPojos() {
