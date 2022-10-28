@@ -10,7 +10,7 @@
     <parent>
         <groupId>io.micronaut</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>3.7.0</version>
+        <version>3.7.2</version>
     </parent>
 
     <developers>
@@ -44,7 +44,7 @@
     <properties>
         <jdk.version>17</jdk.version>
         <release.version>17</release.version>
-        <micronaut.version>3.7.0</micronaut.version>
+        <micronaut.version>3.7.2</micronaut.version>
 
         <!-- project info -->
         <project.author.name>Stefan Wiedemann</project.author.name>
@@ -90,14 +90,14 @@
         <version.org.mockito.mockito-all>1.10.19</version.org.mockito.mockito-all>
         <version.org.mockito.mockito-junit-jupiter>4.2.0</version.org.mockito.mockito-junit-jupiter>
         <version.org.awaitility>4.0.3</version.org.awaitility>
-        <version.org.jacoco.maven-plugin>0.8.7</version.org.jacoco.maven-plugin>
-        <version.org.eluder.coveralls.maven-plugin>2.2.0</version.org.eluder.coveralls.maven-plugin>
+        <version.org.jacoco.maven-plugin>0.8.8</version.org.jacoco.maven-plugin>
+        <version.org.eluder.coveralls.maven-plugin>4.3.0</version.org.eluder.coveralls.maven-plugin>
         <version.com.github.spotbugs.maven-plugin>4.5.2.0</version.com.github.spotbugs.maven-plugin>
         <version.org.apache.maven.plugins.maven-site-plugin>3.9.1</version.org.apache.maven.plugins.maven-site-plugin>
         <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0</version.org.apache.maven.plugins.maven-javadoc-plugin>
         <version.com.google.code.findbugs.annotations>3.0.1u2</version.com.google.code.findbugs.annotations>
         <coveralls.token>myToken</coveralls.token>
-        <jacoco.reportFolder>${project.build.directory}/site/jacoco</jacoco.reportFolder>
+        <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
 
@@ -278,7 +278,10 @@
                     <!-- exclude generated code -->
                     <excludes>
                         <exclude>org/fiware/ngsi/**/*</exclude>
-                        <exclude>org/fiware/tmforum/**/*</exclude>
+                        <exclude>org/fiware/*/api/*</exclude>
+                        <exclude>org/fiware/*/model/*</exclude>
+                        <!-- needs to be excluded, breaks coveralls linking -->
+                        <exclude>**/TMForumMapperImpl*</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -287,10 +290,6 @@
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
-                        <configuration>
-                            <!-- Sets the path to the file which contains the execution data. -->
-                            <destFile>${jacoco.utReportFile}</destFile>
-                        </configuration>
                     </execution>
                     <!-- Ensures that the code coverage report for unit tests is created after unit tests have been run -->
                     <execution>
@@ -299,20 +298,42 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
                         <configuration>
-                            <dataFile>${jacoco.utReportFile}</dataFile>
-                            <outputDirectory>${jacoco.reportFolder}</outputDirectory>
+                            <propertyName>failsafe.jacoco.args</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>merge-reports</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.parent.basedir}/</directory>
+                                    <includes>
+                                        <include>*.exec</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.eluder.coveralls</groupId>
-                <artifactId>coveralls-maven-plugin</artifactId>
-                <version>${version.org.eluder.coveralls.maven-plugin}</version>
-                <configuration>
-                    <repoToken>${coveralls.token}</repoToken>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -414,7 +435,7 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
-                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
+                        <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
                     </configuration>
                 </plugin>
             </plugins>
@@ -719,6 +740,44 @@
                         </plugin>
                     </plugins>
                 </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>report-coveralls</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${version.org.jacoco.maven-plugin}</version>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${project.basedir}</directory>
+                                    <includes>
+                                        <include>**/*.exec</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.eluder.coveralls</groupId>
+                        <artifactId>coveralls-maven-plugin</artifactId>
+                        <version>${version.org.eluder.coveralls.maven-plugin}</version>
+                        <configuration>
+                            <repoToken>${coveralls.token}</repoToken>
+                            <dryRun>true</dryRun>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>javax.xml.bind</groupId>
+                                <artifactId>jaxb-api</artifactId>
+                                <version>2.3.1</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
             </build>
         </profile>
     </profiles>
