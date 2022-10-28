@@ -1,6 +1,5 @@
 package org.fiware.tmforum.resourcecatalog.rest;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -14,20 +13,17 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
-import org.fiware.tmforum.resourcecatalog.domain.FeatureSpecification;
-import org.fiware.tmforum.resourcecatalog.domain.FeatureSpecificationCharacteristicRelationship;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceSpecification;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceSpecificationCharacteristic;
+import org.fiware.tmforum.resource.FeatureSpecification;
+import org.fiware.tmforum.resource.FeatureSpecificationCharacteristicRelationship;
+import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogException;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReason;
 import org.fiware.tmforum.resourcecatalog.repository.ResourceCatalogRepository;
 import reactor.core.publisher.Mono;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

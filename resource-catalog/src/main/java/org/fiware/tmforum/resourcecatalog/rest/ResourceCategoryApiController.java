@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
-import org.fiware.tmforum.resourcecatalog.domain.ResourceCategory;
+import org.fiware.tmforum.resource.ResourceCategory;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogException;
 import org.fiware.tmforum.resourcecatalog.exception.ResourceCatalogExceptionReason;
 import org.fiware.tmforum.resourcecatalog.repository.ResourceCatalogRepository;

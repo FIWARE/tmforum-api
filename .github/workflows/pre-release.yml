@@ -10,7 +10,7 @@ on:
       - unlabeled
 env:
   REGISTRY: quay.io
-  REPOSITORY: fiware
+  REPOSITORY: wi_stefan
 
 jobs:
 
@@ -61,7 +61,7 @@ jobs:
       - name: Build&Push image
         run: |
           mvn versions:set -DnewVersion=${{ needs.generate-version.outputs.version }}
-          mvn clean install deploy -DskipITs -DskipTests -Pdocker -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${{ env.REPOSITORY }}"
+          mvn clean install deploy -DskipITs -DskipTests -Poci -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${{ env.REPOSITORY }}"
 
   git-release:
     needs: ["generate-version","tmforum-apis"]

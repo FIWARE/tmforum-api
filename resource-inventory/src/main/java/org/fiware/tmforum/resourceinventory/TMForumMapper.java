@@ -63,27 +63,6 @@ public interface TMForumMapper {
         }
         return value.toString();
     }
-//
-//    default FeatureRef mapFromFeatureId(String id) {
-//        if (id == null) {
-//            return null;
-//        }
-//        return new FeatureRef(IdHelper.toNgsiLd(id, "feature"));
-//    }
-//
-//    default ResourceSpecificationRef mapFromResourceSpecId(String id) {
-//        if (id == null) {
-//            return null;
-//        }
-//        return new ResourceSpecificationRef(IdHelper.toNgsiLd(id, ResourceSpecification.TYPE_RESOURCE_SPECIFICATION));
-//    }
-//
-//    default String mapFromResourceSpecificationRef(ResourceSpecificationRef resourceSpecificationRef) {
-//        if (resourceSpecificationRef == null) {
-//            return null;
-//        }
-//        return IdHelper.fromNgsiLd(resourceSpecificationRef.getId());
-//    }
 }
 
 
