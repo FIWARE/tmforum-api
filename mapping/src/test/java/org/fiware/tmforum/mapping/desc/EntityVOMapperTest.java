@@ -6,6 +6,8 @@ import io.reactivex.Single;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.ngsi.model.RelationshipListVO;
+import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
 import org.fiware.tmforum.mapping.EntitiesRepository;
 import org.fiware.tmforum.mapping.EntityVOMapper;
@@ -13,6 +15,8 @@ import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojo;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntity;
 import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntityEmbed;
+import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntityFrom;
+import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntityListFrom;
 import org.fiware.tmforum.mapping.desc.pojos.MySubProperty;
 import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntity;
 import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntityEmbed;
@@ -190,7 +194,50 @@ class EntityVOMapperTest {
         EntityVO entityVO = new EntityVO().id(URI.create("urn:ngsi-ld:sub-entity:entity")).type("sub-entity");
         entityVO.setAdditionalProperties("non-prop", new PropertyVO().value("ignore"));
         entityVO.setAdditionalProperties("name", new PropertyVO().value("non-ignore"));
-
         assertEquals(mySubPropertyEntity, entityVOMapper.fromEntityVO(entityVO, MySubPropertyEntity.class).block(), "The non-prop should be ignored.");
     }
-}
+
+    @DisplayName("The relationship target should have been created from its properties.")
+    @Test
+    void mapFromProperties() {
+        EntityVO parentEntity = new EntityVO().id(URI.create("urn:ngsi-ld:complex-pojo:entity")).type("complex-pojo");
+        EntityVO subEntity = new EntityVO().id(URI.create("urn:ngsi-ld:sub-entity:entity")).type("sub-entity");
+        RelationshipVO subRel = new RelationshipVO()._object(subEntity.getId());
+        subRel.setAdditionalProperties("name", new PropertyVO().value("my-other-name"));
+        parentEntity.setAdditionalProperties("mySubProperty", subRel);
+
+        MySubPropertyEntity expectedSub = new MySubPropertyEntity("urn:ngsi-ld:sub-entity:entity");
+        expectedSub.setName("my-other-name");
+        MyPojoWithSubEntityFrom expectedPojo = new MyPojoWithSubEntityFrom("urn:ngsi-ld:complex-pojo:entity");
+        expectedPojo.setMySubProperty(expectedSub);
+
+        assertEquals(expectedPojo, entityVOMapper.fromEntityVO(parentEntity, MyPojoWithSubEntityFrom.class).block(), "The relationship target should have been created from its properties.");
+    }
+
+
+    @DisplayName("The relationship targets should have been created from its properties.")
+    @Test
+    void mapListFromProperties() {
+        EntityVO parentEntity = new EntityVO().id(URI.create("urn:ngsi-ld:complex-pojo:entity")).type("complex-pojo");
+        EntityVO subEntity1 = new EntityVO().id(URI.create("urn:ngsi-ld:sub-entity:entity-1")).type("sub-entity");
+        EntityVO subEntity2 = new EntityVO().id(URI.create("urn:ngsi-ld:sub-entity:entity-2")).type("sub-entity");
+        RelationshipVO subRel1 = new RelationshipVO()._object(subEntity1.getId());
+        RelationshipVO subRel2 = new RelationshipVO()._object(subEntity2.getId());
+
+        subRel1.setAdditionalProperties("name", new PropertyVO().value("sub-entity-1"));
+        subRel2.setAdditionalProperties("name", new PropertyVO().value("sub-entity-2"));
+        RelationshipListVO relationshipVOS = new RelationshipListVO();
+        relationshipVOS.add(subRel1);
+        relationshipVOS.add(subRel2);
+        parentEntity.setAdditionalProperties("mySubProperty", relationshipVOS);
+
+        MySubPropertyEntity expectedSub1 = new MySubPropertyEntity("urn:ngsi-ld:sub-entity:entity-1");
+        expectedSub1.setName("sub-entity-1");
+        MySubPropertyEntity expectedSub2 = new MySubPropertyEntity("urn:ngsi-ld:sub-entity:entity-2");
+        expectedSub2.setName("sub-entity-2");
+        MyPojoWithSubEntityListFrom expectedPojo = new MyPojoWithSubEntityListFrom("urn:ngsi-ld:complex-pojo:entity");
+        expectedPojo.setMySubProperty(List.of(expectedSub1, expectedSub2));
+
+        assertEquals(expectedPojo, entityVOMapper.fromEntityVO(parentEntity, MyPojoWithSubEntityListFrom.class).block(), "The relationship targets should have been created from its properties.");
+    }
+}   
