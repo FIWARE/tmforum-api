@@ -44,6 +44,7 @@ public class EntityVOMapper extends Mapper {
         this.entitiesRepository = entitiesRepository;
         this.objectMapper
                 .addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
+        this.objectMapper.findAndRegisterModules();
     }
 
     /**
@@ -110,7 +111,7 @@ public class EntityVOMapper extends Mapper {
             propertiesMap.put(EntityVO.JSON_PROPERTY_OPERATION_SPACE, entityVO.getOperationSpace());
             propertiesMap.put(EntityVO.JSON_PROPERTY_CREATED_AT, propertyVOFromValue(entityVO.getCreatedAt()));
             propertiesMap.put(EntityVO.JSON_PROPERTY_MODIFIED_AT, propertyVOFromValue(entityVO.getModifiedAt()));
-            propertiesMap.putAll(entityVO.getAdditionalProperties());
+            Optional.ofNullable(entityVO.getAdditionalProperties()).ifPresent(propertiesMap::putAll);
 
             List<Mono<T>> singleInvocations = propertiesMap.entrySet().stream()
                     .map(entry -> getObjectInvocation(entry, constructedObject, relationShipMap, entityVO.getId().toString()))
@@ -133,7 +134,7 @@ public class EntityVOMapper extends Mapper {
      */
     private PropertyVO propertyVOFromValue(Object value) {
         PropertyVO propertyVO = new PropertyVO();
-        propertyVO.setValue(propertyVO);
+        propertyVO.setValue(value);
         return propertyVO;
     }
 
@@ -301,10 +302,8 @@ public class EntityVOMapper extends Mapper {
         try {
             invocationMethod.invoke(objectUnderConstruction, invocationArgs);
             return Mono.just(objectUnderConstruction);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            return Mono.error(e);
-        } catch (RuntimeException e) {
-            return Mono.error(e);
+        } catch (IllegalAccessException | InvocationTargetException | RuntimeException e) {
+            return Mono.error(new MappingException("Was not able to invoke method.", e));
         }
     }
 

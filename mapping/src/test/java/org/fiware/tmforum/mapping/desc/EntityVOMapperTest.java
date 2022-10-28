@@ -2,6 +2,7 @@ package org.fiware.tmforum.mapping.desc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.source.doctree.SeeTree;
 import io.reactivex.Single;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
@@ -20,16 +21,23 @@ import org.fiware.tmforum.mapping.desc.pojos.MyPojoWithSubEntityListFrom;
 import org.fiware.tmforum.mapping.desc.pojos.MySubProperty;
 import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntity;
 import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntityEmbed;
+import org.fiware.tmforum.mapping.desc.pojos.MySubPropertyEntityWithWellKnown;
 import org.fiware.tmforum.mapping.desc.pojos.PropertyListPojo;
+import org.fiware.tmforum.mapping.desc.pojos.invalid.MyPojoWithSubEntityWellKnown;
 import org.fiware.tmforum.mapping.desc.pojos.invalid.MyPojoWithWrongConstructor;
+import org.fiware.tmforum.mapping.desc.pojos.invalid.MySetterThrowingPojo;
+import org.fiware.tmforum.mapping.desc.pojos.invalid.MyThrowingConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.Arguments;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -197,6 +205,13 @@ class EntityVOMapperTest {
         assertEquals(mySubPropertyEntity, entityVOMapper.fromEntityVO(entityVO, MySubPropertyEntity.class).block(), "The non-prop should be ignored.");
     }
 
+    @DisplayName("If the constructor is broken, nothing should be mapped.")
+    @Test
+    void failOnBrokenConstructor() {
+        EntityVO entityVO = new EntityVO().id(URI.create("urn:ngsi-ld:throwing-pojo:id")).type("throwing-pojo");
+        assertThrows(MappingException.class, () -> entityVOMapper.fromEntityVO(entityVO, MyThrowingConstructor.class).block(), "If the constructor is broken, nothing should be mapped.");
+    }
+
     @DisplayName("The relationship target should have been created from its properties.")
     @Test
     void mapFromProperties() {
@@ -240,4 +255,41 @@ class EntityVOMapperTest {
 
         assertEquals(expectedPojo, entityVOMapper.fromEntityVO(parentEntity, MyPojoWithSubEntityListFrom.class).block(), "The relationship targets should have been created from its properties.");
     }
-}   
+
+    @DisplayName("If the setter is broken, nothing should be constructed.")
+    @Test
+    void failWithThrowingSetter() {
+        EntityVO entity = new EntityVO().id(URI.create("urn:ngsi-ld:my-pojo:entity")).type("my-pojo");
+        assertThrows(MappingException.class, () -> entityVOMapper.fromEntityVO(entity, MySetterThrowingPojo.class).block(), "If the setter is broken, nothing should be constructed.");
+    }
+
+    @DisplayName("Well known properties should properly be mapped.")
+    @Test
+    void mapWithWellKnown() {
+        EntityVO entityVO = new EntityVO().id(URI.create("urn:ngsi-ld:complex-pojo:entity")).type("complex-pojo");
+        EntityVO subEntity = new EntityVO().id(URI.create("urn:ngsi-ld:sub-entity:entity")).type("sub-entity");
+        when(entitiesRepository.getEntities(anyList())).thenReturn(Mono.just(List.of(subEntity)));
+
+        RelationshipVO subRel = new RelationshipVO()
+                ._object(subEntity.getId())
+                .observedAt(Instant.MAX)
+                .createdAt(Instant.MAX)
+                .modifiedAt(Instant.MAX)
+                .datasetId(subEntity.getId())
+                .instanceId(URI.create("id"));
+        entityVO.setAdditionalProperties("mySubProperty", subRel);
+
+        MySubPropertyEntityWithWellKnown mySubPropertyEntityWithWellKnown = new MySubPropertyEntityWithWellKnown("urn:ngsi-ld:sub-entity:entity");
+        mySubPropertyEntityWithWellKnown.setDatasetId("urn:ngsi-ld:sub-entity:entity");
+        mySubPropertyEntityWithWellKnown.setInstanceId("id");
+        mySubPropertyEntityWithWellKnown.setCreatedAt(Instant.MAX);
+        mySubPropertyEntityWithWellKnown.setModifiedAt(Instant.MAX);
+        mySubPropertyEntityWithWellKnown.setObservedAt(Instant.MAX);
+
+        MyPojoWithSubEntityWellKnown myPojoWithSubEntityWellKnown = new MyPojoWithSubEntityWellKnown("urn:ngsi-ld:complex-pojo:entity");
+        myPojoWithSubEntityWellKnown.setMySubProperty(mySubPropertyEntityWithWellKnown);
+
+        assertEquals(myPojoWithSubEntityWellKnown, entityVOMapper.fromEntityVO(entityVO, MyPojoWithSubEntityWellKnown.class).block(), "Well known properties should properly be mapped.");
+    }
+
+}
