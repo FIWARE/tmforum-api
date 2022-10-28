@@ -37,8 +37,7 @@ public class AdditionalPropertyDeserializer extends AsArrayTypeDeserializer {
 	public AdditionalPropertyDeserializer(JavaType bt, TypeIdResolver idRes, String typePropertyName, boolean typeIdVisible, JavaType defaultImpl) {
 		super(bt, idRes, typePropertyName, typeIdVisible, defaultImpl);
 		additionalPropertyObjectDeser = new AsPropertyTypeDeserializer(
-				TypeFactory.defaultInstance().constructType(new TypeReference<AdditionalPropertyObjectVO>() {
-				}),
+				TypeFactory.defaultInstance().constructType(new TypeReference<AdditionalPropertyObjectVO>() {}),
 				idRes,
 				NGSI_LD_TYPE_PROPERTY_NAME,
 				false,

@@ -16,17 +16,17 @@ import java.net.URI;
 @MappingEnabled(entityType = "complex-pojo")
 public class MyPojoWithSubEntity {
 
-	@Getter(onMethod = @__({@EntityId}))
-	private URI id;
+    @Getter(onMethod = @__({@EntityId}))
+    private URI id;
 
-	@Getter(onMethod = @__({@EntityType}))
-	private String type = "complex-pojo";
+    @Getter(onMethod = @__({@EntityType}))
+    private String type = "complex-pojo";
 
-	public MyPojoWithSubEntity(String id) {
-		this.id = URI.create(id);
-	}
+    public MyPojoWithSubEntity(String id) {
+        this.id = URI.create(id);
+    }
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity", targetClass = MySubPropertyEntity.class)}))
-	private MySubPropertyEntity mySubProperty;
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "sub-entity", targetClass = MySubPropertyEntity.class)}))
+    private MySubPropertyEntity mySubProperty;
 }

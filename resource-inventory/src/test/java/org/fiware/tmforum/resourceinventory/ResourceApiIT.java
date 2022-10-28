@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @RequiredArgsConstructor
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourceinventory"})
 public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec {
 
     public final ResourceApiTestClient resourceApiTestClient;
@@ -188,6 +188,10 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
                 ResourceCreateVOTestExample.build().place(null).resourceSpecification(ResourceSpecificationRefVOTestExample.build())));
         testEntries.add(Arguments.of("A resource with non-existent resource ref should not be created.",
                 ResourceCreateVOTestExample.build().place(null).resourceSpecification(ResourceSpecificationRefVOTestExample.build().id("urn:ngsi-ld:resource-specification:non-existent"))));
+
+        List<NoteVO> duplicateNoteVOS = List.of(NoteVOTestExample.build().id("note"), NoteVOTestExample.build().id("note"));
+        testEntries.add(Arguments.of("A resource with duplicate note ids should not be created.",
+                ResourceCreateVOTestExample.build().place(null).resourceSpecification(null).note(duplicateNoteVOS)));
 
         testEntries.add(Arguments.of("A resource with duplicate feature ids should not be created.",
                 ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)

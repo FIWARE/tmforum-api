@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import javax.inject.Singleton;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Service to support validation of referential integrity.
@@ -32,6 +33,7 @@ public class ReferenceValidationService {
 
         return Mono.zip(
                 references.stream()
+                        .filter(Objects::nonNull)
                         .map(ref -> referencesRepository.referenceExists(ref.getId().toString(), ref.getReferencedTypes())
                                 .map(eVo -> true)
                                 .defaultIfEmpty(false))

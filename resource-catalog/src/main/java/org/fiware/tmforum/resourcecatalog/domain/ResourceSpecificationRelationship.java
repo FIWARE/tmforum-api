@@ -2,6 +2,8 @@ package org.fiware.tmforum.resourcecatalog.domain;
 
 import lombok.Data;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
+import org.fiware.tmforum.resource.ResourceSpecificationRef;
 
 import java.net.URI;
 import java.util.List;

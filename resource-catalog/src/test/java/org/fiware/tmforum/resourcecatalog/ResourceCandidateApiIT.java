@@ -1,4 +1,4 @@
-package org.fiware.tmforum.resourcecandidate;
+package org.fiware.tmforum.resourcecatalog;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RequiredArgsConstructor
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecandidate"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
 public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCandidateApiTestSpec {
 
     public final ResourceCandidateApiTestClient resourceCandidateApiTestClient;
