@@ -10,7 +10,7 @@ on:
       - unlabeled
 env:
   REGISTRY: quay.io
-  REPOSITORY: fiware
+  REPOSITORY: wi_stefan
 
 jobs:
 
