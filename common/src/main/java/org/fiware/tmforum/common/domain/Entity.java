@@ -20,22 +20,28 @@ public abstract class Entity {
 	/**
 	 * When sub-classing, this defines the super-class
 	 */
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "@baseType")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "@baseType")}))
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "atBaseType", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "atBaseType", fromProperties = true) }))
 	String atBaseType;
 
 	/**
 	 * A URI to a JSON-Schema file that defines additional attributes and relationships
 	 */
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "@schemaLocation")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "@schemaLocation")}))
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "atSchemaLocation", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "atSchemaLocation", fromProperties = true) }))
 	URI atSchemaLocation;
 
 	/**
 	 * When sub-classing, this defines the sub-class entity name
 	 */
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "@type")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "@type")}))
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "atType", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "atType", fromProperties = true) }))
 	String atType;
 
 }

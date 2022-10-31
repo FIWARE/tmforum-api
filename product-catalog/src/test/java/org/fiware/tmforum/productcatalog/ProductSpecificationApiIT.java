@@ -390,7 +390,6 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
         // empty list mapping
         expectedProductOfferingPrice.setBundledProductSpecification(null);
         expectedProductOfferingPrice.setProductSpecificationRelationship(null);
-        expectedProductOfferingPrice.setProductSpecCharacteristic(null);
         expectedProductOfferingPrice.setRelatedParty(null);
         expectedProductOfferingPrice.setResourceSpecification(null);
         expectedProductOfferingPrice.setServiceSpecification(null);
@@ -561,7 +560,6 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
         // empty lists are mapped to null
         expectedProductOfferingPrice.setBundledProductSpecification(null);
         expectedProductOfferingPrice.setProductSpecificationRelationship(null);
-        expectedProductOfferingPrice.setProductSpecCharacteristic(null);
         expectedProductOfferingPrice.setRelatedParty(null);
         expectedProductOfferingPrice.setResourceSpecification(null);
         expectedProductOfferingPrice.setServiceSpecification(null);

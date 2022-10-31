@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.domain.ContactMedium;
 import org.fiware.tmforum.party.domain.ExternalReference;
 import org.fiware.tmforum.party.domain.PartyCreditProfile;
 import org.fiware.tmforum.common.domain.RelatedParty;
-import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
+import org.fiware.tmforum.common.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.net.URI;
@@ -98,8 +98,8 @@ public class Organization extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "status")}))
 	private OrganizationState organizationState;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "taxExemptionCertificate")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "taxExemptionCertificate", targetClass = TaxExemptionCertificate.class)}))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemptionCertificate")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemptionCertificate", targetClass = TaxExemptionCertificate.class)}))
 	private List<TaxExemptionCertificate> taxExemptionCertificate;
 
 	public Organization(String id) {

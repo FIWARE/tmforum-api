@@ -1,5 +1,6 @@
 package org.fiware.tmforum.productcatalog.domain;
 
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,33 +13,16 @@ import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.net.URI;
 
-@MappingEnabled(entityType = PricingLogicAlgorithm.TYPE_PRICING_LOGIC_ALGORITHM)
-@EqualsAndHashCode(callSuper = true)
-public class PricingLogicAlgorithm extends EntityWithId {
+@Data
+public class PricingLogicAlgorithm {
 
-	public static final String TYPE_PRICING_LOGIC_ALGORITHM = "pricing-logic-algorithm";
-
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
+	private String id;
 	private URI href;
-
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "description")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description")}))
 	private String description;
-
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "name")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "name")}))
 	private String name;
-
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "plaSpecId")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "plaSpecId")}))
-	private String  plaSpecId;
-
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
+	private String plaSpecId;
 	private TimePeriod validFor;
-
-	public PricingLogicAlgorithm(String id) {
-		super(TYPE_PRICING_LOGIC_ALGORITHM, id);
-	}
+	private String atBaseType;
+	private URI atSchemaLocation;
+	private String atType;
 }

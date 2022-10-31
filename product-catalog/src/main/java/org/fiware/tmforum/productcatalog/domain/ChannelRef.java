@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productcatalog.domain;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.RefEntity;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
 

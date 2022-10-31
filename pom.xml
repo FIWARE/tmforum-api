@@ -40,6 +40,7 @@
         <module>resource-inventory</module>
         <module>service-catalog</module>
         <module>customer-management</module>
+        <module>customer-bill-management</module>
     </modules>
 
     <properties>
