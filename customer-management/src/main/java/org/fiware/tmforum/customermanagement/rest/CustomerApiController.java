@@ -49,7 +49,6 @@ public class CustomerApiController extends AbstractApiController implements Cust
         references.add(customer.getAgreement());
         references.add(customer.getPaymentMethod());
         references.add(customer.getRelatedParty());
-
         Optional.ofNullable(customer.getEngagedParty()).map(List::of).ifPresent(references::add);
 
         return getCheckingMono(customer, references)
