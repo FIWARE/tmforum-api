@@ -588,7 +588,10 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
                         .account(null)
                         .agreement(null)
                         .paymentMethod(null)
-                        .relatedParty(null)),
+                        .relatedParty(null)
+                        .atType(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)),
                 Arguments.of("Only the mandatory parameters should have been included when a non-existent field was requested.", "nothingToSeeHere", CustomerVOTestExample.build()
                         .name(null)
                         .status(null)
@@ -601,7 +604,10 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
                         .account(null)
                         .agreement(null)
                         .paymentMethod(null)
-                        .relatedParty(null)),
+                        .relatedParty(null)
+                        .atType(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)),
                 Arguments.of("Only name, status, validFor and the mandatory parameters should have been included.", "name,status,validFOr", CustomerVOTestExample.build()
                         .statusReason(null)
                         .characteristic(null)
@@ -611,7 +617,10 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
                         .account(null)
                         .agreement(null)
                         .paymentMethod(null)
-                        .relatedParty(null)));
+                        .relatedParty(null)
+                        .atType(null)
+                        .atBaseType(null)
+                        .atSchemaLocation(null)));
     }
 
     @Disabled("400 cannot happen, only 404")

@@ -11,7 +11,7 @@ public class ContactMedium extends Entity {
 
 	private String mediumType;
 	private boolean preferred;
-	private MediumCharacteristic mediumCharacteristic;
+	private MediumCharacteristic characteristic;
 	private TimePeriod validFor;
 
 }

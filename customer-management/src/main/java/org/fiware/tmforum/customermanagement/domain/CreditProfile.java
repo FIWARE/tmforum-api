@@ -11,7 +11,7 @@ import java.time.Instant;
 public class CreditProfile extends Entity {
 
     private Instant creditProfileDate;
-    private Instant creditRiskRating;
+    private Integer creditRiskRating;
     private Integer creditScore;
     private TimePeriod validFor;
 }

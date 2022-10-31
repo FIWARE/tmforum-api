@@ -103,11 +103,8 @@ public interface TMForumMapper {
 
     RelatedPartyVO map(RelatedParty relatedParty);
 
-    @Mapping(source = "characteristic", target = "mediumCharacteristic")
     ContactMedium map(ContactMediumVO contactMediumVO);
 
-    @Mapping(target = "characteristic", source = "mediumCharacteristic")
-    @Mapping(target = "validFor", source = "validFor")
     ContactMediumVO map(ContactMedium contactMedium);
 
     CharacteristicVO map(Characteristic characteristic);
@@ -189,7 +186,7 @@ public interface TMForumMapper {
         OrganizationRefVO organizationRefVO = new OrganizationRefVO();
         organizationRefVO.setId(organizationParentRelationship.getId().toString());
         organizationRefVO.setName(organizationParentRelationship.getName());
-        if(organizationParentRelationship.getHref() != null) {
+        if (organizationParentRelationship.getHref() != null) {
             organizationRefVO.setHref(organizationParentRelationship.getHref().toString());
         }
         organizationParentRelationshipVO.setOrganization(organizationRefVO);
