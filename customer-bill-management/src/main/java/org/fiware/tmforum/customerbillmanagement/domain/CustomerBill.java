@@ -8,6 +8,7 @@ import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.RelatedParty;
+import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
@@ -56,10 +57,10 @@ public class CustomerBill extends EntityWithId {
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "runType") }))
 	private String runType;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "amountDue") }))
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "amountDue") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "amountDue", targetClass = Money.class) }))
-	private List<Money> amountDue;
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "amountDue", targetClass = Money.class) }))
+	private Money amountDue;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "appliedPayment") }))
 	@Setter(onMethod = @__({
@@ -89,7 +90,7 @@ public class CustomerBill extends EntityWithId {
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod") }))
 	@Setter(onMethod = @__({
 			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod", targetClass = PaymentMethodRefVO.class) }))
-	private PaymentMethodRefVO paymentMethod;
+	private PaymentMethodRef paymentMethod;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
 	@Setter(onMethod = @__({
@@ -115,6 +116,11 @@ public class CustomerBill extends EntityWithId {
 	@Setter(onMethod = @__({
 			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "taxIncludedAmount", targetClass = Money.class) }))
 	private Money taxIncludedAmount;
+
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "taxItem") }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "taxItem", targetClass = TaxItem.class) }))
+	private List<TaxItem> taxItem;
 
 	public CustomerBill(String id) {
 		super(TYPE_CUSTOMER_BILL, id);
