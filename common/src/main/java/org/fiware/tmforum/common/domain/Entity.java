@@ -32,7 +32,7 @@ public abstract class Entity {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "atSchemaLocation", embedProperty = true) }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "atSchemaLocation", fromProperties = true) }))
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "atSchemaLocation", fromProperties = true, targetClass = URI.class) }))
 	URI atSchemaLocation;
 
 	/**

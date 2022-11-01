@@ -14,7 +14,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class FinancialAccountRef extends RefEntity {
 
-	public FinancialAccountRef(URI id) {
+	public FinancialAccountRef(String id) {
 		super(id);
 	}
 

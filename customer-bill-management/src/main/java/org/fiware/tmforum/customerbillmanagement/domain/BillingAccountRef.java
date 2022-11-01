@@ -10,7 +10,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class BillingAccountRef extends RefEntity {
 
-	public BillingAccountRef(URI id) {
+	public BillingAccountRef(String id) {
 		super(id);
 	}
 

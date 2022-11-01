@@ -8,6 +8,7 @@ import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
 import lombok.RequiredArgsConstructor;
+import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
@@ -43,6 +44,7 @@ public class Application {
 			// we need to register per class, in order to use the generic serializer
 			fieldParamModule.addSerializer(CustomerBillVO.class, new FieldCleaningSerializer<>());
 			fieldParamModule.addSerializer(CustomerBillOnDemandVO.class, new FieldCleaningSerializer<>());
+			fieldParamModule.addSerializer(AppliedCustomerBillingRateVO.class, new FieldCleaningSerializer<>());
 			objectMapper.registerModule(fieldParamModule);
 			return objectMapper;
 		}

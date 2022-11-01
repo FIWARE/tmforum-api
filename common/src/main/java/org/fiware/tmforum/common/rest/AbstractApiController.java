@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.rest;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

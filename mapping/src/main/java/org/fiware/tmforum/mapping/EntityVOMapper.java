@@ -303,7 +303,7 @@ public class EntityVOMapper extends Mapper {
             invocationMethod.invoke(objectUnderConstruction, invocationArgs);
             return Mono.just(objectUnderConstruction);
         } catch (IllegalAccessException | InvocationTargetException | RuntimeException e) {
-            return Mono.error(new MappingException("Was not able to invoke method.", e));
+            return Mono.error(new MappingException(String.format("Was not able to invoke method %s.", invocationMethod.getName()), e));
         }
     }
 

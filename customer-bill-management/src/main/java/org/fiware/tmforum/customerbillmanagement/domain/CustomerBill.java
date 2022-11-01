@@ -72,9 +72,9 @@ public class CustomerBill extends EntityWithId {
 			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "billDocument", targetClass = AttachmentRefOrValue.class) }))
 	private List<AttachmentRefOrValue> billDocument;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "billingAccount") }))
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "billingAccount", embedProperty = true) }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "billingAccount", targetClass = BillingAccountRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "billingAccount", targetClass = BillingAccountRef.class, fromProperties = true) }))
 	private BillingAccountRef billingAccount;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "billingPeriod") }))
@@ -82,14 +82,14 @@ public class CustomerBill extends EntityWithId {
 			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "billingPeriod", targetClass = TimePeriod.class) }))
 	private TimePeriod billingPeriod;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount") }))
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount", embedProperty = true) }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount", targetClass = FinancialAccountRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount", targetClass = FinancialAccountRef.class, fromProperties = true) }))
 	private FinancialAccountRef financialAccount;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod") }))
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod", embedProperty = true) }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod", targetClass = PaymentMethodRefVO.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod", targetClass = PaymentMethodRefVO.class, fromProperties = true) }))
 	private PaymentMethodRef paymentMethod;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))

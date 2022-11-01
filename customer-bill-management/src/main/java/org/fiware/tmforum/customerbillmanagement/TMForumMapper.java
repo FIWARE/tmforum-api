@@ -1,10 +1,12 @@
 package org.fiware.tmforum.customerbillmanagement;
 
+import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
 import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand;
 import org.fiware.tmforum.mapping.MappingException;
@@ -39,6 +41,14 @@ public interface TMForumMapper {
 	CustomerBillOnDemandVO map(CustomerBillOnDemand customerBillOnDemand);
 
 	CustomerBillOnDemand map(CustomerBillOnDemandVO customerBillOnDemandVO);
+
+	// applied customer billing rate
+
+	@Mapping(target = "rateType", source = "type")
+	AppliedCustomerBillingRate map(AppliedCustomerBillingRateVO appliedCustomerBillingRateVO);
+
+	@Mapping(target = "type", source = "rateType")
+	AppliedCustomerBillingRateVO map(AppliedCustomerBillingRate appliedCustomerBillingRate);
 
 	default URL map(String value) {
 		if (value == null) {

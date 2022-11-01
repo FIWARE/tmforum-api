@@ -21,7 +21,7 @@ public abstract class RefEntity extends Entity implements ReferencedEntity {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href", embedProperty = true) }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href", fromProperties = true) }))
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href", fromProperties = true, targetClass = URI.class) }))
 	private URI href;
 
 	@Getter(onMethod = @__({

@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.customerBillOnDemandmanagement" })
+@MicronautTest(packages = { "org.fiware.tmforum.customerbillmanagement" })
 public class CustomerBillOnDemandApiIT extends AbstractApiIT implements CustomerBillOnDemandApiTestSpec {
 
 	public final CustomerBillOnDemandApiTestClient customerBillOnDemandApiTestClient;
@@ -232,6 +232,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 			customerBillOnDemandVO
 					.id(id)
 					.href(id)
+					.billingAccount(null)
 					.customerBill(null)
 					.relatedParty(null)
 					.lastUpdate(Instant.MAX.toString());
