@@ -313,14 +313,19 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 
 		List<ResourceFunctionVO> expectedResourceFunctions = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ResourceFunctionCreateVO resourceFunctionCreateVO = ResourceFunctionCreateVOTestExample.build();
+			ResourceFunctionCreateVO resourceFunctionCreateVO = ResourceFunctionCreateVOTestExample.build()
+					.place(null)
+					.resourceSpecification(null);
 			String id = resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO)
 					.body().getId();
 			ResourceFunctionVO resourceFunctionVO = ResourceFunctionVOTestExample.build();
 			resourceFunctionVO
 					.id(id)
 					.href(id)
-					.category(null)
+					.connectionPoint(null)
+					.place(null)
+					.relatedParty(null)
+					.schedule(null)
 					.resourceSpecification(null);
 			expectedResourceFunctions.add(resourceFunctionVO);
 		}

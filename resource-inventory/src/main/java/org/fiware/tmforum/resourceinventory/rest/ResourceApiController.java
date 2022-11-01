@@ -62,7 +62,6 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 	private Mono<Resource> getCheckingMono(Resource resource) {
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
 		references.add(resource.getRelatedParty());
-		references.add(resource.getSchedule());
 		Optional.ofNullable(resource.getPlace()).ifPresent(place -> references.add(List.of(place)));
 		Optional.ofNullable(resource.getResourceSpecification())
 				.ifPresent(resourceSpecificationRef -> references.add(List.of(resourceSpecificationRef)));

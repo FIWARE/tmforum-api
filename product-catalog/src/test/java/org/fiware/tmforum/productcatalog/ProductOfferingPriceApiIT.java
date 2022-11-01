@@ -41,7 +41,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -320,25 +322,40 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 			ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
 			String id = productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO)
 					.body().getId();
-			ProductOfferingPriceVO productOfferingVO = ProductOfferingPriceVOTestExample.build()
+			ProductOfferingPriceVO productOfferingPriceVO = ProductOfferingPriceVOTestExample.build();
+			productOfferingPriceVO
 					.id(id)
-					.href(id);
-			expectedProductOfferingPrices.add(productOfferingVO);
+					.href(id)
+					.bundledPopRelationship(null)
+					.place(null)
+					.popRelationship(null)
+					.constraint(null);
+			expectedProductOfferingPrices.add(productOfferingPriceVO);
 		}
 
-		HttpResponse<List<ProductOfferingPriceVO>> catalogListResponse = callAndCatch(
+		HttpResponse<List<ProductOfferingPriceVO>> productOfferingPriceResponse = callAndCatch(
 				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, null));
-		assertEquals(HttpStatus.OK, catalogListResponse.getStatus(), "The list should be accessible.");
 
-		// ignore order
-		List<ProductOfferingPriceVO> productOfferingVOS = catalogListResponse.body();
-		assertEquals(expectedProductOfferingPrices.size(), expectedProductOfferingPrices.size(),
-				"All categories should be returned.");
-		expectedProductOfferingPrices
-				.forEach(productOfferingVO ->
-						assertTrue(productOfferingVOS.contains(productOfferingVO),
-								String.format("All productOfferings should be contained. Missing: %s",
-										productOfferingVO)));
+		assertEquals(HttpStatus.OK, productOfferingPriceResponse.getStatus(), "The list should be accessible.");
+		assertEquals(expectedProductOfferingPrices.size(), productOfferingPriceResponse.getBody().get().size(),
+				"All productOfferingPrices should have been returned.");
+		List<ProductOfferingPriceVO> retrievedProductOfferingPrices = productOfferingPriceResponse.getBody().get();
+
+		Map<String, ProductOfferingPriceVO> retrievedMap = retrievedProductOfferingPrices.stream()
+				.collect(Collectors.toMap(productOfferingPrice -> productOfferingPrice.getId(),
+						productOfferingPrice -> productOfferingPrice));
+
+		expectedProductOfferingPrices.stream()
+				.forEach(
+						expectedProductOfferingPrice -> assertTrue(
+								retrievedMap.containsKey(expectedProductOfferingPrice.getId()),
+								String.format("All created productOfferingPrices should be returned - Missing: %s.",
+										expectedProductOfferingPrice,
+										retrievedProductOfferingPrices)));
+		expectedProductOfferingPrices.stream().forEach(
+				expectedProductOfferingPrice -> assertEquals(expectedProductOfferingPrice,
+						retrievedMap.get(expectedProductOfferingPrice.getId()),
+						"The correct productOfferingPrices should be retrieved."));
 
 		// get with pagination
 		Integer limit = 5;
@@ -351,13 +368,19 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
-		List<ProductOfferingPriceVO> retrievedCatalogs = firstPartResponse.body();
-		retrievedCatalogs.addAll(secondPartResponse.body());
-		expectedProductOfferingPrices
-				.forEach(productOfferingVO ->
-						assertTrue(retrievedCatalogs.contains(productOfferingVO),
-								String.format("All productOfferings should be contained. Missing: %s",
-										productOfferingVO)));
+		retrievedProductOfferingPrices.clear();
+		retrievedProductOfferingPrices.addAll(firstPartResponse.body());
+		retrievedProductOfferingPrices.addAll(secondPartResponse.body());
+		expectedProductOfferingPrices.stream()
+				.forEach(
+						expectedProductOfferingPrice -> assertTrue(
+								retrievedMap.containsKey(expectedProductOfferingPrice.getId()),
+								String.format("All created productOfferingPrices should be returned - Missing: %s.",
+										expectedProductOfferingPrice)));
+		expectedProductOfferingPrices.stream().forEach(
+				expectedProductOfferingPrice -> assertEquals(expectedProductOfferingPrice,
+						retrievedMap.get(expectedProductOfferingPrice.getId()),
+						"The correct productOfferingPrices should be retrieved."));
 	}
 
 	@Test

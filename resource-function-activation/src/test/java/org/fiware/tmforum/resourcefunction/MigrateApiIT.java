@@ -235,7 +235,9 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 
 		List<MigrateVO> expectedMigrates = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().place(null);
+			MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build()
+					.place(null)
+					.resourceFunction(null);
 			String id = migrateApiTestClient.createMigrate(migrateCreateVO)
 					.body().getId();
 			MigrateVO migrateVO = MigrateVOTestExample.build();
@@ -244,7 +246,8 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 					.href(id)
 					.addConnectionPoint(null)
 					.removeConnectionPoint(null)
-					.place(null);
+					.place(null)
+					.resourceFunction(null);
 			expectedMigrates.add(migrateVO);
 		}
 

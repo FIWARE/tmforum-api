@@ -70,6 +70,11 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 
 	private Clock clock = mock(Clock.class);
 
+	@MockBean(Clock.class)
+	public Clock clock() {
+		return clock;
+	}
+
 	public ServiceSpecificationApiIT(ServiceSpecificationApiTestClient serviceSpecificationApiTestClient,
 			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
@@ -489,6 +494,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 					.resourceSpecification(null)
 					.serviceLevelSpecification(null)
 					.serviceSpecRelationship(null)
+					.constraint(null)
 					.relatedParty(null);
 			expectedServiceSpecifications.add(serviceSpecificationVO);
 		}
@@ -898,6 +904,8 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 	@Override
 	public void retrieveServiceSpecification200() throws Exception {
 
+		when(clock.instant()).thenReturn(Instant.MAX);
+
 		ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build();
 		HttpResponse<ServiceSpecificationVO> createResponse = callAndCatch(
 				() -> serviceSpecificationApiTestClient.createServiceSpecification(serviceSpecificationCreateVO));
@@ -924,7 +932,8 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 								.entitySpecRelationship(null)
 								.resourceSpecification(null)
 								.serviceLevelSpecification(null)
-								.serviceSpecRelationship(null)),
+								.serviceSpecRelationship(null)
+								.lastUpdate(Instant.MAX)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
 						ServiceSpecificationVOTestExample.build()
 								.description(null)
@@ -974,6 +983,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 						"version,lastUpdate,lifecycleStatus,description", ServiceSpecificationVOTestExample.build()
 								.isBundle(null)
 								.name(null)
+								.lastUpdate(Instant.MAX)
 								.attachment(null)
 								.constraint(null)
 								.entitySpecRelationship(null)
