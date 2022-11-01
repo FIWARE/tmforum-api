@@ -1,9 +1,14 @@
 package org.fiware.tmforum.party;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
+import org.fiware.ngsi.model.EntityListVO;
+import org.fiware.ngsi.model.EntityVO;
 import org.fiware.party.api.IndividualApiTestClient;
 import org.fiware.party.api.IndividualApiTestSpec;
 import org.fiware.party.model.AttachmentRefOrValueVO;
@@ -38,6 +43,9 @@ import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
+import org.fiware.tmforum.mapping.JavaObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,8 +55,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,6 +75,38 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	private IndividualCreateVO individualCreateVO;
 	private IndividualUpdateVO individualUpdateVO;
 	private IndividualVO expectedIndividual;
+
+	private final EntitiesApiClient entitiesApiClient;
+	private final JavaObjectMapper javaObjectMapper;
+	private final TMForumMapper tmForumMapper;
+	private final ObjectMapper objectMapper;
+
+	@BeforeEach
+	public void cleanUp() {
+		this.objectMapper
+				.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
+		this.objectMapper.findAndRegisterModules();
+		EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
+				null,
+				null,
+				Individual.TYPE_INDIVIDUAL,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				1000,
+				0,
+				null,
+				null).block();
+		entityVOS.stream()
+				.filter(Objects::nonNull)
+				.map(EntityVO::getId)
+				.filter(Objects::nonNull)
+				.forEach(eId -> entitiesApiClient.removeEntityById(eId, null, null).block());
+	}
 
 	@ParameterizedTest
 	@MethodSource("provideValidIndividuals")
@@ -325,28 +368,36 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Test
 	@Override
 	public void listIndividual200() throws Exception {
-		// find a way to clean before
 		List<IndividualVO> expectedIndividuals = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
-			String id = individualApiTestClient.createIndividual(individualCreateVO).body().getId();
-			IndividualVO individualVO = IndividualVOTestExample.build();
-			individualVO.setId(id);
-			individualVO.setHref(id);
-			expectedIndividuals.add(individualVO);
+			IndividualCreateVO customerCreateVO = IndividualCreateVOTestExample.build();
+			String id = individualApiTestClient.createIndividual(customerCreateVO).body().getId();
+			IndividualVO customerVO = IndividualVOTestExample.build();
+			customerVO
+					.id(id)
+					.href(id)
+					.relatedParty(null);
+			expectedIndividuals.add(customerVO);
 		}
 
-		HttpResponse<List<IndividualVO>> individualListResponse = callAndCatch(
+		HttpResponse<List<IndividualVO>> customerResponse = callAndCatch(
 				() -> individualApiTestClient.listIndividual(null, null, null));
-		assertEquals(HttpStatus.OK, individualListResponse.getStatus(), "The list should be accessible.");
 
-		// ignore order
-		List<IndividualVO> individualVOS = individualListResponse.body();
-		assertEquals(expectedIndividuals.size(), individualVOS.size(), "All individuals should be returned.");
-		expectedIndividuals
-				.forEach(individualVO ->
-						assertTrue(individualVOS.contains(individualVO),
-								String.format("All individuals should be contained. Missing: %s", individualVO)));
+		assertEquals(HttpStatus.OK, customerResponse.getStatus(), "The list should be accessible.");
+		assertEquals(expectedIndividuals.size(), customerResponse.getBody().get().size(),
+				"All individuals should have been returned.");
+		List<IndividualVO> retrievedIndividuals = customerResponse.getBody().get();
+
+		Map<String, IndividualVO> retrievedMap = retrievedIndividuals.stream()
+				.collect(Collectors.toMap(individual -> individual.getId(), individual -> individual));
+
+		expectedIndividuals.stream()
+				.forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
+						String.format("All created individuals should be returned - Missing: %s.", expectedBill,
+								retrievedIndividuals)));
+		expectedIndividuals.stream().forEach(
+				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+						"The correct individuals should be retrieved."));
 
 		// get with pagination
 		Integer limit = 5;
@@ -359,12 +410,14 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
-		List<IndividualVO> retrievedIndividuals = firstPartResponse.body();
+		retrievedIndividuals.clear();
+		retrievedIndividuals.addAll(firstPartResponse.body());
 		retrievedIndividuals.addAll(secondPartResponse.body());
-		expectedIndividuals
-				.forEach(individualVO ->
-						assertTrue(retrievedIndividuals.contains(individualVO),
-								String.format("All individuals should be contained. Missing: %s", individualVO)));
+		expectedIndividuals.stream().forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
+				String.format("All created individuals should be returned - Missing: %s.", expectedBill)));
+		expectedIndividuals.stream().forEach(
+				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+						"The correct individuals should be retrieved."));
 	}
 
 	@Test

@@ -41,8 +41,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -305,24 +307,39 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 	public void listCustomer200() throws Exception {
 		List<CustomerVO> expectedCustomers = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build().engagedParty(null);
+			CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build()
+					.engagedParty(null);
 			String id = customerApiTestClient.createCustomer(customerCreateVO).body().getId();
 			CustomerVO customerVO = CustomerVOTestExample.build();
-			customerVO.id(id).href(id);
+			customerVO
+					.id(id)
+					.href(id)
+					.engagedParty(null)
+					.account(null)
+					.agreement(null)
+					.paymentMethod(null)
+					.relatedParty(null);
 			expectedCustomers.add(customerVO);
 		}
 
-		HttpResponse<List<CustomerVO>> categoryListResponse = callAndCatch(
+		HttpResponse<List<CustomerVO>> customerResponse = callAndCatch(
 				() -> customerApiTestClient.listCustomer(null, null, null));
-		assertEquals(HttpStatus.OK, categoryListResponse.getStatus(), "The list should be accessible.");
 
-		// ignore order
-		List<CustomerVO> customerVOS = categoryListResponse.body();
-		assertEquals(expectedCustomers.size(), expectedCustomers.size(), "All categories should be returned.");
-		expectedCustomers
-				.forEach(customerVO ->
-						assertTrue(customerVOS.contains(customerVO),
-								String.format("All product specs  should be contained. Missing: %s", customerVO)));
+		assertEquals(HttpStatus.OK, customerResponse.getStatus(), "The list should be accessible.");
+		assertEquals(expectedCustomers.size(), customerResponse.getBody().get().size(),
+				"All bills should have been returend.");
+		List<CustomerVO> retrievedBills = customerResponse.getBody().get();
+
+		Map<String, CustomerVO> retrievedMap = retrievedBills.stream()
+				.collect(Collectors.toMap(bill -> bill.getId(), bill -> bill));
+
+		expectedCustomers.stream()
+				.forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
+						String.format("All created customers should be returned - Missing: %s.", expectedBill,
+								retrievedBills)));
+		expectedCustomers.stream().forEach(
+				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+						"The correct customers should be retrieved."));
 
 		// get with pagination
 		Integer limit = 5;
@@ -335,12 +352,14 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
-		List<CustomerVO> retrievedCatalogs = firstPartResponse.body();
-		retrievedCatalogs.addAll(secondPartResponse.body());
-		expectedCustomers
-				.forEach(customerVO ->
-						assertTrue(retrievedCatalogs.contains(customerVO),
-								String.format("All customers should be contained. Missing: %s", customerVO)));
+		retrievedBills.clear();
+		retrievedBills.addAll(firstPartResponse.body());
+		retrievedBills.addAll(secondPartResponse.body());
+		expectedCustomers.stream().forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
+				String.format("All created customers should be returned - Missing: %s.", expectedBill)));
+		expectedCustomers.stream().forEach(
+				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+						"The correct customers should be retrieved."));
 	}
 
 	@Test
