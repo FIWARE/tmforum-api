@@ -13,9 +13,13 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json</tmforum.api.url>
+        <tmforum.api.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json
+        </tmforum.api.url>
         <!-- seems to be unavailable right now -->
-        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF620_Product_catalog_V4-0-0.zip</module.ctk.url>
+        <module.ctk.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF620_Product_catalog_V4-0-0.zip
+        </module.ctk.url>
         <module.ctk.script-folder>TMF632-product-catalog</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/product-catalog/v4</module.ctk.base-path>
@@ -34,6 +38,13 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>resource-shared-models</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
 
         <!-- lazy dev -->
         <dependency>

@@ -9,11 +9,11 @@ import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.party.domain.Characteristic;
-import org.fiware.tmforum.party.domain.ContactMedium;
+import org.fiware.tmforum.common.domain.ContactMedium;
 import org.fiware.tmforum.party.domain.ExternalReference;
 import org.fiware.tmforum.party.domain.PartyCreditProfile;
 import org.fiware.tmforum.common.domain.RelatedParty;
-import org.fiware.tmforum.party.domain.TaxExemptionCertificate;
+import org.fiware.tmforum.common.domain.TaxExemptionCertificate;
 
 import java.net.URI;
 import java.time.Instant;
@@ -150,8 +150,8 @@ public class Individual extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "status")}))
 	private IndividualState individualState;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "taxExemptionCertificate")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "taxExemptionCertificate", targetClass = TaxExemptionCertificate.class)}))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemptionCertificate")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemptionCertificate", targetClass = TaxExemptionCertificate.class)}))
 	private List<TaxExemptionCertificate> taxExemptionCertificate;
 
 	public Individual(String id) {
