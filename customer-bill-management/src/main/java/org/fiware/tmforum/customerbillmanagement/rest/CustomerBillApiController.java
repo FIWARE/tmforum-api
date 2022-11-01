@@ -75,7 +75,8 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 		}
 	}
 
-	@Override public Mono<HttpResponse<CustomerBillVO>> patchCustomerBill(@NonNull String id,
+	@Override
+	public Mono<HttpResponse<CustomerBillVO>> patchCustomerBill(@NonNull String id,
 			@NonNull CustomerBillUpdateVO customerBillUpdateVO) {
 		// non-ngsi-ld ids cannot exist.
 		if (!IdHelper.isNgsiLdId(id)) {
@@ -90,7 +91,8 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 				.map(HttpResponse::ok);
 	}
 
-	@Override public Mono<HttpResponse<CustomerBillVO>> retrieveCustomerBill(@NonNull String id, @Nullable String
+	@Override
+	public Mono<HttpResponse<CustomerBillVO>> retrieveCustomerBill(@NonNull String id, @Nullable String
 			fields) {
 		return retrieve(id, CustomerBill.class)
 				.switchIfEmpty(

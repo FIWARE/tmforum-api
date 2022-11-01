@@ -13,12 +13,18 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF678-CustomerBill-v4.0.0.swagger.json</tmforum.api.url>
-        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF678-Customer_Bill_V4-0-0.zip</module.ctk.url>
+        <tmforum.api.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF678-CustomerBill-v4.0.0.swagger.json
+        </tmforum.api.url>
+        <module.ctk.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF678-Customer_Bill_V4-0-0.zip
+        </module.ctk.url>
         <module.ctk.script-folder>TMF678_Customer_Bill_V4-0-0</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/customerBillManagement/v4</module.ctk.base-path>
-        <module.ctk.additionalCommands>sed -i 's/tmf678-customerbill-v4.mybluemix.net/localhost:8632/g' /opt/ctk/TMF678_Customer_Bill_V4-0-0/config.json</module.ctk.additionalCommands>
+        <module.ctk.additionalCommands>sed -i 's/tmf678-customerbill-v4.mybluemix.net/localhost:8632/g'
+            /opt/ctk/TMF678_Customer_Bill_V4-0-0/config.json
+        </module.ctk.additionalCommands>
     </properties>
 
     <dependencies>
