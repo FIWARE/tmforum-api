@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.ConstraintRef;
 import org.fiware.tmforum.common.domain.EntityWithId;
+import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.PlaceRef;
+import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
@@ -87,20 +89,20 @@ public class ProductOfferingPrice extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "price")}))
 	private Money price;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "pricingLogicAlgorithm")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "pricingLogicAlgorithm", targetClass = PricingLogicAlgorithm.class)}))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "pricingLogicAlgorithm")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "pricingLogicAlgorithm", targetClass = PricingLogicAlgorithm.class)}))
 	private List<PricingLogicAlgorithm> pricingLogicAlgorithm;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "prodSpecCharValueUse")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "prodSpecCharValueUse", targetClass = ProductSpecificationCharacteristicValueUse.class)}))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "prodSpecCharValueUse")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "prodSpecCharValueUse", targetClass = ProductSpecificationCharacteristicValueUse.class)}))
 	private List<ProductSpecificationCharacteristicValueUse> prodSpecCharValueUse;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "productOfferingTerm")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "productOfferingTerm", targetClass = ProductOfferingTerm.class)}))
 	private List<ProductOfferingTerm> productOfferingTerm;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "tax")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "tax", targetClass = TaxItem.class)}))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "tax")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "tax", targetClass = TaxItem.class)}))
 	private List<TaxItem> tax;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "unitOfMeasure")}))

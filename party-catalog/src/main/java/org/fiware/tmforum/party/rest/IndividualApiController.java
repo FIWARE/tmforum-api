@@ -1,158 +1,124 @@
 package org.fiware.tmforum.party.rest;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.party.api.IndividualApi;
 import org.fiware.party.model.IndividualCreateVO;
 import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.party.model.IndividualVO;
-import org.fiware.tmforum.common.exception.DeletionException;
-import org.fiware.tmforum.common.exception.DeletionExceptionReason;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
+import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.party.TMForumMapper;
 import org.fiware.tmforum.party.domain.individual.Individual;
-import org.fiware.tmforum.party.exception.PartyCreationException;
-import org.fiware.tmforum.party.exception.PartyExceptionReason;
-import org.fiware.tmforum.party.exception.PartyRetrievalException;
-import org.fiware.tmforum.party.exception.PartyUpdateException;
-import org.fiware.tmforum.party.repository.PartyRepository;
+import org.fiware.tmforum.party.domain.individual.IndividualIdentification;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import javax.validation.Valid;
-import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
-import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
-
 @Slf4j
 @Controller("${general.basepath:/}")
-public class IndividualApiController extends AbstractApiController implements IndividualApi {
+public class IndividualApiController extends AbstractPartyApiController<Individual> implements IndividualApi {
 
+	private final TMForumMapper tmForumMapper;
 
-    public IndividualApiController(TMForumMapper tmForumMapper, PartyRepository partyRepository, ReferenceValidationService validationService) {
-        super(tmForumMapper, partyRepository, validationService);
-    }
+	public IndividualApiController(ReferenceValidationService validationService, TmForumRepository partyRepository,
+			TMForumMapper tmForumMapper) {
+		super(validationService, partyRepository);
+		this.tmForumMapper = tmForumMapper;
+	}
 
-    @Override
-    public Mono<HttpResponse<IndividualVO>> createIndividual(@Valid IndividualCreateVO individualCreateVO) {
-        IndividualVO individualVO = tmForumMapper.map(individualCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Individual.TYPE_INDIVIDUAL));
-        Individual individual = tmForumMapper.map(individualVO);
-        Mono<Individual> individualMono = getCheckingMono(individual);
+	@Override
+	public Mono<HttpResponse<IndividualVO>> createIndividual(@NonNull @Valid IndividualCreateVO individualCreateVO) {
 
-        individualMono = taxExemptionHandlingMono(
-                individual,
-                individualMono,
-                individual.getTaxExemptionCertificate(),
-                individual::setTaxExemptionCertificate,
-                false);
+		Individual individual = tmForumMapper.map(tmForumMapper.map(individualCreateVO,
+				IdHelper.toNgsiLd(UUID.randomUUID().toString(), Individual.TYPE_INDIVIDUAL)));
 
-        return individualMono
-                .flatMap(individualToCreate -> partyRepository.createDomainEntity(individualToCreate).then(Mono.just(individualToCreate)))
-                .onErrorMap(t -> {
-                    if (t instanceof HttpClientResponseException e) {
-                        return switch (e.getStatus()) {
-                            case CONFLICT -> new PartyCreationException(String.format("Conflict on creating the individual: %s", e.getMessage()), PartyExceptionReason.CONFLICT);
-                            case BAD_REQUEST -> new PartyCreationException(String.format("Did not receive a valid individual: %s.", e.getMessage()), PartyExceptionReason.INVALID_DATA);
-                            default -> new PartyCreationException(String.format("Unspecified downstream error: %s", e.getMessage()), PartyExceptionReason.UNKNOWN);
-                        };
-                    } else {
-                        return t;
-                    }
-                })
-                .cast(Individual.class)
-                .map(tmForumMapper::map)
-                .map(HttpResponse::created);
-    }
+		return create(getCheckingMono(individual), Individual.class)
+				.map(tmForumMapper::map)
+				.map(HttpResponse::created);
+	}
 
+	private Mono<Individual> getCheckingMono(Individual individual) {
+		Optional.ofNullable(individual.getTaxExemptionCertificate()).ifPresent(this::validateTaxExemptions);
+		Optional.ofNullable(individual.getIndividualIdentification())
+				.ifPresent(this::validateIndividualIdentifications);
 
-    private Mono<Individual> getCheckingMono(Individual individual) {
-        Mono<Individual> individualMono = Mono.just(individual);
+		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
+		references.add(individual.getRelatedParty());
 
-        if (individual.getRelatedParty() != null && !individual.getRelatedParty().isEmpty()) {
-            Mono<Individual> checkingMono;
-            checkingMono = validationService.getCheckingMono(individual.getRelatedParty(), individual)
-                    .onErrorMap(throwable -> new PartyCreationException(String.format("Was not able to create individual %s", individual.getId()), throwable, PartyExceptionReason.INVALID_RELATIONSHIP));
-            individualMono = Mono.zip(individualMono, checkingMono, (p1, p2) -> p1);
-        }
+		return getCheckingMono(individual, references)
+				.onErrorMap(throwable ->
+						new TmForumException(
+								String.format("Was not able to create individual %s",
+										individual.getId()),
+								throwable,
+								TmForumExceptionReason.INVALID_RELATIONSHIP));
+	}
 
-        return individualMono;
-    }
+	private void validateIndividualIdentifications(List<IndividualIdentification> individualIdentifications) {
+		List<String> individualIds = individualIdentifications
+				.stream()
+				.map(IndividualIdentification::getIdentificationId)
+				.toList();
+		if (individualIds.size() != new HashSet<>(individualIds).size()) {
+			throw new TmForumException(
+					String.format("Duplicate individual identification ids are not allowed - ids: %s",
+							individualIds), TmForumExceptionReason.INVALID_DATA);
+		}
+	}
 
+	@Override
+	public Mono<HttpResponse<Object>> deleteIndividual(@NonNull String id) {
+		return delete(id);
+	}
 
-    @Override
-    public Mono<HttpResponse<Object>> deleteIndividual(String id) {
-        // non-ngsi-ld ids cannot exist.
-        if (!IdHelper.isNgsiLdId(id)) {
-            throw new DeletionException("Did not receive a valid id, such individual cannot exist.", DeletionExceptionReason.NOT_FOUND);
-        }
-        return partyRepository.deleteDomainEntity(URI.create(id))
-                .then(Mono.just(HttpResponse.noContent()));
-    }
+	@Override
+	public Mono<HttpResponse<List<IndividualVO>>> listIndividual(@Nullable String fields, @Nullable Integer offset,
+			@Nullable Integer limit) {
 
-    @Override
-    public Mono<HttpResponse<List<IndividualVO>>> listIndividual(@Nullable String fields, @Nullable Integer offset, @Nullable Integer limit) {
-        offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
-        limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+		return list(offset, limit, Individual.TYPE_INDIVIDUAL, Individual.class)
+				.map(individualStream -> individualStream.map(tmForumMapper::map).toList())
+				.switchIfEmpty(Mono.just(List.of()))
+				.map(HttpResponse::ok);
 
-        return partyRepository
-                .findIndividuals(offset, limit)
-                .map(List::stream)
-                .map(organizationStream -> organizationStream.map(tmForumMapper::map).toList())
-                .switchIfEmpty(Mono.just(List.of()))
-                .map(HttpResponse::ok);
-    }
+	}
 
-    @Override
-    public Mono<HttpResponse<IndividualVO>> patchIndividual(String id, IndividualUpdateVO individualUpdateVO) {
-        // non-ngsi-ld ids cannot exist.
-        if (!IdHelper.isNgsiLdId(id)) {
-            throw new PartyUpdateException("Did not receive a valid id, such individual cannot exist.", PartyExceptionReason.NOT_FOUND);
-        }
+	@Override
+	public Mono<HttpResponse<IndividualVO>> patchIndividual(@NonNull String id,
+			@NonNull IndividualUpdateVO individualUpdateVO) {
+		// non-ngsi-ld ids cannot exist.
+		if (!IdHelper.isNgsiLdId(id)) {
+			throw new TmForumException("Did not receive a valid id, such individual cannot exist.",
+					TmForumExceptionReason.NOT_FOUND);
+		}
+		Individual individual = tmForumMapper.map(individualUpdateVO, id);
 
-        Individual updatedIndividual = tmForumMapper.map(tmForumMapper.map(individualUpdateVO, id));
+		return patch(id, individual, getCheckingMono(individual), Individual.class)
+				.map(tmForumMapper::map)
+				.map(HttpResponse::ok);
+	}
 
-        URI idUri = URI.create(id);
-        return partyRepository
-                .getIndividual(idUri)
-                .flatMap(individual ->
-                        taxExemptionHandlingMono(
-                                individual,
-                                getCheckingMono(updatedIndividual),
-                                updatedIndividual.getTaxExemptionCertificate(),
-                                individual::setTaxExemptionCertificate,
-                                true)
-                                .flatMap(ui -> partyRepository
-                                        .updateDomainEntity(id, updatedIndividual)
-                                        .then(partyRepository.getIndividual(idUri))
-                                        .map(tmForumMapper::map)
-                                        .map(HttpResponse::ok)
-                                        .onErrorMap(error -> new PartyUpdateException("Was not able to update individual.", PartyExceptionReason.UNKNOWN)))
-                )
-                .map(HttpResponse.class::cast);
-    }
+	@Override
+	public Mono<HttpResponse<IndividualVO>> retrieveIndividual(@NonNull String id, @Nullable String fields) {
 
-    @Override
-    public Mono<HttpResponse<IndividualVO>> retrieveIndividual(String id, @Nullable String fields) {
-
-        // non-ngsi-ld ids cannot exist.
-        if (!IdHelper.isNgsiLdId(id)) {
-            throw new PartyRetrievalException("Did not receive a valid id, such individual cannot exist.", PartyExceptionReason.NOT_FOUND);
-        }
-
-        return partyRepository
-                .getIndividual(URI.create(id))
-                .map(tmForumMapper::map)
-                .map(HttpResponse::ok)
-                .switchIfEmpty(Mono.error(new PartyRetrievalException("No such individual exists.", PartyExceptionReason.NOT_FOUND)))
-                .map(HttpResponse.class::cast);
-
-    }
+		return retrieve(id, Individual.class)
+				.switchIfEmpty(
+						Mono.error(
+								new TmForumException("No such individual exists.", TmForumExceptionReason.NOT_FOUND)))
+				.map(tmForumMapper::map)
+				.map(HttpResponse::ok);
+	}
 }
 

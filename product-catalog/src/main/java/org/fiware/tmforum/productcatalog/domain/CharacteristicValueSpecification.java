@@ -9,12 +9,12 @@ import org.fiware.tmforum.common.domain.TimePeriod;
 @EqualsAndHashCode(callSuper = true)
 public class CharacteristicValueSpecification extends Entity {
 
-	private boolean isDefault;
+	private Boolean isDefault;
 	private String rangeInterval;
 	private String regex;
 	private String unitOfMeasure;
-	private int valueFrom;
-	private int valueTo;
+	private Integer valueFrom;
+	private Integer valueTo;
 	private TimePeriod validFor;
 	private String valueType;
 	private Object value;
