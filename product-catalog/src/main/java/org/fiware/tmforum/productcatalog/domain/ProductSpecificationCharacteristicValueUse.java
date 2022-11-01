@@ -16,6 +16,7 @@ import org.fiware.tmforum.common.domain.TimePeriod;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class ProductSpecificationCharacteristicValueUse extends Entity {
 
 	private String id;

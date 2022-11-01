@@ -62,7 +62,12 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
     private ObjectMapper objectMapper;
 
-    @MockBean(Clock.class)
+	public ResourceSpecificationApiIT(ResourceSpecificationApiTestClient resourceSpecificationApiTestClient) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.resourceSpecificationApiTestClient = resourceSpecificationApiTestClient;
+	}
+
+	@MockBean(Clock.class)
     public Clock clock() {
         return clock;
     }

@@ -1,16 +1,21 @@
 package org.fiware.tmforum.productcatalog;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
+import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestSpec;
 import org.fiware.productcatalog.model.AgreementRefVOTestExample;
-import org.fiware.productcatalog.model.BundledProductOfferingVO;
 import org.fiware.productcatalog.model.BundledProductOfferingVOTestExample;
+import org.fiware.productcatalog.model.CategoryCreateVO;
+import org.fiware.productcatalog.model.CategoryCreateVOTestExample;
 import org.fiware.productcatalog.model.CategoryRefVOTestExample;
+import org.fiware.productcatalog.model.CategoryVO;
+import org.fiware.productcatalog.model.CategoryVOTestExample;
 import org.fiware.productcatalog.model.ChannelRefVOTestExample;
 import org.fiware.productcatalog.model.MarketSegmentRefVOTestExample;
 import org.fiware.productcatalog.model.PlaceRefVOTestExample;
@@ -29,8 +34,10 @@ import org.fiware.productcatalog.model.SLARefVOTestExample;
 import org.fiware.productcatalog.model.ServiceCandidateRefVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.productcatalog.domain.ProductOffering;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,7 +48,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,7 +58,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RequiredArgsConstructor
 @MicronautTest(packages = { "org.fiware.tmforum.productcatalog" })
 public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferingApiTestSpec {
 
@@ -61,6 +69,12 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	private ProductOfferingVO expectedProductOffering;
 
 	private Clock clock = mock(Clock.class);
+
+	public ProductOfferingApiIT(ProductOfferingApiTestClient productOfferingApiTestClient,
+			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.productOfferingApiTestClient = productOfferingApiTestClient;
+	}
 
 	@MockBean(Clock.class)
 	public Clock clock() {
@@ -353,33 +367,58 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 
 	}
 
-	@Disabled
 	@Test
 	@Override
 	public void listProductOffering200() throws Exception {
-
 		List<ProductOfferingVO> expectedProductOfferings = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build();
+			ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build()
+					.productSpecification(null)
+					.resourceCandidate(null)
+					.serviceCandidate(null)
+					.serviceLevelAgreement(null);
 			String id = productOfferingApiTestClient.createProductOffering(productOfferingCreateVO).body().getId();
 			ProductOfferingVO productOfferingVO = ProductOfferingVOTestExample.build();
-			productOfferingVO.setId(id);
-			productOfferingVO.setHref(id);
+			productOfferingVO
+					.id(id)
+					.href(id)
+					.agreement(null)
+					.bundledProductOffering(null)
+					.channel(null)
+					.marketSegment(null)
+					.place(null)
+					.category(null)
+					.productOfferingPrice(null)
+					.productOfferingRelationship(null)
+					.productSpecification(null)
+					.resourceCandidate(null)
+					.serviceCandidate(null)
+					.serviceLevelAgreement(null);
 			expectedProductOfferings.add(productOfferingVO);
 		}
 
-		HttpResponse<List<ProductOfferingVO>> catalogListResponse = callAndCatch(
+		HttpResponse<List<ProductOfferingVO>> productOfferingResponse = callAndCatch(
 				() -> productOfferingApiTestClient.listProductOffering(null, null, null));
-		assertEquals(HttpStatus.OK, catalogListResponse.getStatus(), "The list should be accessible.");
 
-		// ignore order
-		List<ProductOfferingVO> productOfferingVOS = catalogListResponse.body();
-		assertEquals(expectedProductOfferings.size(), expectedProductOfferings.size(),
-				"All categories should be returned.");
-		expectedProductOfferings
-				.forEach(productOfferingVO ->
-						assertTrue(productOfferingVOS.contains(productOfferingVO),
-								String.format("All catalogs should be contained. Missing: %s", productOfferingVO)));
+		assertEquals(HttpStatus.OK, productOfferingResponse.getStatus(), "The list should be accessible.");
+		assertEquals(expectedProductOfferings.size(), productOfferingResponse.getBody().get().size(),
+				"All productOfferings should have been returned.");
+		List<ProductOfferingVO> retrievedProductOfferings = productOfferingResponse.getBody().get();
+
+		Map<String, ProductOfferingVO> retrievedMap = retrievedProductOfferings.stream()
+				.collect(Collectors.toMap(productOffering -> productOffering.getId(),
+						productOffering -> productOffering));
+
+		expectedProductOfferings.stream()
+				.forEach(
+						expectedProductOffering -> assertTrue(retrievedMap.containsKey(expectedProductOffering.getId()),
+								String.format("All created productOfferings should be returned - Missing: %s.",
+										expectedProductOffering,
+										retrievedProductOfferings)));
+		expectedProductOfferings.stream().forEach(
+				expectedProductOffering -> assertEquals(expectedProductOffering,
+						retrievedMap.get(expectedProductOffering.getId()),
+						"The correct productOfferings should be retrieved."));
 
 		// get with pagination
 		Integer limit = 5;
@@ -392,12 +431,18 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
-		List<ProductOfferingVO> retrievedCatalogs = firstPartResponse.body();
-		retrievedCatalogs.addAll(secondPartResponse.body());
-		expectedProductOfferings
-				.forEach(productOfferingVO ->
-						assertTrue(retrievedCatalogs.contains(productOfferingVO),
-								String.format("All catalogs should be contained. Missing: %s", productOfferingVO)));
+		retrievedProductOfferings.clear();
+		retrievedProductOfferings.addAll(firstPartResponse.body());
+		retrievedProductOfferings.addAll(secondPartResponse.body());
+		expectedProductOfferings.stream()
+				.forEach(
+						expectedProductOffering -> assertTrue(retrievedMap.containsKey(expectedProductOffering.getId()),
+								String.format("All created productOfferings should be returned - Missing: %s.",
+										expectedProductOffering)));
+		expectedProductOfferings.stream().forEach(
+				expectedProductOffering -> assertEquals(expectedProductOffering,
+						retrievedMap.get(expectedProductOffering.getId()),
+						"The correct productOfferings should be retrieved."));
 	}
 
 	@Test
@@ -826,6 +871,10 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	@Override
 	public void retrieveProductOffering500() throws Exception {
 
+	}
+
+	@Override protected String getEntityType() {
+		return ProductOffering.TYPE_PRODUCT_OFFERING;
 	}
 }
 

@@ -8,35 +8,28 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
 import org.fiware.customerbillmanagement.api.CustomerBillApiTestClient;
 import org.fiware.customerbillmanagement.api.CustomerBillApiTestSpec;
-import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillUpdateVOTestExample;
 import org.fiware.customerbillmanagement.model.CustomerBillVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVOTestExample;
 import org.fiware.customerbillmanagement.model.StateValueVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
-import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
-import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -47,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RequiredArgsConstructor
 @MicronautTest(packages = { "org.fiware.tmforum.customerbillmanagement" })
 public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiTestSpec {
 
@@ -55,13 +47,22 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	private final EntitiesApiClient entitiesApiClient;
 	private final JavaObjectMapper javaObjectMapper;
 	private final TMForumMapper tmForumMapper;
-	private final ObjectMapper objectMapper;
 
 	private String message;
 	private String fieldsParameter;
 	private CustomerBillVO expectedCustomerBillVo;
 
 	private Clock clock = mock(Clock.class);
+
+	public CustomerBillApiIT(CustomerBillApiTestClient customerBillApiTestClient, EntitiesApiClient entitiesApiClient,
+			JavaObjectMapper javaObjectMapper, TMForumMapper tmForumMapper, ObjectMapper objectMapper,
+			GeneralProperties generalProperties) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.customerBillApiTestClient = customerBillApiTestClient;
+		this.entitiesApiClient = entitiesApiClient;
+		this.javaObjectMapper = javaObjectMapper;
+		this.tmForumMapper = tmForumMapper;
+	}
 
 	@MockBean(Clock.class)
 	public Clock clock() {
@@ -71,37 +72,6 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	private void createBill(CustomerBill customerBillVO) {
 		EntityVO entityVO = javaObjectMapper.toEntityVO(customerBillVO);
 		entitiesApiClient.createEntity(entityVO, null).block();
-	}
-
-	private void deleteBill(URI id) {
-		entitiesApiClient.removeEntityById(id, null, null).block();
-	}
-
-	@BeforeEach
-	public void cleanUp() {
-		this.objectMapper
-				.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
-		this.objectMapper.findAndRegisterModules();
-		EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
-				null,
-				null,
-				CustomerBill.TYPE_CUSTOMER_BILL,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				1000,
-				0,
-				null,
-				null).block();
-		entityVOS.stream()
-				.filter(Objects::nonNull)
-				.map(EntityVO::getId)
-				.filter(Objects::nonNull)
-				.forEach(this::deleteBill);
 	}
 
 	@Test
@@ -490,5 +460,9 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 	@Override public void retrieveCustomerBill500() throws Exception {
 
+	}
+
+	@Override protected String getEntityType() {
+		return CustomerBill.TYPE_CUSTOMER_BILL;
 	}
 }

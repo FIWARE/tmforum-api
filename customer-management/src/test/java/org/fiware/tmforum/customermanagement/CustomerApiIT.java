@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.RequiredArgsConstructor;
 import org.fiware.customermanagement.api.CustomerApiTestClient;
 import org.fiware.customermanagement.api.CustomerApiTestSpec;
 import org.fiware.customermanagement.model.AccountRefVOTestExample;
@@ -23,15 +22,10 @@ import org.fiware.customermanagement.model.RelatedPartyVOTestExample;
 import org.fiware.customermanagement.model.TimePeriodVO;
 import org.fiware.customermanagement.model.TimePeriodVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
-import org.fiware.ngsi.model.EntityListVO;
-import org.fiware.ngsi.model.EntityVO;
-import org.fiware.tmforum.customermanagement.domain.Customer;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
-import org.fiware.tmforum.mapping.JavaObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
+import org.fiware.tmforum.customermanagement.domain.Customer;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,7 +36,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,14 +43,11 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RequiredArgsConstructor
 @MicronautTest(packages = { "org.fiware.tmforum.customermanagement" })
 public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec {
 
 	public final CustomerApiTestClient customerApiTestClient;
 	private final EntitiesApiClient entitiesApiClient;
-	private final JavaObjectMapper javaObjectMapper;
-	private final TMForumMapper tmForumMapper;
 	private final ObjectMapper objectMapper;
 
 	private String message;
@@ -66,31 +56,12 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 	private CustomerUpdateVO customerUpdateVO;
 	private CustomerVO expectedCustomer;
 
-	@BeforeEach
-	public void cleanUp() {
-		this.objectMapper
-				.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
-		this.objectMapper.findAndRegisterModules();
-		EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
-				null,
-				null,
-				Customer.TYPE_CUSTOMER,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				1000,
-				0,
-				null,
-				null).block();
-		entityVOS.stream()
-				.filter(Objects::nonNull)
-				.map(EntityVO::getId)
-				.filter(Objects::nonNull)
-				.forEach(eId -> entitiesApiClient.removeEntityById(eId, null, null).block());
+	public CustomerApiIT(CustomerApiTestClient customerApiTestClient, EntitiesApiClient entitiesApiClient,
+			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.customerApiTestClient = customerApiTestClient;
+		this.entitiesApiClient = entitiesApiClient;
+		this.objectMapper = objectMapper;
 	}
 
 	@ParameterizedTest
@@ -802,5 +773,9 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 	@Override
 	public void retrieveCustomer500() throws Exception {
 
+	}
+
+	@Override protected String getEntityType() {
+		return Customer.TYPE_CUSTOMER;
 	}
 }

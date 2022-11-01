@@ -1,9 +1,11 @@
 package org.fiware.tmforum.party;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
+import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.party.api.IndividualApiTestClient;
 import org.fiware.party.api.OrganizationApiTestClient;
 import org.fiware.party.model.IndividualCreateVO;
@@ -24,6 +26,7 @@ import org.fiware.party.model.OrganizationVO;
 import org.fiware.party.model.OrganizationVOTestExample;
 import org.fiware.party.model.RelatedPartyVO;
 import org.fiware.party.model.RelatedPartyVOTestExample;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Test;
 
@@ -31,12 +34,19 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RequiredArgsConstructor
 @MicronautTest(packages = { "org.fiware.tmforum.party" })
 public class PartyApiIT extends AbstractApiIT {
 
 	private final OrganizationApiTestClient organizationApiTestClient;
 	private final IndividualApiTestClient individualApiTestClient;
+
+	public PartyApiIT(OrganizationApiTestClient organizationApiTestClient,
+			IndividualApiTestClient individualApiTestClient, EntitiesApiClient entitiesApiClient,
+			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.organizationApiTestClient = organizationApiTestClient;
+		this.individualApiTestClient = individualApiTestClient;
+	}
 
 	@Test
 	public void testRelatedParties() throws Exception {
@@ -133,5 +143,10 @@ public class PartyApiIT extends AbstractApiIT {
 		HttpResponse<OrganizationVO> parentGet = callAndCatch(
 				() -> organizationApiTestClient.retrieveOrganization(parentOrgId, null));
 		assertEquals(expectedParent, parentGet.body(), "The parent via get should also be equal.");
+	}
+
+	@Override
+	protected String getEntityType() {
+		return "nothing-to-clean";
 	}
 }

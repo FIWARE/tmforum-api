@@ -1,10 +1,12 @@
 package org.fiware.tmforum.productcatalog;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
+import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.ProductOfferingPriceApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingPriceApiTestSpec;
 import org.fiware.productcatalog.model.BundledProductOfferingPriceRelationshipVOTestExample;
@@ -24,8 +26,11 @@ import org.fiware.productcatalog.model.TaxItemVO;
 import org.fiware.productcatalog.model.TaxItemVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.productcatalog.domain.ProductOffering;
+import org.fiware.tmforum.productcatalog.domain.ProductOfferingPrice;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -44,7 +49,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RequiredArgsConstructor
 @MicronautTest(packages = { "org.fiware.tmforum.productcatalog" })
 public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductOfferingPriceApiTestSpec {
 
@@ -56,6 +60,12 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	private ProductOfferingPriceVO expectedProductOfferingPrice;
 
 	private Clock clock = mock(Clock.class);
+
+	public ProductOfferingPriceApiIT(ProductOfferingPriceApiTestClient productOfferingPriceApiTestClient,
+			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.productOfferingPriceApiTestClient = productOfferingPriceApiTestClient;
+	}
 
 	@MockBean(Clock.class)
 	public Clock clock() {
@@ -301,7 +311,6 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 	}
 
-	@Disabled
 	@Test
 	@Override
 	public void listProductOfferingPrice200() throws Exception {
@@ -311,9 +320,9 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 			ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
 			String id = productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO)
 					.body().getId();
-			ProductOfferingPriceVO productOfferingVO = ProductOfferingPriceVOTestExample.build();
-			productOfferingVO.setId(id);
-			productOfferingVO.setHref(id);
+			ProductOfferingPriceVO productOfferingVO = ProductOfferingPriceVOTestExample.build()
+					.id(id)
+					.href(id);
 			expectedProductOfferingPrices.add(productOfferingVO);
 		}
 
@@ -328,7 +337,8 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedProductOfferingPrices
 				.forEach(productOfferingVO ->
 						assertTrue(productOfferingVOS.contains(productOfferingVO),
-								String.format("All catalogs should be contained. Missing: %s", productOfferingVO)));
+								String.format("All productOfferings should be contained. Missing: %s",
+										productOfferingVO)));
 
 		// get with pagination
 		Integer limit = 5;
@@ -346,7 +356,8 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedProductOfferingPrices
 				.forEach(productOfferingVO ->
 						assertTrue(retrievedCatalogs.contains(productOfferingVO),
-								String.format("All catalogs should be contained. Missing: %s", productOfferingVO)));
+								String.format("All productOfferings should be contained. Missing: %s",
+										productOfferingVO)));
 	}
 
 	@Test
@@ -695,6 +706,11 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@Override
 	public void retrieveProductOfferingPrice500() throws Exception {
 
+	}
+
+	@Override
+	protected String getEntityType() {
+		return ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE;
 	}
 }
 

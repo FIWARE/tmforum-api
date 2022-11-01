@@ -1,9 +1,14 @@
 package org.fiware.tmforum.party;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
+import org.fiware.ngsi.model.EntityListVO;
+import org.fiware.ngsi.model.EntityVO;
 import org.fiware.party.api.OrganizationApiTestClient;
 import org.fiware.party.api.OrganizationApiTestSpec;
 import org.fiware.party.model.AttachmentRefOrValueVO;
@@ -30,8 +35,12 @@ import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
+import org.fiware.tmforum.party.domain.organization.Organization;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,14 +50,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RequiredArgsConstructor
 @MicronautTest(packages = { "org.fiware.tmforum.party" })
 class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec {
 
@@ -58,6 +69,24 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 	private OrganizationUpdateVO organizationUpdateVO;
 	private OrganizationVO expectedOrganization;
 	private String message;
+
+	private final EntitiesApiClient entitiesApiClient;
+	private final ObjectMapper objectMapper;
+	private final GeneralProperties generalProperties;
+
+	OrganizationApiIT(OrganizationApiTestClient organizationApiTestClient, EntitiesApiClient entitiesApiClient,
+			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.organizationApiTestClient = organizationApiTestClient;
+		this.entitiesApiClient = entitiesApiClient;
+		this.objectMapper = objectMapper;
+		this.generalProperties = generalProperties;
+	}
+
+	@Override
+	protected String getEntityType() {
+		return Organization.TYPE_ORGANIZATION;
+	}
 
 	@ParameterizedTest
 	@MethodSource("provideValidOrganizations")
@@ -185,7 +214,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
 		OrganizationCreateVO nonExistentRelatedPartyOrg = OrganizationCreateVOTestExample.build();
 		RelatedPartyVO nonExistentRelatedPartyRef = RelatedPartyVOTestExample.build();
-		nonExistentRelatedPartyRef.setId("urn:ngsi-ld:individual:non-existent");
+		nonExistentRelatedPartyRef.setId("urn:ngsi-ld:organization:non-existent");
 		nonExistentRelatedPartyOrg.setRelatedParty(List.of(nonExistentRelatedPartyRef));
 
 		return List.of(
@@ -312,33 +341,42 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
 	}
 
-	@Disabled("Needs db cleaning.")
 	@Test
 	@Override
 	public void listOrganization200() throws Exception {
-		// find a way to clean before
 		List<OrganizationVO> expectedOrganizations = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
-			organizationCreateVO.setOrganizationParentRelationship(null);
+			OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build()
+					.organizationParentRelationship(null);
 			String id = organizationApiTestClient.createOrganization(organizationCreateVO).body().getId();
 			OrganizationVO organizationVO = OrganizationVOTestExample.build();
-			organizationVO.setId(id);
-			organizationVO.setHref(id);
+			organizationVO
+					.id(id)
+					.href(id)
+					.organizationParentRelationship(null)
+					.organizationChildRelationship(null)
+					.relatedParty(null);
 			expectedOrganizations.add(organizationVO);
 		}
 
-		HttpResponse<List<OrganizationVO>> organizationListResponse = callAndCatch(
+		HttpResponse<List<OrganizationVO>> organizationResponse = callAndCatch(
 				() -> organizationApiTestClient.listOrganization(null, null, null));
-		assertEquals(HttpStatus.OK, organizationListResponse.getStatus(), "The list should be accessible.");
 
-		// ignore order
-		List<OrganizationVO> organizationVOS = organizationListResponse.body();
-		assertEquals(expectedOrganizations.size(), organizationVOS.size(), "All organizations should be returned.");
-		expectedOrganizations
-				.forEach(organizationVO ->
-						assertTrue(organizationVOS.contains(organizationVO),
-								String.format("All organizations should be contained. Missing: %s", organizationVO)));
+		assertEquals(HttpStatus.OK, organizationResponse.getStatus(), "The list should be accessible.");
+		assertEquals(expectedOrganizations.size(), organizationResponse.getBody().get().size(),
+				"All organizations should have been returned.");
+		List<OrganizationVO> retrievedOrganizations = organizationResponse.getBody().get();
+
+		Map<String, OrganizationVO> retrievedMap = retrievedOrganizations.stream()
+				.collect(Collectors.toMap(organization -> organization.getId(), organization -> organization));
+
+		expectedOrganizations.stream()
+				.forEach(expectedOrganization -> assertTrue(retrievedMap.containsKey(expectedOrganization.getId()),
+						String.format("All created organizations should be returned - Missing: %s.", expectedOrganization,
+								retrievedOrganizations)));
+		expectedOrganizations.stream().forEach(
+				expectedOrganization -> assertEquals(expectedOrganization, retrievedMap.get(expectedOrganization.getId()),
+						"The correct organizations should be retrieved."));
 
 		// get with pagination
 		Integer limit = 5;
@@ -351,12 +389,15 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
-		List<OrganizationVO> retrievedOrganizations = firstPartResponse.body();
+		retrievedOrganizations.clear();
+		retrievedOrganizations.addAll(firstPartResponse.body());
 		retrievedOrganizations.addAll(secondPartResponse.body());
-		expectedOrganizations
-				.forEach(organizationVO ->
-						assertTrue(retrievedOrganizations.contains(organizationVO),
-								String.format("All organizations should be contained. Missing: %s", organizationVO)));
+		expectedOrganizations.stream()
+				.forEach(expectedOrganization -> assertTrue(retrievedMap.containsKey(expectedOrganization.getId()),
+						String.format("All created organizations should be returned - Missing: %s.", expectedOrganization)));
+		expectedOrganizations.stream().forEach(
+				expectedOrganization -> assertEquals(expectedOrganization, retrievedMap.get(expectedOrganization.getId()),
+						"The correct organizations should be retrieved."));
 	}
 
 	@Test
@@ -652,7 +693,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
 		OrganizationUpdateVO nonExistentRelatedPartyOrg = OrganizationUpdateVOTestExample.build();
 		RelatedPartyVO nonExistentRelatedPartyRef = RelatedPartyVOTestExample.build();
-		nonExistentRelatedPartyRef.setId("urn:ngsi-ld:individual:non-existent");
+		nonExistentRelatedPartyRef.setId("urn:ngsi-ld:organization:non-existent");
 		nonExistentRelatedPartyOrg.setRelatedParty(List.of(nonExistentRelatedPartyRef));
 
 		return List.of(

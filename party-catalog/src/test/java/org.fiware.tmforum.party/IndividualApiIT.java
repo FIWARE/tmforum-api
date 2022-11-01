@@ -41,10 +41,11 @@ import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
-import org.fiware.tmforum.mapping.JavaObjectMapper;
+import org.fiware.tmforum.party.domain.individual.Individual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -65,7 +66,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RequiredArgsConstructor
 @MicronautTest(packages = { "org.fiware.tmforum.party" })
 public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestSpec {
 
@@ -77,35 +77,21 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	private IndividualVO expectedIndividual;
 
 	private final EntitiesApiClient entitiesApiClient;
-	private final JavaObjectMapper javaObjectMapper;
-	private final TMForumMapper tmForumMapper;
 	private final ObjectMapper objectMapper;
+	private final GeneralProperties generalProperties;
 
-	@BeforeEach
-	public void cleanUp() {
-		this.objectMapper
-				.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
-		this.objectMapper.findAndRegisterModules();
-		EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
-				null,
-				null,
-				Individual.TYPE_INDIVIDUAL,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				null,
-				1000,
-				0,
-				null,
-				null).block();
-		entityVOS.stream()
-				.filter(Objects::nonNull)
-				.map(EntityVO::getId)
-				.filter(Objects::nonNull)
-				.forEach(eId -> entitiesApiClient.removeEntityById(eId, null, null).block());
+	public IndividualApiIT(IndividualApiTestClient individualApiTestClient, EntitiesApiClient entitiesApiClient,
+			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+		super(entitiesApiClient, objectMapper, generalProperties);
+		this.individualApiTestClient = individualApiTestClient;
+		this.entitiesApiClient = entitiesApiClient;
+		this.objectMapper = objectMapper;
+		this.generalProperties = generalProperties;
+	}
+
+	@Override
+	protected String getEntityType() {
+		return Individual.TYPE_INDIVIDUAL;
 	}
 
 	@ParameterizedTest
@@ -364,29 +350,28 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 	}
 
-	@Disabled("Needs db cleaning.")
 	@Test
 	@Override
 	public void listIndividual200() throws Exception {
 		List<IndividualVO> expectedIndividuals = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			IndividualCreateVO customerCreateVO = IndividualCreateVOTestExample.build();
-			String id = individualApiTestClient.createIndividual(customerCreateVO).body().getId();
-			IndividualVO customerVO = IndividualVOTestExample.build();
-			customerVO
+			IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
+			String id = individualApiTestClient.createIndividual(individualCreateVO).body().getId();
+			IndividualVO individualVO = IndividualVOTestExample.build();
+			individualVO
 					.id(id)
 					.href(id)
 					.relatedParty(null);
-			expectedIndividuals.add(customerVO);
+			expectedIndividuals.add(individualVO);
 		}
 
-		HttpResponse<List<IndividualVO>> customerResponse = callAndCatch(
+		HttpResponse<List<IndividualVO>> individualResponse = callAndCatch(
 				() -> individualApiTestClient.listIndividual(null, null, null));
 
-		assertEquals(HttpStatus.OK, customerResponse.getStatus(), "The list should be accessible.");
-		assertEquals(expectedIndividuals.size(), customerResponse.getBody().get().size(),
+		assertEquals(HttpStatus.OK, individualResponse.getStatus(), "The list should be accessible.");
+		assertEquals(expectedIndividuals.size(), individualResponse.getBody().get().size(),
 				"All individuals should have been returned.");
-		List<IndividualVO> retrievedIndividuals = customerResponse.getBody().get();
+		List<IndividualVO> retrievedIndividuals = individualResponse.getBody().get();
 
 		Map<String, IndividualVO> retrievedMap = retrievedIndividuals.stream()
 				.collect(Collectors.toMap(individual -> individual.getId(), individual -> individual));
