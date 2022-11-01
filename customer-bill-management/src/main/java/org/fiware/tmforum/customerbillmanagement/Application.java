@@ -8,6 +8,9 @@ import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
 import lombok.RequiredArgsConstructor;
+import org.fiware.customerbillmanagement.model.CustomerBillVO;
+import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
+import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 
 import javax.inject.Singleton;
 import java.time.Clock;
@@ -37,7 +40,7 @@ public class Application {
             final ObjectMapper objectMapper = event.getBean();
             SimpleModule fieldParamModule = new SimpleModule();
             // we need to register per class, in order to use the generic serializer
-//            fieldParamModule.addSerializer(CustomerVO.class, new FieldCleaningSerializer<>());
+            fieldParamModule.addSerializer(CustomerBillVO.class, new FieldCleaningSerializer<>());
             objectMapper.registerModule(fieldParamModule);
             return objectMapper;
         }

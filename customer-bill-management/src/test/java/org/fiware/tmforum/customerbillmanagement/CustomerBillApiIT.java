@@ -6,7 +6,6 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
-import org.fiware.customerbillmanagement.api.CustomerBillApi;
 import org.fiware.customerbillmanagement.api.CustomerBillApiTestClient;
 import org.fiware.customerbillmanagement.api.CustomerBillApiTestSpec;
 import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
@@ -22,7 +21,6 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
-import org.fiware.tmforum.mapping.EntitiesRepository;
 import org.fiware.tmforum.mapping.JavaObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Clock;
@@ -62,7 +59,6 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 	private String message;
 	private String fieldsParameter;
-	private CustomerBillUpdateVO customerBillUpdateVO;
 	private CustomerBillVO expectedCustomerBillVo;
 
 	private Clock clock = mock(Clock.class);
@@ -82,7 +78,6 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	}
 
 	@BeforeEach
-	@AfterEach
 	public void cleanUp() {
 		this.objectMapper
 				.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
@@ -253,26 +248,56 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 	}
 
-	@Override public void patchCustomerBill400() throws Exception {
+	@Test
+	@Override
+	public void patchCustomerBill400() throws Exception {
+		when(clock.instant()).thenReturn(Instant.ofEpochSecond(1234));
+
+		String billId = "urn:ngsi-ld:customer-bill:test-bill";
+
+		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().id(billId)
+				.relatedParty(null)
+				.financialAccount(null)
+				.billingAccount(null)
+				.paymentMethod(null);
+		createBill(tmForumMapper.map(customerBillVO));
+		HttpResponse<CustomerBillVO> updateResponse = callAndCatch(
+				() -> customerBillApiTestClient.patchCustomerBill(billId,
+						null));
+		assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), "The update should not be successfull");
+	}
+
+	@Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+	@Test
+	@Override
+	public void patchCustomerBill401() throws Exception {
 
 	}
 
-	@Override public void patchCustomerBill401() throws Exception {
+	@Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+	@Test
+	@Override
+	public void patchCustomerBill403() throws Exception {
 
 	}
 
-	@Override public void patchCustomerBill403() throws Exception {
-
+	@Test
+	@Override
+	public void patchCustomerBill404() throws Exception {
+		HttpResponse<CustomerBillVO> updateResponse = callAndCatch(
+				() -> customerBillApiTestClient.patchCustomerBill("urn:ngsi-ld:customer-bill:non-existent",
+						CustomerBillUpdateVOTestExample.build()));
+		assertEquals(HttpStatus.NOT_FOUND, updateResponse.getStatus(), "The update should not be successfull");
 	}
 
-	@Override public void patchCustomerBill404() throws Exception {
-
-	}
-
+	@Disabled("Prohibited by the framework.")
+	@Test
 	@Override public void patchCustomerBill405() throws Exception {
 
 	}
 
+	@Disabled("Impossible status.")
+	@Test
 	@Override public void patchCustomerBill409() throws Exception {
 
 	}
@@ -281,31 +306,185 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 	}
 
-	@Override public void retrieveCustomerBill200() throws Exception {
+	@ParameterizedTest
+	@MethodSource("provideFieldParameters")
+	public void retrieveCustomerBill200(String message, String fields, CustomerBillVO expectedCustomerBill)
+			throws Exception {
+		this.expectedCustomerBillVo = expectedCustomerBill;
+		this.message = message;
+		this.fieldsParameter = fields;
+		retrieveCustomerBill200();
+	}
+
+	@Override
+	public void retrieveCustomerBill200() throws Exception {
+		String billId = "urn:ngsi-ld:customer-bill:test-bill";
+		expectedCustomerBillVo.id(billId);
+
+		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().id(billId)
+				.relatedParty(null)
+				.financialAccount(null)
+				.billingAccount(null)
+				.paymentMethod(null);
+		createBill(tmForumMapper.map(customerBillVO));
+
+		HttpResponse<CustomerBillVO> response = callAndCatch(
+				() -> customerBillApiTestClient.retrieveCustomerBill(billId, fieldsParameter));
+
+		assertEquals(HttpStatus.OK, response.getStatus(), message);
+		assertEquals(expectedCustomerBillVo, response.body(), message);
+	}
+
+	private static Stream<Arguments> provideFieldParameters() {
+		return Stream.of(
+				Arguments.of("Without a fields parameter everything should be returned.", null,
+						CustomerBillVOTestExample.build()
+								.relatedParty(null)
+								.billingAccount(null)
+								.financialAccount(null)
+								.paymentMethod(null)
+				),
+				Arguments.of("With an empty fields parameter only mandatory should be returned.", "",
+						CustomerBillVOTestExample.build()
+								.billNo(null)
+								.category(null)
+								.state(null)
+								.billDate(null)
+								.lastUpdate(null)
+								.nextBillDate(null)
+								.paymentDueDate(null)
+								.runType(null)
+								.amountDue(null)
+								.appliedPayment(null)
+								.billDocument(null)
+								.billingAccount(null)
+								.billingPeriod(null)
+								.financialAccount(null)
+								.paymentMethod(null)
+								.relatedParty(null)
+								.remainingAmount(null)
+								.taxExcludedAmount(null)
+								.taxIncludedAmount(null)
+								.taxItem(null)
+								.atBaseType(null)
+								.atSchemaLocation(null)
+								.atType(null)),
+				Arguments.of("Only mandatory and billNo should be returned.", "billNo",
+						CustomerBillVOTestExample.build()
+								.billDate(null)
+								.category(null)
+								.lastUpdate(null)
+								.nextBillDate(null)
+								.paymentDueDate(null)
+								.runType(null)
+								.amountDue(null)
+								.appliedPayment(null)
+								.billDocument(null)
+								.billingAccount(null)
+								.billingPeriod(null)
+								.financialAccount(null)
+								.paymentMethod(null)
+								.relatedParty(null)
+								.remainingAmount(null)
+								.state(null)
+								.taxExcludedAmount(null)
+								.taxIncludedAmount(null)
+								.taxItem(null)
+								.atBaseType(null)
+								.atSchemaLocation(null)
+								.atType(null)),
+				Arguments.of("Only mandatory, billNo, category and state should be returned.", "billNo,category,state",
+						CustomerBillVOTestExample.build()
+								.billDate(null)
+								.lastUpdate(null)
+								.nextBillDate(null)
+								.paymentDueDate(null)
+								.runType(null)
+								.amountDue(null)
+								.appliedPayment(null)
+								.billDocument(null)
+								.billingAccount(null)
+								.billingPeriod(null)
+								.financialAccount(null)
+								.paymentMethod(null)
+								.relatedParty(null)
+								.remainingAmount(null)
+								.taxExcludedAmount(null)
+								.taxIncludedAmount(null)
+								.taxItem(null)
+								.atBaseType(null)
+								.atSchemaLocation(null)
+								.atType(null)),
+				Arguments.of("Only mandatory should be returned for non-existent.", "non-existent",
+						CustomerBillVOTestExample.build()
+								.billNo(null)
+								.category(null)
+								.state(null)
+								.billDate(null)
+								.lastUpdate(null)
+								.nextBillDate(null)
+								.paymentDueDate(null)
+								.runType(null)
+								.amountDue(null)
+								.appliedPayment(null)
+								.billDocument(null)
+								.billingAccount(null)
+								.billingPeriod(null)
+								.financialAccount(null)
+								.paymentMethod(null)
+								.relatedParty(null)
+								.remainingAmount(null)
+								.taxExcludedAmount(null)
+								.taxIncludedAmount(null)
+								.taxItem(null)
+								.atBaseType(null)
+								.atSchemaLocation(null)
+								.atType(null))
+		);
+	}
+
+	@Disabled("400 cannot happen, only 404")
+	@Test
+	@Override
+	public void retrieveCustomerBill400() throws Exception {
 
 	}
 
-	@Override public void retrieveCustomerBill400() throws Exception {
+	@Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+	@Test
+	@Override
+	public void retrieveCustomerBill401() throws Exception {
 
 	}
 
-	@Override public void retrieveCustomerBill401() throws Exception {
+	@Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+	@Test
+	@Override
+	public void retrieveCustomerBill403() throws Exception {
 
 	}
 
-	@Override public void retrieveCustomerBill403() throws Exception {
-
-	}
-
+	@Test
 	@Override public void retrieveCustomerBill404() throws Exception {
+		HttpResponse<CustomerBillVO> response = callAndCatch(
+				() -> customerBillApiTestClient.retrieveCustomerBill("urn:ngsi-ld:customer-bill:non-existent",
+						fieldsParameter));
+
+		assertEquals(HttpStatus.NOT_FOUND, response.getStatus(),
+				"Not found should be returned for non-existent bills.");
+	}
+
+	@Disabled("Prohibited by the framework.")
+	@Test
+	@Override
+	public void retrieveCustomerBill405() throws Exception {
 
 	}
 
-	@Override public void retrieveCustomerBill405() throws Exception {
-
-	}
-
-	@Override public void retrieveCustomerBill409() throws Exception {
+	@Disabled("Conflict not possible on retrieval")
+	@Test
+	@Override
+	public void retrieveCustomerBill409() throws Exception {
 
 	}
 

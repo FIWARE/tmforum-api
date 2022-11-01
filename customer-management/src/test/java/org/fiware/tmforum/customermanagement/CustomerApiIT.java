@@ -1,5 +1,6 @@
 package org.fiware.tmforum.customermanagement;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -21,17 +22,26 @@ import org.fiware.customermanagement.model.PaymentMethodRefVOTestExample;
 import org.fiware.customermanagement.model.RelatedPartyVOTestExample;
 import org.fiware.customermanagement.model.TimePeriodVO;
 import org.fiware.customermanagement.model.TimePeriodVOTestExample;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
+import org.fiware.ngsi.model.EntityListVO;
+import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
+import org.fiware.tmforum.mapping.JavaObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -43,12 +53,43 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec {
 
 	public final CustomerApiTestClient customerApiTestClient;
+	private final EntitiesApiClient entitiesApiClient;
+	private final JavaObjectMapper javaObjectMapper;
+	private final TMForumMapper tmForumMapper;
+	private final ObjectMapper objectMapper;
 
 	private String message;
 	private String fieldsParameter;
 	private CustomerCreateVO customerCreateVO;
 	private CustomerUpdateVO customerUpdateVO;
 	private CustomerVO expectedCustomer;
+
+	@BeforeEach
+	public void cleanUp() {
+		this.objectMapper
+				.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
+		this.objectMapper.findAndRegisterModules();
+		EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
+				null,
+				null,
+				Customer.TYPE_CUSTOMER,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				1000,
+				0,
+				null,
+				null).block();
+		entityVOS.stream()
+				.filter(Objects::nonNull)
+				.map(EntityVO::getId)
+				.filter(Objects::nonNull)
+				.forEach(eId -> entitiesApiClient.removeEntityById(eId, null, null).block());
+	}
 
 	@ParameterizedTest
 	@MethodSource("provideValidCustomers")
@@ -259,7 +300,6 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 
 	}
 
-	@Disabled("Cleanup has to be solved")
 	@Test
 	@Override
 	public void listCustomer200() throws Exception {
