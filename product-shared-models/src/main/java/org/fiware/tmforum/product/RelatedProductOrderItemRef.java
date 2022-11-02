@@ -1,9 +1,11 @@
 package org.fiware.tmforum.product;
 
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.Entity;
+import org.fiware.tmforum.common.domain.RefEntity;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
@@ -17,7 +19,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class RelatedProductOrderItemRef extends Entity implements ReferencedEntity {
 
-	private final URI productOrderId;
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "productOrderHref", fromProperties = true, targetClass = URI.class) }))
+	private URI productOrderId;
 
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "productOrderHref", embedProperty = true) }))
@@ -49,10 +53,6 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "@referredType", fromProperties = true) }))
 	private String atReferredType;
 
-	public RelatedProductOrderItemRef(String id) {
-		this.productOrderId = URI.create(id);
-	}
-
 	@Override public List<String> getReferencedTypes() {
 		return List.of("product-order");
 	}
@@ -63,4 +63,5 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 	public URI getId() {
 		return productOrderId;
 	}
+
 }

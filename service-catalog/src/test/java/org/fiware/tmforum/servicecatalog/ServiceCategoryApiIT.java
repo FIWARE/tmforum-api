@@ -21,7 +21,7 @@ import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.fiware.tmforum.servicecatalog.domain.ServiceCategory;
+import org.fiware.tmforum.service.ServiceCategory;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

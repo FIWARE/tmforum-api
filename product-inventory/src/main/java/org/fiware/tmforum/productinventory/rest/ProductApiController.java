@@ -59,6 +59,7 @@ public class ProductApiController extends AbstractApiController<Product> impleme
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
 		references.add(product.getAgreement());
 		references.add(product.getPlace());
+		references.add(product.getProduct());
 		references.add(product.getProductOrderItem());
 		references.add(product.getRealizingResource());
 		references.add(product.getRealizingService());

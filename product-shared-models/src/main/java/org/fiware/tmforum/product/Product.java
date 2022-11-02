@@ -78,6 +78,12 @@ public class Product extends EntityWithId {
 	private List<RelatedPlaceRef> place;
 
 	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "product", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "product", fromProperties = true, targetClass = ProductRef.class) }))
+	private List<ProductRef> product;
+
+	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "productCharacteristic") }))
 	@Setter(onMethod = @__({
 			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "productCharacteristic", targetClass = Characteristic.class) }))

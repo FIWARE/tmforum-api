@@ -99,8 +99,14 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 
 		testEntries.add(
 				Arguments.of("An empty product should have been created.",
-						ProductCreateVOTestExample.build().place(null).productSpecification(null),
-						ProductVOTestExample.build().place(null).productSpecification(null)));
+						ProductCreateVOTestExample.build()
+								.productSpecification(null)
+								.billingAccount(null)
+								.productOffering(null),
+						ProductVOTestExample.build()
+								.productSpecification(null)
+								.billingAccount(null)
+								.productOffering(null)));
 
 		Instant start = Instant.now();
 		Instant end = Instant.now();
@@ -431,8 +437,9 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 	@Override
 	public void deleteProduct204() throws Exception {
 		ProductCreateVO emptyCreate = ProductCreateVOTestExample.build()
-				.place(null)
-				.productSpecification(null);
+				.productSpecification(null)
+				.billingAccount(null)
+				.productOffering(null);
 
 		HttpResponse<ProductVO> createResponse = productApiTestClient.createProduct(emptyCreate);
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The product should have been created first.");
@@ -516,18 +523,25 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		List<ProductVO> expectedProducts = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			ProductCreateVO productCreateVO = ProductCreateVOTestExample.build()
-					.place(null)
-					.productSpecification(null);
+					.productSpecification(null)
+					.billingAccount(null)
+					.productOffering(null);
 			String id = productApiTestClient.createProduct(productCreateVO)
 					.body().getId();
 			ProductVO productVO = ProductVOTestExample.build();
 			productVO
 					.id(id)
 					.href(id)
+					.productSpecification(null)
+					.billingAccount(null)
+					.productOffering(null)
+					.agreement(null)
+					.product(null)
 					.place(null)
 					.relatedParty(null)
-					.productRelationship(null)
-					.productSpecification(null);
+					.productOrderItem(null)
+					.realizingResource(null)
+					.realizingService(null);
 			expectedProducts.add(productVO);
 		}
 
@@ -671,7 +685,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ProductVO updatedProduct = updateResponse.body();
-		expectedProduct.href(productId).id(productId).relatedParty(null).productRelationship(null);
+		expectedProduct.href(productId).id(productId);
 
 		assertEquals(expectedProduct, updatedProduct, message);
 	}
@@ -689,6 +703,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.description("new-description")));
 
 		testEntries.add(Arguments.of("The name should have been updated.",
@@ -701,6 +722,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.name("new-name")));
 
 		testEntries.add(Arguments.of("The isBundle should have been updated.",
@@ -713,6 +741,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.isBundle(false)));
 
 		testEntries.add(Arguments.of("The isCustomerVisible should have been updated.",
@@ -725,6 +760,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.isCustomerVisible(false)));
 
 		Instant date = Instant.now();
@@ -738,6 +780,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.orderDate(date)));
 
 		testEntries.add(Arguments.of("The productSerialNumber should have been updated.",
@@ -750,6 +799,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.productSerialNumber("two")));
 
 		testEntries.add(Arguments.of("The startDate should have been updated.",
@@ -762,6 +818,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.startDate(date)));
 
 		testEntries.add(Arguments.of("The terminationDate should have been updated.",
@@ -774,6 +837,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.terminationDate(date)));
 
 		testEntries.add(Arguments.of("The characteristic should have been updated.",
@@ -786,6 +856,13 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.productCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")))));
 
 		testEntries.add(Arguments.of("The product term should have been updated.",
@@ -798,7 +875,14 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
-						.productTerm(List.of(ProductTermVOTestExample.build().name("new")))));
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
+						.productTerm(List.of(ProductTermVOTestExample.build().name("new").validFor(null)))));
 
 		testEntries.add(Arguments.of("The status should have been updated.",
 				ProductUpdateVOTestExample.build()
@@ -810,46 +894,89 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						.billingAccount(null)
 						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.status(ProductStatusTypeVO.CREATED)));
 
 		testEntries.add(Arguments.of("The baseType should have been updated.",
 				ProductUpdateVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
 						.atBaseType("Product"),
 				ProductVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.atBaseType("Product")));
 
 		testEntries.add(Arguments.of("The baseType should have been updated.",
 				ProductUpdateVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
 						.atBaseType("Product"),
 				ProductVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.atBaseType("Product")));
 
 		testEntries.add(Arguments.of("The schemaLocation should have been updated.",
 				ProductUpdateVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
 						.atSchemaLocation(URI.create("/my-shema/location/Product")),
 				ProductVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.atSchemaLocation(URI.create("/my-shema/location/Product"))));
 
 		testEntries.add(Arguments.of("The type should have been updated.",
 				ProductUpdateVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
 						.atType("CloudProduct"),
 				ProductVOTestExample.build()
-						.place(null)
+						.billingAccount(null)
+						.productOffering(null)
 						.productSpecification(null)
+						.agreement(null)
+						.product(null)
+						.place(null)
+						.relatedParty(null)
+						.productOrderItem(null)
+						.realizingResource(null)
+						.realizingService(null)
 						.atType("CloudProduct")));
 
 		return testEntries.stream();
@@ -1109,7 +1236,8 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 	public void retrieveProduct200() throws Exception {
 
 		ProductCreateVO productCreateVO = ProductCreateVOTestExample.build()
-				.place(null)
+				.billingAccount(null)
+				.productOffering(null)
 				.productSpecification(null);
 		HttpResponse<ProductVO> createResponse = callAndCatch(
 				() -> productApiTestClient.createProduct(productCreateVO));
@@ -1133,7 +1261,14 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 						ProductVOTestExample.build()
 								.billingAccount(null)
 								.productOffering(null)
-								.productSpecification(null)),
+								.productSpecification(null)
+								.agreement(null)
+								.place(null)
+								.product(null)
+								.productOrderItem(null)
+								.realizingResource(null)
+								.realizingService(null)
+								.relatedParty(null)),
 				Arguments.of("Only description and the mandatory parameters should have been included.", "description",
 						ProductVOTestExample.build()
 								.isBundle(null)
@@ -1153,6 +1288,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								.productRelationship(null)
 								.productSpecification(null)
 								.productTerm(null)
+								.product(null)
 								.realizingResource(null)
 								.realizingService(null)
 								.relatedParty(null)
@@ -1174,6 +1310,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								.agreement(null)
 								.billingAccount(null)
 								.place(null)
+								.product(null)
 								.productCharacteristic(null)
 								.productOffering(null)
 								.productOrderItem(null)
@@ -1189,7 +1326,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								.atType(null)
 								.atSchemaLocation(null)),
 				Arguments.of("Only description, isBundle and the mandatory parameters should have been included.",
-						"name,isBundle", ProductVOTestExample.build()
+						"description,isBundle", ProductVOTestExample.build()
 								.isCustomerVisible(null)
 								.name(null)
 								.orderDate(null)
@@ -1199,6 +1336,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								.agreement(null)
 								.billingAccount(null)
 								.place(null)
+								.product(null)
 								.productCharacteristic(null)
 								.productOffering(null)
 								.productOrderItem(null)
