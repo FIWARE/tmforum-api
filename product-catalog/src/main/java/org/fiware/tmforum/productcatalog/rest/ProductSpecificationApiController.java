@@ -14,9 +14,9 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.product.ProductSpecification;
+import org.fiware.tmforum.product.ProductSpecificationCharacteristic;
 import org.fiware.tmforum.productcatalog.TMForumMapper;
-import org.fiware.tmforum.productcatalog.domain.ProductSpecification;
-import org.fiware.tmforum.productcatalog.domain.ProductSpecificationCharacteristic;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;

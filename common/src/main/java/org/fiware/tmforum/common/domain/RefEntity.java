@@ -16,7 +16,8 @@ import java.net.URI;
 @EqualsAndHashCode(callSuper = true)
 public abstract class RefEntity extends Entity implements ReferencedEntity {
 
-	@Getter(onMethod = @__({ @RelationshipObject, @DatasetId })) final URI id;
+	@Getter(onMethod = @__({ @RelationshipObject, @DatasetId }))
+	final URI id;
 
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href", embedProperty = true) }))

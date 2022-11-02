@@ -1,0 +1,66 @@
+package org.fiware.tmforum.product;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.fiware.tmforum.common.domain.Entity;
+import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.mapping.annotations.AttributeGetter;
+import org.fiware.tmforum.mapping.annotations.AttributeSetter;
+import org.fiware.tmforum.mapping.annotations.AttributeType;
+import org.fiware.tmforum.mapping.annotations.DatasetId;
+import org.fiware.tmforum.mapping.annotations.RelationshipObject;
+
+import java.net.URI;
+import java.util.List;
+
+@EqualsAndHashCode(callSuper = true)
+public class RelatedProductOrderItemRef extends Entity implements ReferencedEntity {
+
+	private final URI productOrderId;
+
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "productOrderHref", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "productOrderHref", fromProperties = true, targetClass = URI.class) }))
+	private URI productOrderHref;
+
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "orderItemId", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "orderItemId", fromProperties = true) }))
+	private String orderItemId;
+
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "orderItemAction", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "orderItemAction", fromProperties = true) }))
+	private String orderItemAction;
+
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "role", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "role", fromProperties = true) }))
+	private String role;
+
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "@referredType", embedProperty = true) }))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "@referredType", fromProperties = true) }))
+	private String atReferredType;
+
+	public RelatedProductOrderItemRef(String id) {
+		this.productOrderId = URI.create(id);
+	}
+
+	@Override public List<String> getReferencedTypes() {
+		return List.of("product-order");
+	}
+
+	@RelationshipObject
+	@DatasetId
+	@Override
+	public URI getId() {
+		return productOrderId;
+	}
+}

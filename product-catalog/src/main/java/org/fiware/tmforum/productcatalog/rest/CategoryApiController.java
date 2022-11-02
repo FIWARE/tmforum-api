@@ -15,8 +15,8 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.productcatalog.TMForumMapper;
-import org.fiware.tmforum.productcatalog.domain.Category;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;

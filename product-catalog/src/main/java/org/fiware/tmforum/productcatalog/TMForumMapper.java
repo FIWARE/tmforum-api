@@ -1,13 +1,11 @@
 package org.fiware.tmforum.productcatalog;
 
-import org.fiware.productcatalog.model.BundledProductOfferingVO;
 import org.fiware.productcatalog.model.CatalogCreateVO;
 import org.fiware.productcatalog.model.CatalogUpdateVO;
 import org.fiware.productcatalog.model.CatalogVO;
 import org.fiware.productcatalog.model.CategoryCreateVO;
 import org.fiware.productcatalog.model.CategoryUpdateVO;
 import org.fiware.productcatalog.model.CategoryVO;
-import org.fiware.productcatalog.model.PricingLogicAlgorithmVO;
 import org.fiware.productcatalog.model.ProductOfferingCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVO;
@@ -17,17 +15,13 @@ import org.fiware.productcatalog.model.ProductOfferingVO;
 import org.fiware.productcatalog.model.ProductSpecificationCreateVO;
 import org.fiware.productcatalog.model.ProductSpecificationUpdateVO;
 import org.fiware.productcatalog.model.ProductSpecificationVO;
-import org.fiware.productcatalog.model.TaxItemVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.mapping.MappingException;
-import org.fiware.tmforum.productcatalog.domain.BundleProductOffering;
+import org.fiware.tmforum.product.Category;
+import org.fiware.tmforum.product.ProductOffering;
+import org.fiware.tmforum.product.ProductOfferingPrice;
+import org.fiware.tmforum.product.ProductSpecification;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
-import org.fiware.tmforum.productcatalog.domain.Category;
-import org.fiware.tmforum.productcatalog.domain.PricingLogicAlgorithm;
-import org.fiware.tmforum.productcatalog.domain.ProductOffering;
-import org.fiware.tmforum.productcatalog.domain.ProductOfferingPrice;
-import org.fiware.tmforum.productcatalog.domain.ProductSpecification;
-import org.fiware.tmforum.common.domain.TaxItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -1,6 +1,5 @@
 package org.fiware.tmforum.productcatalog;
 
-import org.fiware.tmforum.mapping.MappingException;
 import org.fiware.tmforum.productcatalog.domain.CategoryRef;
 import org.mapstruct.Named;
 
