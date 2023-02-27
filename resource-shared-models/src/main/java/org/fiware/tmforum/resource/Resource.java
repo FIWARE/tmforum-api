@@ -89,9 +89,9 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 	private List<Characteristic> resourceCharacteristic;
 
 	@Getter(onMethod = @__({
-			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceRelationship") }))
+			@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceRelationship") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceRelationship", targetClass = ResourceRelationship.class) }))
+			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceRelationship", targetClass = ResourceRelationship.class) }))
 	private List<ResourceRelationship> resourceRelationship;
 
 	@Getter(onMethod = @__({

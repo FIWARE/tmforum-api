@@ -3,7 +3,6 @@ package org.fiware.tmforum.customerbillmanagement.domain;
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 

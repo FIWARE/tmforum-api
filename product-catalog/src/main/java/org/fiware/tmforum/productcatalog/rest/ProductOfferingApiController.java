@@ -12,20 +12,15 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.repository.TmForumRepository;
-import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.productcatalog.TMForumMapper;
-import org.fiware.tmforum.productcatalog.domain.ProductOffering;
-import org.fiware.tmforum.productcatalog.domain.ProductSpecificationCharacteristicValueUse;
-import org.fiware.tmforum.productcatalog.domain.ProductSpecificationRef;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 

@@ -5,8 +5,8 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
-import org.fiware.tmforum.productcatalog.domain.ProductSpecificationCharacteristicValueUse;
-import org.fiware.tmforum.productcatalog.domain.ProductSpecificationRef;
+import org.fiware.tmforum.product.ProductSpecificationCharacteristicValueUse;
+import org.fiware.tmforum.product.ProductSpecificationRef;
 
 import java.util.HashSet;
 import java.util.List;

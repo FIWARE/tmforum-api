@@ -10,6 +10,7 @@ import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.product.CategoryRef;
 
 import java.net.URI;
 import java.time.Instant;

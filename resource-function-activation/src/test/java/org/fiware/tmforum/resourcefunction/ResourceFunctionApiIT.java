@@ -30,9 +30,13 @@ import org.fiware.resourcefunction.model.ResourceGraphRefVOTestExample;
 import org.fiware.resourcefunction.model.ResourceGraphRelationshipVOTestExample;
 import org.fiware.resourcefunction.model.ResourceGraphVOTestExample;
 import org.fiware.resourcefunction.model.ResourceOperationalStateTypeVO;
+import org.fiware.resourcefunction.model.ResourceRefOrValueVO;
+import org.fiware.resourcefunction.model.ResourceRefOrValueVOTestExample;
+import org.fiware.resourcefunction.model.ResourceRelationshipVOTestExample;
 import org.fiware.resourcefunction.model.ResourceSpecificationRefVOTestExample;
 import org.fiware.resourcefunction.model.ResourceStatusTypeVO;
 import org.fiware.resourcefunction.model.ResourceUsageStateTypeVO;
+import org.fiware.resourcefunction.model.ResourceVOTestExample;
 import org.fiware.resourcefunction.model.ScheduleRefVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -190,6 +194,17 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 				ResourceFunctionCreateVOTestExample.build().connectivity(
 						List.of(ResourceGraphVOTestExample.build()
 								.graphRelationship(List.of(ResourceGraphRelationshipVOTestExample.build()))))));
+		testEntries.add(
+				Arguments.of("A resource functions with an invalid resource should not be created.",
+						ResourceFunctionCreateVOTestExample.build().resourceRelationship(
+								List.of(ResourceRelationshipVOTestExample.build()
+										.resource(ResourceRefOrValueVOTestExample.build())))));
+
+		testEntries.add(Arguments.of("A resource functions with a non existing resource should not be created.",
+				ResourceFunctionCreateVOTestExample.build().resourceRelationship(
+						List.of(ResourceRelationshipVOTestExample.build()
+								.resource(ResourceRefOrValueVOTestExample.build()
+										.id("urn:ngsi-ld:resource:non-existent"))))));
 
 		return testEntries.stream();
 	}
