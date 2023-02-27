@@ -278,7 +278,8 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 
 		List<ResourceCandidateVO> expectedResourceCandidates = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build();
+			ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build()
+					.resourceSpecification(null);
 			String id = resourceCandidateApiTestClient.createResourceCandidate(resourceCandidateCreateVO)
 					.body().getId();
 			ResourceCandidateVO resourceCandidateVO = ResourceCandidateVOTestExample.build();

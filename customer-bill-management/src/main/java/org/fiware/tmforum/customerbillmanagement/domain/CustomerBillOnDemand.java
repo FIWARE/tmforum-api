@@ -3,6 +3,7 @@ package org.fiware.tmforum.customerbillmanagement.domain;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.fiware.customerbillmanagement.model.PaymentMethodRefVO;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.RelatedParty;

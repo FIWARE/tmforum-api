@@ -5,8 +5,6 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.RequiredArgsConstructor;
-
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.servicecatalog.api.ServiceCandidateApiTestClient;
 import org.fiware.servicecatalog.api.ServiceCandidateApiTestSpec;
@@ -23,7 +21,7 @@ import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.fiware.tmforum.servicecatalog.domain.ServiceCandidate;
+import org.fiware.tmforum.service.ServiceCandidate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

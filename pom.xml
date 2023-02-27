@@ -33,7 +33,10 @@
         <module>mapping</module>
         <module>common</module>
         <module>resource-shared-models</module>
+        <module>product-shared-models</module>
+        <module>service-shared-models</module>
         <module>party-catalog</module>
+        <module>product-inventory</module>
         <module>product-catalog</module>
         <module>resource-function-activation</module>
         <module>resource-catalog</module>
