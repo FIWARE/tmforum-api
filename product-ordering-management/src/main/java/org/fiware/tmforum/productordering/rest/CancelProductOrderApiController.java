@@ -46,7 +46,14 @@ public class CancelProductOrderApiController extends AbstractApiController<Cance
 				tmForumMapper.map(cancelProductOrderCreateVO,
 						IdHelper.toNgsiLd(UUID.randomUUID().toString(), CancelProductOrder.TYPE_CANCEL_PRODUCT_ORDER)));
 
-		return create(getCheckingMono(cancelProductOrder, List.of(List.of(cancelProductOrder.getProductOrder()))),
+		Mono<CancelProductOrder> checkingMono = getCheckingMono(cancelProductOrder,
+				List.of(List.of(cancelProductOrder.getProductOrder()))).onErrorMap(throwable ->
+				new TmForumException(
+						String.format("Was not able to cancel product order %s", cancelProductOrder.getId()),
+						throwable,
+						TmForumExceptionReason.INVALID_RELATIONSHIP));
+
+		return create(checkingMono,
 				CancelProductOrder.class)
 				.map(tmForumMapper::map)
 				.map(HttpResponse::created);

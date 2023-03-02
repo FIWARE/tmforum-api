@@ -14,6 +14,6 @@ public class ProductOrderRef extends RefEntity {
 
 	@Override
 	public List<String> getReferencedTypes() {
-		return List.of(getAtReferredType());
+		return List.of(ProductOrder.TYPE_PRODUCT_ORDER);
 	}
 }
