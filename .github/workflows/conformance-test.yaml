@@ -12,7 +12,7 @@ jobs:
       matrix:
         # product-catalog is not included, since the tests currently are not accessible.
         # customer-management & customer-bill-management is not included, since the tests contain invalid references.
-        module: [ party-catalog, resource-function-activation, resource-catalog, resource-inventory, service-catalog, product-ordering-management ]
+        module: [ party-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
 
     steps:
       - uses: actions/checkout@v2
