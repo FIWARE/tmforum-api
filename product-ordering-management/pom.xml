@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.fiware.tmforum</groupId>
-    <artifactId>customer-bill-management</artifactId>
+    <artifactId>product-ordering-management</artifactId>
     <version>0.1</version>
 
     <parent>
@@ -14,16 +14,16 @@
 
     <properties>
         <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF678-CustomerBill-v4.0.0.swagger.json
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF622-ProductOrder-v4.0.0.swagger.json
         </tmforum.api.url>
+        <!-- seems to be unavailable right now -->
         <module.ctk.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF678-Customer_Bill_V4-0-0.zip
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF622-ProductOrdering.zip
         </module.ctk.url>
-        <module.ctk.script-folder>TMF678_Customer_Bill_V4-0-0</module.ctk.script-folder>
+        <module.ctk.script-folder>TMF622-ProductOrdering</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
-        <module.ctk.base-path>/tmf-api/customerBillManagement/v4</module.ctk.base-path>
-        <module.ctk.additionalCommands>sed -i 's/tmf678-customerbill-v4.mybluemix.net/localhost:8632/g'
-            /opt/ctk/TMF678_Customer_Bill_V4-0-0/config.json
+        <module.ctk.base-path>/tmf-api/productOrderingManagement/v4</module.ctk.base-path>
+        <module.ctk.additionalCommands>sed -i 's/8622/8632/g' /opt/ctk/TMF622-ProductOrdering/config.json
         </module.ctk.additionalCommands>
     </properties>
 
@@ -42,6 +42,12 @@
         </dependency>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
+            <artifactId>resource-shared-models</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
             <artifactId>customer-shared-models</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
@@ -49,6 +55,12 @@
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
             <artifactId>product-shared-models</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>service-shared-models</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
@@ -184,12 +196,6 @@
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>customer-shared-models</artifactId>
-            <version>0.1</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -211,16 +217,16 @@
                 <version>${version.org.openapitools.generator-maven-plugin}</version>
                 <executions>
                     <execution>
-                        <id>openapi-customer-bill-management-api</id>
+                        <id>openapi-product-inventory-api</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
                             <inputSpec>${tmforum.api.url}</inputSpec>
-                            <apiPackage>org.fiware.customerbillmanagement.api</apiPackage>
+                            <apiPackage>org.fiware.productordering.api</apiPackage>
                             <strictSpec>true</strictSpec>
-                            <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
+                            <modelPackage>org.fiware.productordering.model</modelPackage>
                             <generatorName>micronaut</generatorName>
                             <modelNameSuffix>VO</modelNameSuffix>
                             <output>${project.build.directory}</output>

@@ -2,6 +2,7 @@ package org.fiware.tmforum.customerbillmanagement.domain;
 
 import lombok.Data;
 import org.fiware.tmforum.common.domain.Money;
+import org.fiware.tmforum.customer.PaymentRef;
 
 import java.net.URI;
 

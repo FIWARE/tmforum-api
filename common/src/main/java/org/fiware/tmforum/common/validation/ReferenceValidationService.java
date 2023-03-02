@@ -34,7 +34,7 @@ public class ReferenceValidationService {
         return Mono.zip(
                 references.stream()
                         .filter(Objects::nonNull)
-                        .map(ref -> referencesRepository.referenceExists(ref.getId().toString(), ref.getReferencedTypes())
+                        .map(ref -> referencesRepository.referenceExists(ref.getEntityId().toString(), ref.getReferencedTypes())
                                 .map(eVo -> true)
                                 .defaultIfEmpty(false))
                         .toList(),

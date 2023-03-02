@@ -112,6 +112,10 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 		super(TYPE_RESOURCE, id);
 	}
 
+	@Override public URI getEntityId() {
+		return getId();
+	}
+
 	@Override
 	public List<String> getReferencedTypes() {
 		return List.of(TYPE_RESOURCE);

@@ -1,4 +1,4 @@
-package org.fiware.tmforum.customerbillmanagement.domain;
+package org.fiware.tmforum.customer;
 
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;

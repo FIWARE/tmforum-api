@@ -10,6 +10,7 @@ import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
+import java.net.URI;
 import java.util.List;
 
 @MappingEnabled
@@ -28,6 +29,6 @@ public class ProductOfferingPriceRef extends RefEntity {
 
 	@Override
 	public List<String> getReferencedTypes() {
-		return List.of(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE);
+		return List.of(getAtReferredType());
 	}
 }
