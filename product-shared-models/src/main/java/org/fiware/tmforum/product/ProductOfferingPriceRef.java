@@ -29,6 +29,6 @@ public class ProductOfferingPriceRef extends RefEntity {
 
 	@Override
 	public List<String> getReferencedTypes() {
-		return List.of(getAtReferredType());
+		return List.of(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE);
 	}
 }
