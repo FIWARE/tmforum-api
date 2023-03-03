@@ -106,13 +106,13 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 		references.add(productOrder.getQuote());
 		references.add(productOrder.getRelatedParty());
 
-		productOrder.getOrderTotalPrice().forEach(op -> {
+		Optional.ofNullable(productOrder.getOrderTotalPrice()).ifPresent(otp -> otp.forEach(op -> {
 			Optional.ofNullable(op.getBillingAccount()).map(List::of).ifPresent(references::add);
 			Optional.ofNullable(op.getProductOfferingPrice()).map(List::of).ifPresent(references::add);
 			Optional.ofNullable(op.getPriceAlteration())
 					.ifPresent(pa -> references.add(pa.stream().map(PriceAlteration::getProductOfferingPrice).collect(
 							Collectors.toList())));
-		});
+		}));
 
 		List<Mono<ProductOrder>> checkingMonos = productOrder
 				.getProductOrderItem()
@@ -163,11 +163,15 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 			});
 		}
 
-		List<Mono<ProductOrder>> subItemCheckingMonos = productOrderItem.getProductOrderItem().stream()
-				.map(poi -> getOrderItemCheckingMono(productOrder, poi))
-				.collect(Collectors.toList());
-		subItemCheckingMonos.add(getCheckingMono(productOrder, references));
-		return Mono.zip(subItemCheckingMonos, poi -> productOrder);
+		List<Mono<ProductOrder>> checkingMonos = new ArrayList<>();
+		checkingMonos.add(getCheckingMono(productOrder, references));
+
+		if (productOrderItem.getProductOrderItem() != null) {
+			productOrderItem.getProductOrderItem().stream()
+					.map(poi -> getOrderItemCheckingMono(productOrder, poi))
+					.forEach(checkingMonos::add);
+		}
+		return Mono.zip(checkingMonos, poi -> productOrder);
 	}
 
 	private List<? extends ReferencedEntity> getReferencesFromPriceAlterations(List<PriceAlteration> priceAlterations) {

@@ -11,8 +11,8 @@ jobs:
       fail-fast: false
       matrix:
         # product-catalog is not included, since the tests currently are not accessible.
-        # customer-management & customer-bill-management is not included, since the tests contain invalid references.
-        module: [ party-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
+        # customer-management, customer-bill-management, product-ordering-management is not included, since the tests contain invalid references.
+        module: [ party-catalog, product-inventory, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
 
     steps:
       - uses: actions/checkout@v2
