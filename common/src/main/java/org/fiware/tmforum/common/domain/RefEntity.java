@@ -45,4 +45,7 @@ public abstract class RefEntity extends Entity implements ReferencedEntity {
 		this.id = id;
 	}
 
+	@Override public URI getEntityId() {
+		return getId();
+	}
 }
