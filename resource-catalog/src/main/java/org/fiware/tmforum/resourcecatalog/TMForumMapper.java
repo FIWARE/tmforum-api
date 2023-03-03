@@ -135,14 +135,14 @@ public interface TMForumMapper {
         if (categoryRef == null) {
             return null;
         }
-        return categoryRef.getId().toString();
+        return categoryRef.getEntityId().toString();
     }
 
     default String mapFromResourceSpecificationRef(ResourceSpecificationRef resourceSpecificationRef) {
         if (resourceSpecificationRef == null) {
             return null;
         }
-        return resourceSpecificationRef.getId().toString();
+        return resourceSpecificationRef.getEntityId().toString();
     }
 }
 

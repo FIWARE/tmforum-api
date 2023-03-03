@@ -23,6 +23,6 @@ public class MappingHelper {
         if (parentId == null) {
             return null;
         }
-        return Optional.ofNullable(parentId.getId()).map(URI::toString).orElse(null);
+        return Optional.ofNullable(parentId.getEntityId()).map(URI::toString).orElse(null);
     }
 }

@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ customer-bill-management, customer-management, party-catalog, product-catalog, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
+        module: [ customer-bill-management, customer-management, party-catalog, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
 
     steps:
       - uses: actions/checkout@v2
@@ -23,4 +23,4 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test --projects common,mapping,resource-shared-models,service-shared-models,product-shared-models,${{matrix.module}}
+          mvn clean test integration-test --projects common,mapping,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}}

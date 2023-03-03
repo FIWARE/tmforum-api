@@ -143,21 +143,21 @@ public interface TMForumMapper {
         if (serviceSpecificationRelationship == null) {
             return null;
         }
-        return serviceSpecificationRelationship.getId().toString();
+        return serviceSpecificationRelationship.getEntityId().toString();
     }
 
     default String mapFromServiceCategoryRef(ServiceCategoryRef serviceCategoryRef) {
         if (serviceCategoryRef == null) {
             return null;
         }
-        return serviceCategoryRef.getId().toString();
+        return serviceCategoryRef.getEntityId().toString();
     }
 
     default String mapFromResourceSpecificationRef(ResourceSpecificationRef resourceSpecificationRef) {
         if (resourceSpecificationRef == null) {
             return null;
         }
-        return resourceSpecificationRef.getId().toString();
+        return resourceSpecificationRef.getEntityId().toString();
     }
 
 

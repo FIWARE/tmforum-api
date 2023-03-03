@@ -32,12 +32,14 @@
     <modules>
         <module>mapping</module>
         <module>common</module>
+        <module>customer-shared-models</module>
         <module>resource-shared-models</module>
         <module>product-shared-models</module>
         <module>service-shared-models</module>
         <module>party-catalog</module>
         <module>product-inventory</module>
         <module>product-catalog</module>
+        <module>product-ordering-management</module>
         <module>resource-function-activation</module>
         <module>resource-catalog</module>
         <module>resource-inventory</module>
@@ -91,7 +93,7 @@
         <version.org.codehaus.mojo.build-helper-maven-plugin>3.3.0</version.org.codehaus.mojo.build-helper-maven-plugin>
 
         <!-- test -->
-        <version.io.kokuwa.maven.k3s-plugin>0.6.1</version.io.kokuwa.maven.k3s-plugin>
+        <version.io.kokuwa.maven.k3s-plugin>0.7.0</version.io.kokuwa.maven.k3s-plugin>
         <version.org.mockito.mockito-all>1.10.19</version.org.mockito.mockito-all>
         <version.org.mockito.mockito-junit-jupiter>4.8.1</version.org.mockito.mockito-junit-jupiter>
         <version.org.awaitility>4.0.3</version.org.awaitility>

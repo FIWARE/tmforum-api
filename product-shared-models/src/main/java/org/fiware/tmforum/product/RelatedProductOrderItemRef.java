@@ -60,7 +60,7 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 	@RelationshipObject
 	@DatasetId
 	@Override
-	public URI getId() {
+	public URI getEntityId() {
 		return productOrderId;
 	}
 

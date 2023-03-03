@@ -18,5 +18,5 @@ public interface ReferencedEntity {
 	 * Id of the entity itself
 	 * @return the id
 	 */
-	URI getId();
+	URI getEntityId();
 }
