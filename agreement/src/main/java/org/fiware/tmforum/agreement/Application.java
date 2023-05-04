@@ -50,7 +50,6 @@ public class Application {
 			fieldParamModule.addSerializer(AgreementSpecificationRefVO.class, new FieldCleaningSerializer<>());
 			fieldParamModule.addSerializer(AgreementSpecificationRelationshipVO.class, new FieldCleaningSerializer<>());
 			fieldParamModule.addSerializer(AgreementTermOrConditionVO.class, new FieldCleaningSerializer<>());
-			fieldParamModule.addSerializer(CategoryRefVO.class, new FieldCleaningSerializer<>());
 
 			objectMapper.registerModule(fieldParamModule);
 			return objectMapper;
