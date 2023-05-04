@@ -17,6 +17,7 @@ import org.fiware.agreement.model.AgreementSpecificationRelationshipVO;
 import org.fiware.agreement.model.AgreementSpecificationVO;
 import org.fiware.agreement.model.AgreementTermOrConditionVO;
 import org.fiware.agreement.model.AgreementVO;
+import org.fiware.agreement.model.CategoryRefVO;
 
 import javax.inject.Singleton;
 
@@ -49,6 +50,7 @@ public class Application {
 			fieldParamModule.addSerializer(AgreementSpecificationRefVO.class, new FieldCleaningSerializer<>());
 			fieldParamModule.addSerializer(AgreementSpecificationRelationshipVO.class, new FieldCleaningSerializer<>());
 			fieldParamModule.addSerializer(AgreementTermOrConditionVO.class, new FieldCleaningSerializer<>());
+			fieldParamModule.addSerializer(CategoryRefVO.class, new FieldCleaningSerializer<>());
 
 			objectMapper.registerModule(fieldParamModule);
 			return objectMapper;

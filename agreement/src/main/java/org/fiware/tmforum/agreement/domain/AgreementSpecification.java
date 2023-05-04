@@ -58,12 +58,16 @@ public class AgreementSpecification extends EntityWithId {
         @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "attachment") }))
         private List<AttachmentRefOrValue> attachment;
 
-        @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "relatedParty") }))
-        @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "relatedParty") }))
+        @Getter(onMethod = @__({
+                        @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
+        @Setter(onMethod = @__({
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
         private List<RelatedParty> relatedParty;
 
-        @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "serviceCategory") }))
-        @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "serviceCategory") }))
+        @Getter(onMethod = @__({
+                        @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCategory") }))
+        @Setter(onMethod = @__({
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCategory", targetClass = CategoryRef.class) }))
         private CategoryRef serviceCategory;
 
         @Getter(onMethod = @__({
@@ -73,9 +77,9 @@ public class AgreementSpecification extends EntityWithId {
         private List<AgreementSpecCharacteristic> specificationCharacteristic;
 
         @Getter(onMethod = @__({
-                        @AttributeGetter(value = AttributeType.PROPERTY, targetName = "specificationRelationship") }))
+                        @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship") }))
         @Setter(onMethod = @__({
-                        @AttributeSetter(value = AttributeType.PROPERTY, targetName = "specificationRelationship") }))
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship") }))
         private List<AgreementSpecificationRelationship> specificationRelationship;
 
         @Getter(onMethod = @__({

@@ -19,7 +19,7 @@ import org.fiware.tmforum.agreement.domain.AgreementSpecification;
 
 import java.net.URL;
 
-@Mapper(componentModel = "jsr330", uses = IdHelper.class)
+@Mapper(componentModel = "jsr330", uses = { IdHelper.class, MappingHelper.class })
 public interface TMForumMapper {
 
 	@Mapping(target = "id", source = "id")

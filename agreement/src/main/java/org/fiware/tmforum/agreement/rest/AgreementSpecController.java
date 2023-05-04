@@ -43,7 +43,7 @@ public class AgreementSpecController extends AbstractApiController<AgreementSpec
         public Mono<HttpResponse<AgreementSpecificationVO>> createAgreementSpecification(
                         AgreementSpecificationCreateVO agreementSpecification) {
                 AgreementSpecification agreement = tmForumMapper.map(tmForumMapper.map(agreementSpecification,
-                                IdHelper.toNgsiLd(UUID.randomUUID().toString(), Agreement.TYPE_AG)));
+                                IdHelper.toNgsiLd(UUID.randomUUID().toString(), AgreementSpecification.TYPE_AGSP)));
                 return create(getCheckingMono(agreement), AgreementSpecification.class)
                                 .map(tmForumMapper::map)
                                 .map(HttpResponse::created);
@@ -53,6 +53,7 @@ public class AgreementSpecController extends AbstractApiController<AgreementSpec
                 List<List<? extends ReferencedEntity>> references = new ArrayList<>();
                 references.add(ag.getRelatedParty());
                 references.add(ag.getSpecificationRelationship());
+                references.add(List.of(ag.getServiceCategory()));
 
                 return getCheckingMono(ag, references)
                                 .onErrorMap(throwable -> new TmForumException(
