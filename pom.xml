@@ -30,7 +30,6 @@
     </licenses>
 
     <modules>
-        <module>mapping</module>
         <module>common</module>
         <module>customer-shared-models</module>
         <module>resource-shared-models</module>
@@ -53,6 +52,8 @@
         <release.version>17</release.version>
         <micronaut.version>3.7.2</micronaut.version>
 
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- project info -->
         <project.author.name>Stefan Wiedemann</project.author.name>
         <project.author.email>stefan.wiedemann@fiware.org</project.author.email>
@@ -101,7 +102,8 @@
         <version.org.eluder.coveralls.maven-plugin>4.3.0</version.org.eluder.coveralls.maven-plugin>
         <version.com.github.spotbugs.maven-plugin>4.5.2.0</version.com.github.spotbugs.maven-plugin>
         <version.org.apache.maven.plugins.maven-site-plugin>3.9.1</version.org.apache.maven.plugins.maven-site-plugin>
-        <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0</version.org.apache.maven.plugins.maven-javadoc-plugin>
+        <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0
+        </version.org.apache.maven.plugins.maven-javadoc-plugin>
         <version.com.google.code.findbugs.annotations>3.0.1u2</version.com.google.code.findbugs.annotations>
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
@@ -111,8 +113,12 @@
         <!-- tm-forum api links. -->
         <tmforum.api.url>API-URL</tmforum.api.url>
         <!-- will be moved to the modules -->
-        <tmforum.product-catalogue-api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json</tmforum.product-catalogue-api.url>
-        <tmforum.agreement-api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF651-Agreement-v4.0.0.swagger.json</tmforum.agreement-api.url>
+        <tmforum.product-catalogue-api.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json
+        </tmforum.product-catalogue-api.url>
+        <tmforum.agreement-api.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF651-Agreement-v4.0.0.swagger.json
+        </tmforum.agreement-api.url>
 
         <!-- tm-forum conformance test config -->
         <module.ctk.url>module-specific-url</module.ctk.url>
@@ -165,6 +171,14 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.wistefan</groupId>
+            <artifactId>ngsi-ld-java-mapping</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <resources>
@@ -425,7 +439,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
-                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
+                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                            java.base/java.time=ALL-UNNAMED
+                        </argLine>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -442,7 +458,9 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
-                        <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
+                        <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                            java.base/java.time=ALL-UNNAMED
+                        </argLine>
                     </configuration>
                 </plugin>
             </plugins>
@@ -450,10 +468,7 @@
     </build>
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>integration-test</id>
             <build>
                 <pluginManagement>
                     <plugins>
@@ -628,10 +643,12 @@
                                             <image>
                                                 <name>ctk</name>
                                                 <build>
-                                                    <dockerFile>${project.build.directory}/conformance-test/Dockerfile</dockerFile>
+                                                    <dockerFile>${project.build.directory}/conformance-test/Dockerfile
+                                                    </dockerFile>
                                                     <args>
                                                         <CTK_URL>${module.ctk.url}</CTK_URL>
-                                                        <CTK_SCRIPT_FOLDER>${module.ctk.script-folder}</CTK_SCRIPT_FOLDER>
+                                                        <CTK_SCRIPT_FOLDER>${module.ctk.script-folder}
+                                                        </CTK_SCRIPT_FOLDER>
                                                     </args>
                                                 </build>
                                                 <run>
@@ -706,16 +723,27 @@
                                 <container>
                                     <labels>
                                         <!-- oci labels -->
-                                        <org.opencontainers.image.authors>${project.author.name} - ${project.author.email}</org.opencontainers.image.authors>
-                                        <org.opencontainers.image.description>${project.description}</org.opencontainers.image.description>
-                                        <org.opencontainers.image.documentation>${project.url}</org.opencontainers.image.documentation>
-                                        <org.opencontainers.image.licenses>${project.license.identifier}</org.opencontainers.image.licenses>
-                                        <org.opencontainers.image.source>${project.url}</org.opencontainers.image.source>
-                                        <org.opencontainers.image.title>${project.title}</org.opencontainers.image.title>
-                                        <org.opencontainers.image.vendor>${project.vendor}</org.opencontainers.image.vendor>
-                                        <org.opencontainers.image.version>${project.version}</org.opencontainers.image.version>
-                                        <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>
-                                        <org.fiware.contact.localpart>${project.contact.email}</org.fiware.contact.localpart>
+                                        <org.opencontainers.image.authors>${project.author.name} -
+                                            ${project.author.email}
+                                        </org.opencontainers.image.authors>
+                                        <org.opencontainers.image.description>${project.description}
+                                        </org.opencontainers.image.description>
+                                        <org.opencontainers.image.documentation>${project.url}
+                                        </org.opencontainers.image.documentation>
+                                        <org.opencontainers.image.licenses>${project.license.identifier}
+                                        </org.opencontainers.image.licenses>
+                                        <org.opencontainers.image.source>${project.url}
+                                        </org.opencontainers.image.source>
+                                        <org.opencontainers.image.title>${project.title}
+                                        </org.opencontainers.image.title>
+                                        <org.opencontainers.image.vendor>${project.vendor}
+                                        </org.opencontainers.image.vendor>
+                                        <org.opencontainers.image.version>${project.version}
+                                        </org.opencontainers.image.version>
+                                        <org.opencontainers.image.created>${maven.build.timestamp}
+                                        </org.opencontainers.image.created>
+                                        <org.fiware.contact.localpart>${project.contact.email}
+                                        </org.fiware.contact.localpart>
                                         <org.fiware.contact.domain>${project.contact.domain}</org.fiware.contact.domain>
                                         <!-- redhat required labels -->
                                         <name>${project.title}</name>
