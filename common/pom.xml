@@ -15,12 +15,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>mapping</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-server</artifactId>
             <scope>provided</scope>
