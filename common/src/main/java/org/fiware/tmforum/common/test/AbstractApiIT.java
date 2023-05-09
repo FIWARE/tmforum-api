@@ -8,7 +8,7 @@ import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
+import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URL;

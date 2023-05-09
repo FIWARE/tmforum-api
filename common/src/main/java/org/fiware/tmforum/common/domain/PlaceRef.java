@@ -1,7 +1,7 @@
 package org.fiware.tmforum.common.domain;
 
 import lombok.EqualsAndHashCode;
-import org.fiware.tmforum.mapping.annotations.MappingEnabled;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 

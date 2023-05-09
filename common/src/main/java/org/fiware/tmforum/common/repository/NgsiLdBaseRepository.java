@@ -15,8 +15,8 @@ import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
-import org.fiware.tmforum.mapping.EntityVOMapper;
-import org.fiware.tmforum.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.EntityVOMapper;
+import io.github.wistefan.mapping.JavaObjectMapper;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;

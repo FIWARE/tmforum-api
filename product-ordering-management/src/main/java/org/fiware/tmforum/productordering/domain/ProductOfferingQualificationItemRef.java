@@ -6,8 +6,8 @@ import lombok.Getter;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.domain.RefEntity;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.mapping.annotations.DatasetId;
-import org.fiware.tmforum.mapping.annotations.RelationshipObject;
+import io.github.wistefan.mapping.annotations.DatasetId;
+import io.github.wistefan.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
 import java.util.List;

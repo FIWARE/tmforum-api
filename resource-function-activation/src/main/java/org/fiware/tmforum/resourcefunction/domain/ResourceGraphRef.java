@@ -1,7 +1,7 @@
 package org.fiware.tmforum.resourcefunction.domain;
 
 import org.fiware.tmforum.common.domain.RefEntity;
-import org.fiware.tmforum.mapping.annotations.MappingEnabled;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 

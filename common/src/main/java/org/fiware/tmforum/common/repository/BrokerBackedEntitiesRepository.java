@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.mapping.EntitiesRepository;
+import io.github.wistefan.mapping.EntitiesRepository;
 import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;

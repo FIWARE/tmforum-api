@@ -44,7 +44,7 @@ import org.fiware.party.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
+import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;

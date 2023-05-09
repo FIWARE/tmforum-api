@@ -13,7 +13,7 @@ import org.fiware.servicecatalog.model.ServiceSpecificationCreateVO;
 import org.fiware.servicecatalog.model.ServiceSpecificationUpdateVO;
 import org.fiware.servicecatalog.model.ServiceSpecificationVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.resource.ResourceSpecificationRef;
 import org.fiware.tmforum.service.ServiceCandidate;
 import org.fiware.tmforum.service.ServiceCategory;
