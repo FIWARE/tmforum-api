@@ -1,10 +1,10 @@
 package org.fiware.tmforum.common.repository;
 
+import io.github.wistefan.mapping.EntitiesRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import io.github.wistefan.mapping.EntitiesRepository;
 import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;

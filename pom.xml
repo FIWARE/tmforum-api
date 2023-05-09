@@ -10,7 +10,7 @@
     <parent>
         <groupId>io.micronaut</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>3.7.2</version>
+        <version>3.9.1</version>
     </parent>
 
     <developers>
@@ -50,7 +50,7 @@
     <properties>
         <jdk.version>17</jdk.version>
         <release.version>17</release.version>
-        <micronaut.version>3.7.2</micronaut.version>
+        <micronaut.version>3.9.1</micronaut.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -86,7 +86,7 @@
         <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>0.1.1</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>0.1.2</version.io.github.wistefan.ngsi-ld-mapping-java>
 
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
@@ -634,7 +634,7 @@
                         <plugin>
                             <groupId>io.fabric8</groupId>
                             <artifactId>docker-maven-plugin</artifactId>
-                            <version>0.40.2</version>
+                            <version>0.42.1</version>
                             <executions>
                                 <execution>
                                     <id>run-test</id>
