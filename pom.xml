@@ -669,7 +669,7 @@
                                                         </bind>
                                                     </volumes>
                                                     <wait>
-                                                        <time>30000</time>
+                                                        <time>50000</time>
                                                         <exit>0</exit>
                                                     </wait>
                                                 </run>
