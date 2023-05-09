@@ -30,6 +30,11 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-server</artifactId>
             <scope>provided</scope>
