@@ -18,6 +18,7 @@ public class TmForumExceptionHandler implements ExceptionHandler<TmForumExceptio
 
     @Override
     public HttpResponse<ErrorDetails> handle(HttpRequest request, TmForumException exception) {
+        log.debug("Got TMForum  Exception:", exception);
         return switch (exception.getExceptionReason()) {
             case CONFLICT -> HttpResponse.status(HttpStatus.CONFLICT).body(new ErrorDetails(HttpStatus.CONFLICT.toString(),
                     HttpStatus.CONFLICT.getReason(),
