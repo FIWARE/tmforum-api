@@ -458,6 +458,13 @@
                                 <goal>integration-test</goal>
                             </goals>
                         </execution>
+                        <execution>
+                            <id>verify</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
                     </executions>
                     <configuration>
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
@@ -473,6 +480,9 @@
     </build>
     <profiles>
         <profile>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <id>integration-test</id>
             <build>
                 <pluginManagement>
@@ -669,7 +679,7 @@
                                                         </bind>
                                                     </volumes>
                                                     <wait>
-                                                        <time>50000</time>
+                                                        <time>30000</time>
                                                         <exit>0</exit>
                                                     </wait>
                                                 </run>
