@@ -28,6 +28,7 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- lazy dev -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -38,6 +39,11 @@
         </dependency>
 
         <!-- micronaut -->
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-inject</artifactId>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-validation</artifactId>
@@ -60,6 +66,11 @@
         </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-http-client</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-server-netty</artifactId>
             <scope>compile</scope>
         </dependency>
@@ -76,6 +87,26 @@
         <dependency>
             <groupId>io.micronaut.reactor</groupId>
             <artifactId>micronaut-reactor</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- javax -->
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
+        <!-- required for javax.nullable -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
             <scope>compile</scope>
         </dependency>
 
