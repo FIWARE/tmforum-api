@@ -79,7 +79,7 @@
         <version.org.projectlombok>1.18.22</version.org.projectlombok>
 
         <!-- logging -->
-        <version.io.kokuwa.micronaut.logging>3.0.4</version.io.kokuwa.micronaut.logging>
+        <version.io.kokuwa.micronaut.logging>3.1.0</version.io.kokuwa.micronaut.logging>
 
         <!-- code gen -->
         <version.org.openapitools.generator-maven-plugin>6.1.0</version.org.openapitools.generator-maven-plugin>
@@ -727,14 +727,6 @@
                                         <tag>latest</tag>
                                     </tags>
                                 </to>
-                                <extraDirectories>
-                                    <paths>
-                                        <path>
-                                            <from>LICENSE</from>
-                                            <into>/licenses</into>
-                                        </path>
-                                    </paths>
-                                </extraDirectories>
                                 <container>
                                     <labels>
                                         <!-- oci labels -->

@@ -42,17 +42,17 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-core</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-client</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-client-core</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
@@ -98,8 +98,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
+            <groupId>io.kokuwa.micronaut</groupId>
+            <artifactId>micronaut-logging</artifactId>
+            <version>${version.io.kokuwa.micronaut.logging}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

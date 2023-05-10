@@ -115,12 +115,6 @@
             <artifactId>micronaut-reactor</artifactId>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>io.kokuwa.micronaut</groupId>
-            <artifactId>micronaut-logging</artifactId>
-            <version>${version.io.kokuwa.micronaut.logging}</version>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- javax -->
         <dependency>
