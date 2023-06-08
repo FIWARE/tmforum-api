@@ -79,7 +79,7 @@ public class Agreement extends EntityWithId {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "agreementSpecification") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "agreementSpecification") }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "agreementSpecification", targetClass = AgreementSpecificationRef.class, fromProperties = true) }))
 	private AgreementSpecificationRef agreementSpecification;
 
 	@Getter(onMethod = @__({
@@ -93,8 +93,8 @@ public class Agreement extends EntityWithId {
 			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristic", targetClass = Characteristic.class) }))
 	private List<Characteristic> characteristic;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "completionDate") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "completionDate") }))
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "completionDate") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "completionDate") }))
 	private TimePeriod completionDate;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty") }))

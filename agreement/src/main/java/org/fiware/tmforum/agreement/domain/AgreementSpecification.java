@@ -1,12 +1,9 @@
 package org.fiware.tmforum.agreement.domain;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.net.URI;
 import java.util.List;
 
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
@@ -15,7 +12,10 @@ import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.product.CategoryRef;
-import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = AgreementSpecification.TYPE_AGSP)
@@ -36,7 +36,7 @@ public class AgreementSpecification extends EntityWithId {
 
         @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "isBundle") }))
         @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "isBundle") }))
-        private boolean isBundle;
+        private Boolean isBundle;
 
         @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "lastUpdate") }))
         @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "lastUpdate") }))
@@ -67,7 +67,7 @@ public class AgreementSpecification extends EntityWithId {
         @Getter(onMethod = @__({
                         @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCategory") }))
         @Setter(onMethod = @__({
-                        @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCategory", targetClass = CategoryRef.class) }))
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCategory", targetClass = CategoryRef.class, fromProperties = true) }))
         private CategoryRef serviceCategory;
 
         @Getter(onMethod = @__({
