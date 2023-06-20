@@ -1,6 +1,7 @@
 package org.fiware.tmforum.agreement.domain;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
@@ -40,7 +41,7 @@ public class AgreementSpecification extends EntityWithId {
 
         @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "lastUpdate") }))
         @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "lastUpdate") }))
-        private String lastUpdate;
+        private Instant lastUpdate;
 
         @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus") }))
         @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus") }))
