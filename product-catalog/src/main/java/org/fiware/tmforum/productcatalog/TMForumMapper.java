@@ -16,7 +16,7 @@ import org.fiware.productcatalog.model.ProductSpecificationCreateVO;
 import org.fiware.productcatalog.model.ProductSpecificationUpdateVO;
 import org.fiware.productcatalog.model.ProductSpecificationVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.product.ProductOfferingPrice;

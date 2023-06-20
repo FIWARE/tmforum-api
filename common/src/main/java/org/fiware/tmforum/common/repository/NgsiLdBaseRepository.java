@@ -1,5 +1,7 @@
 package org.fiware.tmforum.common.repository;
 
+import io.github.wistefan.mapping.EntityVOMapper;
+import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
 import io.micronaut.cache.annotation.Cacheable;
@@ -15,8 +17,6 @@ import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
-import org.fiware.tmforum.mapping.EntityVOMapper;
-import org.fiware.tmforum.mapping.JavaObjectMapper;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;

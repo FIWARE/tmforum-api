@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
@@ -8,7 +9,6 @@ import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.mapping.AdditionalPropertyMixin;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URL;

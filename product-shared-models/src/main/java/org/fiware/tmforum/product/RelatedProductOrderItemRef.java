@@ -7,11 +7,11 @@ import lombok.Setter;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.domain.RefEntity;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.mapping.annotations.AttributeGetter;
-import org.fiware.tmforum.mapping.annotations.AttributeSetter;
-import org.fiware.tmforum.mapping.annotations.AttributeType;
-import org.fiware.tmforum.mapping.annotations.DatasetId;
-import org.fiware.tmforum.mapping.annotations.RelationshipObject;
+import io.github.wistefan.mapping.annotations.AttributeGetter;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
+import io.github.wistefan.mapping.annotations.AttributeType;
+import io.github.wistefan.mapping.annotations.DatasetId;
+import io.github.wistefan.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
 import java.util.List;

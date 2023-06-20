@@ -5,7 +5,7 @@ import org.fiware.customermanagement.model.CustomerUpdateVO;
 import org.fiware.customermanagement.model.CustomerVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customermanagement.domain.Customer;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -3,7 +3,7 @@
 
 ## Structure
 
-The project is setup as a maven multi-module project, to ease the development of independent implementations for each API. 
+The project is setup as a maven multi-module project, to ease the development of independent implementations for each API.
 There are currently two supporting modules:
 - [common](common) - providing functionality that most of the implementations will require
 - [mapping-module](mapping) - providing an annotation based mapping between NGSI-LD objects and Java-Pojos to support the usage of a decoupling-layer.
