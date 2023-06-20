@@ -106,9 +106,9 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
         public void createAgreement201() throws Exception {
                 HttpResponse<AgreementSpecificationVO> agSpecCreateResponse = callAndCatch(
                                 () -> agSpecApiTestClient.createAgreementSpecification(agSpecCreateVO));
+                assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(), message);
                 String id = agSpecCreateResponse.body().getId();
                 expectedAgSpec.id(id).href(id);
-                assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(), message);
                 assertEquals(expectedAgSpec, agSpecCreateResponse.body(), message);
         }
 
@@ -389,7 +389,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
                                                 .relatedParty(null)
                                                 .specificationRelationship(null)));
                 Instant now = Instant.now();
-                result.add(Arguments.of("The version should have been updated",
+                result.add(Arguments.of("The last updated info should have been updated",
                                 AgreementSpecificationUpdateVOTestExample.build().serviceCategory(null).lastUpdate(now),
                                 AgreementSpecificationVOTestExample.build().serviceCategory(null).lastUpdate(now)
                                                 .relatedParty(null)
