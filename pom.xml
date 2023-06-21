@@ -494,21 +494,25 @@
                             <executions>
                                 <execution>
                                     <id>prepare-test-cluster</id>
+                                    <phase>pre-integration-test</phase>
                                     <goals>
                                         <goal>run</goal>
                                         <goal>image</goal>
                                         <goal>apply</goal>
-                                        <goal>rm</goal>
                                     </goals>
                                     <configuration>
-                                        <k3s>
-                                            <failIfExists>false</failIfExists>
-                                        </k3s>
                                         <manifests>${project.parent.basedir}/k3s</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                         </portBindings>
                                     </configuration>
+                                </execution>
+                                <execution>
+                                    <id>clean</id>
+                                    <phase>post-integration-test</phase>
+                                    <goals>
+                                        <goal>rm</goal>
+                                    </goals>
                                 </execution>
                             </executions>
                         </plugin>
