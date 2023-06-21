@@ -9,7 +9,7 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

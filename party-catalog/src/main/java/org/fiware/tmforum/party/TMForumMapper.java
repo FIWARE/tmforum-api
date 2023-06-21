@@ -12,7 +12,7 @@ import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.individual.LanguageAbility;

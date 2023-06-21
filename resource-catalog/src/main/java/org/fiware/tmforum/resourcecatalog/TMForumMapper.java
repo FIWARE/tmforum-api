@@ -13,7 +13,7 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.resource.ResourceCandidate;
 import org.fiware.tmforum.resource.ResourceCategory;
 import org.fiware.tmforum.resource.ResourceCategoryRef;

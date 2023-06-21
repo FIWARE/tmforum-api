@@ -1,15 +1,14 @@
 package org.fiware.tmforum.common.domain;
 
+import io.github.wistefan.mapping.annotations.AttributeGetter;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
+import io.github.wistefan.mapping.annotations.AttributeType;
+import io.github.wistefan.mapping.annotations.DatasetId;
+import io.github.wistefan.mapping.annotations.RelationshipObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.tmforum.common.domain.Entity;
-import org.fiware.tmforum.mapping.annotations.AttributeGetter;
-import org.fiware.tmforum.mapping.annotations.AttributeSetter;
-import org.fiware.tmforum.mapping.annotations.AttributeType;
-import org.fiware.tmforum.mapping.annotations.DatasetId;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
 
@@ -17,7 +16,7 @@ import java.net.URI;
 public abstract class RefEntity extends Entity implements ReferencedEntity {
 
 	@Getter(onMethod = @__({ @RelationshipObject, @DatasetId }))
-	final URI id;
+	 final URI id;
 
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href", embedProperty = true) }))

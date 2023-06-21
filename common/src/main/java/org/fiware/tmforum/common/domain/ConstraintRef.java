@@ -1,12 +1,11 @@
 package org.fiware.tmforum.common.domain;
 
+import io.github.wistefan.mapping.annotations.AttributeGetter;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
+import io.github.wistefan.mapping.annotations.AttributeType;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.tmforum.mapping.annotations.AttributeGetter;
-import org.fiware.tmforum.mapping.annotations.AttributeSetter;
-import org.fiware.tmforum.mapping.annotations.AttributeType;
-import org.fiware.tmforum.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 

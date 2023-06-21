@@ -1,17 +1,16 @@
 package org.fiware.tmforum.common.domain;
 
+import io.github.wistefan.mapping.annotations.AttributeGetter;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
+import io.github.wistefan.mapping.annotations.AttributeType;
+import io.github.wistefan.mapping.annotations.DatasetId;
+import io.github.wistefan.mapping.annotations.EntityId;
+import io.github.wistefan.mapping.annotations.EntityType;
+import io.github.wistefan.mapping.annotations.Ignore;
+import io.github.wistefan.mapping.annotations.RelationshipObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.annotations.AttributeGetter;
-import org.fiware.tmforum.mapping.annotations.AttributeSetter;
-import org.fiware.tmforum.mapping.annotations.AttributeType;
-import org.fiware.tmforum.mapping.annotations.DatasetId;
-import org.fiware.tmforum.mapping.annotations.EntityId;
-import org.fiware.tmforum.mapping.annotations.EntityType;
-import org.fiware.tmforum.mapping.annotations.Ignore;
-import org.fiware.tmforum.mapping.annotations.RelationshipObject;
-
 import javax.annotation.Nullable;
 import java.net.URI;
 

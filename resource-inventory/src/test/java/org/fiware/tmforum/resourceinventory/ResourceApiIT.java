@@ -401,7 +401,6 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 					.href(id)
 					.place(null)
 					.relatedParty(null)
-					.resourceRelationship(null)
 					.resourceSpecification(null);
 			expectedResources.add(resourceVO);
 		}
@@ -543,7 +542,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceVO updatedResource = updateResponse.body();
-		expectedResource.href(resourceId).id(resourceId).relatedParty(null).resourceRelationship(null);
+		expectedResource.href(resourceId).id(resourceId).relatedParty(null);
 
 		assertEquals(expectedResource, updatedResource, message);
 	}
@@ -900,8 +899,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 								// get nulled without values
 								.relatedParty(null)
 								.place(null)
-								.resourceSpecification(null)
-								.resourceRelationship(null)),
+								.resourceSpecification(null)),
 				Arguments.of("Only category and the mandatory parameters should have been included.", "category",
 						ResourceVOTestExample.build()
 								.relatedParty(null)
@@ -909,8 +907,8 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 								.resourceVersion(null)
 								.resourceSpecification(null)
 								.resourceCharacteristic(null)
-								.resourceRelationship(null)
 								.activationFeature(null)
+								.resourceRelationship(null)
 								.description(null)
 								.attachment(null)
 								.note(null)
@@ -927,9 +925,9 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 								.resourceVersion(null)
 								.resourceSpecification(null)
 								.resourceCharacteristic(null)
-								.resourceRelationship(null)
 								.activationFeature(null)
 								.description(null)
+								.resourceRelationship(null)
 								.attachment(null)
 								.note(null)
 								.name(null)
@@ -943,9 +941,9 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 								.resourceVersion(null)
 								.resourceSpecification(null)
 								.resourceCharacteristic(null)
-								.resourceRelationship(null)
 								.activationFeature(null)
 								.category(null)
+								.resourceRelationship(null)
 								.attachment(null)
 								.note(null)
 								.atBaseType(null)

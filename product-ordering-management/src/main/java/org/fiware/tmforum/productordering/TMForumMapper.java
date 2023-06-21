@@ -10,7 +10,7 @@ import org.fiware.productordering.model.ProductOrderUpdateVO;
 import org.fiware.productordering.model.ProductOrderVO;
 import org.fiware.productordering.model.TaskStateTypeVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.productordering.domain.CancelProductOrder;
 import org.fiware.tmforum.productordering.domain.OrderItemAction;
 import org.fiware.tmforum.productordering.domain.ProductOrder;

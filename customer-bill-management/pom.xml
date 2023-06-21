@@ -36,12 +36,6 @@
         </dependency>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
-            <artifactId>mapping</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
             <artifactId>customer-shared-models</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
@@ -115,12 +109,6 @@
             <artifactId>micronaut-reactor</artifactId>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>io.kokuwa.micronaut</groupId>
-            <artifactId>micronaut-logging</artifactId>
-            <version>${version.io.kokuwa.micronaut.logging}</version>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- javax -->
         <dependency>
@@ -183,12 +171,6 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>customer-shared-models</artifactId>
-            <version>0.1</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 

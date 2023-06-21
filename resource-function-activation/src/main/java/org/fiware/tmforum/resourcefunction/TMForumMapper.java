@@ -17,7 +17,7 @@ import org.fiware.resourcefunction.model.ResourceRelationshipVO;
 import org.fiware.resourcefunction.model.ScaleCreateVO;
 import org.fiware.resourcefunction.model.ScaleVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.resource.Characteristic;
 import org.fiware.tmforum.resource.Feature;
 import org.fiware.tmforum.resource.Resource;
