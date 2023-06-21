@@ -501,6 +501,9 @@
                                         <goal>rm</goal>
                                     </goals>
                                     <configuration>
+                                        <k3s>
+                                            <failIfExists>false</failIfExists>
+                                        </k3s>
                                         <manifests>${project.parent.basedir}/k3s</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
