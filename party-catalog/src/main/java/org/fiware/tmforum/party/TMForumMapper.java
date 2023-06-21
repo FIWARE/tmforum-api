@@ -75,6 +75,7 @@ public interface TMForumMapper {
 		organizationParentRelationshipVO.setAtType(organizationParentRelationship.getAtType());
 		OrganizationRefVO organizationRefVO = new OrganizationRefVO();
 		organizationRefVO.setId(organizationParentRelationship.getEntityId().toString());
+		organizationRefVO.setHref(organizationParentRelationship.getHref().toString());
 		organizationRefVO.setName(organizationParentRelationship.getName());
 		organizationRefVO.setAtReferredType(organizationParentRelationship.getAtReferredType());
 		organizationRefVO.setAtType(organizationParentRelationship.getAtType());
@@ -99,6 +100,7 @@ public interface TMForumMapper {
 		organizationChildRelationship.setAtReferredType(organizationChildRelationship.getAtReferredType());
 		OrganizationRefVO organizationRefVO = new OrganizationRefVO();
 		organizationRefVO.setId(organizationChildRelationship.getEntityId().toString());
+		organizationRefVO.setHref(organizationChildRelationship.getHref().toString());
 		organizationRefVO.setName(organizationChildRelationship.getName());
 		organizationRefVO.setAtSchemaLocation(organizationChildRelationship.getAtSchemaLocation());
 		organizationRefVO.setAtBaseType(organizationChildRelationship.getAtBaseType());
@@ -124,6 +126,7 @@ public interface TMForumMapper {
 		organizationParentRelationship.setAtReferredType(
 				organizationParentRelationshipVO.getOrganization().getAtReferredType());
 		organizationParentRelationship.setName(organizationParentRelationshipVO.getOrganization().getName());
+		organizationParentRelationship.setHref(URI.create(organizationParentRelationshipVO.getOrganization().getHref()));
 		return organizationParentRelationship;
 	}
 
