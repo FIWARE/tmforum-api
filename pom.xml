@@ -501,6 +501,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
+                                        <failIfExists>false</failIfExists>
                                         <manifests>${project.parent.basedir}/k3s</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
@@ -630,6 +631,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
+                                        <failIfExists>false</failIfExists>
                                         <manifests>${project.build.directory}/conformance-test</manifests>
                                         <dockerImages>
                                             <dockerImage>api</dockerImage>
