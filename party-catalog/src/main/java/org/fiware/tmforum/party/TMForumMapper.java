@@ -37,8 +37,6 @@ public interface TMForumMapper {
 	@Mapping(target = "href", source = "id")
 	OrganizationVO map(OrganizationCreateVO organizationCreateVO, URI id);
 
-	@Mapping(target = "isHeadOffice", source = "headOffice")
-	@Mapping(target = "isLegalEntity", source = "legalEntity")
 	@Mapping(target = "status", source = "organizationState")
 	OrganizationVO map(Organization organization);
 
