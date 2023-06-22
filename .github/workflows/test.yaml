@@ -27,7 +27,7 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test
+          mvn clean test integration-test verify
 
       - name: Submitt report
         id: coveralls

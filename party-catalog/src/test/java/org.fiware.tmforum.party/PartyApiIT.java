@@ -105,8 +105,6 @@ public class PartyApiIT extends AbstractApiIT {
 		OrganizationRefVO expectedParentRef = OrganizationRefVOTestExample.build();
 		expectedParentRef.setId(parentOrgId);
 		expectedParentRef.setName("Parent");
-		// nothing of this is set
-		expectedParentRef.setHref(null);
 
 		OrganizationParentRelationshipVO expectedParentRelationship = OrganizationParentRelationshipVOTestExample.build();
 		expectedParentRelationship.setOrganization(expectedParentRef);

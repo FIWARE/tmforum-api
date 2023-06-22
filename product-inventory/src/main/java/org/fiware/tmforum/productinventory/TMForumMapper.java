@@ -5,7 +5,7 @@ import org.fiware.productinventory.model.ProductUpdateVO;
 import org.fiware.productinventory.model.ProductVO;
 import org.fiware.productinventory.model.RelatedProductOrderItemVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.mapping.MappingException;
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.product.RelatedProductOrderItemRef;
 import org.mapstruct.Mapper;

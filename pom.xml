@@ -10,7 +10,7 @@
     <parent>
         <groupId>io.micronaut</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>3.7.2</version>
+        <version>3.9.1</version>
     </parent>
 
     <developers>
@@ -30,7 +30,6 @@
     </licenses>
 
     <modules>
-        <module>mapping</module>
         <module>common</module>
         <module>customer-shared-models</module>
         <module>resource-shared-models</module>
@@ -51,8 +50,10 @@
     <properties>
         <jdk.version>17</jdk.version>
         <release.version>17</release.version>
-        <micronaut.version>3.7.2</micronaut.version>
+        <micronaut.version>3.9.1</micronaut.version>
 
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- project info -->
         <project.author.name>Stefan Wiedemann</project.author.name>
         <project.author.email>stefan.wiedemann@fiware.org</project.author.email>
@@ -78,22 +79,25 @@
         <version.org.projectlombok>1.18.22</version.org.projectlombok>
 
         <!-- logging -->
-        <version.io.kokuwa.micronaut.logging>3.0.4</version.io.kokuwa.micronaut.logging>
-
+        <version.io.kokuwa.micronaut.logging>3.1.0</version.io.kokuwa.micronaut.logging>
 
         <!-- code gen -->
         <version.org.openapitools.generator-maven-plugin>6.1.0</version.org.openapitools.generator-maven-plugin>
         <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
+        <!-- mapping -->
+        <version.io.github.wistefan.ngsi-ld-mapping-java>0.1.2</version.io.github.wistefan.ngsi-ld-mapping-java>
+
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
         <version.javax.inject>1</version.javax.inject>
+        <version.io.projectreactor.reactor-core>3.5.5</version.io.projectreactor.reactor-core>
 
         <!-- build -->
         <version.org.codehaus.mojo.build-helper-maven-plugin>3.3.0</version.org.codehaus.mojo.build-helper-maven-plugin>
 
         <!-- test -->
-        <version.io.kokuwa.maven.k3s-plugin>0.7.0</version.io.kokuwa.maven.k3s-plugin>
+        <version.io.kokuwa.maven.k3s-plugin>1.0.0</version.io.kokuwa.maven.k3s-plugin>
         <version.org.mockito.mockito-all>1.10.19</version.org.mockito.mockito-all>
         <version.org.mockito.mockito-junit-jupiter>4.8.1</version.org.mockito.mockito-junit-jupiter>
         <version.org.awaitility>4.0.3</version.org.awaitility>
@@ -101,7 +105,8 @@
         <version.org.eluder.coveralls.maven-plugin>4.3.0</version.org.eluder.coveralls.maven-plugin>
         <version.com.github.spotbugs.maven-plugin>4.5.2.0</version.com.github.spotbugs.maven-plugin>
         <version.org.apache.maven.plugins.maven-site-plugin>3.9.1</version.org.apache.maven.plugins.maven-site-plugin>
-        <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0</version.org.apache.maven.plugins.maven-javadoc-plugin>
+        <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0
+        </version.org.apache.maven.plugins.maven-javadoc-plugin>
         <version.com.google.code.findbugs.annotations>3.0.1u2</version.com.google.code.findbugs.annotations>
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
@@ -111,8 +116,12 @@
         <!-- tm-forum api links. -->
         <tmforum.api.url>API-URL</tmforum.api.url>
         <!-- will be moved to the modules -->
-        <tmforum.product-catalogue-api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json</tmforum.product-catalogue-api.url>
-        <tmforum.agreement-api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF651-Agreement-v4.0.0.swagger.json</tmforum.agreement-api.url>
+        <tmforum.product-catalogue-api.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json
+        </tmforum.product-catalogue-api.url>
+        <tmforum.agreement-api.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF651-Agreement-v4.0.0.swagger.json
+        </tmforum.agreement-api.url>
 
         <!-- tm-forum conformance test config -->
         <module.ctk.url>module-specific-url</module.ctk.url>
@@ -162,6 +171,16 @@
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>
                 <version>${version.com.google.code.findbugs.annotations}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.wistefan</groupId>
+                <artifactId>ngsi-ld-java-mapping</artifactId>
+                <version>${version.io.github.wistefan.ngsi-ld-mapping-java}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-core</artifactId>
+                <version>${version.io.projectreactor.reactor-core}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -425,7 +444,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
-                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
+                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                            java.base/java.time=ALL-UNNAMED
+                        </argLine>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -437,12 +458,21 @@
                                 <goal>integration-test</goal>
                             </goals>
                         </execution>
+                        <execution>
+                            <id>verify</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
                     </executions>
                     <configuration>
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
-                        <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED</argLine>
+                        <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                            java.base/java.time=ALL-UNNAMED
+                        </argLine>
                     </configuration>
                 </plugin>
             </plugins>
@@ -450,10 +480,10 @@
     </build>
     <profiles>
         <profile>
-            <id>default</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+            <id>integration-test</id>
             <build>
                 <pluginManagement>
                     <plugins>
@@ -464,20 +494,26 @@
                             <executions>
                                 <execution>
                                     <id>prepare-test-cluster</id>
+                                    <phase>pre-integration-test</phase>
                                     <goals>
-                                        <goal>create</goal>
-                                        <goal>start</goal>
+                                        <goal>run</goal>
                                         <goal>image</goal>
-                                        <goal>kubectl</goal>
-                                        <goal>rm</goal>
+                                        <goal>apply</goal>
                                     </goals>
                                     <configuration>
+                                        <failIfExists>false</failIfExists>
                                         <manifests>${project.parent.basedir}/k3s</manifests>
-                                        <streamLogs>true</streamLogs>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                         </portBindings>
                                     </configuration>
+                                </execution>
+                                <execution>
+                                    <id>clean</id>
+                                    <phase>post-integration-test</phase>
+                                    <goals>
+                                        <goal>rm</goal>
+                                    </goals>
                                 </execution>
                             </executions>
                         </plugin>
@@ -498,14 +534,12 @@
                                 <execution>
                                     <id>prepare-test-cluster</id>
                                     <goals>
-                                        <goal>create</goal>
-                                        <goal>start</goal>
+                                        <goal>run</goal>
                                         <goal>image</goal>
-                                        <goal>kubectl</goal>
+                                        <goal>apply</goal>
                                     </goals>
                                     <configuration>
                                         <manifests>${project.parent.basedir}/k3s</manifests>
-                                        <streamLogs>true</streamLogs>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                         </portBindings>
@@ -592,14 +626,13 @@
                                 <execution>
                                     <id>prepare-test-cluster</id>
                                     <goals>
-                                        <goal>create</goal>
-                                        <goal>start</goal>
+                                        <goal>run</goal>
                                         <goal>image</goal>
-                                        <goal>kubectl</goal>
+                                        <goal>apply</goal>
                                     </goals>
                                     <configuration>
+                                        <failIfExists>false</failIfExists>
                                         <manifests>${project.build.directory}/conformance-test</manifests>
-                                        <streamLogs>true</streamLogs>
                                         <dockerImages>
                                             <dockerImage>api</dockerImage>
                                         </dockerImages>
@@ -614,7 +647,7 @@
                         <plugin>
                             <groupId>io.fabric8</groupId>
                             <artifactId>docker-maven-plugin</artifactId>
-                            <version>0.40.2</version>
+                            <version>0.42.1</version>
                             <executions>
                                 <execution>
                                     <id>run-test</id>
@@ -628,10 +661,12 @@
                                             <image>
                                                 <name>ctk</name>
                                                 <build>
-                                                    <dockerFile>${project.build.directory}/conformance-test/Dockerfile</dockerFile>
+                                                    <dockerFile>${project.build.directory}/conformance-test/Dockerfile
+                                                    </dockerFile>
                                                     <args>
                                                         <CTK_URL>${module.ctk.url}</CTK_URL>
-                                                        <CTK_SCRIPT_FOLDER>${module.ctk.script-folder}</CTK_SCRIPT_FOLDER>
+                                                        <CTK_SCRIPT_FOLDER>${module.ctk.script-folder}
+                                                        </CTK_SCRIPT_FOLDER>
                                                     </args>
                                                 </build>
                                                 <run>
@@ -695,27 +730,30 @@
                                         <tag>latest</tag>
                                     </tags>
                                 </to>
-                                <extraDirectories>
-                                    <paths>
-                                        <path>
-                                            <from>LICENSE</from>
-                                            <into>/licenses</into>
-                                        </path>
-                                    </paths>
-                                </extraDirectories>
                                 <container>
                                     <labels>
                                         <!-- oci labels -->
-                                        <org.opencontainers.image.authors>${project.author.name} - ${project.author.email}</org.opencontainers.image.authors>
-                                        <org.opencontainers.image.description>${project.description}</org.opencontainers.image.description>
-                                        <org.opencontainers.image.documentation>${project.url}</org.opencontainers.image.documentation>
-                                        <org.opencontainers.image.licenses>${project.license.identifier}</org.opencontainers.image.licenses>
-                                        <org.opencontainers.image.source>${project.url}</org.opencontainers.image.source>
-                                        <org.opencontainers.image.title>${project.title}</org.opencontainers.image.title>
-                                        <org.opencontainers.image.vendor>${project.vendor}</org.opencontainers.image.vendor>
-                                        <org.opencontainers.image.version>${project.version}</org.opencontainers.image.version>
-                                        <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>
-                                        <org.fiware.contact.localpart>${project.contact.email}</org.fiware.contact.localpart>
+                                        <org.opencontainers.image.authors>${project.author.name} -
+                                            ${project.author.email}
+                                        </org.opencontainers.image.authors>
+                                        <org.opencontainers.image.description>${project.description}
+                                        </org.opencontainers.image.description>
+                                        <org.opencontainers.image.documentation>${project.url}
+                                        </org.opencontainers.image.documentation>
+                                        <org.opencontainers.image.licenses>${project.license.identifier}
+                                        </org.opencontainers.image.licenses>
+                                        <org.opencontainers.image.source>${project.url}
+                                        </org.opencontainers.image.source>
+                                        <org.opencontainers.image.title>${project.title}
+                                        </org.opencontainers.image.title>
+                                        <org.opencontainers.image.vendor>${project.vendor}
+                                        </org.opencontainers.image.vendor>
+                                        <org.opencontainers.image.version>${project.version}
+                                        </org.opencontainers.image.version>
+                                        <org.opencontainers.image.created>${maven.build.timestamp}
+                                        </org.opencontainers.image.created>
+                                        <org.fiware.contact.localpart>${project.contact.email}
+                                        </org.fiware.contact.localpart>
                                         <org.fiware.contact.domain>${project.contact.domain}</org.fiware.contact.domain>
                                         <!-- redhat required labels -->
                                         <name>${project.title}</name>

@@ -1,7 +1,7 @@
 package org.fiware.tmforum.party.domain.organization;
 
 import lombok.EqualsAndHashCode;
-import org.fiware.tmforum.mapping.annotations.MappingEnabled;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Organization.TYPE_ORGANIZATION)
