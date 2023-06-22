@@ -31,11 +31,11 @@ public class Organization extends EntityWithId {
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "isHeadOffice")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "isHeadOffice")}))
-	private boolean isHeadOffice;
+	private Boolean isHeadOffice;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "isLegalEntity")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "isLegalEntity")}))
-	private boolean isLegalEntity;
+	private Boolean isLegalEntity;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "name")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "name")}))
