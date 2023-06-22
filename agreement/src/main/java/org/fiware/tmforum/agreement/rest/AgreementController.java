@@ -21,6 +21,7 @@ import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class AgreementController extends AbstractApiController<Agreement> implem
         }
 
         @Override
-        public Mono<HttpResponse<AgreementVO>> createAgreement(AgreementCreateVO agreementCreateVO) {
+        public Mono<HttpResponse<AgreementVO>> createAgreement(@NonNull AgreementCreateVO agreementCreateVO) {
                 Agreement agreement = tmForumMapper.map(tmForumMapper.map(agreementCreateVO,
                                 IdHelper.toNgsiLd(UUID.randomUUID().toString(), Agreement.TYPE_AG)));
                 return create(getCheckingMono(agreement), Agreement.class)
@@ -61,7 +62,7 @@ public class AgreementController extends AbstractApiController<Agreement> implem
         }
 
         @Override
-        public Mono<HttpResponse<Object>> deleteAgreement(String id) {
+        public Mono<HttpResponse<Object>> deleteAgreement(@NonNull String id) {
                 return delete(id);
         }
 
@@ -76,7 +77,8 @@ public class AgreementController extends AbstractApiController<Agreement> implem
         }
 
         @Override
-        public Mono<HttpResponse<AgreementVO>> patchAgreement(String id, AgreementUpdateVO agreementUpdateVO) {
+        public Mono<HttpResponse<AgreementVO>> patchAgreement(@NonNull String id,
+                        @NonNull AgreementUpdateVO agreementUpdateVO) {
                 // non-ngsi-ld ids cannot exist.
                 if (!IdHelper.isNgsiLdId(id)) {
                         throw new TmForumException("Did not receive a valid id, such agreement cannot exist.",
@@ -90,7 +92,7 @@ public class AgreementController extends AbstractApiController<Agreement> implem
         }
 
         @Override
-        public Mono<HttpResponse<AgreementVO>> retrieveAgreement(String id, String fields) {
+        public Mono<HttpResponse<AgreementVO>> retrieveAgreement(@NonNull String id, @Nullable String fields) {
                 return retrieve(id, Agreement.class)
                                 .switchIfEmpty(
                                                 Mono.error(

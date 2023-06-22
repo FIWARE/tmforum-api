@@ -1,20 +1,22 @@
 package org.fiware.tmforum.agreement.domain;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import java.net.URI;
+import java.time.Instant;
+import java.util.List;
+
+import org.fiware.tmforum.common.domain.AgreementRef;
 import org.fiware.tmforum.common.domain.EntityWithId;
+import org.fiware.tmforum.common.domain.RelatedParty;
+import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.mapping.annotations.AttributeGetter;
 import org.fiware.tmforum.mapping.annotations.AttributeSetter;
 import org.fiware.tmforum.mapping.annotations.AttributeType;
 import org.fiware.tmforum.mapping.annotations.MappingEnabled;
-import java.util.List;
-import org.fiware.tmforum.common.domain.TimePeriod;
-import java.time.Instant;
 import org.fiware.tmforum.product.Characteristic;
-import org.fiware.tmforum.common.domain.RelatedParty;
-import org.fiware.tmforum.common.domain.AgreementRef;
-import java.net.URI;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Agreement.TYPE_AG)

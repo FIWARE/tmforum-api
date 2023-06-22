@@ -1,13 +1,7 @@
 package org.fiware.tmforum.agreement;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.event.BeanCreatedEvent;
-import io.micronaut.context.event.BeanCreatedEventListener;
-import io.micronaut.runtime.Micronaut;
-import lombok.RequiredArgsConstructor;
-import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
+import javax.inject.Singleton;
+
 import org.fiware.agreement.model.AgreementAuthorizationVO;
 import org.fiware.agreement.model.AgreementItemVO;
 import org.fiware.agreement.model.AgreementSpecCharacteristicVO;
@@ -17,9 +11,16 @@ import org.fiware.agreement.model.AgreementSpecificationRelationshipVO;
 import org.fiware.agreement.model.AgreementSpecificationVO;
 import org.fiware.agreement.model.AgreementTermOrConditionVO;
 import org.fiware.agreement.model.AgreementVO;
-import org.fiware.agreement.model.CategoryRefVO;
+import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
-import javax.inject.Singleton;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.event.BeanCreatedEvent;
+import io.micronaut.context.event.BeanCreatedEventListener;
+import io.micronaut.runtime.Micronaut;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Base application as starting point
