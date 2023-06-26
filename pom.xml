@@ -80,6 +80,8 @@
 
         <!-- logging -->
         <version.io.kokuwa.micronaut.logging>3.1.0</version.io.kokuwa.micronaut.logging>
+        <version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>4.8.3
+        </version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>
 
         <!-- code gen -->
         <version.org.openapitools.generator-maven-plugin>6.1.0</version.org.openapitools.generator-maven-plugin>
@@ -539,6 +541,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
+                                        <failIfExists>false</failIfExists>
                                         <manifests>${project.parent.basedir}/k3s</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
