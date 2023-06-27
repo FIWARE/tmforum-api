@@ -1,13 +1,15 @@
 package org.fiware.tmforum.agreement.domain;
 
 import java.util.List;
-import lombok.EqualsAndHashCode;
+
 import org.fiware.tmforum.common.domain.RefEntity;
+
+import io.github.wistefan.mapping.annotations.AttributeGetter;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
+import io.github.wistefan.mapping.annotations.AttributeType;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.tmforum.mapping.annotations.AttributeGetter;
-import org.fiware.tmforum.mapping.annotations.AttributeSetter;
-import org.fiware.tmforum.mapping.annotations.AttributeType;
 
 @EqualsAndHashCode(callSuper = true)
 public class AgreementSpecificationRef extends RefEntity {
