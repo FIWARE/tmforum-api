@@ -34,7 +34,15 @@ public class CatchAllExceptionHandler implements ExceptionHandler<Exception, Htt
 									HttpStatus.BAD_REQUEST.toString(),
 									null));
 		}
-
+		if (exception instanceof IllegalArgumentException illegalArgumentException) {
+			return HttpResponse.status(HttpStatus.BAD_REQUEST)
+					.body(
+							new ErrorDetails(HttpStatus.BAD_REQUEST.toString(),
+									HttpStatus.BAD_REQUEST.getReason(),
+									String.format(illegalArgumentException.getMessage()),
+									HttpStatus.BAD_REQUEST.toString(),
+									null));
+		}
 		return HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
 				.body(
 						new ErrorDetails(HttpStatus.INTERNAL_SERVER_ERROR.toString(),
