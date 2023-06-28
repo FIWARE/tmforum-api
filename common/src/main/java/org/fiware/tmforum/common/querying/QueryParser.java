@@ -66,8 +66,10 @@ public class QueryParser {
 
 		List<String> parameters;
 		LogicalOperator logicalOperator = LogicalOperator.AND;
-		// tmforum does not define queries combining AND and OR, therefor we
-		// and case
+		// tmforum does not define queries combining AND and OR
+		if(queryString.contains(TMFORUM_AND) && queryString.contains(TMFORUM_OR_KEY)) {
+			throw new QueryException("Combining AND(&) and OR(;) on query level is not supported by the TMForum API.");
+		}
 		if (queryString.contains(TMFORUM_AND)) {
 			parameters = Arrays.asList(queryString.split(TMFORUM_AND));
 			logicalOperator = LogicalOperator.AND;
