@@ -116,10 +116,28 @@ public class QueryParser {
 
 	private static String encodeValue(String value, QueryAttributeType type) {
 		return switch (type) {
-			case STRING -> String.format("\"%s\"", value);
+			case STRING -> encodeStringValue(value);
 			case BOOLEAN -> value;
 			case NUMBER -> value;
 		};
+	}
+
+	private static String encodeStringValue(String value) {
+		if (value.contains(NGSI_LD_OR)) {
+			// remove the beginning ( and ending )
+			String noBraces = value.substring(1, value.length() - 1);
+			return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_OR)))
+					.map(v -> String.format("\"%s\"", v))
+					.collect(Collectors.joining(NGSI_LD_OR)));
+		} else if (value.contains(NGSI_LD_AND)) {
+			// remove the beginning ( and ending )
+			String noBraces = value.substring(1, value.length() - 1);
+			return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_AND)))
+					.map(v -> String.format("\"%s\"", v))
+					.collect(Collectors.joining(NGSI_LD_AND)));
+		} else {
+			return String.format("\"%s\"", value);
+		}
 	}
 
 	private static List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
