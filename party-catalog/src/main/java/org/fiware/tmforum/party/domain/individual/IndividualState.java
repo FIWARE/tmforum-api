@@ -1,5 +1,7 @@
 package org.fiware.tmforum.party.domain.individual;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum IndividualState {
 
 	INITIALIZED("initialized"),
@@ -10,5 +12,10 @@ public enum IndividualState {
 
 	IndividualState(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }
