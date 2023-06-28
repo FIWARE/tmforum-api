@@ -1,5 +1,7 @@
 package org.fiware.tmforum.party.domain.organization;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum OrganizationState {
 
 	INITIALIZED("initialized"),
@@ -10,5 +12,10 @@ public enum OrganizationState {
 
 	OrganizationState(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }

@@ -87,12 +87,9 @@ public class IndividualApiController extends AbstractPartyApiController<Individu
 	@Override
 	public Mono<HttpResponse<List<IndividualVO>>> listIndividual(@Nullable String fields, @Nullable Integer offset,
 			@Nullable Integer limit) {
-
 		return list(offset, limit, Individual.TYPE_INDIVIDUAL, Individual.class)
 				.map(individualStream -> individualStream.map(tmForumMapper::map).toList())
-				.switchIfEmpty(Mono.just(List.of()))
-				.map(HttpResponse::ok);
-
+				.switchIfEmpty(Mono.just(List.of())).map(HttpResponse::ok);
 	}
 
 	@Override
@@ -120,5 +117,6 @@ public class IndividualApiController extends AbstractPartyApiController<Individu
 				.map(tmForumMapper::map)
 				.map(HttpResponse::ok);
 	}
+
 }
 
