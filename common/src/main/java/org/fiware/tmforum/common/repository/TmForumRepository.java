@@ -26,13 +26,14 @@ public class TmForumRepository extends NgsiLdBaseRepository {
 				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
 	}
 
-	public <T> Mono<List<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass) {
+	public <T> Mono<List<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass,
+			String query) {
 		return entitiesApi.queryEntities(generalProperties.getTenant(),
 						null,
 						null,
 						entityType,
 						null,
-						null,
+						query,
 						null,
 						null,
 						null,

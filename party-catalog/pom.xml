@@ -13,8 +13,12 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632-Party-v4.0.0.swagger.json</tmforum.api.url>
-        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF632-Party-v4.0.0.zip</module.ctk.url>
+        <tmforum.api.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632-Party-v4.0.0.swagger.json
+        </tmforum.api.url>
+        <module.ctk.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF632-Party-v4.0.0.zip
+        </module.ctk.url>
         <module.ctk.script-folder>TMF632-Party</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/party/v4</module.ctk.base-path>

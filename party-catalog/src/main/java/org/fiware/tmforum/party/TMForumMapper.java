@@ -37,10 +37,8 @@ public interface TMForumMapper {
 	@Mapping(target = "href", source = "id")
 	OrganizationVO map(OrganizationCreateVO organizationCreateVO, URI id);
 
-	@Mapping(target = "status", source = "organizationState")
 	OrganizationVO map(Organization organization);
 
-	@Mapping(target = "organizationState", source = "status")
 	@Mapping(target = "href", source = "id")
 	Organization map(OrganizationVO organizationVO);
 
@@ -54,10 +52,8 @@ public interface TMForumMapper {
 	@Mapping(target = "id", source = "id")
 	Individual map(IndividualUpdateVO individualUpdateVO, String id);
 
-	@Mapping(target = "status", source = "individualState")
 	IndividualVO map(Individual individual);
 
-	@Mapping(target = "individualState", source = "status")
 	@Mapping(target = "href", source = "id")
 	Individual map(IndividualVO individualVO);
 
@@ -75,7 +71,9 @@ public interface TMForumMapper {
 		organizationParentRelationshipVO.setAtType(organizationParentRelationship.getAtType());
 		OrganizationRefVO organizationRefVO = new OrganizationRefVO();
 		organizationRefVO.setId(organizationParentRelationship.getEntityId().toString());
-		organizationRefVO.setHref(organizationParentRelationship.getHref().toString());
+		if(organizationParentRelationship.getHref() != null) {
+			organizationRefVO.setHref(organizationParentRelationship.getHref().toString());
+		}
 		organizationRefVO.setName(organizationParentRelationship.getName());
 		organizationRefVO.setAtReferredType(organizationParentRelationship.getAtReferredType());
 		organizationRefVO.setAtType(organizationParentRelationship.getAtType());
@@ -100,7 +98,9 @@ public interface TMForumMapper {
 		organizationChildRelationship.setAtReferredType(organizationChildRelationship.getAtReferredType());
 		OrganizationRefVO organizationRefVO = new OrganizationRefVO();
 		organizationRefVO.setId(organizationChildRelationship.getEntityId().toString());
-		organizationRefVO.setHref(organizationChildRelationship.getHref().toString());
+		if(organizationChildRelationship.getHref() != null) {
+			organizationRefVO.setHref(organizationChildRelationship.getHref().toString());
+		}
 		organizationRefVO.setName(organizationChildRelationship.getName());
 		organizationRefVO.setAtSchemaLocation(organizationChildRelationship.getAtSchemaLocation());
 		organizationRefVO.setAtBaseType(organizationChildRelationship.getAtBaseType());
@@ -117,6 +117,9 @@ public interface TMForumMapper {
 		if (organizationParentRelationshipVO == null) {
 			return null;
 		}
+		if (organizationParentRelationshipVO.getOrganization() == null) {
+			throw new IllegalArgumentException("No organization is set for the parent relationship.");
+		}
 		OrganizationParentRelationship organizationParentRelationship = new OrganizationParentRelationship(
 				organizationParentRelationshipVO.getOrganization().getId());
 		organizationParentRelationship.setRelationshipType(organizationParentRelationshipVO.getRelationshipType());
@@ -126,13 +129,19 @@ public interface TMForumMapper {
 		organizationParentRelationship.setAtReferredType(
 				organizationParentRelationshipVO.getOrganization().getAtReferredType());
 		organizationParentRelationship.setName(organizationParentRelationshipVO.getOrganization().getName());
-		organizationParentRelationship.setHref(URI.create(organizationParentRelationshipVO.getOrganization().getHref()));
+		if (organizationParentRelationshipVO.getOrganization().getHref() != null) {
+			organizationParentRelationship.setHref(
+					URI.create(organizationParentRelationshipVO.getOrganization().getHref()));
+		}
 		return organizationParentRelationship;
 	}
 
 	default OrganizationChildRelationship map(OrganizationChildRelationshipVO organizationChildRelationshipVO) {
 		if (organizationChildRelationshipVO == null) {
 			return null;
+		}
+		if (organizationChildRelationshipVO.getOrganization() == null) {
+			throw new IllegalArgumentException("No organization is set for the child relationship.");
 		}
 		OrganizationChildRelationship organizationChildRelationship = new OrganizationChildRelationship(
 				organizationChildRelationshipVO.getOrganization().getId());
@@ -143,7 +152,10 @@ public interface TMForumMapper {
 		organizationChildRelationship.setName(organizationChildRelationshipVO.getOrganization().getName());
 		organizationChildRelationship.setAtReferredType(
 				organizationChildRelationshipVO.getOrganization().getAtReferredType());
-		organizationChildRelationship.setHref(URI.create(organizationChildRelationshipVO.getOrganization().getHref()));
+		if (organizationChildRelationshipVO.getOrganization().getHref() != null) {
+			organizationChildRelationship.setHref(
+					URI.create(organizationChildRelationshipVO.getOrganization().getHref()));
+		}
 		return organizationChildRelationship;
 	}
 

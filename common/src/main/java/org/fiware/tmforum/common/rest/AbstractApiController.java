@@ -1,14 +1,16 @@
 package org.fiware.tmforum.common.rest;
 
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.context.ServerRequestContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -17,6 +19,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -76,6 +79,20 @@ public abstract class AbstractApiController<T> {
 	}
 
 	protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {
+
+		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
+		String query = null;
+		if (optionalHttpRequest.isEmpty()) {
+			log.warn("The original request is not available, no filters will be applied.");
+		} else {
+			HttpRequest<Object> theRequest = optionalHttpRequest.get();
+			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
+			if (QueryParser.hasFilter(parameters)) {
+				log.debug("A filter is included in the request.");
+				String queryString = theRequest.getUri().getQuery();
+				query = QueryParser.toNgsiLdQuery(entityClass, queryString);
+			}
+		}
 		offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
 		limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
 
@@ -85,7 +102,7 @@ public abstract class AbstractApiController<T> {
 		}
 
 		return repository
-				.findEntities(offset, limit, type, entityClass)
+				.findEntities(offset, limit, type, entityClass, query)
 				.map(List::stream);
 	}
 
