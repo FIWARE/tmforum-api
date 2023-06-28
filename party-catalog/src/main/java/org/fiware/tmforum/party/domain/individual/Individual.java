@@ -148,7 +148,7 @@ public class Individual extends EntityWithId {
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "status")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "status")}))
-	private IndividualState individualState;
+	private IndividualState status;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemptionCertificate")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemptionCertificate", targetClass = TaxExemptionCertificate.class)}))
