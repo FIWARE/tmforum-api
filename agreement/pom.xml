@@ -28,12 +28,6 @@
         </dependency>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
-            <artifactId>mapping</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
             <artifactId>product-shared-models</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
