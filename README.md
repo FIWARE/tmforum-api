@@ -1,6 +1,6 @@
 # FIWARE implementation of the TMFORUM-APIs
-
-## Structure
+ 
+## Structure 
 
 The project is setup as a maven multi-module project, to ease the development of independent implementations for each
 API.
