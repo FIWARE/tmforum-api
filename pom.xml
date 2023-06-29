@@ -45,6 +45,7 @@
         <module>service-catalog</module>
         <module>customer-management</module>
         <module>customer-bill-management</module>
+        <module>agreement</module>
     </modules>
 
     <properties>
