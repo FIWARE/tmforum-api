@@ -27,9 +27,9 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test verify
+          mvn clean test integration-test verify --settings=.github/settings.xml
 
       - name: Submitt report
         id: coveralls
         run: |
-          mvn jacoco:merge jacoco:report coveralls:report -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Preport-coveralls
+          mvn jacoco:merge jacoco:report coveralls:report -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Preport-coveralls --settings=.github/settings.xml

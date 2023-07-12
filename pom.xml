@@ -29,6 +29,16 @@
         </license>
     </licenses>
 
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/pulledtim/json-schema-openapi-codegen</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <modules>
         <module>common</module>
         <module>customer-shared-models</module>
