@@ -29,16 +29,6 @@
         </license>
     </licenses>
 
-    <repositories>
-        <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/pulledtim/json-schema-openapi-codegen</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <modules>
         <module>common</module>
         <module>customer-shared-models</module>
@@ -97,7 +87,7 @@
         <!-- code gen -->
         <version.org.openapitools.generator-maven-plugin>6.6.0</version.org.openapitools.generator-maven-plugin>
         <version.io.kokuwa.micronaut.codegen>3.4.1</version.io.kokuwa.micronaut.codegen>
-        <version.io.github.pulledtim.json-openapi-codegen>1.0.0-PRE-1-14</version.io.github.pulledtim.json-openapi-codegen>
+        <version.io.github.pulledtim.json-openapi-codegen>1.1.0-PRE-3-27</version.io.github.pulledtim.json-openapi-codegen>
         <!-- mapping -->
         <version.io.github.wistefan.ngsi-ld-mapping-java>0.2.1</version.io.github.wistefan.ngsi-ld-mapping-java>
 
