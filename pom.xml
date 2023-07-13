@@ -312,6 +312,7 @@
                         <!-- needs to be excluded, breaks coveralls linking -->
                         <exclude>**/TMForumMapperImpl*</exclude>
                         <exclude>**/NGSIMapperImpl*</exclude>
+                        <exclude>**/modelngsi/*</exclude>
                     </excludes>
                 </configuration>
                 <executions>
