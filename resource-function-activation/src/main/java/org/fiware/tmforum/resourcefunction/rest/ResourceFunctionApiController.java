@@ -7,6 +7,7 @@ import org.fiware.resourcefunction.api.ResourceFunctionApi;
 import org.fiware.resourcefunction.model.ResourceFunctionCreateVO;
 import org.fiware.resourcefunction.model.ResourceFunctionUpdateVO;
 import org.fiware.resourcefunction.model.ResourceFunctionVO;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -14,7 +15,6 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.resource.Feature;
 import org.fiware.tmforum.resourcefunction.TMForumMapper;
 import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
 import org.fiware.tmforum.resourcefunction.domain.ResourceGraphRelationship;
@@ -34,8 +34,8 @@ public class ResourceFunctionApiController extends AbstractApiController<Resourc
 
 	public ResourceFunctionApiController(ReferenceValidationService validationService,
 			TmForumRepository resourceCatalogRepository,
-			TMForumMapper tmForumMapper) {
-		super(validationService, resourceCatalogRepository);
+			TMForumMapper tmForumMapper, EventHandler eventHandler) {
+		super(validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.customerbillmanagement.api.CustomerBillOnDemandApi;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -19,7 +20,6 @@ import org.fiware.tmforum.customerbillmanagement.TMForumMapper;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand;
 import reactor.core.publisher.Mono;
 
-import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +34,8 @@ public class CustomerBillOnDemandApiController extends AbstractApiController<Cus
 
 	public CustomerBillOnDemandApiController(
 			ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper) {
-		super(validationService, repository);
+			TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+		super(validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

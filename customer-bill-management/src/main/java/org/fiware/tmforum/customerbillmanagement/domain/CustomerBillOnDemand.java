@@ -59,4 +59,9 @@ public class CustomerBillOnDemand extends EntityWithId {
 	public CustomerBillOnDemand(String id) {
 		super(TYPE_CUSTOMER_BILL_ON_DEMAND, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return state != null ? state.getValue() : null;
+	}
 }

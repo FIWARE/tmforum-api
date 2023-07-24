@@ -9,6 +9,7 @@ import org.fiware.productinventory.api.ProductApi;
 import org.fiware.productinventory.model.ProductCreateVO;
 import org.fiware.productinventory.model.ProductUpdateVO;
 import org.fiware.productinventory.model.ProductVO;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -17,19 +18,11 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.product.PriceAlteration;
-import org.fiware.tmforum.product.Product;
-import org.fiware.tmforum.product.ProductOfferingPriceRef;
-import org.fiware.tmforum.product.ProductPrice;
-import org.fiware.tmforum.product.ProductRelationship;
+import org.fiware.tmforum.product.*;
 import org.fiware.tmforum.productinventory.TMForumMapper;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -38,8 +31,8 @@ public class ProductApiController extends AbstractApiController<Product> impleme
 	private final TMForumMapper tmForumMapper;
 
 	public ProductApiController(ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper) {
-		super(validationService, repository);
+			TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+		super(validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

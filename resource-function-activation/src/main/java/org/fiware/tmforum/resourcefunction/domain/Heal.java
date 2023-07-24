@@ -64,4 +64,9 @@ public class Heal extends EntityWithId {
     public Heal(String id) {
         super(TYPE_HEAL, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return state != null ? state.getValue() : null;
+    }
 }
