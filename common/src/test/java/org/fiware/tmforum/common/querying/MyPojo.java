@@ -21,6 +21,8 @@ public class MyPojo {
 	private SubObject sub;
 	private SubObject otherNamedSub;
 	private Integer temperature;
+	private RelObject rel;
+	private List<RelObject> relList;
 
 	// required constructor
 	public MyPojo(String id) {
@@ -85,5 +87,25 @@ public class MyPojo {
 	@AttributeSetter(value = AttributeType.PROPERTY, targetName = "otherSub", targetClass = SubObject.class)
 	public void setOtherNamedSub(SubObject otherSub) {
 		this.otherNamedSub = otherNamedSub;
+	}
+
+	@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "rel")
+	public RelObject getRel() {
+		return rel;
+	}
+
+	@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "rel", targetClass = RelObject.class)
+	public void setRel(RelObject rel) {
+		this.rel = rel;
+	}
+
+	@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relList")
+	public List<RelObject> getRelList() {
+		return relList;
+	}
+
+	@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relList", targetClass = RelObject.class)
+	public void setRelList(List<RelObject> rel) {
+		this.relList = relList;
 	}
 }
