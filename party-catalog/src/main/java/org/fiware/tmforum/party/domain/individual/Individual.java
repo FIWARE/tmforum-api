@@ -157,4 +157,9 @@ public class Individual extends EntityWithId {
 	public Individual(String id) {
 		super(TYPE_INDIVIDUAL, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return status != null ? status.getValue() : null;
+	}
 }

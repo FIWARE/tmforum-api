@@ -1,11 +1,9 @@
 package org.fiware.tmforum.productinventory;
 
-import org.fiware.productinventory.model.ProductCreateVO;
-import org.fiware.productinventory.model.ProductUpdateVO;
-import org.fiware.productinventory.model.ProductVO;
-import org.fiware.productinventory.model.RelatedProductOrderItemVO;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import io.github.wistefan.mapping.MappingException;
+import org.fiware.productinventory.model.*;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.product.RelatedProductOrderItemRef;
 import org.mapstruct.Mapper;
@@ -46,6 +44,8 @@ public interface TMForumMapper {
 			throw new MappingException(String.format("%s is not a URL.", value), e);
 		}
 	}
+
+	EventSubscriptionVO map(Subscription subscription);
 
 	default String map(URL value) {
 		if (value == null) {

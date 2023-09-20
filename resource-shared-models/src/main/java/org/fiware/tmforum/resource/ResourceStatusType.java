@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resource;
 
+import lombok.Getter;
+
 public enum ResourceStatusType {
 
     STANDBY("standby"),
@@ -9,6 +11,7 @@ public enum ResourceStatusType {
     UNKNOWN("unknown"),
     SUSPENDED("suspended");
 
+    @Getter
     private final String value;
 
     ResourceStatusType(String value) {

@@ -1,34 +1,11 @@
 package org.fiware.tmforum.resourcefunction;
 
-import org.fiware.resourcefunction.model.CharacteristicVO;
-import org.fiware.resourcefunction.model.FeatureVO;
-import org.fiware.resourcefunction.model.HealCreateVO;
-import org.fiware.resourcefunction.model.HealVO;
-import org.fiware.resourcefunction.model.MigrateCreateVO;
-import org.fiware.resourcefunction.model.MigrateVO;
-import org.fiware.resourcefunction.model.MonitorVO;
-import org.fiware.resourcefunction.model.ResourceFunctionCreateVO;
-import org.fiware.resourcefunction.model.ResourceFunctionUpdateVO;
-import org.fiware.resourcefunction.model.ResourceFunctionVO;
-import org.fiware.resourcefunction.model.ResourceGraphRelationshipVO;
-import org.fiware.resourcefunction.model.ResourceGraphVO;
-import org.fiware.resourcefunction.model.ResourceRefOrValueVO;
-import org.fiware.resourcefunction.model.ResourceRelationshipVO;
-import org.fiware.resourcefunction.model.ScaleCreateVO;
-import org.fiware.resourcefunction.model.ScaleVO;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.tmforum.resource.Characteristic;
-import org.fiware.tmforum.resource.Feature;
+import org.fiware.resourcefunction.model.*;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.Resource;
-import org.fiware.tmforum.resource.ResourceRelationship;
-import org.fiware.tmforum.resourcefunction.domain.Heal;
-import org.fiware.tmforum.resourcefunction.domain.Migrate;
-import org.fiware.tmforum.resourcefunction.domain.Monitor;
-import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
-import org.fiware.tmforum.resourcefunction.domain.ResourceGraph;
-import org.fiware.tmforum.resourcefunction.domain.ResourceGraphRelationship;
-import org.fiware.tmforum.resourcefunction.domain.Scale;
+import org.fiware.tmforum.resourcefunction.domain.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -92,6 +69,8 @@ public interface TMForumMapper {
     // sub-entities
 
     Resource map(ResourceRefOrValueVO resourceRefOrValueVO);
+
+    EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {
         if (value == null) {

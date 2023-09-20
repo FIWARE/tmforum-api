@@ -1,22 +1,9 @@
 package org.fiware.tmforum.productcatalog;
 
-import org.fiware.productcatalog.model.CatalogCreateVO;
-import org.fiware.productcatalog.model.CatalogUpdateVO;
-import org.fiware.productcatalog.model.CatalogVO;
-import org.fiware.productcatalog.model.CategoryCreateVO;
-import org.fiware.productcatalog.model.CategoryUpdateVO;
-import org.fiware.productcatalog.model.CategoryVO;
-import org.fiware.productcatalog.model.ProductOfferingCreateVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceCreateVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceVO;
-import org.fiware.productcatalog.model.ProductOfferingUpdateVO;
-import org.fiware.productcatalog.model.ProductOfferingVO;
-import org.fiware.productcatalog.model.ProductSpecificationCreateVO;
-import org.fiware.productcatalog.model.ProductSpecificationUpdateVO;
-import org.fiware.productcatalog.model.ProductSpecificationVO;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import io.github.wistefan.mapping.MappingException;
+import org.fiware.productcatalog.model.*;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.product.ProductOfferingPrice;
@@ -111,6 +98,8 @@ public interface TMForumMapper {
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
 	ProductSpecificationVO map(ProductSpecificationUpdateVO productSpecificationUpdateVO, String id);
+
+	EventSubscriptionVO map(Subscription subscription);
 
 	default URL map(String value) {
 		if (value == null) {

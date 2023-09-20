@@ -1,19 +1,10 @@
 package org.fiware.tmforum.party;
 
-import org.fiware.party.model.IndividualCreateVO;
-import org.fiware.party.model.IndividualUpdateVO;
-import org.fiware.party.model.IndividualVO;
-import org.fiware.party.model.LanguageAbilityVO;
-import org.fiware.party.model.OrganizationChildRelationshipVO;
-import org.fiware.party.model.OrganizationCreateVO;
-import org.fiware.party.model.OrganizationParentRelationshipVO;
-import org.fiware.party.model.OrganizationRefVO;
-import org.fiware.party.model.OrganizationUpdateVO;
-import org.fiware.party.model.OrganizationVO;
-import org.fiware.party.model.TimePeriodVO;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import io.github.wistefan.mapping.MappingException;
+import org.fiware.party.model.*;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.individual.LanguageAbility;
 import org.fiware.tmforum.party.domain.organization.Organization;
@@ -59,6 +50,8 @@ public interface TMForumMapper {
 
 	@Mapping(target = "isFavouriteLanguage", source = "favouriteLanguage")
 	LanguageAbilityVO map(LanguageAbility languageAbility);
+
+	EventSubscriptionVO map(Subscription subscription);
 
 	default OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
 		if (organizationParentRelationship == null) {

@@ -1,5 +1,7 @@
 package org.fiware.tmforum.customerbillmanagement.domain;
 
+import lombok.Getter;
+
 public enum StateValue {
 
 	NEW("new"),
@@ -9,6 +11,7 @@ public enum StateValue {
 	PARTIALLYPAID("partiallyPaid"),
 	SETTLED("settled");
 
+	@Getter
 	private final String value;
 
 	StateValue(String value) {

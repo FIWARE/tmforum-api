@@ -1,24 +1,10 @@
 package org.fiware.tmforum.resourcecatalog;
 
-import org.fiware.resourcecatalog.model.ResourceCandidateCreateVO;
-import org.fiware.resourcecatalog.model.ResourceCandidateUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceCandidateVO;
-import org.fiware.resourcecatalog.model.ResourceCatalogCreateVO;
-import org.fiware.resourcecatalog.model.ResourceCatalogUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceCatalogVO;
-import org.fiware.resourcecatalog.model.ResourceCategoryCreateVO;
-import org.fiware.resourcecatalog.model.ResourceCategoryUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceCategoryVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.tmforum.resource.ResourceCandidate;
-import org.fiware.tmforum.resource.ResourceCategory;
-import org.fiware.tmforum.resource.ResourceCategoryRef;
-import org.fiware.tmforum.resource.ResourceSpecification;
-import org.fiware.tmforum.resource.ResourceSpecificationRef;
+import org.fiware.resourcecatalog.model.*;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.resource.*;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -84,6 +70,8 @@ public interface TMForumMapper {
 
     @Mapping(target = "id", source = "id")
     ResourceCategory map(ResourceCategoryUpdateVO resourceCategoryUpdateVO, String id);
+
+    EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {
         if (value == null) {

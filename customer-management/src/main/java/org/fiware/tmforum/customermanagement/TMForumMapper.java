@@ -1,11 +1,13 @@
 package org.fiware.tmforum.customermanagement;
 
+import io.github.wistefan.mapping.MappingException;
 import org.fiware.customermanagement.model.CustomerCreateVO;
 import org.fiware.customermanagement.model.CustomerUpdateVO;
 import org.fiware.customermanagement.model.CustomerVO;
+import org.fiware.customermanagement.model.EventSubscriptionVO;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customermanagement.domain.Customer;
-import io.github.wistefan.mapping.MappingException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -31,6 +33,8 @@ public interface TMForumMapper {
 
     @Mapping(target = "id", source = "id")
     Customer map(CustomerUpdateVO customerUpdateVO, String id);
+
+    EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {
         if (value == null) {

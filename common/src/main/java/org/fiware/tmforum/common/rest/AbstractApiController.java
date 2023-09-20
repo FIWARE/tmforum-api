@@ -47,7 +47,9 @@ public abstract class AbstractApiController<T> {
 
 	protected Mono<T> create(Mono<T> checkingMono, Class<T> entityClass) {
 		return checkingMono
-				.flatMap(checkedResult -> repository.createDomainEntity(checkedResult).then(Mono.just(checkedResult)))
+				.flatMap(checkedResult -> repository.createDomainEntity(checkedResult)
+						.then(repository.handleCreateEvent(checkedResult))
+						.then(Mono.just(checkedResult)))
 				.onErrorMap(t -> {
 					if (t instanceof HttpClientResponseException e) {
 						return switch (e.getStatus()) {
@@ -74,8 +76,12 @@ public abstract class AbstractApiController<T> {
 			throw new TmForumException("Did not receive a valid id, such entity cannot exist.",
 					TmForumExceptionReason.NOT_FOUND);
 		}
-		return repository.deleteDomainEntity(URI.create(id))
-				.then(Mono.just(HttpResponse.noContent()));
+
+		URI idUri = URI.create(id);
+		return repository.retrieveEntityById(idUri).flatMap(entityVO ->
+				repository.deleteDomainEntity(idUri)
+						.then(repository.handleDeleteEvent(entityVO))
+						.then(Mono.just(HttpResponse.noContent())));
 	}
 
 	protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {
@@ -123,9 +129,12 @@ public abstract class AbstractApiController<T> {
 				.get(idUri, entityClass)
 				.switchIfEmpty(
 						Mono.error(new TmForumException("No such entity exists.", TmForumExceptionReason.NOT_FOUND)))
-				.flatMap(entity -> checkingMono)
 				.flatMap(entity -> repository.updateDomainEntity(id, updatedObject)
-						.then(repository.get(idUri, entityClass)));
+								.then(repository.get(idUri, entityClass))
+								.flatMap(updatedState -> repository.handleUpdateEvent(updatedState, entity)
+										.then(Mono.just(updatedState))
+								)
+				);
 	}
 
 	protected <R extends EntityWithId> Mono<T> relatedEntityHandlingMono(T entity, Mono<T> entityMono,

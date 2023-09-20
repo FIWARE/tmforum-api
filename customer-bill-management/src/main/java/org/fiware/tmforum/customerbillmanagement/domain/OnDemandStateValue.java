@@ -1,5 +1,7 @@
 package org.fiware.tmforum.customerbillmanagement.domain;
 
+import lombok.Getter;
+
 public enum OnDemandStateValue {
 
 	INPROGRESS("inProgress"),
@@ -7,6 +9,7 @@ public enum OnDemandStateValue {
 	DONE("done"),
 	TERMINATEDWITHERROR("terminatedWithError");
 
+	@Getter
 	private final String value;
 
 	OnDemandStateValue(String value) {

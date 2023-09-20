@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resourcefunction.domain;
 
+import lombok.Getter;
+
 public enum TaskState {
 
     ACKNOWLEDGED("acknowledged"),
@@ -7,6 +9,7 @@ public enum TaskState {
     INPROGRESS("inProgress"),
     DONE("done");
 
+    @Getter
     private final String value;
 
     TaskState(String value) {
