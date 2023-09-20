@@ -14,10 +14,26 @@ public class SubscriptionQuery {
 
     public SubscriptionQuery() {
         eventTypes = new ArrayList<>();
+        fields = new ArrayList<>();
         query = "";
     }
 
     public void addEventType(String eventType) {
         eventTypes.add(eventType);
+    }
+
+    public SubscriptionQuery eventTypes(List<String> eventTypes) {
+        this.eventTypes = eventTypes;
+        return this;
+    }
+
+    public SubscriptionQuery query(String query) {
+        this.query = query;
+        return this;
+    }
+
+    public SubscriptionQuery fields(List<String> fields) {
+        this.fields = fields;
+        return this;
     }
 }
