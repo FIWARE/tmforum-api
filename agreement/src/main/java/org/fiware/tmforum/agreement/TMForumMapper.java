@@ -42,6 +42,7 @@ public interface TMForumMapper {
 	@Mapping(target = "id", source = "id")
 	AgreementSpecificationVO map(AgreementSpecification agreementspecUpdateVO);
 
+	@Mapping(target = "query", source = "rawQuery")
 	EventSubscriptionVO map(Subscription subscription);
 
 	TimePeriod map(TimePeriodVO value);

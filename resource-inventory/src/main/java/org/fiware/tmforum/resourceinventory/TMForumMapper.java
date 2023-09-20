@@ -34,6 +34,7 @@ public interface TMForumMapper {
     @Mapping(target = "id", source = "id")
     Resource map(ResourceUpdateVO resourceUpdateVO, String id);
 
+    @Mapping(target = "query", source = "rawQuery")
     EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {

@@ -76,6 +76,7 @@ public interface TMForumMapper {
     @Mapping(target = "id", source = "id")
     ServiceSpecification map(ServiceSpecificationUpdateVO serviceSpecificationUpdateVO, String id);
 
+    @Mapping(target = "query", source = "rawQuery")
     EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {

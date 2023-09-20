@@ -76,6 +76,7 @@ public interface TMForumMapper {
 	@ValueMapping(target = "INPROGRESS", source = "IN_PROGRESS")
 	TaskStateTypeVO map(TaskState taskState);
 
+	@Mapping(target = "query", source = "rawQuery")
 	EventSubscriptionVO map(Subscription subscription);
 
 	default URL map(String value) {

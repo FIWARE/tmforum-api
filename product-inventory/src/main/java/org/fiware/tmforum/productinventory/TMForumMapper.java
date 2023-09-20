@@ -45,6 +45,7 @@ public interface TMForumMapper {
 		}
 	}
 
+	@Mapping(target = "query", source = "rawQuery")
 	EventSubscriptionVO map(Subscription subscription);
 
 	default String map(URL value) {

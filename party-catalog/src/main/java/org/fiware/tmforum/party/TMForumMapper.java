@@ -51,6 +51,7 @@ public interface TMForumMapper {
 	@Mapping(target = "isFavouriteLanguage", source = "favouriteLanguage")
 	LanguageAbilityVO map(LanguageAbility languageAbility);
 
+	@Mapping(target = "query", source = "rawQuery")
 	EventSubscriptionVO map(Subscription subscription);
 
 	default OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {

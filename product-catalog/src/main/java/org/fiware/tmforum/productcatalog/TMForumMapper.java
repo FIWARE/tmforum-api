@@ -99,6 +99,7 @@ public interface TMForumMapper {
 	@Mapping(target = "href", source = "id")
 	ProductSpecificationVO map(ProductSpecificationUpdateVO productSpecificationUpdateVO, String id);
 
+	@Mapping(target = "query", source = "rawQuery")
 	EventSubscriptionVO map(Subscription subscription);
 
 	default URL map(String value) {

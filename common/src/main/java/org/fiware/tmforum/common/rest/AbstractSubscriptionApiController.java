@@ -46,6 +46,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
         String subId = UUID.randomUUID().toString();
         Subscription subscription = new Subscription(subId);
+        subscription.setRawQuery(query);
         subscription.setEventTypes(subscriptionQuery.getEventTypes());
         subscription.setEntities(subscriptionQuery.getEventGroups().stream()
                 .map(eventGroupToEntityNameMapping::get).toList());

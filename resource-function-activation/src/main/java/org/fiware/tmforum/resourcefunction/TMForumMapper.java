@@ -70,6 +70,7 @@ public interface TMForumMapper {
 
     Resource map(ResourceRefOrValueVO resourceRefOrValueVO);
 
+    @Mapping(target = "query", source = "rawQuery")
     EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {
