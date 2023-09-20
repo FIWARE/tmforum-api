@@ -62,7 +62,7 @@ public class NotificationSender {
             String query = subscription.getQuery();
             if (queryResolver.doesQueryMatchCreateEvent(entity, query)) {
                 Event event = createEvent(eventType, applyFieldsFilter(entity, subscription.getFields()),
-                        subscription.getPayloadName());
+                        StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
                 monos.add(sendEventToClient(subscription.getCallback(), event));
             }
         });
@@ -78,7 +78,7 @@ public class NotificationSender {
             if (queryResolver.doesQueryMatchUpdateEvent(newState, oldState, query)) {
                 String eventType = buildAttributeValueChangeEventType(entityType);
                 Event event = createEvent(eventType, applyFieldsFilter(newState, subscription.getFields()),
-                        subscription.getPayloadName());
+                        StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
                 monos.add(sendEventToClient(subscription.getCallback(), event));
             }
         });
@@ -93,7 +93,7 @@ public class NotificationSender {
             if (hasEntityStateChanged(oldState, newState)) {
                 String eventType = buildStateChangeEventType(entityType);
                 Event event = createEvent(eventType, applyFieldsFilter(newState, subscription.getFields()),
-                        subscription.getPayloadName());
+                        StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
                 monos.add(sendEventToClient(subscription.getCallback(), event));
             }
         });
@@ -107,7 +107,7 @@ public class NotificationSender {
         List<Mono<HttpResponse<String>>> monos = new ArrayList<>();
         subscriptions.forEach(subscription -> {
             Event event = createEvent(eventType, applyFieldsFilter(entityVO, subscription.getFields()),
-                    subscription.getPayloadName());
+                    StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
             monos.add(sendEventToClient(subscription.getCallback(), event));
         });
         return Flux.concat(monos).collectList();

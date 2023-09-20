@@ -1,10 +1,6 @@
 package org.fiware.tmforum.common.querying;
 
-import io.github.wistefan.mapping.JavaObjectMapper;
-import io.github.wistefan.mapping.NgsiLdAttribute;
-import io.github.wistefan.mapping.QueryAttributeType;
 import org.fiware.tmforum.common.exception.QueryException;
-import org.fiware.tmforum.common.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,27 +14,14 @@ public class QueryParserTmp {
 	public static final String OFFSET_KEY = "offset";
 	public static final String LIMIT_KEY = "limit";
 	public static final String FIELDS_KEY = "fields";
-	public static final String FIELDS_SEPARATOR = ",";
 	public static final String SORT_KEY = "sort";
-	public static final String EVENT_TYPE_KEY = "eventType";
 
 	public static final String NGSI_LD_OR = "|";
-	public static final String NGSI_LD_AND = ";";
 	// the "," in tm-forum values is an or
 	public static final String TMFORUM_OR_VALUE = ",";
 	// the ";" in tm-forum parameters is an or
 	public static final String TMFORUM_OR_KEY = ";";
 	public static final String TMFORUM_AND = "&";
-
-	public static boolean hasFilter(Map<String, List<String>> values) {
-		//remove the "non-filtering" keys
-		values.remove(OFFSET_KEY);
-		values.remove(LIMIT_KEY);
-		values.remove(FIELDS_KEY);
-		values.remove(SORT_KEY);
-		// if something is left, we have filter
-		return !values.isEmpty();
-	}
 
 	private static String removeWellKnownParameters(String queryString) {
 		List<String> parameters = new ArrayList<>(Arrays.asList(queryString.split(TMFORUM_AND)));
@@ -53,98 +36,6 @@ public class QueryParserTmp {
 		// not part of the query
 		parameters.removeAll(wellKnownParams);
 		return String.join(TMFORUM_AND, parameters);
-	}
-
-	public static String toNgsiLdQuery(Class<?> queryClass, String queryString) {
-		LogicalOperator logicalOperator = getLogicalOperator(queryString);
-		Stream<QueryPart> queryPartsStream = parseToQueryParts(queryString, logicalOperator);
-
-		// translate the attributes
-		Stream<String> queryStrings = queryPartsStream.map(qp -> {
-					NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
-							Arrays.asList(qp.attribute().split("\\.")),
-							queryClass);
-					return new QueryPart(
-							String.join(".", attribute.path()
-							),
-							qp.operator(),
-							encodeValue(qp.value(), attribute.type()));
-				})
-				.map(QueryParserTmp::toQueryString);
-
-		return switch (logicalOperator) {
-			case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
-			case OR -> queryStrings.collect(Collectors.joining(NGSI_LD_OR));
-		};
-	}
-
-	public static SubscriptionQuery parseNotificationQuery(String queryString, List<String> eventGroups) {
-		SubscriptionQuery subscriptionQuery = new SubscriptionQuery();
-
-		if (queryString == null || queryString.isEmpty()) {
-			// TODO support for multiple event groups
-			if (!eventGroups.isEmpty()) {
-				subscriptionQuery.setEventGroupName(eventGroups.get(0));
-			}
-			return subscriptionQuery;
-		}
-
-		subscriptionQuery.setEventGroupName(getEventGroup(queryString));
-		subscriptionQuery.setFields(getSelectionFields(queryString));
-		subscriptionQuery.setEventTypes(getEventTypes(queryString));
-		subscriptionQuery.setQuery(getQuery(queryString));
-
-		return subscriptionQuery;
-	}
-
-	private static String getEventGroup(String queryString) {
-		Set<String> eventGroupNames = new HashSet<>();
-		Arrays.stream(queryString.split(TMFORUM_AND)).filter(p ->
-				p.startsWith(EVENT_TYPE_KEY)).forEach(parameter -> {
-					String eventType = parameter.split(Operator.EQUALS.getTmForumOperator().operator())[1];
-					eventGroupNames.add(StringUtils.getEventGroupName(eventType));
-				});
-		if (eventGroupNames.size() != 1) {
-			throw new RuntimeException("Events should belong to one entity");
-		}
-		return eventGroupNames.iterator().next();
-	}
-
-	private static List<String> getEventTypes(String queryString) {
-		List<String> eventTypes = new ArrayList<>();
-		Arrays.stream(queryString.split(TMFORUM_AND)).filter(p ->
-				p.startsWith(EVENT_TYPE_KEY)).forEach(parameter -> {
-			String eventType = parameter.split(Operator.EQUALS.getTmForumOperator().operator())[1];
-			eventTypes.add(eventType);
-		});
-		return eventTypes;
-	}
-
-	private static String getQuery(String queryString) {
-		List<String> parameters = new ArrayList<>(Arrays.asList(queryString.split(TMFORUM_AND)));
-		List<String> toRemove = parameters
-				.stream()
-				.filter(p -> p.startsWith(LIMIT_KEY)
-						|| p.startsWith(FIELDS_KEY)
-						|| p.startsWith(OFFSET_KEY)
-						|| p.startsWith(SORT_KEY)
-						|| p.startsWith(EVENT_TYPE_KEY)
-				)
-				.toList();
-		// not part of the query
-		parameters.removeAll(toRemove);
-		if (parameters.isEmpty()) {
-			return "";
-		}
-
-		return String.join(TMFORUM_AND, parameters.stream().map(QueryParserTmp::truncateToEventPayload).toList());
-	}
-
-	private static List<String> getSelectionFields(String queryString) {
-		Optional<String> optional = Arrays.stream(queryString.split(TMFORUM_AND)).filter(p ->
-				p.startsWith(FIELDS_KEY)).findFirst();
-        return optional.map(s -> Arrays.stream(s.split(FIELDS_SEPARATOR))
-                .map(QueryParserTmp::truncateToEventPayload).toList()).orElse(null);
 	}
 
 	public static LogicalOperator getLogicalOperator(String queryString) {
@@ -192,42 +83,6 @@ public class QueryParserTmp {
 		return queryPartsStream;
 	}
 
-	// query comes in format event.<object_name>.<object_attribute_path>, we need only <object_attribute_path>
-	// e.g., event.product.category.name -> category.name
-	private static String truncateToEventPayload(String attributePath) {
-		String[] pathParts = attributePath.split("\\.", 3);
-		if (pathParts.length < 3) {
-			throw new RuntimeException();
-		}
-		return pathParts[2];
-	}
-
-	private static String encodeValue(String value, QueryAttributeType type) {
-		return switch (type) {
-			case STRING -> encodeStringValue(value);
-			case BOOLEAN -> value;
-			case NUMBER -> value;
-		};
-	}
-
-	private static String encodeStringValue(String value) {
-		if (value.contains(NGSI_LD_OR)) {
-			// remove the beginning ( and ending )
-			String noBraces = value.substring(1, value.length() - 1);
-			return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_OR)))
-					.map(v -> String.format("\"%s\"", v))
-					.collect(Collectors.joining(NGSI_LD_OR)));
-		} else if (value.contains(NGSI_LD_AND)) {
-			// remove the beginning ( and ending )
-			String noBraces = value.substring(1, value.length() - 1);
-			return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_AND)))
-					.map(v -> String.format("\"%s\"", v))
-					.collect(Collectors.joining(NGSI_LD_AND)));
-		} else {
-			return String.format("\"%s\"", value);
-		}
-	}
-
 	private static List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
 		Map<String, List<QueryPart>> collectedParts = uncombinedParts.stream()
 				.collect(
@@ -250,10 +105,6 @@ public class QueryParserTmp {
 					return new QueryPart(attribute, entry.getKey(), value);
 				})
 				.collect(Collectors.toList());
-	}
-
-	private static String toQueryString(QueryPart queryPart) {
-		return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), queryPart.value());
 	}
 
 	private static QueryPart paramsToQueryPart(String parameter, Operator operator) {

@@ -41,10 +41,6 @@ public class Subscription extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "fields") }))
 	private List<String> fields;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "payloadName") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "payloadName") }))
-	private String payloadName;
-
 	public Subscription(String id) {
 		super(TYPE_SUBSCRIPTION, id);
 	}

@@ -1,13 +1,10 @@
 package org.fiware.tmforum.common.rest;
 
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.EventConstants;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
-import org.fiware.tmforum.common.querying.QueryParserTmp;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
-import org.fiware.tmforum.common.querying.QueryParser;
+import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
-import org.fiware.tmforum.common.util.StringUtils;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import reactor.core.publisher.Mono;
 
@@ -44,23 +41,15 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     protected Subscription buildSubscription(String callback, String query, List<String> eventGroups) {
-        SubscriptionQuery subscriptionQuery = QueryParserTmp.parseNotificationQuery(query, eventGroups);
-        log.debug(subscriptionQuery.toString());
-
-        List<String> eventTypes;
-        if (subscriptionQuery.getEventTypes().isEmpty()) {
-            eventTypes = EventConstants.ALLOWED_EVENT_TYPES.get(subscriptionQuery.getEventGroupName()).stream().map(
-                    eventType -> subscriptionQuery.getEventGroupName() + eventType).toList();
-        } else {
-            eventTypes = subscriptionQuery.getEventTypes();
-        }
+        log.debug(query);
+        SubscriptionQuery subscriptionQuery = SubscriptionQueryParser.parse(query, eventGroups);
 
         String subId = UUID.randomUUID().toString();
         Subscription subscription = new Subscription(subId);
-        subscription.setEventTypes(eventTypes);
-        subscription.setEntities(List.of(eventGroupToEntityNameMapping.get(subscriptionQuery.getEventGroupName())));
+        subscription.setEventTypes(subscriptionQuery.getEventTypes());
+        subscription.setEntities(subscriptionQuery.getEventGroups().stream()
+                .map(eventGroupToEntityNameMapping::get).toList());
         subscription.setQuery(subscriptionQuery.getQuery());
-        subscription.setPayloadName(StringUtils.decapitalize(subscriptionQuery.getEventGroupName()));
         subscription.setCallback(URI.create(callback));
         subscription.setFields(subscriptionQuery.getFields());
         return subscription;

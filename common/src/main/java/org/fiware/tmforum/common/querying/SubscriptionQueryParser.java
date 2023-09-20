@@ -2,11 +2,13 @@ package org.fiware.tmforum.common.querying;
 
 import org.fiware.tmforum.common.EventConstants;
 import org.fiware.tmforum.common.exception.QueryException;
+import org.fiware.tmforum.common.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.querying.Operator.*;
@@ -70,6 +72,9 @@ public class SubscriptionQueryParser {
 							EventConstants.ALLOWED_EVENT_TYPES.get(eventGroup).stream().map(
 									eventType -> eventGroup + eventType)).toList());
 		}
+
+		subscriptionQuery.setEventGroups(subscriptionQuery.getEventTypes().stream()
+				.map(StringUtils::getEventGroupName).collect(Collectors.toSet()));
 
 		return subscriptionQuery;
 	}
