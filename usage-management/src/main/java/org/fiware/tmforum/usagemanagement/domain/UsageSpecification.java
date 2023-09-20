@@ -61,28 +61,28 @@ public class UsageSpecification extends EntityWithId {
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "name") }))
 	private String name;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "attachment") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "attachment") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment") }))
 	private List<AttachmentRefOrValue> attachment;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "constraint") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "constraint") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint") }))
 	private List<ConstraintRef> constraint; 
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "entitySpecRelationship") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "entitySpecRelationship") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship") }))
 	private List<EntitySpecificationRelationship> entitySpecRelationship;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "relatedParty") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "relatedParty") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
 	private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic") }))
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic") }))
 	private List<CharacteristicSpecification> specCharacteristic;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "targetEntitySchema") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "targetEntitySchema") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "targetEntitySchema") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetEntitySchema") }))
 	private TargetEntitySchema targetEntitySchema;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor") }))
