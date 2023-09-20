@@ -10,6 +10,7 @@ import org.fiware.tmforum.common.exception.QueryException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +52,9 @@ public class QueryParser {
 	}
 
 	private static String removeWellKnownParameters(String queryString) {
-		List<String> parameters = Arrays.asList(queryString.split(TMFORUM_AND));
+		// Using linked list as the list returned by asList method is fixed-size
+		// so the remove method raises a non implemented exception
+		List<String> parameters = new LinkedList<>(Arrays.asList(queryString.split(TMFORUM_AND)));
 		List<String> wellKnownParams = parameters
 				.stream()
 				.filter(p -> p.startsWith(LIMIT_KEY)
