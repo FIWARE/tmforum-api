@@ -29,7 +29,7 @@ public class QueryResolver {
 
         Stream<Boolean> results = queryPartsStream.map(qp -> {
             if (!doesAttributeBelongsToPayload(qp.attribute(), payloadName)) {
-                return true;
+                return false;
             }
 
             Object fieldValue;
@@ -65,7 +65,7 @@ public class QueryResolver {
         // translate the attributes
         Stream<Boolean> results = queryPartsStream.map(qp -> {
             if (!doesAttributeBelongsToPayload(qp.attribute(), payloadName)) {
-                return true;
+                return false;
             }
 
             Object fieldValue;
