@@ -1,6 +1,6 @@
 package org.fiware.tmforum.productordering.domain;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum OrderItemAction {
 	ADD("add"),
@@ -8,10 +8,14 @@ public enum OrderItemAction {
 	DELETE("delete"),
 	NO_CHANGE("noChange");
 
-	@Getter
 	private final String value;
 
 	OrderItemAction(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }

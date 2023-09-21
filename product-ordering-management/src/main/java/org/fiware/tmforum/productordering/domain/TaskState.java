@@ -1,5 +1,6 @@
 package org.fiware.tmforum.productordering.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 public enum TaskState {
@@ -9,10 +10,14 @@ public enum TaskState {
 	IN_PROGRESS("inProgress"),
 	DONE("done");
 
-	@Getter
 	private final String value;
 
 	TaskState(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }
