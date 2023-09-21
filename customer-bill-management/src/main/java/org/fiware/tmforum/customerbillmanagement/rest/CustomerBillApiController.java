@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.customerbillmanagement.api.CustomerBillApi;
 import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;

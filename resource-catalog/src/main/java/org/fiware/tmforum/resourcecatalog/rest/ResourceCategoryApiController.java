@@ -9,7 +9,7 @@ import org.fiware.resourcecatalog.api.ResourceCategoryApi;
 import org.fiware.resourcecatalog.model.ResourceCategoryCreateVO;
 import org.fiware.resourcecatalog.model.ResourceCategoryUpdateVO;
 import org.fiware.resourcecatalog.model.ResourceCategoryVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;

@@ -7,7 +7,7 @@ import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApi;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.repository.TmForumRepository;

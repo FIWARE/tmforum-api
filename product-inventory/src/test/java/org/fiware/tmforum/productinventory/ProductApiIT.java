@@ -32,7 +32,7 @@ import org.fiware.productinventory.model.RelatedPlaceRefOrValueVOTestExample;
 import org.fiware.productinventory.model.RelatedProductOrderItemVOTestExample;
 import org.fiware.productinventory.model.ResourceRefVOTestExample;
 import org.fiware.productinventory.model.ServiceRefVOTestExample;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;

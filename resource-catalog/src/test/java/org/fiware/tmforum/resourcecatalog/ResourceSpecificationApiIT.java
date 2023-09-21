@@ -25,7 +25,7 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVOTestExample;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;

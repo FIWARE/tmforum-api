@@ -1,6 +1,6 @@
 package org.fiware.tmforum.common.querying;
 
-import org.fiware.tmforum.common.EventConstants;
+import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.util.StringUtils;
 

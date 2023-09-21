@@ -9,7 +9,7 @@ import org.fiware.productinventory.api.ProductApi;
 import org.fiware.productinventory.model.ProductCreateVO;
 import org.fiware.productinventory.model.ProductUpdateVO;
 import org.fiware.productinventory.model.ProductVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;

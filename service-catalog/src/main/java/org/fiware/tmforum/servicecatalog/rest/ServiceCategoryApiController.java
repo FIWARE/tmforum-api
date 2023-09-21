@@ -9,7 +9,7 @@ import org.fiware.servicecatalog.api.ServiceCategoryApi;
 import org.fiware.servicecatalog.model.ServiceCategoryCreateVO;
 import org.fiware.servicecatalog.model.ServiceCategoryUpdateVO;
 import org.fiware.servicecatalog.model.ServiceCategoryVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;

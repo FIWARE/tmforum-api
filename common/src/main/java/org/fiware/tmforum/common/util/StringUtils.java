@@ -1,6 +1,6 @@
 package org.fiware.tmforum.common.util;
 
-import org.fiware.tmforum.common.EventConstants;
+import org.fiware.tmforum.common.notification.EventConstants;
 
 import java.util.Arrays;
 

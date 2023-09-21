@@ -14,7 +14,7 @@ import org.fiware.customerbillmanagement.model.BillingAccountRefVOTestExample;
 import org.fiware.customerbillmanagement.model.ProductRefVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;

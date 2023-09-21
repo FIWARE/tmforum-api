@@ -5,7 +5,7 @@ import io.micronaut.http.annotation.Controller;
 import org.fiware.resourcefunction.api.MigrateApi;
 import org.fiware.resourcefunction.model.MigrateCreateVO;
 import org.fiware.resourcefunction.model.MigrateVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;

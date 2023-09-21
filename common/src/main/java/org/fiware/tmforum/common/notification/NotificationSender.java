@@ -1,4 +1,4 @@
-package org.fiware.tmforum.common;
+package org.fiware.tmforum.common.notification;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.context.annotation.Bean;
@@ -21,7 +21,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.*;
 
-import static org.fiware.tmforum.common.EventConstants.*;
+import static org.fiware.tmforum.common.notification.EventConstants.*;
 
 @RequiredArgsConstructor
 @Bean

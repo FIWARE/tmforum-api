@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.servicecatalog.api.EventsSubscriptionApi;
 import org.fiware.servicecatalog.model.EventSubscriptionInputVO;
 import org.fiware.servicecatalog.model.EventSubscriptionVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static org.fiware.tmforum.common.EventConstants.*;
+import static org.fiware.tmforum.common.notification.EventConstants.*;
 
 @Slf4j
 @Controller("${general.basepath:/}")

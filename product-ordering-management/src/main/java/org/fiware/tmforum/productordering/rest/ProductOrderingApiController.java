@@ -9,7 +9,7 @@ import org.fiware.productordering.api.ProductOrderApi;
 import org.fiware.productordering.model.ProductOrderCreateVO;
 import org.fiware.productordering.model.ProductOrderUpdateVO;
 import org.fiware.productordering.model.ProductOrderVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;

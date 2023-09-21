@@ -13,7 +13,7 @@ import org.fiware.agreement.model.AgreementSpecificationUpdateVO;
 import org.fiware.agreement.model.AgreementSpecificationVO;
 import org.fiware.tmforum.agreement.TMForumMapper;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;

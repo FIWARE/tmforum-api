@@ -1,4 +1,4 @@
-package org.fiware.tmforum.common;
+package org.fiware.tmforum.common.notification;
 
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.http.HttpResponse;

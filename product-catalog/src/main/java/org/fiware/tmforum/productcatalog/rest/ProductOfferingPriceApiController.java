@@ -8,7 +8,7 @@ import org.fiware.productcatalog.api.ProductOfferingPriceApi;
 import org.fiware.productcatalog.model.ProductOfferingPriceCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;

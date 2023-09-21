@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.productordering.api.EventsSubscriptionApi;
 import org.fiware.productordering.model.EventSubscriptionInputVO;
 import org.fiware.productordering.model.EventSubscriptionVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static org.fiware.tmforum.common.EventConstants.EVENT_GROUP_CANCEL_PRODUCT_ORDER;
-import static org.fiware.tmforum.common.EventConstants.EVENT_GROUP_PRODUCT_ORDER;
+import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_CANCEL_PRODUCT_ORDER;
+import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_PRODUCT_ORDER;
 
 @Slf4j
 @Controller("${general.basepath:/}")

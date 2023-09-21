@@ -8,7 +8,7 @@ import org.fiware.productcatalog.api.CategoryApi;
 import org.fiware.productcatalog.model.CategoryCreateVO;
 import org.fiware.productcatalog.model.CategoryUpdateVO;
 import org.fiware.productcatalog.model.CategoryVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;

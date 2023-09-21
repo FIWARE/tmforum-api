@@ -1,7 +1,7 @@
 package org.fiware.tmforum.common.rest;
 
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;

@@ -1,4 +1,4 @@
-package org.fiware.tmforum.common;
+package org.fiware.tmforum.common.notification;
 
 import java.util.List;
 import java.util.Map;

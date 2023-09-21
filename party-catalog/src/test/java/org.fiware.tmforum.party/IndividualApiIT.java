@@ -38,7 +38,7 @@ import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;

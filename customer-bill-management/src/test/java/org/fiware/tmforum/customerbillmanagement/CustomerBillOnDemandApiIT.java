@@ -15,7 +15,7 @@ import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVOTestExample;
 import org.fiware.customerbillmanagement.model.RelatedPartyRefVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -27,7 +27,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;

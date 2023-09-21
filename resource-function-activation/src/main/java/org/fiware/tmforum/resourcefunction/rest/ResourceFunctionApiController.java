@@ -7,7 +7,7 @@ import org.fiware.resourcefunction.api.ResourceFunctionApi;
 import org.fiware.resourcefunction.model.ResourceFunctionCreateVO;
 import org.fiware.resourcefunction.model.ResourceFunctionUpdateVO;
 import org.fiware.resourcefunction.model.ResourceFunctionVO;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;

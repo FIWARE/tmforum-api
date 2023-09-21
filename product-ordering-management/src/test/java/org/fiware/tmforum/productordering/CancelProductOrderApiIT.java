@@ -16,7 +16,7 @@ import org.fiware.productordering.model.CancelProductOrderVOTestExample;
 import org.fiware.productordering.model.ProductOrderCreateVO;
 import org.fiware.productordering.model.ProductOrderCreateVOTestExample;
 import org.fiware.productordering.model.ProductOrderRefVOTestExample;
-import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;

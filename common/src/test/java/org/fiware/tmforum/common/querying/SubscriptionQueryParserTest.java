@@ -1,6 +1,6 @@
 package org.fiware.tmforum.common.querying;
 
-import org.fiware.tmforum.common.EventConstants;
+import org.fiware.tmforum.common.notification.EventConstants;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
