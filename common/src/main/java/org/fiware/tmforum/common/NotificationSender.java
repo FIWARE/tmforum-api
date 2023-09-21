@@ -49,7 +49,7 @@ public class NotificationSender {
 
     private Mono<HttpResponse<String>> sendEventToClient(URI callbackURI, Event event) {
         HttpRequest<?> req = HttpRequest.POST(callbackURI, event)
-                .header(HttpHeaders.CONTENT_TYPE, "application/ld+json");
+                .header(HttpHeaders.CONTENT_TYPE, "application/json");
         return Mono.fromDirect(this.httpClient.exchange(req, String.class));
     }
 
