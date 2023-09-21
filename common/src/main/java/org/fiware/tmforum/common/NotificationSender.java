@@ -56,13 +56,14 @@ public class NotificationSender {
     public <T> Mono<List<HttpResponse<String>>> handleCreateEvent(List<Subscription> subscriptions, T entity) {
         String entityType = getEntityType(entity);
         String eventType = buildCreateEventType(entityType);
+        String payloadName = StringUtils.decapitalize(StringUtils.getEventGroupName(eventType));
 
         List<Mono<HttpResponse<String>>> monos = new ArrayList<>();
         subscriptions.forEach(subscription -> {
             String query = subscription.getQuery();
-            if (queryResolver.doesQueryMatchCreateEvent(entity, query)) {
+            if (queryResolver.doesQueryMatchCreateEvent(query, entity, payloadName)) {
                 Event event = createEvent(eventType, applyFieldsFilter(entity, subscription.getFields()),
-                        StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
+                        payloadName);
                 monos.add(sendEventToClient(subscription.getCallback(), event));
             }
         });
@@ -71,12 +72,13 @@ public class NotificationSender {
 
     public <T> Flux<HttpResponse<String>> handleUpdateEvent(List<Subscription> subscriptions, T oldState, T newState) {
         String entityType = getEntityType(newState);
+        String eventType = buildAttributeValueChangeEventType(entityType);
+        String payloadName = StringUtils.decapitalize(StringUtils.getEventGroupName(eventType));
 
         List<Mono<HttpResponse<String>>> monos = new ArrayList<>();
         subscriptions.forEach(subscription -> {
             String query = subscription.getQuery();
-            if (queryResolver.doesQueryMatchUpdateEvent(newState, oldState, query)) {
-                String eventType = buildAttributeValueChangeEventType(entityType);
+            if (queryResolver.doesQueryMatchUpdateEvent(query, newState, oldState, payloadName)) {
                 Event event = createEvent(eventType, applyFieldsFilter(newState, subscription.getFields()),
                         StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
                 monos.add(sendEventToClient(subscription.getCallback(), event));

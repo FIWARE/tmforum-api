@@ -97,4 +97,19 @@ public class MyPojo {
 	public void setCreatedAt(Instant createdAt) {
 		this.createdAt = createdAt;
 	}
+
+	public MyPojo color(String color) {
+		this.color = color;
+		return this;
+	}
+
+	public MyPojo temperature(Integer temperature) {
+		this.temperature = temperature;
+		return this;
+	}
+
+	public MyPojo createdAt(Instant createdAt) {
+		this.createdAt = createdAt;
+		return this;
+	}
 }

@@ -15,65 +15,49 @@ public class QueryResolverTest {
     @ParameterizedTest
     @MethodSource("queriesForCreationEvent")
     public void testCreationEvent(MyPojo myPojo, String tmForumQuery, boolean expectedResult) {
-        assertEquals(expectedResult, queryResolver.doesQueryMatchCreateEvent(myPojo, tmForumQuery),
+        assertEquals(expectedResult, queryResolver.doesQueryMatchCreateEvent(tmForumQuery, myPojo, ""),
                 "The query should have been properly translated.");
     }
 
     private static Stream<Arguments> queriesForCreationEvent() {
-        MyPojo cR = new MyPojo("id");
-        cR.setColor("Red");
-
-        MyPojo t3 = new MyPojo("id");
-        t3.setTemperature(3);
-
-        MyPojo t7 = new MyPojo("id");
-        t7.setTemperature(7);
-
-        MyPojo cRt7 = new MyPojo("id");
-        cRt7.setColor("Red");
-        cRt7.setTemperature(7);
-
-        MyPojo cRt5 = new MyPojo("id");
-        cRt5.setColor("Red");
-        cRt5.setTemperature(5);
-
-        MyPojo inst = new MyPojo("id");
-        inst.setCreatedAt(Instant.parse("2023-05-01T00:00:00.000Z"));
-
         return Stream.of(
-                Arguments.of(new MyPojo(""), "", true),
-                Arguments.of(new MyPojo(""), "nonExistingField=10", false),
-                Arguments.of(cR, "color=Red", true),
-                Arguments.of(cR, "color=Black", false),
-                Arguments.of(t3, "temperature>5", false),
-                Arguments.of(t3, "temperature<5&temperature>2", true),
-                Arguments.of(t3, "temperature>4;temperature<2", false),
-                Arguments.of(t7, "temperature>=7", true),
-                Arguments.of(cRt7, "color=Red&temperature>6", true),
-                Arguments.of(cRt5, "color=Red&temperature>6", false),
-                Arguments.of(inst, "createdAt>2023-04-01T00:00:00.000Z", true),
-                Arguments.of(inst, "createdAt<=2023-06-01T00:00:00.000Z", true),
-                Arguments.of(inst, "createdAt=2023-05-01T00:00:00.000Z", true)
+                Arguments.of(MyPojoBuilder.build(), "", true),
+                Arguments.of(MyPojoBuilder.build(), "nonExistingField=10", false),
+                Arguments.of(MyPojoBuilder.build().color("Red"), "color=Red", true),
+                Arguments.of(MyPojoBuilder.build().color("Red"), "color=Black", false),
+                Arguments.of(MyPojoBuilder.build().temperature(3), "temperature>5", false),
+                Arguments.of(MyPojoBuilder.build().temperature(3), "temperature<5&temperature>2", true),
+                Arguments.of(MyPojoBuilder.build().temperature(3), "temperature>4;temperature<2", false),
+                Arguments.of(MyPojoBuilder.build().temperature(7), "temperature>=7", true),
+                Arguments.of(MyPojoBuilder.build().color("Red").temperature(7), "color=Red&temperature>6", true),
+                Arguments.of(MyPojoBuilder.build().color("Red").temperature(5), "color=Red&temperature>6", false),
+                Arguments.of(MyPojoBuilder.build().createdAt(Instant.parse("2023-05-01T00:00:00.000Z")),
+                        "createdAt>2023-04-01T00:00:00.000Z", true),
+                Arguments.of(MyPojoBuilder.build().createdAt(Instant.parse("2023-05-01T00:00:00.000Z")),
+                        "createdAt<=2023-06-01T00:00:00.000Z", true),
+                Arguments.of(MyPojoBuilder.build().createdAt(Instant.parse("2023-05-01T00:00:00.000Z")),
+                        "createdAt=2023-05-01T00:00:00.000Z", true)
         );
     }
 
     @ParameterizedTest
     @MethodSource("queriesForUpdateEvent")
     public void testUpdateEvent(MyPojo oldState, MyPojo newState, String tmForumQuery, boolean expectedResult) {
-        assertEquals(expectedResult, queryResolver.doesQueryMatchUpdateEvent(newState, oldState, tmForumQuery),
+        assertEquals(expectedResult, queryResolver.doesQueryMatchUpdateEvent(tmForumQuery, newState, oldState, ""),
                 "The query should have been properly translated.");
     }
 
     private static Stream<Arguments> queriesForUpdateEvent() {
-        MyPojo cR = new MyPojo("id");
-        cR.setColor("Red");
-        MyPojo cB = new MyPojo("id");
-        cB.setColor("Blue");
-
         return Stream.of(
-            Arguments.of(cR, cB, "color=Blue", true),
-            Arguments.of(cR, cB, "color=Black", false),
-            Arguments.of(cB, cR, "color=Blue", false)
+            Arguments.of(MyPojoBuilder.build().color("Red"), MyPojoBuilder.build().color("Blue"), "color=Blue", true),
+            Arguments.of(MyPojoBuilder.build().color("Red"), MyPojoBuilder.build().color("Blue"), "color=Black", false),
+            Arguments.of(MyPojoBuilder.build().color("Blue"), MyPojoBuilder.build().color("Red"), "color=Blue", false)
         );
+    }
+
+    private static class MyPojoBuilder {
+        public static MyPojo build() {
+            return new MyPojo("id");
+        }
     }
 }
