@@ -114,13 +114,15 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("provideEventSubscriptionInputsForDuplication")
+    public void registerListener409(EventSubscriptionInputVO eventSubscriptionInputVO) throws Exception {
+        this.eventSubscriptionInputVO = eventSubscriptionInputVO;
+        registerListener409();
+    }
+
     @Override
     public void registerListener409() throws Exception {
-        eventSubscriptionInputVO = EventSubscriptionInputVOTestExample.build()
-                .query(null)
-                .callback(ANY_CALLBACK);
-
         HttpResponse<EventSubscriptionVO> registerResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
         assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), message);
@@ -128,6 +130,34 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
         HttpResponse<EventSubscriptionVO> duplicatedListenerRegisterResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
         assertEquals(HttpStatus.CONFLICT, duplicatedListenerRegisterResponse.getStatus(), message);
+    }
+
+    private static Stream<Arguments> provideEventSubscriptionInputsForDuplication() {
+        List<Arguments> testEntries = new ArrayList<>();
+
+        testEntries.add(
+                Arguments.of(
+                        EventSubscriptionInputVOTestExample.build()
+                                .query(null)
+                                .callback(ANY_CALLBACK)
+                )
+        );
+        testEntries.add(
+                Arguments.of(
+                        EventSubscriptionInputVOTestExample.build()
+                                .query("")
+                                .callback(ANY_CALLBACK)
+                )
+        );
+        testEntries.add(
+                Arguments.of(
+                        EventSubscriptionInputVOTestExample.build()
+                                .query("eventType=ProductCreateEvent")
+                                .callback(ANY_CALLBACK)
+                )
+        );
+
+        return testEntries.stream();
     }
 
     @Override
@@ -202,7 +232,7 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
                                 .query(null)
                                 .callback(ANY_CALLBACK),
                         EventSubscriptionVOTestExample.build()
-                                .query(null)
+                                .query("")
                                 .callback(ANY_CALLBACK)
                 )
         );

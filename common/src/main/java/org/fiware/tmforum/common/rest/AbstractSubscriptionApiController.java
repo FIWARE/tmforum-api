@@ -1,10 +1,10 @@
 package org.fiware.tmforum.common.rest;
 
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -34,10 +34,9 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     private Mono<Subscription> findExistingSubscription(Subscription subscription) {
-        String query = String.format("callback==\"%s\";query==\"%s\";%s",
-                subscription.getCallback(), subscription.getQuery(),
-                String.join(";", subscription.getEventTypes().stream().map(eventType ->
-                    String.format("eventTypes==\"%s\"", eventType)).toList()));
+        String query = String.format("callback==\"%s\";rawQuery==\"%s\"",
+                subscription.getCallback(), subscription.getRawQuery());
+
         return repository.findEntities(DEFAULT_OFFSET, 1, Subscription.TYPE_SUBSCRIPTION,
                     Subscription.class, query)
                 .flatMap(list -> list.isEmpty() ? Mono.empty() :
@@ -50,7 +49,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
         String subId = UUID.randomUUID().toString();
         Subscription subscription = new Subscription(subId);
-        subscription.setRawQuery(query);
+        subscription.setRawQuery(query != null ? query : "");
         subscription.setEventTypes(subscriptionQuery.getEventTypes());
         subscription.setEntities(subscriptionQuery.getEventGroups().stream()
                 .map(eventGroup -> {
