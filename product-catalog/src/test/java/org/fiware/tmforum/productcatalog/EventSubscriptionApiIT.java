@@ -1,35 +1,38 @@
 package org.fiware.tmforum.productcatalog;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.EventsSubscriptionApiTestClient;
 import org.fiware.productcatalog.api.EventsSubscriptionApiTestSpec;
 import org.fiware.productcatalog.model.EventSubscriptionInputVO;
 import org.fiware.productcatalog.model.EventSubscriptionInputVOTestExample;
 import org.fiware.productcatalog.model.EventSubscriptionVO;
 import org.fiware.productcatalog.model.EventSubscriptionVOTestExample;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(packages = { "org.fiware.tmforum.productcatalog" })
-public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
+public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubscriptionApiTestSpec {
 
     private static final String ANY_CALLBACK = "https://test.com";
-    private static final String ANY_SIMPLE_QUERY = "name==%22test%22";
-    private static final String ANY_COMPLEX_QUERY =
-            "eventType=SomeStateChangeNotification&event.someEntity.severity=Urgent";
 
     public final EventsSubscriptionApiTestClient eventsSubscriptionApiTestClient;
     private EventSubscriptionInputVO eventSubscriptionInputVO;
@@ -37,16 +40,16 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
     private EventSubscriptionVO expectedEventSubscription;
 
 
-    public EventSubscriptionApiIT(EventsSubscriptionApiTestClient eventsSubscriptionApiTestClient) {
+    public EventSubscriptionApiIT(EventsSubscriptionApiTestClient eventsSubscriptionApiTestClient,
+                                  EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
+                                  GeneralProperties generalProperties) {
+        super(entitiesApiClient, objectMapper, generalProperties);
         this.eventsSubscriptionApiTestClient = eventsSubscriptionApiTestClient;
     }
 
-    public <T> HttpResponse<T> callAndCatch(Callable<HttpResponse<T>> request) throws Exception {
-        try {
-            return request.call();
-        } catch (HttpClientResponseException e) {
-            return (HttpResponse<T>) e.getResponse();
-        }
+    @Override
+    protected String getEntityType() {
+        return Subscription.TYPE_SUBSCRIPTION;
     }
 
     @ParameterizedTest
@@ -61,18 +64,30 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
 
     @Override
     public void registerListener201() throws Exception {
-        HttpResponse<EventSubscriptionVO> eventSubscriptionVOHttpResponse =
+        HttpResponse<EventSubscriptionVO> registerResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
-        assertEquals(HttpStatus.CREATED, eventSubscriptionVOHttpResponse.getStatus(), message);
-        assertTrue(eventSubscriptionVOHttpResponse.getBody().isPresent());
-        expectedEventSubscription.setId(eventSubscriptionVOHttpResponse.getBody().get().getId());
+        assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), message);
+        assertTrue(registerResponse.getBody().isPresent());
+        expectedEventSubscription.setId(registerResponse.getBody().get().getId());
 
-        assertEquals(expectedEventSubscription, eventSubscriptionVOHttpResponse.getBody().get(), message);
+        assertEquals(expectedEventSubscription, registerResponse.getBody().get(), message);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidEventSubscriptionInputs")
+    public void registerListener400(String message, EventSubscriptionInputVO eventSubscriptionInputVO) throws Exception {
+        this.message = message;
+        this.eventSubscriptionInputVO = eventSubscriptionInputVO;
+        registerListener400();
     }
 
     @Override
     public void registerListener400() throws Exception {
-
+        HttpResponse<EventSubscriptionVO> registerResponse = callAndCatch(
+                () -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+        assertEquals(HttpStatus.BAD_REQUEST, registerResponse.getStatus(), message);
+        Optional<ErrorDetails> optionalErrorDetails = registerResponse.getBody(ErrorDetails.class);
+        assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
     }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
@@ -87,6 +102,7 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
 
     }
 
+    @Disabled("Impossible status.")
     @Override
     public void registerListener404() throws Exception {
 
@@ -98,10 +114,20 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
 
     }
 
-    @Disabled("Impossible status.")
+    @Test
     @Override
     public void registerListener409() throws Exception {
+        eventSubscriptionInputVO = EventSubscriptionInputVOTestExample.build()
+                .query("eventType=CatalogCreateEvent")
+                .callback(ANY_CALLBACK);
 
+        HttpResponse<EventSubscriptionVO> registerResponse =
+                callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+        assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), message);
+
+        HttpResponse<EventSubscriptionVO> duplicatedListenerRegisterResponse =
+                callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+        assertEquals(HttpStatus.CONFLICT, duplicatedListenerRegisterResponse.getStatus(), message);
     }
 
     @Override
@@ -112,8 +138,8 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
     @Override
     public void unregisterListener204() throws Exception {
         EventSubscriptionInputVO eventSubscriptionInputVO = EventSubscriptionInputVOTestExample.build()
-                        .query(null)
-                        .callback(ANY_CALLBACK);
+                .query("eventType=CatalogCreateEvent")
+                .callback(ANY_CALLBACK);
         HttpResponse<EventSubscriptionVO> eventSubscriptionVOHttpResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
         assertEquals(HttpStatus.CREATED, eventSubscriptionVOHttpResponse.getStatus(),
@@ -129,7 +155,10 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
 
     @Override
     public void unregisterListener400() throws Exception {
-
+        HttpResponse<?> httpResponse =
+                callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener(null));
+        assertEquals(HttpStatus.BAD_REQUEST, httpResponse.getStatus(),
+                "Should have returned 400 when ID is null");
     }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
@@ -144,9 +173,13 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
 
     }
 
+    @Test
     @Override
     public void unregisterListener404() throws Exception {
-
+        HttpResponse<?> httpResponse =
+                callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener("non-existing-id"));
+        assertEquals(HttpStatus.NOT_FOUND, httpResponse.getStatus(),
+                "Should have return 404 when non-existing ID provided.");
     }
 
     @Disabled("Prohibited by the framework.")
@@ -164,32 +197,79 @@ public class EventSubscriptionApiIT implements EventsSubscriptionApiTestSpec {
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(
-                Arguments.of("A listener with callback should have been created.",
+                Arguments.of("A listener with callback and simple query should have been created.",
                         EventSubscriptionInputVOTestExample.build()
-                                .query(null)
+                                .query("eventType=CatalogCreateEvent")
                                 .callback(ANY_CALLBACK),
                         EventSubscriptionVOTestExample.build()
-                                .query(null)
+                                .query("eventType=CatalogCreateEvent")
                                 .callback(ANY_CALLBACK)
                 )
         );
         testEntries.add(
-                Arguments.of("A listener with callback and simple query should have been created.",
+                Arguments.of("A listener with event types of multiple entities within module should have been created.",
                         EventSubscriptionInputVOTestExample.build()
-                                .query(ANY_SIMPLE_QUERY)
+                                .query("eventType=CatalogCreateEvent;eventType=CategoryCreateEvent")
                                 .callback(ANY_CALLBACK),
                         EventSubscriptionVOTestExample.build()
-                                .query(ANY_SIMPLE_QUERY)
+                                .query("eventType=CatalogCreateEvent;eventType=CategoryCreateEvent")
                                 .callback(ANY_CALLBACK)
                 )
         );
         testEntries.add(
                 Arguments.of("A listener with callback and complex query should have been created.",
                         EventSubscriptionInputVOTestExample.build()
-                                .query(ANY_COMPLEX_QUERY)
+                                .query("eventType=CatalogCreateEvent&event.catalog.lifecycleStatus=created")
                                 .callback(ANY_CALLBACK),
                         EventSubscriptionVOTestExample.build()
-                                .query(ANY_COMPLEX_QUERY)
+                                .query("eventType=CatalogCreateEvent&event.catalog.lifecycleStatus=created")
+                                .callback(ANY_CALLBACK)
+                )
+        );
+        testEntries.add(
+                Arguments.of("A listener with callback and complex query should have been created.",
+                        EventSubscriptionInputVOTestExample.build()
+                                .query("eventType=CatalogCreateEvent&event.catalog.lifecycleStatus=created" +
+                                        "&fields=event.catalog.id,event.catalog.name")
+                                .callback(ANY_CALLBACK),
+                        EventSubscriptionVOTestExample.build()
+                                .query("eventType=CatalogCreateEvent&event.catalog.lifecycleStatus=created" +
+                                        "&fields=event.catalog.id,event.catalog.name")
+                                .callback(ANY_CALLBACK)
+                )
+        );
+
+        return testEntries.stream();
+    }
+
+    private static Stream<Arguments> provideInvalidEventSubscriptionInputs() {
+        List<Arguments> testEntries = new ArrayList<>();
+
+        testEntries.add(
+                Arguments.of("A query with several ANDed event types should not be created.",
+                        EventSubscriptionInputVOTestExample.build()
+                                .query("eventType=CatalogCreateEvent&eventType=CatalogDeleteEvent")
+                                .callback(ANY_CALLBACK)
+                )
+        );
+        testEntries.add(
+                Arguments.of("A query with different ORed section conditions should not be created.",
+                        EventSubscriptionInputVOTestExample.build()
+                                .query("eventType=CatalogCreateEvent;event.catalog.name=Some")
+                                .callback(ANY_CALLBACK)
+                )
+        );
+        testEntries.add(
+                Arguments.of("A query with both logical operators AND and OR should not be created.",
+                        EventSubscriptionInputVOTestExample.build()
+                                .query("eventType=CatalogCreateEvent;eventType=CatalogDeleteEvent&event.catalog.name=Some")
+                                .callback(ANY_CALLBACK)
+                )
+        );
+        testEntries.add(
+                Arguments.of("A query with entities from other modules should not be create.",
+                        EventSubscriptionInputVOTestExample.build()
+                                .query("eventType=ProductCreateEvent")
                                 .callback(ANY_CALLBACK)
                 )
         );

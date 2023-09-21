@@ -53,7 +53,14 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         subscription.setRawQuery(query);
         subscription.setEventTypes(subscriptionQuery.getEventTypes());
         subscription.setEntities(subscriptionQuery.getEventGroups().stream()
-                .map(eventGroupToEntityNameMapping::get).toList());
+                .map(eventGroup -> {
+                    if (eventGroupToEntityNameMapping.containsKey(eventGroup)) {
+                        return eventGroupToEntityNameMapping.get(eventGroup);
+                    } else {
+                        throw new TmForumException("Such subscription already exists.",
+                                TmForumExceptionReason.INVALID_DATA);
+                    }
+                }).toList());
         subscription.setQuery(subscriptionQuery.getQuery());
         subscription.setCallback(URI.create(callback));
         subscription.setFields(subscriptionQuery.getFields());
