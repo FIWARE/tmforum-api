@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.productordering.api.CancelProductOrderApi;
 import org.fiware.productordering.model.CancelProductOrderCreateVO;
 import org.fiware.productordering.model.CancelProductOrderVO;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -30,8 +31,8 @@ public class CancelProductOrderApiController extends AbstractApiController<Cance
 
 	public CancelProductOrderApiController(
 			ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper) {
-		super(validationService, repository);
+			TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+		super(validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

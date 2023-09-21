@@ -3,12 +3,13 @@ package org.fiware.tmforum.productordering.rest;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.productordering.api.ProductOrderApi;
 import org.fiware.productordering.model.ProductOrderCreateVO;
 import org.fiware.productordering.model.ProductOrderUpdateVO;
 import org.fiware.productordering.model.ProductOrderVO;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -38,8 +39,8 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 	private final Clock clock;
 
 	public ProductOrderingApiController(ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock) {
-		super(validationService, repository);
+			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, EventHandler eventHandler) {
+		super(validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}
@@ -179,5 +180,14 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 				.map(PriceAlteration::getProductOfferingPrice)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
+	}
+
+	@Post("/callback")
+	@Consumes("application/json;charset=utf-8")
+	@Produces("application/json;charset=utf-8")
+	public Mono<HttpResponse<String>> callback(@Body String body) {
+		log.debug("Beka got callback payload");
+		log.debug(body);
+		return Mono.just("Yes!").map(HttpResponse::created);
 	}
 }

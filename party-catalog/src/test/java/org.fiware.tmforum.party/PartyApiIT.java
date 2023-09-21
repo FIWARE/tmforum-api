@@ -3,6 +3,7 @@ package org.fiware.tmforum.party;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApiClient;
@@ -26,13 +27,20 @@ import org.fiware.party.model.OrganizationVO;
 import org.fiware.party.model.OrganizationVOTestExample;
 import org.fiware.party.model.RelatedPartyVO;
 import org.fiware.party.model.RelatedPartyVOTestExample;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.party" })
 public class PartyApiIT extends AbstractApiIT {
@@ -46,6 +54,19 @@ public class PartyApiIT extends AbstractApiIT {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.organizationApiTestClient = organizationApiTestClient;
 		this.individualApiTestClient = individualApiTestClient;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		Mono<List<HttpResponse<String>>> response = Mono.just(Stream.of("ok")
+				.map(HttpResponse::ok).collect(Collectors.toList()));
+		when(eventHandler.handleCreateEvent(any())).thenReturn(response);
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(response);
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(response);
+
+		return eventHandler;
 	}
 
 	@Test

@@ -18,6 +18,7 @@ import org.fiware.servicecatalog.model.ServiceCategoryRefVOTestExample;
 import org.fiware.servicecatalog.model.ServiceSpecificationRefVOTestExample;
 import org.fiware.servicecatalog.model.TimePeriodVO;
 import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Clock;
@@ -40,6 +42,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +68,19 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 	@MockBean(Clock.class)
 	public Clock clock() {
 		return clock;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		Mono<List<HttpResponse<String>>> response = Mono.just(Stream.of("ok")
+				.map(HttpResponse::ok).collect(Collectors.toList()));
+		when(eventHandler.handleCreateEvent(any())).thenReturn(response);
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(response);
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(response);
+
+		return eventHandler;
 	}
 
 	@ParameterizedTest

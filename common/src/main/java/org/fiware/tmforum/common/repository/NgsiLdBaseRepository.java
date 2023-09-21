@@ -111,6 +111,7 @@ public abstract class NgsiLdBaseRepository {
      * @param id id of the entity to be deleted
      * @return an empty mono
      */
+    @CacheInvalidate(value = ENTITIES_CACHE_NAME)
     public Mono<Void> deleteDomainEntity(URI id) {
         return entitiesApi
             .removeEntityById(id, generalProperties.getTenant(), null)

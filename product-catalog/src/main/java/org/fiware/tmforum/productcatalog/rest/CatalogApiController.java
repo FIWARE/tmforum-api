@@ -7,6 +7,7 @@ import org.fiware.productcatalog.api.CatalogApi;
 import org.fiware.productcatalog.model.CatalogCreateVO;
 import org.fiware.productcatalog.model.CatalogUpdateVO;
 import org.fiware.productcatalog.model.CatalogVO;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -30,8 +31,8 @@ public class CatalogApiController extends AbstractApiController<Catalog> impleme
 	private final TMForumMapper tmForumMapper;
 
 	public CatalogApiController(ReferenceValidationService validationService,
-			TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper) {
-		super(validationService, productCatalogRepository);
+			TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+		super(validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

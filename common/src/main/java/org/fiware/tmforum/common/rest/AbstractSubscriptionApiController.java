@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.rest;
 
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
@@ -20,14 +21,15 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     private final Map<String, String> eventGroupToEntityNameMapping;
 
     public AbstractSubscriptionApiController(ReferenceValidationService validationService, TmForumRepository repository,
-                                             Map<String, String> eventGroupToEntityNameMapping) {
-        super(validationService, repository);
+                                             Map<String, String> eventGroupToEntityNameMapping, EventHandler eventHandler) {
+        super(validationService, repository, eventHandler);
         this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
     }
 
     protected Mono<Subscription> create(Subscription subscription) {
-        return findExistingSubscription(subscription)
-                .switchIfEmpty(create(Mono.just(subscription), Subscription.class));
+//        return findExistingSubscription(subscription)
+//                .switchIfEmpty(create(Mono.just(subscription), Subscription.class));
+        return create(Mono.just(subscription), Subscription.class);
     }
 
     private Mono<Subscription> findExistingSubscription(Subscription subscription) {

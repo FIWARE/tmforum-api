@@ -5,6 +5,7 @@ import io.micronaut.http.annotation.Controller;
 import org.fiware.resourcefunction.api.ScaleApi;
 import org.fiware.resourcefunction.model.ScaleCreateVO;
 import org.fiware.resourcefunction.model.ScaleVO;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -28,8 +29,8 @@ public class ScaleApiController extends AbstractApiController<Scale> implements 
 	private final TMForumMapper tmForumMapper;
 
 	public ScaleApiController(ReferenceValidationService validationService, TmForumRepository resourceCatalogRepository,
-			TMForumMapper tmForumMapper) {
-		super(validationService, resourceCatalogRepository);
+			TMForumMapper tmForumMapper, EventHandler eventHandler) {
+		super(validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

@@ -1,5 +1,6 @@
 package org.fiware.tmforum.productcatalog.rest;
 
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -16,8 +17,8 @@ public class AbstractProductCatalogApiController<T> extends AbstractApiControlle
 
 	public AbstractProductCatalogApiController(
 			ReferenceValidationService validationService,
-			TmForumRepository repository) {
-		super(validationService, repository);
+			TmForumRepository repository, EventHandler eventHandler) {
+		super(validationService, repository, eventHandler);
 	}
 
 	protected List<ProductSpecificationRef> validateProdSpecCharValueUse(

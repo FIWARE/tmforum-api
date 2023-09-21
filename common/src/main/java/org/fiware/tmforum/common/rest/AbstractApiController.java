@@ -6,6 +6,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.context.ServerRequestContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -33,6 +35,7 @@ public abstract class AbstractApiController<T> {
 
 	protected final ReferenceValidationService validationService;
 	protected final TmForumRepository repository;
+	private final EventHandler eventHandler;
 
 	protected Mono<T> getCheckingMono(T entityToCheck, List<List<? extends ReferencedEntity>> referencedEntities) {
 		Mono<T> checkingMono = Mono.just(entityToCheck);
@@ -48,7 +51,7 @@ public abstract class AbstractApiController<T> {
 	protected Mono<T> create(Mono<T> checkingMono, Class<T> entityClass) {
 		return checkingMono
 				.flatMap(checkedResult -> repository.createDomainEntity(checkedResult)
-						.then(repository.handleCreateEvent(checkedResult))
+						.then(eventHandler.handleCreateEvent(checkedResult))
 						.then(Mono.just(checkedResult)))
 				.onErrorMap(t -> {
 					if (t instanceof HttpClientResponseException e) {
@@ -78,9 +81,12 @@ public abstract class AbstractApiController<T> {
 		}
 
 		URI idUri = URI.create(id);
-		return repository.retrieveEntityById(idUri).flatMap(entityVO ->
-				repository.deleteDomainEntity(idUri)
-						.then(repository.handleDeleteEvent(entityVO))
+		return repository.retrieveEntityById(idUri)
+				.switchIfEmpty(Mono.error(new TmForumException("No such product order exists.",
+						TmForumExceptionReason.NOT_FOUND)))
+				.flatMap(entityVO ->
+					repository.deleteDomainEntity(idUri)
+						.then(eventHandler.handleDeleteEvent(entityVO))
 						.then(Mono.just(HttpResponse.noContent())));
 	}
 
@@ -125,13 +131,18 @@ public abstract class AbstractApiController<T> {
 	protected Mono<T> patch(String id, T updatedObject, Mono<T> checkingMono, Class<T> entityClass) {
 		URI idUri = URI.create(id);
 
+		AtomicReference<T> old = new AtomicReference<>();
 		return repository
 				.get(idUri, entityClass)
 				.switchIfEmpty(
 						Mono.error(new TmForumException("No such entity exists.", TmForumExceptionReason.NOT_FOUND)))
+				.flatMap(entity -> {
+					old.set(entity);
+					return checkingMono;
+				})
 				.flatMap(entity -> repository.updateDomainEntity(id, updatedObject)
 								.then(repository.get(idUri, entityClass))
-								.flatMap(updatedState -> repository.handleUpdateEvent(updatedState, entity)
+								.flatMap(updatedState -> eventHandler.handleUpdateEvent(updatedState, old.get())
 										.then(Mono.just(updatedState))
 								)
 				);

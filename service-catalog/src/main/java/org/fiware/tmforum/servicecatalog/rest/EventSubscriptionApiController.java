@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.servicecatalog.api.EventsSubscriptionApi;
 import org.fiware.servicecatalog.model.EventSubscriptionInputVO;
 import org.fiware.servicecatalog.model.EventSubscriptionVO;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
@@ -38,8 +39,8 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 			EVENT_GROUP_SERVICE_CATALOG, EVENT_GROUP_SERVICE_CATEGORY, EVENT_GROUP_SERVICE_SPECIFICATION);
 
 	public EventSubscriptionApiController(ReferenceValidationService validationService,
-										  TmForumRepository repository, TMForumMapper tmForumMapper) {
-		super(validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING);
+										  TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+		super(validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

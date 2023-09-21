@@ -14,6 +14,7 @@ import org.fiware.customerbillmanagement.model.CustomerBillVOTestExample;
 import org.fiware.customerbillmanagement.model.StateValueVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -37,6 +39,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -67,6 +70,19 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	@MockBean(Clock.class)
 	public Clock clock() {
 		return clock;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		Mono<List<HttpResponse<String>>> response = Mono.just(Stream.of("ok")
+				.map(HttpResponse::ok).collect(Collectors.toList()));
+		when(eventHandler.handleCreateEvent(any())).thenReturn(response);
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(response);
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(response);
+
+		return eventHandler;
 	}
 
 	private void createBill(CustomerBill customerBillVO) {

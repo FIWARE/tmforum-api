@@ -1,6 +1,25 @@
 package org.fiware.tmforum.agreement;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.fiware.agreement.api.AgreementApiTestClient;
+import org.fiware.agreement.api.AgreementApiTestSpec;
+import org.fiware.agreement.model.*;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.agreement.domain.Agreement;
+import org.fiware.tmforum.common.EventHandler;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,35 +29,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.fiware.agreement.api.AgreementApiTestClient;
-import org.fiware.agreement.api.AgreementApiTestSpec;
-import org.fiware.agreement.model.AgreementCreateVO;
-import org.fiware.agreement.model.AgreementCreateVOTestExample;
-import org.fiware.agreement.model.AgreementSpecificationRefVO;
-import org.fiware.agreement.model.AgreementSpecificationRefVOTestExample;
-import org.fiware.agreement.model.AgreementUpdateVO;
-import org.fiware.agreement.model.AgreementUpdateVOTestExample;
-import org.fiware.agreement.model.AgreementVO;
-import org.fiware.agreement.model.AgreementVOTestExample;
-import org.fiware.agreement.model.RelatedPartyVOTestExample;
-import org.fiware.agreement.model.TimePeriodVO;
-import org.fiware.agreement.model.TimePeriodVOTestExample;
-import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.agreement.domain.Agreement;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.agreement" })
 public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpec {
@@ -66,6 +60,19 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
         @Override
         protected String getEntityType() {
                 return Agreement.TYPE_AG;
+        }
+
+        @MockBean(EventHandler.class)
+        public EventHandler eventHandler() {
+                EventHandler eventHandler = mock(EventHandler.class);
+
+                Mono<List<HttpResponse<String>>> response = Mono.just(Stream.of("ok")
+                        .map(HttpResponse::ok).collect(Collectors.toList()));
+                when(eventHandler.handleCreateEvent(any())).thenReturn(response);
+                when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(response);
+                when(eventHandler.handleDeleteEvent(any())).thenReturn(response);
+
+                return eventHandler;
         }
 
         @ParameterizedTest

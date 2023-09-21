@@ -9,6 +9,7 @@ import org.fiware.resourcecatalog.api.ResourceCandidateApi;
 import org.fiware.resourcecatalog.model.ResourceCandidateCreateVO;
 import org.fiware.resourcecatalog.model.ResourceCandidateUpdateVO;
 import org.fiware.resourcecatalog.model.ResourceCandidateVO;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -36,8 +37,8 @@ public class ResourceCandidateApiController extends AbstractApiController<Resour
 
 	public ResourceCandidateApiController(ReferenceValidationService validationService,
 			TmForumRepository resourceCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock) {
-		super(validationService, resourceCatalogRepository);
+			Clock clock, EventHandler eventHandler) {
+		super(validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

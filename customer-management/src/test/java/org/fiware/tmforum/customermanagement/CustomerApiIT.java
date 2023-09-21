@@ -3,6 +3,7 @@ package org.fiware.tmforum.customermanagement;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.customermanagement.api.CustomerApiTestClient;
 import org.fiware.customermanagement.api.CustomerApiTestSpec;
@@ -22,6 +23,7 @@ import org.fiware.customermanagement.model.RelatedPartyVOTestExample;
 import org.fiware.customermanagement.model.TimePeriodVO;
 import org.fiware.customermanagement.model.TimePeriodVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -42,6 +45,9 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.customermanagement" })
 public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec {
@@ -62,6 +68,19 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 		this.customerApiTestClient = customerApiTestClient;
 		this.entitiesApiClient = entitiesApiClient;
 		this.objectMapper = objectMapper;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		Mono<List<HttpResponse<String>>> response = Mono.just(Stream.of("ok")
+				.map(HttpResponse::ok).collect(Collectors.toList()));
+		when(eventHandler.handleCreateEvent(any())).thenReturn(response);
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(response);
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(response);
+
+		return eventHandler;
 	}
 
 	@ParameterizedTest
