@@ -3,6 +3,8 @@ package org.fiware.tmforum.common.rest;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -27,9 +29,8 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     protected Mono<Subscription> create(Subscription subscription) {
-//        return findExistingSubscription(subscription)
-//                .switchIfEmpty(create(Mono.just(subscription), Subscription.class));
-        return create(Mono.just(subscription), Subscription.class);
+        return findExistingSubscription(subscription)
+                .switchIfEmpty(create(Mono.just(subscription), Subscription.class));
     }
 
     private Mono<Subscription> findExistingSubscription(Subscription subscription) {
@@ -39,7 +40,8 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
                     String.format("eventTypes==\"%s\"", eventType)).toList()));
         return repository.findEntities(DEFAULT_OFFSET, 1, Subscription.TYPE_SUBSCRIPTION,
                     Subscription.class, query)
-                .flatMap(list -> list.isEmpty() ? Mono.empty() : Mono.just(list.get(0)));
+                .flatMap(list -> list.isEmpty() ? Mono.empty() :
+                        Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
     }
 
     protected Subscription buildSubscription(String callback, String query, List<String> eventGroups) {
