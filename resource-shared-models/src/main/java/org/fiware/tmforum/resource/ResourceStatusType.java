@@ -1,6 +1,6 @@
 package org.fiware.tmforum.resource;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ResourceStatusType {
 
@@ -11,11 +11,15 @@ public enum ResourceStatusType {
     UNKNOWN("unknown"),
     SUSPENDED("suspended");
 
-    @Getter
     private final String value;
 
     ResourceStatusType(String value) {
         this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }
 

@@ -1,6 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement.domain;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum StateValue {
 
@@ -11,10 +11,14 @@ public enum StateValue {
 	PARTIALLYPAID("partiallyPaid"),
 	SETTLED("settled");
 
-	@Getter
 	private final String value;
 
 	StateValue(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }
