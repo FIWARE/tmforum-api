@@ -181,13 +181,4 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 	}
-
-	@Post("/callback")
-	@Consumes("application/json;charset=utf-8")
-	@Produces("application/json;charset=utf-8")
-	public Mono<HttpResponse<String>> callback(@Body String body) {
-		log.debug("Beka got callback payload");
-		log.debug(body);
-		return Mono.just("Yes!").map(HttpResponse::created);
-	}
 }
