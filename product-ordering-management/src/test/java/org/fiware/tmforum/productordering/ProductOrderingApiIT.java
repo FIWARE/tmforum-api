@@ -9,9 +9,9 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productordering.api.ProductOrderApiTestClient;
 import org.fiware.productordering.api.ProductOrderApiTestSpec;
 import org.fiware.productordering.model.*;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
@@ -60,11 +60,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 	public EventHandler eventHandler() {
 		EventHandler eventHandler = mock(EventHandler.class);
 
-		Mono<List<HttpResponse<String>>> response = Mono.just(Stream.of("ok")
-				.map(HttpResponse::ok).collect(Collectors.toList()));
-		when(eventHandler.handleCreateEvent(any())).thenReturn(response);
-		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(response);
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(response);
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

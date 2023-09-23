@@ -10,9 +10,9 @@ import org.fiware.agreement.api.AgreementApiTestSpec;
 import org.fiware.agreement.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.agreement.domain.Agreement;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -66,11 +66,9 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
         public EventHandler eventHandler() {
                 EventHandler eventHandler = mock(EventHandler.class);
 
-                Mono<List<HttpResponse<String>>> response = Mono.just(Stream.of("ok")
-                        .map(HttpResponse::ok).collect(Collectors.toList()));
-                when(eventHandler.handleCreateEvent(any())).thenReturn(response);
-                when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(response);
-                when(eventHandler.handleDeleteEvent(any())).thenReturn(response);
+                when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+                when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+                when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
                 return eventHandler;
         }

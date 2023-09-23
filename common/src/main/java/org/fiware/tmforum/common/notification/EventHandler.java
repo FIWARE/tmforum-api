@@ -1,12 +1,10 @@
 package org.fiware.tmforum.common.notification;
 
 import io.micronaut.context.annotation.Bean;
-import io.micronaut.http.HttpResponse;
 import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -30,7 +28,7 @@ public class EventHandler {
         );
     }
 
-    public <T> Mono<List<HttpResponse<String>>> handleCreateEvent(T entity) {
+    public <T> Mono<Void> handleCreateEvent(T entity) {
         String entityType = notificationSender.getEntityType(entity);
         if (entityType.equals(Subscription.TYPE_SUBSCRIPTION)) {
             return Mono.empty();
@@ -38,28 +36,31 @@ public class EventHandler {
 
         String eventType = notificationSender.buildCreateEventType(entityType);
         return getSubscriptions(entityType, eventType)
-                .flatMap(subscriptions -> notificationSender.handleCreateEvent(subscriptions, entity));
+                .doOnNext(subscriptions -> notificationSender.handleCreateEvent(subscriptions, entity))
+                .then();
     }
 
-    public <T> Mono<List<HttpResponse<String>>> handleUpdateEvent(T newState, T oldState) {
+    public <T> Mono<Void> handleUpdateEvent(T newState, T oldState) {
         String entityType = notificationSender.getEntityType(newState);
         if (entityType.equals(Subscription.TYPE_SUBSCRIPTION)) {
             return Mono.empty();
         }
 
         String buildAttributeValueChangeEventType = notificationSender.buildAttributeValueChangeEventType(entityType);
-        Flux<HttpResponse<String>> attrUpdateMono = getSubscriptions(entityType, buildAttributeValueChangeEventType)
-                .flatMapMany(subscriptions ->
-                        notificationSender.handleUpdateEvent(subscriptions, oldState, newState));
+        Mono<Void> attrUpdateMono = getSubscriptions(entityType, buildAttributeValueChangeEventType)
+                .doOnNext(subscriptions ->
+                        notificationSender.handleUpdateEvent(subscriptions, oldState, newState))
+                .then();
 
         String stateChangeEventType = notificationSender.buildStateChangeEventType(entityType);
-        Flux<HttpResponse<String>> stateChangeMono = getSubscriptions(entityType, stateChangeEventType)
-                .flatMapMany(subscriptions ->
-                        notificationSender.handleStateChangeEvent(subscriptions, oldState, newState));
-        return Flux.merge(attrUpdateMono, stateChangeMono).collectList();
+        Mono<Void> stateChangeMono = getSubscriptions(entityType, stateChangeEventType)
+                .doOnNext(subscriptions ->
+                        notificationSender.handleStateChangeEvent(subscriptions, oldState, newState))
+                .then();
+        return attrUpdateMono.then(stateChangeMono);
     }
 
-    public Mono<List<HttpResponse<String>>> handleDeleteEvent(EntityVO entityVO) {
+    public Mono<Void> handleDeleteEvent(EntityVO entityVO) {
         String entityType = entityVO.getType();
         if (entityType.equals(Subscription.TYPE_SUBSCRIPTION)) {
             return Mono.empty();
@@ -67,6 +68,7 @@ public class EventHandler {
 
         String eventType = notificationSender.buildDeleteEventType(entityType);
         return getSubscriptions(entityType, eventType)
-                .flatMap(subscriptions -> notificationSender.handleDeleteEvent(subscriptions, entityVO));
+                .doOnNext(subscriptions -> notificationSender.handleDeleteEvent(subscriptions, entityVO))
+                .then();
     }
 }

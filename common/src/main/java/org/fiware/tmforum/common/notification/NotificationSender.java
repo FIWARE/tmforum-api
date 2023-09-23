@@ -1,5 +1,10 @@
 package org.fiware.tmforum.common.notification;
 
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.reactor.retry.RetryOperator;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.http.HttpHeaders;
@@ -13,7 +18,6 @@ import org.fiware.tmforum.common.domain.subscription.Event;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.querying.QueryResolver;
 import org.fiware.tmforum.common.util.StringUtils;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.InvocationTargetException;
@@ -47,72 +51,92 @@ public class NotificationSender {
         return StringUtils.toCamelCase(entityType) + DELETE_EVENT_SUFFIX;
     }
 
-    private Mono<HttpResponse<String>> sendEventToClient(URI callbackURI, Event event) {
-        HttpRequest<?> req = HttpRequest.POST(callbackURI, event)
+    private static final RetryRegistry RETRY_REGISTRY = RetryRegistry.of(RetryConfig.custom()
+            .maxAttempts(10)
+            .intervalFunction(IntervalFunction.ofExponentialBackoff())
+            .failAfterMaxAttempts(true)
+            .build());
+
+    private Mono<HttpResponse<Object>> sendToClient(Notification notification) {
+        HttpRequest<?> req = HttpRequest.POST(notification.callback, notification.event)
                 .header(HttpHeaders.CONTENT_TYPE, "application/json");
-        return Mono.fromDirect(this.httpClient.exchange(req, String.class));
+        return Mono.fromDirect(this.httpClient.exchange(req, Object.class));
     }
 
-    public <T> Mono<List<HttpResponse<String>>> handleCreateEvent(List<Subscription> subscriptions, T entity) {
+    private void addNotifications(List<Notification> notifications) {
+        notifications
+                .forEach(notification -> {
+                    Retry retry = RETRY_REGISTRY
+                            .retry(String.valueOf(notification.hashCode()));
+                    sendToClient(notification)
+                            .transformDeferred(RetryOperator.of(retry))
+                            .doOnError(e -> log.warn("Was not able to deliver notification {}.", notification, e))
+                            .subscribe();
+                });
+    }
+
+    public <T> void handleCreateEvent(List<Subscription> subscriptions, T entity) {
         String entityType = getEntityType(entity);
         String eventType = buildCreateEventType(entityType);
         String payloadName = StringUtils.decapitalize(StringUtils.getEventGroupName(eventType));
 
-        List<Mono<HttpResponse<String>>> monos = new ArrayList<>();
+        List<Notification> notifications = new ArrayList<>();
         subscriptions.forEach(subscription -> {
             String query = subscription.getQuery();
             if (queryResolver.doesQueryMatchCreateEvent(query, entity, payloadName)) {
                 Event event = createEvent(eventType, applyFieldsFilter(entity, subscription.getFields()),
                         payloadName);
-                monos.add(sendEventToClient(subscription.getCallback(), event));
+                notifications.add(new Notification(subscription.getCallback(), event));
             }
         });
-        return Flux.concat(monos).collectList();
+        addNotifications(notifications);
     }
 
-    public <T> Flux<HttpResponse<String>> handleUpdateEvent(List<Subscription> subscriptions, T oldState, T newState) {
+    public <T> void handleUpdateEvent(List<Subscription> subscriptions, T oldState, T newState) {
         String entityType = getEntityType(newState);
         String eventType = buildAttributeValueChangeEventType(entityType);
         String payloadName = StringUtils.decapitalize(StringUtils.getEventGroupName(eventType));
 
-        List<Mono<HttpResponse<String>>> monos = new ArrayList<>();
+        List<Notification> notifications = new ArrayList<>();
         subscriptions.forEach(subscription -> {
             String query = subscription.getQuery();
             if (queryResolver.doesQueryMatchUpdateEvent(query, newState, oldState, payloadName)) {
                 Event event = createEvent(eventType, applyFieldsFilter(newState, subscription.getFields()),
-                        StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
-                monos.add(sendEventToClient(subscription.getCallback(), event));
+                        payloadName);
+                notifications.add(new Notification(subscription.getCallback(), event));
             }
         });
-        return Flux.concat(monos);
+        addNotifications(notifications);
     }
 
-    public <T> Flux<HttpResponse<String>> handleStateChangeEvent(List<Subscription> subscriptions, T oldState, T newState) {
+    public <T> void handleStateChangeEvent(List<Subscription> subscriptions, T oldState, T newState) {
         String entityType = getEntityType(newState);
+        String eventType = buildStateChangeEventType(entityType);
+        String payloadName = StringUtils.decapitalize(StringUtils.getEventGroupName(eventType));
 
-        List<Mono<HttpResponse<String>>> monos = new ArrayList<>();
+        List<Notification> notifications = new ArrayList<>();
         subscriptions.forEach(subscription -> {
             if (hasEntityStateChanged(oldState, newState)) {
-                String eventType = buildStateChangeEventType(entityType);
                 Event event = createEvent(eventType, applyFieldsFilter(newState, subscription.getFields()),
-                        StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
-                monos.add(sendEventToClient(subscription.getCallback(), event));
+                        payloadName);
+                notifications.add(new Notification(subscription.getCallback(), event));
             }
         });
-        return Flux.concat(monos);
+        addNotifications(notifications);
     }
 
-    public Mono<List<HttpResponse<String>>> handleDeleteEvent(List<Subscription> subscriptions, EntityVO entityVO) {
+    public void handleDeleteEvent(List<Subscription> subscriptions, EntityVO entityVO) {
         String entityType = entityVO.getType();
         String eventType = buildDeleteEventType(entityType);
+        String payloadName = StringUtils.decapitalize(StringUtils.getEventGroupName(eventType));
 
-        List<Mono<HttpResponse<String>>> monos = new ArrayList<>();
+        List<Notification> notifications = new ArrayList<>();
         subscriptions.forEach(subscription -> {
             Event event = createEvent(eventType, applyFieldsFilter(entityVO, subscription.getFields()),
-                    StringUtils.decapitalize(StringUtils.getEventGroupName(eventType)));
-            monos.add(sendEventToClient(subscription.getCallback(), event));
+                    payloadName);
+            notifications.add(new Notification(subscription.getCallback(), event));
         });
-        return Flux.concat(monos).collectList();
+        addNotifications(notifications);
     }
 
     private Event createEvent(String eventType, Map<String, Object> payload, String payloadName) {
@@ -168,4 +192,6 @@ public class NotificationSender {
                 oldStateFieldValue != null && !oldStateFieldValue.equals(newStateFieldValue) ||
                 newStateFieldValue != null && !newStateFieldValue.equals(oldStateFieldValue);
     }
+
+    private record Notification(URI callback, Event event) {}
 }
