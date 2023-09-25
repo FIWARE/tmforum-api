@@ -170,12 +170,18 @@ public class QueryParser {
 	}
 
 	private static String encodeStringValue(String value) {
-		if (value.contains(NGSI_LD_OR)) {
+		//if (value.contains(NGSI_LD_OR)) {
+		if (value.contains(",")) {
 			// remove the beginning ( and ending )
-			String noBraces = value.substring(1, value.length() - 1);
-			return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_OR)))
-					.map(v -> String.format("\"%s\"", v))
-					.collect(Collectors.joining(NGSI_LD_OR)));
+			// String noBraces = value.substring(1, value.length() - 1);
+			// return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_OR)))
+			// 		.map(v -> String.format("\"%s\"", v))
+			// 		.collect(Collectors.joining(NGSI_LD_OR)));
+			// FIXME: scorpio workarround
+			return String.format("%s", Arrays.stream(value.split(","))
+				.map(v -> String.format("\"%s\"", v))
+				.collect(Collectors.joining(",")));
+
 		} else if (value.contains(NGSI_LD_AND)) {
 			// remove the beginning ( and ending )
 			String noBraces = value.substring(1, value.length() - 1);
@@ -224,7 +230,9 @@ public class QueryParser {
 		}
 		String value = parameterParts[1];
 		if (value.contains(TMFORUM_OR_VALUE)) {
-			value = String.format("(%s)", value.replace(TMFORUM_OR_VALUE, NGSI_LD_OR));
+			// Comented while using scorpio
+			//value = String.format("(%s)", value.replace(TMFORUM_OR_VALUE, NGSI_LD_OR));
+			//
 		}
 
 		return new QueryPart(
