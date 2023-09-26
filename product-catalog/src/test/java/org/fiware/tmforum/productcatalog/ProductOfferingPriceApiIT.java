@@ -112,6 +112,8 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 		ProductOfferingPriceCreateVO withPriceLogic = ProductOfferingPriceCreateVOTestExample.build();
 		PricingLogicAlgorithmVO pricingLogicAlgorithmVO = PricingLogicAlgorithmVOTestExample.build();
+		pricingLogicAlgorithmVO.setId("urn:price-logic");
+		pricingLogicAlgorithmVO.setPlaSpecId(null);
 		withPriceLogic.setPricingLogicAlgorithm(List.of(pricingLogicAlgorithmVO));
 		ProductOfferingPriceVO expectedWithPriceLogic = ProductOfferingPriceVOTestExample.build();
 		expectedWithPriceLogic.setPricingLogicAlgorithm(List.of(pricingLogicAlgorithmVO));
@@ -120,6 +122,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 		ProductOfferingPriceCreateVO withTaxItem = ProductOfferingPriceCreateVOTestExample.build();
 		TaxItemVO taxItemVO = TaxItemVOTestExample.build();
+		taxItemVO.setId("urn:tax-item");
 		withTaxItem.setTax(List.of(taxItemVO));
 		ProductOfferingPriceVO expectedWithTax = ProductOfferingPriceVOTestExample.build();
 		expectedWithTax.setTax(List.of(taxItemVO));
@@ -518,9 +521,9 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
 
 		ProductOfferingPriceUpdateVO newTax = ProductOfferingPriceUpdateVOTestExample.build();
-		newTax.setTax(List.of(TaxItemVOTestExample.build()));
+		newTax.setTax(List.of(TaxItemVOTestExample.build().id("urn:tax-item")));
 		ProductOfferingPriceVO expectedNewTax = ProductOfferingPriceVOTestExample.build();
-		expectedNewTax.setTax(List.of(TaxItemVOTestExample.build()));
+		expectedNewTax.setTax(List.of(TaxItemVOTestExample.build().id("urn:tax-item")));
 		testEntries.add(Arguments.of("The tax should have been updated.", newTax, expectedNewTax));
 
 		return testEntries.stream();

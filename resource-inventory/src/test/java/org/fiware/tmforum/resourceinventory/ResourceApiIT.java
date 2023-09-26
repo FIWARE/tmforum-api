@@ -108,7 +108,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 						ResourceVOTestExample.build().place(null).resourceSpecification(null).startOperatingDate(start)
 								.endOperatingDate(end)));
 
-		List<NoteVO> notes = List.of(NoteVOTestExample.build().id("note-1"), NoteVOTestExample.build().id("note-2"));
+		List<NoteVO> notes = List.of(NoteVOTestExample.build().id("urn:note-1"), NoteVOTestExample.build().id("urn:note-2"));
 		testEntries.add(
 				Arguments.of("A resource with notes should have been created.",
 						ResourceCreateVOTestExample.build().place(null).resourceSpecification(null).note(notes),
@@ -139,25 +139,25 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		List<ArgumentPair<List<FeatureVO>>> featureArguments = new ArrayList<>();
 
 		featureArguments.add(new ArgumentPair<>("A single feature without references should be valid.",
-				List.of(FeatureVOTestExample.build().constraint(null).featureRelationship(null)
+				List.of(FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
 						.featureCharacteristic(null))));
 		featureArguments.add(new ArgumentPair<>("Multiple features without references should be valid.",
 				List.of(
-						FeatureVOTestExample.build().id("f-1").constraint(null).featureRelationship(null)
+						FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
 								.featureCharacteristic(null),
-						FeatureVOTestExample.build().id("f-2").constraint(null).featureRelationship(null)
+						FeatureVOTestExample.build().id("urn:f-2").constraint(null).featureRelationship(null)
 								.featureCharacteristic(null))));
 		featureArguments.add(new ArgumentPair<>("Features referencing should be valid.",
 				List.of(
-						FeatureVOTestExample.build().id("f-1").constraint(null).featureRelationship(null)
+						FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
 								.featureCharacteristic(null),
-						FeatureVOTestExample.build().id("f-2").constraint(null).featureCharacteristic(null)
+						FeatureVOTestExample.build().id("urn:f-2").constraint(null).featureCharacteristic(null)
 								.featureRelationship(
-										List.of(FeatureRelationshipVOTestExample.build().validFor(null).id("f-1"))))));
+										List.of(FeatureRelationshipVOTestExample.build().validFor(null).id("urn:f-1"))))));
 
 		provideValidCharacteristicLists()
 				.map(ap -> new ArgumentPair<>(String.format("Features should be valid - %s", ap.message()),
-						List.of(FeatureVOTestExample.build().constraint(null).featureRelationship(null)
+						List.of(FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
 								.featureCharacteristic(ap.value()))))
 				.forEach(featureArguments::add);
 
@@ -168,15 +168,15 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		List<ArgumentPair<List<CharacteristicVO>>> characteristicArguments = new ArrayList<>();
 
 		characteristicArguments.add(new ArgumentPair<>("Single characteristics should be valid.",
-				List.of(CharacteristicVOTestExample.build().characteristicRelationship(null))));
+				List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null))));
 		characteristicArguments.add(new ArgumentPair<>("Mulitple characteristics should be valid.",
-				List.of(CharacteristicVOTestExample.build().id("c-1").characteristicRelationship(null),
-						CharacteristicVOTestExample.build().id("c-2").characteristicRelationship(null))));
+				List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
+						CharacteristicVOTestExample.build().id("urn:c-2").characteristicRelationship(null))));
 		characteristicArguments.add(new ArgumentPair<>("Referencing characteristics should be valid.",
-				List.of(CharacteristicVOTestExample.build().id("c-1").characteristicRelationship(null),
-						CharacteristicVOTestExample.build().id("c-2")
+				List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
+						CharacteristicVOTestExample.build().id("urn:c-2")
 								.characteristicRelationship(
-										List.of(CharacteristicRelationshipVOTestExample.build().id("c-1"))))));
+										List.of(CharacteristicRelationshipVOTestExample.build().id("urn:c-1"))))));
 		return characteristicArguments.stream();
 	}
 
@@ -611,7 +611,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 						.resourceSpecification(null)
 						.resourceVersion("new-version")));
 
-		List<NoteVO> notes = List.of(NoteVOTestExample.build().id("note-1"), NoteVOTestExample.build().id("note-2"));
+		List<NoteVO> notes = List.of(NoteVOTestExample.build().id("urn:note-1"), NoteVOTestExample.build().id("urn:note-2"));
 		testEntries.add(Arguments.of("The notes should have been updated.",
 				ResourceUpdateVOTestExample.build()
 						.place(null)

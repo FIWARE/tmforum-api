@@ -130,7 +130,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 		testEntries.add(Arguments.of("A migrate with a start time should have been created.", startTimeCreateVO,
 				expectedStartTimeVO));
 
-		String charId = UUID.randomUUID().toString();
+		String charId = "urn:" + UUID.randomUUID();
 		MigrateCreateVO additionalParamsCreateVO = MigrateCreateVOTestExample.build()
 				.characteristics(List.of(CharacteristicVOTestExample.build().id(charId))).place(null)
 				.resourceFunction(null);

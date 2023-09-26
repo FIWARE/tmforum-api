@@ -636,7 +636,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		testEntries.add(
 				Arguments.of("The attachments should have been updated.", attachmentUpdate, expectedAttachmentUpdate));
 
-		String featureId = UUID.randomUUID().toString();
+		String featureId = "urn:" + UUID.randomUUID();
 		ResourceFunctionUpdateVO featureUpdate = ResourceFunctionUpdateVOTestExample.build()
 				.activationFeature(List.of(FeatureVOTestExample.build().id(featureId)))
 				.place(null)
@@ -650,7 +650,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		testEntries.add(
 				Arguments.of("The activation feature should have been updated.", featureUpdate, expectedFeatureUpdate));
 
-		String charId = UUID.randomUUID().toString();
+		String charId = "urn:" + UUID.randomUUID();
 		ResourceFunctionUpdateVO autoModificationUpdate = ResourceFunctionUpdateVOTestExample.build()
 				.autoModification(List.of(CharacteristicVOTestExample.build().id(charId)))
 				.place(null)
@@ -663,7 +663,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		testEntries.add(Arguments.of("The autoModification should have been updated.", autoModificationUpdate,
 				expectedAutoModificationUpdate));
 
-		String resourceCharId = UUID.randomUUID().toString();
+		String resourceCharId = "urn:" + UUID.randomUUID();
 		ResourceFunctionUpdateVO resourceCharacteristicUpdate = ResourceFunctionUpdateVOTestExample.build()
 				.resourceCharacteristic(List.of(CharacteristicVOTestExample.build().id(resourceCharId)))
 				.place(null)
@@ -677,7 +677,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 				Arguments.of("The resourceCharacteristic should have been updated.", resourceCharacteristicUpdate,
 						expectedResourceCharacteristicUpdate));
 
-		String graphId = UUID.randomUUID().toString();
+		String graphId = "urn:" + UUID.randomUUID();
 		ResourceFunctionUpdateVO connectivityUpdate = ResourceFunctionUpdateVOTestExample.build()
 				.connectivity(List.of(ResourceGraphVOTestExample.build().id(graphId)))
 				.place(null)
@@ -691,11 +691,11 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 				expectedConnectivityUpdate));
 
 		ResourceFunctionUpdateVO notesUpdate = ResourceFunctionUpdateVOTestExample.build()
-				.note(List.of(NoteVOTestExample.build().author("My author").id("author-note").text("This is my note.")))
+				.note(List.of(NoteVOTestExample.build().author("My author").id("urn:author-note").text("This is my note.")))
 				.place(null)
 				.resourceSpecification(null);
 		ResourceFunctionVO expectedNotesUpdate = ResourceFunctionVOTestExample.build()
-				.note(List.of(NoteVOTestExample.build().author("My author").id("author-note").text("This is my note.")))
+				.note(List.of(NoteVOTestExample.build().author("My author").id("urn:author-note").text("This is my note.")))
 				.place(null)
 				.resourceSpecification(null);
 		testEntries.add(Arguments.of("The notes should have been updated.", notesUpdate, expectedNotesUpdate));
