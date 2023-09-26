@@ -1,10 +1,13 @@
 package org.fiware.tmforum.common.rest;
 
+import io.micronaut.cache.annotation.CacheInvalidate;
+import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -28,13 +31,14 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
     }
 
+    @CacheInvalidate(value = EventHandler.SUBSCRIPTIONS_CACHE_NAME, all = true)
     protected Mono<Subscription> create(Subscription subscription) {
         return findExistingSubscription(subscription)
                 .switchIfEmpty(create(Mono.just(subscription), Subscription.class));
     }
 
     private Mono<Subscription> findExistingSubscription(Subscription subscription) {
-        String query = String.format("callback==\"%s\";rawQuery==\"%s\"",
+        String query = String.format(QueryParser.toNgsiLdQuery(Subscription.class, "callback=%s&rawQuery=%s"),
                 subscription.getCallback(), subscription.getRawQuery());
 
         return repository.findEntities(DEFAULT_OFFSET, 1, Subscription.TYPE_SUBSCRIPTION,
@@ -64,5 +68,11 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         subscription.setCallback(URI.create(callback));
         subscription.setFields(subscriptionQuery.getFields());
         return subscription;
+    }
+
+    @Override
+    @CacheInvalidate(value = EventHandler.SUBSCRIPTIONS_CACHE_NAME, all = true)
+    protected Mono<HttpResponse<Object>> delete(String id) {
+        return super.delete(id);
     }
 }

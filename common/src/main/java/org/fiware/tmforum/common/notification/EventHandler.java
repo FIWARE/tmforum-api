@@ -1,9 +1,11 @@
 package org.fiware.tmforum.common.notification;
 
+import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.context.annotation.Bean;
 import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import reactor.core.publisher.Mono;
 
@@ -15,16 +17,20 @@ import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
 @Bean
 @RequiredArgsConstructor
 public class EventHandler {
+    public static final String SUBSCRIPTIONS_CACHE_NAME = "subscriptions";
+
     private final TmForumRepository repository;
     private final NotificationSender notificationSender;
 
-    private Mono<List<Subscription>> getSubscriptions(String entityType, String eventType) {
+    @Cacheable(SUBSCRIPTIONS_CACHE_NAME)
+    public Mono<List<Subscription>> getSubscriptions(String entityType, String eventType) {
         return repository.findEntities(
                 DEFAULT_OFFSET,
                 DEFAULT_LIMIT,
                 Subscription.TYPE_SUBSCRIPTION,
                 Subscription.class,
-                String.format("entities==\"%s\";eventTypes==\"%s\"", entityType, eventType)
+                QueryParser.toNgsiLdQuery(Subscription.class,
+                        String.format("entities=%s&eventTypes=%s", entityType, eventType))
         );
     }
 
