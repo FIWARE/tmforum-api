@@ -15,10 +15,10 @@ on:
 jobs:
   it:
     runs-on: ubuntu-latest
-      strategy:
-        fail-fast: false
-        matrix:
-          broker: [orion-ld, scorpio]
+    strategy:
+      fail-fast: false
+      matrix:
+        broker: [orion-ld, scorpio]
 
     steps:
       - uses: actions/checkout@v2
