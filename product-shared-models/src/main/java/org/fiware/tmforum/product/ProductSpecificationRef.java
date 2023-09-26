@@ -12,7 +12,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = ProductSpecification.TYPE_PRODUCT_SPECIFICATION)
 @EqualsAndHashCode(callSuper = true)
 public class ProductSpecificationRef extends RefEntity {
 
