@@ -104,4 +104,8 @@ public class Agreement extends EntityWithId {
 			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty", targetClass = RelatedParty.class, fromProperties = true) }))
 	private List<RelatedParty> engagedParty;
 
+	@Override
+	public String getEntityState() {
+		return status;
+	}
 }

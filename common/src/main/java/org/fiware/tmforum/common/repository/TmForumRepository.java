@@ -17,7 +17,8 @@ import java.util.List;
 public class TmForumRepository extends NgsiLdBaseRepository {
 
 	public TmForumRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
-			EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
+							 EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper,
+							 JavaObjectMapper javaObjectMapper) {
 		super(generalProperties, entitiesApi, javaObjectMapper, ngsiMapper, entityVOMapper);
 	}
 

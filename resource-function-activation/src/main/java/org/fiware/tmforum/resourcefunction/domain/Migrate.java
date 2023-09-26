@@ -76,4 +76,9 @@ public class Migrate extends EntityWithId {
     public Migrate(String id) {
         super(TYPE_MIGRATE, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return state != null ? state.getValue() : null;
+    }
 }

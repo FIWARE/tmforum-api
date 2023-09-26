@@ -1,5 +1,7 @@
 package org.fiware.tmforum.customerbillmanagement.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum OnDemandStateValue {
 
 	INPROGRESS("inProgress"),
@@ -11,5 +13,10 @@ public enum OnDemandStateValue {
 
 	OnDemandStateValue(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }

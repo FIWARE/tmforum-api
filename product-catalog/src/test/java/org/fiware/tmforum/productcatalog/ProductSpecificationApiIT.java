@@ -23,6 +23,7 @@ import org.fiware.productcatalog.model.ResourceSpecificationRefVOTestExample;
 import org.fiware.productcatalog.model.ServiceSpecificationRefVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -44,6 +46,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -68,6 +71,17 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	@MockBean(Clock.class)
 	public Clock clock() {
 		return clock;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+		return eventHandler;
 	}
 
 	@ParameterizedTest

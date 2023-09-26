@@ -48,7 +48,7 @@ public abstract class NgsiLdBaseRepository {
     }
 
     /**
-     * Create an entity at the broker and cahce it.
+     * Create an entity at the broker and cache it.
      *
      * @param entityVO     - the entity to be created
      * @param ngsiLDTenant - tenant the entity belongs to
@@ -111,18 +111,19 @@ public abstract class NgsiLdBaseRepository {
      * @param id id of the entity to be deleted
      * @return an empty mono
      */
+    @CacheInvalidate(value = ENTITIES_CACHE_NAME)
     public Mono<Void> deleteDomainEntity(URI id) {
         return entitiesApi
-                .removeEntityById(id, generalProperties.getTenant(), null)
-                .onErrorResume(t -> {
-                    if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
-                        throw new DeletionException(String.format("Was not able to delete %s, since it does not exist.", id),
-                                DeletionExceptionReason.NOT_FOUND);
-                    }
-                    throw new DeletionException(String.format("Was not able to delete %s.", id),
-                            t,
-                            DeletionExceptionReason.UNKNOWN);
-                });
+            .removeEntityById(id, generalProperties.getTenant(), null)
+            .onErrorResume(t -> {
+                if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
+                    throw new DeletionException(String.format("Was not able to delete %s, since it does not exist.", id),
+                            DeletionExceptionReason.NOT_FOUND);
+                }
+                throw new DeletionException(String.format("Was not able to delete %s.", id),
+                        t,
+                        DeletionExceptionReason.UNKNOWN);
+            });
     }
 
     /**
