@@ -8,6 +8,7 @@ import io.github.wistefan.mapping.annotations.EntityType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.net.URI;
+import java.util.List;
 import java.time.Instant;
 
 @MappingEnabled(entityType = "my-pojo")
@@ -21,6 +22,8 @@ public class MyPojo {
 	private SubObject sub;
 	private SubObject otherNamedSub;
 	private Integer temperature;
+	private RelObject rel;
+	private List<RelObject> relList;
 	private Instant createdAt;
 
 	// required constructor
@@ -86,6 +89,26 @@ public class MyPojo {
 	@AttributeSetter(value = AttributeType.PROPERTY, targetName = "otherSub", targetClass = SubObject.class)
 	public void setOtherNamedSub(SubObject otherSub) {
 		this.otherNamedSub = otherNamedSub;
+	}
+
+	@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "rel")
+	public RelObject getRel() {
+		return rel;
+	}
+
+	@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "rel", targetClass = RelObject.class)
+	public void setRel(RelObject rel) {
+		this.rel = rel;
+	}
+
+	@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relList")
+	public List<RelObject> getRelList() {
+		return relList;
+	}
+
+	@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relList", targetClass = RelObject.class)
+	public void setRelList(List<RelObject> rel) {
+		this.relList = relList;
 	}
 
 	@AttributeGetter(value = AttributeType.PROPERTY, targetName = "createdAt")

@@ -3,15 +3,21 @@ package org.fiware.tmforum.common.querying;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.github.wistefan.mapping.NgsiLdAttribute;
 import io.github.wistefan.mapping.QueryAttributeType;
+import io.github.wistefan.mapping.annotations.AttributeGetter;
+import io.github.wistefan.mapping.annotations.AttributeType;
+
 import org.fiware.tmforum.common.exception.QueryException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.github.wistefan.mapping.JavaObjectMapper.getGetterMethodByName;
 
 import static org.fiware.tmforum.common.querying.Operator.GREATER_THAN;
 import static org.fiware.tmforum.common.querying.Operator.GREATER_THAN_EQUALS;
@@ -46,7 +52,9 @@ public class QueryParser {
 	}
 
 	private static String removeWellKnownParameters(String queryString) {
-		List<String> parameters = Arrays.asList(queryString.split(TMFORUM_AND));
+		// Using linked list as the list returned by asList method is fixed-size
+		// so the remove method raises a non implemented exception
+		List<String> parameters = new LinkedList<>(Arrays.asList(queryString.split(TMFORUM_AND)));
 		List<String> wellKnownParams = parameters
 				.stream()
 				.filter(p -> p.startsWith(LIMIT_KEY)
@@ -102,11 +110,8 @@ public class QueryParser {
 					NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
 							Arrays.asList(qp.attribute().split("\\.")),
 							queryClass);
-					return new QueryPart(
-							String.join(".", attribute.path()
-							),
-							qp.operator(),
-							encodeValue(qp.value(), attribute.type()));
+
+					return getQueryPart(attribute, qp, isRelationship(queryClass, attribute));
 				})
 				.map(QueryParser::toQueryString);
 
@@ -114,6 +119,46 @@ public class QueryParser {
 			case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
 			case OR -> queryStrings.collect(Collectors.joining(NGSI_LD_OR));
 		};
+	}
+
+	private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
+		Optional<AttributeGetter> getter = getGetterMethodByName(queryClass, attribute.path().get(0))
+			.map(m -> {
+				return Arrays.stream(m.getAnnotations())
+					.filter(AttributeGetter.class::isInstance)
+					.map(AttributeGetter.class::cast)
+					.findFirst();
+			})
+			.filter(a -> a.isPresent())
+			.map(a -> a.get())
+			.findFirst();
+
+		return getter.isPresent() &&
+			(getter.get().value().equals(AttributeType.RELATIONSHIP) ||
+			getter.get().value().equals(AttributeType.RELATIONSHIP_LIST));
+	}
+
+	private static QueryPart getQueryPart(NgsiLdAttribute attribute, QueryPart qp, boolean isRel) {
+		// The query part will depend on the type of query
+		// if the query is to a relationship subproperties will be joined with .
+		// if the query is to a property with structured values the path will be
+		// added between brackets
+
+		String attrPath;
+		if (isRel) {
+			attrPath = String.join(".", attribute.path());
+		} else {
+			String first = attribute.path().remove(0);
+			attrPath = first + String.join("", attribute.path()
+				.stream()
+				.map(a -> "[" + a + "]")
+				.toList());
+		}
+
+		return new QueryPart(
+				attrPath,
+				qp.operator(),
+				encodeValue(qp.value(), attribute.type()));
 	}
 
 	private static String encodeValue(String value, QueryAttributeType type) {
