@@ -160,25 +160,25 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("A single char without rels should be valid", List.of(
-						CharacteristicSpecificationVOTestExample.build().id("cs-1").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().id("urn:cs-1").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null))));
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("Multiple chars without rels should be valid", List.of(
-						CharacteristicSpecificationVOTestExample.build().id("cs-1").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().id("urn:cs-1").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null),
-						CharacteristicSpecificationVOTestExample.build().id("cs-2").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().id("urn:cs-2").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null))));
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("Multiple chars with rels should be valid", List.of(
-						CharacteristicSpecificationVOTestExample.build().id("cs-1").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().id("urn:cs-1").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null),
-						CharacteristicSpecificationVOTestExample.build().id("cs-2")
+						CharacteristicSpecificationVOTestExample.build().id("urn:cs-2")
 								.characteristicValueSpecification(null).validFor(null)
 								.charSpecRelationship(
 										List.of(CharacteristicSpecificationRelationshipVOTestExample.build()
-												.characteristicSpecificationId("cs-1").validFor(null))))));
+												.characteristicSpecificationId("urn:cs-1").validFor(null))))));
 		return validCharacteristicSpecs.stream();
 	}
 
@@ -188,24 +188,30 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec char rel should be created.",
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
+						.id("urn:feature")
 						.validFor(null)
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
 								FeatureSpecificationCharacteristicVOTestExample.build()
 										.validFor(null)
+										.id("urn:feature-spec")
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
 												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
 														.validFor(null)
+														.characteristicId("urn:feature-spec")
+														.featureId("urn:feature")
 														.resourceSpecificationId(null)))
 						))));
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec rel should be created.",
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
 						.validFor(null)
+						.id("urn:feature")
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
 								FeatureSpecificationRelationshipVOTestExample.build()
+										.featureId("urn:feature")
 										.validFor(null)))));
 
 		return validFeatureSpecs.stream();
