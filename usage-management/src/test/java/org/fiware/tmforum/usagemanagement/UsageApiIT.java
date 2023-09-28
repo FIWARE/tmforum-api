@@ -137,24 +137,6 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 
 		List<Arguments> testEntries = new ArrayList<>();
 
-		/*  
-		UsageCreateVO invalidRatedProductCreate = UsageCreateVOTestExample.build();
-		// no valid id
-		RatedProductUsageVO invalidRatedProduct = RatedProductUsageVOTestExample.build();
-		invalidRatedProductCreate.setRatedProductUsage(List.of(invalidRatedProduct));
-		testEntries.add(Arguments.of("A usage with invalid related parties should not be created.",
-				invalidRatedProductCreate));
-
-		UsageCreateVO nonExistentRatedProductCreate = UsageCreateVOTestExample.build();
-		// no existent id
-		RatedProductUsageVO nonExistentRatedProduct = RatedProductUsageVOTestExample.build();
-		nonExistentRatedProduct.setId("urn:ngsi-ld:usage:non-existent");
-		nonExistentRatedProductCreate.setRatedProductUsage(List.of(nonExistentRatedProduct));
-		testEntries.add(Arguments.of("A usage with non-existent related parties should not be created.",
-				nonExistentRatedProductCreate));
-
-		*/
-
 		UsageCreateVO invalidRelatedPartyCreate = UsageCreateVOTestExample.build();
 		// no valid id
 		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
@@ -428,7 +410,6 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 	// patchUsage
 
 
-	@Disabled
 	@ParameterizedTest
 	@MethodSource("provideUsageUpdates")
 	public void patchUsage200(String message, UsageUpdateVO usageUpdateVO, UsageVO expectedUsage)
@@ -442,7 +423,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 	@Override
 	public void patchUsage200() throws Exception {
 		//first create
-		UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build();
+		UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build().usageSpecification(null);
 		HttpResponse<UsageVO> createResponse = callAndCatch(
 				() -> usageApiTestClient.createUsage(usageCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
@@ -454,40 +435,36 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		UsageVO updatedUsage = updateResponse.body();
-		expectedUsage.setHref(new URI(usageId));
 		expectedUsage.setId(usageId);
-		expectedUsage.setRatedProductUsage(null);
+		expectedUsage.setHref(new URI(usageId));
 		expectedUsage.setRelatedParty(null);
-		expectedUsage.setUsageCharacteristic(null);
+		expectedUsage.usageSpecification(null);
 
 		assertEquals(expectedUsage, updatedUsage, message);
 	}
 
 	private static Stream<Arguments> provideUsageUpdates() {
 
-		/* Hai que revisar moito se estou pondo as couasa ben que non sei que teño que actualizar */
-
 		List<Arguments> testEntries = new ArrayList<>();
 
-		UsageUpdateVO newTypeUsage = UsageUpdateVOTestExample.build();
+		UsageUpdateVO newTypeUsage = UsageUpdateVOTestExample.build().usageSpecification(null);;
 		newTypeUsage.setUsageType("New-Type");
-		UsageVO expectedNewType = UsageVOTestExample.build();
+		UsageVO expectedNewType = UsageVOTestExample.build().usageSpecification(null);;
 		expectedNewType.setUsageType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeUsage, expectedNewType));
 
-		UsageUpdateVO newDesc = UsageUpdateVOTestExample.build();
+		UsageUpdateVO newDesc = UsageUpdateVOTestExample.build().usageSpecification(null);;
 		newDesc.setDescription("New description");
-		UsageVO expectedNewDesc = UsageVOTestExample.build();
+		UsageVO expectedNewDesc = UsageVOTestExample.build().usageSpecification(null);;
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
 		return testEntries.stream();
 	}
 
-	@Disabled
 	@ParameterizedTest
 	@MethodSource("provideInvalidUpdates")
-	public void patchUsage400(String messages, UsageUpdateVO usageUpdateVO) throws Exception {
+	public void patchUsage400(String message, UsageUpdateVO usageUpdateVO) throws Exception {
 		this.message = message;
 		this.usageUpdateVO = usageUpdateVO;
 		patchUsage400();
@@ -563,7 +540,6 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 	}
 
 
-	@Disabled
 	@Test
 	@Override
 	public void patchUsage404() throws Exception {
