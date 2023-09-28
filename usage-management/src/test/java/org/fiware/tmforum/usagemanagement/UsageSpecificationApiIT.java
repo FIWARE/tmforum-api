@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.net.URI;
 
-import org.fiware.tmforum.common.domain.ConstraintRef;
-import org.fiware.tmforum.service.EntitySpecificationRelationship;
 import org.fiware.usagemanagement.api.UsageSpecificationApiTestSpec;
 import org.fiware.usagemanagement.api.UsageSpecificationApiTestClient;
 import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
@@ -32,10 +30,7 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.internal.configuration.injection.ConstructorInjection;
 
 @MicronautTest(packages = { "org.fiware.tmforum.usagemanagement" })
 public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpecificationApiTestSpec{
@@ -46,7 +41,6 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
     private UsageSpecificationCreateVO usageSpecificationCreateVO;
     private UsageSpecificationUpdateVO usageSpecificationUpdateVO;
     private UsageSpecificationVO expectedUsageSpecification;
-
     private final EntitiesApiClient entitiesApiClient;
     private final ObjectMapper objectMapper;
     private final GeneralProperties generalProperties;

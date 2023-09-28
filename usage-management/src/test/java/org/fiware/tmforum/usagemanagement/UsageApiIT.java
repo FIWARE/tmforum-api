@@ -49,7 +49,6 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
     private UsageCreateVO usageCreateVO;
     private UsageUpdateVO usageUpdateVO;
     private UsageVO expectedUsage;
-
     private final EntitiesApiClient entitiesApiClient;
     private final ObjectMapper objectMapper;
     private final GeneralProperties generalProperties;
@@ -447,15 +446,15 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 
 		List<Arguments> testEntries = new ArrayList<>();
 
-		UsageUpdateVO newTypeUsage = UsageUpdateVOTestExample.build().usageSpecification(null);;
+		UsageUpdateVO newTypeUsage = UsageUpdateVOTestExample.build().usageSpecification(null);
 		newTypeUsage.setUsageType("New-Type");
-		UsageVO expectedNewType = UsageVOTestExample.build().usageSpecification(null);;
+		UsageVO expectedNewType = UsageVOTestExample.build().usageSpecification(null);
 		expectedNewType.setUsageType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeUsage, expectedNewType));
 
-		UsageUpdateVO newDesc = UsageUpdateVOTestExample.build().usageSpecification(null);;
+		UsageUpdateVO newDesc = UsageUpdateVOTestExample.build().usageSpecification(null);
 		newDesc.setDescription("New description");
-		UsageVO expectedNewDesc = UsageVOTestExample.build().usageSpecification(null);;
+		UsageVO expectedNewDesc = UsageVOTestExample.build().usageSpecification(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
@@ -473,7 +472,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 	@Override
 	public void patchUsage400() throws Exception {
 		//first create
-		UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build();
+		UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build().usageSpecification(null);
 		HttpResponse<UsageVO> createResponse = callAndCatch(
 				() -> usageApiTestClient.createUsage(usageCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
@@ -492,35 +491,35 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
 		
 		List<Arguments> testEntries = new ArrayList<>();
 
-		UsageCreateVO invalidRelatedPartyCreate = UsageCreateVOTestExample.build();
+		UsageUpdateVO invalidRelatedPartyUpdate = UsageUpdateVOTestExample.build();
 		// no valid id
 		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
-		invalidRelatedPartyCreate.setRelatedParty(List.of(invalidRelatedParty));
-		testEntries.add(Arguments.of("A usage with invalid related parties should not be created.",
-				invalidRelatedPartyCreate));
+		invalidRelatedPartyUpdate.setRelatedParty(List.of(invalidRelatedParty));
+		testEntries.add(Arguments.of("A usage with invalid related parties should not be Updated.",
+				invalidRelatedPartyUpdate));
 
-		UsageCreateVO nonExistentRelatedPartyCreate = UsageCreateVOTestExample.build();
+		UsageUpdateVO nonExistentRelatedPartyUpdate = UsageUpdateVOTestExample.build();
 		// no existent id
 		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
 		nonExistentRelatedParty.setId("urn:ngsi-ld:usage:non-existent");
-		nonExistentRelatedPartyCreate.setRelatedParty(List.of(nonExistentRelatedParty));
-		testEntries.add(Arguments.of("A usage with non-existent related parties should not be created.",
-				nonExistentRelatedPartyCreate));
+		nonExistentRelatedPartyUpdate.setRelatedParty(List.of(nonExistentRelatedParty));
+		testEntries.add(Arguments.of("A usage with non-existent related parties should not be Updated.",
+				nonExistentRelatedPartyUpdate));
 
-		UsageCreateVO invalidUsageCharacteristicCreate = UsageCreateVOTestExample.build();
+		UsageUpdateVO invalidUsageCharacteristicUpdate = UsageUpdateVOTestExample.build();
 		// no valid id
 		UsageCharacteristicVO usageCharacteristic = UsageCharacteristicVOTestExample.build();
-		invalidUsageCharacteristicCreate.setUsageCharacteristic(List.of(usageCharacteristic));
+		invalidUsageCharacteristicUpdate.setUsageCharacteristic(List.of(usageCharacteristic));
 		testEntries.add(
-				Arguments.of("A usage with invalid categories should not be created.", invalidUsageCharacteristicCreate));
+				Arguments.of("A usage with invalid categories should not be Updated.", invalidUsageCharacteristicUpdate));
 
-		UsageCreateVO nonExistentUsageCharacteristicCreate = UsageCreateVOTestExample.build();
+		UsageUpdateVO nonExistentUsageCharacteristicUpdate = UsageUpdateVOTestExample.build();
 		// no existent id
 		UsageCharacteristicVO nonExistentUsageCharacteristic = UsageCharacteristicVOTestExample.build();
 		nonExistentUsageCharacteristic.setId("urn:ngsi-ld:usage:non-existent");
-		nonExistentUsageCharacteristicCreate.setUsageCharacteristic(List.of(nonExistentUsageCharacteristic));
-		testEntries.add(Arguments.of("A usage with non-existent categories should not be created.",
-				nonExistentUsageCharacteristicCreate));
+		nonExistentUsageCharacteristicUpdate.setUsageCharacteristic(List.of(nonExistentUsageCharacteristic));
+		testEntries.add(Arguments.of("A usage with non-existent categories should not be Updated.",
+				nonExistentUsageCharacteristicUpdate));
 
 		return testEntries.stream();
 	}
