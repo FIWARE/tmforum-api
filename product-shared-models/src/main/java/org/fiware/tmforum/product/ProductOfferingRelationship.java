@@ -12,7 +12,7 @@ import org.fiware.tmforum.common.domain.TimePeriod;
 
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = ProductOffering.TYPE_PRODUCT_OFFERING)
 @EqualsAndHashCode(callSuper = true)
 public class ProductOfferingRelationship extends RefEntity {
 
