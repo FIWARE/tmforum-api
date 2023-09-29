@@ -68,4 +68,8 @@ public class Catalog extends EntityWithId {
 		super(TYPE_CATALOG, id);
 	}
 
+	@Override
+	public String getEntityState() {
+		return lifecycleStatus;
+	}
 }

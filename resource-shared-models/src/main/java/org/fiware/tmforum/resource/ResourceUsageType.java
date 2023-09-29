@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resource;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum ResourceUsageType {
 
     IDLE("idle"),
@@ -10,5 +12,10 @@ public enum ResourceUsageType {
 
     ResourceUsageType(String value) {
         this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }

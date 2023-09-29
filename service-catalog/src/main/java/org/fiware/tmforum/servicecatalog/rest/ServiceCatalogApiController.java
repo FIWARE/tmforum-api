@@ -9,6 +9,7 @@ import org.fiware.servicecatalog.api.ServiceCatalogApi;
 import org.fiware.servicecatalog.model.ServiceCatalogCreateVO;
 import org.fiware.servicecatalog.model.ServiceCatalogUpdateVO;
 import org.fiware.servicecatalog.model.ServiceCatalogVO;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -34,8 +35,8 @@ public class ServiceCatalogApiController extends AbstractApiController<ServiceCa
 
 	public ServiceCatalogApiController(ReferenceValidationService validationService,
 			TmForumRepository serviceCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock) {
-		super(validationService, serviceCatalogRepository);
+			Clock clock, EventHandler eventHandler) {
+		super(validationService, serviceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

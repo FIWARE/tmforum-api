@@ -128,4 +128,9 @@ public class ProductOffering extends EntityWithId {
 	public ProductOffering(String id) {
 		super(TYPE_PRODUCT_OFFERING, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return lifecycleStatus;
+	}
 }

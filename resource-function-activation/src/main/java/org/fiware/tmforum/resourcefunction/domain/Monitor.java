@@ -41,4 +41,9 @@ public class Monitor extends EntityWithId {
     public Monitor(String id) {
         super(TYPE_MONITOR, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return state;
+    }
 }

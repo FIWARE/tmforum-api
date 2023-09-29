@@ -150,4 +150,9 @@ public class Product extends EntityWithId {
 	public Product(String id) {
 		super(TYPE_PRODUCT, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return status != null ? status.getValue() : null;
+	}
 }

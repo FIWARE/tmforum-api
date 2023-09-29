@@ -71,4 +71,9 @@ public class Category extends EntityWithId {
 	public Category(String id) {
 		super(TYPE_CATEGORY, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return lifecycleStatus;
+	}
 }
