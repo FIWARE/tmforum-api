@@ -82,7 +82,7 @@ public abstract class AbstractApiController<T> {
 
 		URI idUri = URI.create(id);
 		return repository.retrieveEntityById(idUri)
-				.switchIfEmpty(Mono.error(new TmForumException("No such product order exists.",
+				.switchIfEmpty(Mono.error(new TmForumException("No such entity exists.",
 						TmForumExceptionReason.NOT_FOUND)))
 				.flatMap(entityVO ->
 					repository.deleteDomainEntity(idUri)
