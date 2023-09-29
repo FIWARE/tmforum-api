@@ -3,12 +3,13 @@ package org.fiware.tmforum.productordering.rest;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.productordering.api.ProductOrderApi;
 import org.fiware.productordering.model.ProductOrderCreateVO;
 import org.fiware.productordering.model.ProductOrderUpdateVO;
 import org.fiware.productordering.model.ProductOrderVO;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -38,8 +39,8 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 	private final Clock clock;
 
 	public ProductOrderingApiController(ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock) {
-		super(validationService, repository);
+			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, EventHandler eventHandler) {
+		super(validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

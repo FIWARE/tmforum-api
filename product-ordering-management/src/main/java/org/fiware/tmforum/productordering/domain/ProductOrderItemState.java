@@ -1,5 +1,7 @@
 package org.fiware.tmforum.productordering.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum ProductOrderItemState {
 
 	ACKNOWLEDGED("acknowledged"),
@@ -17,5 +19,10 @@ public enum ProductOrderItemState {
 
 	ProductOrderItemState(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }

@@ -119,4 +119,9 @@ public class Organization extends EntityWithId {
 	public Organization(String id) {
 		super(TYPE_ORGANIZATION, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return status != null ? status.getValue() : null;
+	}
 }

@@ -3,8 +3,8 @@ package org.fiware.tmforum.resourceinventory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourceinventory.api.ResourceApiTestClient;
 import org.fiware.resourceinventory.api.ResourceApiTestSpec;
@@ -28,6 +28,7 @@ import org.fiware.resourceinventory.model.ResourceUpdateVOTestExample;
 import org.fiware.resourceinventory.model.ResourceUsageStateTypeVO;
 import org.fiware.resourceinventory.model.ResourceVO;
 import org.fiware.resourceinventory.model.ResourceVOTestExample;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Instant;
@@ -50,6 +52,9 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.resourceinventory" })
 public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec {
@@ -66,6 +71,17 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 			ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.resourceApiTestClient = resourceApiTestClient;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+		return eventHandler;
 	}
 
 	@ParameterizedTest

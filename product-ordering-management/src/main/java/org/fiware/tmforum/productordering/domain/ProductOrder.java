@@ -142,4 +142,9 @@ public class ProductOrder extends EntityWithId {
 	public ProductOrder(String id) {
 		super(TYPE_PRODUCT_ORDER, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return state != null ? state.getValue() : null;
+	}
 }

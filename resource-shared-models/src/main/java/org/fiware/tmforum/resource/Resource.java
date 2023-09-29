@@ -120,4 +120,9 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 	public List<String> getReferencedTypes() {
 		return List.of(TYPE_RESOURCE);
 	}
+
+	@Override
+	public String getEntityState() {
+		return resourceStatus != null ? resourceStatus.getValue() : null;
+	}
 }

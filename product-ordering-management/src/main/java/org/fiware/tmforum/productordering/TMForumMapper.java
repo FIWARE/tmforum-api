@@ -1,22 +1,10 @@
 package org.fiware.tmforum.productordering;
 
-import org.fiware.productordering.model.CancelProductOrderCreateVO;
-import org.fiware.productordering.model.CancelProductOrderVO;
-import org.fiware.productordering.model.OrderItemActionTypeVO;
-import org.fiware.productordering.model.ProductOrderCreateVO;
-import org.fiware.productordering.model.ProductOrderItemStateTypeVO;
-import org.fiware.productordering.model.ProductOrderStateTypeVO;
-import org.fiware.productordering.model.ProductOrderUpdateVO;
-import org.fiware.productordering.model.ProductOrderVO;
-import org.fiware.productordering.model.TaskStateTypeVO;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.tmforum.productordering.domain.CancelProductOrder;
-import org.fiware.tmforum.productordering.domain.OrderItemAction;
-import org.fiware.tmforum.productordering.domain.ProductOrder;
-import org.fiware.tmforum.productordering.domain.ProductOrderItemState;
-import org.fiware.tmforum.productordering.domain.ProductOrderState;
-import org.fiware.tmforum.productordering.domain.TaskState;
+import org.fiware.productordering.model.*;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.productordering.domain.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ValueMapping;
@@ -87,6 +75,9 @@ public interface TMForumMapper {
 	@ValueMapping(target = "TERMINATEDWITHERROR", source = "TERMINATED_WITH_ERROR")
 	@ValueMapping(target = "INPROGRESS", source = "IN_PROGRESS")
 	TaskStateTypeVO map(TaskState taskState);
+
+	@Mapping(target = "query", source = "rawQuery")
+	EventSubscriptionVO map(Subscription subscription);
 
 	default URL map(String value) {
 		if (value == null) {

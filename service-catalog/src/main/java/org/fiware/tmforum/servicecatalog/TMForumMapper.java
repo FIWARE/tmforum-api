@@ -1,19 +1,9 @@
 package org.fiware.tmforum.servicecatalog;
 
-import org.fiware.servicecatalog.model.ServiceCandidateCreateVO;
-import org.fiware.servicecatalog.model.ServiceCandidateUpdateVO;
-import org.fiware.servicecatalog.model.ServiceCandidateVO;
-import org.fiware.servicecatalog.model.ServiceCatalogCreateVO;
-import org.fiware.servicecatalog.model.ServiceCatalogUpdateVO;
-import org.fiware.servicecatalog.model.ServiceCatalogVO;
-import org.fiware.servicecatalog.model.ServiceCategoryCreateVO;
-import org.fiware.servicecatalog.model.ServiceCategoryUpdateVO;
-import org.fiware.servicecatalog.model.ServiceCategoryVO;
-import org.fiware.servicecatalog.model.ServiceSpecificationCreateVO;
-import org.fiware.servicecatalog.model.ServiceSpecificationUpdateVO;
-import org.fiware.servicecatalog.model.ServiceSpecificationVO;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import io.github.wistefan.mapping.MappingException;
+import org.fiware.servicecatalog.model.*;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.ResourceSpecificationRef;
 import org.fiware.tmforum.service.ServiceCandidate;
 import org.fiware.tmforum.service.ServiceCategory;
@@ -85,6 +75,9 @@ public interface TMForumMapper {
 
     @Mapping(target = "id", source = "id")
     ServiceSpecification map(ServiceSpecificationUpdateVO serviceSpecificationUpdateVO, String id);
+
+    @Mapping(target = "query", source = "rawQuery")
+    EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {
         if (value == null) {

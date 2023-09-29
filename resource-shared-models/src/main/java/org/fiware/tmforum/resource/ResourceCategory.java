@@ -76,4 +76,9 @@ public class ResourceCategory extends EntityWithId {
 	public ResourceCategory(String id) {
 		super(TYPE_RESOURCE_CATEGORY, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return lifecycleStatus;
+	}
 }
