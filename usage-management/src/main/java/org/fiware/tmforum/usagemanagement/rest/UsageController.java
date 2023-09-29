@@ -68,11 +68,10 @@ public class UsageController extends AbstractApiController<Usage> implements Usa
         @Override
         public Mono<HttpResponse<List<UsageVO>>> listUsage(@Nullable String fields, @Nullable Integer offset,
                         @Nullable Integer limit) {
-                Mono<HttpResponse<List<UsageVO>>> res = list(offset, limit, Usage.TYPE_U, Usage.class)
+                return list(offset, limit, Usage.TYPE_U, Usage.class)
                                 .map(ugStream -> ugStream.map(tmForumMapper::map).toList())
                                 .switchIfEmpty(Mono.just(List.of()))
                                 .map(HttpResponse::ok);
-                return res;
         }
 
         @Override

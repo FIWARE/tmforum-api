@@ -24,8 +24,6 @@ import lombok.RequiredArgsConstructor;
 @Factory
 public class Application {
 
-
-	/* Non está implementado */
 	public static void main(String[] args) {
 		Micronaut.run(Application.class, args);
 	}

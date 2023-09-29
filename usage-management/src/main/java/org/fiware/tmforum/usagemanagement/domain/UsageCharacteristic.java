@@ -12,6 +12,6 @@ public class UsageCharacteristic extends Entity {
     private String id;
     private String name;
     private String valueType;
-    private List<CharacteristicRelationship> characteristicRelationship; /* hai que implementar */
+    private List<CharacteristicRelationship> characteristicRelationship;
     private Object value;
 }

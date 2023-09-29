@@ -29,11 +29,11 @@ public interface TMForumMapper {
 	@Mapping(target = "id", source = "id")
 	Usage map(UsageUpdateVO usageUpdateVO, String id);
 
-	@Mapping(target = "id", source = "id")
-	Usage map(UsageVO usageUpdateVO);
+	@Mapping(target = "href", source = "id")
+	Usage map(UsageVO usageVO);
 
 	@Mapping(target = "id", source = "id")
-	UsageVO map(Usage sageUpdateVO);
+	UsageVO map(Usage usage);
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")

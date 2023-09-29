@@ -6,10 +6,9 @@ import java.util.List;
 
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
-import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.ConstraintRef;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.service.CharacteristicSpecification;
 import org.fiware.tmforum.service.EntitySpecificationRelationship;
 import org.fiware.tmforum.service.TargetEntitySchema;
@@ -21,12 +20,6 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-
-/* Hai 3 clases, entity, refentity e entitywithid
-Solo as clase que están na api poden ser entitywithid
-Se non son ou entity ou entityref, asi que usagecharacteristic
-é de tipo entity.
-*/
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = UsageSpecification.TYPE_USP)
@@ -47,7 +40,7 @@ public class UsageSpecification extends EntityWithId {
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "isBundle") }))
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "isBundle") }))
-	private boolean isBundle;
+	private Boolean isBundle; //Era bool e cambieino a String
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "lastUpdate") }))
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "lastUpdate") }))
@@ -60,6 +53,10 @@ public class UsageSpecification extends EntityWithId {
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "name") }))
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "name") }))
 	private String name;
+
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "version") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "version") }))
+	private String version;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment") }))
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment") }))

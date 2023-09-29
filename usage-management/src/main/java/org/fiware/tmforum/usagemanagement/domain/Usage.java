@@ -6,8 +6,6 @@ import java.util.List;
 
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
-import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.tmforum.common.domain.Characteristic;
 
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
@@ -17,11 +15,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-/* Hai 3 clases, entity, refentity e entitywithid
-Solo as clase que están na api poden ser entitywithid
-Se non son ou entity ou entityref, asi que usagecharacteristic
-é de tipo entity.
-*/
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Usage.TYPE_U)
@@ -72,9 +65,9 @@ public class Usage extends EntityWithId {
     private List<UsageCharacteristic> usageCharacteristic;
 
     @Getter(onMethod = @__({
-        @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "usageSpecification") }))
+        @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "usageSpecification") }))
     @Setter(onMethod = @__({
-        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "usageSpecification", targetClass = UsageSpecificationRef.class) }))
+        @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "usageSpecification", targetClass = UsageSpecificationRef.class) }))
     private UsageSpecificationRef usageSpecification;
 
 }
