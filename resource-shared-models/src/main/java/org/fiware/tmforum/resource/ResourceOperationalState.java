@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resource;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum ResourceOperationalState {
 
     ENABLE("enable"),
@@ -9,5 +11,10 @@ public enum ResourceOperationalState {
 
     ResourceOperationalState(String value) {
         this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }

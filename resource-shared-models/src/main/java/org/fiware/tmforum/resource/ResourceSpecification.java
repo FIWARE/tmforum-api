@@ -81,4 +81,9 @@ public class ResourceSpecification extends EntityWithId {
     public ResourceSpecification(String id) {
         super(TYPE_RESOURCE_SPECIFICATION, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return lifecycleStatus;
+    }
 }

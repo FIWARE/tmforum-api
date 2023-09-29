@@ -1,22 +1,16 @@
 package org.fiware.tmforum.agreement;
 
-import org.fiware.agreement.model.TimePeriodVO;
+import org.fiware.agreement.model.*;
+import org.fiware.tmforum.agreement.domain.Agreement;
+import org.fiware.tmforum.agreement.domain.AgreementSpecification;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.fiware.agreement.model.AgreementVO;
-import org.fiware.agreement.model.AgreementCreateVO;
-import org.fiware.agreement.model.AgreementSpecificationCreateVO;
-import org.fiware.agreement.model.AgreementSpecificationUpdateVO;
-import org.fiware.agreement.model.AgreementSpecificationVO;
-import org.fiware.agreement.model.AgreementUpdateVO;
 
 import java.net.MalformedURLException;
 import java.net.URI;
-import org.fiware.tmforum.agreement.domain.Agreement;
-import org.fiware.tmforum.agreement.domain.AgreementSpecification;
-
 import java.net.URL;
 
 @Mapper(componentModel = "jsr330", uses = { IdHelper.class, MappingHelper.class })
@@ -47,6 +41,9 @@ public interface TMForumMapper {
 
 	@Mapping(target = "id", source = "id")
 	AgreementSpecificationVO map(AgreementSpecification agreementspecUpdateVO);
+
+	@Mapping(target = "query", source = "rawQuery")
+	EventSubscriptionVO map(Subscription subscription);
 
 	TimePeriod map(TimePeriodVO value);
 

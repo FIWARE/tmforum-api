@@ -1,6 +1,9 @@
 package org.fiware.tmforum.agreement;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,6 +13,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.micronaut.test.annotation.MockBean;
 import org.fiware.agreement.api.AgreementApiTestSpec;
 import org.fiware.agreement.api.AgreementSpecificationApiTestClient;
 import org.fiware.agreement.model.AgreementSpecificationCreateVO;
@@ -26,6 +30,7 @@ import org.fiware.agreement.model.TimePeriodVO;
 import org.fiware.agreement.model.TimePeriodVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -40,6 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import reactor.core.publisher.Mono;
 
 @MicronautTest(packages = { "org.fiware.tmforum.agreement" })
 public class AgreementSpecificationApiIT extends AbstractApiIT implements AgreementApiTestSpec {
@@ -67,6 +73,17 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
         @Override
         protected String getEntityType() {
                 return AgreementSpecification.TYPE_AGSP;
+        }
+
+        @MockBean(EventHandler.class)
+        public EventHandler eventHandler() {
+                EventHandler eventHandler = mock(EventHandler.class);
+
+                when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+                when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+                when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+                return eventHandler;
         }
 
         @ParameterizedTest

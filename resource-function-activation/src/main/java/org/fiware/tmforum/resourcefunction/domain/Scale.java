@@ -54,4 +54,9 @@ public class Scale extends EntityWithId {
     public Scale(String id) {
         super(TYPE_SCALE, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return state != null ? state.getValue() : null;
+    }
 }
