@@ -13,7 +13,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import java.net.URI;
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE)
 @EqualsAndHashCode(callSuper = true)
 public class ProductOfferingPriceRef extends RefEntity {
 

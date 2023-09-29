@@ -8,27 +8,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestSpec;
-import org.fiware.productcatalog.model.AgreementRefVOTestExample;
-import org.fiware.productcatalog.model.BundledProductOfferingVOTestExample;
-import org.fiware.productcatalog.model.CategoryRefVOTestExample;
-import org.fiware.productcatalog.model.ChannelRefVOTestExample;
-import org.fiware.productcatalog.model.MarketSegmentRefVOTestExample;
-import org.fiware.productcatalog.model.PlaceRefVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingCreateVO;
-import org.fiware.productcatalog.model.ProductOfferingCreateVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingPriceRefOrValueVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingRelationshipVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingUpdateVO;
-import org.fiware.productcatalog.model.ProductOfferingUpdateVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingVO;
-import org.fiware.productcatalog.model.ProductOfferingVOTestExample;
-import org.fiware.productcatalog.model.ProductSpecificationCharacteristicValueUseVOTestExample;
-import org.fiware.productcatalog.model.ProductSpecificationRefVOTestExample;
-import org.fiware.productcatalog.model.ResourceCandidateRefVOTestExample;
-import org.fiware.productcatalog.model.SLARefVOTestExample;
-import org.fiware.productcatalog.model.ServiceCandidateRefVOTestExample;
-import org.fiware.productcatalog.model.TimePeriodVO;
-import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.productcatalog.api.ProductSpecificationApiTestClient;
+import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -41,6 +22,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -60,6 +42,7 @@ import static org.mockito.Mockito.when;
 public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferingApiTestSpec {
 
 	public final ProductOfferingApiTestClient productOfferingApiTestClient;
+	private final ProductSpecificationApiTestClient productSpecificationApiTestClient;
 
 	private String message;
 	private ProductOfferingCreateVO productOfferingCreateVO;
@@ -69,9 +52,10 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	private Clock clock = mock(Clock.class);
 
 	public ProductOfferingApiIT(ProductOfferingApiTestClient productOfferingApiTestClient,
-			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
+			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties, ProductSpecificationApiTestClient productSpecificationApiTestClient) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productOfferingApiTestClient = productOfferingApiTestClient;
+		this.productSpecificationApiTestClient = productSpecificationApiTestClient;
 	}
 
 	@MockBean(Clock.class)
@@ -379,10 +363,20 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	@Test
 	@Override
 	public void listProductOffering200() throws Exception {
+		//Persist Product Specification to be used
+		ProductSpecificationVO productSpecification = productSpecificationApiTestClient.createProductSpecification(ProductSpecificationCreateVOTestExample.build().productSpecCharacteristic(List.of(ProductSpecificationCharacteristicVOTestExample.build()))).body();
+		String productSpecId = productSpecification.getId();
+		ProductSpecificationRefVO productSpecReference = ProductSpecificationRefVOTestExample.build()
+				.targetProductSchema(productSpecification.getTargetProductSchema())
+				.id(productSpecId)
+				.href(URI.create(productSpecId))
+				.atType(null)
+				.atReferredType(null);
+
 		List<ProductOfferingVO> expectedProductOfferings = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build()
-					.productSpecification(null)
+					.productSpecification(new ProductSpecificationRefVO().id(productSpecId))
 					.resourceCandidate(null)
 					.serviceCandidate(null)
 					.serviceLevelAgreement(null);
@@ -399,7 +393,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 					.category(null)
 					.productOfferingPrice(null)
 					.productOfferingRelationship(null)
-					.productSpecification(null)
+					.productSpecification(productSpecReference)
 					.resourceCandidate(null)
 					.serviceCandidate(null)
 					.serviceLevelAgreement(null);

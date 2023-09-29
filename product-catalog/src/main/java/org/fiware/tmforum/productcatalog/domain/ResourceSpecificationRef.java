@@ -12,7 +12,7 @@ import org.fiware.tmforum.resource.ResourceSpecification;
 
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)
 @EqualsAndHashCode(callSuper = true)
 public class ResourceSpecificationRef extends RefEntity {
 

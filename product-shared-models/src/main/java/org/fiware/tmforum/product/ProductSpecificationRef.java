@@ -12,7 +12,9 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 
-@MappingEnabled
+import static org.fiware.tmforum.product.ProductSpecification.TYPE_PRODUCT_SPECIFICATION;
+
+@MappingEnabled(entityType = TYPE_PRODUCT_SPECIFICATION)
 @EqualsAndHashCode(callSuper = true)
 public class ProductSpecificationRef extends RefEntity {
 
@@ -35,6 +37,6 @@ public class ProductSpecificationRef extends RefEntity {
 	@Override
 	@Ignore
 	public List<String> getReferencedTypes() {
-		return List.of(ProductSpecification.TYPE_PRODUCT_SPECIFICATION);
+		return List.of(TYPE_PRODUCT_SPECIFICATION);
 	}
 }

@@ -6,7 +6,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = "sla")
 @EqualsAndHashCode(callSuper = true)
 public class SLARef extends RefEntity {
 

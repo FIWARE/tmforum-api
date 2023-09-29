@@ -11,7 +11,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.util.List;
 
-@MappingEnabled
+@MappingEnabled(entityType = ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE)
 @EqualsAndHashCode(callSuper = true)
 public class ProductOfferingPriceRelationship extends RefEntity {
 
