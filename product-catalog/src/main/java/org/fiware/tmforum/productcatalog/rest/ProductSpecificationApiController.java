@@ -8,6 +8,7 @@ import org.fiware.productcatalog.api.ProductSpecificationApi;
 import org.fiware.productcatalog.model.ProductSpecificationCreateVO;
 import org.fiware.productcatalog.model.ProductSpecificationUpdateVO;
 import org.fiware.productcatalog.model.ProductSpecificationVO;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -37,8 +38,8 @@ public class ProductSpecificationApiController extends AbstractProductCatalogApi
 
 	public ProductSpecificationApiController(ReferenceValidationService validationService,
 			TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock) {
-		super(validationService, productCatalogRepository);
+			Clock clock, EventHandler eventHandler) {
+		super(validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

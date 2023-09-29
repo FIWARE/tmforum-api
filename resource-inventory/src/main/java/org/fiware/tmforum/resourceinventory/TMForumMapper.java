@@ -1,10 +1,12 @@
 package org.fiware.tmforum.resourceinventory;
 
+import io.github.wistefan.mapping.MappingException;
+import org.fiware.resourceinventory.model.EventSubscriptionVO;
 import org.fiware.resourceinventory.model.ResourceCreateVO;
 import org.fiware.resourceinventory.model.ResourceUpdateVO;
 import org.fiware.resourceinventory.model.ResourceVO;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.resource.Resource;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -31,6 +33,9 @@ public interface TMForumMapper {
 
     @Mapping(target = "id", source = "id")
     Resource map(ResourceUpdateVO resourceUpdateVO, String id);
+
+    @Mapping(target = "query", source = "rawQuery")
+    EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {
         if (value == null) {

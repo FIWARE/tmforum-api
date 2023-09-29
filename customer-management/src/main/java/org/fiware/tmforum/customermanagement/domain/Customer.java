@@ -78,4 +78,9 @@ public class Customer extends EntityWithId {
     public Customer(String id) {
         super(TYPE_CUSTOMER, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return status;
+    }
 }

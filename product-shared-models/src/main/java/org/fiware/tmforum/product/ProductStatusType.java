@@ -1,5 +1,7 @@
 package org.fiware.tmforum.product;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum ProductStatusType {
 
 	CREATED("created"),
@@ -15,5 +17,10 @@ public enum ProductStatusType {
 
 	ProductStatusType(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }

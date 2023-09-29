@@ -71,4 +71,9 @@ public class ServiceCategory extends EntityWithId {
 	public ServiceCategory(String id) {
 		super(TYPE_SERVICE_CATEGORY, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return lifecycleStatus;
+	}
 }

@@ -62,4 +62,9 @@ public class ServiceCandidate extends EntityWithId {
     public ServiceCandidate(String id) {
         super(TYPE_SERVICE_CANDIDATE, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return lifecycleStatus;
+    }
 }

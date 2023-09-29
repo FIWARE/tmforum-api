@@ -59,4 +59,9 @@ public class ResourceCandidate extends EntityWithId {
     public ResourceCandidate(String id) {
         super(TYPE_RESOURCE_CANDIDATE, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return lifecycleStatus;
+    }
 }

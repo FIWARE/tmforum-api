@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resource;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum ResourceStatusType {
 
     STANDBY("standby"),
@@ -13,6 +15,11 @@ public enum ResourceStatusType {
 
     ResourceStatusType(String value) {
         this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }
 

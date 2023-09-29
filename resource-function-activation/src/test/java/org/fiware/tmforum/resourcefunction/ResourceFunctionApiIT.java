@@ -3,8 +3,8 @@ package org.fiware.tmforum.resourcefunction;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcefunction.api.ResourceFunctionApiTestClient;
 import org.fiware.resourcefunction.api.ResourceFunctionApiTestSpec;
@@ -30,14 +30,13 @@ import org.fiware.resourcefunction.model.ResourceGraphRefVOTestExample;
 import org.fiware.resourcefunction.model.ResourceGraphRelationshipVOTestExample;
 import org.fiware.resourcefunction.model.ResourceGraphVOTestExample;
 import org.fiware.resourcefunction.model.ResourceOperationalStateTypeVO;
-import org.fiware.resourcefunction.model.ResourceRefOrValueVO;
 import org.fiware.resourcefunction.model.ResourceRefOrValueVOTestExample;
 import org.fiware.resourcefunction.model.ResourceRelationshipVOTestExample;
 import org.fiware.resourcefunction.model.ResourceSpecificationRefVOTestExample;
 import org.fiware.resourcefunction.model.ResourceStatusTypeVO;
 import org.fiware.resourcefunction.model.ResourceUsageStateTypeVO;
-import org.fiware.resourcefunction.model.ResourceVOTestExample;
 import org.fiware.resourcefunction.model.ScheduleRefVOTestExample;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -47,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -59,6 +59,9 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.resourcefunction" })
 public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunctionApiTestSpec {
@@ -74,6 +77,17 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.resourceFunctionApiTestClient = resourceFunctionApiTestClient;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+		return eventHandler;
 	}
 
 	@ParameterizedTest
