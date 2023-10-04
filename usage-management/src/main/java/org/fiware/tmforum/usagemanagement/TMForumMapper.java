@@ -1,16 +1,12 @@
 package org.fiware.tmforum.usagemanagement;
 
+import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.usagemanagement.model.TimePeriodVO;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.fiware.usagemanagement.model.UsageVO;
-import org.fiware.usagemanagement.model.UsageCreateVO;
-import org.fiware.usagemanagement.model.UsageUpdateVO;
-import org.fiware.usagemanagement.model.UsageSpecificationVO;
-import org.fiware.usagemanagement.model.UsageSpecificationCreateVO;
-import org.fiware.usagemanagement.model.UsageSpecificationUpdateVO;
+import org.fiware.usagemanagement.model.*;
 import org.fiware.tmforum.usagemanagement.domain.Usage;
 import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
 
@@ -47,6 +43,9 @@ public interface TMForumMapper {
 
 	@Mapping(target = "id", source = "id")
 	UsageSpecificationVO map(UsageSpecification usageSpecificationUpdateVO);
+
+	@Mapping(target = "query", source = "rawQuery")
+	EventSubscriptionVO map(Subscription subscription);
 
 	TimePeriod map(TimePeriodVO value);
 

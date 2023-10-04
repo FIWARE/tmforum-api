@@ -34,6 +34,9 @@ public class EventConstants {
     public final static String EVENT_GROUP_AGREEMENT = "Agreement";
     public final static String EVENT_GROUP_AGREEMENT_SPECIFICATION = "AgreementSpecification";
 
+    public final static String EVENT_GROUP_USAGE = "Usage";
+    public final static String EVENT_GROUP_USAGE_SPECIFICATION = "UsageSpecification";
+
     public static final String CREATE_EVENT_SUFFIX = "CreateEvent";
     public static final String ATTRIBUTE_VALUE_CHANGE_EVENT_SUFFIX = "AttributeValueChangeEvent";
     public static final String STATE_CHANGE_EVENT_SUFFIX = "StateChangeEvent";

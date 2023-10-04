@@ -1,6 +1,9 @@
 package org.fiware.tmforum.usagemanagement;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,6 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.net.URI;
 
+import io.micronaut.test.annotation.MockBean;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.usagemanagement.api.UsageApiTestSpec;
 import org.fiware.usagemanagement.api.UsageApiTestClient;
 import org.fiware.tmforum.usagemanagement.domain.Usage;
@@ -40,6 +45,7 @@ import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.provider.Arguments;
+import reactor.core.publisher.Mono;
 
 @MicronautTest(packages = { "org.fiware.tmforum.usagemanagement" })
 public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
@@ -49,18 +55,23 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec{
     private UsageCreateVO usageCreateVO;
     private UsageUpdateVO usageUpdateVO;
     private UsageVO expectedUsage;
-    private final EntitiesApiClient entitiesApiClient;
-    private final ObjectMapper objectMapper;
-    private final GeneralProperties generalProperties;
 
     public UsageApiIT(UsageApiTestClient usageApiTestClient, EntitiesApiClient entitiesApiClient, 
             ObjectMapper objectMapper,GeneralProperties generalProperties) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.usageApiTestClient = usageApiTestClient;
-        this.entitiesApiClient = entitiesApiClient;
-        this.objectMapper = objectMapper;
-        this.generalProperties = generalProperties;
     }
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+		return eventHandler;
+	}
 
     @Override
     protected String getEntityType() {

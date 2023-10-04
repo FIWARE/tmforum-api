@@ -53,10 +53,10 @@ public class Usage extends EntityWithId {
 	private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({
-        @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "status") }))
+        @AttributeGetter(value = AttributeType.PROPERTY, targetName = "status") }))
     @Setter(onMethod = @__({
-        @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "status", targetClass = UsageStatusType.class) }))
-    private UsageStatusType usageStatusType;
+        @AttributeSetter(value = AttributeType.PROPERTY, targetName = "status", targetClass = UsageStatusType.class) }))
+    private UsageStatusType status;
 
     @Getter(onMethod = @__({
         @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "usageCharacteristic") }))

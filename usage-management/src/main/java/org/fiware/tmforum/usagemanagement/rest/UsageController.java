@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.usagemanagement.api.UsageApi;
 import org.fiware.usagemanagement.model.UsageCreateVO;
 import org.fiware.usagemanagement.model.UsageUpdateVO;
@@ -34,8 +35,8 @@ public class UsageController extends AbstractApiController<Usage> implements Usa
         private final TMForumMapper tmForumMapper;
 
         public UsageController(ReferenceValidationService validationService, TmForumRepository partyRepository,
-                        TMForumMapper tmForumMapper) {
-                super(validationService, partyRepository);
+                        TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                super(validationService, partyRepository, eventHandler);
                 this.tmForumMapper = tmForumMapper;
         }
 
