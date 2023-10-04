@@ -6,7 +6,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import java.util.List;
 
 // Map to HealPolicy as soon as it exists.
-@MappingEnabled
+@MappingEnabled(entityType = "heal-policy")
 public class HealPolicyRef extends RefEntity {
 
 
