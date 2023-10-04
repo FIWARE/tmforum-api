@@ -56,7 +56,7 @@ jobs:
           java-package: jdk
 
       - name: Log into quay.io
-        run: docker login -u "${{ secrets.QUAY_USERNAME_FF }}" -p "${{ secrets.QUAY_PASSWORD_FF }}" ${{ env.REGISTRY }}
+        run: docker login -u "${{ secrets.QUAY_USERNAME }}" -p "${{ secrets.QUAY_PASSWORD }}" ${{ env.REGISTRY }}
 
       - name: Build&Push image
         run: |
