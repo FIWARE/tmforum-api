@@ -73,7 +73,7 @@
         <!-- docker -->
         <exec.mainClass>org.fiware.tmforum.Application</exec.mainClass>
         <image.registry>quay.io</image.registry>
-        <image.repository>wi_stefan</image.repository>
+        <image.repository>fiware</image.repository>
         <image.tag>latest</image.tag>
 
         <!-- lazy dev -->
