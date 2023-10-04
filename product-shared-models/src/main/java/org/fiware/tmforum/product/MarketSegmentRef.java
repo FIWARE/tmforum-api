@@ -7,7 +7,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled
+@MappingEnabled(entityType = "market-segment")
 public class MarketSegmentRef extends RefEntity {
 
 	public MarketSegmentRef(String id) {
