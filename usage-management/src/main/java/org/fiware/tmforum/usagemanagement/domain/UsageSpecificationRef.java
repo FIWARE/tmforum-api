@@ -3,6 +3,7 @@ package org.fiware.tmforum.usagemanagement.domain;
 import java.util.List;
 import java.net.URI;
 
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.common.domain.RefEntity;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
@@ -12,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
+@MappingEnabled(entityType = UsageSpecification.TYPE_USP)
 public class UsageSpecificationRef extends RefEntity {
 
     public UsageSpecificationRef(String id) {
