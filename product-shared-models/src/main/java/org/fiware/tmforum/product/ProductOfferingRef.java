@@ -7,7 +7,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled
+@MappingEnabled(entityType = ProductOffering.TYPE_PRODUCT_OFFERING)
 public class ProductOfferingRef extends RefEntity {
 
 	public ProductOfferingRef(String id) {

@@ -111,4 +111,9 @@ public class ProductSpecification extends EntityWithId {
 	public ProductSpecification(String id) {
 		super(TYPE_PRODUCT_SPECIFICATION, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return lifecycleStatus;
+	}
 }

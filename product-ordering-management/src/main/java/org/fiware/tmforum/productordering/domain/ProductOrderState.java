@@ -1,6 +1,6 @@
 package org.fiware.tmforum.productordering.domain;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ProductOrderState {
 	ACKNOWLEDGED("acknowledged"),
@@ -15,10 +15,14 @@ public enum ProductOrderState {
 	ASSESSING_CANCELLATION("assessingCancellation"),
 	PENDING_CANCELLATION("pendingCancellation");
 
-	@Getter
 	private final String value;
 
 	ProductOrderState(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }

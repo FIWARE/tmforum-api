@@ -126,4 +126,9 @@ public class CustomerBill extends EntityWithId {
 	public CustomerBill(String id) {
 		super(TYPE_CUSTOMER_BILL, id);
 	}
+
+	@Override
+	public String getEntityState() {
+		return state != null ? state.getValue() : null;
+	}
 }

@@ -1,5 +1,6 @@
 package org.fiware.tmforum.party.rest;
 
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -15,8 +16,8 @@ import java.util.Objects;
 public class AbstractPartyApiController<T> extends AbstractApiController<T> {
 
 	public AbstractPartyApiController(ReferenceValidationService validationService,
-			TmForumRepository repository) {
-		super(validationService, repository);
+									  TmForumRepository repository, EventHandler eventHandler) {
+		super(validationService, repository, eventHandler);
 	}
 
 	protected void validateTaxExemptions(List<TaxExemptionCertificate> taxExemptionCertificates) {

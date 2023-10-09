@@ -72,7 +72,7 @@
         <!-- docker -->
         <exec.mainClass>org.fiware.tmforum.Application</exec.mainClass>
         <image.registry>quay.io</image.registry>
-        <image.repository>wi_stefan</image.repository>
+        <image.repository>fiware</image.repository>
         <image.tag>latest</image.tag>
 
         <!-- lazy dev -->
@@ -89,12 +89,14 @@
         <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>0.2.1</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>0.3.0</version.io.github.wistefan.ngsi-ld-mapping-java>
 
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
         <version.javax.inject>1</version.javax.inject>
         <version.io.projectreactor.reactor-core>3.5.5</version.io.projectreactor.reactor-core>
+        <version.io.github.resilience4j.resilience4j-retry>2.0.0</version.io.github.resilience4j.resilience4j-retry>
+        <version.io.github.resilience4j.resilience4j-reactor>2.0.0</version.io.github.resilience4j.resilience4j-reactor>
 
         <!-- build -->
         <version.org.codehaus.mojo.build-helper-maven-plugin>3.3.0</version.org.codehaus.mojo.build-helper-maven-plugin>

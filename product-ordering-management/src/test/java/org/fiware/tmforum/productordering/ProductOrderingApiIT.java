@@ -8,46 +8,19 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productordering.api.ProductOrderApiTestClient;
 import org.fiware.productordering.api.ProductOrderApiTestSpec;
-import org.fiware.productordering.model.AgreementRefVOTestExample;
-import org.fiware.productordering.model.AppointmentRefVOTestExample;
-import org.fiware.productordering.model.BillingAccountRefVOTestExample;
-import org.fiware.productordering.model.MoneyVOTestExample;
-import org.fiware.productordering.model.NoteVOTestExample;
-import org.fiware.productordering.model.OrderItemActionTypeVO;
-import org.fiware.productordering.model.OrderPriceVO;
-import org.fiware.productordering.model.OrderPriceVOTestExample;
-import org.fiware.productordering.model.PaymentRefVOTestExample;
-import org.fiware.productordering.model.PriceAlterationVOTestExample;
-import org.fiware.productordering.model.PriceVOTestExample;
-import org.fiware.productordering.model.ProductOfferingPriceRefVOTestExample;
-import org.fiware.productordering.model.ProductOfferingQualificationItemRefVOTestExample;
-import org.fiware.productordering.model.ProductOfferingQualificationRefVOTestExample;
-import org.fiware.productordering.model.ProductOfferingRefVOTestExample;
-import org.fiware.productordering.model.ProductOrderCreateVO;
-import org.fiware.productordering.model.ProductOrderCreateVOTestExample;
-import org.fiware.productordering.model.ProductOrderItemVO;
-import org.fiware.productordering.model.ProductOrderItemVOTestExample;
-import org.fiware.productordering.model.ProductOrderStateTypeVO;
-import org.fiware.productordering.model.ProductOrderUpdateVO;
-import org.fiware.productordering.model.ProductOrderUpdateVOTestExample;
-import org.fiware.productordering.model.ProductOrderVO;
-import org.fiware.productordering.model.ProductOrderVOTestExample;
-import org.fiware.productordering.model.ProductRefOrValueVOTestExample;
-import org.fiware.productordering.model.QuoteItemRefVOTestExample;
-import org.fiware.productordering.model.QuoteRefVOTestExample;
-import org.fiware.productordering.model.RelatedChannelVOTestExample;
-import org.fiware.productordering.model.RelatedPartyVOTestExample;
+import org.fiware.productordering.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
-import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -61,6 +34,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -80,6 +54,17 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 	@MockBean(Clock.class)
 	public Clock clock() {
 		return clock;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+		return eventHandler;
 	}
 
 	public ProductOrderingApiIT(ProductOrderApiTestClient productOrderApiTestClient,

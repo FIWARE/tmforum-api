@@ -147,4 +147,9 @@ public class ResourceFunction extends EntityWithId {
     public ResourceFunction(String id) {
         super(TYPE_RESOURCE_FUNCTION, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return lifecycleState;
+    }
 }
