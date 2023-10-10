@@ -54,6 +54,7 @@ public class Application {
             fieldParamModule.addSerializer(SettlementAccountVO.class, new FieldCleaningSerializer<>());
             objectMapper.registerModule(fieldParamModule);
             return objectMapper;
+
         }
     }
 }
