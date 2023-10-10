@@ -9,9 +9,9 @@ import java.net.URI;
 @Data
 public class BillStructure {
 
-    private String relationshipType;
-    private AccountRef account;
-    private TimePeriod validFor;
+    private BillingCycleSpecificationRefOrValue cycleSpecification;
+    private BillFormatRefOrValue format;
+    private BillPresentationMediaRefOrValue presentationMediaRefOrValue;
     private String atBaseType;
     private URI atSchemaLocation;
     private String atType;
