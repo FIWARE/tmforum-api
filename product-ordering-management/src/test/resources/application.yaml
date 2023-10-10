@@ -43,3 +43,6 @@ loggers:
 ---
 general:
   contextUrl: https://smartdatamodels.org/context.jsonld
+  ngsildOrQueryValue: ","
+  ngsildOrQueryKey: ","
+  encloseQuery: false
