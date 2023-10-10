@@ -33,6 +33,13 @@ public class EventConstants {
     public final static String EVENT_GROUP_CUSTOMER = "Customer";
     public final static String EVENT_GROUP_AGREEMENT = "Agreement";
     public final static String EVENT_GROUP_AGREEMENT_SPECIFICATION = "AgreementSpecification";
+    public final static String EVENT_GROUP_BILL_FORMAT = "BillFormat";
+    //public final static String EVENT_GROUP_BILLING_ACCOUNT = "BillingAccount";
+    public final static String EVENT_GROUP_BILLING_CYCLE_SPECIFICATION = "BillingCycleSpecification";
+    public final static String EVENT_GROUP_BILL_PRESENTATION_MEDIA = "BillPresentationMedia";
+    public final static String EVENT_GROUP_FINANCIAL_ACCOUNT = "FinancialAccount";
+    public final static String EVENT_GROUP_PARTY_ACCOUNT = "PartyAccount";
+    //public final static String EVENT_GROUP_SETTLEMENT_ACCOUNT = "SettlementAccount";
 
     public static final String CREATE_EVENT_SUFFIX = "CreateEvent";
     public static final String ATTRIBUTE_VALUE_CHANGE_EVENT_SUFFIX = "AttributeValueChangeEvent";
