@@ -5,7 +5,10 @@ import io.github.wistefan.mapping.NgsiLdAttribute;
 import io.github.wistefan.mapping.QueryAttributeType;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
+import io.micronaut.context.annotation.Bean;
+import lombok.RequiredArgsConstructor;
 
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 
 import java.util.ArrayList;
@@ -25,7 +28,11 @@ import static org.fiware.tmforum.common.querying.Operator.LESS_THAN;
 import static org.fiware.tmforum.common.querying.Operator.LESS_THAN_EQUALS;
 import static org.fiware.tmforum.common.querying.Operator.REGEX;
 
+@Bean
+@RequiredArgsConstructor
 public class QueryParser {
+
+	protected final GeneralProperties generalProperties;
 
 	// Keys for the "well-known" fields
 	public static final String OFFSET_KEY = "offset";
@@ -33,10 +40,11 @@ public class QueryParser {
 	public static final String FIELDS_KEY = "fields";
 	public static final String SORT_KEY = "sort";
 
-	public static final String NGSI_LD_OR = "|";
 	public static final String NGSI_LD_AND = ";";
+
 	// the "," in tm-forum values is an or
 	public static final String TMFORUM_OR_VALUE = ",";
+
 	// the ";" in tm-forum parameters is an or
 	public static final String TMFORUM_OR_KEY = ";";
 	public static final String TMFORUM_AND = "&";
@@ -68,8 +76,7 @@ public class QueryParser {
 		return String.join(TMFORUM_AND, parameters);
 	}
 
-	public static String toNgsiLdQuery(Class<?> queryClass, String queryString) {
-
+	public String toNgsiLdQuery(Class<?> queryClass, String queryString) {
 		queryString = removeWellKnownParameters(queryString);
 
 		List<String> parameters;
@@ -91,7 +98,7 @@ public class QueryParser {
 
 		Stream<QueryPart> queryPartsStream = parameters
 				.stream()
-				.map(QueryParser::parseParameter);
+				.map(this::parseParameter);
 
 		// collect the or values to single entries if they use the same key
 		if (logicalOperator == LogicalOperator.OR) {
@@ -115,9 +122,10 @@ public class QueryParser {
 				})
 				.map(QueryParser::toQueryString);
 
+		String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
 		return switch (logicalOperator) {
 			case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
-			case OR -> queryStrings.collect(Collectors.joining(NGSI_LD_OR));
+			case OR -> queryStrings.collect(Collectors.joining(ngsidOrKey));
 		};
 	}
 
@@ -138,7 +146,7 @@ public class QueryParser {
 			getter.get().value().equals(AttributeType.RELATIONSHIP_LIST));
 	}
 
-	private static QueryPart getQueryPart(NgsiLdAttribute attribute, QueryPart qp, boolean isRel) {
+	private QueryPart getQueryPart(NgsiLdAttribute attribute, QueryPart qp, boolean isRel) {
 		// The query part will depend on the type of query
 		// if the query is to a relationship subproperties will be joined with .
 		// if the query is to a property with structured values the path will be
@@ -161,7 +169,7 @@ public class QueryParser {
 				encodeValue(qp.value(), attribute.type()));
 	}
 
-	private static String encodeValue(String value, QueryAttributeType type) {
+	private String encodeValue(String value, QueryAttributeType type) {
 		return switch (type) {
 			case STRING -> encodeStringValue(value);
 			case BOOLEAN -> value;
@@ -169,23 +177,25 @@ public class QueryParser {
 		};
 	}
 
-	private static String encodeStringValue(String value) {
-		//if (value.contains(NGSI_LD_OR)) {
-		if (value.contains(",")) {
+	private String encodeStringValue(String value) {
+		String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
+		if (value.contains(ngsildOrValue)) {
 			// remove the beginning ( and ending )
 			// String noBraces = value.substring(1, value.length() - 1);
-			// return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_OR)))
-			// 		.map(v -> String.format("\"%s\"", v))
-			// 		.collect(Collectors.joining(NGSI_LD_OR)));
-			// FIXME: scorpio workarround
-			return String.format("%s", Arrays.stream(value.split(","))
-				.map(v -> String.format("\"%s\"", v))
-				.collect(Collectors.joining(",")));
+			String format = "(%s)";
+
+			if (!generalProperties.getEncloseQuery()) {
+				format = "%s";
+			}
+
+			return String.format(format, Arrays.stream(value.split(String.format("\\%s", ngsildOrValue)))
+					.map(v -> String.format("\"%s\"", v))
+					.collect(Collectors.joining(ngsildOrValue)));
 
 		} else if (value.contains(NGSI_LD_AND)) {
 			// remove the beginning ( and ending )
-			String noBraces = value.substring(1, value.length() - 1);
-			return String.format("(%s)", Arrays.stream(noBraces.split(String.format("\\%s", NGSI_LD_AND)))
+			//String noBraces = value.substring(1, value.length() - 1);
+			return String.format("(%s)", Arrays.stream(value.split(String.format("\\%s", NGSI_LD_AND)))
 					.map(v -> String.format("\"%s\"", v))
 					.collect(Collectors.joining(NGSI_LD_AND)));
 		} else {
@@ -193,7 +203,8 @@ public class QueryParser {
 		}
 	}
 
-	private static List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
+	private List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
+		String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
 		Map<String, List<QueryPart>> collectedParts = uncombinedParts.stream()
 				.collect(
 						Collectors.toMap(QueryPart::operator, qp -> new ArrayList<>(List.of(qp)),
@@ -208,10 +219,12 @@ public class QueryParser {
 					String value = entry.getValue()
 							.stream()
 							.map(QueryPart::value)
-							.collect(Collectors.joining(NGSI_LD_OR));
-					if (entry.getValue().size() > 1) {
-						value = String.format("(%s)", value);
-					}
+							.collect(Collectors.joining(ngsildOrValue));
+
+					//if (entry.getValue().size() > 1) {
+					//	value = String.format("(%s)", value);
+					//}
+
 					return new QueryPart(attribute, entry.getKey(), value);
 				})
 				.collect(Collectors.toList());
@@ -221,7 +234,8 @@ public class QueryParser {
 		return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), queryPart.value());
 	}
 
-	private static QueryPart paramsToQueryPart(String parameter, Operator operator) {
+	private QueryPart paramsToQueryPart(String parameter, Operator operator) {
+		String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
 		String[] parameterParts = parameter.split(operator.getTmForumOperator().operator());
 		if (parameterParts.length != 2) {
 			throw new QueryException(String.format("%s is not a valid %s parameter.",
@@ -230,9 +244,7 @@ public class QueryParser {
 		}
 		String value = parameterParts[1];
 		if (value.contains(TMFORUM_OR_VALUE)) {
-			// Comented while using scorpio
-			//value = String.format("(%s)", value.replace(TMFORUM_OR_VALUE, NGSI_LD_OR));
-			//
+			value = String.format("%s", value.replace(TMFORUM_OR_VALUE, ngsildOrValue));
 		}
 
 		return new QueryPart(
@@ -241,7 +253,7 @@ public class QueryParser {
 				value);
 	}
 
-	private static QueryPart getQueryFromEquals(String parameter) {
+	private QueryPart getQueryFromEquals(String parameter) {
 
 		// equals could also contain a textual operator, f.e. key.gt=value -> key>value
 		Optional<Operator> containedOperator = getOperator(parameter);
@@ -259,7 +271,7 @@ public class QueryParser {
 
 	}
 
-	private static QueryPart parseParameter(String parameter) {
+	private QueryPart parseParameter(String parameter) {
 
 		Operator operator = getOperatorFromParam(parameter);
 		return switch (operator) {

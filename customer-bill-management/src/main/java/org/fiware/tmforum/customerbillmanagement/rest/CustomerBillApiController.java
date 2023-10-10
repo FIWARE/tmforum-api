@@ -9,6 +9,7 @@ import org.fiware.customerbillmanagement.api.CustomerBillApi;
 import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -34,9 +35,9 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 	private final TMForumMapper tmForumMapper;
 	private final Clock clock;
 
-	public CustomerBillApiController(ReferenceValidationService validationService,
+	public CustomerBillApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, EventHandler eventHandler) {
-		super(validationService, repository, eventHandler);
+		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

@@ -10,7 +10,7 @@ micronaut:
       expire-after-access: 2s
 
   server:
-    port: 8632
+    port: 8633
 
   metrics:
     enabled: true
@@ -46,3 +46,6 @@ loggers:
 general:
   contextUrl: https://smartdatamodels.org/context.jsonld
   serverHost: http://localhost:8632
+  ngsildOrQueryValue: ","
+  ngsildOrQueryKey: ","
+  encloseQuery: false

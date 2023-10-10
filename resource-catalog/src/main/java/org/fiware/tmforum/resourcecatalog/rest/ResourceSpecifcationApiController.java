@@ -10,6 +10,7 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -38,10 +39,10 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 	private final TMForumMapper tmForumMapper;
 	private final Clock clock;
 
-	public ResourceSpecifcationApiController(ReferenceValidationService validationService,
+	public ResourceSpecifcationApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository resourceCatalogRepository, TMForumMapper tmForumMapper,
 			Clock clock, EventHandler eventHandler) {
-		super(validationService, resourceCatalogRepository, eventHandler);
+		super(queryParser, validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

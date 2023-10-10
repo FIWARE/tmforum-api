@@ -11,6 +11,7 @@ import org.fiware.tmforum.agreement.TMForumMapper;
 import org.fiware.tmforum.agreement.domain.Agreement;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
@@ -35,9 +36,9 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
     private static final List<String> EVENT_GROUPS = List.of(
             EVENT_GROUP_AGREEMENT, EVENT_GROUP_AGREEMENT_SPECIFICATION);
 
-    public EventSubscriptionApiController(ReferenceValidationService validationService,
+    public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
                                           TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }
 
