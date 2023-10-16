@@ -53,20 +53,20 @@ public abstract class Account extends EntityWithId {
     @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "state") }))
     private String state;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "accountBalance") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "accountBalance") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance") }))
     private List<AccountBalance> accountBalance;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "accountRelationship") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "accountRelationship") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "accountRelationship") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountRelationship") }))
     private List<AccountRelationship> accountRelationship;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "contact") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "contact") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "contact") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "contact") }))
     private List<Contact> contact;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "creditLimit") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "creditLimit") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "creditLimit") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "creditLimit") }))
     private Money creditLimit;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
@@ -74,8 +74,12 @@ public abstract class Account extends EntityWithId {
             @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class) }))
     private List<RelatedParty> relatedParty;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "taxExemption") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "taxExemption") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemption") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemption") }))
     private List<AccountTaxExemption> taxExemption;
 
+    @Override
+    public String getEntityState() {
+        return state;
+    }
 }

@@ -3,6 +3,7 @@ package org.fiware.tmforum.account.domain;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
+import io.github.wistefan.mapping.annotations.Ignore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +19,9 @@ public class PaymentMethodRef extends RefEntity {
         super(id);
     }
 
-    @Override public List<String> getReferencedTypes() {
-        return Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of());
+    @Override
+    @Ignore
+    public List<String> getReferencedTypes() {
+        return List.of(getAtReferredType());
     }
 }

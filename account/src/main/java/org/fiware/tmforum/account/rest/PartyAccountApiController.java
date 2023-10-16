@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -48,6 +49,9 @@ public class PartyAccountApiController extends AbstractApiController<PartyAccoun
 
     private Mono<PartyAccount> getCheckingMono(PartyAccount partyAccount) {
         List<List<? extends ReferencedEntity>> references = new ArrayList<>();
+        references.add(partyAccount.getRelatedParty());
+        Optional.ofNullable(partyAccount.getDefaultPaymentMethod()).map(List::of).ifPresent(references::add);
+        Optional.ofNullable(partyAccount.getFinancialAccount()).map(List::of).ifPresent(references::add);
         return getCheckingMono(partyAccount, references)
                 .onErrorMap(throwable -> new TmForumException(
                         String.format("Was not able to create partyAccount %s", partyAccount.getId()), throwable,

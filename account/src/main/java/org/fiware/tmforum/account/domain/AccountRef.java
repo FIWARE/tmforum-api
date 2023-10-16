@@ -25,4 +25,6 @@ public class AccountRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return List.of(PartyAccount.TYPE_PARTYAC);
     }
+
+    /* Problema*/
 }

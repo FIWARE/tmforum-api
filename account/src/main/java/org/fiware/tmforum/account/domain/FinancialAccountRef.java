@@ -27,6 +27,6 @@ public class FinancialAccountRef extends RefEntity {
     private AccountBalance accountBalance;
 
     @Override public List<String> getReferencedTypes() {
-        return Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of());
+        return List.of(FinancialAccount.TYPE_FINANCIALAC);
     }
 }

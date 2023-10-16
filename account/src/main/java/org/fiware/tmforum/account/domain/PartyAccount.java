@@ -21,18 +21,17 @@ import java.util.List;
 public class PartyAccount extends Account {
 
     public PartyAccount(String id) {
-        super(TYPE, id);
+        super(TYPE_PARTYAC, id);
     }
 
     public static final String TYPE_PARTYAC = "partyAccount";
-    public static final String TYPE = TYPE_PARTYAC;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))
     @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))
     private String paymentStatus;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "billStructure") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "billStructure") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "billStructure") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "billStructure") }))
     private BillStructure billStructure;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "defaultPaymentMethod") }))
@@ -43,8 +42,8 @@ public class PartyAccount extends Account {
     @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount") }))
     private FinancialAccountRef financialAccount;
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "paymentPlan") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "paymentPlan") }))
+    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "paymentPlan") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "paymentPlan") }))
     private List<PaymentPlan> paymentPlan;
 
 }

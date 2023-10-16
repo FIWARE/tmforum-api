@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -48,6 +49,7 @@ public class FinancialAccountApiController extends AbstractApiController<Financi
 
     private Mono<FinancialAccount> getCheckingMono(FinancialAccount financialAccount) {
         List<List<? extends ReferencedEntity>> references = new ArrayList<>();
+        references.add(financialAccount.getRelatedParty());
         return getCheckingMono(financialAccount, references)
                 .onErrorMap(throwable -> new TmForumException(
                         String.format("Was not able to create financialAccount %s", financialAccount.getId()), throwable,
