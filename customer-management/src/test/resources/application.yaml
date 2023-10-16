@@ -5,10 +5,9 @@ micronaut:
 
   caches:
     entities:
-      maximumSize: 1000
-      # enough to not call twice in one call, but would prevent conflicting writes
-      expire-after-write: 2s
-      expire-after-access: 2s
+      enabled: false
+    subscriptions:
+      enabled: false
 
   metrics:
     enabled: false

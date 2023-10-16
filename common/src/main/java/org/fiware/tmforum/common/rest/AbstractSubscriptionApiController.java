@@ -3,6 +3,7 @@ package org.fiware.tmforum.common.rest;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -31,7 +32,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
     }
 
-    @CacheInvalidate(value = EventHandler.SUBSCRIPTIONS_CACHE_NAME, all = true)
+    @CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME, all = true)
     protected Mono<Subscription> create(Subscription subscription) {
         return findExistingSubscription(subscription)
                 .switchIfEmpty(create(Mono.just(subscription), Subscription.class));
@@ -71,7 +72,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     @Override
-    @CacheInvalidate(value = EventHandler.SUBSCRIPTIONS_CACHE_NAME, all = true)
+    @CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME, all = true)
     protected Mono<HttpResponse<Object>> delete(String id) {
         return super.delete(id);
     }

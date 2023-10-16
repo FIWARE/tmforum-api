@@ -5,6 +5,7 @@ import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.context.annotation.Bean;
 import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.domain.subscription.Event;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.exception.EventHandlingException;
@@ -25,14 +26,13 @@ import static org.fiware.tmforum.common.notification.EventConstants.*;
 @Bean
 @RequiredArgsConstructor
 public class EventHandler {
-    public static final String SUBSCRIPTIONS_CACHE_NAME = "subscriptions";
 
     private final TmForumRepository repository;
     private final NotificationSender notificationSender;
     private final SubscriptionQueryResolver subscriptionQueryResolver;
     private final EntityVOMapper entityVOMapper;
 
-    @Cacheable(SUBSCRIPTIONS_CACHE_NAME)
+    @Cacheable(CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
     public Mono<List<Subscription>> getSubscriptions(String entityType, String eventType) {
         return repository.findEntities(
                 DEFAULT_OFFSET,

@@ -41,6 +41,13 @@ public class Subscription extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "fields") }))
 	private List<String> fields;
 
+	/**
+	 * Empty constructor for cache serialization and deserialization
+	 */
+	public Subscription() {
+		super(TYPE_SUBSCRIPTION, null);
+	}
+
 	public Subscription(String id) {
 		super(TYPE_SUBSCRIPTION, id);
 	}
