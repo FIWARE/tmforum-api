@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resourcefunction.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum TaskState {
 
     ACKNOWLEDGED("acknowledged"),
@@ -11,5 +13,10 @@ public enum TaskState {
 
     TaskState(String value) {
         this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }

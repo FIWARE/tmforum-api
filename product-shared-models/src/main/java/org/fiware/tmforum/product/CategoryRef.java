@@ -12,7 +12,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled
+@MappingEnabled(entityType = Category.TYPE_CATEGORY)
 public class CategoryRef extends RefEntity {
 
 	@Getter(onMethod = @__({

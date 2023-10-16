@@ -66,4 +66,8 @@ public abstract class EntityWithId {
 	@Nullable
 	String atType;
 
+	public String getEntityState() {
+		return "default";
+	}
+
 }

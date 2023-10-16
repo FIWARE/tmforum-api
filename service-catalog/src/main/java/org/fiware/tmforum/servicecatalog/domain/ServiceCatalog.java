@@ -62,4 +62,9 @@ public class ServiceCatalog extends EntityWithId {
     public ServiceCatalog(String id) {
         super(TYPE_SERVICE_CATALOG, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return lifecycleStatus;
+    }
 }

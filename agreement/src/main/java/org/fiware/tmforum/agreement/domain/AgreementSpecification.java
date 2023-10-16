@@ -89,4 +89,8 @@ public class AgreementSpecification extends EntityWithId {
                         @AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor") }))
         private TimePeriod validFor;
 
+        @Override
+        public String getEntityState() {
+                return lifecycleStatus;
+        }
 }

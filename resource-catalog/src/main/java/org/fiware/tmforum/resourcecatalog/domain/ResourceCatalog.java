@@ -61,4 +61,9 @@ public class ResourceCatalog extends EntityWithId {
     public ResourceCatalog(String id) {
         super(TYPE_RESOURCE_CATALOG, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return lifecycleStatus;
+    }
 }

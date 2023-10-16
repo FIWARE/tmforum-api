@@ -3,8 +3,8 @@ package org.fiware.tmforum.productcatalog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.CatalogApiTestClient;
 import org.fiware.productcatalog.api.CatalogApiTestSpec;
@@ -20,6 +20,7 @@ import org.fiware.productcatalog.model.RelatedPartyVO;
 import org.fiware.productcatalog.model.RelatedPartyVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,6 +42,9 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.productcatalog" })
 public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
@@ -55,6 +60,17 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 			ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.catalogApiTestClient = catalogApiTestClient;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+		return eventHandler;
 	}
 
 	@ParameterizedTest

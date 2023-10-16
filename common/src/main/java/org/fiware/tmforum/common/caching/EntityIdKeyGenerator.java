@@ -21,7 +21,7 @@ public class EntityIdKeyGenerator implements CacheKeyGenerator {
 		}
 		if (params.length == 1 && params[0] instanceof EntityVO entityVO) {
 			return entityVO.getId();
-		} else if (params.length == 2 & params[0] instanceof URI) {
+		} else if (params[0] instanceof URI) {
 			return params[0];
 		}
 		throw new CachingException(String.format("Key generator not supported for parameter type %s.", params[0].getClass()));

@@ -1,5 +1,7 @@
 package org.fiware.tmforum.customerbillmanagement.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum StateValue {
 
 	NEW("new"),
@@ -13,5 +15,10 @@ public enum StateValue {
 
 	StateValue(String value) {
 		this.value = value;
+	}
+
+	@JsonValue
+	public String getValue() {
+		return value;
 	}
 }

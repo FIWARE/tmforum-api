@@ -3,12 +3,9 @@ package org.fiware.tmforum.party;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
-import org.fiware.ngsi.model.EntityListVO;
-import org.fiware.ngsi.model.EntityVO;
 import org.fiware.party.api.OrganizationApiTestClient;
 import org.fiware.party.api.OrganizationApiTestSpec;
 import org.fiware.party.model.AttachmentRefOrValueVO;
@@ -35,23 +32,22 @@ import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import org.fiware.tmforum.party.domain.organization.Organization;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -59,6 +55,9 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.party" })
 class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec {
@@ -81,6 +80,17 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		this.entitiesApiClient = entitiesApiClient;
 		this.objectMapper = objectMapper;
 		this.generalProperties = generalProperties;
+	}
+
+	@MockBean(EventHandler.class)
+	public EventHandler eventHandler() {
+		EventHandler eventHandler = mock(EventHandler.class);
+
+		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
+		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
+		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
+
+		return eventHandler;
 	}
 
 	@Override

@@ -100,4 +100,9 @@ public class ServiceSpecification extends EntityWithId {
     public ServiceSpecification(String id) {
         super(TYPE_SERVICE_SPECIFICATION, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return lifecycleStatus;
+    }
 }

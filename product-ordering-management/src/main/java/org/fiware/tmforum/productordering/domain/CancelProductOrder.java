@@ -1,18 +1,16 @@
 package org.fiware.tmforum.productordering.domain;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import org.fiware.productordering.model.ProductOrderRefVO;
-import org.fiware.tmforum.common.domain.EntityWithId;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.fiware.tmforum.common.domain.EntityWithId;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = CancelProductOrder.TYPE_CANCEL_PRODUCT_ORDER)
@@ -54,5 +52,10 @@ public class CancelProductOrder extends EntityWithId {
 
 	public CancelProductOrder(String id) {
 		super(TYPE_CANCEL_PRODUCT_ORDER, id);
+	}
+
+	@Override
+	public String getEntityState() {
+		return state != null ? state.getValue() : null;
 	}
 }
