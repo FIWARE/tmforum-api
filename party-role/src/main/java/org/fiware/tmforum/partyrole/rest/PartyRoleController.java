@@ -59,7 +59,7 @@ return res;
     public Mono<HttpResponse<PartyRoleVO>> patchPartyRole(@NonNull String id, @NonNull PartyRoleUpdateVO partyRoleUpdateVO) {
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
-                throw new TmForumException("Did not receive a valid id, such agreement cannot exist.",
+                throw new TmForumException("Did not receive a valid id, such party role cannot exist.",
                                 TmForumExceptionReason.NOT_FOUND);
         }
         PartyRole pr = tmForumMapper.map(partyRoleUpdateVO, id);
@@ -71,7 +71,7 @@ return res;
     @Override
     public Mono<HttpResponse<PartyRoleVO>> retrievePartyRole(@NonNull String id, @Nullable String fields) {
         return retrieve(id, PartyRole.class).switchIfEmpty(
-             Mono.error(new TmForumException("No such individual exists.", TmForumExceptionReason.NOT_FOUND)))
+             Mono.error(new TmForumException("No such party role exists.", TmForumExceptionReason.NOT_FOUND)))
              .map(tmForumMapper::map)
             .map(HttpResponse::ok);
     }
@@ -85,7 +85,7 @@ return res;
                 Optional.ofNullable(pr.getEngagedParty()).map(List::of).ifPresent(references::add);
                 return getCheckingMono(pr, references)
                                 .onErrorMap(throwable -> new TmForumException(
-                                                String.format("Was not able to create individual %s",
+                                                String.format("Was not able to create a party role %s",
                                                                 pr.getId()),
                                                 throwable,
                                                 TmForumExceptionReason.INVALID_RELATIONSHIP));

@@ -3,11 +3,15 @@ package org.fiware.tmforum.partyrole.domain;
 import java.net.URI;
 import java.util.List;
 
+import org.fiware.tmforum.common.domain.AgreementRef;
 import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.ContactMedium;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.customer.AccountRef;
+import org.fiware.tmforum.customer.CreditProfile;
+import org.fiware.tmforum.customer.PaymentMethodRef;
 
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;

@@ -1,20 +1,20 @@
-package org.fiware.tmforum.partyrole.domain;
+package org.fiware.tmforum.customer;
 
-import java.net.URI;
-import java.util.List;
-
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.fiware.tmforum.common.domain.RefEntity;
-
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.Ignore;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+
+import java.net.URI;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 public class AccountRef extends RefEntity {
+
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "description", embedProperty = true)}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description", targetClass = String.class)}))
     private String description;

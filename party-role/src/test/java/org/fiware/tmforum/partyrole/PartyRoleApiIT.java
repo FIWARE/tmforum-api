@@ -27,7 +27,6 @@ import org.fiware.partyRole.model.RelatedPartyVOTestExample;
 import org.fiware.partyRole.model.TimePeriodVO;
 import org.fiware.partyRole.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.partyrole.domain.PartyRole;
