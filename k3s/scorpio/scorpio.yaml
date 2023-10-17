@@ -114,6 +114,8 @@ spec:
               value: postgis
             - name: BUSHOST
               value: kafka
+            - name: QUARKUS_LOG_LEVEL
+              value: DEBUG
           ports:
             - name: http
               containerPort: 9090
