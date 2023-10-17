@@ -119,7 +119,7 @@
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- broker to be used for testing, could be scropio or orion-ld -->
-        <broker>scorpio</broker>
+        <broker>orion-ld</broker>
 
         <!-- tm-forum api links. -->
         <tmforum.api.url>API-URL</tmforum.api.url>
@@ -480,7 +480,7 @@
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
                         <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
-                            java.base/java.time=ALL-UNNAMED
+                            java.base/java.time=ALL-UNNAMED -Dmicronaut.environments=${broker}
                         </argLine>
                     </configuration>
                 </plugin>
