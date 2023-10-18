@@ -10,7 +10,7 @@ micronaut:
       expire-after-access: 2s
 
   server:
-    port: 8633
+    port: 8632
 
   metrics:
     enabled: true
@@ -44,8 +44,5 @@ loggers:
 
 ---
 general:
-  ngsildOrQueryValue: ","
-  ngsildOrQueryKey: ","
-  encloseQuery: false
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632

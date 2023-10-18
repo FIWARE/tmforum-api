@@ -41,11 +41,8 @@ endpoints:
 loggers:
   levels:
     ROOT: TRACE
-    
+
 ---
 general:
-  ngsildOrQueryValue: ","
-  ngsildOrQueryKey: ","
-  encloseQuery: false
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
