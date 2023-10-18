@@ -10,6 +10,7 @@ import org.fiware.servicecatalog.model.ServiceCandidateCreateVO;
 import org.fiware.servicecatalog.model.ServiceCandidateUpdateVO;
 import org.fiware.servicecatalog.model.ServiceCandidateVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -35,10 +36,10 @@ public class ServiceCandidateApiController extends AbstractApiController<Service
 	private final TMForumMapper tmForumMapper;
 	private final Clock clock;
 
-	public ServiceCandidateApiController(ReferenceValidationService validationService,
+	public ServiceCandidateApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository resourceCatalogRepository, TMForumMapper tmForumMapper,
 			Clock clock, EventHandler eventHandler) {
-		super(validationService, resourceCatalogRepository, eventHandler);
+		super(queryParser, validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

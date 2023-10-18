@@ -1,7 +1,4 @@
 micronaut:
-  application:
-    name: ${project.artifactId}
-
   caches:
     entities:
       maximumSize: 1000
@@ -44,5 +41,8 @@ loggers:
 
 ---
 general:
+  ngsildOrQueryValue: ","
+  ngsildOrQueryKey: ","
+  encloseQuery: false
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632

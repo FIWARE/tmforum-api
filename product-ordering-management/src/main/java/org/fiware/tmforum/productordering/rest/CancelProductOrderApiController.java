@@ -9,6 +9,7 @@ import org.fiware.productordering.api.CancelProductOrderApi;
 import org.fiware.productordering.model.CancelProductOrderCreateVO;
 import org.fiware.productordering.model.CancelProductOrderVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -30,9 +31,10 @@ public class CancelProductOrderApiController extends AbstractApiController<Cance
 	private final TMForumMapper tmForumMapper;
 
 	public CancelProductOrderApiController(
+			QueryParser queryParser,
 			ReferenceValidationService validationService,
 			TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, repository, eventHandler);
+		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

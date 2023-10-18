@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productcatalog.rest;
 
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -16,9 +17,10 @@ import java.util.Objects;
 public class AbstractProductCatalogApiController<T> extends AbstractApiController<T> {
 
 	public AbstractProductCatalogApiController(
+			QueryParser queryParser,
 			ReferenceValidationService validationService,
 			TmForumRepository repository, EventHandler eventHandler) {
-		super(validationService, repository, eventHandler);
+		super(queryParser, validationService, repository, eventHandler);
 	}
 
 	protected List<ProductSpecificationRef> validateProdSpecCharValueUse(
