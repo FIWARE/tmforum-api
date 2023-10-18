@@ -364,7 +364,9 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	@Override
 	public void listProductOffering200() throws Exception {
 		//Persist Product Specification to be used
-		ProductSpecificationVO productSpecification = productSpecificationApiTestClient.createProductSpecification(ProductSpecificationCreateVOTestExample.build().productSpecCharacteristic(List.of(ProductSpecificationCharacteristicVOTestExample.build()))).body();
+		ProductSpecificationVO productSpecification = productSpecificationApiTestClient.createProductSpecification(
+				ProductSpecificationCreateVOTestExample.build()
+						.productSpecCharacteristic(List.of(ProductSpecificationCharacteristicVOTestExample.build().id("urn:spec")))).body();
 		String productSpecId = productSpecification.getId();
 		ProductSpecificationRefVO productSpecReference = ProductSpecificationRefVOTestExample.build()
 				.targetProductSchema(productSpecification.getTargetProductSchema())
