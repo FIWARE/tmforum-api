@@ -1,0 +1,4 @@
+general:
+  ngsildOrQueryValue: ","
+  ngsildOrQueryKey: ","
+  encloseQuery: false

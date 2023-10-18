@@ -1,6 +1,4 @@
 micronaut:
-  application:
-    name: ${project.artifactId}
 
   caches:
     entities:
@@ -44,5 +42,5 @@ loggers:
 
 ---
 general:
-  contextUrl: https://smartdatamodels.org/context.jsonld
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632

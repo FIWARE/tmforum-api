@@ -9,6 +9,7 @@ import org.fiware.customerbillmanagement.api.CustomerBillOnDemandApi;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -33,9 +34,10 @@ public class CustomerBillOnDemandApiController extends AbstractApiController<Cus
 	private final TMForumMapper tmForumMapper;
 
 	public CustomerBillOnDemandApiController(
+			QueryParser queryParser,
 			ReferenceValidationService validationService,
 			TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, repository, eventHandler);
+		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

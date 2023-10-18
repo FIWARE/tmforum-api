@@ -9,6 +9,7 @@ import org.fiware.productcatalog.model.CategoryCreateVO;
 import org.fiware.productcatalog.model.CategoryUpdateVO;
 import org.fiware.productcatalog.model.CategoryVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -33,10 +34,10 @@ public class CategoryApiController extends AbstractApiController<Category> imple
 	private final TMForumMapper tmForumMapper;
 	private final Clock clock;
 
-	public CategoryApiController(ReferenceValidationService validationService,
+	public CategoryApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository productCatalogRepository,
 			TMForumMapper tmForumMapper, Clock clock, EventHandler eventHandler) {
-		super(validationService, productCatalogRepository, eventHandler);
+		super(queryParser, validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}
