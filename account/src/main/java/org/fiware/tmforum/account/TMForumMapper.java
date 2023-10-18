@@ -4,6 +4,7 @@ import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.fiware.tmforum.common.domain.TimePeriod;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.account.model.*;
@@ -126,7 +127,7 @@ public interface TMForumMapper {
     @Mapping(target = "query", source = "rawQuery")
     EventSubscriptionVO map(Subscription subscription);
 
-
+    TimePeriod map(TimePeriodVO value);
 
     default String map(URL value) {
         if (value == null) {

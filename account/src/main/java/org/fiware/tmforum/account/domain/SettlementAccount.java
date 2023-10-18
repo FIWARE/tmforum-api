@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
+@MappingEnabled(entityType = BillingAccount.TYPE_PARTYAC)
 public class SettlementAccount extends PartyAccount {
 
     public SettlementAccount(String id) {

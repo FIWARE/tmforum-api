@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.RefEntity;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ public class PaymentMethodRef extends RefEntity {
     @Override
     @Ignore
     public List<String> getReferencedTypes() {
-        return List.of(getAtReferredType());
+        return Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of());
     }
 }
+

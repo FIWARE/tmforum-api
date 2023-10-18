@@ -1,16 +1,16 @@
 package org.fiware.tmforum.account.domain;
 
 import lombok.Data;
-import org.fiware.tmforum.common.domain.Money;
-import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.tmforum.common.domain.RelatedParty;
-import org.fiware.tmforum.common.domain.ContactMedium;
+import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.*;
+
 import java.util.List;
 
 import java.net.URI;
 
 @Data
-public class Contact {
+@EqualsAndHashCode(callSuper = true)
+public class Contact extends Entity {
 
     private String contactName;
     private String contactType;

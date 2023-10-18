@@ -31,6 +31,7 @@ public class PartyAccountApiController extends AbstractApiController<PartyAccoun
 
     private final TMForumMapper tmForumMapper;
 
+
     public PartyAccountApiController(ReferenceValidationService validationService,
                                          TmForumRepository productPartyAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
         super(validationService, productPartyAccountRepository, eventHandler);
@@ -67,7 +68,7 @@ public class PartyAccountApiController extends AbstractApiController<PartyAccoun
     public Mono<HttpResponse<List<PartyAccountVO>>> listPartyAccount(@Nullable String fields, @Nullable Integer offset,
                                                                              @Nullable Integer limit) {
         return list(offset, limit, PartyAccount.TYPE_PARTYAC, PartyAccount.class)
-                .map(categoryStream -> categoryStream.map(tmForumMapper::map).toList())
+                .map(partyAccountStream -> partyAccountStream.map(tmForumMapper::map).toList())
                 .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }

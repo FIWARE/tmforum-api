@@ -8,13 +8,7 @@ import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
 import lombok.RequiredArgsConstructor;
-import org.fiware.account.model.BillFormatVO;
-import org.fiware.account.model.BillingAccountVO;
-import org.fiware.account.model.BillingCycleSpecificationVO;
-import org.fiware.account.model.BillPresentationMediaVO;
-import org.fiware.account.model.FinancialAccountVO;
-import org.fiware.account.model.PartyAccountVO;
-import org.fiware.account.model.SettlementAccountVO;
+import org.fiware.account.model.*;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
 import javax.inject.Singleton;
@@ -52,6 +46,8 @@ public class Application {
             fieldParamModule.addSerializer(FinancialAccountVO.class, new FieldCleaningSerializer<>());
             fieldParamModule.addSerializer(PartyAccountVO.class, new FieldCleaningSerializer<>());
             fieldParamModule.addSerializer(SettlementAccountVO.class, new FieldCleaningSerializer<>());
+            fieldParamModule.addSerializer(BillStructureVO.class, new FieldCleaningSerializer<>());
+            //fieldParamModule.addSerializer(BillingCycleSpecificationRefOrValueVO.class, new FieldCleaningSerializer<>());
             objectMapper.registerModule(fieldParamModule);
             return objectMapper;
 

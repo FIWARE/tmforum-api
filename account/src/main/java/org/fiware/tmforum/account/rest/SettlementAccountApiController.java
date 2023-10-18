@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class SettlementAccountApiController extends AbstractApiController<SettlementAccount> implements SettlementAccountApi {
 
     private final TMForumMapper tmForumMapper;
+
 
     public SettlementAccountApiController(ReferenceValidationService validationService,
                                      TmForumRepository productSettlementAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
@@ -48,6 +50,9 @@ public class SettlementAccountApiController extends AbstractApiController<Settle
 
     private Mono<SettlementAccount> getCheckingMono(SettlementAccount settlementAccount) {
         List<List<? extends ReferencedEntity>> references = new ArrayList<>();
+        references.add(settlementAccount.getRelatedParty());
+        Optional.ofNullable(settlementAccount.getDefaultPaymentMethod()).map(List::of).ifPresent(references::add);
+        Optional.ofNullable(settlementAccount.getFinancialAccount()).map(List::of).ifPresent(references::add);
         return getCheckingMono(settlementAccount, references)
                 .onErrorMap(throwable -> new TmForumException(
                         String.format("Was not able to create settlementAccount %s", settlementAccount.getId()), throwable,
@@ -63,7 +68,7 @@ public class SettlementAccountApiController extends AbstractApiController<Settle
     public Mono<HttpResponse<List<SettlementAccountVO>>> listSettlementAccount(@Nullable String fields, @Nullable Integer offset,
                                                                      @Nullable Integer limit) {
         return list(offset, limit, SettlementAccount.TYPE_PARTYAC, SettlementAccount.class)
-                .map(categoryStream -> categoryStream.map(tmForumMapper::map).toList())
+                .map(settlementAccountStream -> settlementAccountStream.map(tmForumMapper::map).toList())
                 .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
     }
@@ -91,3 +96,4 @@ public class SettlementAccountApiController extends AbstractApiController<Settle
                 .map(HttpResponse::ok);
     }
 }
+
