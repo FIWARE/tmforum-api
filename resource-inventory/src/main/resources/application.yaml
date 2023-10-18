@@ -1,7 +1,4 @@
 micronaut:
-  application:
-    name: ${project.artifactId}
-
   caches:
     entities:
       maximumSize: 1000
