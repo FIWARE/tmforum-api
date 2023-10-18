@@ -90,7 +90,8 @@
         <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>0.3.0</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>0.4.0</version.io.github.wistefan.ngsi-ld-mapping-java>
+
 
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
@@ -118,6 +119,8 @@
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
+        <!-- broker to be used for testing, could be scropio or orion-ld -->
+        <broker>orion-ld</broker>
 
         <!-- tm-forum api links. -->
         <tmforum.api.url>API-URL</tmforum.api.url>
@@ -478,7 +481,7 @@
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
                         <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
-                            java.base/java.time=ALL-UNNAMED
+                            java.base/java.time=ALL-UNNAMED -Dmicronaut.environments=${broker}
                         </argLine>
                     </configuration>
                 </plugin>
@@ -509,7 +512,7 @@
                                     </goals>
                                     <configuration>
                                         <failIfExists>false</failIfExists>
-                                        <manifests>${project.parent.basedir}/k3s</manifests>
+                                        <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                         </portBindings>
@@ -547,7 +550,7 @@
                                     </goals>
                                     <configuration>
                                         <failIfExists>false</failIfExists>
-                                        <manifests>${project.parent.basedir}/k3s</manifests>
+                                        <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                         </portBindings>

@@ -6,6 +6,7 @@ import org.fiware.resourcefunction.api.HealApi;
 import org.fiware.resourcefunction.model.HealCreateVO;
 import org.fiware.resourcefunction.model.HealVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -28,9 +29,9 @@ public class HealApiController extends AbstractApiController<Heal> implements He
 
 	private final TMForumMapper tmForumMapper;
 
-	public HealApiController(ReferenceValidationService validationService, TmForumRepository resourceCatalogRepository,
+	public HealApiController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository resourceCatalogRepository,
 			TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, resourceCatalogRepository, eventHandler);
+		super(queryParser, validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

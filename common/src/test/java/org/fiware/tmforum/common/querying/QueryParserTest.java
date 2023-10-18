@@ -1,5 +1,6 @@
 package org.fiware.tmforum.common.querying;
 
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -13,7 +14,13 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("queries")
 	public void testQueryParsing(String tmForumQuery, String ngsiLdQuery, Class<?> targetClass) {
-		assertEquals(ngsiLdQuery, QueryParser.toNgsiLdQuery(targetClass, tmForumQuery),
+		GeneralProperties properties = new GeneralProperties();
+		properties.setNgsildOrQueryKey("|");
+		properties.setNgsildOrQueryValue("|");
+		properties.setEncloseQuery(true);
+
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
 				"The query should have been properly translated.");
 	}
 
@@ -50,6 +57,30 @@ class QueryParserTest {
 				// Relationship attributes queries
 				Arguments.of("rel.name=therel", "rel.name==\"therel\"", MyPojo.class),
 				Arguments.of("relList.name=therel", "relList.name==\"therel\"", MyPojo.class)
+		);
+	}
+
+	@ParameterizedTest
+	@MethodSource("scorpioQueries")
+	public void testScorpioQueryParsing(String tmForumQuery, String ngsiLdQuery, Class<?> targetClass) {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setNgsildOrQueryKey(",");
+		properties.setNgsildOrQueryValue(",");
+		properties.setEncloseQuery(false);
+
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
+				"The query should have been properly translated.");
+	}
+
+	private static Stream<Arguments> scorpioQueries() {
+		return Stream.of(
+			Arguments.of("status=Active,Started&color=Red", "status==\"Active\",\"Started\";color==\"Red\"", MyPojo.class),
+			Arguments.of("status=Active;status=Started", "status==\"Active\",\"Started\"", MyPojo.class),
+			Arguments.of("sub.status=Active&status=Started&color=Red", "sub[status]==\"Active\";status==\"Started\";color==\"Red\"", MyPojo.class),
+			Arguments.of("temperature<20&temperature>10", "temperature<20;temperature>10", MyPojo.class),
+			Arguments.of("status.eq=Active,Started&color.eq=Red", "status==\"Active\",\"Started\";color==\"Red\"", MyPojo.class),
+			Arguments.of("status.eq=Active;status.eq=Started", "status==\"Active\",\"Started\"", MyPojo.class)
 		);
 	}
 }

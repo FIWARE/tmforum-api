@@ -33,6 +33,7 @@ import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
 @RequiredArgsConstructor
 public abstract class AbstractApiController<T> {
 
+	protected final QueryParser queryParser;
 	protected final ReferenceValidationService validationService;
 	protected final TmForumRepository repository;
 	private final EventHandler eventHandler;
@@ -102,7 +103,7 @@ public abstract class AbstractApiController<T> {
 			if (QueryParser.hasFilter(parameters)) {
 				log.debug("A filter is included in the request.");
 				String queryString = theRequest.getUri().getQuery();
-				query = QueryParser.toNgsiLdQuery(entityClass, queryString);
+				query = queryParser.toNgsiLdQuery(entityClass, queryString);
 			}
 		}
 		offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);

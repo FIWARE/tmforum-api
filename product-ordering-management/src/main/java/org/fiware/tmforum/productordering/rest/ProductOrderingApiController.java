@@ -10,6 +10,7 @@ import org.fiware.productordering.model.ProductOrderCreateVO;
 import org.fiware.productordering.model.ProductOrderUpdateVO;
 import org.fiware.productordering.model.ProductOrderVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -38,9 +39,9 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 	private final TMForumMapper tmForumMapper;
 	private final Clock clock;
 
-	public ProductOrderingApiController(ReferenceValidationService validationService,
+	public ProductOrderingApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, EventHandler eventHandler) {
-		super(validationService, repository, eventHandler);
+		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}

@@ -8,6 +8,7 @@ import org.fiware.servicecatalog.api.EventsSubscriptionApi;
 import org.fiware.servicecatalog.model.EventSubscriptionInputVO;
 import org.fiware.servicecatalog.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
@@ -38,9 +39,9 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_SERVICE_CANDIDATE,
 			EVENT_GROUP_SERVICE_CATALOG, EVENT_GROUP_SERVICE_CATEGORY, EVENT_GROUP_SERVICE_SPECIFICATION);
 
-	public EventSubscriptionApiController(ReferenceValidationService validationService,
+	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

@@ -10,6 +10,7 @@ import org.fiware.customermanagement.model.CustomerCreateVO;
 import org.fiware.customermanagement.model.CustomerUpdateVO;
 import org.fiware.customermanagement.model.CustomerVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -32,10 +33,10 @@ public class CustomerApiController extends AbstractApiController<Customer> imple
 
 	private final TMForumMapper tmForumMapper;
 
-	public CustomerApiController(ReferenceValidationService validationService,
+	public CustomerApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository customerManagementRepository,
 			TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, customerManagementRepository, eventHandler);
+		super(queryParser, validationService, customerManagementRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 
