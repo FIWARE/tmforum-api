@@ -522,6 +522,7 @@
                                         <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
+                                            <portBinding>6379:6379</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -560,6 +561,7 @@
                                         <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
+                                            <portBinding>6379:6379</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
