@@ -9,6 +9,7 @@ import org.fiware.account.model.EventSubscriptionInputVO;
 import org.fiware.account.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -45,9 +46,9 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
     EVENT_GROUP_BILLING_CYCLE_SPECIFICATION, EVENT_GROUP_BILL_PRESENTATION_MEDIA, EVENT_GROUP_FINANCIAL_ACCOUNT,
             EVENT_GROUP_PARTY_ACCOUNT/*, EVENT_GROUP_SETTLEMENT_ACCOUNT*/);
 
-    public EventSubscriptionApiController(ReferenceValidationService validationService,
+    public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
                                           TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }
 

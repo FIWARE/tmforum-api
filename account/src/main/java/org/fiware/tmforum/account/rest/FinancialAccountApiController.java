@@ -11,6 +11,7 @@ import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -31,9 +32,9 @@ public class FinancialAccountApiController extends AbstractApiController<Financi
 
     private final TMForumMapper tmForumMapper;
 
-    public FinancialAccountApiController(ReferenceValidationService validationService,
-                                              TmForumRepository productFinancialAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(validationService, productFinancialAccountRepository, eventHandler);
+    public FinancialAccountApiController(QueryParser queryParser, ReferenceValidationService validationService,
+                                         TmForumRepository productFinancialAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+        super(queryParser, validationService, productFinancialAccountRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }
 

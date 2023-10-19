@@ -32,7 +32,7 @@ public class BillingCycleSpecification extends EntityWithId {
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "billingDateShift")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "billingDateShift")}))
-    private String billingDateShift;
+    private Integer billingDateShift;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "billingPeriod")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "billingPeriod")}))

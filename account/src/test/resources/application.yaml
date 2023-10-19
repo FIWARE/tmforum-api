@@ -1,19 +1,17 @@
 micronaut:
 
+  caches:
+    entities:
+      maximumSize: 1000
+      # enough to not call twice in one call, but would prevent conflicting writes
+      expire-after-write: 2s
+      expire-after-access: 2s
+
   server:
     port: 8632
 
-  caches:
-    entities:
-      enabled: false
-      # maximumSize: 1000
-      # enough to not call twice in one call, but would prevent conflicting writes
-      # expire-after-write: 2s
-      # expire-after-access: 2s
-
-
   metrics:
-    enabled: false
+    enabled: true
     export:
       prometheus:
         step: PT2s
@@ -33,9 +31,9 @@ jackson:
 ---
 endpoints:
   metrics:
-    enabled: false
+    enabled: true
   health:
-    enabled: false
+    enabled: true
 
 ---
 loggers:
@@ -44,4 +42,5 @@ loggers:
 
 ---
 general:
-  contextUrl: https://smartdatamodels.org/context.jsonld
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+  serverHost: http://localhost:8632

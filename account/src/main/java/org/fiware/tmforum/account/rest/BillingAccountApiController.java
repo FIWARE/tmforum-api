@@ -12,6 +12,7 @@ import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -32,9 +33,9 @@ public class BillingAccountApiController extends AbstractApiController<BillingAc
 
     private final TMForumMapper tmForumMapper;
 
-    public BillingAccountApiController(ReferenceValidationService validationService,
-                                   TmForumRepository productBillingAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(validationService, productBillingAccountRepository, eventHandler);
+    public BillingAccountApiController(QueryParser queryParser, ReferenceValidationService validationService,
+                                       TmForumRepository productBillingAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+        super(queryParser, validationService, productBillingAccountRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }
 

@@ -105,8 +105,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
         return testEntries.stream();
     }
 
-
-    @Disabled
+    @Disabled //Non ten referencias, polo tanto non sei como facer os
     @ParameterizedTest
     @MethodSource("provideInvalidBillFormats")
     public void createBillFormat400(String message, BillFormatCreateVO invalidCreateVO) throws Exception {
@@ -129,6 +128,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
     }
 
     @Disabled
+    @Test
     @Override
     public void createBillFormat401() throws Exception {
 
