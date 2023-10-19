@@ -4,6 +4,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.usagemanagement.api.EventsSubscriptionApi;
 import org.fiware.usagemanagement.model.EventSubscriptionInputVO;
 import org.fiware.usagemanagement.model.EventSubscriptionVO;
@@ -35,9 +36,9 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
     private static final List<String> EVENT_GROUPS = List.of(
             EVENT_GROUP_USAGE, EVENT_GROUP_USAGE_SPECIFICATION);
 
-    public EventSubscriptionApiController(ReferenceValidationService validationService,
+    public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
                                           TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }
 
