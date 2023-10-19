@@ -9,6 +9,7 @@ import org.fiware.party.model.IndividualCreateVO;
 import org.fiware.party.model.IndividualUpdateVO;
 import org.fiware.party.model.IndividualVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -34,9 +35,9 @@ public class IndividualApiController extends AbstractPartyApiController<Individu
 
 	private final TMForumMapper tmForumMapper;
 
-	public IndividualApiController(ReferenceValidationService validationService, TmForumRepository partyRepository,
+	public IndividualApiController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository partyRepository,
 			TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, partyRepository, eventHandler);
+		super(queryParser, validationService, partyRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

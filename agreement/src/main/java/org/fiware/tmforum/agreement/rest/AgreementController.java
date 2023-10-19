@@ -14,6 +14,7 @@ import org.fiware.agreement.model.AgreementVO;
 import org.fiware.tmforum.agreement.TMForumMapper;
 import org.fiware.tmforum.agreement.domain.Agreement;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -34,9 +35,9 @@ public class AgreementController extends AbstractApiController<Agreement> implem
 
         private final TMForumMapper tmForumMapper;
 
-        public AgreementController(ReferenceValidationService validationService, TmForumRepository partyRepository,
+        public AgreementController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository partyRepository,
                         TMForumMapper tmForumMapper, EventHandler eventHandler) {
-                super(validationService, partyRepository, eventHandler);
+                super(queryParser, validationService, partyRepository, eventHandler);
                 this.tmForumMapper = tmForumMapper;
         }
 

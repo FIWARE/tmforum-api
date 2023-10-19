@@ -179,15 +179,16 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		OrganizationCreateVO orgWithTaxExemption = OrganizationCreateVOTestExample.build();
 		orgWithTaxExemption.setOrganizationParentRelationship(null);
 		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build();
-		taxDefinitionVO.setId(UUID.randomUUID().toString());
+		taxDefinitionVO.setId("urn:" + UUID.randomUUID());
 		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build();
 		// prevent duplicates
-		taxExemptionCertificateVO.setId(UUID.randomUUID().toString());
+		taxExemptionCertificateVO.setId("urn:" + UUID.randomUUID());
 		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
 		// fix the example
 		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build();
 		attachmentRefOrValueVO.setHref("http://my-ref.de");
 		attachmentRefOrValueVO.setUrl("http://my-url.de");
+		attachmentRefOrValueVO.setId("urn:attachment");
 		taxExemptionCertificateVO.setAttachment(attachmentRefOrValueVO);
 		orgWithTaxExemption.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
 		OrganizationVO expectedOrgWithTaxExemption = OrganizationVOTestExample.build();
@@ -382,10 +383,12 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
 		expectedOrganizations.stream()
 				.forEach(expectedOrganization -> assertTrue(retrievedMap.containsKey(expectedOrganization.getId()),
-						String.format("All created organizations should be returned - Missing: %s.", expectedOrganization,
+						String.format("All created organizations should be returned - Missing: %s.",
+								expectedOrganization,
 								retrievedOrganizations)));
 		expectedOrganizations.stream().forEach(
-				expectedOrganization -> assertEquals(expectedOrganization, retrievedMap.get(expectedOrganization.getId()),
+				expectedOrganization -> assertEquals(expectedOrganization,
+						retrievedMap.get(expectedOrganization.getId()),
 						"The correct organizations should be retrieved."));
 
 		// get with pagination
@@ -404,9 +407,11 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		retrievedOrganizations.addAll(secondPartResponse.body());
 		expectedOrganizations.stream()
 				.forEach(expectedOrganization -> assertTrue(retrievedMap.containsKey(expectedOrganization.getId()),
-						String.format("All created organizations should be returned - Missing: %s.", expectedOrganization)));
+						String.format("All created organizations should be returned - Missing: %s.",
+								expectedOrganization)));
 		expectedOrganizations.stream().forEach(
-				expectedOrganization -> assertEquals(expectedOrganization, retrievedMap.get(expectedOrganization.getId()),
+				expectedOrganization -> assertEquals(expectedOrganization,
+						retrievedMap.get(expectedOrganization.getId()),
 						"The correct organizations should be retrieved."));
 	}
 
@@ -483,8 +488,8 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
 	@Test
 	public void patchOrgWithTaxEx() throws Exception {
-		String teId = UUID.randomUUID().toString();
-		String tdId = UUID.randomUUID().toString();
+		String teId = "urn:" + UUID.randomUUID();
+		String tdId = "urn:" + UUID.randomUUID();
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
 		timePeriodVO.setStartDateTime(Instant.now());
@@ -502,6 +507,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build();
 		attachmentRefOrValueVO.setHref("http://my-ref.de");
 		attachmentRefOrValueVO.setUrl("http://my-url.de");
+		attachmentRefOrValueVO.setId("urn:attachment");
 		attachmentRefOrValueVO.setValidFor(timePeriodVO);
 		taxExemptionCertificateVO.setAttachment(attachmentRefOrValueVO);
 		orgWithTaxExemption.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
@@ -644,17 +650,18 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
 		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build();
 		// prevent duplicates
-		taxDefinitionVO.setId(UUID.randomUUID().toString());
+		taxDefinitionVO.setId("urn:" + UUID.randomUUID());
 		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build();
 		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
 		taxExemptionCertificateVO.setValidFor(timePeriodVO);
 		// prevent duplicates
-		taxExemptionCertificateVO.setId(UUID.randomUUID().toString());
+		taxExemptionCertificateVO.setId("urn:" + UUID.randomUUID());
 
 		// fix the example
 		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build();
 		attachmentRefOrValueVO.setHref("http://my-ref.de");
 		attachmentRefOrValueVO.setUrl("http://my-url.de");
+		attachmentRefOrValueVO.setId("urn:attachment");
 		attachmentRefOrValueVO.setValidFor(timePeriodVO);
 		taxExemptionCertificateVO.setAttachment(attachmentRefOrValueVO);
 		orgWithTaxExemption.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));

@@ -29,6 +29,7 @@ public class BundleProductSpecification extends RefEntity implements ReferencedE
 
 	@Override
 	public List<String> getReferencedTypes() {
-		return Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of());
+		return List.of(ProductSpecification.TYPE_PRODUCT_SPECIFICATION);
+		//return Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of());
 	}
 }

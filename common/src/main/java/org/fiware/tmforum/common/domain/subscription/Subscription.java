@@ -15,7 +15,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Subscription.TYPE_SUBSCRIPTION)
 public class Subscription extends EntityWithId {
-	public static final String TYPE_SUBSCRIPTION = "subscription";
+	public static final String TYPE_SUBSCRIPTION = "tm-forum-subscription";
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "callback") }))
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "callback") }))
@@ -29,16 +29,16 @@ public class Subscription extends EntityWithId {
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "rawQuery") }))
 	private String rawQuery;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "eventTypes") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "eventTypes") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "eventTypes") }))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "eventTypes", targetClass = String.class) }))
 	private List<String> eventTypes;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "entities") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "entities") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "entities") }))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "entities", targetClass = String.class) }))
 	private List<String> entities;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "fields") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "fields") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "fields") }))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "fields", targetClass = String.class) }))
 	private List<String> fields;
 
 	/**

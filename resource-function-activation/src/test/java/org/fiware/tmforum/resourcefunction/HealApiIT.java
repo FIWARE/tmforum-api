@@ -134,9 +134,9 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 				expectedStartTimeVO));
 
 		HealCreateVO additionalParamsCreateVO = HealCreateVOTestExample.build()
-				.additionalParms(List.of(CharacteristicVOTestExample.build())).healPolicy(null).resourceFunction(null);
+				.additionalParms(List.of(CharacteristicVOTestExample.build().id("urn:char"))).healPolicy(null).resourceFunction(null);
 		HealVO expectedAdditionalParamsVO = HealVOTestExample.build()
-				.additionalParms(List.of(CharacteristicVOTestExample.build())).resourceFunction(null).healPolicy(null);
+				.additionalParms(List.of(CharacteristicVOTestExample.build().id("urn:char"))).resourceFunction(null).healPolicy(null);
 		testEntries.add(
 				Arguments.of("A heal with additional parameters should have been created.", additionalParamsCreateVO,
 						expectedAdditionalParamsVO));

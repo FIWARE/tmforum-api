@@ -26,9 +26,9 @@ import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
 public abstract class AbstractSubscriptionApiController extends AbstractApiController<Subscription> {
     private final Map<String, String> eventGroupToEntityNameMapping;
 
-    public AbstractSubscriptionApiController(ReferenceValidationService validationService, TmForumRepository repository,
+    public AbstractSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
                                              Map<String, String> eventGroupToEntityNameMapping, EventHandler eventHandler) {
-        super(validationService, repository, eventHandler);
+        super(queryParser, validationService, repository, eventHandler);
         this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
     }
 
@@ -39,7 +39,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     private Mono<Subscription> findExistingSubscription(Subscription subscription) {
-        String query = String.format(QueryParser.toNgsiLdQuery(Subscription.class, "callback=%s&rawQuery=%s"),
+        String query = String.format(queryParser.toNgsiLdQuery(Subscription.class, "callback=%s&rawQuery=%s"),
                 subscription.getCallback(), subscription.getRawQuery());
 
         return repository.findEntities(DEFAULT_OFFSET, 1, Subscription.TYPE_SUBSCRIPTION,

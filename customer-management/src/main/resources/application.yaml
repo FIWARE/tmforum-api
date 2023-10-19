@@ -1,6 +1,4 @@
 micronaut:
-  application:
-    name: ${project.artifactId}
 
   server:
     port: 8632
@@ -34,12 +32,11 @@ endpoints:
 loggers:
   levels:
     ROOT: TRACE
-
 ---
 general:
-  contextUrl: https://smartdatamodels.org/context.jsonld
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
-
+  
 ---
 redis:
   uri: redis://localhost:6379

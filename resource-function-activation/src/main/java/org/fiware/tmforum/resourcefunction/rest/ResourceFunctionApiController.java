@@ -8,6 +8,7 @@ import org.fiware.resourcefunction.model.ResourceFunctionCreateVO;
 import org.fiware.resourcefunction.model.ResourceFunctionUpdateVO;
 import org.fiware.resourcefunction.model.ResourceFunctionVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -32,10 +33,10 @@ public class ResourceFunctionApiController extends AbstractApiController<Resourc
 		implements ResourceFunctionApi {
 	public final TMForumMapper tmForumMapper;
 
-	public ResourceFunctionApiController(ReferenceValidationService validationService,
+	public ResourceFunctionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository resourceCatalogRepository,
 			TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, resourceCatalogRepository, eventHandler);
+		super(queryParser, validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

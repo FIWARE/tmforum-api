@@ -9,6 +9,7 @@ import org.fiware.party.model.OrganizationCreateVO;
 import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.TmForumException;
@@ -36,9 +37,9 @@ public class OrganizationApiController extends AbstractPartyApiController<Organi
 
 	private final TMForumMapper tmForumMapper;
 
-	public OrganizationApiController(TmForumRepository partyRepository, ReferenceValidationService validationService,
+	public OrganizationApiController(QueryParser queryParser, TmForumRepository partyRepository, ReferenceValidationService validationService,
 			TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, partyRepository, eventHandler);
+		super(queryParser, validationService, partyRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

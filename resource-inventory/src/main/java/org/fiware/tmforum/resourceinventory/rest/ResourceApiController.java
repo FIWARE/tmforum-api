@@ -10,6 +10,7 @@ import org.fiware.resourceinventory.model.ResourceCreateVO;
 import org.fiware.resourceinventory.model.ResourceUpdateVO;
 import org.fiware.resourceinventory.model.ResourceVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -40,10 +41,10 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 
 	private final TMForumMapper tmForumMapper;
 
-	public ResourceApiController(ReferenceValidationService validationService,
+	public ResourceApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository resourceInventoryRepository,
 			TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, resourceInventoryRepository, eventHandler);
+		super(queryParser, validationService, resourceInventoryRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

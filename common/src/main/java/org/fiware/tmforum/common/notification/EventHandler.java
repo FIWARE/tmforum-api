@@ -27,6 +27,7 @@ import static org.fiware.tmforum.common.notification.EventConstants.*;
 @RequiredArgsConstructor
 public class EventHandler {
 
+    private final QueryParser queryParser;
     private final TmForumRepository repository;
     private final NotificationSender notificationSender;
     private final SubscriptionQueryResolver subscriptionQueryResolver;
@@ -39,7 +40,7 @@ public class EventHandler {
                 100,
                 Subscription.TYPE_SUBSCRIPTION,
                 Subscription.class,
-                QueryParser.toNgsiLdQuery(Subscription.class,
+                queryParser.toNgsiLdQuery(Subscription.class,
                         String.format("entities=%s&eventTypes=%s", entityType, eventType))
         );
     }

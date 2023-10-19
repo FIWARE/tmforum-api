@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApi;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -28,9 +29,10 @@ public class AppliedCustomerBillingRateApiController extends AbstractApiControll
 	private final TMForumMapper tmForumMapper;
 
 	public AppliedCustomerBillingRateApiController(
+			QueryParser queryParser,
 			ReferenceValidationService validationService,
 			TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(validationService, repository, eventHandler);
+		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
 

@@ -1,16 +1,16 @@
 micronaut:
 
-  server:
-    port: 8632
-
   caches:
     entities:
       enabled: false
     subscriptions:
       enabled: false
 
+  server:
+    port: 8632
+
   metrics:
-    enabled: false
+    enabled: true
     export:
       prometheus:
         step: PT2s
@@ -30,9 +30,9 @@ jackson:
 ---
 endpoints:
   metrics:
-    enabled: false
+    enabled: true
   health:
-    enabled: false
+    enabled: true
 
 ---
 loggers:
@@ -41,4 +41,5 @@ loggers:
 
 ---
 general:
-  contextUrl: https://smartdatamodels.org/context.jsonld
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+  serverHost: http://localhost:8632

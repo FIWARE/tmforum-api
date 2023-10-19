@@ -9,6 +9,7 @@ import org.fiware.productcatalog.model.ProductOfferingPriceCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceVO;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -37,10 +38,10 @@ public class ProductOfferingPriceApiController extends AbstractProductCatalogApi
 	private final TMForumMapper tmForumMapper;
 	private final Clock clock;
 
-	public ProductOfferingPriceApiController(ReferenceValidationService validationService,
+	public ProductOfferingPriceApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper,
 			Clock clock, EventHandler eventHandler) {
-		super(validationService, productCatalogRepository, eventHandler);
+		super(queryParser, validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}
