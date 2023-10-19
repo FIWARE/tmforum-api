@@ -58,7 +58,7 @@ public class BillingAccountApiController extends AbstractApiController<BillingAc
                 .onErrorMap(throwable -> new TmForumException(
                         String.format("Was not able to create billingAccount %s", billingAccount.getId()), throwable,
                         TmForumExceptionReason.INVALID_RELATIONSHIP));
-    } //Vai dar error fijo
+    }
 
     @Override
     public Mono<HttpResponse<Object>> deleteBillingAccount(String id) {

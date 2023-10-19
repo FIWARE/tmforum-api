@@ -105,27 +105,12 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
         return testEntries.stream();
     }
 
-    @Disabled //Non ten referencias, polo tanto non sei como facer os
-    @ParameterizedTest
-    @MethodSource("provideInvalidBillFormats")
-    public void createBillFormat400(String message, BillFormatCreateVO invalidCreateVO) throws Exception {
-        this.message = message;
-        this.billFormatCreateVO = invalidCreateVO;
-        createBillFormat400();
-    }
-
+    @Disabled("Cannot add invalid references, there isn't one")
+    @Test
     @Override
     public void createBillFormat400() throws Exception {
-
     }
 
-    private static Stream<Arguments> provideInvalidBillFormats() {
-        List<Arguments> testEntries = new ArrayList<>();
-
-
-
-        return testEntries.stream();
-    }
 
     @Disabled
     @Test

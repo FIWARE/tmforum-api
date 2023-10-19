@@ -82,7 +82,6 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         partyAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
 
     private static void fixExampleUpdate(PartyAccountUpdateVO partyAccount) {
@@ -99,7 +98,6 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         partyAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
 
     private static void fixExampleExpected(PartyAccountVO partyAccount) {
@@ -116,10 +114,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         partyAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
-
-    //Preguntar o tema do do Checking Mono do Controller, porque non me ten sentido
 
     @ParameterizedTest
     @MethodSource("provideValidPartyAccounts")

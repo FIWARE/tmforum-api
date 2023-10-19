@@ -102,31 +102,11 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
         return testEntries.stream();
     }
 
-
-    @Disabled //Non ten referencias, non pode haber un problema no create
-    @ParameterizedTest
-    @MethodSource("provideInvalidBillingCycleSpecifications")
-    public void createBillingCycleSpecification400(String message, BillingCycleSpecificationCreateVO invalidCreateVO) throws Exception {
-        this.message = message;
-        this.billingCycleSpecificationCreateVO = invalidCreateVO;
-        createBillingCycleSpecification400();
-    }
-
+    @Disabled("Cannot add invalid references, there isn't one")
+    @Test
     @Override
     public void createBillingCycleSpecification400() throws Exception {
-        HttpResponse<BillingCycleSpecificationVO> creationResponse = callAndCatch(
-                () -> billingCycleSpecificationApiTestClient.createBillingCycleSpecification(billingCycleSpecificationCreateVO));
-        assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
-        Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
-        assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
     }
-
-    private static Stream<Arguments> provideInvalidBillingCycleSpecifications() {
-        List<Arguments> testEntries = new ArrayList<>();
-
-        return testEntries.stream();
-    }
-
 
     @Disabled
     @Test

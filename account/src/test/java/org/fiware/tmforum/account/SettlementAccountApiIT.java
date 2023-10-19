@@ -82,7 +82,6 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         settlementAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
 
     private static void fixExampleUpdate(SettlementAccountUpdateVO settlementAccount) {
@@ -99,7 +98,6 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         settlementAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
 
     private static void fixExampleExpected(SettlementAccountVO settlementAccount) {
@@ -116,10 +114,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         settlementAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
-
-    //Preguntar o tema do do Checking Mono do Controller, porque non me ten sentido
 
     @ParameterizedTest
     @MethodSource("provideValidSettlementAccounts")

@@ -18,16 +18,11 @@ import java.time.Instant;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-//@MappingEnabled(entityType = Account.TYPE_ACCOUNT)
 public abstract class Account extends EntityWithId {
 
     public Account(String type, String id) {
         super(type, id);
     }
-
-    /*public static final String TYPE_ACCOUNT = "account";
-
-    public final String type = TYPE_ACCOUNT;*/
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))

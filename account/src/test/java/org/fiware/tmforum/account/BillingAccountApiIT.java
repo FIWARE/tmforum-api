@@ -82,7 +82,6 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         billingAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
 
     private static void fixExampleUpdate(BillingAccountUpdateVO billingAccount) {
@@ -99,7 +98,6 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         billingAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
 
     private static void fixExampleExpected(BillingAccountVO billingAccount) {
@@ -116,10 +114,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
         billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
         billStructure.setFormat(billFormatRefOrValueVO);
         billingAccount.setBillStructure(billStructure);
-        // igual o podo meter nunha función a parte
     }
-
-    //Preguntar o tema do do Checking Mono do Controller, porque non me ten sentido
 
     @ParameterizedTest
     @MethodSource("provideValidBillingAccounts")

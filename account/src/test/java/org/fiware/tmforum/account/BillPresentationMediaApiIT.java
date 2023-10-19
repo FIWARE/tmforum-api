@@ -105,26 +105,11 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
         return testEntries.stream();
     }
 
-    @Disabled //Non ten referencias, polo tanto non sei como facer os
-    @ParameterizedTest
-    @MethodSource("provideInvalidBillPresentationMedias")
-    public void createBillPresentationMedia400(String message, BillPresentationMediaCreateVO invalidCreateVO) throws Exception {
-        this.message = message;
-        this.billPresentationMediaCreateVO = invalidCreateVO;
-        createBillPresentationMedia400();
-    }
-
+    @Disabled("Cannot add invalid references, there isn't one")
+    @Test
     @Override
     public void createBillPresentationMedia400() throws Exception {
 
-    }
-
-    private static Stream<Arguments> provideInvalidBillPresentationMedias() {
-        List<Arguments> testEntries = new ArrayList<>();
-
-
-
-        return testEntries.stream();
     }
 
     @Disabled
