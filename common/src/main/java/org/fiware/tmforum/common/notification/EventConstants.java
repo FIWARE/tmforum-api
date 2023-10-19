@@ -33,6 +33,13 @@ public class EventConstants {
     public final static String EVENT_GROUP_CUSTOMER = "Customer";
     public final static String EVENT_GROUP_AGREEMENT = "Agreement";
     public final static String EVENT_GROUP_AGREEMENT_SPECIFICATION = "AgreementSpecification";
+    public final static String EVENT_GROUP_BILL_FORMAT = "BillFormat";
+    public final static String EVENT_GROUP_BILLING_ACCOUNT = "BillingAccount";
+    public final static String EVENT_GROUP_BILLING_CYCLE_SPECIFICATION = "BillingCycleSpecification";
+    public final static String EVENT_GROUP_BILL_PRESENTATION_MEDIA = "BillPresentationMedia";
+    public final static String EVENT_GROUP_FINANCIAL_ACCOUNT = "FinancialAccount";
+    public final static String EVENT_GROUP_PARTY_ACCOUNT = "PartyAccount";
+    public final static String EVENT_GROUP_SETTLEMENT_ACCOUNT = "SettlementAccount";
 
     public final static String EVENT_GROUP_USAGE = "Usage";
     public final static String EVENT_GROUP_USAGE_SPECIFICATION = "UsageSpecification";
@@ -102,6 +109,19 @@ public class EventConstants {
             entry(EVENT_GROUP_USAGE, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
                     DELETE_EVENT_SUFFIX)),
             entry(EVENT_GROUP_USAGE_SPECIFICATION, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+            entry(EVENT_GROUP_BILL_FORMAT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_BILLING_ACCOUNT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_BILLING_CYCLE_SPECIFICATION, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_BILL_PRESENTATION_MEDIA, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_FINANCIAL_ACCOUNT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_PARTY_ACCOUNT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_SETTLEMENT_ACCOUNT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
                     DELETE_EVENT_SUFFIX))
     );
 }
