@@ -197,15 +197,16 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 		IndividualCreateVO withTaxExCreateVO = IndividualCreateVOTestExample.build();
 		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build();
-		taxDefinitionVO.setId(UUID.randomUUID().toString());
+		taxDefinitionVO.setId("urn:" + UUID.randomUUID());
 		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build();
 		// prevent duplicates
-		taxExemptionCertificateVO.setId(UUID.randomUUID().toString());
+		taxExemptionCertificateVO.setId("urn:" + UUID.randomUUID());
 		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
 		// fix the example
 		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build();
 		attachmentRefOrValueVO.setHref("http://my-ref.de");
 		attachmentRefOrValueVO.setUrl("http://my-url.de");
+		attachmentRefOrValueVO.setId("urn:attachment");
 		taxExemptionCertificateVO.setAttachment(attachmentRefOrValueVO);
 
 		withTaxExCreateVO.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
@@ -597,16 +598,17 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 		IndividualUpdateVO withTaxExUpdateVO = IndividualUpdateVOTestExample.build();
 		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build();
-		taxDefinitionVO.setId(UUID.randomUUID().toString());
+		taxDefinitionVO.setId("urn:" + UUID.randomUUID());
 		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build();
 		// prevent duplicates
-		taxExemptionCertificateVO.setId(UUID.randomUUID().toString());
+		taxExemptionCertificateVO.setId("urn:" + UUID.randomUUID());
 		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
 		taxExemptionCertificateVO.setValidFor(timePeriodVO);
 		// fix the example
 		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build();
 		attachmentRefOrValueVO.setHref("http://my-ref.de");
 		attachmentRefOrValueVO.setUrl("http://my-url.de");
+		attachmentRefOrValueVO.setId("urn:attachment");
 		attachmentRefOrValueVO.validFor(timePeriodVO);
 		taxExemptionCertificateVO.setAttachment(attachmentRefOrValueVO);
 

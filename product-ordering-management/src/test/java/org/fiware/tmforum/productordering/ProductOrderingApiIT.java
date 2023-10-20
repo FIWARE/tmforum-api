@@ -187,20 +187,20 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		testEntries.add(
 				Arguments.of("A product order with a note should have been created.",
 						ProductOrderCreateVOTestExample.build()
-								.note(List.of(NoteVOTestExample.build().text("myNote")))
+								.note(List.of(NoteVOTestExample.build().id("urn:note").text("myNote")))
 								.billingAccount(null),
 						ProductOrderVOTestExample.build()
-								.note(List.of(NoteVOTestExample.build().text("myNote")))
+								.note(List.of(NoteVOTestExample.build().id("urn:note").text("myNote")))
 								.billingAccount(null)));
 		testEntries.add(
 				Arguments.of("A product order with multiple notes should have been created.",
 						ProductOrderCreateVOTestExample.build()
-								.note(List.of(NoteVOTestExample.build().text("myNote"),
-										NoteVOTestExample.build().author("fromAnotherAuthor")))
+								.note(List.of(NoteVOTestExample.build().id("urn:note1").text("myNote"),
+										NoteVOTestExample.build().id("urn:note2").author("fromAnotherAuthor")))
 								.billingAccount(null),
 						ProductOrderVOTestExample.build()
-								.note(List.of(NoteVOTestExample.build().text("myNote"),
-										NoteVOTestExample.build().author("fromAnotherAuthor")))
+								.note(List.of(NoteVOTestExample.build().id("urn:note1").text("myNote"),
+										NoteVOTestExample.build().id("urn:note2").author("fromAnotherAuthor")))
 								.billingAccount(null)));
 
 		OrderPriceVO orderPriceVO = OrderPriceVOTestExample.build()
@@ -219,6 +219,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 
 		ProductOrderItemVO productOrderItemVO = ProductOrderItemVOTestExample.build()
 				.action(OrderItemActionTypeVO.ADD)
+				.id("urn:order-item")
 				.appointment(null)
 				.billingAccount(null)
 				.product(null)
@@ -957,7 +958,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		testEntries.add(Arguments.of("The note should have been updated.",
 				ProductOrderUpdateVOTestExample.build()
 						.billingAccount(null)
-						.note(List.of(NoteVOTestExample.build().text("my note"))),
+						.note(List.of(NoteVOTestExample.build().id("urn:note").text("my note"))),
 				ProductOrderVOTestExample.build()
 						.billingAccount(null)
 						.agreement(null)
@@ -966,7 +967,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.productOfferingQualification(null)
 						.quote(null)
 						.relatedParty(null)
-						.note(List.of(NoteVOTestExample.build().text("my note")))));
+						.note(List.of(NoteVOTestExample.build().id("urn:note").text("my note")))));
 
 		testEntries.add(Arguments.of("The state should have been updated.",
 				ProductOrderUpdateVOTestExample.build()

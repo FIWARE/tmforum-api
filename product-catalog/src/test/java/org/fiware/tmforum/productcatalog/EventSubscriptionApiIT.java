@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productcatalog;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -30,6 +31,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(packages = { "org.fiware.tmforum.productcatalog" })
+/*
+ * the test currently fails for scorpio -  {@link https://github.com/ScorpioBroker/ScorpioBroker/issues/456}
+ */
+@Requires(notEnv = "scorpio")
 public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubscriptionApiTestSpec {
 
     private static final String ANY_CALLBACK = "https://test.com";
