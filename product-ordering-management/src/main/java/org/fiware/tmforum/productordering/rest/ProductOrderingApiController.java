@@ -137,7 +137,8 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
 		Optional.ofNullable(productOrderItem.getAppointment()).map(List::of).ifPresent(references::add);
 		Optional.ofNullable(productOrderItem.getBillingAccount()).map(List::of).ifPresent(references::add);
-		Optional.ofNullable(productOrderItem.getProduct()).map(List::of).ifPresent(references::add);
+
+		//Optional.ofNullable(productOrderItem.getProduct()).map(List::of).ifPresent(references::add);
 		Optional.ofNullable(productOrderItem.getProductOffering()).map(List::of).ifPresent(references::add);
 
 		// TODO: validate item rel, we just validate the ref now
