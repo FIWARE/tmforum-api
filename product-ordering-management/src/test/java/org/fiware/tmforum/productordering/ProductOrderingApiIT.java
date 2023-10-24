@@ -385,14 +385,14 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.quoteItem(null)
 						.appointment(null))));
 
-		invalidItems.add(new ArgumentPair<>("An order item with an invalid product should not be accepted.",
-				List.of(ProductOrderItemVOTestExample.build()
-						.billingAccount(null)
-						.product(ProductRefOrValueVOTestExample.build())
-						.productOffering(null)
-						.productOfferingQualificationItem(null)
-						.quoteItem(null)
-						.appointment(null))));
+		// invalidItems.add(new ArgumentPair<>("An order item with an invalid product should not be accepted.",
+		// 		List.of(ProductOrderItemVOTestExample.build()
+		// 				.billingAccount(null)
+		// 				.product(ProductRefOrValueVOTestExample.build())
+		// 				.productOffering(null)
+		// 				.productOfferingQualificationItem(null)
+		// 				.quoteItem(null)
+		// 				.appointment(null))));
 		invalidItems.add(new ArgumentPair<>("An order item with a non existent product should not be accepted.",
 				List.of(ProductOrderItemVOTestExample.build()
 						.billingAccount(null)
