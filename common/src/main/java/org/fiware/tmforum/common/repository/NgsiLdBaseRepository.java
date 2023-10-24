@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.DeletionException;
@@ -31,11 +32,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public abstract class NgsiLdBaseRepository {
 
-    /**
-     * Name for the entities cache
-     */
-    private static final String ENTITIES_CACHE_NAME = "entities";
-
     protected final GeneralProperties generalProperties;
     protected final EntitiesApiClient entitiesApi;
     protected final JavaObjectMapper javaObjectMapper;
@@ -54,7 +50,7 @@ public abstract class NgsiLdBaseRepository {
      * @param ngsiLDTenant - tenant the entity belongs to
      * @return completable with the result
      */
-    @CachePut(value = ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
+    @CachePut(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
     public Mono<Void> createEntity(EntityVO entityVO, String ngsiLDTenant) {
         return entitiesApi.createEntity(entityVO, ngsiLDTenant);
     }
@@ -65,7 +61,7 @@ public abstract class NgsiLdBaseRepository {
      * @param entityId id of the entity
      * @return the entity
      */
-    @Cacheable(ENTITIES_CACHE_NAME)
+    @Cacheable(CommonConstants.ENTITIES_CACHE_NAME)
     public Mono<EntityVO> retrieveEntityById(URI entityId) {
         return asyncRetrieveEntityById(entityId, generalProperties.getTenant(), null, null, null, getLinkHeader());
     }
@@ -77,7 +73,7 @@ public abstract class NgsiLdBaseRepository {
      * @param entityFragmentVO the entity elements to be updated
      * @return an empty mono
      */
-    @CacheInvalidate(value = ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
+    @CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
     public Mono<Void> patchEntity(URI entityId, EntityFragmentVO entityFragmentVO) {
         return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null);
     }
@@ -111,7 +107,7 @@ public abstract class NgsiLdBaseRepository {
      * @param id id of the entity to be deleted
      * @return an empty mono
      */
-    @CacheInvalidate(value = ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
+    @CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
     public Mono<Void> deleteDomainEntity(URI id) {
         return entitiesApi
             .removeEntityById(id, generalProperties.getTenant(), null)
