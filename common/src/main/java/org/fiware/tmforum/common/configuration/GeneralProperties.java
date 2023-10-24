@@ -31,16 +31,16 @@ public class GeneralProperties {
 	 * Character used in target NGSI-LD broker for making
 	 * or queries in a specific value
 	 */
-	private String ngsildOrQueryValue;
+	private String ngsildOrQueryValue=",";
 
 	/**
 	 * Character used in target NGSI-LD broker for making
 	 * or queries between mutiple parameters
 	 */
-	private String ngsildOrQueryKey;
+	private String ngsildOrQueryKey=",";
 
 	/**
 	 * Whether to enclose queries using bracets or not
 	 */
-	private Boolean encloseQuery;
+	private Boolean encloseQuery=false;
 }

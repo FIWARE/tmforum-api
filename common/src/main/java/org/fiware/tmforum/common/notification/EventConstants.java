@@ -41,6 +41,9 @@ public class EventConstants {
     public final static String EVENT_GROUP_PARTY_ACCOUNT = "PartyAccount";
     public final static String EVENT_GROUP_SETTLEMENT_ACCOUNT = "SettlementAccount";
 
+    public final static String EVENT_GROUP_USAGE = "Usage";
+    public final static String EVENT_GROUP_USAGE_SPECIFICATION = "UsageSpecification";
+
     public static final String CREATE_EVENT_SUFFIX = "CreateEvent";
     public static final String ATTRIBUTE_VALUE_CHANGE_EVENT_SUFFIX = "AttributeValueChangeEvent";
     public static final String STATE_CHANGE_EVENT_SUFFIX = "StateChangeEvent";
@@ -102,6 +105,10 @@ public class EventConstants {
             entry(EVENT_GROUP_SERVICE_CATEGORY, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
                     DELETE_EVENT_SUFFIX)),
             entry(EVENT_GROUP_SERVICE_SPECIFICATION, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_USAGE, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_USAGE_SPECIFICATION, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
                     DELETE_EVENT_SUFFIX)),
             entry(EVENT_GROUP_BILL_FORMAT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
                     DELETE_EVENT_SUFFIX)),
