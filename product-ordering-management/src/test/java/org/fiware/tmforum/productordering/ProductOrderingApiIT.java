@@ -241,8 +241,13 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 				.value("Value");
 
 		ProductRefOrValueVO productVO = ProductRefOrValueVOTestExample.build()
+				.id(null)
 				.description("Product Ref")
-				.productCharacteristic(List.of(characteristicVO));
+				.productCharacteristic(List.of(characteristicVO))
+				.billingAccount(null)
+				.productOffering(null)
+				.productSpecification(null)
+				.atReferredType(null);
 
 		ProductOrderItemVO productOrderItemProductVO = ProductOrderItemVOTestExample.build()
 				.action(OrderItemActionTypeVO.ADD)
