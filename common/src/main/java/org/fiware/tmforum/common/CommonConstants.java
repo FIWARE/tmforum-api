@@ -19,4 +19,14 @@ public class CommonConstants {
 	 */
 	public static final String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
 
+	/**
+	 * Name for the entities cache
+	 */
+	public static final String ENTITIES_CACHE_NAME = "entities";
+
+	/**
+	 * Name for the subscriptions cache
+	 */
+	public static final String SUBSCRIPTIONS_CACHE_NAME = "subscriptions";
+
 }
