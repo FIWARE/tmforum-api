@@ -1,5 +1,8 @@
 micronaut:
 
+  server:
+    port: 8632
+
   caches:
     entities:
       maximumSize: 1000
@@ -7,8 +10,6 @@ micronaut:
       expire-after-write: 2s
       expire-after-access: 2s
 
-  server:
-    port: 8632
 
   metrics:
     enabled: true

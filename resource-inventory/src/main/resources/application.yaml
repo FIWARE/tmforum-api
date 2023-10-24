@@ -1,10 +1,4 @@
 micronaut:
-  caches:
-    entities:
-      maximumSize: 1000
-      # enough to not call twice in one call, but would prevent conflicting writes
-      expire-after-write: 2s
-      expire-after-access: 2s
 
   server:
     port: 8632
@@ -15,6 +9,13 @@ micronaut:
       prometheus:
         step: PT2s
         descriptions: false
+
+  caches:
+    entities:
+      maximumSize: 1000
+      # enough to not call twice in one call, but would prevent conflicting writes
+      expire-after-write: 2s
+      expire-after-access: 2s
 
   http:
     services:
@@ -41,8 +42,5 @@ loggers:
 
 ---
 general:
-  ngsildOrQueryValue: ","
-  ngsildOrQueryKey: ","
-  encloseQuery: false
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632

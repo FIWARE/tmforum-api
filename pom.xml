@@ -91,7 +91,10 @@
         <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>0.4.0</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>0.5.0</version.io.github.wistefan.ngsi-ld-mapping-java>
+
+        <!-- caching -->
+        <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>
 
 
         <!-- rx -->
@@ -191,6 +194,11 @@
                 <groupId>io.projectreactor</groupId>
                 <artifactId>reactor-core</artifactId>
                 <version>${version.io.projectreactor.reactor-core}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micronaut.redis</groupId>
+                <artifactId>micronaut-redis-lettuce</artifactId>
+                <version>${version.io.micronaut.redis.micronaut-redis-lettuce}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -516,6 +524,7 @@
                                         <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
+                                            <portBinding>6379:6379</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -554,6 +563,7 @@
                                         <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
+                                            <portBinding>6379:6379</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>

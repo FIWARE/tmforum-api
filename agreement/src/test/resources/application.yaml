@@ -3,15 +3,6 @@ micronaut:
   server:
     port: 8632
 
-  caches:
-    entities:
-      enabled: false
-      # maximumSize: 1000
-      # enough to not call twice in one call, but would prevent conflicting writes
-      # expire-after-write: 2s
-      # expire-after-access: 2s
-
-
   metrics:
     enabled: false
     export:
@@ -45,3 +36,17 @@ loggers:
 ---
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+
+---
+redis:
+  uri: redis://localhost:6379
+  caches:
+    entities:
+      # enough to not call twice in one call, but would prevent conflicting writes
+      expire-after-write: 2s
+      expire-after-access: 2s
+      value-serializer: io.github.wistefan.mapping.EntityVOSerializer
+    subscriptions:
+      expire-after-write: 10s
+      expire-after-access: 10s
+      value-serializer: io.github.wistefan.mapping.EntityVOSerializer
