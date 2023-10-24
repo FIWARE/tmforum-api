@@ -64,6 +64,10 @@
             <artifactId>micronaut-cache-core</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.redis</groupId>
+            <artifactId>micronaut-redis-lettuce</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.micronaut.micrometer</groupId>
