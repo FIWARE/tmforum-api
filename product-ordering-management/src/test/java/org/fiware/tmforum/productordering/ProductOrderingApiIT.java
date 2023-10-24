@@ -236,6 +236,33 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 								.productOrderItem(List.of(productOrderItemVO))
 								.billingAccount(null)));
 
+		CharacteristicVO characteristicVO = CharacteristicVOTestExample.build()
+				.name("Characteristic Name")
+				.value("Value");
+
+		ProductRefOrValueVO productVO = ProductRefOrValueVOTestExample.build()
+				.description("Product Ref")
+				.addProductCharacteristicItem(characteristicVO);
+
+		ProductOrderItemVO productOrderItemProductVO = ProductOrderItemVOTestExample.build()
+				.action(OrderItemActionTypeVO.ADD)
+				.id("urn:order-item")
+				.appointment(null)
+				.billingAccount(null)
+				.product(productVO)
+				.productOffering(null)
+				.productOfferingQualificationItem(null)
+				.quoteItem(null);
+
+		testEntries.add(
+				Arguments.of("A product order with an order item with product template should have been created.",
+						ProductOrderCreateVOTestExample.build()
+								.productOrderItem(List.of(productOrderItemProductVO))
+								.billingAccount(null),
+						ProductOrderVOTestExample.build()
+								.productOrderItem(List.of(productOrderItemProductVO))
+								.billingAccount(null)));
+
 		return testEntries.stream();
 	}
 
@@ -385,14 +412,6 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.quoteItem(null)
 						.appointment(null))));
 
-		// invalidItems.add(new ArgumentPair<>("An order item with an invalid product should not be accepted.",
-		// 		List.of(ProductOrderItemVOTestExample.build()
-		// 				.billingAccount(null)
-		// 				.product(ProductRefOrValueVOTestExample.build())
-		// 				.productOffering(null)
-		// 				.productOfferingQualificationItem(null)
-		// 				.quoteItem(null)
-		// 				.appointment(null))));
 		invalidItems.add(new ArgumentPair<>("An order item with a non existent product should not be accepted.",
 				List.of(ProductOrderItemVOTestExample.build()
 						.billingAccount(null)
