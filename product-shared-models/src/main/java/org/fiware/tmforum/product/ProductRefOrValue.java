@@ -2,11 +2,13 @@ package org.fiware.tmforum.product;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.domain.RelatedPartyRefValue;
+import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resource.ResourceRef;
 import org.fiware.tmforum.service.ServiceRef;
 
@@ -19,7 +21,7 @@ import lombok.NoArgsConstructor;
 @MappingEnabled(entityType = Product.TYPE_PRODUCT)
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class ProductRefOrValue extends Entity {
+public class ProductRefOrValue extends Entity implements ReferencedEntity {
 
 	private URI id;
 	private URI href;
@@ -46,4 +48,14 @@ public class ProductRefOrValue extends Entity {
 	private List<ServiceRef> realizingService;
 	private List<RelatedPartyRefValue> relatedParty;
 	private ProductStatusType status;
+
+	@Override
+	public List<String> getReferencedTypes() {
+		return new ArrayList<>(List.of("product"));
+	}
+
+	@Override
+	public URI getEntityId() {
+		return this.id;
+	}
 }
