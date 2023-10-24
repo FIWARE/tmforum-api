@@ -46,6 +46,8 @@
         <module>customer-management</module>
         <module>customer-bill-management</module>
         <module>agreement</module>
+        <module>usage-management</module>
+        <module>account</module>
     </modules>
 
     <properties>
