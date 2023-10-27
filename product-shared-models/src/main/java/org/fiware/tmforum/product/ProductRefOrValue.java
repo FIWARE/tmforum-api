@@ -40,7 +40,7 @@ public class ProductRefOrValue extends Entity implements ReferencedEntity {
 	private List<Characteristic> productCharacteristic;
 	private ProductOfferingRef productOffering;
 	private List<RelatedProductOrderItemRef> productOrderItem;
-	private List<ProductPrice> productPrice;
+	private List<ProductPriceValue> productPrice;
 	private List<ProductRelationship> productRelationship;
 	private ProductSpecificationRef productSpecification;
 	private List<ProductTerm> productTerm;
