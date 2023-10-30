@@ -18,6 +18,6 @@ public class ProductPrice extends Entity {
 	private String unitOfMeasure;
 	private BillingAccountRef billingAccount;
 	private Price price;
-	private ProductOfferingPriceRef productOfferingPrice;
+	private ProductOfferingPriceRefValue productOfferingPrice;
 	private List<PriceAlteration> productPriceAlteration;
 }

@@ -85,7 +85,7 @@ public class ProductApiController extends AbstractApiController<Product> impleme
 					.filter(Objects::nonNull)
 					.toList();
 			internalReferences.add(billingAccountRefs);
-			List<ProductOfferingPriceRef> productOfferingPriceRefs = product.getProductPrice()
+			List<ProductOfferingPriceRefValue> productOfferingPriceRefs = product.getProductPrice()
 					.stream()
 					.map(ProductPrice::getProductOfferingPrice)
 					.filter(Objects::nonNull)
