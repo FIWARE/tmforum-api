@@ -125,6 +125,8 @@
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- broker to be used for testing, could be scropio or orion-ld -->
         <broker>orion-ld</broker>
+        <!-- caching to be used for testing, could be in-memory or redis -->
+        <cache>in-memory</cache>
 
         <!-- tm-forum api links. -->
         <tmforum.api.url>API-URL</tmforum.api.url>
@@ -490,7 +492,7 @@
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
                         <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
-                            java.base/java.time=ALL-UNNAMED -Dmicronaut.environments=${broker}
+                            java.base/java.time=ALL-UNNAMED -Dmicronaut.environments=${cache},${broker}
                         </argLine>
                     </configuration>
                 </plugin>
