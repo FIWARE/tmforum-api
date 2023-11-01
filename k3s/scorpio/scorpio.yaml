@@ -68,7 +68,7 @@ metadata:
     app.kubernetes.io/name: scorpio
     app.kubernetes.io/instance: scorpio
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     # same as orion, makes other config easier
     - port: 1026
