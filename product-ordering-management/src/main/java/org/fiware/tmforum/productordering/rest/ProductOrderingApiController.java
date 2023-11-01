@@ -19,11 +19,13 @@ import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.product.PriceAlteration;
+import org.fiware.tmforum.product.ProductRefOrValue;
 import org.fiware.tmforum.productordering.TMForumMapper;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
 import org.fiware.tmforum.productordering.domain.ProductOrderItem;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,10 +136,17 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 
 	private Mono<ProductOrder> getOrderItemCheckingMono(ProductOrder productOrder,
 			ProductOrderItem productOrderItem) {
+
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
 		Optional.ofNullable(productOrderItem.getAppointment()).map(List::of).ifPresent(references::add);
 		Optional.ofNullable(productOrderItem.getBillingAccount()).map(List::of).ifPresent(references::add);
-		Optional.ofNullable(productOrderItem.getProduct()).map(List::of).ifPresent(references::add);
+
+		Optional.ofNullable(productOrderItem.getProduct()).map((item) -> {
+			return item.getEntityId();
+		}).ifPresent((uri) -> {
+			references.add(List.of(productOrderItem.getProduct()));
+		});
+
 		Optional.ofNullable(productOrderItem.getProductOffering()).map(List::of).ifPresent(references::add);
 
 		// TODO: validate item rel, we just validate the ref now

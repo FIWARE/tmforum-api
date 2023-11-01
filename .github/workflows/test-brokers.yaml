@@ -10,7 +10,7 @@ on:
       - unlabeled
   push:
     branches:
-      - main
+      - tests
 
 jobs:
   it:

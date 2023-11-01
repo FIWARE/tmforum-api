@@ -1,7 +1,7 @@
 micronaut:
 
   server:
-    port: 8632
+    port: 8633
 
   metrics:
     enabled: true
