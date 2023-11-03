@@ -54,7 +54,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 
     @Override
     protected String getEntityType() {
-        return SettlementAccount.TYPE_PARTYAC;
+        return SettlementAccount.TYPE_SETTLEMENTAC;
     }
 
     @MockBean(EventHandler.class)

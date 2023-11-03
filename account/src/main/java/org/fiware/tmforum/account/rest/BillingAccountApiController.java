@@ -42,7 +42,7 @@ public class BillingAccountApiController extends AbstractApiController<BillingAc
     @Override
     public Mono<HttpResponse<BillingAccountVO>> createBillingAccount(BillingAccountCreateVO billingAccountVo) {
         BillingAccount billingAccount = tmForumMapper.map(
-                tmForumMapper.map(billingAccountVo, IdHelper.toNgsiLd(UUID.randomUUID().toString(), BillingAccount.TYPE_PARTYAC)));
+                tmForumMapper.map(billingAccountVo, IdHelper.toNgsiLd(UUID.randomUUID().toString(), BillingAccount.TYPE_BILLINGAC)));
 
         return create(getCheckingMono(billingAccount), BillingAccount.class)
                 .map(tmForumMapper::map)
@@ -68,7 +68,7 @@ public class BillingAccountApiController extends AbstractApiController<BillingAc
     @Override
     public Mono<HttpResponse<List<BillingAccountVO>>> listBillingAccount(@Nullable String fields, @Nullable Integer offset,
                                                                  @Nullable Integer limit) {
-        return list(offset, limit, BillingAccount.TYPE_PARTYAC, BillingAccount.class)
+        return list(offset, limit, BillingAccount.TYPE_BILLINGAC, BillingAccount.class)
                 .map(categoryStream -> categoryStream.map(tmForumMapper::map).toList())
                 .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);
