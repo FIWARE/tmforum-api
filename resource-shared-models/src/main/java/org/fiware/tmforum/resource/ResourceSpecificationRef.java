@@ -4,14 +4,13 @@ import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 
-import java.net.URI;
 import java.util.List;
 
 @MappingEnabled(entityType = "resource-specification")
 @EqualsAndHashCode(callSuper = true)
 public class ResourceSpecificationRef extends RefEntity {
 
-    public ResourceSpecificationRef(URI id) {
+    public ResourceSpecificationRef(String id) {
         super(id);
     }
 
