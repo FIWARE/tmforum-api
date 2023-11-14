@@ -26,7 +26,7 @@ public class BillingAccount extends Account {
         super(TYPE_BILLINGAC, id);
     }
 
-    public static final String TYPE_BILLINGAC = "billingAccount";
+    public static final String TYPE_BILLINGAC = "billing-account";
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))
     @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))

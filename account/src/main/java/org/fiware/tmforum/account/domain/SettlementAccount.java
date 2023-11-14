@@ -26,7 +26,7 @@ public class SettlementAccount extends Account {
         super(TYPE_SETTLEMENTAC, id);
     }
 
-    public static final String TYPE_SETTLEMENTAC = "settlementAccount";
+    public static final String TYPE_SETTLEMENTAC = "settlement-account";
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))
     @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))
