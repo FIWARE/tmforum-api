@@ -54,7 +54,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 
     @Override
     protected String getEntityType() {
-        return BillingAccount.TYPE_PARTYAC;
+        return BillingAccount.TYPE_BILLINGAC;
     }
 
     @MockBean(EventHandler.class)
