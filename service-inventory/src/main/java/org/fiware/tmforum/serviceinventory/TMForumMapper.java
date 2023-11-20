@@ -1,5 +1,6 @@
 package org.fiware.tmforum.serviceinventory;
 
+import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.resource.*;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.serviceinventory.model.*;
@@ -31,6 +32,9 @@ public interface TMForumMapper {
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
     ServiceVO map(ServiceUpdateVO billFormatUpdateVO, String id);
+
+    @Mapping(target = "query", source = "rawQuery")
+    EventSubscriptionVO map(Subscription subscription);
 
     default URL map(String value) {
         if (value == null) {
