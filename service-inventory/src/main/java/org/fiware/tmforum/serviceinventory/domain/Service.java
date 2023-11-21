@@ -93,8 +93,8 @@ public class Service extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "relatedEntity", targetClass = RelatedEntityRefOrValue.class)}))
     private List<RelatedEntityRefOrValue> relatedEntity;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "relatedParty")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "relatedParty", targetClass = RelatedParty.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class)}))
     private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "serviceCharacteristic")}))
