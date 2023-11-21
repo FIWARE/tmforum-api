@@ -48,6 +48,7 @@
         <module>agreement</module>
         <module>usage-management</module>
         <module>account</module>
+        <module>service-inventory</module>
     </modules>
 
     <properties>
