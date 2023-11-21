@@ -20,10 +20,10 @@ import java.time.Instant;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled(entityType = Service.TYPE_SERVICE_INVENTORY)
+@MappingEnabled(entityType = Service.TYPE_SERVICE)
 public class Service extends EntityWithId {
 
-    public static final String TYPE_SERVICE_INVENTORY = "service-inventory";
+    public static final String TYPE_SERVICE = "service";
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
@@ -126,6 +126,6 @@ public class Service extends EntityWithId {
     private List<ServiceRefOrValue> supportingService;
 
     public Service(String id) {
-        super(TYPE_SERVICE_INVENTORY, id);
+        super(TYPE_SERVICE, id);
     }
 }

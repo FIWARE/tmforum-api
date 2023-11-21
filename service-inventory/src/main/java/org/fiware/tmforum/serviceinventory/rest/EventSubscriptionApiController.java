@@ -28,7 +28,7 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 	private final TMForumMapper tmForumMapper;
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-		entry(EVENT_GROUP_PRODUCT, Service.TYPE_SERVICE_INVENTORY)
+		entry(EVENT_GROUP_PRODUCT, Service.TYPE_SERVICE)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_PRODUCT);
 

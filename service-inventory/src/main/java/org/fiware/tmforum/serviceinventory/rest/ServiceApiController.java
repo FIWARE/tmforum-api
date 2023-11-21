@@ -49,7 +49,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
     public Mono<HttpResponse<ServiceVO>> createService(@NonNull ServiceCreateVO serviceCreateVO) {
         Service service = tmForumMapper.map(
                 tmForumMapper.map(serviceCreateVO,
-                        IdHelper.toNgsiLd(UUID.randomUUID().toString(), Service.TYPE_SERVICE_INVENTORY)));
+                        IdHelper.toNgsiLd(UUID.randomUUID().toString(), Service.TYPE_SERVICE)));
 
         validateInternalRefs(service);
 
@@ -181,7 +181,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
     @Override
     public Mono<HttpResponse<List<ServiceVO>>> listService(@Nullable String fields, @Nullable Integer offset,
                                                              @Nullable Integer limit) {
-        return list(offset, limit, Service.TYPE_SERVICE_INVENTORY, Service.class)
+        return list(offset, limit, Service.TYPE_SERVICE, Service.class)
                 .map(serviceStream -> serviceStream
                         .map(tmForumMapper::map)
                         .toList())

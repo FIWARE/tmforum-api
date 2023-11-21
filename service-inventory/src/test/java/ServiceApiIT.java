@@ -65,7 +65,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
     }
 
     @Override protected String getEntityType() {
-        return Service.TYPE_SERVICE_INVENTORY;
+        return Service.TYPE_SERVICE;
     }
 
     @ParameterizedTest
