@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -109,7 +110,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				() -> resourceSpecificationApiTestClient.createResourceSpecification(resourceSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, resourceSpecificationVOHttpResponse.getStatus(), message);
 		String rsId = resourceSpecificationVOHttpResponse.body().getId();
-		expectedResourceSpecification.id(rsId).href(rsId).lastUpdate(currentTimeInstant).resourceSpecRelationship(null);
+		expectedResourceSpecification.id(rsId).href(URI.create(rsId)).lastUpdate(currentTimeInstant).resourceSpecRelationship(null);
 
 		assertEquals(expectedResourceSpecification, resourceSpecificationVOHttpResponse.body(), message);
 	}
@@ -172,7 +173,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						.featureSpecRelationship(List.of(
 								FeatureSpecificationRelationshipVOTestExample.build()
 										.validFor(null)
-										.resourceSpecificationId(null)))));
+										//.resourceSpecificationId(null)
+						))));
 
 		return validFeatureSpecs.stream();
 	}
@@ -272,12 +274,13 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						FeatureSpecificationVOTestExample.build()
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
 										.featureId(null)
-										.resourceSpecificationId("invalid")))));
+										//.resourceSpecificationId("invalid")
+								))));
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
-										.resourceSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
+										//.resourceSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
 										.featureId(null)))));
 
 		return invalidFeatureSpecs.stream();
@@ -413,7 +416,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 			ResourceSpecificationVO resourceSpecificationVO = ResourceSpecificationVOTestExample.build();
 			resourceSpecificationVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.relatedParty(null);
 			expectedResourceSpecifications.add(resourceSpecificationVO);
 		}
@@ -562,7 +565,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceSpecificationVO updatedResourceSpecification = updateResponse.body();
-		expectedResourceSpecification.href(resourceId).id(resourceId).relatedParty(null).resourceSpecRelationship(null)
+		expectedResourceSpecification.href(URI.create(resourceId)).id(resourceId).relatedParty(null).resourceSpecRelationship(null)
 				.lastUpdate(currentTimeInstant);
 
 		assertEquals(expectedResourceSpecification, updatedResourceSpecification, message);
@@ -746,7 +749,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 		expectedResourceSpecification
 				.id(id)
-				.href(id);
+				.href(URI.create(id));
 
 		//then retrieve
 		HttpResponse<ResourceSpecificationVO> retrievedResourceSpec = callAndCatch(

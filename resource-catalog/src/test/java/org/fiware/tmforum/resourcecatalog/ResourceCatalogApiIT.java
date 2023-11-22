@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -101,7 +102,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 		assertEquals(HttpStatus.CREATED, resourceCatalogVOHttpResponse.getStatus(), message);
 		String rfId = resourceCatalogVOHttpResponse.body().getId();
 		expectedResourceCatalog.setId(rfId);
-		expectedResourceCatalog.setHref(rfId);
+		expectedResourceCatalog.setHref(URI.create(rfId));
 		expectedResourceCatalog.setLastUpdate(currentTimeInstant);
 
 		assertEquals(expectedResourceCatalog, resourceCatalogVOHttpResponse.body(), message);
@@ -289,7 +290,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 			ResourceCatalogVO resourceCatalogVO = ResourceCatalogVOTestExample.build();
 			resourceCatalogVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.category(null)
 					.relatedParty(null);
 			expectedResourceCatalogs.add(resourceCatalogVO);
@@ -432,7 +433,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceCatalogVO updatedResourceCatalog = updateResponse.body();
-		expectedResourceCatalog.href(resourceId).id(resourceId);
+		expectedResourceCatalog.href(URI.create(resourceId)).id(resourceId);
 
 		expectedResourceCatalog.relatedParty(null);
 		expectedResourceCatalog.category(null);
@@ -591,7 +592,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 
 		expectedResourceCatalog
 				.id(id)
-				.href(id);
+				.href(URI.create(id));
 
 		//then retrieve
 		HttpResponse<ResourceCatalogVO> retrievedRF = callAndCatch(

@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -101,7 +102,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		assertEquals(HttpStatus.CREATED, resourceCandidateVOHttpResponse.getStatus(), message);
 		String rfId = resourceCandidateVOHttpResponse.body().getId();
 		expectedResourceCandidate.setId(rfId);
-		expectedResourceCandidate.setHref(rfId);
+		expectedResourceCandidate.setHref(URI.create(rfId));
 		expectedResourceCandidate.setLastUpdate(currentTimeInstant);
 		expectedResourceCandidate.resourceSpecification(null);
 
@@ -298,7 +299,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 			ResourceCandidateVO resourceCandidateVO = ResourceCandidateVOTestExample.build();
 			resourceCandidateVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.category(null)
 					.resourceSpecification(null);
 			expectedResourceCandidates.add(resourceCandidateVO);
@@ -442,7 +443,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceCandidateVO updatedResourceCandidate = updateResponse.body();
-		expectedResourceCandidate.href(resourceId).id(resourceId);
+		expectedResourceCandidate.href(URI.create(resourceId)).id(resourceId);
 
 		expectedResourceCandidate.category(null);
 
@@ -612,7 +613,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 
 		expectedResourceCandidate
 				.id(id)
-				.href(id);
+				.href(URI.create(id));
 
 		//then retrieve
 		HttpResponse<ResourceCandidateVO> retrievedRF = callAndCatch(
