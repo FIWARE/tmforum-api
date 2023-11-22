@@ -122,7 +122,7 @@ public interface TMForumMapper {
         if (id == null) {
             return null;
         }
-        return new ServiceCategoryRef(URI.create(id));
+        return new ServiceCategoryRef(id);
     }
 
     default ServiceSpecificationRelationship mapFromServiceSpecificationRelationshipId(String id) {

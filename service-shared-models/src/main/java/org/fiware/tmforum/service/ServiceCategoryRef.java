@@ -18,7 +18,7 @@ public class ServiceCategoryRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version", targetClass = String.class)}))
     private String version;
 
-    public ServiceCategoryRef(URI id) {
+    public ServiceCategoryRef(String id) {
         super(id);
     }
 
