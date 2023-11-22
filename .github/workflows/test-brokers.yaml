@@ -10,7 +10,7 @@ on:
       - unlabeled
   push:
     branches:
-      - tests
+      - ServiceInventory-Implementation
 
 jobs:
   it:
