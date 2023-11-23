@@ -128,4 +128,9 @@ public class Service extends EntityWithId {
     public Service(String id) {
         super(TYPE_SERVICE, id);
     }
+
+    @Override
+    public String getEntityState() {
+        return state.getValue();
+    }
 }

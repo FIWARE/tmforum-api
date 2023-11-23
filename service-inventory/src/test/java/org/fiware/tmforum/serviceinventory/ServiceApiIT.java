@@ -100,11 +100,16 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
         testEntries.add(
                 Arguments.of("An empty service should have been created.",
                         ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .supportingResource(null),
+                                .serviceSpecification(null),
                         ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .supportingResource(null)));
+                                .serviceSpecification(null)));
+
+        testEntries.add(
+                Arguments.of("An empty service should have been created.",
+                        ServiceCreateVOTestExample.build()
+                                .serviceSpecification(null),
+                        ServiceVOTestExample.build()
+                                .serviceSpecification(null)));
 
         Instant start = Instant.now();
         Instant end = Instant.now();
@@ -112,10 +117,12 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 Arguments.of("A service with operating times should have been created.",
                         ServiceCreateVOTestExample.build()
                                 .serviceSpecification(null)
-                                .startDate(start).endDate(end),
+                                .startDate(start)
+                                .endDate(end),
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
-                                .startDate(start).endDate(end)));
+                                .startDate(start)
+                                .endDate(end)));
 
         testEntries.add(
                 Arguments.of("A service with characteristic should have been created.",
@@ -376,9 +383,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                     .id(id)
                     .href(id)
                     .serviceSpecification(null)
-                    .place(null)
-                    .relatedParty(null)
-                    .serviceOrderItem(null);
+                    .relatedParty(null);
             expectedServices.add(serviceVO);
         }
 
