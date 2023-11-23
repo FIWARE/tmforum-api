@@ -1,3 +1,5 @@
+package org.fiware.tmforum.serviceinventory;
+
 import org.fiware.serviceinventory.model.*;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 
@@ -38,6 +40,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@MicronautTest(packages = { "org.fiware.tmforum.serviceinventory" })
 public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
     public final ServiceApiTestClient serviceApiTestClient;
 
