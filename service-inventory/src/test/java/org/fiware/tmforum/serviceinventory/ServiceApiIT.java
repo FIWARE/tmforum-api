@@ -136,34 +136,42 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 Arguments.of("A service with feature should have been created.",
                         ServiceCreateVOTestExample.build()
                                 .serviceSpecification(null)
-                                .feature(List.of(FeatureVOTestExample.build())),
+                                .feature(List.of(FeatureVOTestExample.build()
+                                        .id(null))),
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
-                                .feature(List.of(FeatureVOTestExample.build()))));
+                                .feature(List.of(FeatureVOTestExample.build()
+                                        .id(null)))));
         testEntries.add(
                 Arguments.of("A service with place should have been created.",
                         ServiceCreateVOTestExample.build()
                                 .serviceSpecification(null)
-                                .place(List.of(RelatedPlaceRefOrValueVOTestExample.build())),
+                                .place(List.of(RelatedPlaceRefOrValueVOTestExample.build()
+                                        .id(null))),
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
-                                .place(List.of(RelatedPlaceRefOrValueVOTestExample.build()))));
+                                .place(List.of(RelatedPlaceRefOrValueVOTestExample.build()
+                                        .id(null)))));
         testEntries.add(
                 Arguments.of("A service with related entity should have been created.",
                         ServiceCreateVOTestExample.build()
                                 .serviceSpecification(null)
-                                .relatedEntity(List.of(RelatedEntityRefOrValueVOTestExample.build())),
+                                .relatedEntity(List.of(RelatedEntityRefOrValueVOTestExample.build()
+                                        .id(null))),
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
-                                .relatedEntity(List.of(RelatedEntityRefOrValueVOTestExample.build()))));
+                                .relatedEntity(List.of(RelatedEntityRefOrValueVOTestExample.build()
+                                        .id(null)))));
         testEntries.add(
                 Arguments.of("A service with note should have been created.",
                         ServiceCreateVOTestExample.build()
                                 .serviceSpecification(null)
-                                .note(List.of(NoteVOTestExample.build())),
+                                .note(List.of(NoteVOTestExample.build()
+                                        .id(null))),
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
-                                .note(List.of(NoteVOTestExample.build()))));
+                                .note(List.of(NoteVOTestExample.build()
+                                        .id(null)))));
         testEntries.add(
                 Arguments.of("A service with supporting service should have been created.",
                         ServiceCreateVOTestExample.build()
@@ -171,13 +179,15 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
                                                 .id(null)
                                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
-                                                        .id(null))))),
+                                                        .id(null)
+                                                        .serviceSpecification(null))))),
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
                                                 .id(null)
                                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
-                                                        .id(null)))))));
+                                                        .id(null)
+                                                        .serviceSpecification(null)))))));
         return testEntries.stream();
     }
 
@@ -521,9 +531,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .serviceOrderItem(null)
                         .supportingResource(null)
-                        .supportingService(null)
                         .description("new-description")));
 
         testEntries.add(Arguments.of("The name should have been updated.",
@@ -533,9 +541,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .serviceOrderItem(null)
                         .supportingResource(null)
-                        .supportingService(null)
                         .name("new-name")));
 
         testEntries.add(Arguments.of("The isBundle should have been updated.",
@@ -545,9 +551,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .serviceOrderItem(null)
                         .supportingResource(null)
-                        .supportingService(null)
                         .isBundle(false)));
 
         Instant date = Instant.now();
@@ -558,9 +562,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .serviceOrderItem(null)
                         .supportingResource(null)
-                        .supportingService(null)
                         .startDate(date)));
 
         testEntries.add(Arguments.of("The endDate should have been updated.",
@@ -570,9 +572,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .serviceOrderItem(null)
                         .supportingResource(null)
-                        .supportingService(null)
                         .endDate(date)));
 
         testEntries.add(Arguments.of("The characteristic should have been updated.",
@@ -582,9 +582,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .serviceOrderItem(null)
                         .supportingResource(null)
-                        .supportingService(null)
                         .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")))));
 
         return testEntries.stream();
@@ -730,19 +728,17 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 Arguments.of("Without a fields parameter everything should be returned.", null,
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
-                                .place(null)
-                                .serviceOrderItem(null)
+                                .supportingResource(null)
                                 .relatedParty(null)),
                 Arguments.of("Only description and the mandatory parameters should have been included.", "description",
                         ServiceVOTestExample.build()
                                 .isBundle(null)
                                 .name(null)
                                 .startDate(null)
-                                .place(null)
                                 .serviceCharacteristic(null)
-                                .serviceOrderItem(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
+                                .supportingResource(null)
                                 .relatedParty(null)),
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
@@ -751,21 +747,19 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .isBundle(null)
                                 .name(null)
                                 .startDate(null)
-                                .place(null)
                                 .serviceCharacteristic(null)
-                                .serviceOrderItem(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
+                                .supportingResource(null)
                                 .relatedParty(null)),
                 Arguments.of("Only description, isBundle and the mandatory parameters should have been included.",
                         "description,isBundle", ServiceVOTestExample.build()
                                 .name(null)
                                 .startDate(null)
-                                .place(null)
                                 .serviceCharacteristic(null)
-                                .serviceOrderItem(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
+                                .supportingResource(null)
                                 .relatedParty(null)));
     }
 
