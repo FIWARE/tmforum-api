@@ -2,7 +2,7 @@ package org.fiware.tmforum.resourcefunction;
 
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.resourcefunction.model.*;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.Resource;
 import org.fiware.tmforum.resourcefunction.domain.*;
@@ -71,7 +71,7 @@ public interface TMForumMapper {
     Resource map(ResourceRefOrValueVO resourceRefOrValueVO);
 
     @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(Subscription subscription);
+    EventSubscriptionVO map(TMForumSubscription subscription);
 
     default URL map(String value) {
         if (value == null) {

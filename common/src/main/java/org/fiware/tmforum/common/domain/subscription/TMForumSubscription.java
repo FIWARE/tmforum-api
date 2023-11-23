@@ -13,9 +13,9 @@ import java.net.URI;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled(entityType = Subscription.TYPE_SUBSCRIPTION)
-public class Subscription extends EntityWithId {
-	public static final String TYPE_SUBSCRIPTION = "tm-forum-subscription";
+@MappingEnabled(entityType = TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION)
+public class TMForumSubscription extends EntityWithId {
+	public static final String TYPE_TM_FORUM_SUBSCRIPTION = "tm-forum-subscription";
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "callback") }))
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "callback") }))
@@ -44,11 +44,11 @@ public class Subscription extends EntityWithId {
 	/**
 	 * Empty constructor for cache serialization and deserialization
 	 */
-	public Subscription() {
-		super(TYPE_SUBSCRIPTION, null);
+	public TMForumSubscription() {
+		super(TYPE_TM_FORUM_SUBSCRIPTION, null);
 	}
 
-	public Subscription(String id) {
-		super(TYPE_SUBSCRIPTION, id);
+	public TMForumSubscription(String id) {
+		super(TYPE_TM_FORUM_SUBSCRIPTION, id);
 	}
 }

@@ -9,7 +9,7 @@ import org.fiware.resourcecatalog.model.EventSubscriptionInputVO;
 import org.fiware.resourcecatalog.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -49,7 +49,7 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
     @Override
     public Mono<HttpResponse<EventSubscriptionVO>> registerListener(
             @NonNull EventSubscriptionInputVO eventSubscriptionInputVO) {
-        Subscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
+        TMForumSubscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
                 eventSubscriptionInputVO.getQuery(), EVENT_GROUPS);
 
         return create(subscription)

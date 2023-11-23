@@ -4,7 +4,7 @@ import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.CommonConstants;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.notification.EventHandler;
@@ -23,7 +23,7 @@ import java.util.UUID;
 import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
 
 @Slf4j
-public abstract class AbstractSubscriptionApiController extends AbstractApiController<Subscription> {
+public abstract class AbstractSubscriptionApiController extends AbstractApiController<TMForumSubscription> {
     private final Map<String, String> eventGroupToEntityNameMapping;
 
     public AbstractSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
@@ -33,27 +33,27 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     @CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME, all = true)
-    protected Mono<Subscription> create(Subscription subscription) {
+    protected Mono<TMForumSubscription> create(TMForumSubscription subscription) {
         return findExistingSubscription(subscription)
-                .switchIfEmpty(create(Mono.just(subscription), Subscription.class));
+                .switchIfEmpty(create(Mono.just(subscription), TMForumSubscription.class));
     }
 
-    private Mono<Subscription> findExistingSubscription(Subscription subscription) {
-        String query = String.format(queryParser.toNgsiLdQuery(Subscription.class, "callback=%s&rawQuery=%s"),
+    private Mono<TMForumSubscription> findExistingSubscription(TMForumSubscription subscription) {
+        String query = String.format(queryParser.toNgsiLdQuery(TMForumSubscription.class, "callback=%s&rawQuery=%s"),
                 subscription.getCallback(), subscription.getRawQuery());
 
-        return repository.findEntities(DEFAULT_OFFSET, 1, Subscription.TYPE_SUBSCRIPTION,
-                    Subscription.class, query)
+        return repository.findEntities(DEFAULT_OFFSET, 1, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
+                    TMForumSubscription.class, query)
                 .flatMap(list -> list.isEmpty() ? Mono.empty() :
                         Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
     }
 
-    protected Subscription buildSubscription(String callback, String query, List<String> eventGroups) {
+    protected TMForumSubscription buildSubscription(String callback, String query, List<String> eventGroups) {
         log.debug(query);
         SubscriptionQuery subscriptionQuery = SubscriptionQueryParser.parse(query, eventGroups);
 
         String subId = UUID.randomUUID().toString();
-        Subscription subscription = new Subscription(subId);
+        TMForumSubscription subscription = new TMForumSubscription(subId);
         subscription.setRawQuery(query != null ? query : "");
         subscription.setEventTypes(subscriptionQuery.getEventTypes());
         subscription.setEntities(subscriptionQuery.getEventGroups().stream()

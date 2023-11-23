@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.domain.subscription.Event;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.EventHandlingException;
 import org.fiware.tmforum.common.notification.command.*;
 import org.fiware.tmforum.common.querying.QueryParser;
@@ -34,13 +34,13 @@ public class EventHandler {
     private final EntityVOMapper entityVOMapper;
 
     @Cacheable(CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
-    public Mono<List<Subscription>> getSubscriptions(String entityType, String eventType) {
+    public Mono<List<TMForumSubscription>> getSubscriptions(String entityType, String eventType) {
         return repository.findEntities(
                 DEFAULT_OFFSET,
                 100,
-                Subscription.TYPE_SUBSCRIPTION,
-                Subscription.class,
-                queryParser.toNgsiLdQuery(Subscription.class,
+                TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
+                TMForumSubscription.class,
+                queryParser.toNgsiLdQuery(TMForumSubscription.class,
                         String.format("entities=%s&eventTypes=%s", entityType, eventType))
         );
     }
@@ -149,7 +149,7 @@ public class EventHandler {
         }
 
         private void init(String eventSuffix) {
-            if (entityType.equals(Subscription.TYPE_SUBSCRIPTION)) {
+            if (entityType.equals(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION)) {
                 throw new EventHandlingException();
             }
             eventType = StringUtils.toCamelCase(entityType) + eventSuffix;
