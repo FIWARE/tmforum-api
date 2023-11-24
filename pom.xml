@@ -40,7 +40,7 @@
         <module>product-catalog</module>
         <module>product-ordering-management</module>
         <module>resource-function-activation</module>
-        <!-- <module>resource-catalog</module> -->
+        <module>resource-catalog</module>
         <module>resource-inventory</module>
         <module>service-catalog</module>
         <module>customer-management</module>
