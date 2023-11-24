@@ -189,8 +189,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                                 .serviceSpecification(null)
                                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
                                                         .id(null)
-                                                        .serviceSpecification(null)
-                                                        .atSchemaLocation(null)))))));
+                                                        .serviceSpecification(null)))))));
         return testEntries.stream();
     }
 
@@ -570,12 +569,14 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
         testEntries.add(Arguments.of("The characteristic should have been updated.",
                 ServiceUpdateVOTestExample.build()
                         .serviceSpecification(null)
-                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new"))),
+                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
+                                .id(null))),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
                         .supportingResource(null)
-                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")))));
+                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
+                                .id(null)))));
 
         return testEntries.stream();
     }
@@ -730,29 +731,44 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .feature(null)
                                 .note(null)
                                 .place(null)
+                                .startMode(null)
                                 .relatedEntity(null)
+                                .serviceType(null)
+                                .serviceDate(null)
+                                .isStateful(null)
+                                .isServiceEnabled(null)
+                                .hasStarted(null)
+                                .category(null)
                                 .serviceCharacteristic(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
                                 .serviceOrderItem(null)
                                 .supportingResource(null)
+                                .supportingService(null)
                                 .relatedParty(null)),
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
                         "nothingToSeeHere", ServiceVOTestExample.build()
-                                .description(null)
                                 .isBundle(null)
                                 .name(null)
                                 .startDate(null)
                                 .feature(null)
                                 .note(null)
                                 .place(null)
+                                .startMode(null)
                                 .relatedEntity(null)
+                                .serviceType(null)
+                                .serviceDate(null)
+                                .isStateful(null)
+                                .isServiceEnabled(null)
+                                .hasStarted(null)
+                                .category(null)
                                 .serviceCharacteristic(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
                                 .serviceOrderItem(null)
                                 .supportingResource(null)
+                                .supportingService(null)
                                 .relatedParty(null)),
                 Arguments.of("Only description, isBundle and the mandatory parameters should have been included.",
                         "description,isBundle", ServiceVOTestExample.build()
@@ -761,12 +777,20 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .feature(null)
                                 .note(null)
                                 .place(null)
+                                .startMode(null)
                                 .relatedEntity(null)
+                                .serviceType(null)
+                                .serviceDate(null)
+                                .isStateful(null)
+                                .isServiceEnabled(null)
+                                .hasStarted(null)
+                                .category(null)
                                 .serviceCharacteristic(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
                                 .serviceOrderItem(null)
                                 .supportingResource(null)
+                                .supportingService(null)
                                 .relatedParty(null)));
     }
 
