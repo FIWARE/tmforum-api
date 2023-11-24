@@ -576,7 +576,8 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         .relatedParty(null)
                         .supportingResource(null)
                         .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
-                                .id(null)))));
+                                .id(null)
+                                .characteristicRelationship(null)))));
 
         return testEntries.stream();
     }
@@ -749,6 +750,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
                         "nothingToSeeHere", ServiceVOTestExample.build()
+                                .description(null)
                                 .isBundle(null)
                                 .name(null)
                                 .startDate(null)
