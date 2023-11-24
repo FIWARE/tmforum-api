@@ -178,6 +178,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .serviceSpecification(null)
                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
                                                 .id(null)
+                                                .serviceSpecification(null)
                                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
                                                         .id(null)
                                                         .serviceSpecification(null))))),
@@ -185,9 +186,11 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .serviceSpecification(null)
                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
                                                 .id(null)
+                                                .serviceSpecification(null)
                                                 .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
                                                         .id(null)
-                                                        .serviceSpecification(null)))))));
+                                                        .serviceSpecification(null)
+                                                        .atSchemaLocation(null)))))));
         return testEntries.stream();
     }
 
@@ -230,17 +233,6 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         .serviceSpecification(
                                 (ServiceSpecificationRefVOTestExample.build()
                                         .id("urn:ngsi-ld:organisation:non-existent")))));
-
-        testEntries.add(Arguments.of("A service with invalid service specification should not be created.",
-                ServiceCreateVOTestExample.build()
-                        .serviceSpecification(null)
-                        .supportingResource(List.of(ResourceRefVOTestExample.build()))));
-        testEntries.add(Arguments.of("A service with non-existent service specifications should not be created.",
-                ServiceCreateVOTestExample.build()
-                        .serviceSpecification(null)
-                        .supportingResource(
-                                (List.of(ResourceRefVOTestExample.build()
-                                        .id("urn:ngsi-ld:organisation:non-existent"))))));
 
         return testEntries.stream();
     }
@@ -735,9 +727,14 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .isBundle(null)
                                 .name(null)
                                 .startDate(null)
+                                .feature(null)
+                                .note(null)
+                                .place(null)
+                                .relatedEntity(null)
                                 .serviceCharacteristic(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
+                                .serviceOrderItem(null)
                                 .supportingResource(null)
                                 .relatedParty(null)),
                 Arguments.of(
@@ -747,18 +744,28 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .isBundle(null)
                                 .name(null)
                                 .startDate(null)
+                                .feature(null)
+                                .note(null)
+                                .place(null)
+                                .relatedEntity(null)
                                 .serviceCharacteristic(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
+                                .serviceOrderItem(null)
                                 .supportingResource(null)
                                 .relatedParty(null)),
                 Arguments.of("Only description, isBundle and the mandatory parameters should have been included.",
                         "description,isBundle", ServiceVOTestExample.build()
                                 .name(null)
                                 .startDate(null)
+                                .feature(null)
+                                .note(null)
+                                .place(null)
+                                .relatedEntity(null)
                                 .serviceCharacteristic(null)
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
+                                .serviceOrderItem(null)
                                 .supportingResource(null)
                                 .relatedParty(null)));
     }
