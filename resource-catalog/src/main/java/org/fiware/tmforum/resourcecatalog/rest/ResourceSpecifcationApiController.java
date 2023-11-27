@@ -139,13 +139,6 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
 		references.add(featureSpecification.getConstraint());
 
-		if (featureSpecification.getFeatureSpecRelationship() != null) {
-			featureSpecification.getFeatureSpecRelationship().forEach(fsr ->
-					Optional.ofNullable(fsr.getResourceSpecificationId())
-							.map(List::of)
-							.ifPresent(references::add));
-		}
-
 		if (featureSpecification.getFeatureSpecCharacteristic() != null) {
 			featureSpecification.getFeatureSpecCharacteristic().forEach(fsc -> {
 				if (fsc.getFeatureSpecCharRelationship() != null) {
