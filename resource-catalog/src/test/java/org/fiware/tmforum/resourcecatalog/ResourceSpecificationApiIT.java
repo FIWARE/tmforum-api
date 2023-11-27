@@ -277,7 +277,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						FeatureSpecificationVOTestExample.build()
 								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
-										.id(null)
 										.featureId(null)
 										//.resourceSpecificationId("invalid")
 								))));
@@ -286,7 +285,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						FeatureSpecificationVOTestExample.build()
 								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
-										.id(null)
 										//.resourceSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
 										.featureId(null)))));
 

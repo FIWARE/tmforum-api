@@ -8,8 +8,12 @@ import java.net.URI;
 @Data
 public class FeatureSpecificationRelationship {
 
+    private String id;
+    private URI href;
     private String featureId;
     private String name;
+    private URI parentSpecificationHref;
+    private String parentSpecificationId;
     private String relationshipType;
     private String resourceSpecificationHref;
     private ResourceSpecificationRef resourceSpecificationId;
