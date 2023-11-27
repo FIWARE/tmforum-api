@@ -152,26 +152,29 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec char rel should be created.",
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
-						.id("urn:feature-spec")
+						.id(null)
 						.validFor(null)
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
 								FeatureSpecificationCharacteristicVOTestExample.build()
+										.id(null)
 										.validFor(null)
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
 												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
+														.id(null)
 														.validFor(null)
 														.resourceSpecificationId(null)))
 						))));
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec rel should be created.",
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
-						.id("urn:feature-spec")
+						.id(null)
 						.validFor(null)
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
 								FeatureSpecificationRelationshipVOTestExample.build()
+										.id(null)
 										.validFor(null)
 										//.resourceSpecificationId(null)
 						))));
@@ -272,14 +275,18 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with invalid resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
+								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
+										.id(null)
 										.featureId(null)
 										//.resourceSpecificationId("invalid")
 								))));
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
+								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
+										.id(null)
 										//.resourceSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
 										.featureId(null)))));
 
