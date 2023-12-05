@@ -13,6 +13,7 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -31,8 +32,8 @@ import reactor.core.publisher.Mono;
 @Controller("${general.basepath:/}")
 public class PartyRoleController extends AbstractApiController<PartyRole> implements PartyRoleApi{
     private final TMForumMapper tmForumMapper;
-    public PartyRoleController(ReferenceValidationService validationService, TMForumMapper mapper,TmForumRepository repository, EventHandler eventHandler) {
-        super(validationService, repository, eventHandler);
+    public PartyRoleController(QueryParser queryParser, ReferenceValidationService validationService, TMForumMapper mapper,TmForumRepository repository, EventHandler eventHandler) {
+        super(queryParser, validationService, repository, eventHandler);
                 this.tmForumMapper = mapper;
     }
     @Override
