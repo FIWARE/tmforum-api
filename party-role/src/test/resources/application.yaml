@@ -3,13 +3,6 @@ micronaut:
   server:
     port: 8632
 
-  caches:
-    entities:
-      maximumSize: 1000
-      # enough to not call twice in one call, but would prevent conflicting writes
-      expire-after-write: 2s
-      expire-after-access: 2s
-
   metrics:
     enabled: false
     export:
@@ -43,3 +36,4 @@ loggers:
 ---
 general:
   contextUrl: https://smartdatamodels.org/context.jsonld
+  serverHost: http://localhost:8632

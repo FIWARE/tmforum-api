@@ -1,13 +1,4 @@
 micronaut:
-  application:
-    name: ${project.artifactId}
-
-  caches:
-    entities:
-      maximumSize: 1000
-      # enough to not call twice in one call, but would prevent conflicting writes
-      expire-after-write: 2s
-      expire-after-access: 2s
 
   server:
     port: 8632
