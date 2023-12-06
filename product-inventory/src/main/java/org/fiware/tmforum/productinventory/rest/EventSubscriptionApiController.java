@@ -1,13 +1,18 @@
 package org.fiware.tmforum.productinventory.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.*;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.productinventory.api.EventsSubscriptionApi;
 import org.fiware.productinventory.model.EventSubscriptionInputVO;
 import org.fiware.productinventory.model.EventSubscriptionVO;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -33,8 +38,11 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_PRODUCT);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
-										  TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+										  TmForumRepository repository, TMForumMapper tmForumMapper,
+										  EventHandler eventHandler, GeneralProperties generalProperties,
+										  EntityVOMapper entityVOMapper) {
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler,
+				generalProperties, entityVOMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
 
@@ -52,5 +60,26 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	@Override
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
+	}
+
+	@Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)
+	@Consumes({"application/ld+json;charset=utf-8"})
+	public Mono<HttpResponse<Void>> callback(@NonNull @QueryValue String subscriptionId,
+											 @NonNull @Body String payload,
+											 @Header("Listener-Endpoint") String listenerEndpoint,
+											 @Header("Selected-Fields") String selectedFields,
+											 @Header("Event-Types") String eventTypes) {
+		log.debug(String.format("Callback for subscription %s with notification %s", subscriptionId, payload));
+
+		try {
+			NotificationVO notificationVO = this.entityVOMapper.readNotificationFromJSON(payload);
+
+			assert !notificationVO.getData().isEmpty();
+
+			eventHandler.handleNgsiLdNotification(notificationVO, eventTypes, listenerEndpoint, selectedFields);
+			return Mono.just(HttpResponse.noContent());
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

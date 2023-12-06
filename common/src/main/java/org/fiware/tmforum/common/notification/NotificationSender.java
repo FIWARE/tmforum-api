@@ -28,13 +28,13 @@ public class NotificationSender {
             .failAfterMaxAttempts(true)
             .build());
 
-    private Mono<HttpResponse<Object>> sendToClient(Notification notification) {
+    private Mono<HttpResponse<Object>> sendToClient(TMForumNotification notification) {
         HttpRequest<?> req = HttpRequest.POST(notification.callback(), notification.event())
                 .header(HttpHeaders.CONTENT_TYPE, "application/json");
         return Mono.fromDirect(this.httpClient.exchange(req, Object.class));
     }
 
-    public void sendNotifications(List<Notification> notifications) {
+    public void sendNotifications(List<TMForumNotification> notifications) {
         notifications
                 .forEach(notification -> {
                     Retry retry = RETRY_REGISTRY

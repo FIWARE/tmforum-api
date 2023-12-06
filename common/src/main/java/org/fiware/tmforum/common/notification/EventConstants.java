@@ -6,6 +6,10 @@ import java.util.Map;
 import static java.util.Map.entry;
 
 public class EventConstants {
+    public final static String NOTIFICATION_FORMAT = "normalized";
+    public final static String NOTIFICATION_PAYLOAD_MIME_TYPE = "application/ld+json";
+    public final static String SUBSCRIPTION_CALLBACK_PATH = "/callback";
+
     public final static String EVENT_GROUP_PRODUCT = "Product";
     public final static String EVENT_GROUP_CATALOG = "Catalog";
     public final static String EVENT_GROUP_CATEGORY = "Category";

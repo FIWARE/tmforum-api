@@ -1,5 +1,6 @@
 package org.fiware.tmforum.account.rest;
 
+import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -7,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.account.api.EventsSubscriptionApi;
 import org.fiware.account.model.EventSubscriptionInputVO;
 import org.fiware.account.model.EventSubscriptionVO;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
@@ -47,8 +49,11 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
             EVENT_GROUP_PARTY_ACCOUNT, EVENT_GROUP_SETTLEMENT_ACCOUNT);
 
     public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                          TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+                                          TmForumRepository repository, TMForumMapper tmForumMapper,
+                                          EventHandler eventHandler, GeneralProperties generalProperties,
+                                          EntityVOMapper entityVOMapper) {
+        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler,
+                generalProperties, entityVOMapper);
         this.tmForumMapper = tmForumMapper;
     }
 

@@ -23,6 +23,11 @@ public class GeneralProperties {
 	private String basePath;
 
 	/**
+	 * Root URL of the server to be used in the ngsild-subscription callbacks
+	 */
+	private String serverUrl;
+
+	/**
 	 * Tenant to be used by the tmforum api.
 	 */
 	private String tenant = null;
@@ -35,12 +40,12 @@ public class GeneralProperties {
 
 	/**
 	 * Character used in target NGSI-LD broker for making
-	 * or queries between mutiple parameters
+	 * or queries between multiple parameters
 	 */
 	private String ngsildOrQueryKey=",";
 
 	/**
-	 * Whether to enclose queries using bracets or not
+	 * Whether to enclose queries using brackets or not
 	 */
 	private Boolean encloseQuery=false;
 }
