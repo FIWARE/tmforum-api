@@ -24,7 +24,7 @@ public class PartyAccount extends Account {
         super(TYPE_PARTYAC, id);
     }
 
-    public static final String TYPE_PARTYAC = "partyAccount";
+    public static final String TYPE_PARTYAC = "party-account";
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))
     @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "paymentStatus") }))

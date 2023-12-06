@@ -42,7 +42,7 @@ public class SettlementAccountApiController extends AbstractApiController<Settle
     @Override
     public Mono<HttpResponse<SettlementAccountVO>> createSettlementAccount(SettlementAccountCreateVO settlementAccountVo) {
         SettlementAccount settlementAccount = tmForumMapper.map(
-                tmForumMapper.map(settlementAccountVo, IdHelper.toNgsiLd(UUID.randomUUID().toString(), SettlementAccount.TYPE_PARTYAC)));
+                tmForumMapper.map(settlementAccountVo, IdHelper.toNgsiLd(UUID.randomUUID().toString(), SettlementAccount.TYPE_SETTLEMENTAC)));
 
         return create(getCheckingMono(settlementAccount), SettlementAccount.class)
                 .map(tmForumMapper::map)
@@ -68,7 +68,7 @@ public class SettlementAccountApiController extends AbstractApiController<Settle
     @Override
     public Mono<HttpResponse<List<SettlementAccountVO>>> listSettlementAccount(@Nullable String fields, @Nullable Integer offset,
                                                                      @Nullable Integer limit) {
-        return list(offset, limit, SettlementAccount.TYPE_PARTYAC, SettlementAccount.class)
+        return list(offset, limit, SettlementAccount.TYPE_SETTLEMENTAC, SettlementAccount.class)
                 .map(settlementAccountStream -> settlementAccountStream.map(tmForumMapper::map).toList())
                 .switchIfEmpty(Mono.just(List.of()))
                 .map(HttpResponse::ok);

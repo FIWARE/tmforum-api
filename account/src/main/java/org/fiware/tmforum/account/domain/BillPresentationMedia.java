@@ -24,7 +24,7 @@ public class BillPresentationMedia extends EntityWithId {
         super(TYPE_BILLPM, id);
     }
 
-    public static final String TYPE_BILLPM = "billingPresentationMedia";
+    public static final String TYPE_BILLPM = "bill-presentation-media";
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))

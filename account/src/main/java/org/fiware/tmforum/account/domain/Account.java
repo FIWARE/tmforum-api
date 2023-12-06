@@ -49,15 +49,15 @@ public abstract class Account extends EntityWithId {
     private String state;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance", targetClass = AccountBalance.class) }))
     private List<AccountBalance> accountBalance;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "accountRelationship") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountRelationship") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountRelationship", targetClass = AccountRelationship.class) }))
     private List<AccountRelationship> accountRelationship;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "contact") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "contact") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "contact", targetClass = Contact.class) }))
     private List<Contact> contact;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "creditLimit") }))
@@ -70,7 +70,7 @@ public abstract class Account extends EntityWithId {
     private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemption") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemption") }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "taxExemption", targetClass = AccountTaxExemption.class) }))
     private List<AccountTaxExemption> taxExemption;
 
     @Override

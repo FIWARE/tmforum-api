@@ -110,7 +110,7 @@ public interface TMForumMapper {
         if (id == null) {
             return null;
         }
-        return new ResourceSpecificationRef(URI.create(id));
+        return new ResourceSpecificationRef(id);
     }
 
     default ResourceCategoryRef mapFromCategoryId(String id) {

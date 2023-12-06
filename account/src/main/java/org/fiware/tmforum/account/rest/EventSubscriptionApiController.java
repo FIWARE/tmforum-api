@@ -35,12 +35,12 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
     private final TMForumMapper tmForumMapper;
     private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
             entry(EVENT_GROUP_BILL_FORMAT, BillFormat.TYPE_BILLF),
-            entry(EVENT_GROUP_BILLING_ACCOUNT, BillingAccount.TYPE_PARTYAC),
+            entry(EVENT_GROUP_BILLING_ACCOUNT, BillingAccount.TYPE_BILLINGAC),
             entry(EVENT_GROUP_BILLING_CYCLE_SPECIFICATION, BillingCycleSpecification.TYPE_BILLCL),
             entry(EVENT_GROUP_BILL_PRESENTATION_MEDIA, BillPresentationMedia.TYPE_BILLPM),
             entry(EVENT_GROUP_FINANCIAL_ACCOUNT, FinancialAccount.TYPE_FINANCIALAC),
             entry(EVENT_GROUP_PARTY_ACCOUNT, PartyAccount.TYPE_PARTYAC),
-            entry(EVENT_GROUP_SETTLEMENT_ACCOUNT, SettlementAccount.TYPE_PARTYAC)
+            entry(EVENT_GROUP_SETTLEMENT_ACCOUNT, SettlementAccount.TYPE_SETTLEMENTAC)
     );
     private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_BILL_FORMAT, /*EVENT_GROUP_BILLING_ACCOUNT,*/
     EVENT_GROUP_BILLING_CYCLE_SPECIFICATION, EVENT_GROUP_BILL_PRESENTATION_MEDIA, EVENT_GROUP_FINANCIAL_ACCOUNT,

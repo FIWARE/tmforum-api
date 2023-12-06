@@ -24,7 +24,7 @@ public class BillFormat extends EntityWithId {
         super(TYPE_BILLF, id);
     }
 
-    public static final String TYPE_BILLF = "billFormat";
+    public static final String TYPE_BILLF = "bill-format";
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "href") }))
     @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "href") }))
