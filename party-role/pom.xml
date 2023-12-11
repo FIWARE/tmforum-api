@@ -192,11 +192,13 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
+        </resources>
+        <testResources>
             <resource>
                 <directory>src/test/resources</directory>
                 <filtering>true</filtering>
             </resource>
-        </resources>
+        </testResources>
         <plugins>
             <!-- generate api code -->
           
