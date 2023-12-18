@@ -20,10 +20,7 @@ import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 public abstract class AbstractSubscriptionApiController extends AbstractApiController<TMForumSubscription> {
@@ -96,21 +93,6 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
                     }
                 }).toList();
 
-        Subscription subscription = new Subscription(UUID.randomUUID().toString());
-        subscription.setQ(subscriptionQuery.getQuery());
-        subscription.setEntities(entities.stream().map(EntityInfo::new).toList());
-        NotificationParams notificationParams = new NotificationParams();
-        notificationParams.setAttributes(Set.copyOf(subscriptionQuery.getFields()));
-        notificationParams.setFormat(EventConstants.NOTIFICATION_FORMAT);
-        notificationParams.setEndpoint(new Endpoint(
-                getCallbackURI(),
-                EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
-                List.of(
-                        new KeyValuePair("Listener-Endpoint", callback),
-                        new KeyValuePair("Event-Types", String.join(",", subscriptionQuery.getEventTypes())),
-                        new KeyValuePair("Selected-Fields", String.join(",", subscriptionQuery.getFields())))));
-        subscription.setNotification(notificationParams);
-
         TMForumSubscription tmForumSubscription = new TMForumSubscription(UUID.randomUUID().toString());
         tmForumSubscription.setRawQuery(query != null ? query : "");
         tmForumSubscription.setEventTypes(subscriptionQuery.getEventTypes());
@@ -118,8 +100,41 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         tmForumSubscription.setQuery(subscriptionQuery.getQuery());
         tmForumSubscription.setCallback(URI.create(callback));
         tmForumSubscription.setFields(subscriptionQuery.getFields());
-        tmForumSubscription.setSubscription(subscription);
+        tmForumSubscription.setSubscription(buildNgsiLdSubscription(callback, subscriptionQuery, entities));
         return tmForumSubscription;
+    }
+
+    private Subscription buildNgsiLdSubscription(String callback, SubscriptionQuery subscriptionQuery, List<String> entities) {
+        Subscription subscription = new Subscription(UUID.randomUUID().toString());
+        subscription.setQ(subscriptionQuery.getQuery());
+        subscription.setEntities(entities.stream().map(entityType -> {
+            EntityInfo entityInfo = new EntityInfo();
+            entityInfo.setType(entityType);
+            return entityInfo;
+        }).toList());
+        subscription.setNotification(buildNotificationParams(callback, subscriptionQuery));
+        return subscription;
+    }
+
+    private NotificationParams buildNotificationParams(String callback, SubscriptionQuery subscriptionQuery) {
+        NotificationParams notificationParams = new NotificationParams();
+        notificationParams.setAttributes(Set.copyOf(subscriptionQuery.getFields()));
+        notificationParams.setFormat(EventConstants.NOTIFICATION_FORMAT);
+        notificationParams.setEndpoint(buildEndpoint(callback, subscriptionQuery));
+        return notificationParams;
+    }
+
+    private Endpoint buildEndpoint(String callback, SubscriptionQuery subscriptionQuery) {
+        List<KeyValuePair> receiverInfo = new ArrayList<>();
+        receiverInfo.add(new KeyValuePair("Listener-Endpoint", callback));
+        receiverInfo.add(new KeyValuePair("Event-Types", String.join(",", subscriptionQuery.getEventTypes())));
+        if (!subscriptionQuery.getFields().isEmpty()) {
+            receiverInfo.add(new KeyValuePair("Selected-Fields", String.join(",", subscriptionQuery.getFields())));
+        }
+        return new Endpoint(
+                getCallbackURI(),
+                EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
+                receiverInfo);
     }
 
     @Override
