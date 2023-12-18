@@ -37,7 +37,7 @@ public class EventHandler {
     private final TmForumRepository repository;
 
     @Cacheable(CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
-    private Mono<List<TMForumSubscription>> getSubscriptions(String entityType, String eventType) {
+    public Mono<List<TMForumSubscription>> getSubscriptions(String entityType, String eventType) {
         return repository.findEntities(
                 DEFAULT_OFFSET,
                 100,

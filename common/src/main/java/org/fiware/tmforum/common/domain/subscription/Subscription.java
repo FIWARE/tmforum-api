@@ -26,7 +26,8 @@ public class Subscription {
      */
     @Ignore
     @Getter(onMethod = @__({ @SubscriptionId }))
-    private final URI id;
+    @Setter
+    private URI id;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "q")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "q")}))
@@ -61,5 +62,9 @@ public class Subscription {
         } else {
             this.id = IdHelper.toNgsiLd(id, TYPE_SUBSCRIPTION);
         }
+    }
+
+    public Subscription() {
+        this.type = TYPE_SUBSCRIPTION;
     }
 }

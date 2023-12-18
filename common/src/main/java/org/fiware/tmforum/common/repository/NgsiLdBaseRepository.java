@@ -113,7 +113,7 @@ public abstract class NgsiLdBaseRepository {
      * @return an empty mono
      */
     public Mono<Void> createDomainSubscription(Subscription domainSubscription) {
-        return createSubscription(javaObjectMapper.toSubscriptionVO(domainSubscription), generalProperties.getTenant());
+        return createSubscription(entityVOMapper.toSubscriptionVO(domainSubscription), generalProperties.getTenant());
     }
 
     /**

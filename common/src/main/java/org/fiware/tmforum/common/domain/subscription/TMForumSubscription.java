@@ -41,8 +41,8 @@ public class TMForumSubscription extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "fields", targetClass = String.class) }))
 	private List<String> fields;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "subscription") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "subscription",
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "subscription") }))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "subscription",
 					targetClass = Subscription.class) }))
 	private Subscription subscription;
 
