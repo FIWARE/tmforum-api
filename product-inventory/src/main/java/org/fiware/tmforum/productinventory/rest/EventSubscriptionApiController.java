@@ -3,6 +3,7 @@ package org.fiware.tmforum.productinventory.rest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import lombok.extern.slf4j.Slf4j;
@@ -63,11 +64,11 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	}
 
 	@Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)
-	@Consumes({"application/ld+json;charset=utf-8"})
+	@Consumes({"application/json;charset=utf-8"})
 	public Mono<HttpResponse<Void>> callback(@NonNull @QueryValue String subscriptionId,
 											 @NonNull @Body String payload,
 											 @Header("Listener-Endpoint") String listenerEndpoint,
-											 @Header("Selected-Fields") String selectedFields,
+											 @Nullable @Header("Selected-Fields") String selectedFields,
 											 @Header("Event-Types") String eventTypes) {
 		log.debug(String.format("Callback for subscription %s with notification %s", subscriptionId, payload));
 

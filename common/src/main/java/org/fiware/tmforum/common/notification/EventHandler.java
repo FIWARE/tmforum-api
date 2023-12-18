@@ -124,7 +124,8 @@ public class EventHandler {
     private <T> Map<String, Object> applyFieldsFilter(T entity, List<String> fields) {
         Map<String, Object> entityMap = entityVOMapper.convertEntityToMap(entity);
 
-        if (entity instanceof EntityVO) {
+        if (entity instanceof EntityVO && entityMap.containsKey("additionalProperties") &&
+                entityMap.get("additionalProperties") != null) {
             entityMap.putAll(entityVOMapper.convertEntityToMap(entityMap.get("additionalProperties")));
             entityMap.remove("additionalProperties");
         }
@@ -150,7 +151,8 @@ public class EventHandler {
         notificationVO.getData().forEach(entityVO -> eventCheckers.forEach(eventChecker -> {
             if (eventChecker.wasFired(entityVO)) {
                 notifications.add(createNotification(entityVO, eventChecker.getEventTypeSuffix(),
-                        notificationVO.getNotifiedAt(), Arrays.stream(selectedFields.split(",")).toList(),
+                        notificationVO.getNotifiedAt(), selectedFields == null ? List.of()
+                                : Arrays.stream(selectedFields.split(",")).toList(),
                         URI.create(listenerCallback)));
             }
         }));
