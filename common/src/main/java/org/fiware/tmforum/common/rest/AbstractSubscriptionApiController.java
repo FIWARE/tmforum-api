@@ -1,10 +1,15 @@
 package org.fiware.tmforum.common.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.*;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.*;
@@ -147,5 +152,26 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     private URI getCallbackURI() {
         return URI.create(generalProperties.getServerUrl() + generalProperties.getBasePath() +
                 EventConstants.SUBSCRIPTION_CALLBACK_PATH);
+    }
+
+    @Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)
+    @Consumes({"application/json;charset=utf-8"})
+    public Mono<HttpResponse<Void>> callback(@NonNull @QueryValue String subscriptionId,
+                                             @NonNull @Body String payload,
+                                             @Header("Listener-Endpoint") String listenerEndpoint,
+                                             @Nullable @Header("Selected-Fields") String selectedFields,
+                                             @Header("Event-Types") String eventTypes) {
+        log.debug(String.format("Callback for subscription %s with notification %s", subscriptionId, payload));
+
+        try {
+            NotificationVO notificationVO = this.entityVOMapper.readNotificationFromJSON(payload);
+
+            assert !notificationVO.getData().isEmpty();
+
+            eventHandler.handleNgsiLdNotification(notificationVO, eventTypes, listenerEndpoint, selectedFields);
+            return Mono.just(HttpResponse.noContent());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
