@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -102,7 +103,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		assertEquals(HttpStatus.CREATED, resourceCategoryVOHttpResponse.getStatus(), message);
 		String rfId = resourceCategoryVOHttpResponse.body().getId();
 		expectedResourceCategory.setId(rfId);
-		expectedResourceCategory.setHref(rfId);
+		expectedResourceCategory.setHref(URI.create(rfId));
 		expectedResourceCategory.setLastUpdate(currentTimeInstant);
 
 		assertEquals(expectedResourceCategory, resourceCategoryVOHttpResponse.body(), message);
@@ -308,7 +309,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 			ResourceCategoryVO resourceCategoryVO = ResourceCategoryVOTestExample.build();
 			resourceCategoryVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.parentId(null)
 					.category(null)
 					.relatedParty(null)
@@ -453,7 +454,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceCategoryVO updatedResourceCategory = updateResponse.body();
-		expectedResourceCategory.href(resourceId).id(resourceId).relatedParty(null).resourceCandidate(null);
+		expectedResourceCategory.href(URI.create(resourceId)).id(resourceId).relatedParty(null).resourceCandidate(null);
 
 		expectedResourceCategory.category(null);
 
@@ -644,7 +645,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 
 		expectedResourceCategory
 				.id(id)
-				.href(id);
+				.href(URI.create(id));
 
 		//then retrieve
 		HttpResponse<ResourceCategoryVO> retrievedRF = callAndCatch(
