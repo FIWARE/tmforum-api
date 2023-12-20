@@ -11,6 +11,7 @@ import java.util.List;
 public class FeatureSpecification {
 
     private String id;
+    private URI href;
     private Boolean isBundle;
     private Boolean isEnabled;
     private String name;

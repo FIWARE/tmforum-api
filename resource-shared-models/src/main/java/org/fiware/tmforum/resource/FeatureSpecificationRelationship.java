@@ -8,11 +8,13 @@ import java.net.URI;
 @Data
 public class FeatureSpecificationRelationship {
 
+    private String id;
+    private URI href;
     private String featureId;
     private String name;
     private String relationshipType;
-    private String resourceSpecificationHref;
-    private ResourceSpecificationRef resourceSpecificationId;
+    private URI parentSpecificationHref;
+    private ResourceSpecificationRef parentSpecificationId;
     private TimePeriod validFor;
     private String atBaseType;
     private URI atSchemaLocation;
