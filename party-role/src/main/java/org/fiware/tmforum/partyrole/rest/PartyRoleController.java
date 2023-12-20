@@ -54,7 +54,7 @@ public class PartyRoleController extends AbstractApiController<PartyRole> implem
         .map(prStream -> prStream.map(tmForumMapper::map).toList())
         .switchIfEmpty(Mono.just(List.of()))
         .map(HttpResponse::ok);
-return res;    
+        return res;
     }
     @Override
     public Mono<HttpResponse<PartyRoleVO>> patchPartyRole(@NonNull String id, @NonNull PartyRoleUpdateVO partyRoleUpdateVO) {
