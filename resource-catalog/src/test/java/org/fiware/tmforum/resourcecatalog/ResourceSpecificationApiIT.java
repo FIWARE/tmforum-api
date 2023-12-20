@@ -38,6 +38,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -109,7 +110,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				() -> resourceSpecificationApiTestClient.createResourceSpecification(resourceSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, resourceSpecificationVOHttpResponse.getStatus(), message);
 		String rsId = resourceSpecificationVOHttpResponse.body().getId();
-		expectedResourceSpecification.id(rsId).href(rsId).lastUpdate(currentTimeInstant).resourceSpecRelationship(null);
+		expectedResourceSpecification.id(rsId).href(URI.create(rsId)).lastUpdate(currentTimeInstant).resourceSpecRelationship(null);
 
 		assertEquals(expectedResourceSpecification, resourceSpecificationVOHttpResponse.body(), message);
 	}
@@ -156,10 +157,12 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
 								FeatureSpecificationCharacteristicVOTestExample.build()
+										.id("urn:feature-spec-char")
 										.validFor(null)
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
 												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
+														.id("urn:feature-spec-char-rel")
 														.validFor(null)
 														.resourceSpecificationId(null)))
 						))));
@@ -171,8 +174,9 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
 								FeatureSpecificationRelationshipVOTestExample.build()
+										.id("urn:feature-spec-rel")
 										.validFor(null)
-										.resourceSpecificationId(null)))));
+										.parentSpecificationId(null)))));
 
 		return validFeatureSpecs.stream();
 	}
@@ -272,12 +276,12 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						FeatureSpecificationVOTestExample.build()
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
 										.featureId(null)
-										.resourceSpecificationId("invalid")))));
+										.parentSpecificationId("invalid")))));
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
-										.resourceSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
+										.parentSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
 										.featureId(null)))));
 
 		return invalidFeatureSpecs.stream();
@@ -413,7 +417,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 			ResourceSpecificationVO resourceSpecificationVO = ResourceSpecificationVOTestExample.build();
 			resourceSpecificationVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.relatedParty(null);
 			expectedResourceSpecifications.add(resourceSpecificationVO);
 		}
@@ -562,7 +566,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceSpecificationVO updatedResourceSpecification = updateResponse.body();
-		expectedResourceSpecification.href(resourceId).id(resourceId).relatedParty(null).resourceSpecRelationship(null)
+		expectedResourceSpecification.href(URI.create(resourceId)).id(resourceId).relatedParty(null).resourceSpecRelationship(null)
 				.lastUpdate(currentTimeInstant);
 
 		assertEquals(expectedResourceSpecification, updatedResourceSpecification, message);
@@ -746,7 +750,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 		expectedResourceSpecification
 				.id(id)
-				.href(id);
+				.href(URI.create(id));
 
 		//then retrieve
 		HttpResponse<ResourceSpecificationVO> retrievedResourceSpec = callAndCatch(
