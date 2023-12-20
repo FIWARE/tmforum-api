@@ -141,7 +141,7 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 
 		if (featureSpecification.getFeatureSpecRelationship() != null) {
 			featureSpecification.getFeatureSpecRelationship().forEach(fsr ->
-					Optional.ofNullable(fsr.getResourceSpecificationId())
+					Optional.ofNullable(fsr.getParentSpecificationId())
 							.map(List::of)
 							.ifPresent(references::add));
 		}
