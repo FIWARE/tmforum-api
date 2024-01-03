@@ -8,19 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.servicecatalog.api.ServiceCandidateApiTestClient;
 import org.fiware.servicecatalog.api.ServiceCandidateApiTestSpec;
-import org.fiware.servicecatalog.model.ServiceCandidateCreateVO;
-import org.fiware.servicecatalog.model.ServiceCandidateCreateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCandidateUpdateVO;
-import org.fiware.servicecatalog.model.ServiceCandidateUpdateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCandidateVO;
-import org.fiware.servicecatalog.model.ServiceCandidateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCategoryRefVOTestExample;
-import org.fiware.servicecatalog.model.ServiceSpecificationRefVOTestExample;
-import org.fiware.servicecatalog.model.TimePeriodVO;
-import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.servicecatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.service.ServiceCandidate;
 import org.junit.jupiter.api.Disabled;
@@ -76,7 +67,6 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

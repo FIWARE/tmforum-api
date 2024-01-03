@@ -63,7 +63,6 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-        when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
         return eventHandler;
     }

@@ -1,8 +1,8 @@
-package org.fiware.tmforum.common.notification.checkers;
+package org.fiware.tmforum.common.notification.checkers.ngsild;
 
 import org.fiware.ngsi.model.EntityVO;
 
-public interface EventChecker {
+public interface NgsiLdEventChecker {
     boolean wasFired(EntityVO entityVO);
     String getEventTypeSuffix();
 }

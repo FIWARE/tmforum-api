@@ -8,19 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcecatalog.api.ResourceCatalogApiTestClient;
 import org.fiware.resourcecatalog.api.ResourceCatalogApiTestSpec;
-import org.fiware.resourcecatalog.model.RelatedPartyVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceCatalogCreateVO;
-import org.fiware.resourcecatalog.model.ResourceCatalogCreateVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceCatalogUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceCatalogUpdateVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceCatalogVO;
-import org.fiware.resourcecatalog.model.ResourceCatalogVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceCategoryRefVOTestExample;
-import org.fiware.resourcecatalog.model.TimePeriodVO;
-import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.resourcecatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
 import org.junit.jupiter.api.Disabled;
@@ -76,7 +67,6 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

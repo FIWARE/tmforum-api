@@ -80,15 +80,8 @@ public abstract class AbstractApiController<T> {
 			throw new TmForumException("Did not receive a valid id, such entity cannot exist.",
 					TmForumExceptionReason.NOT_FOUND);
 		}
-
-		URI idUri = URI.create(id);
-		return repository.retrieveEntityById(idUri)
-				.switchIfEmpty(Mono.error(new TmForumException("No such entity exists.",
-						TmForumExceptionReason.NOT_FOUND)))
-				.flatMap(entityVO ->
-					repository.deleteDomainEntity(idUri)
-						.then(eventHandler.handleDeleteEvent(entityVO))
-						.then(Mono.just(HttpResponse.noContent())));
+		return repository.deleteDomainEntity(URI.create(id))
+				.then(Mono.just(HttpResponse.noContent()));
 	}
 
 	protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {

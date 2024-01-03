@@ -8,18 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcefunction.api.MigrateApiTestClient;
 import org.fiware.resourcefunction.api.MigrateApiTestSpec;
-import org.fiware.resourcefunction.model.CharacteristicVOTestExample;
-import org.fiware.resourcefunction.model.ConnectionPointRefVOTestExample;
-import org.fiware.resourcefunction.model.MigrateCreateVO;
-import org.fiware.resourcefunction.model.MigrateCreateVOTestExample;
-import org.fiware.resourcefunction.model.MigrateVO;
-import org.fiware.resourcefunction.model.MigrateVOTestExample;
-import org.fiware.resourcefunction.model.PlaceRefVOTestExample;
-import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
-import org.fiware.resourcefunction.model.TaskStateTypeVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.resourcefunction.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.resourcefunction.domain.Migrate;
 import org.junit.jupiter.api.Disabled;
@@ -29,11 +21,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,7 +52,6 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

@@ -5,15 +5,15 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.fiware.account.model.*;
-import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.account.api.BillingCycleSpecificationApiTestClient;
 import org.fiware.account.api.BillingCycleSpecificationApiTestSpec;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.account.model.*;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.account.domain.BillingCycleSpecification;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.fiware.tmforum.account.domain.BillingCycleSpecification;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -62,7 +62,6 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-        when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
         return eventHandler;
     }

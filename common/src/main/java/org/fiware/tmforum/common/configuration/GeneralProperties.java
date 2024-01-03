@@ -25,7 +25,7 @@ public class GeneralProperties {
 	/**
 	 * Root URL of the server to be used in the ngsild-subscription callbacks
 	 */
-	private String serverUrl;
+	private String serverHost;
 
 	/**
 	 * Tenant to be used by the tmforum api.

@@ -150,7 +150,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     private URI getCallbackURI() {
-        return URI.create(generalProperties.getServerUrl() + generalProperties.getBasePath() +
+        return URI.create(generalProperties.getServerHost() + generalProperties.getBasePath() +
                 EventConstants.SUBSCRIPTION_CALLBACK_PATH);
     }
 

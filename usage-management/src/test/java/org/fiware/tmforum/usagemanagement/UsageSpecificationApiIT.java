@@ -1,10 +1,27 @@
 package org.fiware.tmforum.usagemanagement;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
+import org.fiware.usagemanagement.api.UsageSpecificationApiTestClient;
+import org.fiware.usagemanagement.api.UsageSpecificationApiTestSpec;
+import org.fiware.usagemanagement.model.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,31 +29,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.net.URI;
 
-import io.micronaut.test.annotation.MockBean;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.usagemanagement.api.UsageSpecificationApiTestSpec;
-import org.fiware.usagemanagement.api.UsageSpecificationApiTestClient;
-import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
-import org.fiware.usagemanagement.model.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-
-import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.provider.Arguments;
-import reactor.core.publisher.Mono;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.usagemanagement" })
 public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpecificationApiTestSpec{
@@ -60,7 +58,6 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-        when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
         return eventHandler;
     }

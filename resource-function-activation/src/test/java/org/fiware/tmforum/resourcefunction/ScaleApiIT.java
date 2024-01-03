@@ -8,16 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcefunction.api.ScaleApiTestClient;
 import org.fiware.resourcefunction.api.ScaleApiTestSpec;
-import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
-import org.fiware.resourcefunction.model.ScaleCreateVO;
-import org.fiware.resourcefunction.model.ScaleCreateVOTestExample;
-import org.fiware.resourcefunction.model.ScaleVO;
-import org.fiware.resourcefunction.model.ScaleVOTestExample;
-import org.fiware.resourcefunction.model.ScheduleRefVOTestExample;
-import org.fiware.resourcefunction.model.TaskStateTypeVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.resourcefunction.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.resourcefunction.domain.Scale;
 import org.junit.jupiter.api.Disabled;
@@ -61,7 +55,6 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

@@ -7,25 +7,11 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.customermanagement.api.CustomerApiTestClient;
 import org.fiware.customermanagement.api.CustomerApiTestSpec;
-import org.fiware.customermanagement.model.AccountRefVOTestExample;
-import org.fiware.customermanagement.model.AgreementRefVOTestExample;
-import org.fiware.customermanagement.model.CharacteristicVOTestExample;
-import org.fiware.customermanagement.model.ContactMediumVOTestExample;
-import org.fiware.customermanagement.model.CreditProfileVOTestExample;
-import org.fiware.customermanagement.model.CustomerCreateVO;
-import org.fiware.customermanagement.model.CustomerCreateVOTestExample;
-import org.fiware.customermanagement.model.CustomerUpdateVO;
-import org.fiware.customermanagement.model.CustomerUpdateVOTestExample;
-import org.fiware.customermanagement.model.CustomerVO;
-import org.fiware.customermanagement.model.CustomerVOTestExample;
-import org.fiware.customermanagement.model.PaymentMethodRefVOTestExample;
-import org.fiware.customermanagement.model.RelatedPartyVOTestExample;
-import org.fiware.customermanagement.model.TimePeriodVO;
-import org.fiware.customermanagement.model.TimePeriodVOTestExample;
+import org.fiware.customermanagement.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customermanagement.domain.Customer;
 import org.junit.jupiter.api.Disabled;
@@ -76,7 +62,6 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

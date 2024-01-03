@@ -38,4 +38,5 @@ general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
   basePath: /tmf-api/productInventory/v4
+  basePath: /tmf-api/productInventory/v4
   serverUrl: http://localhost

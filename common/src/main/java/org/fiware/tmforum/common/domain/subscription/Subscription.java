@@ -11,21 +11,21 @@ import java.util.List;
 import java.util.Set;
 
 @EqualsAndHashCode
-@MappingEnabled(subscriptionType = Subscription.TYPE_SUBSCRIPTION)
+@MappingEnabled(entityType = Subscription.TYPE_SUBSCRIPTION)
 public class Subscription {
     public static final String TYPE_SUBSCRIPTION = "Subscription";
 
     /**
      * Type of the subscription
      */
-    @Getter(onMethod = @__({ @SubscriptionType}))
+    @Getter(onMethod = @__({ @EntityType}))
     private final String type;
 
     /**
      * ID of the subscription. This is the id part of "urn:ngsi-ld:TYPE:ID"
      */
     @Ignore
-    @Getter(onMethod = @__({ @SubscriptionId }))
+    @Getter(onMethod = @__({ @EntityId }))
     @Setter
     private URI id;
 

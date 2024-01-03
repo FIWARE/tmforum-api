@@ -1,16 +1,17 @@
-package org.fiware.tmforum.common.notification.checkers;
+package org.fiware.tmforum.common.notification.checkers.ngsild;
 
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.notification.EventConstants;
 
-public class CreateEventChecker implements EventChecker {
+public class DeleteNgsiLdEventChecker implements NgsiLdEventChecker {
+
     @Override
     public boolean wasFired(EntityVO entityVO) {
-        return false;
+        return entityVO.getDeletedAt() != null;
     }
 
     @Override
     public String getEventTypeSuffix() {
-        return EventConstants.CHANGE_EVENT_SUFFIX;
+        return EventConstants.DELETE_EVENT_SUFFIX;
     }
 }

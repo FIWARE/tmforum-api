@@ -10,8 +10,8 @@ import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.domain.subscription.Event;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.EventHandlingException;
-import org.fiware.tmforum.common.notification.checkers.*;
-import org.fiware.tmforum.common.notification.command.*;
+import org.fiware.tmforum.common.notification.checkers.ngsild.*;
+import org.fiware.tmforum.common.notification.checkers.tmforum.*;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -48,12 +48,12 @@ public class EventHandler {
         );
     }
 
-    private <T> Mono<Void> handle(T entity, EventDetails<T> eventDetails, Command command) {
+    private <T> Mono<Void> handle(T entity, EventDetails<T> eventDetails, TmForumEventChecker eventChecker) {
         return getSubscriptions(eventDetails.entityType, eventDetails.eventType)
                 .doOnNext(subscriptions -> {
                     List<TMForumNotification> notifications = new ArrayList<>();
                     subscriptions.forEach(subscription -> {
-                        if (command.execute(subscription.getQuery())) {
+                        if (eventChecker.wasFired(subscription.getQuery())) {
                             Event event = createEvent(eventDetails, applyFieldsFilter(entity, subscription.getFields()));
                             notifications.add(new TMForumNotification(subscription.getCallback(), event));
                         }
@@ -66,8 +66,8 @@ public class EventHandler {
     public <T> Mono<Void> handleCreateEvent(T entity) {
         try {
             EventDetails<T> eventDetails = new EventDetails<>(entity, CREATE_EVENT_SUFFIX);
-            Command command = new CreateEventCommand<>(subscriptionQueryResolver, entity, eventDetails.payloadName);
-            return handle(entity, eventDetails, command);
+            TmForumEventChecker tmForumEventChecker = new CreateTmForumEventChecker<>(subscriptionQueryResolver, entity, eventDetails.entityType);
+            return handle(entity, eventDetails, tmForumEventChecker);
         } catch (EventHandlingException e) {
             return Mono.empty();
         }
@@ -76,26 +76,16 @@ public class EventHandler {
     public <T> Mono<Void> handleUpdateEvent(T newState, T oldState) {
         try {
             EventDetails<T> eventDetails1 = new EventDetails<>(newState, ATTRIBUTE_VALUE_CHANGE_EVENT_SUFFIX);
-            Command command1 = new AttributeValueChangeEventCommand<>(
-                    subscriptionQueryResolver, newState, oldState, eventDetails1.payloadName);
-            Mono<Void> attrUpdateMono = handle(newState, eventDetails1, command1);
+            TmForumEventChecker eventChecker1 = new AttributeValueChangeTmForumEventChecker<>(
+                    subscriptionQueryResolver, newState, oldState, eventDetails1.entityType);
+            Mono<Void> attrUpdateMono = handle(newState, eventDetails1, eventChecker1);
 
 
             EventDetails<T> eventDetails2 = new EventDetails<>(newState, STATE_CHANGE_EVENT_SUFFIX);
-            Command command2 = new StateChangeEventCommand<>(newState, oldState);
-            Mono<Void> stateChangeMono = handle(newState, eventDetails2, command2);
+            TmForumEventChecker eventChecker2 = new StateChangeTmForumEventChecker<>(newState, oldState);
+            Mono<Void> stateChangeMono = handle(newState, eventDetails2, eventChecker2);
 
             return attrUpdateMono.then(stateChangeMono);
-        } catch (EventHandlingException e) {
-            return Mono.empty();
-        }
-    }
-
-    public Mono<Void> handleDeleteEvent(EntityVO entityVO) {
-        try {
-            EventDetails<EntityVO> eventDetails = new EventDetails<>(entityVO, DELETE_EVENT_SUFFIX);
-            Command command = new DeleteCommand();
-            return handle(entityVO, eventDetails, command);
         } catch (EventHandlingException e) {
             return Mono.empty();
         }
@@ -106,16 +96,16 @@ public class EventHandler {
 
         event.setEventType(eventDetails.eventType);
         event.setEventId(UUID.randomUUID().toString());
-        event.setEvent(Map.of(eventDetails.payloadName, payload));
+        event.setEvent(Map.of(eventDetails.entityType, payload));
         event.setEventTime(eventDetails.eventTime);
 
         return event;
     }
 
-    private TMForumNotification createNotification(EntityVO payload, String eventType, Instant eventTime,
+    private TMForumNotification createNotification(EntityVO payload, String eventTypeSuffix, Instant eventTime,
                                                    List<String> selectedFields, URI listenerCallback) {
-        EventDetails<EntityVO> eventDetails = new EventDetails<>(payload,
-                eventType, eventTime);
+        EventDetails<EntityVO> eventDetails = new EventDetails<>(payload.getType(),
+                eventTypeSuffix, eventTime);
         Event event = createEvent(eventDetails, applyFieldsFilter(
                 payload, selectedFields));
         return new TMForumNotification(listenerCallback, event);
@@ -147,8 +137,8 @@ public class EventHandler {
                                          String listenerCallback, String selectedFields) {
         List<TMForumNotification> notifications = new ArrayList<>();
 
-        List<EventChecker> eventCheckers = buildEventCheckers(relevantEventTypes);
-        notificationVO.getData().forEach(entityVO -> eventCheckers.forEach(eventChecker -> {
+        List<NgsiLdEventChecker> ngsiLdEventCheckers = buildNgsiLdEventCheckers(relevantEventTypes);
+        notificationVO.getData().forEach(entityVO -> ngsiLdEventCheckers.forEach(eventChecker -> {
             if (eventChecker.wasFired(entityVO)) {
                 notifications.add(createNotification(entityVO, eventChecker.getEventTypeSuffix(),
                         notificationVO.getNotifiedAt(), selectedFields == null ? List.of()
@@ -160,28 +150,27 @@ public class EventHandler {
         notificationSender.sendNotifications(notifications);
     }
 
-    private List<EventChecker> buildEventCheckers(String relevantEventTypes) throws EventHandlingException {
-        List<EventChecker> eventCheckers = new ArrayList<>();
+    private List<NgsiLdEventChecker> buildNgsiLdEventCheckers(String relevantEventTypes) throws EventHandlingException {
+        List<NgsiLdEventChecker> ngsiLdEventCheckers = new ArrayList<>();
         Arrays.stream(relevantEventTypes.split(",")).forEach(relevantEventType -> {
             if (relevantEventType.contains(CREATE_EVENT_SUFFIX)) {
-                eventCheckers.add(new CreateEventChecker());
+                ngsiLdEventCheckers.add(new CreateNgsiLdEventChecker());
             } else if (relevantEventType.contains(ATTRIBUTE_VALUE_CHANGE_EVENT_SUFFIX)) {
-                eventCheckers.add(new AttributeValueChangeEventChecker());
+                ngsiLdEventCheckers.add(new AttributeValueChangeNgsiLdEventChecker());
             } else if (relevantEventType.contains(STATE_CHANGE_EVENT_SUFFIX)) {
-                eventCheckers.add(new StateChangeEventChecker());
+                ngsiLdEventCheckers.add(new StateChangeNgsiLdEventChecker());
             } else if (relevantEventType.contains(DELETE_EVENT_SUFFIX)) {
-                eventCheckers.add(new DeleteEventChecker());
+                ngsiLdEventCheckers.add(new DeleteNgsiLdEventChecker());
             } else {
                 throw new EventHandlingException("Event type was not recognized.");
             }
         });
-        return eventCheckers;
+        return ngsiLdEventCheckers;
     }
 
     private static class EventDetails<T> {
         String entityType;
         String eventType;
-        String payloadName;
         Instant eventTime;
 
         public EventDetails(T entity, String eventSuffix) {
@@ -190,8 +179,8 @@ public class EventHandler {
             init(eventSuffix);
         }
 
-        public EventDetails(T entity, String eventSuffix, Instant eventTime) {
-            entityType = getEntityType(entity);
+        public EventDetails(String entityType, String eventSuffix, Instant eventTime) {
+            this.entityType = entityType;
             this.eventTime = eventTime;
             init(eventSuffix);
         }
@@ -209,7 +198,6 @@ public class EventHandler {
                 throw new EventHandlingException();
             }
             eventType = StringUtils.toCamelCase(entityType) + eventSuffix;
-            payloadName = StringUtils.decapitalize(StringUtils.getEventGroupName(eventType));
         }
     }
 }

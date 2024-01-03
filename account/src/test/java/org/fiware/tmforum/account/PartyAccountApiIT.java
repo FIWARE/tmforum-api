@@ -9,7 +9,6 @@ import org.fiware.account.api.PartyAccountApiTestClient;
 import org.fiware.account.api.PartyAccountApiTestSpec;
 import org.fiware.account.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.account.domain.BillStructure;
 import org.fiware.tmforum.account.domain.PartyAccount;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -22,7 +21,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +61,6 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-        when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
         return eventHandler;
     }
