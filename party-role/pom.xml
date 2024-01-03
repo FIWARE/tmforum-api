@@ -3,9 +3,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.fiware.tmforum</groupId>
-    <artifactId>customer-management</artifactId>
+    <artifactId>party-role</artifactId>
     <version>0.1</version>
-
     <parent>
         <groupId>org.fiware</groupId>
         <artifactId>tmforum</artifactId>
@@ -13,24 +12,23 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF629-Customer-v4.0.0.swagger.json
-        </tmforum.api.url>
-        <module.ctk.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF629-Customer-v4.0.0.zip
-        </module.ctk.url>
-        <module.ctk.script-folder>TMF629-Customer-v4.0.0</module.ctk.script-folder>
+        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF669-PartyRole-v4.0.0.swagger.json</tmforum.api.url>
+        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF669-PartyRole-v4.0.0.zip</module.ctk.url>
+        <module.ctk.script-folder>TMF669-PartyRole</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
-        <module.ctk.base-path>/tmf-api/customerManagement/v4</module.ctk.base-path>
-        <module.ctk.additionalCommands>sed -i 's#https://api-customer-v4-0-0.mybluemix.net#http://localhost:8632#g'
-            /opt/ctk/TMF629-Customer-v4.0.0/config.json
-        </module.ctk.additionalCommands>
+        <module.ctk.base-path>/tmf-api/partyRole/v4/</module.ctk.base-path>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
             <artifactId>common</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>product-shared-models</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
@@ -42,11 +40,25 @@
             <scope>compile</scope>
         </dependency>
 
+         <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>service-shared-models</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>service-shared-models</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- lazy dev -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-        </dependency>
+        </dependency> 
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
@@ -101,6 +113,12 @@
         <dependency>
             <groupId>io.micronaut.reactor</groupId>
             <artifactId>micronaut-reactor</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.kokuwa.micronaut</groupId>
+            <artifactId>micronaut-logging</artifactId>
+            <version>${version.io.kokuwa.micronaut.logging}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -183,22 +201,23 @@
         </testResources>
         <plugins>
             <!-- generate api code -->
+          
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <version>${version.org.openapitools.generator-maven-plugin}</version>
                 <executions>
                     <execution>
-                        <id>openapi-customer-management-api</id>
+                        <id>openapi-partyRole-api</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
                             <inputSpec>${tmforum.api.url}</inputSpec>
-                            <apiPackage>org.fiware.customermanagement.api</apiPackage>
+                            <apiPackage>org.fiware.partyRole.api</apiPackage>
                             <strictSpec>true</strictSpec>
-                            <modelPackage>org.fiware.customermanagement.model</modelPackage>
+                            <modelPackage>org.fiware.partyRole.model</modelPackage>
                             <generatorName>micronaut</generatorName>
                             <modelNameSuffix>VO</modelNameSuffix>
                             <output>${project.build.directory}</output>
