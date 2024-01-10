@@ -38,6 +38,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -157,12 +158,12 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
 								FeatureSpecificationCharacteristicVOTestExample.build()
-										.id(null)
+										.id("urn:feature-spec-char")
 										.validFor(null)
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
 												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
-														.id(null)
+														.id("urn:feature-spec-char-rel")
 														.validFor(null)
 														.resourceSpecificationId(null)))
 						))));
@@ -174,10 +175,9 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
 								FeatureSpecificationRelationshipVOTestExample.build()
-										.id(null)
+										.id("urn:feature-spec-rel")
 										.validFor(null)
-										//.resourceSpecificationId(null)
-						))));
+										.parentSpecificationId(null)))));
 
 		return validFeatureSpecs.stream();
 	}
@@ -272,21 +272,21 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 								.constraint(List.of(ConstraintRefVOTestExample.build()
 										.id("urn:ngsi-ld:constraint:non-existent")))));
 
-		/*invalidFeatureSpecs.add(
+		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with invalid resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
 								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
 										.featureId(null)
-										//.resourceSpecificationId("invalid")
-								))));
+										.parentSpecificationId("invalid")))));
+    
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
 								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
-										//.resourceSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
-										.featureId(null)))));*/
+										.parentSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
+										.featureId(null)))));
 
 		return invalidFeatureSpecs.stream();
 	}

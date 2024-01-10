@@ -1,4 +1,4 @@
-package org.fiware.tmforum.customermanagement.domain;
+package org.fiware.tmforum.customer;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
