@@ -12,8 +12,6 @@ public class FeatureSpecificationRelationship {
     private URI href;
     private String featureId;
     private String name;
-    private URI parentSpecificationHref;
-    private String parentSpecificationId;
     private String relationshipType;
     private URI parentSpecificationHref;
     private ResourceSpecificationRef parentSpecificationId;
