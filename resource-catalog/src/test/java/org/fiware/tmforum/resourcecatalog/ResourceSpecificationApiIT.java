@@ -47,7 +47,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -153,7 +152,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec char rel should be created.",
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
-						.id(null)
+						.id("urn:feature-spec")
 						.validFor(null)
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
@@ -170,7 +169,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec rel should be created.",
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
-						.id(null)
+						.id("urn:feature-spec")
 						.validFor(null)
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
@@ -275,7 +274,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with invalid resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
-								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
 										.featureId(null)
 										.parentSpecificationId("invalid")))));
@@ -283,7 +281,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
-								.id(null)
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
 										.parentSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
 										.featureId(null)))));
