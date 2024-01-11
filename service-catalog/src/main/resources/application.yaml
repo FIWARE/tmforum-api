@@ -1,7 +1,7 @@
 micronaut:
 
   server:
-    port: 8638
+    port: 8632
 
   metrics:
     enabled: true
@@ -36,4 +36,4 @@ loggers:
 ---
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
-  serverHost: http://localhost:8638
+  serverHost: http://localhost:8632
