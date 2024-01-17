@@ -16,6 +16,7 @@ import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.util.StringUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.InvocationTargetException;
@@ -50,17 +51,11 @@ public class EventHandler {
 
     private <T> Mono<Void> handle(T entity, EventDetails<T> eventDetails, TmForumEventChecker eventChecker) {
         return getSubscriptions(eventDetails.entityType, eventDetails.eventType)
-                .doOnNext(subscriptions -> {
-                    List<TMForumNotification> notifications = new ArrayList<>();
-                    subscriptions.forEach(subscription -> {
-                        if (eventChecker.wasFired(subscription.getQuery())) {
-                            Event event = createEvent(eventDetails, applyFieldsFilter(entity, subscription.getFields()));
-                            notifications.add(new TMForumNotification(subscription.getCallback(), event));
-                        }
-                    });
-                    notificationSender.sendNotifications(notifications);
-                })
-                .then();
+                    .map(subscriptions -> subscriptions.stream()
+                        .filter(subscription -> eventChecker.wasFired(subscription.getQuery()))
+                        .map(subscription -> new TMForumNotification(subscription.getCallback(),
+                                createEvent(eventDetails, applyFieldsFilter(entity, subscription.getFields()))))
+                        .toList()).flatMap(notificationSender::sendNotifications);
     }
 
     public <T> Mono<Void> handleCreateEvent(T entity) {
@@ -102,23 +97,18 @@ public class EventHandler {
         return event;
     }
 
-    private TMForumNotification createNotification(EntityVO payload, String eventTypeSuffix, Instant eventTime,
-                                                   List<String> selectedFields, URI listenerCallback) {
+    private Mono<TMForumNotification> createNotification(EntityVO payload, String eventTypeSuffix, Instant eventTime,
+                                                   List<String> selectedFields, URI listenerCallback,
+                                                   Map<String, Class<?>> entityNameToEntityClassMapping) {
         EventDetails<EntityVO> eventDetails = new EventDetails<>(payload.getType(),
                 eventTypeSuffix, eventTime);
-        Event event = createEvent(eventDetails, applyFieldsFilter(
-                payload, selectedFields));
-        return new TMForumNotification(listenerCallback, event);
+        return entityVOMapper.fromEntityVO(payload, entityNameToEntityClassMapping.get(payload.getType()))
+                .map(entity -> new TMForumNotification(listenerCallback, createEvent(eventDetails, applyFieldsFilter(
+                        entity, selectedFields))));
     }
 
     private <T> Map<String, Object> applyFieldsFilter(T entity, List<String> fields) {
         Map<String, Object> entityMap = entityVOMapper.convertEntityToMap(entity);
-
-        if (entity instanceof EntityVO && entityMap.containsKey("additionalProperties") &&
-                entityMap.get("additionalProperties") != null) {
-            entityMap.putAll(entityVOMapper.convertEntityToMap(entityMap.get("additionalProperties")));
-            entityMap.remove("additionalProperties");
-        }
 
         if (fields != null && !fields.isEmpty()) {
             Map<String, Object> filteredMap = new HashMap<>();
@@ -133,21 +123,18 @@ public class EventHandler {
         }
     }
 
-    public void handleNgsiLdNotification(NotificationVO notificationVO, String relevantEventTypes,
-                                         String listenerCallback, String selectedFields) {
-        List<TMForumNotification> notifications = new ArrayList<>();
+    public Mono<Void> handleNgsiLdNotification(NotificationVO notificationVO, String relevantEventTypes,
+                                         String listenerCallback, String selectedFields,
+                                         Map<String, Class<?>> entityNameToEntityClassMapping) {
+        List<Mono<TMForumNotification>> notifications = notificationVO.getData().stream().flatMap(entityVO ->
+                buildNgsiLdEventCheckers(relevantEventTypes).stream().filter(eventChecker -> eventChecker.wasFired(entityVO))
+                        .map(eventChecker -> createNotification(
+                                entityVO, eventChecker.getEventTypeSuffix(), notificationVO.getNotifiedAt(),
+                                selectedFields == null ? List.of() : Arrays.stream(selectedFields.split(",")).toList(),
+                                URI.create(listenerCallback), entityNameToEntityClassMapping))).toList();
 
-        List<NgsiLdEventChecker> ngsiLdEventCheckers = buildNgsiLdEventCheckers(relevantEventTypes);
-        notificationVO.getData().forEach(entityVO -> ngsiLdEventCheckers.forEach(eventChecker -> {
-            if (eventChecker.wasFired(entityVO)) {
-                notifications.add(createNotification(entityVO, eventChecker.getEventTypeSuffix(),
-                        notificationVO.getNotifiedAt(), selectedFields == null ? List.of()
-                                : Arrays.stream(selectedFields.split(",")).toList(),
-                        URI.create(listenerCallback)));
-            }
-        }));
-
-        notificationSender.sendNotifications(notifications);
+        return Flux.fromIterable(notifications).flatMap(x -> x).collectList()
+                .flatMap(notificationSender::sendNotifications);
     }
 
     private List<NgsiLdEventChecker> buildNgsiLdEventCheckers(String relevantEventTypes) throws EventHandlingException {

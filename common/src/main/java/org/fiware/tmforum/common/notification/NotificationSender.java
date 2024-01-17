@@ -34,7 +34,7 @@ public class NotificationSender {
         return Mono.fromDirect(this.httpClient.exchange(req, Object.class));
     }
 
-    public void sendNotifications(List<TMForumNotification> notifications) {
+    public Mono<Void> sendNotifications(List<TMForumNotification> notifications) {
         notifications
                 .forEach(notification -> {
                     Retry retry = RETRY_REGISTRY
@@ -44,5 +44,6 @@ public class NotificationSender {
                             .doOnError(e -> log.warn("Was not able to deliver notification {}.", notification, e))
                             .subscribe();
                 });
+        return Mono.empty();
     }
 }

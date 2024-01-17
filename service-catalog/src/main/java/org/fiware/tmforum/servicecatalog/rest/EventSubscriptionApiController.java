@@ -40,13 +40,19 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_SERVICE_CANDIDATE,
 			EVENT_GROUP_SERVICE_CATALOG, EVENT_GROUP_SERVICE_CATEGORY, EVENT_GROUP_SERVICE_SPECIFICATION);
+	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+		entry(ServiceCandidate.TYPE_SERVICE_CANDIDATE, ServiceCandidate.class),
+		entry(ServiceCatalog.TYPE_SERVICE_CATALOG, ServiceCatalog.class),
+		entry(ServiceCategory.TYPE_SERVICE_CATEGORY, ServiceCategory.class),
+		entry(ServiceSpecification.TYPE_SERVICE_SPECIFICATION, ServiceSpecification.class)
+	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  EventHandler eventHandler, GeneralProperties generalProperties,
 										  EntityVOMapper entityVOMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler,
-				generalProperties, entityVOMapper);
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
+				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, eventHandler, generalProperties, entityVOMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
 

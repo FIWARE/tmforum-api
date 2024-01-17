@@ -36,13 +36,17 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 		entry(EVENT_GROUP_ORGANIZATION, Organization.TYPE_ORGANIZATION)
 	);
     private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_INDIVIDUAL, EVENT_GROUP_ORGANIZATION);
+    private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+        entry(Individual.TYPE_INDIVIDUAL, Individual.class),
+        entry(Organization.TYPE_ORGANIZATION, Organization.class)
+    );
 
     public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
                                           TmForumRepository repository, TMForumMapper tmForumMapper,
                                           EventHandler eventHandler, GeneralProperties generalProperties,
                                           EntityVOMapper entityVOMapper) {
-        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler,
-                generalProperties, entityVOMapper);
+        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
+                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, eventHandler, generalProperties, entityVOMapper);
         this.tmForumMapper = tmForumMapper;
     }
 

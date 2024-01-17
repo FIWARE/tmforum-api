@@ -30,15 +30,17 @@ import java.util.*;
 @Slf4j
 public abstract class AbstractSubscriptionApiController extends AbstractApiController<TMForumSubscription> {
     private final Map<String, String> eventGroupToEntityNameMapping;
+    private final Map<String, Class<?>> entityNameToEntityClassMapping;
     private final GeneralProperties generalProperties;
     protected final EntityVOMapper entityVOMapper;
 
     public AbstractSubscriptionApiController(
             QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
-            Map<String, String> eventGroupToEntityNameMapping, EventHandler eventHandler,
-            GeneralProperties generalProperties, EntityVOMapper entityVOMapper) {
+            Map<String, String> eventGroupToEntityNameMapping, Map<String, Class<?>> entityNameToEntityClassMapping,
+            EventHandler eventHandler, GeneralProperties generalProperties, EntityVOMapper entityVOMapper) {
         super(queryParser, validationService, repository, eventHandler);
         this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
+        this.entityNameToEntityClassMapping = entityNameToEntityClassMapping;
         this.generalProperties = generalProperties;
         this.entityVOMapper = entityVOMapper;
     }
@@ -168,8 +170,9 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
             assert !notificationVO.getData().isEmpty();
 
-            eventHandler.handleNgsiLdNotification(notificationVO, eventTypes, listenerEndpoint, selectedFields);
-            return Mono.just(HttpResponse.noContent());
+            return eventHandler.handleNgsiLdNotification(notificationVO, eventTypes, listenerEndpoint, selectedFields,
+                    entityNameToEntityClassMapping)
+                    .then(Mono.just(HttpResponse.noContent()));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
