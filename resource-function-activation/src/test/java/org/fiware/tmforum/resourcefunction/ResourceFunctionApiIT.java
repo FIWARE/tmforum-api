@@ -8,37 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcefunction.api.ResourceFunctionApiTestClient;
 import org.fiware.resourcefunction.api.ResourceFunctionApiTestSpec;
-import org.fiware.resourcefunction.model.AttachmentRefOrValueVOTestExample;
-import org.fiware.resourcefunction.model.CharacteristicRelationshipVOTestExample;
-import org.fiware.resourcefunction.model.CharacteristicVOTestExample;
-import org.fiware.resourcefunction.model.ConnectionPointRefVOTestExample;
-import org.fiware.resourcefunction.model.ConnectionVOTestExample;
-import org.fiware.resourcefunction.model.ConstraintRefVOTestExample;
-import org.fiware.resourcefunction.model.FeatureRelationshipVOTestExample;
-import org.fiware.resourcefunction.model.FeatureVOTestExample;
-import org.fiware.resourcefunction.model.NoteVOTestExample;
-import org.fiware.resourcefunction.model.RelatedPartyVOTestExample;
-import org.fiware.resourcefunction.model.RelatedPlaceRefOrValueVOTestExample;
-import org.fiware.resourcefunction.model.ResourceAdministrativeStateTypeVO;
-import org.fiware.resourcefunction.model.ResourceFunctionCreateVO;
-import org.fiware.resourcefunction.model.ResourceFunctionCreateVOTestExample;
-import org.fiware.resourcefunction.model.ResourceFunctionUpdateVO;
-import org.fiware.resourcefunction.model.ResourceFunctionUpdateVOTestExample;
-import org.fiware.resourcefunction.model.ResourceFunctionVO;
-import org.fiware.resourcefunction.model.ResourceFunctionVOTestExample;
-import org.fiware.resourcefunction.model.ResourceGraphRefVOTestExample;
-import org.fiware.resourcefunction.model.ResourceGraphRelationshipVOTestExample;
-import org.fiware.resourcefunction.model.ResourceGraphVOTestExample;
-import org.fiware.resourcefunction.model.ResourceOperationalStateTypeVO;
-import org.fiware.resourcefunction.model.ResourceRefOrValueVOTestExample;
-import org.fiware.resourcefunction.model.ResourceRelationshipVOTestExample;
-import org.fiware.resourcefunction.model.ResourceSpecificationRefVOTestExample;
-import org.fiware.resourcefunction.model.ResourceStatusTypeVO;
-import org.fiware.resourcefunction.model.ResourceUsageStateTypeVO;
-import org.fiware.resourcefunction.model.ScheduleRefVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.resourcefunction.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
 import org.junit.jupiter.api.Disabled;
@@ -49,11 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,7 +54,6 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

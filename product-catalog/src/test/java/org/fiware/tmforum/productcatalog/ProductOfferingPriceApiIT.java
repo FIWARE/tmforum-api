@@ -8,26 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.ProductOfferingPriceApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingPriceApiTestSpec;
-import org.fiware.productcatalog.model.BundledProductOfferingPriceRelationshipVOTestExample;
-import org.fiware.productcatalog.model.ConstraintRefVOTestExample;
-import org.fiware.productcatalog.model.PlaceRefVOTestExample;
-import org.fiware.productcatalog.model.PricingLogicAlgorithmVO;
-import org.fiware.productcatalog.model.PricingLogicAlgorithmVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingPriceCreateVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceCreateVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingPriceRelationshipVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingPriceVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceVOTestExample;
-import org.fiware.productcatalog.model.ProductSpecificationCharacteristicValueUseVOTestExample;
-import org.fiware.productcatalog.model.TaxItemVO;
-import org.fiware.productcatalog.model.TaxItemVOTestExample;
-import org.fiware.productcatalog.model.TimePeriodVO;
-import org.fiware.productcatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.product.ProductOfferingPrice;
 import org.junit.jupiter.api.Disabled;
@@ -81,7 +65,6 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

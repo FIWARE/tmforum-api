@@ -8,26 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApiTestClient;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApiTestSpec;
-import org.fiware.resourcecatalog.model.ConstraintRefVOTestExample;
-import org.fiware.resourcecatalog.model.FeatureSpecificationCharacteristicRelationshipVOTestExample;
-import org.fiware.resourcecatalog.model.FeatureSpecificationCharacteristicVOTestExample;
-import org.fiware.resourcecatalog.model.FeatureSpecificationRelationshipVOTestExample;
-import org.fiware.resourcecatalog.model.FeatureSpecificationVO;
-import org.fiware.resourcecatalog.model.FeatureSpecificationVOTestExample;
-import org.fiware.resourcecatalog.model.RelatedPartyVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceSpecificationCharacteristicRelationshipVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceSpecificationCharacteristicVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVOTestExample;
-import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationVOTestExample;
-import org.fiware.resourcecatalog.model.TimePeriodVO;
-import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.resourcecatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.resource.ResourceSpecification;
@@ -84,7 +68,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

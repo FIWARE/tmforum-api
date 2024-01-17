@@ -1,5 +1,6 @@
 package org.fiware.tmforum.resourcefunction.rest;
 
+import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -7,9 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.resourcefunction.api.EventsSubscriptionApi;
 import org.fiware.resourcefunction.model.EventSubscriptionInputVO;
 import org.fiware.resourcefunction.model.EventSubscriptionVO;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -36,17 +38,27 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
     private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_HEAL,EVENT_GROUP_MIGRATE,
             EVENT_GROUP_MONITOR, EVENT_GROUP_RESOURCE_FUNCTION, EVENT_GROUP_SCALE);
+    private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+        entry(Heal.TYPE_HEAL, Heal.class),
+        entry(Migrate.TYPE_MIGRATE, Migrate.class),
+        entry(Monitor.TYPE_MONITOR, Monitor.class),
+        entry(ResourceFunction.TYPE_RESOURCE_FUNCTION, ResourceFunction.class),
+        entry(Scale.TYPE_SCALE, Scale.class)
+    );
 
     public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                          TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+                                          TmForumRepository repository, TMForumMapper tmForumMapper,
+                                          EventHandler eventHandler, GeneralProperties generalProperties,
+                                          EntityVOMapper entityVOMapper) {
+        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
+                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, eventHandler, generalProperties, entityVOMapper);
         this.tmForumMapper = tmForumMapper;
     }
 
     @Override
     public Mono<HttpResponse<EventSubscriptionVO>> registerListener(
             @NonNull EventSubscriptionInputVO eventSubscriptionInputVO) {
-        Subscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
+        TMForumSubscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
                 eventSubscriptionInputVO.getQuery(), EVENT_GROUPS);
 
         return create(subscription)

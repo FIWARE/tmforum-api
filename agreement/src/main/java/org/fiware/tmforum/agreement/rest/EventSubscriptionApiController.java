@@ -1,5 +1,6 @@
 package org.fiware.tmforum.agreement.rest;
 
+import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
@@ -10,9 +11,10 @@ import org.fiware.agreement.model.EventSubscriptionVO;
 import org.fiware.tmforum.agreement.TMForumMapper;
 import org.fiware.tmforum.agreement.domain.Agreement;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -35,17 +37,24 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
     private static final List<String> EVENT_GROUPS = List.of(
             EVENT_GROUP_AGREEMENT, EVENT_GROUP_AGREEMENT_SPECIFICATION);
+    private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+        entry(Agreement.TYPE_AG, Agreement.class),
+        entry(AgreementSpecification.TYPE_AGSP, AgreementSpecification.class)
+    );
 
     public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                          TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, eventHandler);
+                                          TmForumRepository repository, TMForumMapper tmForumMapper,
+                                          EventHandler eventHandler, GeneralProperties generalProperties,
+                                          EntityVOMapper entityVOMapper) {
+        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
+                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, eventHandler, generalProperties, entityVOMapper);
         this.tmForumMapper = tmForumMapper;
     }
 
     @Override
     public Mono<HttpResponse<EventSubscriptionVO>> registerListener(
             @NonNull EventSubscriptionInputVO eventSubscriptionInputVO) {
-        Subscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
+        TMForumSubscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
                 eventSubscriptionInputVO.getQuery(), EVENT_GROUPS);
 
         return create(subscription)

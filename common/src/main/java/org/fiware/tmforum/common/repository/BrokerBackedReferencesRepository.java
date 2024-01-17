@@ -19,7 +19,7 @@ public class BrokerBackedReferencesRepository extends NgsiLdBaseRepository imple
 
 	public BrokerBackedReferencesRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
 		// only used for retrieval, so no such mappers required
-		super(generalProperties, entitiesApi, null, null, null);
+		super(generalProperties, entitiesApi, null, null, null, null);
 	}
 
 	/**

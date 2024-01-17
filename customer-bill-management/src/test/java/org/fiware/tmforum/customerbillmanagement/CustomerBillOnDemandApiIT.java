@@ -64,7 +64,6 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

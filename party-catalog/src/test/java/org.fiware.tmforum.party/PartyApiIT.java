@@ -8,33 +8,14 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.party.api.IndividualApiTestClient;
 import org.fiware.party.api.OrganizationApiTestClient;
-import org.fiware.party.model.IndividualCreateVO;
-import org.fiware.party.model.IndividualCreateVOTestExample;
-import org.fiware.party.model.IndividualVO;
-import org.fiware.party.model.IndividualVOTestExample;
-import org.fiware.party.model.OrganizationChildRelationshipVO;
-import org.fiware.party.model.OrganizationChildRelationshipVOTestExample;
-import org.fiware.party.model.OrganizationCreateVO;
-import org.fiware.party.model.OrganizationCreateVOTestExample;
-import org.fiware.party.model.OrganizationParentRelationshipVO;
-import org.fiware.party.model.OrganizationParentRelationshipVOTestExample;
-import org.fiware.party.model.OrganizationRefVO;
-import org.fiware.party.model.OrganizationRefVOTestExample;
-import org.fiware.party.model.OrganizationUpdateVO;
-import org.fiware.party.model.OrganizationUpdateVOTestExample;
-import org.fiware.party.model.OrganizationVO;
-import org.fiware.party.model.OrganizationVOTestExample;
-import org.fiware.party.model.RelatedPartyVO;
-import org.fiware.party.model.RelatedPartyVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.party.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Matchers.any;
@@ -61,7 +42,6 @@ public class PartyApiIT extends AbstractApiIT {
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

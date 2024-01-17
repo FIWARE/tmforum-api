@@ -2,7 +2,7 @@ package org.fiware.tmforum.productordering;
 
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.productordering.model.*;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.productordering.domain.*;
 import org.mapstruct.Mapper;
@@ -77,7 +77,7 @@ public interface TMForumMapper {
 	TaskStateTypeVO map(TaskState taskState);
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(Subscription subscription);
+	EventSubscriptionVO map(TMForumSubscription subscription);
 
 	default URL map(String value) {
 		if (value == null) {

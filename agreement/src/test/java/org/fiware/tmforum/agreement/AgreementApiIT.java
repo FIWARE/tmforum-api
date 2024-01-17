@@ -68,7 +68,6 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
 
                 when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
                 when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-                when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
                 return eventHandler;
         }

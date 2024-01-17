@@ -8,19 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.servicecatalog.api.ServiceCatalogApiTestClient;
 import org.fiware.servicecatalog.api.ServiceCatalogApiTestSpec;
-import org.fiware.servicecatalog.model.RelatedPartyVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCatalogCreateVO;
-import org.fiware.servicecatalog.model.ServiceCatalogCreateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCatalogUpdateVO;
-import org.fiware.servicecatalog.model.ServiceCatalogUpdateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCatalogVO;
-import org.fiware.servicecatalog.model.ServiceCatalogVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCategoryRefVOTestExample;
-import org.fiware.servicecatalog.model.TimePeriodVO;
-import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.servicecatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCatalog;
 import org.junit.jupiter.api.Disabled;
@@ -76,7 +67,6 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

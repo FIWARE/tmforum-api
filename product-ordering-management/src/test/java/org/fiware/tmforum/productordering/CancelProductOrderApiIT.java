@@ -9,16 +9,10 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productordering.api.CancelProductOrderApiTestClient;
 import org.fiware.productordering.api.CancelProductOrderApiTestSpec;
 import org.fiware.productordering.api.ProductOrderApiTestClient;
-import org.fiware.productordering.model.CancelProductOrderCreateVO;
-import org.fiware.productordering.model.CancelProductOrderCreateVOTestExample;
-import org.fiware.productordering.model.CancelProductOrderVO;
-import org.fiware.productordering.model.CancelProductOrderVOTestExample;
-import org.fiware.productordering.model.ProductOrderCreateVO;
-import org.fiware.productordering.model.ProductOrderCreateVOTestExample;
-import org.fiware.productordering.model.ProductOrderRefVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.productordering.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.productordering.domain.CancelProductOrder;
 import org.junit.jupiter.api.AfterEach;
@@ -70,7 +64,6 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

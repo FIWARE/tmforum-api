@@ -8,29 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourceinventory.api.ResourceApiTestClient;
 import org.fiware.resourceinventory.api.ResourceApiTestSpec;
-import org.fiware.resourceinventory.model.CharacteristicRelationshipVOTestExample;
-import org.fiware.resourceinventory.model.CharacteristicVO;
-import org.fiware.resourceinventory.model.CharacteristicVOTestExample;
-import org.fiware.resourceinventory.model.FeatureRelationshipVOTestExample;
-import org.fiware.resourceinventory.model.FeatureVO;
-import org.fiware.resourceinventory.model.FeatureVOTestExample;
-import org.fiware.resourceinventory.model.NoteVO;
-import org.fiware.resourceinventory.model.NoteVOTestExample;
-import org.fiware.resourceinventory.model.RelatedPartyVOTestExample;
-import org.fiware.resourceinventory.model.RelatedPlaceRefOrValueVOTestExample;
-import org.fiware.resourceinventory.model.ResourceCreateVO;
-import org.fiware.resourceinventory.model.ResourceCreateVOTestExample;
-import org.fiware.resourceinventory.model.ResourceOperationalStateTypeVO;
-import org.fiware.resourceinventory.model.ResourceSpecificationRefVOTestExample;
-import org.fiware.resourceinventory.model.ResourceStatusTypeVO;
-import org.fiware.resourceinventory.model.ResourceUpdateVO;
-import org.fiware.resourceinventory.model.ResourceUpdateVOTestExample;
-import org.fiware.resourceinventory.model.ResourceUsageStateTypeVO;
-import org.fiware.resourceinventory.model.ResourceVO;
-import org.fiware.resourceinventory.model.ResourceVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.resourceinventory.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.resource.Resource;
@@ -79,7 +60,6 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}
