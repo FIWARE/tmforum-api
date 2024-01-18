@@ -6,18 +6,19 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.usagemanagement.api.EventsSubscriptionApi;
-import org.fiware.usagemanagement.model.EventSubscriptionInputVO;
-import org.fiware.usagemanagement.model.EventSubscriptionVO;
-import org.fiware.tmforum.usagemanagement.TMForumMapper;
-import org.fiware.tmforum.usagemanagement.domain.Usage;
-import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
+import org.fiware.tmforum.usagemanagement.TMForumMapper;
+import org.fiware.tmforum.usagemanagement.domain.Usage;
+import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
+import org.fiware.usagemanagement.api.EventsSubscriptionApi;
+import org.fiware.usagemanagement.model.EventSubscriptionInputVO;
+import org.fiware.usagemanagement.model.EventSubscriptionVO;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -44,10 +45,11 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 
     public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
                                           TmForumRepository repository, TMForumMapper tmForumMapper,
-                                          EventHandler eventHandler, GeneralProperties generalProperties,
-                                          EntityVOMapper entityVOMapper) {
+                                          TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
+                                          GeneralProperties generalProperties, EntityVOMapper entityVOMapper) {
         super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, eventHandler, generalProperties, entityVOMapper);
+                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+                generalProperties, entityVOMapper);
         this.tmForumMapper = tmForumMapper;
     }
 

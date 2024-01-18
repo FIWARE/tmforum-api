@@ -81,6 +81,7 @@
         <!-- lazy dev -->
         <version.org.mapstruct>1.4.2.Final</version.org.mapstruct>
         <version.org.projectlombok>1.18.22</version.org.projectlombok>
+        <version.com.google.guava>31.1-jre</version.com.google.guava>
 
         <!-- logging -->
         <version.io.kokuwa.micronaut.logging>3.1.0</version.io.kokuwa.micronaut.logging>

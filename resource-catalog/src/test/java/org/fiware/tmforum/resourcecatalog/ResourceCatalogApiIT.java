@@ -11,7 +11,7 @@ import org.fiware.resourcecatalog.api.ResourceCatalogApiTestSpec;
 import org.fiware.resourcecatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
 import org.junit.jupiter.api.Disabled;
@@ -61,9 +61,9 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 		return clock;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());

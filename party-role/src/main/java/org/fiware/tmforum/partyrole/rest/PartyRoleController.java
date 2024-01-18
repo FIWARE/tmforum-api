@@ -1,10 +1,10 @@
 package org.fiware.tmforum.partyrole.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.Controller;
+import lombok.extern.slf4j.Slf4j;
 import org.fiware.partyRole.api.PartyRoleApi;
 import org.fiware.partyRole.model.PartyRoleCreateVO;
 import org.fiware.partyRole.model.PartyRoleUpdateVO;
@@ -12,7 +12,7 @@ import org.fiware.partyRole.model.PartyRoleVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
@@ -20,19 +20,19 @@ import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.partyrole.TMForumMapper;
 import org.fiware.tmforum.partyrole.domain.PartyRole;
-
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Controller("${general.basepath:/}")
-public class PartyRoleController extends AbstractApiController<PartyRole> implements PartyRoleApi{
+public class PartyRoleController extends AbstractApiController<PartyRole> implements PartyRoleApi {
     private final TMForumMapper tmForumMapper;
-    public PartyRoleController(QueryParser queryParser, ReferenceValidationService validationService, TMForumMapper mapper,TmForumRepository repository, EventHandler eventHandler) {
+    public PartyRoleController(QueryParser queryParser, ReferenceValidationService validationService,
+                               TMForumMapper mapper, TmForumRepository repository, TMForumEventHandler eventHandler) {
         super(queryParser, validationService, repository, eventHandler);
                 this.tmForumMapper = mapper;
     }

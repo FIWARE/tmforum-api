@@ -13,7 +13,7 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillPresentationMedia;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -57,9 +57,9 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
         return BillPresentationMedia.TYPE_BILLPM;
     }
 
-    @MockBean(EventHandler.class)
-    public EventHandler eventHandler() {
-        EventHandler eventHandler = mock(EventHandler.class);
+    @MockBean(TMForumEventHandler.class)
+    public TMForumEventHandler eventHandler() {
+        TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());

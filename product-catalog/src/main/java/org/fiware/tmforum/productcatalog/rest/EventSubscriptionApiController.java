@@ -10,7 +10,8 @@ import org.fiware.productcatalog.model.EventSubscriptionInputVO;
 import org.fiware.productcatalog.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
@@ -52,10 +53,11 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 
     public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
                                           TmForumRepository repository, TMForumMapper tmForumMapper,
-                                          EventHandler eventHandler, GeneralProperties generalProperties,
-                                          EntityVOMapper entityVOMapper) {
+                                          TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
+                                          GeneralProperties generalProperties, EntityVOMapper entityVOMapper) {
         super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, eventHandler, generalProperties, entityVOMapper);
+                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+                generalProperties, entityVOMapper);
         this.tmForumMapper = tmForumMapper;
     }
 

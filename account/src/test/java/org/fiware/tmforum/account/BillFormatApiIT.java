@@ -13,7 +13,7 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillFormat;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -57,9 +57,9 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
         return BillFormat.TYPE_BILLF;
     }
 
-    @MockBean(EventHandler.class)
-    public EventHandler eventHandler() {
-        EventHandler eventHandler = mock(EventHandler.class);
+    @MockBean(TMForumEventHandler.class)
+    public TMForumEventHandler eventHandler() {
+        TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
@@ -372,15 +372,6 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
         testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
         
         return testEntries.stream();
-    }
-
-    @Disabled
-    @ParameterizedTest
-    @MethodSource("provideInvalidUpdates")
-    public void patchBillFormat400(String message, BillFormatUpdateVO invalidUpdateVO) throws Exception {
-        this.message = message;
-        this.billFormatUpdateVO = invalidUpdateVO;
-        patchBillFormat400();
     }
     
     @Override

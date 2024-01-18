@@ -16,7 +16,8 @@ import org.fiware.tmforum.common.domain.subscription.*;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.notification.EventConstants;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
@@ -33,16 +34,19 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     private final Map<String, Class<?>> entityNameToEntityClassMapping;
     private final GeneralProperties generalProperties;
     protected final EntityVOMapper entityVOMapper;
+    private final NgsiLdEventHandler ngsiLdEventHandler;
 
     public AbstractSubscriptionApiController(
             QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
             Map<String, String> eventGroupToEntityNameMapping, Map<String, Class<?>> entityNameToEntityClassMapping,
-            EventHandler eventHandler, GeneralProperties generalProperties, EntityVOMapper entityVOMapper) {
-        super(queryParser, validationService, repository, eventHandler);
+            TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
+            GeneralProperties generalProperties, EntityVOMapper entityVOMapper) {
+        super(queryParser, validationService, repository, tmForumEventHandler);
         this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
         this.entityNameToEntityClassMapping = entityNameToEntityClassMapping;
         this.generalProperties = generalProperties;
         this.entityVOMapper = entityVOMapper;
+        this.ngsiLdEventHandler = ngsiLdEventHandler;
     }
 
     @CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME, all = true)
@@ -152,7 +156,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     private URI getCallbackURI() {
-        return URI.create(generalProperties.getServerHost() + generalProperties.getBasePath() +
+        return URI.create(generalProperties.getServerHost() + generalProperties.getBasepath() +
                 EventConstants.SUBSCRIPTION_CALLBACK_PATH);
     }
 
@@ -170,7 +174,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
             assert !notificationVO.getData().isEmpty();
 
-            return eventHandler.handleNgsiLdNotification(notificationVO, eventTypes, listenerEndpoint, selectedFields,
+            return ngsiLdEventHandler.handle(notificationVO, eventTypes, listenerEndpoint, selectedFields,
                     entityNameToEntityClassMapping)
                     .then(Mono.just(HttpResponse.noContent()));
         } catch (JsonProcessingException e) {

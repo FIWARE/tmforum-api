@@ -10,7 +10,7 @@ import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -36,7 +36,7 @@ public abstract class AbstractApiController<T> {
 	protected final QueryParser queryParser;
 	protected final ReferenceValidationService validationService;
 	protected final TmForumRepository repository;
-	protected final EventHandler eventHandler;
+	protected final TMForumEventHandler eventHandler;
 
 	protected Mono<T> getCheckingMono(T entityToCheck, List<List<? extends ReferencedEntity>> referencedEntities) {
 		Mono<T> checkingMono = Mono.just(entityToCheck);

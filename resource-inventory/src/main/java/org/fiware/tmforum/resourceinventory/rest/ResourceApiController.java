@@ -9,31 +9,21 @@ import org.fiware.resourceinventory.api.ResourceApi;
 import org.fiware.resourceinventory.model.ResourceCreateVO;
 import org.fiware.resourceinventory.model.ResourceUpdateVO;
 import org.fiware.resourceinventory.model.ResourceVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.resource.Characteristic;
-import org.fiware.tmforum.resource.CharacteristicRelationship;
-import org.fiware.tmforum.resource.Feature;
-import org.fiware.tmforum.resource.FeatureRelationship;
-import org.fiware.tmforum.resource.Note;
-import org.fiware.tmforum.resource.Resource;
-import org.fiware.tmforum.resource.ResourceRelationship;
+import org.fiware.tmforum.resource.*;
 import org.fiware.tmforum.resourceinventory.TMForumMapper;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -43,7 +33,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 
 	public ResourceApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository resourceInventoryRepository,
-			TMForumMapper tmForumMapper, EventHandler eventHandler) {
+			TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, resourceInventoryRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}
