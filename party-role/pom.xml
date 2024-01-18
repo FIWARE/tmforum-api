@@ -12,7 +12,7 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF669-PartyRole-v4.0.0.swagger.json</tmforum.api.url>
+        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF669_Party_Role_Management_API_swagger_v4.0.0.json</tmforum.api.url>
         <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF669-PartyRole-v4.0.0.zip</module.ctk.url>
         <module.ctk.script-folder>TMF669-PartyRole</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>

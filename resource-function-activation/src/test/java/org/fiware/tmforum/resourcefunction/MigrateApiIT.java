@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,7 +75,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 		assertEquals(HttpStatus.CREATED, migrateVOHttpResponse.getStatus(), message);
 		String migrateId = migrateVOHttpResponse.body().getId();
 
-		expectedMigrateVO.id(migrateId).href(migrateId);
+		expectedMigrateVO.id(migrateId).href(URI.create(migrateId));
 
 		assertEquals(expectedMigrateVO, migrateVOHttpResponse.body(), message);
 	}
@@ -246,7 +247,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 			MigrateVO migrateVO = MigrateVOTestExample.build();
 			migrateVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.addConnectionPoint(null)
 					.removeConnectionPoint(null)
 					.place(null)
@@ -378,7 +379,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 
 		MigrateVO expectedMigrate = MigrateVOTestExample.build()
 				.id(migrateId)
-				.href(migrateId)
+				.href(URI.create(migrateId))
 				.place(null)
 				.resourceFunction(null)
 				.addConnectionPoint(null)

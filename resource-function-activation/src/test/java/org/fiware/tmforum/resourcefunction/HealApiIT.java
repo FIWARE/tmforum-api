@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), message);
 		String healId = healVOHttpResponse.body().getId();
 
-		expectedHealVO.id(healId).href(healId);
+		expectedHealVO.id(healId).href(URI.create(healId));
 
 		assertEquals(expectedHealVO, healVOHttpResponse.body(), message);
 	}
@@ -219,7 +220,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 			HealVO healVO = HealVOTestExample.build();
 			healVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.healPolicy(null)
 					.resourceFunction(null);
 			expectedHeals.add(healVO);
@@ -344,7 +345,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), "The initial create should be successfully.");
 		String healId = healVOHttpResponse.body().getId();
 
-		HealVO expectedHeal = HealVOTestExample.build().id(healId).href(healId).healPolicy(null).resourceFunction(null);
+		HealVO expectedHeal = HealVOTestExample.build().id(healId).href(URI.create(healId)).healPolicy(null).resourceFunction(null);
 
 		HttpResponse<HealVO> retreiveResponse = callAndCatch(() -> healApiTestClient.retrieveHeal(healId, null));
 		assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");
