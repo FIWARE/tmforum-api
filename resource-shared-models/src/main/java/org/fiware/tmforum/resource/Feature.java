@@ -18,6 +18,7 @@ import java.util.List;
 public class Feature {
 
     private String id;
+    private URI href;
     private Boolean isBundle;
     private Boolean isEnabled;
     private String name;

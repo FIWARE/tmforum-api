@@ -14,7 +14,7 @@
 
     <properties>
         <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF635-UsageManagement-v4.0.0.swagger.json
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF635_Usage_Management_API_swagger_v4.0.0.json
         </tmforum.api.url>
         <module.ctk.url>
             https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF635-Usage_V4-0-0-fixed.zip
