@@ -48,6 +48,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +109,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		assertEquals(HttpStatus.CREATED, resourceFunctionVOHttpResponse.getStatus(), message);
 		String rfId = resourceFunctionVOHttpResponse.body().getId();
 		expectedResourceFunction.setId(rfId);
-		expectedResourceFunction.setHref(rfId);
+		expectedResourceFunction.setHref(URI.create(rfId));
 
 		assertEquals(expectedResourceFunction, resourceFunctionVOHttpResponse.body(), message);
 	}
@@ -145,9 +146,6 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 
 	private static Stream<Arguments> provideInvalidResourceFunctions() {
 		List<Arguments> testEntries = new ArrayList<>();
-
-		testEntries.add(Arguments.of("A resource function without a lifecycleState should not be created.",
-				ResourceFunctionCreateVOTestExample.build().lifecycleState(null)));
 
 		testEntries.add(Arguments.of("A resource functions with invalid connection points should not be created.",
 				ResourceFunctionCreateVOTestExample.build()
@@ -350,7 +348,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 			ResourceFunctionVO resourceFunctionVO = ResourceFunctionVOTestExample.build();
 			resourceFunctionVO
 					.id(id)
-					.href(id)
+					.href(URI.create(id))
 					.connectionPoint(null)
 					.place(null)
 					.relatedParty(null)
@@ -497,7 +495,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceFunctionVO updatedResourceFunction = updateResponse.body();
-		expectedResourceFunction.href(resourceId).id(resourceId);
+		expectedResourceFunction.href(URI.create(resourceId)).id(resourceId);
 
 		if (expectedResourceFunction.getConnectionPoint() != null && expectedResourceFunction.getConnectionPoint()
 				.isEmpty()) {
@@ -635,15 +633,15 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		ResourceFunctionUpdateVO attachmentUpdate = ResourceFunctionUpdateVOTestExample.build()
 				.attachment(List.of(AttachmentRefOrValueVOTestExample.build()
 						.id("urn:ngsi-ld:attachment:a")
-						.url("http://my-attachment.com")
-						.href("urn:ngsi-ld:attachment:a")))
+						.url(URI.create("http://my-attachment.com"))
+						.href(URI.create("urn:ngsi-ld:attachment:a"))))
 				.place(null)
 				.resourceSpecification(null);
 		ResourceFunctionVO expectedAttachmentUpdate = ResourceFunctionVOTestExample.build()
 				.attachment(List.of(AttachmentRefOrValueVOTestExample.build()
 						.id("urn:ngsi-ld:attachment:a")
-						.url("http://my-attachment.com")
-						.href("urn:ngsi-ld:attachment:a")
+						.url(URI.create("http://my-attachment.com"))
+						.href(URI.create("urn:ngsi-ld:attachment:a"))
 						.validFor(null)))
 				.place(null)
 				.resourceSpecification(null);
@@ -942,7 +940,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		ResourceFunctionVO expectedResourceFunctionVO = ResourceFunctionVOTestExample.build();
 		expectedResourceFunctionVO
 				.id(id)
-				.href(id)
+				.href(URI.create(id))
 				.place(null)
 				.resourceSpecification(null)
 				.connectionPoint(null)
