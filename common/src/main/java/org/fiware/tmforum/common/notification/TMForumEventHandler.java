@@ -39,7 +39,7 @@ public class TMForumEventHandler extends EventHandler {
         this.repository = repository;
     }
 
-    @Cacheable(CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
+    @Cacheable(CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME)
     public Mono<List<TMForumSubscription>> getSubscriptions(EventDetails eventDetails) {
         return repository.findEntities(
                 DEFAULT_OFFSET,

@@ -83,6 +83,13 @@ public abstract class NgsiLdBaseRepository {
         return asyncRetrieveEntityById(entityId, generalProperties.getTenant(), null, null, null, getLinkHeader());
     }
 
+    @Cacheable(CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
+    public Mono<SubscriptionVO> retrieveSubscriptionById(URI subscriptionId) {
+        return subscriptionsApi
+                .retrieveSubscriptionById(subscriptionId)
+                .onErrorResume(this::handleClientSubscriptionException);
+    }
+
     /**
      * Patch an entity, using the "overwrite" option.
      *
@@ -155,17 +162,28 @@ public abstract class NgsiLdBaseRepository {
      * @param tmForumSubscriptionId id of the tm-forum-subscription to delete the related ngsild-subscription
      * @return an empty mono
      */
-    public Mono<Void> deleteDomainSubscription(URI tmForumSubscriptionId) {
+    public Mono<Void> deleteDomainSubscriptionByTmForumSubscription(URI tmForumSubscriptionId) {
         return retrieveEntityById(tmForumSubscriptionId)
                 .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, TMForumSubscription.class))
                 .flatMap(tmForumSubscription ->
-                        subscriptionsApi.removeSubscription(tmForumSubscription.getSubscription().getId()))
+                        deleteDomainSubscription(tmForumSubscription.getSubscription().getId()));
+    }
+
+    /**
+     * Delete a domain subscription
+     *
+     * @param subscriptionId id of the ngsild-subscription to be deleted
+     * @return an empty mono
+     */
+    @CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
+    public Mono<Void> deleteDomainSubscription(URI subscriptionId) {
+        return subscriptionsApi.removeSubscription(subscriptionId)
                 .onErrorResume(t -> {
                     if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
                         throw new DeletionException(String.format("Was not able to delete %s, since it does not exist.",
-                                tmForumSubscriptionId), DeletionExceptionReason.NOT_FOUND);
+                                subscriptionId), DeletionExceptionReason.NOT_FOUND);
                     }
-                    throw new DeletionException(String.format("Was not able to delete %s.", tmForumSubscriptionId),
+                    throw new DeletionException(String.format("Was not able to delete %s.", subscriptionId),
                             t, DeletionExceptionReason.UNKNOWN);
                 });
     }
@@ -191,10 +209,17 @@ public abstract class NgsiLdBaseRepository {
     private Mono<EntityVO> asyncRetrieveEntityById(URI entityId, String ngSILDTenant, String attrs, String type, String options, String link) {
         return entitiesApi
                 .retrieveEntityById(entityId, ngSILDTenant, attrs, type, options, link)
-                .onErrorResume(this::handleClientException);
+                .onErrorResume(this::handleClientEntityException);
     }
 
-    private Mono<EntityVO> handleClientException(Throwable e) {
+    private Mono<EntityVO> handleClientEntityException(Throwable e) {
+        if (e instanceof HttpClientResponseException httpException && httpException.getStatus().equals(HttpStatus.NOT_FOUND)) {
+            return Mono.empty();
+        }
+        throw new NgsiLdRepositoryException("Was not able to successfully call the broker.", Optional.of(e));
+    }
+
+    private Mono<SubscriptionVO> handleClientSubscriptionException(Throwable e) {
         if (e instanceof HttpClientResponseException httpException && httpException.getStatus().equals(HttpStatus.NOT_FOUND)) {
             return Mono.empty();
         }

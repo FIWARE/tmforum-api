@@ -4,5 +4,5 @@ import org.fiware.ngsi.model.EntityVO;
 
 public interface NgsiLdEventChecker {
     boolean wasFired(EntityVO entityVO);
-    String eventType();
+    String eventTypeSuffix();
 }

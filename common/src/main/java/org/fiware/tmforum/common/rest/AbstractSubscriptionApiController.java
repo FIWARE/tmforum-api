@@ -4,9 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Consumes;
+import io.micronaut.http.annotation.Post;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
@@ -26,10 +27,15 @@ import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 public abstract class AbstractSubscriptionApiController extends AbstractApiController<TMForumSubscription> {
+    private static final String RECEIVER_INFO_LISTENER_ENDPOINT = "Listener-Endpoint";
+
     private final Map<String, String> eventGroupToEntityNameMapping;
     private final Map<String, Class<?>> entityNameToEntityClassMapping;
     private final GeneralProperties generalProperties;
@@ -49,7 +55,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         this.ngsiLdEventHandler = ngsiLdEventHandler;
     }
 
-    @CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME, all = true)
+    @CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
     protected Mono<TMForumSubscription> create(TMForumSubscription tmForumSubscription) {
         return findExistingTMForumSubscription(tmForumSubscription)
                 .switchIfEmpty(
@@ -131,27 +137,18 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         NotificationParams notificationParams = new NotificationParams();
         notificationParams.setAttributes(Set.copyOf(subscriptionQuery.getFields()));
         notificationParams.setFormat(EventConstants.NOTIFICATION_FORMAT);
-        notificationParams.setEndpoint(buildEndpoint(callback, subscriptionQuery));
+        notificationParams.setEndpoint(
+                new Endpoint(
+                    getCallbackURI(),
+                    EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
+                    List.of(new KeyValuePair(RECEIVER_INFO_LISTENER_ENDPOINT, callback))));
         return notificationParams;
     }
 
-    private Endpoint buildEndpoint(String callback, SubscriptionQuery subscriptionQuery) {
-        List<KeyValuePair> receiverInfo = new ArrayList<>();
-        receiverInfo.add(new KeyValuePair("Listener-Endpoint", callback));
-        receiverInfo.add(new KeyValuePair("Event-Types", String.join(",", subscriptionQuery.getEventTypes())));
-        if (!subscriptionQuery.getFields().isEmpty()) {
-            receiverInfo.add(new KeyValuePair("Selected-Fields", String.join(",", subscriptionQuery.getFields())));
-        }
-        return new Endpoint(
-                getCallbackURI(),
-                EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
-                receiverInfo);
-    }
-
     @Override
-    @CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME, all = true)
+    @CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
     protected Mono<HttpResponse<Object>> delete(String id) {
-        return repository.deleteDomainSubscription(URI.create(id))
+        return repository.deleteDomainSubscriptionByTmForumSubscription(URI.create(id))
                 .then(super.delete(id));
     }
 
@@ -162,20 +159,19 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
     @Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)
     @Consumes({"application/json;charset=utf-8"})
-    public Mono<HttpResponse<Void>> callback(@NonNull @QueryValue String subscriptionId,
-                                             @NonNull @Body String payload,
-                                             @Header("Listener-Endpoint") String listenerEndpoint,
-                                             @Nullable @Header("Selected-Fields") String selectedFields,
-                                             @Header("Event-Types") String eventTypes) {
-        log.debug(String.format("Callback for subscription %s with notification %s", subscriptionId, payload));
+    public Mono<HttpResponse<Void>> callback(@NonNull @Body String payload) {
+        log.debug("Callback for NGSI-LD subscription");
 
         try {
             NotificationVO notificationVO = this.entityVOMapper.readNotificationFromJSON(payload);
 
+            log.debug(String.format("Callback for subscription %s with notification %s", notificationVO.getSubscriptionId(), payload));
+
             assert !notificationVO.getData().isEmpty();
 
-            return ngsiLdEventHandler.handle(notificationVO, eventTypes, listenerEndpoint, selectedFields,
-                    entityNameToEntityClassMapping)
+            return this.repository.retrieveSubscriptionById(notificationVO.getSubscriptionId())
+                    .flatMap(subscriptionVO -> ngsiLdEventHandler.handle(notificationVO, subscriptionVO,
+                            entityNameToEntityClassMapping))
                     .then(Mono.just(HttpResponse.noContent()));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
