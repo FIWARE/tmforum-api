@@ -4,7 +4,7 @@ import org.fiware.agreement.model.*;
 import org.fiware.tmforum.agreement.domain.Agreement;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
 import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -43,7 +43,7 @@ public interface TMForumMapper {
 	AgreementSpecificationVO map(AgreementSpecification agreementspecUpdateVO);
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(Subscription subscription);
+	EventSubscriptionVO map(TMForumSubscription subscription);
 
 	TimePeriod map(TimePeriodVO value);
 

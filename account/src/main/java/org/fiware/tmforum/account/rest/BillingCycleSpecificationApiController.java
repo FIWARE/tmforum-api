@@ -7,17 +7,17 @@ import org.fiware.account.api.BillingCycleSpecificationApi;
 import org.fiware.account.model.BillingCycleSpecificationCreateVO;
 import org.fiware.account.model.BillingCycleSpecificationUpdateVO;
 import org.fiware.account.model.BillingCycleSpecificationVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.account.TMForumMapper;
+import org.fiware.tmforum.account.domain.BillingCycleSpecification;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.account.TMForumMapper;
-import org.fiware.tmforum.account.domain.BillingCycleSpecification;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -32,7 +32,8 @@ public class BillingCycleSpecificationApiController extends AbstractApiControlle
     private final TMForumMapper tmForumMapper;
 
     public BillingCycleSpecificationApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                                  TmForumRepository productBillingCycleSpecificationRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                                                  TmForumRepository productBillingCycleSpecificationRepository,
+                                                  TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
         super(queryParser, validationService, productBillingCycleSpecificationRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }

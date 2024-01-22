@@ -2,7 +2,7 @@ package org.fiware.tmforum.servicecatalog;
 
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.servicecatalog.model.*;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.ResourceSpecificationRef;
 import org.fiware.tmforum.service.ServiceCandidate;
@@ -77,7 +77,7 @@ public interface TMForumMapper {
     ServiceSpecification map(ServiceSpecificationUpdateVO serviceSpecificationUpdateVO, String id);
 
     @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(Subscription subscription);
+    EventSubscriptionVO map(TMForumSubscription subscription);
 
     default URL map(String value) {
         if (value == null) {

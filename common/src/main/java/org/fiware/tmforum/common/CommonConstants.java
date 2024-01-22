@@ -25,6 +25,11 @@ public class CommonConstants {
 	public static final String ENTITIES_CACHE_NAME = "entities";
 
 	/**
+	 * Name for the tmforum-subscriptions cache
+	 */
+	public static final String TMFORUM_SUBSCRIPTIONS_CACHE_NAME = "tmforum-subscriptions";
+
+	/**
 	 * Name for the subscriptions cache
 	 */
 	public static final String SUBSCRIPTIONS_CACHE_NAME = "subscriptions";

@@ -8,21 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.CatalogApiTestClient;
 import org.fiware.productcatalog.api.CatalogApiTestSpec;
-import org.fiware.productcatalog.model.CatalogCreateVO;
-import org.fiware.productcatalog.model.CatalogCreateVOTestExample;
-import org.fiware.productcatalog.model.CatalogUpdateVO;
-import org.fiware.productcatalog.model.CatalogUpdateVOTestExample;
-import org.fiware.productcatalog.model.CatalogVO;
-import org.fiware.productcatalog.model.CatalogVOTestExample;
-import org.fiware.productcatalog.model.CategoryRefVO;
-import org.fiware.productcatalog.model.CategoryRefVOTestExample;
-import org.fiware.productcatalog.model.RelatedPartyVO;
-import org.fiware.productcatalog.model.RelatedPartyVOTestExample;
-import org.fiware.productcatalog.model.TimePeriodVO;
-import org.fiware.productcatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.junit.jupiter.api.Disabled;
@@ -62,13 +51,12 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 		this.catalogApiTestClient = catalogApiTestClient;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

@@ -7,17 +7,17 @@ import org.fiware.account.api.PartyAccountApi;
 import org.fiware.account.model.PartyAccountCreateVO;
 import org.fiware.account.model.PartyAccountUpdateVO;
 import org.fiware.account.model.PartyAccountVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.account.TMForumMapper;
+import org.fiware.tmforum.account.domain.PartyAccount;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.account.TMForumMapper;
-import org.fiware.tmforum.account.domain.PartyAccount;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -34,7 +34,8 @@ public class PartyAccountApiController extends AbstractApiController<PartyAccoun
 
 
     public PartyAccountApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                     TmForumRepository productPartyAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                                     TmForumRepository productPartyAccountRepository, TMForumMapper tmForumMapper,
+                                     TMForumEventHandler eventHandler) {
         super(queryParser, validationService, productPartyAccountRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }

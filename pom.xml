@@ -81,6 +81,7 @@
         <!-- lazy dev -->
         <version.org.mapstruct>1.4.2.Final</version.org.mapstruct>
         <version.org.projectlombok>1.18.22</version.org.projectlombok>
+        <version.com.google.guava>31.1-jre</version.com.google.guava>
 
         <!-- logging -->
         <version.io.kokuwa.micronaut.logging>3.1.0</version.io.kokuwa.micronaut.logging>
@@ -92,7 +93,7 @@
         <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>0.5.0</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.1.0</version.io.github.wistefan.ngsi-ld-mapping-java>
 
         <!-- caching -->
         <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>

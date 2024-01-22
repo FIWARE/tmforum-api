@@ -4,10 +4,10 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import org.fiware.resourcefunction.api.MonitorApi;
 import org.fiware.resourcefunction.model.MonitorVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -26,7 +26,7 @@ public class MonitorApiController extends AbstractApiController<Monitor> impleme
 
 	public MonitorApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository resourceCatalogRepository,
-			TMForumMapper tmForumMapper, EventHandler eventHandler) {
+			TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}

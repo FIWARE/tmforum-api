@@ -8,33 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productinventory.api.ProductApiTestClient;
 import org.fiware.productinventory.api.ProductApiTestSpec;
-import org.fiware.productinventory.model.AgreementItemRefVOTestExample;
-import org.fiware.productinventory.model.BillingAccountRefVOTestExample;
-import org.fiware.productinventory.model.CharacteristicVOTestExample;
-import org.fiware.productinventory.model.PriceAlterationVOTestExample;
-import org.fiware.productinventory.model.ProductCreateVO;
-import org.fiware.productinventory.model.ProductCreateVOTestExample;
-import org.fiware.productinventory.model.ProductOfferingPriceRefVOTestExample;
-import org.fiware.productinventory.model.ProductOfferingRefVOTestExample;
-import org.fiware.productinventory.model.ProductPriceVO;
-import org.fiware.productinventory.model.ProductPriceVOTestExample;
-import org.fiware.productinventory.model.ProductRefOrValueVOTestExample;
-import org.fiware.productinventory.model.ProductRelationshipVOTestExample;
-import org.fiware.productinventory.model.ProductSpecificationRefVOTestExample;
-import org.fiware.productinventory.model.ProductStatusTypeVO;
-import org.fiware.productinventory.model.ProductTermVOTestExample;
-import org.fiware.productinventory.model.ProductUpdateVO;
-import org.fiware.productinventory.model.ProductUpdateVOTestExample;
-import org.fiware.productinventory.model.ProductVO;
-import org.fiware.productinventory.model.ProductVOTestExample;
-import org.fiware.productinventory.model.RelatedPartyVOTestExample;
-import org.fiware.productinventory.model.RelatedPlaceRefOrValueVOTestExample;
-import org.fiware.productinventory.model.RelatedProductOrderItemVOTestExample;
-import org.fiware.productinventory.model.ResourceRefVOTestExample;
-import org.fiware.productinventory.model.ServiceRefVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.productinventory.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.product.Product;
@@ -44,7 +21,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
-
 
 import java.net.URI;
 import java.time.Instant;
@@ -78,13 +54,12 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		this.productApiTestClient = productApiTestClient;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

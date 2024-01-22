@@ -8,12 +8,12 @@ import org.fiware.productcatalog.api.ProductOfferingPriceApi;
 import org.fiware.productcatalog.model.ProductOfferingPriceCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceUpdateVO;
 import org.fiware.productcatalog.model.ProductOfferingPriceVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -23,12 +23,7 @@ import org.fiware.tmforum.productcatalog.TMForumMapper;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -40,7 +35,7 @@ public class ProductOfferingPriceApiController extends AbstractProductCatalogApi
 
 	public ProductOfferingPriceApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock, EventHandler eventHandler) {
+			Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;

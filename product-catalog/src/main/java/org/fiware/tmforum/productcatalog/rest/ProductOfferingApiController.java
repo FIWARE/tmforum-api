@@ -8,11 +8,11 @@ import org.fiware.productcatalog.api.ProductOfferingApi;
 import org.fiware.productcatalog.model.ProductOfferingCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingUpdateVO;
 import org.fiware.productcatalog.model.ProductOfferingVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -36,7 +36,7 @@ public class ProductOfferingApiController extends AbstractProductCatalogApiContr
 
 	public ProductOfferingApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock, EventHandler eventHandler) {
+			Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;

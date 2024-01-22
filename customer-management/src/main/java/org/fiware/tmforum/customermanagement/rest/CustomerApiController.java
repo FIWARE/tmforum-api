@@ -9,11 +9,11 @@ import org.fiware.customermanagement.api.CustomerApi;
 import org.fiware.customermanagement.model.CustomerCreateVO;
 import org.fiware.customermanagement.model.CustomerUpdateVO;
 import org.fiware.customermanagement.model.CustomerVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -35,7 +35,7 @@ public class CustomerApiController extends AbstractApiController<Customer> imple
 
 	public CustomerApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository customerManagementRepository,
-			TMForumMapper tmForumMapper, EventHandler eventHandler) {
+			TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, customerManagementRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}

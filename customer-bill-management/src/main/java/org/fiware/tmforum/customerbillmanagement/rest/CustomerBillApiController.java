@@ -8,12 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.customerbillmanagement.api.CustomerBillApi;
 import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.domain.TaxItem;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -36,7 +36,7 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 	private final Clock clock;
 
 	public CustomerBillApiController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, EventHandler eventHandler) {
+			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
