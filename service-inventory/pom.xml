@@ -13,8 +13,8 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF638-ServiceInventory-v4.0.0.swagger.json</tmforum.api.url>
-        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF638-Service_Inventory.zip</module.ctk.url>
+        <tmforum.api.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF638_Service_Inventory_Management_API_swagger_gitv4.0.0.json</tmforum.api.url>
+        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF638-ServiceInventory_V4-0-0.zip</module.ctk.url>
         <module.ctk.script-folder>TMF638-ServiceInventory</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/serviceInventoryManagement/v4</module.ctk.base-path>
