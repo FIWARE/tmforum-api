@@ -14,7 +14,7 @@
 
     <properties>
         <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632-Party-v4.0.0.swagger.json
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632_Party_Management_API_swagger_v4.0.0.json
         </tmforum.api.url>
         <module.ctk.url>
             https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF632-Party-v4.0.0.zip
