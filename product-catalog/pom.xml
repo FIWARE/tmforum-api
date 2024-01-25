@@ -14,7 +14,7 @@
 
     <properties>
         <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620_Product_Catalog_Management_API_swagger_v4.1.0.json
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620_Product_Catalog_Management_API_v4.1.0_swagger.json
         </tmforum.api.url>
         <!-- seems to be unavailable right now -->
         <module.ctk.url>
