@@ -81,6 +81,7 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
     }
 
     @Override
+    @Test
     public void createBillPresentationMedia201() throws Exception {
 
         HttpResponse<BillPresentationMediaVO> billPresentationMediaVOHttpResponse = callAndCatch(
@@ -275,6 +276,7 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
     }
 
     @Override
+    @Test
     public void listBillPresentationMedia400() throws Exception {
         HttpResponse<List<BillPresentationMediaVO>> badRequestResponse = callAndCatch(
                 () -> billPresentationMediaApiTestClient.listBillPresentationMedia(null, -1, null));
