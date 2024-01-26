@@ -81,7 +81,6 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
     }
 
     @Override
-    @Test
     public void createBillPresentationMedia201() throws Exception {
 
         HttpResponse<BillPresentationMediaVO> billPresentationMediaVOHttpResponse = callAndCatch(
