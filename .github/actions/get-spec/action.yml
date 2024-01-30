@@ -1,6 +1,11 @@
 name: Get OpenAPI Specs
 description: Try to download the OpenAPI Specs for TMForum API.
 
+inputs:
+  github-token:
+      description: Github token to be used for creating PR-Comments
+      required: true
+
 runs:
   using: composite
 
@@ -33,6 +38,5 @@ runs:
       uses: thollander/actions-comment-pull-request@2.4.3
       with:
         filePath: ./.github/message.md
-        GITHUB_TOKEN:
-          ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: inputs.github-token
 

@@ -59,6 +59,8 @@ jobs:
 
       - name: Update Specs
         uses: ./.github/actions/get-spec
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-java@v1
         with:
