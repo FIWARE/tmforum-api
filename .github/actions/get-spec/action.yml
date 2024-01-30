@@ -11,17 +11,20 @@ runs:
 
     - id: get-specs
       name: Download Specifications
+      shell: bash
       run: |
         ./.github/get-spec.sh
 
     - id: check-results
       name: Check results of the spec download
+      shell: bash
       run: |
         failed=$(jq length ./.github/not-available.json)
         echo "failed="$failed >> "$GITHUB_OUTPUT"
 
     - id: generate-message
       if: ${{ steps.check-results.outputs.failed }} != 0
+      shell: bash
       run: |
         ./.github/generate-message.sh       
 
