@@ -8,21 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.CategoryApiTestClient;
 import org.fiware.productcatalog.api.CategoryApiTestSpec;
-import org.fiware.productcatalog.model.CategoryCreateVO;
-import org.fiware.productcatalog.model.CategoryCreateVOTestExample;
-import org.fiware.productcatalog.model.CategoryVO;
-import org.fiware.productcatalog.model.CategoryVOTestExample;
-import org.fiware.productcatalog.model.CategoryRefVO;
-import org.fiware.productcatalog.model.CategoryRefVOTestExample;
-import org.fiware.productcatalog.model.CategoryUpdateVO;
-import org.fiware.productcatalog.model.CategoryUpdateVOTestExample;
-import org.fiware.productcatalog.model.ProductOfferingRefVO;
-import org.fiware.productcatalog.model.ProductOfferingRefVOTestExample;
-import org.fiware.productcatalog.model.TimePeriodVO;
-import org.fiware.productcatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.product.Category;
 import org.junit.jupiter.api.Disabled;
@@ -70,13 +59,12 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 		return clock;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

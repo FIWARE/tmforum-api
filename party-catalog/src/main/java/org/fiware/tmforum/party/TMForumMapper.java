@@ -3,7 +3,7 @@ package org.fiware.tmforum.party;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.party.model.*;
 import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.individual.LanguageAbility;
@@ -52,7 +52,7 @@ public interface TMForumMapper {
 	LanguageAbilityVO map(LanguageAbility languageAbility);
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(Subscription subscription);
+	EventSubscriptionVO map(TMForumSubscription subscription);
 
 	default OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
 		if (organizationParentRelationship == null) {

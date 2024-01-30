@@ -8,33 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.party.api.OrganizationApiTestClient;
 import org.fiware.party.api.OrganizationApiTestSpec;
-import org.fiware.party.model.AttachmentRefOrValueVO;
-import org.fiware.party.model.AttachmentRefOrValueVOTestExample;
-import org.fiware.party.model.CharacteristicVO;
-import org.fiware.party.model.CharacteristicVOTestExample;
-import org.fiware.party.model.ContactMediumVO;
-import org.fiware.party.model.ContactMediumVOTestExample;
-import org.fiware.party.model.OrganizationCreateVO;
-import org.fiware.party.model.OrganizationCreateVOTestExample;
-import org.fiware.party.model.OrganizationUpdateVO;
-import org.fiware.party.model.OrganizationUpdateVOTestExample;
-import org.fiware.party.model.OrganizationVO;
-import org.fiware.party.model.OrganizationVOTestExample;
-import org.fiware.party.model.OtherNameOrganizationVO;
-import org.fiware.party.model.OtherNameOrganizationVOTestExample;
-import org.fiware.party.model.PartyCreditProfileVO;
-import org.fiware.party.model.PartyCreditProfileVOTestExample;
-import org.fiware.party.model.RelatedPartyVO;
-import org.fiware.party.model.RelatedPartyVOTestExample;
-import org.fiware.party.model.TaxDefinitionVO;
-import org.fiware.party.model.TaxDefinitionVOTestExample;
-import org.fiware.party.model.TaxExemptionCertificateVO;
-import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
-import org.fiware.party.model.TimePeriodVO;
-import org.fiware.party.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.party.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.party.domain.organization.Organization;
 import org.junit.jupiter.api.Disabled;
@@ -45,11 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,13 +55,12 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		this.generalProperties = generalProperties;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}
