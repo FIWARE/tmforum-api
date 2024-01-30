@@ -107,16 +107,37 @@ spec:
       serviceAccountName: default
       containers:
         - name: scorpio
+          image: "scorpiobroker/all-in-one-runner:java-4.1.11"
           imagePullPolicy: IfNotPresent
-          image: "scorpiobroker/all-in-one-runner:java-kafka-4.1.4"
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /q/health
+              port: 9090
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /q/health
+              port: 9090
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 6
           env:
             - name: DBHOST
               value: postgis
-            - name: BUSHOST
-              value: kafka
-            - name: QUARKUS_LOG_LEVEL
-              value: DEBUG
-          ports:
-            - name: http
-              containerPort: 9090
-              protocol: TCP
+            - name: DBPASS
+              value: ngb
+            - name: DBUSER
+              value: ngb
+            - name: POSTGRES_DB
+              value: ngb
+            - name: DBHOST
+              value: postgis
+            - name: POSTGRES_PASSWORD
+              value: ngb
+            - name: POSTGRES_USER
+              value: ngb
