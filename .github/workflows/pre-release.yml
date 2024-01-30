@@ -14,7 +14,7 @@ env:
 
 concurrency:
   # Only cancel jobs for PR updates
-  group: ci-${{ github.ref }}
+  group: pre-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
