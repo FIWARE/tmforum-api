@@ -35,7 +35,7 @@ runs:
 
     - name: Comment PR
       if: ${{ steps.check-results.outputs.failed }} != 0
-      uses: thollander/actions-comment-pull-request@2.4.3
+      uses: thollander/actions-comment-pull-request@v2.4.3
       with:
         filePath: ./.github/message.md
         GITHUB_TOKEN: inputs.github-token
