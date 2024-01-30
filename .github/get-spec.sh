@@ -1,7 +1,5 @@
 #!/bin/bash
 
-rm ./not-available.json
-
 elements=""
 while read -r i; do
   module=$(echo $i | jq -c -r '.module');
