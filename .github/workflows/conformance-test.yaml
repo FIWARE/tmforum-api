@@ -1,7 +1,6 @@
 name: Conformance Test
 
 on:
-  push
 
 jobs:
   conformance:
