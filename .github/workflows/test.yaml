@@ -12,6 +12,11 @@ on:
     branches:
       - main
 
+concurrency:
+  # Only cancel jobs for PR updates
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   it:
     runs-on: ubuntu-latest

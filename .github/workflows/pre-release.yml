@@ -12,6 +12,11 @@ env:
   REGISTRY: quay.io
   REPOSITORY: fiware
 
+concurrency:
+  # Only cancel jobs for PR updates
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   generate-version:
