@@ -19,6 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         broker: [orion-ld, scorpio]
+        cache: [in-memory, redis]
 
     steps:
       - uses: actions/checkout@v2
@@ -31,4 +32,4 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test verify -Dbroker=${{matrix.broker}}
+          mvn clean test integration-test verify -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
