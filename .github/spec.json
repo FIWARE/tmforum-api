@@ -1,0 +1,59 @@
+[
+  {
+    "module": "account",
+    "url": "test",
+    "unusedForTest": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF666_Account_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "agreement",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF651_Agreement_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "customer-bill-management",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF678_Customer_Bill_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "customer-management",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF629_Customer_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "party-catalog",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632_Party_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "party-role",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF669_Party_Role_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "product-catalog",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620_Product_Catalog_Management_API_v4.1.0_swagger.json"
+  },
+  {
+    "module": "product-inventory",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF637_Product_Inventory_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "product-ordering-management",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF622_Product_Ordering_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "resource-catalog",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF634_Resource_Catalog_Management_API_v4.1.0_swagger.json"
+  },
+  {
+    "module": "resource-function-activation",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF664_Resource_Function_Activation_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "resource-inventory",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF639_Resource_Inventory_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "service-catalog",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF633_Service_Catalog_Management_API_v4.0.0_swagger.json"
+  },
+  {
+    "module": "usage-management",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF635_Usage_Management_API_v4.0.0_swagger.json"
+  }
+]

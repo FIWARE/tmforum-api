@@ -48,7 +48,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update Specs
+        uses: ./.github/actions/get-spec
 
       - uses: actions/setup-java@v1
         with:

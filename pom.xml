@@ -131,14 +131,7 @@
         <cache>in-memory</cache>
 
         <!-- tm-forum api links. -->
-        <tmforum.api.url>API-URL</tmforum.api.url>
-        <!-- will be moved to the modules -->
-        <tmforum.product-catalogue-api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json
-        </tmforum.product-catalogue-api.url>
-        <tmforum.agreement-api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF651-Agreement-v4.0.0.swagger.json
-        </tmforum.agreement-api.url>
+        <tmforum.api.url>${project.parent.basedir}/api/tm-forum/${project.artifactId}/api.json</tmforum.api.url>
 
         <!-- tm-forum conformance test config -->
         <module.ctk.url>module-specific-url</module.ctk.url>

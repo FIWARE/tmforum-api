@@ -13,9 +13,7 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620_Product_Catalog_Management_API_swagger_v4.1.0.json
-        </tmforum.api.url>
+        <tmforum.api.url>${project.parent.basedir}/api/tm-forum/${project.artifactId}/api.json</tmforum.api.url>
         <!-- seems to be unavailable right now -->
         <module.ctk.url>
             https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF620_Product_catalog_V4-0-0.zip

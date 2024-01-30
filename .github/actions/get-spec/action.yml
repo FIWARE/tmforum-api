@@ -1,0 +1,35 @@
+name: Get OpenAPI Specs
+description: Try to download the OpenAPI Specs for TMForum API.
+
+runs:
+  using: composite
+
+  steps:
+
+    - id: setup-jq
+      uses: dcarbone/install-jq-action@v2.1.0
+
+    - id: get-specs
+      name: Download Specifications
+      run: |
+        ./.github/get-spec.sh
+
+    - id: check-results
+      name: Check results of the spec download
+      run: |
+        failed=$(jq length ./.github/not-available.json)
+        echo "failed="$failed >> "$GITHUB_OUTPUT"
+
+    - id: generate-message
+      if: ${{ steps.check-results.outputs.failed }} != 0
+      run: |
+        ./.github/generate-message.sh       
+
+    - name: Comment PR
+      if: ${{ steps.check-results.outputs.failed }} != 0
+      uses: thollander/actions-comment-pull-request@2.4.3
+      with:
+        filePath: ./.github/message.md
+        GITHUB_TOKEN:
+          ${{ secrets.GITHUB_TOKEN }}
+
