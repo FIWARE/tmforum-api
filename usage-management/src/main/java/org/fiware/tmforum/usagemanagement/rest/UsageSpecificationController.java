@@ -1,33 +1,30 @@
 package org.fiware.tmforum.usagemanagement.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
-
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.usagemanagement.api.UsageSpecificationApi;
-import org.fiware.usagemanagement.model.UsageSpecificationCreateVO;
-import org.fiware.usagemanagement.model.UsageSpecificationUpdateVO;
-import org.fiware.usagemanagement.model.UsageSpecificationVO;
-import org.fiware.tmforum.usagemanagement.TMForumMapper;
-import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
-import org.fiware.tmforum.common.exception.TmForumException;
-import org.fiware.tmforum.common.exception.TmForumExceptionReason;
-import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.common.repository.TmForumRepository;
-import org.fiware.tmforum.common.rest.AbstractApiController;
-import org.fiware.tmforum.common.validation.ReferenceValidationService;
-import org.fiware.tmforum.common.validation.ReferencedEntity;
-
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
+import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.common.rest.AbstractApiController;
+import org.fiware.tmforum.common.validation.ReferenceValidationService;
+import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.usagemanagement.TMForumMapper;
+import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
+import org.fiware.usagemanagement.api.UsageSpecificationApi;
+import org.fiware.usagemanagement.model.UsageSpecificationCreateVO;
+import org.fiware.usagemanagement.model.UsageSpecificationUpdateVO;
+import org.fiware.usagemanagement.model.UsageSpecificationVO;
 import reactor.core.publisher.Mono;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 
 @Slf4j
@@ -38,7 +35,7 @@ public class UsageSpecificationController extends AbstractApiController<UsageSpe
         private final TMForumMapper tmForumMapper;
 
         public UsageSpecificationController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
-                                            TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                                            TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
                 super(queryParser, validationService, repository, eventHandler);
                 this.tmForumMapper = tmForumMapper;
         }

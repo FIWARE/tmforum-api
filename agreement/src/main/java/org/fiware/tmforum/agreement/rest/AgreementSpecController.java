@@ -1,33 +1,31 @@
 package org.fiware.tmforum.agreement.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
-
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.Controller;
+import lombok.extern.slf4j.Slf4j;
 import org.fiware.agreement.api.AgreementSpecificationApi;
 import org.fiware.agreement.model.AgreementSpecificationCreateVO;
 import org.fiware.agreement.model.AgreementSpecificationUpdateVO;
 import org.fiware.agreement.model.AgreementSpecificationVO;
 import org.fiware.tmforum.agreement.TMForumMapper;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.Controller;
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -37,7 +35,7 @@ public class AgreementSpecController extends AbstractApiController<AgreementSpec
         private final TMForumMapper tmForumMapper;
 
         public AgreementSpecController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
-                        TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                        TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
                 super(queryParser, validationService, repository, eventHandler);
                 this.tmForumMapper = tmForumMapper;
         }

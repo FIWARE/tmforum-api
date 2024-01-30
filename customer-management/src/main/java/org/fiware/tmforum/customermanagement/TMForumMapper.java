@@ -5,7 +5,7 @@ import org.fiware.customermanagement.model.CustomerCreateVO;
 import org.fiware.customermanagement.model.CustomerUpdateVO;
 import org.fiware.customermanagement.model.CustomerVO;
 import org.fiware.customermanagement.model.EventSubscriptionVO;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customermanagement.domain.Customer;
 import org.mapstruct.Mapper;
@@ -35,7 +35,7 @@ public interface TMForumMapper {
     Customer map(CustomerUpdateVO customerUpdateVO, String id);
 
     @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(Subscription subscription);
+    EventSubscriptionVO map(TMForumSubscription subscription);
 
     default URL map(String value) {
         if (value == null) {

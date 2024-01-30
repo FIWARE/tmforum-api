@@ -7,17 +7,17 @@ import org.fiware.account.api.SettlementAccountApi;
 import org.fiware.account.model.SettlementAccountCreateVO;
 import org.fiware.account.model.SettlementAccountUpdateVO;
 import org.fiware.account.model.SettlementAccountVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.account.TMForumMapper;
+import org.fiware.tmforum.account.domain.SettlementAccount;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.account.TMForumMapper;
-import org.fiware.tmforum.account.domain.SettlementAccount;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -34,7 +34,8 @@ public class SettlementAccountApiController extends AbstractApiController<Settle
 
 
     public SettlementAccountApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                          TmForumRepository productSettlementAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                                          TmForumRepository productSettlementAccountRepository,
+                                          TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
         super(queryParser, validationService, productSettlementAccountRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }

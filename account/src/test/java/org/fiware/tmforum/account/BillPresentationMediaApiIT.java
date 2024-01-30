@@ -4,18 +4,17 @@ package org.fiware.tmforum.account;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.fiware.ngsi.api.EntitiesApiClient;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.fiware.account.api.BillPresentationMediaApiTestSpec;
 import org.fiware.account.api.BillPresentationMediaApiTestClient;
+import org.fiware.account.api.BillPresentationMediaApiTestSpec;
+import org.fiware.account.model.*;
+import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillPresentationMedia;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.fiware.account.model.*;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,7 +22,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,13 +57,12 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
         return BillPresentationMedia.TYPE_BILLPM;
     }
 
-    @MockBean(EventHandler.class)
-    public EventHandler eventHandler() {
-        EventHandler eventHandler = mock(EventHandler.class);
+    @MockBean(TMForumEventHandler.class)
+    public TMForumEventHandler eventHandler() {
+        TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-        when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
         return eventHandler;
     }

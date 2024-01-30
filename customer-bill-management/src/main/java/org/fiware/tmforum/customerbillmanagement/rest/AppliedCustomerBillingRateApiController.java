@@ -7,10 +7,10 @@ import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApi;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -31,7 +31,7 @@ public class AppliedCustomerBillingRateApiController extends AbstractApiControll
 	public AppliedCustomerBillingRateApiController(
 			QueryParser queryParser,
 			ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+			TmForumRepository repository, TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}

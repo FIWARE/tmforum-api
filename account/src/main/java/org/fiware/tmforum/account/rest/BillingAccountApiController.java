@@ -4,21 +4,20 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.account.api.BillingAccountApi;
-import org.fiware.account.api.BillingAccountApi;
 import org.fiware.account.model.BillingAccountCreateVO;
 import org.fiware.account.model.BillingAccountUpdateVO;
 import org.fiware.account.model.BillingAccountVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.account.TMForumMapper;
+import org.fiware.tmforum.account.domain.BillingAccount;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.account.TMForumMapper;
-import org.fiware.tmforum.account.domain.BillingAccount;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -34,7 +33,8 @@ public class BillingAccountApiController extends AbstractApiController<BillingAc
     private final TMForumMapper tmForumMapper;
 
     public BillingAccountApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                       TmForumRepository productBillingAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                                       TmForumRepository productBillingAccountRepository, TMForumMapper tmForumMapper,
+                                       TMForumEventHandler eventHandler) {
         super(queryParser, validationService, productBillingAccountRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }
