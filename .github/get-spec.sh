@@ -5,6 +5,7 @@ while read -r i; do
   module=$(echo $i | jq -c -r '.module');
   url=$(echo $i | jq -c -r '.url');
   mkdir -p ../api/tm-forum/$module
+  echo "Module: $module Url: $url"
   result=$(curl -s -o /dev/null -w "%{http_code}" $url)
   if [ $result != 200 ]; then
     elements="${elements} ${i}"
