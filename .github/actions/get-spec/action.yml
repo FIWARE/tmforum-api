@@ -18,7 +18,8 @@ runs:
       name: Download Specifications
       shell: bash
       run: |
-        ./.github/get-spec.sh
+        cd .github/
+        ./get-spec.sh
 
     - id: check-results
       name: Check results of the spec download
@@ -31,7 +32,8 @@ runs:
       if: ${{ steps.check-results.outputs.failed }} != 0
       shell: bash
       run: |
-        ./.github/generate-message.sh       
+        cd .github/
+        ./generate-message.sh       
 
     - name: Comment PR
       if: ${{ steps.check-results.outputs.failed }} != 0
