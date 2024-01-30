@@ -40,5 +40,5 @@ runs:
       uses: thollander/actions-comment-pull-request@v2.4.3
       with:
         filePath: ./.github/message.md
-        GITHUB_TOKEN: inputs.github-token
+        GITHUB_TOKEN: ${{ inputs.github-token }}
 
