@@ -1,8 +1,7 @@
 [
   {
     "module": "account",
-    "url": "test",
-    "unusedForTest": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF666_Account_Management_API_v4.0.0_swagger.json"
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF666_Account_Management_API_v4.0.0_swagger.json"
   },
   {
     "module": "agreement",
