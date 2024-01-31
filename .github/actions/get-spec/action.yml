@@ -32,6 +32,7 @@ runs:
       if: ${{ steps.check-results.outputs.failed }} != 0
       shell: bash
       run: |
+        echo "Failed " ${{ steps.check-results.outputs.failed }}
         cd .github/
         ./generate-message.sh       
 
