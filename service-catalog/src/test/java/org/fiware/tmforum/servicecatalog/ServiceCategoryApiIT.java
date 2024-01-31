@@ -8,19 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.servicecatalog.api.ServiceCategoryApiTestClient;
 import org.fiware.servicecatalog.api.ServiceCategoryApiTestSpec;
-import org.fiware.servicecatalog.model.ServiceCandidateRefVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCategoryCreateVO;
-import org.fiware.servicecatalog.model.ServiceCategoryCreateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCategoryRefVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCategoryUpdateVO;
-import org.fiware.servicecatalog.model.ServiceCategoryUpdateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceCategoryVO;
-import org.fiware.servicecatalog.model.ServiceCategoryVOTestExample;
-import org.fiware.servicecatalog.model.TimePeriodVO;
-import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.servicecatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.service.ServiceCategory;
 import org.junit.jupiter.api.Disabled;
@@ -70,13 +61,12 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		return clock;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

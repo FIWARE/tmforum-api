@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ customer-bill-management, customer-management, party-catalog, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
+        module: [ customer-bill-management, customer-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
 
     steps:
       - uses: actions/checkout@v2

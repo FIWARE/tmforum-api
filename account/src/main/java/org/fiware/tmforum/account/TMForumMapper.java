@@ -1,12 +1,10 @@
 package org.fiware.tmforum.account;
 
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.fiware.tmforum.common.domain.TimePeriod;
-import io.github.wistefan.mapping.MappingException;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.account.model.*;
 import org.fiware.tmforum.account.domain.*;
 import java.net.MalformedURLException;
@@ -125,7 +123,7 @@ public interface TMForumMapper {
     SettlementAccountVO map(SettlementAccountUpdateVO settlementAccountUpdateVO, String id);
 
     @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(Subscription subscription);
+    EventSubscriptionVO map(TMForumSubscription subscription);
 
     TimePeriod map(TimePeriodVO value);
 

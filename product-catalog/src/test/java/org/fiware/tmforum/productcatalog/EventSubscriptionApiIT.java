@@ -13,7 +13,7 @@ import org.fiware.productcatalog.model.EventSubscriptionInputVOTestExample;
 import org.fiware.productcatalog.model.EventSubscriptionVO;
 import org.fiware.productcatalog.model.EventSubscriptionVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.junit.jupiter.api.Disabled;
@@ -54,7 +54,7 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 
     @Override
     protected String getEntityType() {
-        return Subscription.TYPE_SUBSCRIPTION;
+        return TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION;
     }
 
     @ParameterizedTest

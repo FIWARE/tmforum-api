@@ -9,11 +9,11 @@ import org.fiware.servicecatalog.api.ServiceCategoryApi;
 import org.fiware.servicecatalog.model.ServiceCategoryCreateVO;
 import org.fiware.servicecatalog.model.ServiceCategoryUpdateVO;
 import org.fiware.servicecatalog.model.ServiceCategoryVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -37,7 +37,7 @@ public class ServiceCategoryApiController extends AbstractApiController<ServiceC
 
 	public ServiceCategoryApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository serviceCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock, EventHandler eventHandler) {
+			Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, serviceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;

@@ -8,31 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.servicecatalog.api.ServiceSpecificationApiTestClient;
 import org.fiware.servicecatalog.api.ServiceSpecificationApiTestSpec;
-import org.fiware.servicecatalog.model.CharacteristicSpecificationRelationshipVOTestExample;
-import org.fiware.servicecatalog.model.CharacteristicSpecificationVO;
-import org.fiware.servicecatalog.model.CharacteristicSpecificationVOTestExample;
-import org.fiware.servicecatalog.model.ConstraintRefVOTestExample;
-import org.fiware.servicecatalog.model.EntitySpecificationRelationshipVOTestExample;
-import org.fiware.servicecatalog.model.FeatureSpecificationCharacteristicRelationshipVOTestExample;
-import org.fiware.servicecatalog.model.FeatureSpecificationCharacteristicVOTestExample;
-import org.fiware.servicecatalog.model.FeatureSpecificationRelationshipVOTestExample;
-import org.fiware.servicecatalog.model.FeatureSpecificationVO;
-import org.fiware.servicecatalog.model.FeatureSpecificationVOTestExample;
-import org.fiware.servicecatalog.model.RelatedPartyVOTestExample;
-import org.fiware.servicecatalog.model.ResourceSpecificationRefVOTestExample;
-import org.fiware.servicecatalog.model.ServiceLevelSpecificationRefVOTestExample;
-import org.fiware.servicecatalog.model.ServiceSpecRelationshipVOTestExample;
-import org.fiware.servicecatalog.model.ServiceSpecificationCreateVO;
-import org.fiware.servicecatalog.model.ServiceSpecificationCreateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceSpecificationUpdateVO;
-import org.fiware.servicecatalog.model.ServiceSpecificationUpdateVOTestExample;
-import org.fiware.servicecatalog.model.ServiceSpecificationVO;
-import org.fiware.servicecatalog.model.ServiceSpecificationVOTestExample;
-import org.fiware.servicecatalog.model.TimePeriodVO;
-import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.servicecatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
@@ -77,13 +56,12 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		return clock;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

@@ -7,23 +7,22 @@ import org.fiware.account.api.FinancialAccountApi;
 import org.fiware.account.model.FinancialAccountCreateVO;
 import org.fiware.account.model.FinancialAccountUpdateVO;
 import org.fiware.account.model.FinancialAccountVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.tmforum.account.TMForumMapper;
+import org.fiware.tmforum.account.domain.FinancialAccount;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.account.TMForumMapper;
-import org.fiware.tmforum.account.domain.FinancialAccount;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -33,7 +32,8 @@ public class FinancialAccountApiController extends AbstractApiController<Financi
     private final TMForumMapper tmForumMapper;
 
     public FinancialAccountApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                         TmForumRepository productFinancialAccountRepository, TMForumMapper tmForumMapper, EventHandler eventHandler) {
+                                         TmForumRepository productFinancialAccountRepository,
+                                         TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
         super(queryParser, validationService, productFinancialAccountRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }

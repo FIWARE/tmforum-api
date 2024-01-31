@@ -1,9 +1,25 @@
 package org.fiware.tmforum.agreement;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.fiware.agreement.api.AgreementApiTestSpec;
+import org.fiware.agreement.api.AgreementSpecificationApiTestClient;
+import org.fiware.agreement.model.*;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.agreement.domain.AgreementSpecification;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -13,39 +29,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.test.annotation.MockBean;
-import org.fiware.agreement.api.AgreementApiTestSpec;
-import org.fiware.agreement.api.AgreementSpecificationApiTestClient;
-import org.fiware.agreement.model.AgreementSpecificationCreateVO;
-import org.fiware.agreement.model.AgreementSpecificationCreateVOTestExample;
-import org.fiware.agreement.model.AgreementSpecificationRelationshipVOTestExample;
-import org.fiware.agreement.model.AgreementSpecificationUpdateVO;
-import org.fiware.agreement.model.AgreementSpecificationUpdateVOTestExample;
-import org.fiware.agreement.model.AgreementSpecificationVO;
-import org.fiware.agreement.model.AgreementSpecificationVOTestExample;
-import org.fiware.agreement.model.CategoryRefVO;
-import org.fiware.agreement.model.CategoryRefVOTestExample;
-import org.fiware.agreement.model.RelatedPartyVOTestExample;
-import org.fiware.agreement.model.TimePeriodVO;
-import org.fiware.agreement.model.TimePeriodVOTestExample;
-import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.agreement.domain.AgreementSpecification;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import reactor.core.publisher.Mono;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.agreement" })
 public class AgreementSpecificationApiIT extends AbstractApiIT implements AgreementApiTestSpec {
@@ -75,13 +62,12 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
                 return AgreementSpecification.TYPE_AGSP;
         }
 
-        @MockBean(EventHandler.class)
-        public EventHandler eventHandler() {
-                EventHandler eventHandler = mock(EventHandler.class);
+        @MockBean(TMForumEventHandler.class)
+        public TMForumEventHandler eventHandler() {
+                TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
                 when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
                 when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-                when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
                 return eventHandler;
         }

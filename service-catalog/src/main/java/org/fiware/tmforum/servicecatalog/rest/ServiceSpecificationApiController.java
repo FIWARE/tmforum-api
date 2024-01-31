@@ -9,35 +9,25 @@ import org.fiware.servicecatalog.api.ServiceSpecificationApi;
 import org.fiware.servicecatalog.model.ServiceSpecificationCreateVO;
 import org.fiware.servicecatalog.model.ServiceSpecificationUpdateVO;
 import org.fiware.servicecatalog.model.ServiceSpecificationVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.domain.ConstraintRef;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resource.FeatureSpecificationCharacteristicRelationship;
 import org.fiware.tmforum.resource.ResourceSpecificationRef;
-import org.fiware.tmforum.service.AssociationSpecificationRef;
-import org.fiware.tmforum.service.CharacteristicSpecification;
-import org.fiware.tmforum.service.CharacteristicSpecificationRelationship;
-import org.fiware.tmforum.service.EntitySpecificationRelationship;
-import org.fiware.tmforum.service.FeatureSpecification;
+import org.fiware.tmforum.service.*;
 import org.fiware.tmforum.servicecatalog.TMForumMapper;
-import org.fiware.tmforum.service.FeatureSpecificationCharacteristic;
-import org.fiware.tmforum.service.FeatureSpecificationRelationship;
 import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -49,7 +39,7 @@ public class ServiceSpecificationApiController extends AbstractApiController<Ser
 
 	public ServiceSpecificationApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository serviceCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock, EventHandler eventHandler) {
+			Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, serviceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;

@@ -8,17 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcefunction.api.HealApiTestClient;
 import org.fiware.resourcefunction.api.HealApiTestSpec;
-import org.fiware.resourcefunction.model.CharacteristicVOTestExample;
-import org.fiware.resourcefunction.model.HealCreateVO;
-import org.fiware.resourcefunction.model.HealCreateVOTestExample;
-import org.fiware.resourcefunction.model.HealPolicyRefVOTestExample;
-import org.fiware.resourcefunction.model.HealVO;
-import org.fiware.resourcefunction.model.HealVOTestExample;
-import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
-import org.fiware.resourcefunction.model.TaskStateTypeVO;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.resourcefunction.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.resourcefunction.domain.Heal;
 import org.junit.jupiter.api.Disabled;
@@ -57,13 +50,12 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		this.healApiTestClient = healApiTestClient;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

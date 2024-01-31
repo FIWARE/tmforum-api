@@ -5,7 +5,7 @@ import org.fiware.resourceinventory.model.EventSubscriptionVO;
 import org.fiware.resourceinventory.model.ResourceCreateVO;
 import org.fiware.resourceinventory.model.ResourceUpdateVO;
 import org.fiware.resourceinventory.model.ResourceVO;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.Resource;
 import org.mapstruct.Mapper;
@@ -35,7 +35,7 @@ public interface TMForumMapper {
     Resource map(ResourceUpdateVO resourceUpdateVO, String id);
 
     @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(Subscription subscription);
+    EventSubscriptionVO map(TMForumSubscription subscription);
 
     default URL map(String value) {
         if (value == null) {

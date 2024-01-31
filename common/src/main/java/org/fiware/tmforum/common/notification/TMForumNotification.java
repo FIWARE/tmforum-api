@@ -4,4 +4,4 @@ import org.fiware.tmforum.common.domain.subscription.Event;
 
 import java.net.URI;
 
-public record Notification(URI callback, Event event) {}
+public record TMForumNotification(URI callback, Event event) {}

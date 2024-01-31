@@ -8,39 +8,10 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.party.api.IndividualApiTestClient;
 import org.fiware.party.api.IndividualApiTestSpec;
-import org.fiware.party.model.AttachmentRefOrValueVO;
-import org.fiware.party.model.AttachmentRefOrValueVOTestExample;
-import org.fiware.party.model.ContactMediumVOTestExample;
-import org.fiware.party.model.DisabilityVO;
-import org.fiware.party.model.DisabilityVOTestExample;
-import org.fiware.party.model.ExternalReferenceVOTestExample;
-import org.fiware.party.model.IndividualCreateVO;
-import org.fiware.party.model.IndividualCreateVOTestExample;
-import org.fiware.party.model.IndividualIdentificationVO;
-import org.fiware.party.model.IndividualIdentificationVOTestExample;
-import org.fiware.party.model.IndividualUpdateVO;
-import org.fiware.party.model.IndividualUpdateVOTestExample;
-import org.fiware.party.model.IndividualVO;
-import org.fiware.party.model.IndividualVOTestExample;
-import org.fiware.party.model.LanguageAbilityVO;
-import org.fiware.party.model.LanguageAbilityVOTestExample;
-import org.fiware.party.model.OtherNameIndividualVO;
-import org.fiware.party.model.OtherNameIndividualVOTestExample;
-import org.fiware.party.model.PartyCreditProfileVO;
-import org.fiware.party.model.PartyCreditProfileVOTestExample;
-import org.fiware.party.model.RelatedPartyVO;
-import org.fiware.party.model.RelatedPartyVOTestExample;
-import org.fiware.party.model.SkillVO;
-import org.fiware.party.model.SkillVOTestExample;
-import org.fiware.party.model.TaxDefinitionVO;
-import org.fiware.party.model.TaxDefinitionVOTestExample;
-import org.fiware.party.model.TaxExemptionCertificateVO;
-import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
-import org.fiware.party.model.TimePeriodVO;
-import org.fiware.party.model.TimePeriodVOTestExample;
-import org.fiware.tmforum.common.notification.EventHandler;
+import org.fiware.party.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.junit.jupiter.api.Disabled;
@@ -51,11 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,13 +55,12 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		this.generalProperties = generalProperties;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

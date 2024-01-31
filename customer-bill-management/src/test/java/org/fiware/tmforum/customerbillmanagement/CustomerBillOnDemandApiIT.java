@@ -7,17 +7,11 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.customerbillmanagement.api.CustomerBillOnDemandApiTestClient;
 import org.fiware.customerbillmanagement.api.CustomerBillOnDemandApiTestSpec;
-import org.fiware.customerbillmanagement.model.BillRefVOTestExample;
-import org.fiware.customerbillmanagement.model.BillingAccountRefVOTestExample;
-import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVO;
-import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVOTestExample;
-import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
-import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVOTestExample;
-import org.fiware.customerbillmanagement.model.RelatedPartyRefVOTestExample;
+import org.fiware.customerbillmanagement.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand;
 import org.junit.jupiter.api.Disabled;
@@ -58,13 +52,12 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 		this.customerBillOnDemandApiTestClient = customerBillOnDemandApiTestClient;
 	}
 
-	@MockBean(EventHandler.class)
-	public EventHandler eventHandler() {
-		EventHandler eventHandler = mock(EventHandler.class);
+	@MockBean(TMForumEventHandler.class)
+	public TMForumEventHandler eventHandler() {
+		TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
 		when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
 		when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-		when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
 		return eventHandler;
 	}

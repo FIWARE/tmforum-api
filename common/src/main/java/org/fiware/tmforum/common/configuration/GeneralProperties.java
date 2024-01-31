@@ -20,7 +20,12 @@ public class GeneralProperties {
 	/**
 	 * Base path for the controllers to be deployed at. If nothing is set, the project-individual defaults will be used
 	 */
-	private String basePath;
+	private String basepath;
+
+	/**
+	 * Root URL of the server to be used in the ngsild-subscription callbacks
+	 */
+	private String serverHost;
 
 	/**
 	 * Tenant to be used by the tmforum api.
@@ -35,12 +40,12 @@ public class GeneralProperties {
 
 	/**
 	 * Character used in target NGSI-LD broker for making
-	 * or queries between mutiple parameters
+	 * or queries between multiple parameters
 	 */
 	private String ngsildOrQueryKey=",";
 
 	/**
-	 * Whether to enclose queries using bracets or not
+	 * Whether to enclose queries using brackets or not
 	 */
 	private Boolean encloseQuery=false;
 }

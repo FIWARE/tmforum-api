@@ -8,13 +8,13 @@ import org.fiware.party.api.OrganizationApi;
 import org.fiware.party.model.OrganizationCreateVO;
 import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -25,11 +25,7 @@ import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -38,7 +34,7 @@ public class OrganizationApiController extends AbstractPartyApiController<Organi
 	private final TMForumMapper tmForumMapper;
 
 	public OrganizationApiController(QueryParser queryParser, TmForumRepository partyRepository, ReferenceValidationService validationService,
-			TMForumMapper tmForumMapper, EventHandler eventHandler) {
+			TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, partyRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 	}

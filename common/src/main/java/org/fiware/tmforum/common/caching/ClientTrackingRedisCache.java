@@ -36,6 +36,7 @@ public class ClientTrackingRedisCache extends RedisCache {
             sync.clientTracking(TrackingArgs.Builder.enabled()
                     .bcast()
                     .prefixes(CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
+                    .prefixes(CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME)
                     .prefixes(CommonConstants.ENTITIES_CACHE_NAME)
                     .noloop());
             commands = sync;

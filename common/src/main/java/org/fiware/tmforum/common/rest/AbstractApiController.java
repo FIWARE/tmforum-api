@@ -6,11 +6,11 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.context.ServerRequestContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -36,7 +36,7 @@ public abstract class AbstractApiController<T> {
 	protected final QueryParser queryParser;
 	protected final ReferenceValidationService validationService;
 	protected final TmForumRepository repository;
-	private final EventHandler eventHandler;
+	protected final TMForumEventHandler eventHandler;
 
 	protected Mono<T> getCheckingMono(T entityToCheck, List<List<? extends ReferencedEntity>> referencedEntities) {
 		Mono<T> checkingMono = Mono.just(entityToCheck);
@@ -80,15 +80,8 @@ public abstract class AbstractApiController<T> {
 			throw new TmForumException("Did not receive a valid id, such entity cannot exist.",
 					TmForumExceptionReason.NOT_FOUND);
 		}
-
-		URI idUri = URI.create(id);
-		return repository.retrieveEntityById(idUri)
-				.switchIfEmpty(Mono.error(new TmForumException("No such entity exists.",
-						TmForumExceptionReason.NOT_FOUND)))
-				.flatMap(entityVO ->
-					repository.deleteDomainEntity(idUri)
-						.then(eventHandler.handleDeleteEvent(entityVO))
-						.then(Mono.just(HttpResponse.noContent())));
+		return repository.deleteDomainEntity(URI.create(id))
+				.then(Mono.just(HttpResponse.noContent()));
 	}
 
 	protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {
@@ -143,7 +136,8 @@ public abstract class AbstractApiController<T> {
 				})
 				.flatMap(entity -> repository.updateDomainEntity(id, updatedObject)
 								.then(repository.get(idUri, entityClass))
-								.flatMap(updatedState -> eventHandler.handleUpdateEvent(updatedState, old.get())
+								.flatMap(updatedState -> eventHandler.handleUpdateEvent(
+										updatedState, old.get())
 										.then(Mono.just(updatedState))
 								)
 				);

@@ -1,16 +1,16 @@
-package org.fiware.tmforum.common.notification.command;
+package org.fiware.tmforum.common.notification.checkers.tmforum;
 
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.InvocationTargetException;
 
 @RequiredArgsConstructor
-public class StateChangeEventCommand<T> implements Command {
+public class StateChangeTmForumEventChecker<T> implements TmForumEventChecker {
     private final T newState;
     private final T oldState;
 
     @Override
-    public boolean execute(String query) {
+    public boolean wasFired(String query) {
         return hasEntityStateChanged(oldState, newState);
     }
 
