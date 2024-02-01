@@ -64,9 +64,9 @@
         <project.description>Implementation of the TMForum APIs, backed by NGSI-LD</project.description>
         <project.summary>NGSI-LD backed TMForum.</project.summary>
         <project.url>https://github.com/wistefan/tmforum-poc</project.url>
-        <project.license.name>GNU Affero General Public License v3.0</project.license.name>
-        <project.license.identifier>AGPL-3.0-only</project.license.identifier>
-        <project.license.url>https://www.gnu.org/licenses/agpl.txt</project.license.url>
+        <project.license.name>Apache License, Version 2.0</project.license.name>
+        <project.license.identifier>Apache-2.0</project.license.identifier>
+        <project.license.url>https://www.apache.org/licenses/LICENSE-2.0.txt</project.license.url>
         <project.title>FIWARE TMForum API</project.title>
         <project.vendor>FIWARE Foundation, e.V.</project.vendor>
         <project.contact.domain>fiware.org</project.contact.domain>
