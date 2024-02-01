@@ -41,9 +41,11 @@ jobs:
           mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
 
       - name: Archive coverage
-        if: ${{ matrix.broker }} == 'scorpio' && ${{ matrix.cache }} == 'in-memory'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.module}}-jacoco-exec
-          path: |
-            ${{matrix.module}}/target/jacoco.exec
+        if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
+        run: |
+          echo ${{ matrix.broker }} ${{ matrix.cache }}
+        #uses: actions/upload-artifact@v4
+        #with:
+        #  name: ${{matrix.module}}-jacoco-exec
+        #  path: |
+        #    ${{matrix.module}}/target/jacoco.exec
