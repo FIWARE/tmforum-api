@@ -44,7 +44,7 @@ jobs:
         if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{matrix.module}}/target/jacoco.exec
+          name: ${{matrix.module}}-report
           path: |
             ${{matrix.module}}/target/jacoco.exec
 
@@ -56,7 +56,12 @@ jobs:
 
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: jacoco-merge-dir
+
+
 
       - name: Merge and Submit report
         run: |
-          mvn jacoco:merge jacoco:report coveralls:report -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Preport-coveralls
+          mvn jacoco:merge jacoco:report coveralls:report -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Djacoco.mergeDir=./jacoco-merge-dir -Preport-coveralls

@@ -124,6 +124,7 @@
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
+        <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- broker to be used for testing, could be scropio or orion-ld -->
         <broker>orion-ld</broker>
@@ -367,9 +368,9 @@
                         <configuration>
                             <fileSets>
                                 <fileSet>
-                                    <directory>${project.parent.basedir}/</directory>
+                                    <directory>${jacoco.mergeDir}</directory>
                                     <includes>
-                                        <include>*.exec</include>
+                                        <include>**/*.exec</include>
                                     </includes>
                                 </fileSet>
                             </fileSets>
@@ -817,7 +818,7 @@
                         <configuration>
                             <fileSets>
                                 <fileSet>
-                                    <directory>${project.basedir}</directory>
+                                    <directory>${jacoco.mergeDir}</directory>
                                     <includes>
                                         <include>**/*.exec</include>
                                     </includes>
