@@ -42,10 +42,8 @@ jobs:
 
       - name: Archive coverage
         if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
-        run: |
-          echo ${{ matrix.broker }} ${{ matrix.cache }}
-        #uses: actions/upload-artifact@v4
-        #with:
-        #  name: ${{matrix.module}}-jacoco-exec
-        #  path: |
-        #    ${{matrix.module}}/target/jacoco.exec
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.module}}-jacoco-exec
+          path: |
+            ${{matrix.module}}/target/jacoco.exec
