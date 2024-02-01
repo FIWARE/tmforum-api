@@ -29,7 +29,7 @@ runs:
         echo "failed="$failed >> "$GITHUB_OUTPUT"
 
     - id: generate-message
-      if: ${{ steps.check-results.outputs.failed }} != "0"
+      if: steps.check-results.outputs.failed != 0
       shell: bash
       run: |
         echo "Failed " ${{ steps.check-results.outputs.failed }}
@@ -37,7 +37,7 @@ runs:
         ./generate-message.sh       
 
     - name: Comment PR
-      if: ${{ steps.check-results.outputs.failed }} != "0"
+      if: steps.check-results.outputs.failed != 0
       uses: thollander/actions-comment-pull-request@v2.4.3
       with:
         filePath: ./.github/message.md
