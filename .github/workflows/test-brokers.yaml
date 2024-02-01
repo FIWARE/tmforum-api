@@ -47,3 +47,16 @@ jobs:
           name: ${{matrix.module}}-jacoco-exec
           path: |
             ${{matrix.module}}/target/jacoco.exec
+
+  upload-report:
+    needs: ["it"]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Merge and Submit report
+        run: |
+          ls -R
+          mvn jacoco:merge jacoco:report coveralls:report -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Preport-coveralls
