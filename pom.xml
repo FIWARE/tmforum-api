@@ -833,7 +833,7 @@
                         <configuration>
                             <repoToken>${coveralls.token}</repoToken>
                             <jacocoReports>
-                                <jacocoReport>${jacoco.mergeDir}/party-role/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/party-role-report/jacoco.xml</jacocoReport>
                             </jacocoReports>
                         </configuration>
                     </plugin>
