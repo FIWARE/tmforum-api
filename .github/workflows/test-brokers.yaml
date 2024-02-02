@@ -68,5 +68,5 @@ jobs:
 
       - name: Merge and Submit report
         run: |
-          ls -r jacoco-merge-dir
+          ls -R jacoco-merge-dir
           mvn jacoco:merge jacoco:report coveralls:report -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Djacoco.mergeDir=jacoco-merge-dir -Preport-coveralls
