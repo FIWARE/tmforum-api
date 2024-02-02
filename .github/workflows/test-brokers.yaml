@@ -1,4 +1,4 @@
-name: Test different brokers
+name: Test
 
 on:
   pull_request:
