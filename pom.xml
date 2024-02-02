@@ -833,7 +833,18 @@
                         <configuration>
                             <repoToken>${coveralls.token}</repoToken>
                             <jacocoReports>
-                                <jacocoReport>${jacoco.mergeDir}/${artifactId}/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/common/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/service-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/customer-bill-management/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/customer-management/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/party-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/product-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/product-inventory/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/product-ordering-management/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/resource-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/resource-function-activation/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/resource-inventory/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/unit/jacoco.xml</jacocoReport>
                             </jacocoReports>
                         </configuration>
                     </plugin>
