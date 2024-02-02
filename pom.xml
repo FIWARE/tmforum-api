@@ -833,9 +833,7 @@
                         <configuration>
                             <repoToken>${coveralls.token}</repoToken>
                             <jacocoReports>
-                                <sourceDirectories>
-                                    <sourceDirectory>${jacoco.mergeDir}</sourceDirectory>
-                                </sourceDirectories>
+                                <sourceDirectories>${jacoco.mergeDir}</sourceDirectories>
                             </jacocoReports>
                         </configuration>
                     </plugin>
