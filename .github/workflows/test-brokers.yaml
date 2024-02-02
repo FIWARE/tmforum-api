@@ -47,7 +47,7 @@ jobs:
         with:
           name: ${{matrix.module}}-report
           path: |
-            ${{matrix.module}}/target/site/jacoco
+            ${{matrix.module}}/target/site/jacoco/jacoco.xml
 
   upload-report:
     needs: ["it"]
