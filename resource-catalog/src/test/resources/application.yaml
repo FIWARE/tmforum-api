@@ -31,7 +31,7 @@ endpoints:
 ---
 loggers:
   levels:
-    ROOT: TRACE
+    ROOT: WARN
 
 ---
 general:

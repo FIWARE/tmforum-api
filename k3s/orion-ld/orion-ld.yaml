@@ -118,7 +118,7 @@ spec:
       containers:
         - name: orion-ld
           imagePullPolicy: IfNotPresent
-          image: "quay.io/fiware/orion-ld:1.1.0"
+          image: "quay.io/fiware/orion-ld:1.5.1"
           ports:
             - name: http
               containerPort: 1026
@@ -132,5 +132,5 @@ spec:
             # logging
             - name: ORIONLD_LOG_LEVEL
               value: "DEBUG"
-            - name: ORIONLD_TMP_TRACES
+            - name: ORIONLD_TMP_WARNS
               value: "TRUE"

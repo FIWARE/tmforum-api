@@ -12,6 +12,11 @@ env:
   REGISTRY: quay.io
   REPOSITORY: fiware
 
+concurrency:
+  # Only cancel jobs for PR updates
+  group: pre-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   generate-version:
@@ -48,7 +53,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Update Specs
+        uses: ./.github/actions/get-spec
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-java@v1
         with:

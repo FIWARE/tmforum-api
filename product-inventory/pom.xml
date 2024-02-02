@@ -13,9 +13,7 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF637_Product_Inventory_Management_API_swagger_v4.0.0.json
-        </tmforum.api.url>
+        <tmforum.api.url>${project.parent.basedir}/api/tm-forum/${project.artifactId}/api.json</tmforum.api.url>
         <!-- seems to be unavailable right now -->
         <module.ctk.url>
             https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF637-ProductInventory.zip
