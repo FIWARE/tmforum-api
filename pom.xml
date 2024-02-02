@@ -124,7 +124,7 @@
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
-        <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
+        <jacoco.mergeDir>${project.parent.basedir}</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- broker to be used for testing, could be scropio or orion-ld -->
         <broker>orion-ld</broker>
