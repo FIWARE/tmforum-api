@@ -51,7 +51,10 @@ jobs:
 
   unit:
     runs-on: ubuntu-latest
-
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models ]
     steps:
       - uses: actions/checkout@v2
 
@@ -63,14 +66,14 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test      
+          mvn clean test --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}}
 
       - name: Archive coverage
         uses: actions/upload-artifact@v4
         with:
-          name: unit
+          name: ${{matrix.module}}
           path: |
-            **/jacoco.xml
+            ${{matrix.module}}/target/site/jacoco/jacoco.xml
 
   upload-report:
     needs: [ "it","unit" ]
