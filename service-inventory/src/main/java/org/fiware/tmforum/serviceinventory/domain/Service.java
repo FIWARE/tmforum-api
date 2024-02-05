@@ -3,8 +3,6 @@ package org.fiware.tmforum.serviceinventory.domain;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.serviceinventory.model.ResourceRefVO;
-import org.fiware.serviceinventory.model.ServiceRefOrValueVO;
 import org.fiware.tmforum.common.domain.*;
 import org.fiware.tmforum.resource.Characteristic;
 import org.fiware.tmforum.resource.*;
@@ -13,7 +11,6 @@ import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
-import org.fiware.tmforum.service.ServiceCategoryRef;
 
 import java.net.URI;
 import java.time.Instant;
