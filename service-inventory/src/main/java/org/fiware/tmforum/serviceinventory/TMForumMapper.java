@@ -1,6 +1,7 @@
 package org.fiware.tmforum.serviceinventory;
 
 import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.resource.*;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.serviceinventory.model.*;
@@ -20,21 +21,20 @@ import java.net.URL;
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
 public interface TMForumMapper {
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    ServiceVO map(ServiceCreateVO billFormatCreateVO, URI id);
-
-    ServiceVO map(Service billFormat);
-
-    @Mapping(target = "href", source = "id")
-    Service map(ServiceVO billFormatVO);
+    // product
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    ServiceVO map(ServiceUpdateVO billFormatUpdateVO, String id);
+    ServiceVO map(ServiceCreateVO productCreateVO, URI id);
 
-    @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(Subscription subscription);
+    ServiceVO map(Service product);
+
+    Service map(ServiceVO productVO);
+
+    @Mapping(target = "id", source = "id")
+    Service map(ServiceUpdateVO productUpdateVO, String id);
+
+    //RelatedServiceOrderItemRef map (RelatedServiceOrderItemVO relatedServiceOrderItemVO);
 
     default URL map(String value) {
         if (value == null) {
@@ -46,6 +46,9 @@ public interface TMForumMapper {
             throw new MappingException(String.format("%s is not a URL.", value), e);
         }
     }
+
+    @Mapping(target = "query", source = "rawQuery")
+    EventSubscriptionVO map(TMForumSubscription subscription);
 
     default String map(URL value) {
         if (value == null) {
@@ -67,12 +70,4 @@ public interface TMForumMapper {
         }
         return value.toString();
     }
-
-    default ResourceRef mapResourceRefId(String id) {
-        if (id == null) {
-            return null;
-        }
-        return new ResourceRef(id);
-    }
-
 }

@@ -9,28 +9,21 @@ import org.fiware.serviceinventory.api.ServiceApi;
 import org.fiware.serviceinventory.model.ServiceCreateVO;
 import org.fiware.serviceinventory.model.ServiceUpdateVO;
 import org.fiware.serviceinventory.model.ServiceVO;
-import org.fiware.tmforum.common.notification.EventHandler;
-import org.fiware.tmforum.common.querying.QueryParser;
+import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.resource.Characteristic;
-import org.fiware.tmforum.resource.*;
 import org.fiware.tmforum.serviceinventory.domain.Service;
-import org.fiware.tmforum.serviceinventory.domain.ServiceRelationship;
 import org.fiware.tmforum.serviceinventory.TMForumMapper;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Controller("${general.basepath:/}")
@@ -39,9 +32,8 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
     private final TMForumMapper tmForumMapper;
 
     public ServiceApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                 TmForumRepository serviceInventoryRepository,
-                                 TMForumMapper tmForumMapper, EventHandler eventHandler) {
-        super(queryParser, validationService, serviceInventoryRepository, eventHandler);
+                                TmForumRepository repository, TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
+        super(queryParser, validationService, repository, eventHandler);
         this.tmForumMapper = tmForumMapper;
     }
 
@@ -51,22 +43,27 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                 tmForumMapper.map(serviceCreateVO,
                         IdHelper.toNgsiLd(UUID.randomUUID().toString(), Service.TYPE_SERVICE)));
 
-        validateInternalRefs(service);
-
         return create(getCheckingMono(service), Service.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::created);
     }
 
     private Mono<Service> getCheckingMono(Service service) {
+
         List<List<? extends ReferencedEntity>> references = new ArrayList<>();
+        references.add(service.getAgreement());
+        references.add(service.getPlace());
+        references.add(service.getService());
+        references.add(service.getServiceOrderItem());
+        references.add(service.getRealizingResource());
+        references.add(service.getRealizingService());
         references.add(service.getRelatedParty());
-        Optional.ofNullable(service.getServiceSpecification())
-                .ifPresent(serviceSpecificationRef -> references.add(List.of(serviceSpecificationRef)));
+        Optional.ofNullable(service.getBillingAccount()).map(List::of).ifPresent(references::add);
+        Optional.ofNullable(service.getServiceOffering()).map(List::of).ifPresent(references::add);
+        Optional.ofNullable(service.getServiceSpecification()).map(List::of).ifPresent(references::add);
 
         Mono<Service> checkingMono = getCheckingMono(service, references);
 
-        // check service refs
         if (service.getServiceRelationship() != null && !service.getServiceRelationship().isEmpty()) {
             List<Mono<Service>> serviceRelCheckingMonos = service.getServiceRelationship()
                     .stream()
@@ -79,19 +76,31 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
             }
         }
 
-        // check features
-        if (service.getFeature() != null && !service.getFeature().isEmpty()) {
-            List<Mono<Service>> featureConstraintsCheckingMonos = service.getFeature()
+        if (service.getServicePrice() != null && !service.getServicePrice().isEmpty()) {
+            List<List<? extends ReferencedEntity>> internalReferences = new ArrayList<>();
+
+            List<BillingAccountRef> billingAccountRefs = service.getServicePrice()
                     .stream()
-                    .peek(feature -> validateInternalFeatureRefs(feature, service))
-                    .filter(feature -> feature.getConstraint() != null)
-                    .map(feature -> getCheckingMono(service, List.of(feature.getConstraint())))
+                    .map(ServicePrice::getBillingAccount)
+                    .filter(Objects::nonNull)
                     .toList();
-            if (!featureConstraintsCheckingMonos.isEmpty()) {
-                Mono<Service> featureConstraintsCheckingMono = Mono.zip(featureConstraintsCheckingMonos,
-                        p -> service);
-                checkingMono = Mono.zip(featureConstraintsCheckingMono, checkingMono, (p1, p2) -> service);
-            }
+            internalReferences.add(billingAccountRefs);
+            List<ServiceOfferingPriceRefValue> serviceOfferingPriceRefs = service.getServicePrice()
+                    .stream()
+                    .map(ServicePrice::getServiceOfferingPrice)
+                    .filter(Objects::nonNull)
+                    .toList();
+            internalReferences.add(serviceOfferingPriceRefs);
+            List<ServiceOfferingPriceRef> alterationRefs = service.getServicePrice()
+                    .stream()
+                    .map(ServicePrice::getServicePriceAlteration)
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .map(PriceAlteration::getServiceOfferingPrice)
+                    .filter(Objects::nonNull)
+                    .toList();
+            internalReferences.add(alterationRefs);
+            checkingMono = Mono.zip(getCheckingMono(service, internalReferences), checkingMono, (p1, p2) -> service);
         }
         return checkingMono
                 .onErrorMap(throwable ->
@@ -101,86 +110,12 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                                 TmForumExceptionReason.INVALID_RELATIONSHIP));
     }
 
-    private void validateInternalRefs(Service service) {
-        if (service.getNote() != null) {
-            List<URI> noteIds = service.getNote().stream().map(Note::getId).toList();
-            if (noteIds.size() != new HashSet<>(noteIds).size()) {
-                throw new TmForumException(
-                        String.format("Duplicate note ids are not allowed: %s", noteIds),
-                        TmForumExceptionReason.INVALID_DATA);
-            }
-        }
-        if (service.getServiceCharacteristic() != null) {
-            service.getServiceCharacteristic()
-                    .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic,
-                            service.getServiceCharacteristic()));
-        }
-
-    }
-
-    private void validateInternalCharacteristicRefs(Characteristic characteristic,
-                                                    List<Characteristic> characteristics) {
-        List<String> charIds = characteristics
-                .stream()
-                .map(Characteristic::getId)
-                .toList();
-        if (charIds.size() != new HashSet<>(charIds).size()) {
-            throw new TmForumException(
-                    String.format("Duplicate characteristic ids are not allowed: %s", charIds),
-                    TmForumExceptionReason.INVALID_DATA);
-        }
-
-        if (characteristic.getCharacteristicRelationship() != null) {
-            characteristic.getCharacteristicRelationship()
-                    .stream()
-                    .map(CharacteristicRelationship::getId)
-                    .filter(charRef -> !charIds.contains(charRef))
-                    .findFirst()
-                    .ifPresent(missingId -> {
-                        throw new TmForumException(
-                                String.format("Referenced characteristic %s does not exist", missingId),
-                                TmForumExceptionReason.INVALID_DATA);
-                    });
-        }
-    }
-
-    private void validateInternalFeatureRefs(Feature feature, Service service) {
-        List<String> featureIds = service.getFeature()
-                .stream()
-                .map(Feature::getId)
-                .toList();
-        // check for duplicate ids
-        if (featureIds.size() != new HashSet<>(featureIds).size()) {
-            throw new TmForumException(String.format("Duplicate feature ids are not allowed: %s", featureIds),
-                    TmForumExceptionReason.INVALID_DATA);
-        }
-        if (feature.getFeatureRelationship() != null) {
-            feature.getFeatureRelationship()
-                    .stream()
-                    .map(FeatureRelationship::getId)
-                    .filter(featureRef -> !featureIds.contains(featureRef))
-                    .findFirst()
-                    .ifPresent(missingId -> {
-                        throw new TmForumException(
-                                String.format("Referenced feature %s does not exist", missingId),
-                                TmForumExceptionReason.INVALID_DATA);
-                    });
-        }
-        if (feature.getFeatureCharacteristic() != null) {
-            feature.getFeatureCharacteristic()
-                    .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic,
-                            feature.getFeatureCharacteristic()));
-        }
-    }
-
-    @Override
-    public Mono<HttpResponse<Object>> deleteService(@NonNull String id) {
+    @Override public Mono<HttpResponse<Object>> deleteService(@NonNull String id) {
         return delete(id);
     }
 
-    @Override
-    public Mono<HttpResponse<List<ServiceVO>>> listService(@Nullable String fields, @Nullable Integer offset,
-                                                             @Nullable Integer limit) {
+    @Override public Mono<HttpResponse<List<ServiceVO>>> listService(@Nullable String fields, @Nullable Integer offset,
+                                                                     @Nullable Integer limit) {
         return list(offset, limit, Service.TYPE_SERVICE, Service.class)
                 .map(serviceStream -> serviceStream
                         .map(tmForumMapper::map)
@@ -189,24 +124,22 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                 .map(HttpResponse::ok);
     }
 
-    @Override
-    public Mono<HttpResponse<ServiceVO>> patchService(@NonNull String id,
-                                                        @NonNull ServiceUpdateVO serviceUpdateVO) {
+    @Override public Mono<HttpResponse<ServiceVO>> patchService(@NonNull String id,
+                                                                @NonNull ServiceUpdateVO serviceUpdateVO) {
         // non-ngsi-ld ids cannot exist.
         if (!IdHelper.isNgsiLdId(id)) {
             throw new TmForumException("Did not receive a valid id, such service cannot exist.",
                     TmForumExceptionReason.NOT_FOUND);
         }
 
-        Service service = tmForumMapper.map(tmForumMapper.map(serviceUpdateVO, id));
+        Service service = tmForumMapper.map(serviceUpdateVO, id);
 
         return patch(id, service, getCheckingMono(service), Service.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }
 
-    @Override
-    public Mono<HttpResponse<ServiceVO>> retrieveService(@NonNull String id, @Nullable String fields) {
+    @Override public Mono<HttpResponse<ServiceVO>> retrieveService(@NonNull String id, @Nullable String fields) {
         return retrieve(id, Service.class)
                 .switchIfEmpty(Mono.error(new TmForumException("No such service exists.",
                         TmForumExceptionReason.NOT_FOUND)))
