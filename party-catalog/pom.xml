@@ -207,6 +207,35 @@
                             </typeMappings>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>smart-data-schema</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${tmforum.api.url}</inputSpec>
+                            <modelPackage>org.fiware.party.modelngsi</modelPackage>
+                            <generatorName>smart-data</generatorName>
+                            <modelNameSuffix></modelNameSuffix>
+                            <output>${project.build.directory}</output>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <fullJavaUtil>true</fullJavaUtil>
+                                <useOptional>false</useOptional>
+                                <useGenericResponse>true</useGenericResponse>
+                                <useLombokGenerated>true</useLombokGenerated>
+                                <introspected>true</introspected>
+                                <useBeanValidation>false</useBeanValidation>
+                                <supportAsync>false</supportAsync>
+                                <jacksonDatabindNullable>false</jacksonDatabindNullable>
+                                <generateExamples>false</generateExamples>
+                            </configOptions>
+                            <typeMappings>
+                                <typeMapping>java.util.Date=java.time.Instant</typeMapping>
+                            </typeMappings>
+                        </configuration>
+                    </execution>
                 </executions>
                 <dependencies>
                     <dependency>
@@ -214,7 +243,33 @@
                         <artifactId>micronaut-openapi-codegen</artifactId>
                         <version>${version.io.kokuwa.micronaut.codegen}</version>
                     </dependency>
+                    <dependency>
+                        <groupId>io.github.pulledtim</groupId>
+                        <artifactId>json-openapi-codegen</artifactId>
+                        <version>${version.io.github.pulledtim.json-openapi-codegen}</version>
+                    </dependency>
                 </dependencies>
+            </plugin>
+            <!-- Expose schema as separate artifact-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classesDirectory>./target/schema/</classesDirectory>
+                            <classifier>schema</classifier>
+                            <includes>
+                                <include>*.json</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!-- add generated sources -->
             <plugin>
