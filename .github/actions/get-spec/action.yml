@@ -1,0 +1,45 @@
+name: Get OpenAPI Specs
+description: Try to download the OpenAPI Specs for TMForum API.
+
+inputs:
+  github-token:
+      description: Github token to be used for creating PR-Comments
+      required: true
+
+runs:
+  using: composite
+
+  steps:
+
+    - id: setup-jq
+      uses: dcarbone/install-jq-action@v2.1.0
+
+    - id: get-specs
+      name: Download Specifications
+      shell: bash
+      run: |
+        cd .github/
+        ./get-spec.sh
+
+    - id: check-results
+      name: Check results of the spec download
+      shell: bash
+      run: |
+        failed=$(jq length ./.github/not-available.json)
+        echo "failed="$failed >> "$GITHUB_OUTPUT"
+
+    - id: generate-message
+      if: steps.check-results.outputs.failed != 0
+      shell: bash
+      run: |
+        echo "Failed " ${{ steps.check-results.outputs.failed }}
+        cd .github/
+        ./generate-message.sh       
+
+    - name: Comment PR
+      if: steps.check-results.outputs.failed != 0
+      uses: thollander/actions-comment-pull-request@v2.4.3
+      with:
+        filePath: ./.github/message.md
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+

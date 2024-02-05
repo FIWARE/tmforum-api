@@ -1,4 +1,4 @@
-name: Test different brokers
+name: Test
 
 on:
   pull_request:
@@ -13,13 +13,21 @@ on:
       - tests
       - ServiceInventory-Implementation
 
+concurrency:
+  # Only cancel jobs for PR updates
+  group: test-it-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   it:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        broker: [orion-ld, scorpio]
+        module: [ customer-bill-management, customer-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
+        # only test scorpio for speed up, orion is currently not really used with the tmforum
+        broker: [ scorpio ]
+        cache: [ in-memory, redis ]
 
     steps:
       - uses: actions/checkout@v2
@@ -32,4 +40,60 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test verify -Dbroker=${{matrix.broker}}
+          mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
+
+      - name: Archive coverage
+        if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.module}}
+          path: |
+            ${{matrix.module}}/target/site/jacoco/jacoco.xml
+
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+          java-package: jdk
+
+      - name: Execute tests
+        id: test
+        run: |
+          mvn clean test --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}}
+
+      - name: Archive coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.module}}
+          path: |
+            ${{matrix.module}}/target/site/jacoco/jacoco.xml
+
+  upload-report:
+    needs: [ "it","unit" ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+          java-package: jdk
+
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: jacoco-merge-dir
+
+
+      - name: Merge and Submit report
+        run: |
+          ls -R jacoco-merge-dir
+          mvn jacoco:merge jacoco:report coveralls:report -Dcoveralls.token=${{ secrets.COVERALLS_TOKEN }} -Djacoco.mergeDir=jacoco-merge-dir -Preport-coveralls

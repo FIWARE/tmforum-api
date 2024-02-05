@@ -13,9 +13,7 @@
     </parent>
 
     <properties>
-        <tmforum.api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF666_Account_Management_API_v4.0.0_swagger.json
-        </tmforum.api.url>
+        <tmforum.api.url>${project.parent.basedir}/api/tm-forum/${project.artifactId}/api.json</tmforum.api.url>
         <!-- seems to be unavailable right now -->
         <module.ctk.url>
             https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF666-Account-v4.0.0.zip
