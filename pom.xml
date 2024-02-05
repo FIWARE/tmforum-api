@@ -64,9 +64,9 @@
         <project.description>Implementation of the TMForum APIs, backed by NGSI-LD</project.description>
         <project.summary>NGSI-LD backed TMForum.</project.summary>
         <project.url>https://github.com/wistefan/tmforum-poc</project.url>
-        <project.license.name>GNU Affero General Public License v3.0</project.license.name>
-        <project.license.identifier>AGPL-3.0-only</project.license.identifier>
-        <project.license.url>https://www.gnu.org/licenses/agpl.txt</project.license.url>
+        <project.license.name>Apache License, Version 2.0</project.license.name>
+        <project.license.identifier>Apache-2.0</project.license.identifier>
+        <project.license.url>https://www.apache.org/licenses/LICENSE-2.0.txt</project.license.url>
         <project.title>FIWARE TMForum API</project.title>
         <project.vendor>FIWARE Foundation, e.V.</project.vendor>
         <project.contact.domain>fiware.org</project.contact.domain>
@@ -93,7 +93,7 @@
         <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.1.0</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.1.1</version.io.github.wistefan.ngsi-ld-mapping-java>
 
         <!-- caching -->
         <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>
@@ -110,7 +110,7 @@
         <version.org.codehaus.mojo.build-helper-maven-plugin>3.3.0</version.org.codehaus.mojo.build-helper-maven-plugin>
 
         <!-- test -->
-        <version.io.kokuwa.maven.k3s-plugin>1.0.0</version.io.kokuwa.maven.k3s-plugin>
+        <version.io.kokuwa.maven.k3s-plugin>1.2.4</version.io.kokuwa.maven.k3s-plugin>
         <version.org.mockito.mockito-all>1.10.19</version.org.mockito.mockito-all>
         <version.org.mockito.mockito-junit-jupiter>4.8.1</version.org.mockito.mockito-junit-jupiter>
         <version.org.awaitility>4.0.3</version.org.awaitility>
@@ -124,6 +124,7 @@
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
+        <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- broker to be used for testing, could be scropio or orion-ld -->
         <broker>orion-ld</broker>
@@ -131,14 +132,7 @@
         <cache>in-memory</cache>
 
         <!-- tm-forum api links. -->
-        <tmforum.api.url>API-URL</tmforum.api.url>
-        <!-- will be moved to the modules -->
-        <tmforum.product-catalogue-api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.1.0/swagger/TMF620-ProductCatalog-v4.1.0.swagger.json
-        </tmforum.product-catalogue-api.url>
-        <tmforum.agreement-api.url>
-            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF651-Agreement-v4.0.0.swagger.json
-        </tmforum.agreement-api.url>
+        <tmforum.api.url>${project.parent.basedir}/api/tm-forum/${project.artifactId}/api.json</tmforum.api.url>
 
         <!-- tm-forum conformance test config -->
         <module.ctk.url>module-specific-url</module.ctk.url>
@@ -374,9 +368,9 @@
                         <configuration>
                             <fileSets>
                                 <fileSet>
-                                    <directory>${project.parent.basedir}/</directory>
+                                    <directory>${jacoco.mergeDir}</directory>
                                     <includes>
-                                        <include>*.exec</include>
+                                        <include>**/*.exec</include>
                                     </includes>
                                 </fileSet>
                             </fileSets>
@@ -824,7 +818,7 @@
                         <configuration>
                             <fileSets>
                                 <fileSet>
-                                    <directory>${project.basedir}</directory>
+                                    <directory>${jacoco.mergeDir}</directory>
                                     <includes>
                                         <include>**/*.exec</include>
                                     </includes>
@@ -833,19 +827,26 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>org.eluder.coveralls</groupId>
+                        <groupId>com.github.hazendaz.maven</groupId>
                         <artifactId>coveralls-maven-plugin</artifactId>
-                        <version>${version.org.eluder.coveralls.maven-plugin}</version>
+                        <version>4.5.0-M3</version>
                         <configuration>
                             <repoToken>${coveralls.token}</repoToken>
+                            <jacocoReports>
+                                <jacocoReport>${jacoco.mergeDir}/common/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/service-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/customer-bill-management/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/customer-management/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/party-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/product-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/product-inventory/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/product-ordering-management/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/resource-catalog/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/resource-function-activation/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/resource-inventory/jacoco.xml</jacocoReport>
+                                <jacocoReport>${jacoco.mergeDir}/unit/jacoco.xml</jacocoReport>
+                            </jacocoReports>
                         </configuration>
-                        <dependencies>
-                            <dependency>
-                                <groupId>javax.xml.bind</groupId>
-                                <artifactId>jaxb-api</artifactId>
-                                <version>2.3.1</version>
-                            </dependency>
-                        </dependencies>
                     </plugin>
                 </plugins>
             </build>
