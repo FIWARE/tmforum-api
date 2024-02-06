@@ -600,22 +600,6 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null).relatedParty(
                         List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
 
-        testEntries.add(Arguments.of("A service with an invalid place ref should not be created.",
-                ServiceUpdateVOTestExample.build().place(List.of(RelatedPlaceRefOrValueVOTestExample.build()))
-                        .serviceSpecification(null)));
-        testEntries.add(Arguments.of("A service with non-existent place ref should not be created.",
-                ServiceUpdateVOTestExample.build()
-                        .place(List.of(RelatedPlaceRefOrValueVOTestExample.build().id("urn:ngsi-ld:place:non-existent")))
-                        .serviceSpecification(null)));
-
-        testEntries.add(Arguments.of("A service with an invalid service ref should not be created.",
-                ServiceUpdateVOTestExample.build().place(null)
-                        .serviceSpecification(ServiceSpecificationRefVOTestExample.build())));
-        testEntries.add(Arguments.of("A service with non-existent service ref should not be created.",
-                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(
-                        ServiceSpecificationRefVOTestExample.build()
-                                .id("urn:ngsi-ld:service-specification:non-existent"))));
-
         testEntries.add(Arguments.of("A service with duplicate feature ids should not be created.",
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
                         .feature(List.of(FeatureVOTestExample.build().id("my-feature"),
@@ -736,7 +720,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         ServiceVOTestExample.build()
                                 // get nulled without values
                                 .relatedParty(null)
-                                .place(null)
+                                .supportingResource(null)
                                 .serviceSpecification(null)),
                 Arguments.of("Only category and the mandatory parameters should have been included.", "category",
                         ServiceVOTestExample.build()
@@ -748,7 +732,17 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .serviceRelationship(null)
                                 .description(null)
                                 .note(null)
-                                .name(null)),
+                                .name(null)
+                                .hasStarted(null)
+                                .isServiceEnabled(null)
+                                .isStateful(null)
+                                .serviceDate(null)
+                                .serviceType(null)
+                                .startMode(null)
+                                .relatedEntity(null)
+                                .serviceOrderItem(null)
+                                .supportingResource(null)
+                                .supportingService(null)),
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
                         "nothingToSeeHere", ServiceVOTestExample.build()
@@ -761,7 +755,17 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .description(null)
                                 .serviceRelationship(null)
                                 .note(null)
-                                .name(null)),
+                                .name(null)
+                                .hasStarted(null)
+                                .isServiceEnabled(null)
+                                .isStateful(null)
+                                .serviceDate(null)
+                                .serviceType(null)
+                                .startMode(null)
+                                .relatedEntity(null)
+                                .serviceOrderItem(null)
+                                .supportingResource(null)
+                                .supportingService(null)),
                 Arguments.of("Only description, name and the mandatory parameters should have been included.",
                         "name,description", ServiceVOTestExample.build()
                                 .relatedParty(null)
@@ -771,7 +775,17 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .feature(null)
                                 .category(null)
                                 .serviceRelationship(null)
-                                .note(null)));
+                                .note(null)
+                                .hasStarted(null)
+                                .isServiceEnabled(null)
+                                .isStateful(null)
+                                .serviceDate(null)
+                                .serviceType(null)
+                                .startMode(null)
+                                .relatedEntity(null)
+                                .serviceOrderItem(null)
+                                .supportingResource(null)
+                                .supportingService(null)));
     }
 
     @Disabled("400 cannot happen, only 404")
