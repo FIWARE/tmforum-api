@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ customer-bill-management, customer-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
+        module: [ customer-bill-management, customer-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog, service-inventory ]
         # only test scorpio for speed up, orion is currently not really used with the tmforum
         broker: [ scorpio ]
         cache: [ in-memory, redis ]

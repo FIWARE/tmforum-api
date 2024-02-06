@@ -1,6 +1,7 @@
 package org.fiware.tmforum.serviceinventory;
 
 import org.fiware.serviceinventory.model.*;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,13 +57,12 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
         this.serviceApiTestClient = serviceApiTestClient;
     }
 
-    @MockBean(EventHandler.class)
-    public EventHandler eventHandler() {
-        EventHandler eventHandler = mock(EventHandler.class);
+    @MockBean(TMForumEventHandler.class)
+    public TMForumEventHandler eventHandler() {
+        TMForumEventHandler eventHandler = mock(TMForumEventHandler.class);
 
         when(eventHandler.handleCreateEvent(any())).thenReturn(Mono.empty());
         when(eventHandler.handleUpdateEvent(any(), any())).thenReturn(Mono.empty());
-        when(eventHandler.handleDeleteEvent(any())).thenReturn(Mono.empty());
 
         return eventHandler;
     }
