@@ -12,10 +12,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.serviceinventory.api.ServiceApiTestClient;
 import org.fiware.serviceinventory.api.ServiceApiTestSpec;
-import org.fiware.tmforum.common.notification.EventHandler;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.serviceinventory.domain.Service;
 import org.junit.jupiter.api.Disabled;
@@ -99,98 +97,79 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
 
         testEntries.add(
                 Arguments.of("An empty service should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)));
+                        ServiceCreateVOTestExample.build().place(null).serviceSpecification(null),
+                        ServiceVOTestExample.build().place(null).serviceSpecification(null)));
 
+        List<NoteVO> notes = List.of(NoteVOTestExample.build().id("urn:note-1"), NoteVOTestExample.build().id("urn:note-2"));
         testEntries.add(
-                Arguments.of("An empty service should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)));
+                Arguments.of("A service with notes should have been created.",
+                        ServiceCreateVOTestExample.build().place(null).serviceSpecification(null).note(notes),
+                        ServiceVOTestExample.build().place(null).serviceSpecification(null).note(notes)));
 
-        Instant start = Instant.now();
-        Instant end = Instant.now();
-        testEntries.add(
-                Arguments.of("A service with operating times should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .startDate(start)
-                                .endDate(end),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .startDate(start)
-                                .endDate(end)));
+        provideValidFeatureLists()
+                .map(ap ->
+                        Arguments.of(
+                                ap.message(),
+                                ServiceCreateVOTestExample.build().place(null).serviceSpecification(null)
+                                        .feature(ap.value()),
+                                ServiceVOTestExample.build().place(null).serviceSpecification(null)
+                                        .feature(ap.value()))
+                ).forEach(testEntries::add);
 
-        testEntries.add(
-                Arguments.of("A service with characteristic should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().id(null))),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().id(null)))));
-        testEntries.add(
-                Arguments.of("A service with feature should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .feature(List.of(FeatureVOTestExample.build()
-                                        .id(null))),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .feature(List.of(FeatureVOTestExample.build()
-                                        .id(null)))));
-        testEntries.add(
-                Arguments.of("A service with place should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .place(List.of(RelatedPlaceRefOrValueVOTestExample.build()
-                                        .id(null))),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .place(List.of(RelatedPlaceRefOrValueVOTestExample.build()
-                                        .id(null)))));
-        testEntries.add(
-                Arguments.of("A service with related entity should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .relatedEntity(List.of(RelatedEntityRefOrValueVOTestExample.build()
-                                        .id(null))),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .relatedEntity(List.of(RelatedEntityRefOrValueVOTestExample.build()
-                                        .id(null)))));
-        testEntries.add(
-                Arguments.of("A service with note should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .note(List.of(NoteVOTestExample.build()
-                                        .id(null))),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .note(List.of(NoteVOTestExample.build()
-                                        .id(null)))));
-        testEntries.add(
-                Arguments.of("A service with supporting service should have been created.",
-                        ServiceCreateVOTestExample.build()
-                                .serviceSpecification(null)
-                                .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
-                                                .id(null)
-                                                .serviceSpecification(null)
-                                                .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
-                                                        .id(null)
-                                                        .serviceSpecification(null))))),
-                        ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
-                                                .id(null)
-                                                .serviceSpecification(null)
-                                                .supportingService(List.of(ServiceRefOrValueVOTestExample.build()
-                                                        .id(null)
-                                                        .serviceSpecification(null)))))));
+        provideValidCharacteristicLists()
+                .map(ap -> Arguments.of(ap.message(),
+                        ServiceCreateVOTestExample.build().place(null).serviceSpecification(null)
+                                .serviceCharacteristic(ap.value()),
+                        ServiceVOTestExample.build().place(null).serviceSpecification(null)
+                                .serviceCharacteristic(ap.value())))
+                .forEach(testEntries::add);
+
         return testEntries.stream();
+    }
+
+    private static Stream<ArgumentPair<List<FeatureVO>>> provideValidFeatureLists() {
+        List<ArgumentPair<List<FeatureVO>>> featureArguments = new ArrayList<>();
+
+        featureArguments.add(new ArgumentPair<>("A single feature without references should be valid.",
+                List.of(FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
+                        .featureCharacteristic(null))));
+        featureArguments.add(new ArgumentPair<>("Multiple features without references should be valid.",
+                List.of(
+                        FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
+                                .featureCharacteristic(null),
+                        FeatureVOTestExample.build().id("urn:f-2").constraint(null).featureRelationship(null)
+                                .featureCharacteristic(null))));
+        featureArguments.add(new ArgumentPair<>("Features referencing should be valid.",
+                List.of(
+                        FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
+                                .featureCharacteristic(null),
+                        FeatureVOTestExample.build().id("urn:f-2").constraint(null).featureCharacteristic(null)
+                                .featureRelationship(
+                                        List.of(FeatureRelationshipVOTestExample.build().validFor(null).id("urn:f-1"))))));
+
+        provideValidCharacteristicLists()
+                .map(ap -> new ArgumentPair<>(String.format("Features should be valid - %s", ap.message()),
+                        List.of(FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
+                                .featureCharacteristic(ap.value()))))
+                .forEach(featureArguments::add);
+
+        return featureArguments.stream();
+    }
+
+    private static Stream<ArgumentPair<List<CharacteristicVO>>> provideValidCharacteristicLists() {
+        List<ArgumentPair<List<CharacteristicVO>>> characteristicArguments = new ArrayList<>();
+
+        characteristicArguments.add(new ArgumentPair<>("Single characteristics should be valid.",
+                List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null))));
+        characteristicArguments.add(new ArgumentPair<>("Mulitple characteristics should be valid.",
+                List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
+                        CharacteristicVOTestExample.build().id("urn:c-2").characteristicRelationship(null))));
+        characteristicArguments.add(new ArgumentPair<>("Referencing characteristics should be valid.",
+                List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
+                        CharacteristicVOTestExample.build().id("urn:c-2")
+                                .characteristicRelationship(
+                                        List.of(CharacteristicRelationshipVOTestExample.build().id("urn:c-1"))))));
+        return characteristicArguments.stream();
     }
 
     @ParameterizedTest
@@ -364,7 +343,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                     .id(id)
                     .href(id)
                     .serviceSpecification(null)
-                    .supportingResource(null)
+                    .supportingService(null)
                     .relatedParty(null);
             expectedServices.add(serviceVO);
         }
@@ -522,7 +501,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingResource(null)
+                        .supportingService(null)
                         .description("new-description")));
 
         testEntries.add(Arguments.of("The name should have been updated.",
@@ -532,7 +511,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingResource(null)
+                        .supportingService(null)
                         .name("new-name")));
 
         testEntries.add(Arguments.of("The isBundle should have been updated.",
@@ -542,7 +521,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingResource(null)
+                        .supportingService(null)
                         .isBundle(false)));
 
         Instant date = Instant.now();
@@ -553,7 +532,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingResource(null)
+                        .supportingService(null)
                         .startDate(date)));
 
         testEntries.add(Arguments.of("The endDate should have been updated.",
@@ -563,7 +542,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingResource(null)
+                        .supportingService(null)
                         .endDate(date)));
 
         testEntries.add(Arguments.of("The characteristic should have been updated.",
@@ -574,7 +553,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingResource(null)
+                        .supportingService(null)
                         .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
                                 .id(null)
                                 .characteristicRelationship(null)))));
@@ -613,34 +592,68 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
 
     private static Stream<Arguments> provideInvalidUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
+
         testEntries.add(Arguments.of("A service with invalid related parties should not be created.",
-                ServiceUpdateVOTestExample.build()
-                        .serviceSpecification(null)
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
                         .relatedParty(List.of(RelatedPartyVOTestExample.build()))));
         testEntries.add(Arguments.of("A service with non-existent related parties should not be created.",
-                ServiceUpdateVOTestExample.build()
-                        .serviceSpecification(null)
-                        .relatedParty(
-                                List.of((RelatedPartyVOTestExample.build()
-                                        .id("urn:ngsi-ld:organisation:non-existent"))))));
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null).relatedParty(
+                        List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
 
-        testEntries.add(Arguments.of("A service with an invalid service sepecification ref should not be created.",
+        testEntries.add(Arguments.of("A service with an invalid place ref should not be created.",
+                ServiceUpdateVOTestExample.build().place(List.of(RelatedPlaceRefOrValueVOTestExample.build()))
+                        .serviceSpecification(null)));
+        testEntries.add(Arguments.of("A service with non-existent place ref should not be created.",
                 ServiceUpdateVOTestExample.build()
+                        .place(List.of(RelatedPlaceRefOrValueVOTestExample.build().id("urn:ngsi-ld:place:non-existent")))
+                        .serviceSpecification(null)));
+
+        testEntries.add(Arguments.of("A service with an invalid service ref should not be created.",
+                ServiceUpdateVOTestExample.build().place(null)
                         .serviceSpecification(ServiceSpecificationRefVOTestExample.build())));
-        testEntries.add(Arguments.of("A service with non-existent service specification ref should not be created.",
-                ServiceUpdateVOTestExample.build()
-                        .serviceSpecification(
-                                ServiceSpecificationRefVOTestExample.build()
-                                        .id("urn:ngsi-ld:service-specification:non-existent"))));
+        testEntries.add(Arguments.of("A service with non-existent service ref should not be created.",
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(
+                        ServiceSpecificationRefVOTestExample.build()
+                                .id("urn:ngsi-ld:service-specification:non-existent"))));
 
-        testEntries.add(Arguments.of("A service with an invalid service sepecification ref should not be created.",
-                ServiceUpdateVOTestExample.build()
-                        .supportingResource(List.of(ResourceRefVOTestExample.build()))));
-        testEntries.add(Arguments.of("A service with non-existent service specification ref should not be created.",
-                ServiceUpdateVOTestExample.build()
-                        .supportingResource(
-                                List.of(ResourceRefVOTestExample.build()
-                                        .id("urn:ngsi-ld:service-specification:non-existent")))));
+        testEntries.add(Arguments.of("A service with duplicate feature ids should not be created.",
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
+                        .feature(List.of(FeatureVOTestExample.build().id("my-feature"),
+                                FeatureVOTestExample.build().id("my-feature")))));
+        testEntries.add(Arguments.of("A service with invalid feature references should not be created.",
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
+                        .feature(List.of(
+                                FeatureVOTestExample.build().id("my-feature"),
+                                FeatureVOTestExample.build().featureRelationship(
+                                        List.of(FeatureRelationshipVOTestExample.build().id("non-existent")))))));
+
+        testEntries.add(Arguments.of("A service with duplicate service characteristic ids should not be created.",
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
+                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
+                                CharacteristicVOTestExample.build().id("my-characteristic")))));
+        testEntries.add(Arguments.of("A service with invalid feature references should not be created.",
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
+                        .serviceCharacteristic(List.of(
+                                CharacteristicVOTestExample.build().id("my-feature"),
+                                CharacteristicVOTestExample.build().characteristicRelationship(
+                                        List.of(CharacteristicRelationshipVOTestExample.build()
+                                                .id("non-existent")))))));
+
+        testEntries.add(Arguments.of("A service with duplicate feature characteristic ids should not be created.",
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
+                        .feature(List.of(FeatureVOTestExample.build()
+                                .featureCharacteristic(
+                                        List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
+                                                CharacteristicVOTestExample.build().id("my-characteristic")))))));
+        testEntries.add(Arguments.of("A service with invalid feature references should not be created.",
+                ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
+                        .feature(List.of(FeatureVOTestExample.build()
+                                .featureCharacteristic(
+                                        List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
+                                                CharacteristicVOTestExample.build()
+                                                        .characteristicRelationship(
+                                                                List.of(CharacteristicRelationshipVOTestExample.build()
+                                                                        .id("non-existent")))))))));
 
         return testEntries.stream();
     }
@@ -722,7 +735,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 Arguments.of("Without a fields parameter everything should be returned.", null,
                         ServiceVOTestExample.build()
                                 .serviceSpecification(null)
-                                .supportingResource(null)
+                                .supportingService(null)
                                 .relatedParty(null)),
                 Arguments.of("Only description and the mandatory parameters should have been included.", "description",
                         ServiceVOTestExample.build()
@@ -744,7 +757,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
                                 .serviceOrderItem(null)
-                                .supportingResource(null)
+                                .supportingService(null)
                                 .supportingService(null)
                                 .relatedParty(null)),
                 Arguments.of(
@@ -769,7 +782,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
                                 .serviceOrderItem(null)
-                                .supportingResource(null)
+                                .supportingService(null)
                                 .supportingService(null)
                                 .relatedParty(null)),
                 Arguments.of("Only description, isBundle and the mandatory parameters should have been included.",
@@ -791,7 +804,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .serviceRelationship(null)
                                 .serviceSpecification(null)
                                 .serviceOrderItem(null)
-                                .supportingResource(null)
+                                .supportingService(null)
                                 .supportingService(null)
                                 .relatedParty(null)));
     }
