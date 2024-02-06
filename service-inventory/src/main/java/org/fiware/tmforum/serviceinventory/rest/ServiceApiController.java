@@ -45,6 +45,8 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                 tmForumMapper.map(serviceCreateVO,
                         IdHelper.toNgsiLd(UUID.randomUUID().toString(), Service.TYPE_SERVICE)));
 
+        validateInternalRefs(service);
+        
         return create(getCheckingMono(service), Service.class)
                 .map(tmForumMapper::map)
                 .map(HttpResponse::created);
@@ -91,6 +93,23 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                                 String.format("Was not able to create service %s", service.getId()),
                                 throwable,
                                 TmForumExceptionReason.INVALID_RELATIONSHIP));
+    }
+
+    private void validateInternalRefs(Service service) {
+        if (service.getNote() != null) {
+            List<URI> noteIds = service.getNote().stream().map(Note::getId).toList();
+            if (noteIds.size() != new HashSet<>(noteIds).size()) {
+                throw new TmForumException(
+                        String.format("Duplicate note ids are not allowed: %s", noteIds),
+                        TmForumExceptionReason.INVALID_DATA);
+            }
+        }
+        if (service.getServiceCharacteristic() != null) {
+            service.getServiceCharacteristic()
+                    .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic,
+                            service.getServiceCharacteristic()));
+        }
+
     }
 
     private void validateInternalCharacteristicRefs(Characteristic characteristic,
@@ -172,6 +191,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
         }
 
         Service service = tmForumMapper.map(serviceUpdateVO, id);
+        validateInternalRefs(service);
 
         return patch(id, service, getCheckingMono(service), Service.class)
                 .map(tmForumMapper::map)
@@ -185,22 +205,4 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
     }
-
-    private void validateInternalRefs(Service service) {
-        if (service.getNote() != null) {
-            List<URI> noteIds = service.getNote().stream().map(Note::getId).toList();
-            if (noteIds.size() != new HashSet<>(noteIds).size()) {
-                throw new TmForumException(
-                        String.format("Duplicate note ids are not allowed: %s", noteIds),
-                        TmForumExceptionReason.INVALID_DATA);
-            }
-        }
-        if (service.getServiceCharacteristic() != null) {
-            service.getServiceCharacteristic()
-                    .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic,
-                            service.getServiceCharacteristic()));
-        }
-
-    }
-
 }
