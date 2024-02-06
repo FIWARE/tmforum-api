@@ -343,7 +343,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                     .id(id)
                     .href(id)
                     .serviceSpecification(null)
-                    .supportingService(null)
+                    .supportingResource(null)
                     .relatedParty(null);
             expectedServices.add(serviceVO);
         }
@@ -501,7 +501,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingService(null)
+                        .supportingResource(null)
                         .description("new-description")));
 
         testEntries.add(Arguments.of("The name should have been updated.",
@@ -511,7 +511,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingService(null)
+                        .supportingResource(null)
                         .name("new-name")));
 
         testEntries.add(Arguments.of("The isBundle should have been updated.",
@@ -521,7 +521,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingService(null)
+                        .supportingResource(null)
                         .isBundle(false)));
 
         Instant date = Instant.now();
@@ -532,7 +532,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingService(null)
+                        .supportingResource(null)
                         .startDate(date)));
 
         testEntries.add(Arguments.of("The endDate should have been updated.",
@@ -542,7 +542,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingService(null)
+                        .supportingResource(null)
                         .endDate(date)));
 
         testEntries.add(Arguments.of("The characteristic should have been updated.",
@@ -553,7 +553,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(null)
-                        .supportingService(null)
+                        .supportingResource(null)
                         .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
                                 .id(null)
                                 .characteristicRelationship(null)))));
@@ -734,79 +734,44 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
                         ServiceVOTestExample.build()
-                                .serviceSpecification(null)
-                                .supportingService(null)
-                                .relatedParty(null)),
-                Arguments.of("Only description and the mandatory parameters should have been included.", "description",
-                        ServiceVOTestExample.build()
-                                .isBundle(null)
-                                .name(null)
-                                .startDate(null)
-                                .feature(null)
-                                .note(null)
+                                // get nulled without values
+                                .relatedParty(null)
                                 .place(null)
-                                .startMode(null)
-                                .relatedEntity(null)
-                                .serviceType(null)
-                                .serviceDate(null)
-                                .isStateful(null)
-                                .isServiceEnabled(null)
-                                .hasStarted(null)
-                                .category(null)
-                                .serviceCharacteristic(null)
-                                .serviceRelationship(null)
+                                .serviceSpecification(null)),
+                Arguments.of("Only category and the mandatory parameters should have been included.", "category",
+                        ServiceVOTestExample.build()
+                                .relatedParty(null)
+                                .place(null)
                                 .serviceSpecification(null)
-                                .serviceOrderItem(null)
-                                .supportingService(null)
-                                .supportingService(null)
-                                .relatedParty(null)),
+                                .serviceCharacteristic(null)
+                                .feature(null)
+                                .serviceRelationship(null)
+                                .description(null)
+                                .note(null)
+                                .name(null)),
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
                         "nothingToSeeHere", ServiceVOTestExample.build()
+                                .relatedParty(null)
+                                .place(null)
+                                .category(null)
+                                .serviceSpecification(null)
+                                .serviceCharacteristic(null)
+                                .feature(null)
                                 .description(null)
-                                .isBundle(null)
-                                .name(null)
-                                .startDate(null)
-                                .feature(null)
-                                .note(null)
-                                .place(null)
-                                .startMode(null)
-                                .relatedEntity(null)
-                                .serviceType(null)
-                                .serviceDate(null)
-                                .isStateful(null)
-                                .isServiceEnabled(null)
-                                .hasStarted(null)
-                                .category(null)
-                                .serviceCharacteristic(null)
                                 .serviceRelationship(null)
-                                .serviceSpecification(null)
-                                .serviceOrderItem(null)
-                                .supportingService(null)
-                                .supportingService(null)
-                                .relatedParty(null)),
-                Arguments.of("Only description, isBundle and the mandatory parameters should have been included.",
-                        "description,isBundle", ServiceVOTestExample.build()
-                                .name(null)
-                                .startDate(null)
-                                .feature(null)
                                 .note(null)
+                                .name(null)),
+                Arguments.of("Only description, name and the mandatory parameters should have been included.",
+                        "name,description", ServiceVOTestExample.build()
+                                .relatedParty(null)
                                 .place(null)
-                                .startMode(null)
-                                .relatedEntity(null)
-                                .serviceType(null)
-                                .serviceDate(null)
-                                .isStateful(null)
-                                .isServiceEnabled(null)
-                                .hasStarted(null)
-                                .category(null)
-                                .serviceCharacteristic(null)
-                                .serviceRelationship(null)
                                 .serviceSpecification(null)
-                                .serviceOrderItem(null)
-                                .supportingService(null)
-                                .supportingService(null)
-                                .relatedParty(null)));
+                                .serviceCharacteristic(null)
+                                .feature(null)
+                                .category(null)
+                                .serviceRelationship(null)
+                                .note(null)));
     }
 
     @Disabled("400 cannot happen, only 404")
