@@ -9,8 +9,6 @@ import org.fiware.serviceinventory.api.ServiceApi;
 import org.fiware.serviceinventory.model.ServiceCreateVO;
 import org.fiware.serviceinventory.model.ServiceUpdateVO;
 import org.fiware.serviceinventory.model.ServiceVO;
-import org.fiware.tmforum.common.domain.BillingAccountRef;
-import org.fiware.tmforum.common.domain.ConstraintRef;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -20,7 +18,6 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.service.*;
 import org.fiware.tmforum.resource.*;
 import org.fiware.tmforum.serviceinventory.domain.Service;
 import org.fiware.tmforum.serviceinventory.TMForumMapper;
@@ -96,60 +93,6 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                                 TmForumExceptionReason.INVALID_RELATIONSHIP));
     }
 
-    @Override public Mono<HttpResponse<Object>> deleteService(@NonNull String id) {
-        return delete(id);
-    }
-
-    @Override public Mono<HttpResponse<List<ServiceVO>>> listService(@Nullable String fields, @Nullable Integer offset,
-                                                                     @Nullable Integer limit) {
-        return list(offset, limit, Service.TYPE_SERVICE, Service.class)
-                .map(serviceStream -> serviceStream
-                        .map(tmForumMapper::map)
-                        .toList())
-                .switchIfEmpty(Mono.just(List.of()))
-                .map(HttpResponse::ok);
-    }
-
-    @Override public Mono<HttpResponse<ServiceVO>> patchService(@NonNull String id,
-                                                                @NonNull ServiceUpdateVO serviceUpdateVO) {
-        // non-ngsi-ld ids cannot exist.
-        if (!IdHelper.isNgsiLdId(id)) {
-            throw new TmForumException("Did not receive a valid id, such service cannot exist.",
-                    TmForumExceptionReason.NOT_FOUND);
-        }
-
-        Service service = tmForumMapper.map(serviceUpdateVO, id);
-
-        return patch(id, service, getCheckingMono(service), Service.class)
-                .map(tmForumMapper::map)
-                .map(HttpResponse::ok);
-    }
-
-    @Override public Mono<HttpResponse<ServiceVO>> retrieveService(@NonNull String id, @Nullable String fields) {
-        return retrieve(id, Service.class)
-                .switchIfEmpty(Mono.error(new TmForumException("No such service exists.",
-                        TmForumExceptionReason.NOT_FOUND)))
-                .map(tmForumMapper::map)
-                .map(HttpResponse::ok);
-    }
-
-    private void validateInternalRefs(Service service) {
-        if (service.getNote() != null) {
-            List<URI> noteIds = service.getNote().stream().map(Note::getId).toList();
-            if (noteIds.size() != new HashSet<>(noteIds).size()) {
-                throw new TmForumException(
-                        String.format("Duplicate note ids are not allowed: %s", noteIds),
-                        TmForumExceptionReason.INVALID_DATA);
-            }
-        }
-        if (service.getServiceCharacteristic() != null) {
-            service.getServiceCharacteristic()
-                    .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic,
-                            service.getServiceCharacteristic()));
-        }
-
-    }
-
     private void validateInternalCharacteristicRefs(Characteristic characteristic,
                                                     List<Characteristic> characteristics) {
         List<String> charIds = characteristics
@@ -205,4 +148,59 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                             feature.getFeatureCharacteristic()));
         }
     }
+
+    @Override public Mono<HttpResponse<Object>> deleteService(@NonNull String id) {
+        return delete(id);
+    }
+
+    @Override public Mono<HttpResponse<List<ServiceVO>>> listService(@Nullable String fields, @Nullable Integer offset,
+                                                                     @Nullable Integer limit) {
+        return list(offset, limit, Service.TYPE_SERVICE, Service.class)
+                .map(serviceStream -> serviceStream
+                        .map(tmForumMapper::map)
+                        .toList())
+                .switchIfEmpty(Mono.just(List.of()))
+                .map(HttpResponse::ok);
+    }
+
+    @Override public Mono<HttpResponse<ServiceVO>> patchService(@NonNull String id,
+                                                                @NonNull ServiceUpdateVO serviceUpdateVO) {
+        // non-ngsi-ld ids cannot exist.
+        if (!IdHelper.isNgsiLdId(id)) {
+            throw new TmForumException("Did not receive a valid id, such service cannot exist.",
+                    TmForumExceptionReason.NOT_FOUND);
+        }
+
+        Service service = tmForumMapper.map(serviceUpdateVO, id);
+
+        return patch(id, service, getCheckingMono(service), Service.class)
+                .map(tmForumMapper::map)
+                .map(HttpResponse::ok);
+    }
+
+    @Override public Mono<HttpResponse<ServiceVO>> retrieveService(@NonNull String id, @Nullable String fields) {
+        return retrieve(id, Service.class)
+                .switchIfEmpty(Mono.error(new TmForumException("No such service exists.",
+                        TmForumExceptionReason.NOT_FOUND)))
+                .map(tmForumMapper::map)
+                .map(HttpResponse::ok);
+    }
+
+    private void validateInternalRefs(Service service) {
+        if (service.getNote() != null) {
+            List<URI> noteIds = service.getNote().stream().map(Note::getId).toList();
+            if (noteIds.size() != new HashSet<>(noteIds).size()) {
+                throw new TmForumException(
+                        String.format("Duplicate note ids are not allowed: %s", noteIds),
+                        TmForumExceptionReason.INVALID_DATA);
+            }
+        }
+        if (service.getServiceCharacteristic() != null) {
+            service.getServiceCharacteristic()
+                    .forEach(characteristic -> validateInternalCharacteristicRefs(characteristic,
+                            service.getServiceCharacteristic()));
+        }
+
+    }
+
 }
