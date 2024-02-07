@@ -55,6 +55,7 @@ public class EventConstants {
     public static final String DELETE_EVENT_SUFFIX = "DeleteEvent";
     public static final String CHANGE_EVENT_SUFFIX = "ChangeEvent";
     public static final String INFORMATION_REQUIRED_EVENT_SUFFIX = "InformationRequiredEvent";
+    public static final String EVENT_GROUP_SERVICE = "Service";
 
     public static final Map<String, List<String>> ALLOWED_EVENT_TYPES = Map.ofEntries(
             entry(EVENT_GROUP_PRODUCT, List.of(CREATE_EVENT_SUFFIX, ATTRIBUTE_VALUE_CHANGE_EVENT_SUFFIX,
@@ -130,6 +131,8 @@ public class EventConstants {
             entry(EVENT_GROUP_PARTY_ACCOUNT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
                     DELETE_EVENT_SUFFIX)),
             entry(EVENT_GROUP_SETTLEMENT_ACCOUNT, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
+                    DELETE_EVENT_SUFFIX)),
+            entry(EVENT_GROUP_SERVICE, List.of(CREATE_EVENT_SUFFIX, CHANGE_EVENT_SUFFIX,
                     DELETE_EVENT_SUFFIX))
     );
 }

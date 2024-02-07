@@ -260,6 +260,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
 										.featureId(null)
 										.parentSpecificationId("invalid")))));
+    
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent resource id on spec rel should fail.",
 						FeatureSpecificationVOTestExample.build()
