@@ -17,6 +17,10 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.Map;
 
+
+/**
+ * Health indicator that reports the readiness based on the NGSI-LD broker's health state
+ */
 @Singleton
 @Requires(beans = {HealthEndpoint.class, NgsiLdBrokerHealthConfiguration.class})
 @Readiness

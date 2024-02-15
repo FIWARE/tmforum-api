@@ -8,7 +8,7 @@ import io.micronaut.management.endpoint.health.HealthEndpoint;
 import java.util.List;
 
 @ConfigurationProperties(HealthEndpoint.PREFIX + ".broker")
-@Requires(property = HealthEndpoint.PREFIX + ".broker.enabled", notEquals = StringUtils.FALSE)
+@Requires(property = HealthEndpoint.PREFIX + ".broker.enabled", defaultValue = StringUtils.FALSE, notEquals = StringUtils.FALSE)
 public record NgsiLdBrokerHealthConfiguration (boolean enabled, List<Integer> allowedResponseCodes){
 
 }
