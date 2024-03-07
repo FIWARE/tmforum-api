@@ -52,6 +52,10 @@
     "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF633_Service_Catalog_Management_API_v4.0.0_swagger.json"
   },
   {
+    "module": "service-inventory",
+    "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/TMF638_Service_Inventory/4.0.0/swagger/TMF638_Service_Inventory_Management_API_v4.0.0_swagger.json"
+  },
+  {
     "module": "usage-management",
     "url": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF635_Usage_Management_API_v4.0.0_swagger.json"
   }
