@@ -19,7 +19,12 @@ jobs:
           java-version: '17'
           java-package: jdk
 
+      - name: Compile the modules
+        id: compile
+        run: |
+          mvn clean install -DskipTests -DskipITs
+          
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=orion-ld -Dcache=in-memory
+          mvn test integration-test verify --projects ${{matrix.module}} -Dbroker=orion-ld -Dcache=in-memory
