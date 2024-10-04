@@ -178,7 +178,7 @@
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
             <artifactId>resource-catalog</artifactId>
-            <version>${parent.version}</version>
+            <version>${version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
