@@ -498,6 +498,37 @@
     </build>
     <profiles>
         <profile>
+            <id>build-only</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-failsafe-plugin</artifactId>
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </plugin>
+                        <plugin>
+                            <groupId>io.kokuwa.maven</groupId>
+                            <artifactId>k3s-maven-plugin</artifactId>
+                            <version>${version.io.kokuwa.maven.k3s-plugin}</version>
+                            <configuration>
+                                <skip>true</skip>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>

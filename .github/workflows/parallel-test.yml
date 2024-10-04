@@ -23,7 +23,7 @@ jobs:
       - name: Build project
         id: build
         run: |
-          mvn clean install -DskipTests -DskipITs
+          mvn clean install -Pbuild-only
 
 
   test:
