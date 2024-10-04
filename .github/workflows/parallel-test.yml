@@ -51,10 +51,6 @@ jobs:
           name: m2-repo
           path: ~/.m2
 
-      - id: logging
-        run: |
-          ls -l ~/.m2
-
       - name: Execute tests
         id: test
         run: |

@@ -34,7 +34,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.account" })
+@MicronautTest(packages = {"org.fiware.tmforum.account"})
 public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiTestSpec {
 
     public final PartyAccountApiTestClient partyAccountApiTestClient;
@@ -344,17 +344,15 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
             PartyAccountVO partyAccountVO = PartyAccountVOTestExample.build();
             fixExampleExpected(partyAccountVO);
             BillingCycleSpecificationRefOrValueVO billingCycleRV = partyAccountVO.getBillStructure()
-                    .getCycleSpecification().validFor(null);
+                    .getCycleSpecification();
             BillStructureVO billStructure = partyAccountVO.getBillStructure()
-                    .cycleSpecification(billingCycleRV)
-                    .presentationMedia(null);
+                    .cycleSpecification(billingCycleRV);
             partyAccountVO
                     .id(id)
                     .href(id)
                     .billStructure(billStructure)
                     .defaultPaymentMethod(null)
-                    .financialAccount(null)
-                    .relatedParty(null);
+                    .financialAccount(null);
             expectedPartyAccounts.add(partyAccountVO);
         }
 
@@ -491,14 +489,12 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         fixExampleExpected(expectedPartyAccount);
         expectedPartyAccount.setHref(partyAccountId);
         expectedPartyAccount.setId(partyAccountId);
-        expectedPartyAccount.setRelatedParty(null);
-        expectedPartyAccount.setFinancialAccount(null);
-        expectedPartyAccount.setDefaultPaymentMethod(null);
+        expectedPartyAccount.defaultPaymentMethod(null);
+        expectedPartyAccount.financialAccount(null);
         BillingCycleSpecificationRefOrValueVO billingCycleRV = expectedPartyAccount.getBillStructure()
-                .getCycleSpecification().validFor(null);
+                .getCycleSpecification();
         BillStructureVO billStructure = expectedPartyAccount.getBillStructure()
-                .cycleSpecification(billingCycleRV)
-                .presentationMedia(null);
+                .cycleSpecification(billingCycleRV);
         expectedPartyAccount.billStructure(billStructure);
 
         assertEquals(expectedPartyAccount, updatedPartyAccount, message);
@@ -666,16 +662,13 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         PartyAccountVO expectedPartyAccount = PartyAccountVOTestExample.build();
         expectedPartyAccount.setId(id);
         expectedPartyAccount.setHref(id);
-        // empty list is mapped to null
-        expectedPartyAccount.setFinancialAccount(null);
-        expectedPartyAccount.setDefaultPaymentMethod(null);
-        expectedPartyAccount.setRelatedParty(null);
+        expectedPartyAccount.financialAccount(null);
+        expectedPartyAccount.defaultPaymentMethod(null);
         fixExampleExpected(expectedPartyAccount);
         BillingCycleSpecificationRefOrValueVO billingCycleRV = expectedPartyAccount.getBillStructure()
-                .getCycleSpecification().validFor(null);
+                .getCycleSpecification();
         BillStructureVO billStructure = expectedPartyAccount.getBillStructure()
-                .cycleSpecification(billingCycleRV)
-                .presentationMedia(null);
+                .cycleSpecification(billingCycleRV);
         expectedPartyAccount.billStructure(billStructure);
 
         //then retrieve

@@ -36,8 +36,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.usagemanagement" })
-public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpecificationApiTestSpec{
+@MicronautTest(packages = {"org.fiware.tmforum.usagemanagement"})
+public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpecificationApiTestSpec {
 
     private final UsageSpecificationApiTestClient usageSpecificationApiTestClient;
     private String message;
@@ -47,7 +47,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
     private UsageSpecificationVO expectedUsageSpecification;
 
     public UsageSpecificationApiIT(UsageSpecificationApiTestClient usageSpecificationApiTestClient, EntitiesApiClient entitiesApiClient,
-                      ObjectMapper objectMapper,GeneralProperties generalProperties) {
+                                   ObjectMapper objectMapper, GeneralProperties generalProperties) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.usageSpecificationApiTestClient = usageSpecificationApiTestClient;
     }
@@ -70,7 +70,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
     @ParameterizedTest
     @MethodSource("provideValidUsageSpecifications")
     public void createUsageSpecification201(String message, UsageSpecificationCreateVO usageSpecificationCreateVO,
-            UsageSpecificationVO expectedUsageSpecification) throws Exception {
+                                            UsageSpecificationVO expectedUsageSpecification) throws Exception {
 
         this.message = message;
         this.usageSpecificationCreateVO = usageSpecificationCreateVO;
@@ -84,7 +84,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
         HttpResponse<UsageSpecificationVO> usageSpecificationVOHttpResponse = callAndCatch(
                 () -> usageSpecificationApiTestClient.createUsageSpecification(usageSpecificationCreateVO));
 
-        assertEquals(HttpStatus.CREATED,usageSpecificationVOHttpResponse.getStatus(), message);
+        assertEquals(HttpStatus.CREATED, usageSpecificationVOHttpResponse.getStatus(), message);
         UsageSpecificationVO createdUsageSpecificationVO = usageSpecificationVOHttpResponse.body();
         String usageId = usageSpecificationVOHttpResponse.body().getId();
 
@@ -290,10 +290,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
             UsageSpecificationVO usageSpecificationVO = UsageSpecificationVOTestExample.build();
             usageSpecificationVO
                     .id(id)
-                    .href(new URI(id))
-                    .relatedParty(null)
-                    .entitySpecRelationship(null)
-                    .constraint(null);
+                    .href(new URI(id));
             editExpectedTimePeriod(usageSpecificationVO);
             expectedUsageSpecifications.add(usageSpecificationVO);
         }
@@ -423,9 +420,6 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
         UsageSpecificationVO updatedUsageSpecification = updateResponse.body();
         expectedUsageSpecification.setId(usageId);
         expectedUsageSpecification.setHref(new URI(usageId));
-        expectedUsageSpecification.setRelatedParty(null);
-        expectedUsageSpecification.setConstraint(null);
-        expectedUsageSpecification.setEntitySpecRelationship(null);
         editExpectedTimePeriod(expectedUsageSpecification);
 
 
@@ -459,7 +453,6 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
         UsageSpecificationVO expectedVersionUpdate = UsageSpecificationVOTestExample.build()
                 .version("v0.0.2");
         testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
-
 
 
         return testEntries.stream();
@@ -596,10 +589,6 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
         UsageSpecificationVO expectedUsageSpecification = UsageSpecificationVOTestExample.build();
         expectedUsageSpecification.setId(id);
         expectedUsageSpecification.setHref(new URI(id));
-        // empty list is mapped to null
-        expectedUsageSpecification.setRelatedParty(null);
-        expectedUsageSpecification.setConstraint(null);
-        expectedUsageSpecification.setEntitySpecRelationship(null);
         editExpectedTimePeriod(expectedUsageSpecification);
 
         //then retrieve
@@ -653,7 +642,6 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
     public void retrieveUsageSpecification500() throws Exception {
 
     }
-
 
 
 }

@@ -324,10 +324,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 			productOfferingPriceVO
 					.id(id)
 					.href(id)
-					.bundledPopRelationship(null)
-					.place(null)
-					.popRelationship(null)
-					.constraint(null);
+					.bundledPopRelationship(null);
 			expectedProductOfferingPrices.add(productOfferingPriceVO);
 		}
 
@@ -473,10 +470,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedProductOfferingPrice.setHref(catalogId);
 		expectedProductOfferingPrice.setId(catalogId);
 
-		expectedProductOfferingPrice.setConstraint(null);
-		expectedProductOfferingPrice.setPopRelationship(null);
 		expectedProductOfferingPrice.setBundledPopRelationship(null);
-		expectedProductOfferingPrice.setPlace(null);
 		assertEquals(expectedProductOfferingPrice, updatedCatalog, message);
 	}
 
@@ -664,11 +658,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedProductOfferingPrice.setId(id);
 		expectedProductOfferingPrice.setHref(id);
 		expectedProductOfferingPrice.setLastUpdate(currentTimeInstant);
-		// empty lists are mapped to null
-		expectedProductOfferingPrice.setConstraint(null);
-		expectedProductOfferingPrice.setPopRelationship(null);
 		expectedProductOfferingPrice.setBundledPopRelationship(null);
-		expectedProductOfferingPrice.setPlace(null);
 
 		//then retrieve
 		HttpResponse<ProductOfferingPriceVO> retrievedPOP = callAndCatch(

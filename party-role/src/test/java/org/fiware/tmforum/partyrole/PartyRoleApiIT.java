@@ -43,8 +43,8 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.val;
 
-@MicronautTest(packages = { "org.fiware.tmforum.partyRole" })
-public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpec  {
+@MicronautTest(packages = {"org.fiware.tmforum.partyRole"})
+public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpec {
 
     private final PartyRoleApiTestClient prApiTestClient;
     private String message;
@@ -58,13 +58,13 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     private final GeneralProperties generalProperties;
 
     protected PartyRoleApiIT(PartyRoleApiTestClient agSpecApiTestClient,
-    EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
+                             EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.prApiTestClient = agSpecApiTestClient;
         this.entitiesApiClient = entitiesApiClient;
         this.objectMapper = objectMapper;
         this.generalProperties = generalProperties;
-}
+    }
 
     @Override
     protected String getEntityType() {
@@ -76,26 +76,26 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
         PartyRoleCreateVO prCreateVO = PartyRoleCreateVOTestExample.build().engagedParty(null);
         PartyRoleVO expectedAgSpec = PartyRoleVOTestExample.build().engagedParty(null);
         testEntries.add(
-                        Arguments.of("Empty PartyRole should have been created", prCreateVO,
-                                        expectedAgSpec));
+                Arguments.of("Empty PartyRole should have been created", prCreateVO,
+                        expectedAgSpec));
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
-                        .startDateTime(Instant.now());
+                .startDateTime(Instant.now());
         prCreateVO = PartyRoleCreateVOTestExample.build().engagedParty(null)
-                        .validFor(timePeriodVO);
+                .validFor(timePeriodVO);
         expectedAgSpec = PartyRoleVOTestExample.build().engagedParty(null)
-                        .validFor(timePeriodVO);
+                .validFor(timePeriodVO);
         testEntries.add(
-                        Arguments.of("PartyRole with a engagedParty should have been created",
-                                        prCreateVO,
-                                        expectedAgSpec));
+                Arguments.of("PartyRole with a engagedParty should have been created",
+                        prCreateVO,
+                        expectedAgSpec));
 
         return testEntries.stream();
     }
 
     @ParameterizedTest
-    @MethodSource({ "provideValidAgSpec" })
+    @MethodSource({"provideValidAgSpec"})
     public void createPartyRole201(String message, PartyRoleCreateVO agSpecCreateVO,
-        PartyRoleVO expectedAgSpec) throws Exception {
+                                   PartyRoleVO expectedAgSpec) throws Exception {
         this.message = message;
         this.prCreateVO = agSpecCreateVO;
         this.expectedpr = expectedAgSpec;
@@ -104,50 +104,50 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 
     @Override
     public void createPartyRole201() throws Exception {
-       HttpResponse<PartyRoleVO> agCreateResponse = callAndCatch(
-                                () -> prApiTestClient.createPartyRole(prCreateVO));
-                assertEquals(HttpStatus.CREATED, agCreateResponse.getStatus(), message);
-                String id = agCreateResponse.body().getId();
-                expectedpr.id(id).href(id);
-                assertEquals(expectedpr, agCreateResponse.body(), message);
+        HttpResponse<PartyRoleVO> agCreateResponse = callAndCatch(
+                () -> prApiTestClient.createPartyRole(prCreateVO));
+        assertEquals(HttpStatus.CREATED, agCreateResponse.getStatus(), message);
+        String id = agCreateResponse.body().getId();
+        expectedpr.id(id).href(id);
+        assertEquals(expectedpr, agCreateResponse.body(), message);
     }
 
     private static Stream<Arguments> provideInvalidAg() {
-                    List<Arguments> testEntries = new ArrayList<>();
-                    RelatedPartyVO engagedParty = RelatedPartyVOTestExample.build()
-                                    .id("non-existent");
-                    PartyRoleCreateVO prCreateVO = PartyRoleCreateVOTestExample.build().engagedParty(engagedParty);
-                    testEntries.add(
-                                    Arguments.of("An PartyRole with an invalid engagedParty should not be created",
-                                                    prCreateVO));
+        List<Arguments> testEntries = new ArrayList<>();
+        RelatedPartyVO engagedParty = RelatedPartyVOTestExample.build()
+                .id("non-existent");
+        PartyRoleCreateVO prCreateVO = PartyRoleCreateVOTestExample.build().engagedParty(engagedParty);
+        testEntries.add(
+                Arguments.of("An PartyRole with an invalid engagedParty should not be created",
+                        prCreateVO));
 
-                    prCreateVO = PartyRoleCreateVOTestExample.build()
-                                    .relatedParty(List
-                                                    .of(RelatedPartyVOTestExample.build().id(
-                                                                    "urn:ngsi-ld:PartyRole:non-existent")));
-                    testEntries.add(
-                                    Arguments.of("PartyRole with an invalid relatedParty should not be created",
-                                                    prCreateVO));
+        prCreateVO = PartyRoleCreateVOTestExample.build()
+                .relatedParty(List
+                        .of(RelatedPartyVOTestExample.build().id(
+                                "urn:ngsi-ld:PartyRole:non-existent")));
+        testEntries.add(
+                Arguments.of("PartyRole with an invalid relatedParty should not be created",
+                        prCreateVO));
 
-                    prCreateVO = PartyRoleCreateVOTestExample.build().agreement(List.of(AgreementRefVOTestExample.build().id("non-existent").name("Lambda")));
-                    testEntries.add(Arguments.of("PartyRole with a invalid agreementRef should not be created", prCreateVO));
+        prCreateVO = PartyRoleCreateVOTestExample.build().agreement(List.of(AgreementRefVOTestExample.build().id("non-existent").name("Lambda")));
+        testEntries.add(Arguments.of("PartyRole with a invalid agreementRef should not be created", prCreateVO));
 
-                    return testEntries.stream();
-            }
+        return testEntries.stream();
+    }
 
     @ParameterizedTest
-    @MethodSource({ "provideInvalidAg" })
+    @MethodSource({"provideInvalidAg"})
     public void createCustomer400(String message, PartyRoleCreateVO agCreateVO) throws Exception {
-            this.message = message;
-            this.prCreateVO = agCreateVO;
-            createPartyRole400();
+        this.message = message;
+        this.prCreateVO = agCreateVO;
+        createPartyRole400();
     }
 
     @Override
     public void createPartyRole400() throws Exception {
         HttpResponse<PartyRoleVO> agSpecCreateResponse = callAndCatch(() -> prApiTestClient.createPartyRole(prCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, agSpecCreateResponse.getStatus(),
-                    message);    
+                message);
     }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
@@ -167,43 +167,43 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     @Disabled("Prohibited by the framework.")
     @Test
     @Override
-    public void createPartyRole405() throws Exception {   
+    public void createPartyRole405() throws Exception {
     }
 
     @Disabled("No implicit creation, impossible state.")
     @Test
     @Override
-    public void createPartyRole409() throws Exception {  
+    public void createPartyRole409() throws Exception {
     }
 
     @Override
-    public void createPartyRole500() throws Exception {   
+    public void createPartyRole500() throws Exception {
     }
 
     @Override
     public void deletePartyRole204() throws Exception {
         PartyRoleCreateVO agSpecCreate = PartyRoleCreateVOTestExample.build();
         HttpResponse<PartyRoleVO> createAgSpecResponse = prApiTestClient
-                        .createPartyRole(agSpecCreate);
+                .createPartyRole(agSpecCreate);
         assertEquals(HttpStatus.CREATED, createAgSpecResponse.getStatus(),
-                        "PartyRole should be created");
+                "PartyRole should be created");
 
         String prId = createAgSpecResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                        callAndCatch(() -> prApiTestClient.deletePartyRole(prId)).getStatus(),
-                        "The partyRole should have been deleted.");
+                callAndCatch(() -> prApiTestClient.deletePartyRole(prId)).getStatus(),
+                "The partyRole should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                        callAndCatch(() -> prApiTestClient.retrievePartyRole(prId, null))
-                                        .status(),
-                        "The partyRole should not exist anymore.");
+                callAndCatch(() -> prApiTestClient.retrievePartyRole(prId, null))
+                        .status(),
+                "The partyRole should not exist anymore.");
     }
 
     @Disabled("400 is impossible to happen on deletion with the current implementation.")
     @Test
     @Override
-    public void deletePartyRole400() throws Exception {    
+    public void deletePartyRole400() throws Exception {
     }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
@@ -223,9 +223,9 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     public void deletePartyRole404() throws Exception {
         String prId = "urn:ngsi-ld:PartyRole:non-existent";
 
-                assertEquals(HttpStatus.NOT_FOUND,
-                                callAndCatch(() -> prApiTestClient.deletePartyRole(prId)).getStatus(),
-                                "The partyRole should have been deleted.");
+        assertEquals(HttpStatus.NOT_FOUND,
+                callAndCatch(() -> prApiTestClient.deletePartyRole(prId)).getStatus(),
+                "The partyRole should have been deleted.");
     }
 
     @Disabled("Prohibited by the framework.")
@@ -248,43 +248,44 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     @Override
     public void listPartyRole200() throws Exception {
         List<PartyRoleVO> expectedPr = new ArrayList<>();
-                HttpResponse<PartyRoleVO> createPrResponse;
-                PartyRoleCreateVO createAg;
-                for (int i = 0; i < 10; i++) {
-                        createAg = PartyRoleCreateVOTestExample.build().engagedParty(null);
-                        createPrResponse = prApiTestClient.createPartyRole(createAg);
-                        expectedPr.add(createPrResponse.body());
-                }
-                HttpResponse<List<PartyRoleVO>> listResponse = callAndCatch(
-                                () -> prApiTestClient.listPartyRole(null, null, null));
-                assertEquals(HttpStatus.OK, listResponse.getStatus(),
-                                "PartyRole list should be accessible");
-                assertEquals(expectedPr.size(), listResponse.body().size(),
-                                "The number of party roles should be the same");
-                Map<String, PartyRoleVO> expectedmap = expectedPr.stream()
-                                .collect(Collectors.toMap((r) -> r.getId(), (t) -> t));
-                listResponse.body().forEach((obj) -> assertNotNull(expectedmap.get(obj.getId()),
-                                "Retrieved partyRole list should contain all objects created previously"));
+        HttpResponse<PartyRoleVO> createPrResponse;
+        PartyRoleCreateVO createAg;
+        for (int i = 0; i < 10; i++) {
+            createAg = PartyRoleCreateVOTestExample.build().engagedParty(null);
+            createPrResponse = prApiTestClient.createPartyRole(createAg);
+            expectedPr.add(createPrResponse.body());
+        }
+        HttpResponse<List<PartyRoleVO>> listResponse = callAndCatch(
+                () -> prApiTestClient.listPartyRole(null, null, null));
+        assertEquals(HttpStatus.OK, listResponse.getStatus(),
+                "PartyRole list should be accessible");
+        assertEquals(expectedPr.size(), listResponse.body().size(),
+                "The number of party roles should be the same");
+        Map<String, PartyRoleVO> expectedmap = expectedPr.stream()
+                .collect(Collectors.toMap((r) -> r.getId(), (t) -> t));
+        listResponse.body().forEach((obj) -> assertNotNull(expectedmap.get(obj.getId()),
+                "Retrieved partyRole list should contain all objects created previously"));
 
-                // get with limit
-                Integer limit = 5;
-                listResponse = callAndCatch(
-                                () -> prApiTestClient.listPartyRole(null, null, limit));
-                assertEquals(HttpStatus.OK, listResponse.getStatus(),
-                                "PartyRole list should be accessible");
-                assertEquals(limit, listResponse.body().size(),
-                                "The number of party roles should be the same");
+        // get with limit
+        Integer limit = 5;
+        listResponse = callAndCatch(
+                () -> prApiTestClient.listPartyRole(null, null, limit));
+        assertEquals(HttpStatus.OK, listResponse.getStatus(),
+                "PartyRole list should be accessible");
+        assertEquals(limit, listResponse.body().size(),
+                "The number of party roles should be the same");
     }
+
     @Test
     @Override
     public void listPartyRole400() throws Exception {
         HttpResponse<List<PartyRoleVO>> listResponse = callAndCatch(() -> prApiTestClient.listPartyRole(null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST, listResponse.getStatus(),
-            "PartyRole list should not be accessible");
+                "PartyRole list should not be accessible");
         listResponse = callAndCatch(
-            () -> prApiTestClient.listPartyRole(null, null, -1));
+                () -> prApiTestClient.listPartyRole(null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST, listResponse.getStatus(),
-            "PartyRole list should not be accessible");
+                "PartyRole list should not be accessible");
     }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
@@ -318,30 +319,26 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     }
 
     @Override
-    public void listPartyRole500() throws Exception {   
+    public void listPartyRole500() throws Exception {
     }
 
     private static Stream<Arguments> providePrUpdates() {
         List<Arguments> result = new ArrayList<>();
         result.add(Arguments.of("The name should have been updated",
-                        PartyRoleUpdateVOTestExample.build().engagedParty(null).name("Updated"),
-                        PartyRoleVOTestExample.build().name("Updated")
-                                        .engagedParty(null).paymentMethod(null)
-                                        .relatedParty(null).agreement(null).account(null)));
+                PartyRoleUpdateVOTestExample.build().engagedParty(null).name("Updated"),
+                PartyRoleVOTestExample.build().name("Updated")
+                        .engagedParty(null)));
         result.add(Arguments.of("The status should have been updated",
-                        PartyRoleUpdateVOTestExample.build().engagedParty(null).status("canceled"),
-                        PartyRoleVOTestExample.build().engagedParty(null).status("canceled")
-                        .paymentMethod(null).relatedParty(null).account(null).agreement(null)));
-        
+                PartyRoleUpdateVOTestExample.build().engagedParty(null).status("canceled"),
+                PartyRoleVOTestExample.build().engagedParty(null).status("canceled")));
+
         Instant now1 = Instant.now();
         Instant now2 = Instant.now();
         TimePeriodVO validFor = TimePeriodVOTestExample.build().startDateTime(now1).endDateTime(now2);
         result.add(Arguments.of("The validFor info should have been updated",
-                        PartyRoleUpdateVOTestExample.build().engagedParty(null).validFor(validFor),
-                        PartyRoleVOTestExample.build().validFor(validFor)
-                                        .engagedParty(null)
-                                        .paymentMethod(null).relatedParty(null)
-                                        .account(null).agreement(null)));
+                PartyRoleUpdateVOTestExample.build().engagedParty(null).validFor(validFor),
+                PartyRoleVOTestExample.build().validFor(validFor)
+                        .engagedParty(null)));
 
         return result.stream();
     }
@@ -349,11 +346,11 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     @ParameterizedTest
     @MethodSource("providePrUpdates")
     public void patchPartyRole200(String message, PartyRoleUpdateVO updateVO,
-                    PartyRoleVO expectedPrVO) throws Exception {
-            this.message = message;
-            this.prUpdateVO = updateVO;
-            this.expectedpr = expectedPrVO;
-            patchPartyRole200();
+                                  PartyRoleVO expectedPrVO) throws Exception {
+        this.message = message;
+        this.prUpdateVO = updateVO;
+        this.expectedpr = expectedPrVO;
+        patchPartyRole200();
 
     }
 
@@ -376,34 +373,34 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     private static Stream<Arguments> provideInvalidUpdates() {
         List<Arguments> result = new ArrayList<>();
         result.add(Arguments.of("An update with an invalid agreement reference is not allowed.",
-                        PartyRoleUpdateVOTestExample.build()
-                                        .agreement(List.of(AgreementRefVOTestExample.build().id("invalid")))));
+                PartyRoleUpdateVOTestExample.build()
+                        .agreement(List.of(AgreementRefVOTestExample.build().id("invalid")))));
         result.add(Arguments.of("An update with an invalid engaged party is not allowed.",
-                        PartyRoleUpdateVOTestExample.build()
-                                        .agreement(List.of(AgreementRefVOTestExample.build().id("invalid")))));
+                PartyRoleUpdateVOTestExample.build()
+                        .agreement(List.of(AgreementRefVOTestExample.build().id("invalid")))));
         return result.stream();
     }
 
     @ParameterizedTest
     @MethodSource("provideInvalidUpdates")
     public void patchAgreement400(String messages, PartyRoleUpdateVO invalidVO) throws Exception {
-            this.message = messages;
-            this.prUpdateVO = invalidVO;
-            patchPartyRole400();
+        this.message = messages;
+        this.prUpdateVO = invalidVO;
+        patchPartyRole400();
     }
 
     @Override
-        public void patchPartyRole400() throws Exception {
-                PartyRoleCreateVO prSpecCreate = PartyRoleCreateVOTestExample.build().engagedParty(null);
-                HttpResponse<PartyRoleVO> agSpecCreateResponse = callAndCatch(
-                                () -> prApiTestClient.createPartyRole(prSpecCreate));
-                String id = agSpecCreateResponse.body().getId();
-                assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(),
-                                "PartyRole should have been created firstly");
-                HttpResponse<PartyRoleVO> updateAgSpecResponse = callAndCatch(
-                                () -> prApiTestClient.patchPartyRole(id, prUpdateVO));
-                assertEquals(HttpStatus.BAD_REQUEST, updateAgSpecResponse.getStatus(), message);
-        }
+    public void patchPartyRole400() throws Exception {
+        PartyRoleCreateVO prSpecCreate = PartyRoleCreateVOTestExample.build().engagedParty(null);
+        HttpResponse<PartyRoleVO> agSpecCreateResponse = callAndCatch(
+                () -> prApiTestClient.createPartyRole(prSpecCreate));
+        String id = agSpecCreateResponse.body().getId();
+        assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(),
+                "PartyRole should have been created firstly");
+        HttpResponse<PartyRoleVO> updateAgSpecResponse = callAndCatch(
+                () -> prApiTestClient.patchPartyRole(id, prUpdateVO));
+        assertEquals(HttpStatus.BAD_REQUEST, updateAgSpecResponse.getStatus(), message);
+    }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
     @Override
@@ -420,10 +417,11 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     public void patchPartyRole404() throws Exception {
         PartyRoleUpdateVO agspec = PartyRoleUpdateVOTestExample.build();
         assertEquals(HttpStatus.NOT_FOUND,
-                        callAndCatch(() -> prApiTestClient.patchPartyRole("non-existent",
-                                        agspec)).getStatus(),
-                        "It should not be able to patch a non-existent party role");
+                callAndCatch(() -> prApiTestClient.patchPartyRole("non-existent",
+                        agspec)).getStatus(),
+                "It should not be able to patch a non-existent party role");
     }
+
     @Disabled("Prohibited by the framework.")
     @Override
     public void patchPartyRole405() throws Exception {
@@ -442,12 +440,11 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     private static Stream<Arguments> provideFieldsRetrieve() {
         List<Arguments> result = new ArrayList<>();
         result.add(Arguments.of("If no fields are established, all attributes should be returned", null,
-                        PartyRoleVOTestExample.build().engagedParty(null).account(null)
-                        .agreement(null).paymentMethod(null).relatedParty(null)));
+                PartyRoleVOTestExample.build().engagedParty(null)));
         result.add(Arguments.of(
-                        "It should only show up name,version,description with the default mandatory attributes",
-                        "name,version,description",
-                        PartyRoleVOTestExample.build().engagedParty(null).account(null).validFor(null)
+                "It should only show up name,version,description with the default mandatory attributes",
+                "name,version,description",
+                PartyRoleVOTestExample.build().engagedParty(null).account(null).validFor(null)
                         .agreement(null).paymentMethod(null).relatedParty(null)
                         .status(null).statusReason(null).characteristic(null).contactMedium(null)
                         .creditProfile(null).atBaseType(null).atType(null).atSchemaLocation(null)));
@@ -457,11 +454,11 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     @ParameterizedTest
     @MethodSource("provideFieldsRetrieve")
     public void retrievePartyRole200(String message, String fields, PartyRoleVO pr)
-                    throws Exception {
-            this.fields = fields;
-            this.message = message;
-            this.expectedpr = pr;
-            retrievePartyRole200();
+            throws Exception {
+        this.fields = fields;
+        this.message = message;
+        this.expectedpr = pr;
+        retrievePartyRole200();
     }
 
     @Override
@@ -502,14 +499,14 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     @Override
     public void retrievePartyRole404() throws Exception {
         HttpResponse<PartyRoleVO> response = callAndCatch(
-                                () -> prApiTestClient.retrievePartyRole(
-                                                "urn:ngsi-ld:PartyRole:non-existent", null));
-                assertEquals(HttpStatus.NOT_FOUND, response.getStatus(),
-                                "No such partyRole should exist");
+                () -> prApiTestClient.retrievePartyRole(
+                        "urn:ngsi-ld:PartyRole:non-existent", null));
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatus(),
+                "No such partyRole should exist");
 
-                Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);
+        Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);
 
-                assertTrue(optionalErrorDetails.isPresent(), "Error details should have been provided.");
+        assertTrue(optionalErrorDetails.isPresent(), "Error details should have been provided.");
     }
 
     @Disabled("Prohibited by the framework.")
@@ -527,7 +524,6 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
     @Override
     public void retrievePartyRole500() throws Exception {
     }
-
 
 
 }

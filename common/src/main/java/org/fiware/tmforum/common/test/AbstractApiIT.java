@@ -44,7 +44,7 @@ public abstract class AbstractApiIT {
         this.objectMapper
                 .addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
         this.objectMapper.findAndRegisterModules();
-        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+//        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
                 null,
                 null,

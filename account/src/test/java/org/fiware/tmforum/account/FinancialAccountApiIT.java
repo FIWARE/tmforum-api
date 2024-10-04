@@ -264,8 +264,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
             FinancialAccountVO financialAccountVO = FinancialAccountVOTestExample.build();
             financialAccountVO
                     .id(id)
-                    .href(id)
-                    .relatedParty(null);
+                    .href(id);
             expectedFinancialAccounts.add(financialAccountVO);
         }
 
@@ -398,7 +397,6 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
         FinancialAccountVO updatedFinancialAccount = updateResponse.body();
         expectedFinancialAccount.setHref(financialAccountId);
         expectedFinancialAccount.setId(financialAccountId);
-        expectedFinancialAccount.setRelatedParty(null);
 
         assertEquals(expectedFinancialAccount, updatedFinancialAccount, message);
     }
@@ -539,8 +537,6 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
         FinancialAccountVO expectedFinancialAccount = FinancialAccountVOTestExample.build();
         expectedFinancialAccount.setId(id);
         expectedFinancialAccount.setHref(id);
-        // empty list is mapped to null
-        expectedFinancialAccount.setRelatedParty(null);
 
         //then retrieve
         HttpResponse<FinancialAccountVO> retrievedFinancialAccount = callAndCatch(() -> financialAccountApiTestClient.retrieveFinancialAccount(id, null));

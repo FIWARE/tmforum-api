@@ -320,12 +320,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
             ProductSpecificationVO productSpecificationVO = ProductSpecificationVOTestExample.build();
             productSpecificationVO
                     .id(id)
-                    .href(id)
-                    .bundledProductSpecification(null)
-                    .productSpecificationRelationship(null)
-                    .relatedParty(null)
-                    .resourceSpecification(null)
-                    .serviceSpecification(null);
+                    .href(id);
             expectedProductSpecifications.add(productSpecificationVO);
         }
 
@@ -469,12 +464,6 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
         ProductSpecificationVO updatedCatalog = updateResponse.body();
         expectedProductOfferingPrice.setHref(catalogId);
         expectedProductOfferingPrice.setId(catalogId);
-        // empty list mapping
-        expectedProductOfferingPrice.setBundledProductSpecification(null);
-        expectedProductOfferingPrice.setProductSpecificationRelationship(null);
-        expectedProductOfferingPrice.setRelatedParty(null);
-        expectedProductOfferingPrice.setResourceSpecification(null);
-        expectedProductOfferingPrice.setServiceSpecification(null);
 
         assertEquals(expectedProductOfferingPrice, updatedCatalog, message);
     }
@@ -707,12 +696,6 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
         expectedProductOfferingPrice.setId(id);
         expectedProductOfferingPrice.setHref(id);
         expectedProductOfferingPrice.setLastUpdate(currentTimeInstant);
-        // empty lists are mapped to null
-        expectedProductOfferingPrice.setBundledProductSpecification(null);
-        expectedProductOfferingPrice.setProductSpecificationRelationship(null);
-        expectedProductOfferingPrice.setRelatedParty(null);
-        expectedProductOfferingPrice.setResourceSpecification(null);
-        expectedProductOfferingPrice.setServiceSpecification(null);
 
         //then retrieve
         HttpResponse<ProductSpecificationVO> retrievedPOP = callAndCatch(
