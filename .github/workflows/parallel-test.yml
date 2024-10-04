@@ -48,6 +48,10 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
 
+      - name: ls
+        run: |
+          ls -l ~/.m2
+
       - name: Execute tests
         id: test
         run: |
