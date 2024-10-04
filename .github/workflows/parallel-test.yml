@@ -22,5 +22,5 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean install -B -DskipTests -DskipITs --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,resource-catalog
-          mvn test integration-test verify -B --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=orion-ld -Dcache=in-memory
+          mvn clean install -B -DskipTests -DskipITs --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,resource-catalog,tmforum
+          mvn test integration-test verify -B --projects ${{matrix.module}} -Dbroker=orion-ld -Dcache=in-memory
