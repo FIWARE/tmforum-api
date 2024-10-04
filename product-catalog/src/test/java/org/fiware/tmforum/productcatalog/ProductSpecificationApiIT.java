@@ -9,6 +9,7 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestClient;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestSpec;
 import org.fiware.productcatalog.model.*;
+import org.fiware.resourcecatalog.api.ResourceSpecificationApi;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApiTestClient;
 import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVOTestExample;
@@ -49,8 +50,7 @@ import static org.mockito.Mockito.when;
 public class ProductSpecificationApiIT extends AbstractApiIT implements ProductSpecificationApiTestSpec {
 
     public final ProductSpecificationApiTestClient productSpecificationApiTestClient;
-    public final ResourceSpecificationApiTestClient resourceSpecificationApiTestClient;
-    public final ServiceSpecificationApiTestClient serviceSpecificationApiTestClient;
+    public final ResourceSpecificationApi resourceSpecificationApi;
 
     private String message;
     private ProductSpecificationCreateVO productSpecificationCreateVO;
@@ -60,13 +60,10 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
     private Clock clock = mock(Clock.class);
 
     public ProductSpecificationApiIT(ProductSpecificationApiTestClient productSpecificationApiTestClient,
-                                     ResourceSpecificationApiTestClient resourceSpecificationApiTestClient,
-                                     ServiceSpecificationApiTestClient serviceSpecificationApiTestClient,
-                                     EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
+                                     EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties, ResourceSpecificationApi resourceSpecificationApi) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.productSpecificationApiTestClient = productSpecificationApiTestClient;
-        this.resourceSpecificationApiTestClient = resourceSpecificationApiTestClient;
-        this.serviceSpecificationApiTestClient = serviceSpecificationApiTestClient;
+        this.resourceSpecificationApi = resourceSpecificationApi;
     }
 
     @MockBean(Clock.class)
@@ -487,7 +484,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
         ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build();
         HttpResponse<ResourceSpecificationVO> resourceSpecificationVOHttpResponse = callAndCatch(
-                () -> resourceSpecificationApiTestClient.createResourceSpecification(resourceSpecificationCreateVO));
+                () -> resourceSpecificationApi.createResourceSpecification(resourceSpecificationCreateVO).block());
         assertEquals(HttpStatus.CREATED, resourceSpecificationVOHttpResponse.getStatus(), message);
         String resourceSpecId = resourceSpecificationVOHttpResponse.body().getId();
         ResourceSpecificationRefVO rsrV = new ResourceSpecificationRefVO()
@@ -507,17 +504,23 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
         String specId = createResponse.body().getId();
 
-        HttpResponse<ProductSpecificationVO> getResponse = callAndCatch(
-                () -> productSpecificationApiTestClient.retrieveProductSpecification(specId, null)
-        );
-        ProductSpecificationUpdateVO productSpecificationUpdateVO1 = ProductSpecificationUpdateVOTestExample.build();
-        productSpecificationUpdateVO1.setResourceSpecification(List.of());
-        productSpecificationUpdateVO1.setServiceSpecification(null);
-        HttpResponse<ProductSpecificationVO> updateResponse = callAndCatch(
+        // null updates should not change anything
+        ProductSpecificationUpdateVO productSpecificationUpdateNullList = ProductSpecificationUpdateVOTestExample.build();
+        productSpecificationUpdateNullList.resourceSpecification(null);
+        HttpResponse<ProductSpecificationVO> nullUpdateResponse = callAndCatch(
                 () -> productSpecificationApiTestClient.patchProductSpecification(specId,
-                        productSpecificationUpdateVO1));
-        assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
-        assertEquals(0, updateResponse.body().getResourceSpecification().size(), "The spec should have been removed.");
+                        productSpecificationUpdateNullList));
+        assertEquals(HttpStatus.OK, nullUpdateResponse.getStatus(), message);
+        assertEquals(1, nullUpdateResponse.body().getResourceSpecification().size(), "If set to null, the spec-list should stay untouched.");
+
+        // empty list updates should empty the list
+        ProductSpecificationUpdateVO productSpecificationUpdateEmptyList = ProductSpecificationUpdateVOTestExample.build();
+        productSpecificationUpdateNullList.resourceSpecification(List.of());
+        HttpResponse<ProductSpecificationVO> emptyUpdateResponse = callAndCatch(
+                () -> productSpecificationApiTestClient.patchProductSpecification(specId,
+                        productSpecificationUpdateEmptyList));
+        assertEquals(HttpStatus.OK, emptyUpdateResponse.getStatus(), message);
+        assertEquals(0, emptyUpdateResponse.body().getResourceSpecification().size(), "If set to empty, the spec-list should be emptied.");
     }
 
 
