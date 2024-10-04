@@ -22,8 +22,8 @@ jobs:
       - name: Compile the modules
         id: compile
         run: |
-          mvn clean install -DskipTests -DskipITs
-          
+          mvn clean install -DskipTests -DskipITS --projects --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,resource-catalog
+
       - name: Execute tests
         id: test
         run: |
