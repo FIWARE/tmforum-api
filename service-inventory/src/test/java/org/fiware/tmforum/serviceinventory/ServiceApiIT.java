@@ -39,8 +39,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.serviceinventory" })
-public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
+@MicronautTest(packages = {"org.fiware.tmforum.serviceinventory"})
+public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     public final ServiceApiTestClient serviceApiTestClient;
 
     private String message;
@@ -65,7 +65,8 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
         return eventHandler;
     }
 
-    @Override protected String getEntityType() {
+    @Override
+    protected String getEntityType() {
         return Service.TYPE_SERVICE;
     }
 
@@ -342,9 +343,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
             serviceVO
                     .id(id)
                     .href(id)
-                    .serviceSpecification(null)
-                    .supportingResource(null)
-                    .relatedParty(null);
+                    .serviceSpecification(null);
             expectedServices.add(serviceVO);
         }
 
@@ -500,8 +499,6 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         .description("new-description"),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
-                        .relatedParty(null)
-                        .supportingResource(null)
                         .description("new-description")));
 
         testEntries.add(Arguments.of("The name should have been updated.",
@@ -510,8 +507,6 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         .name("new-name"),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
-                        .relatedParty(null)
-                        .supportingResource(null)
                         .name("new-name")));
 
         testEntries.add(Arguments.of("The isBundle should have been updated.",
@@ -520,8 +515,6 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         .isBundle(false),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
-                        .relatedParty(null)
-                        .supportingResource(null)
                         .isBundle(false)));
 
         Instant date = Instant.now();
@@ -531,8 +524,6 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         .startDate(date),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
-                        .relatedParty(null)
-                        .supportingResource(null)
                         .startDate(date)));
 
         testEntries.add(Arguments.of("The endDate should have been updated.",
@@ -541,8 +532,6 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                         .endDate(date),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
-                        .relatedParty(null)
-                        .supportingResource(null)
                         .endDate(date)));
 
         testEntries.add(Arguments.of("The characteristic should have been updated.",
@@ -552,11 +541,8 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
                                 .id(null))),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
-                        .relatedParty(null)
-                        .supportingResource(null)
                         .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
-                                .id(null)
-                                .characteristicRelationship(null)))));
+                                .id(null)))));
 
         return testEntries.stream();
     }
@@ -717,11 +703,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec{
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
-                        ServiceVOTestExample.build()
-                                // get nulled without values
-                                .relatedParty(null)
-                                .supportingResource(null)
-                                .serviceSpecification(null)),
+                        ServiceVOTestExample.build().serviceSpecification(null)),
                 Arguments.of("Only category and the mandatory parameters should have been included.", "category",
                         ServiceVOTestExample.build()
                                 .relatedParty(null)

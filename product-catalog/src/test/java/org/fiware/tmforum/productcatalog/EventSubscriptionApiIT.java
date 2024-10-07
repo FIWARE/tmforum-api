@@ -1,5 +1,6 @@
 package org.fiware.tmforum.productcatalog;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
@@ -16,6 +17,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,6 +52,12 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
                                   GeneralProperties generalProperties) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.eventsSubscriptionApiTestClient = eventsSubscriptionApiTestClient;
+    }
+
+    @BeforeEach
+    public void fixObjectMapper() {
+        // without, the test client will try to create an empty q subscription
+        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     }
 
     @Override
