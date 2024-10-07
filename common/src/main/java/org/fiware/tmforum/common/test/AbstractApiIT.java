@@ -22,8 +22,8 @@ import java.util.concurrent.Callable;
 public abstract class AbstractApiIT {
 
     private final EntitiesApiClient entitiesApiClient;
-    private final ObjectMapper objectMapper;
     private final GeneralProperties generalProperties;
+    protected final ObjectMapper objectMapper;
 
     /**
      * Needs to return the type of the handled entities, to allow automated cleanup before each test.
@@ -44,7 +44,6 @@ public abstract class AbstractApiIT {
         this.objectMapper
                 .addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
         this.objectMapper.findAndRegisterModules();
-//        this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
                 null,
                 null,
