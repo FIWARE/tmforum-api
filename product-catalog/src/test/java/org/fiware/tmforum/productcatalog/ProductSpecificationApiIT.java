@@ -6,6 +6,10 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.ngsi.model.AdditionalPropertyObjectVO;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
+import org.fiware.ngsi.model.EntityVO;
+import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestClient;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestSpec;
 import org.fiware.productcatalog.model.*;
@@ -30,6 +34,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.PortUnreachableException;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
@@ -50,8 +55,7 @@ import static org.mockito.Mockito.when;
 public class ProductSpecificationApiIT extends AbstractApiIT implements ProductSpecificationApiTestSpec {
 
     public final ProductSpecificationApiTestClient productSpecificationApiTestClient;
-    public final ResourceSpecificationApi resourceSpecificationApi;
-
+    private final EntitiesApiClient entitiesApi;
     private String message;
     private ProductSpecificationCreateVO productSpecificationCreateVO;
     private ProductSpecificationUpdateVO productSpecificationUpdateVO;
@@ -60,10 +64,11 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
     private Clock clock = mock(Clock.class);
 
     public ProductSpecificationApiIT(ProductSpecificationApiTestClient productSpecificationApiTestClient,
-                                     EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties, ResourceSpecificationApi resourceSpecificationApi) {
+                                     EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
+                                     GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.productSpecificationApiTestClient = productSpecificationApiTestClient;
-        this.resourceSpecificationApi = resourceSpecificationApi;
+        this.entitiesApi = entitiesApi;
     }
 
     @MockBean(Clock.class)
@@ -470,12 +475,28 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
     @Test
     public void patchSpecEmptyList() throws Exception {
+        String resourceSpecId = "urn:ngsi-ld:resource-specification:test-spec";
+        EntityVO resourceSpecEntity = new EntityVO()
+                .atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
+                .id(URI.create(resourceSpecId))
+                .type("resource-specification");
 
-        ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build();
-        HttpResponse<ResourceSpecificationVO> resourceSpecificationVOHttpResponse = callAndCatch(
-                () -> resourceSpecificationApi.createResourceSpecification(resourceSpecificationCreateVO).block());
-        assertEquals(HttpStatus.CREATED, resourceSpecificationVOHttpResponse.getStatus(), message);
-        String resourceSpecId = resourceSpecificationVOHttpResponse.body().getId();
+        PropertyVO isBundle = new PropertyVO().value(false);
+        resourceSpecEntity.setAdditionalProperties("isBundle", isBundle);
+        PropertyVO atSchemaLocation = new PropertyVO().value("my:uri");
+        resourceSpecEntity.setAdditionalProperties("atSchemaLocation", atSchemaLocation);
+        PropertyVO lifecycleStatus = new PropertyVO().value("string");
+        resourceSpecEntity.setAdditionalProperties("lifecycleStatus", lifecycleStatus);
+        PropertyVO description = new PropertyVO().value("string");
+        resourceSpecEntity.setAdditionalProperties("description", description);
+        PropertyVO version = new PropertyVO().value("0.1.2");
+        resourceSpecEntity.setAdditionalProperties("version", version);
+        PropertyVO href = new PropertyVO().value(resourceSpecId);
+        resourceSpecEntity.setAdditionalProperties("href", href);
+        PropertyVO category = new PropertyVO().value("category");
+        resourceSpecEntity.setAdditionalProperties("category", category);
+        entitiesApi.createEntity(resourceSpecEntity, null).block();
+
         ResourceSpecificationRefVO rsrV = new ResourceSpecificationRefVO()
                 .id(resourceSpecId)
                 .href(URI.create(resourceSpecId))

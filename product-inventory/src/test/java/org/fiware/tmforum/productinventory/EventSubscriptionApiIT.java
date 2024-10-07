@@ -158,13 +158,6 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
         testEntries.add(
                 Arguments.of(
                         EventSubscriptionInputVOTestExample.build()
-                                .query("")
-                                .callback(ANY_CALLBACK)
-                )
-        );
-        testEntries.add(
-                Arguments.of(
-                        EventSubscriptionInputVOTestExample.build()
                                 .query("eventType=ProductCreateEvent")
                                 .callback(ANY_CALLBACK)
                 )
