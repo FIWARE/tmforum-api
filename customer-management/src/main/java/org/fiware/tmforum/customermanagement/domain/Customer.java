@@ -48,7 +48,7 @@ public class Customer extends EntityWithId {
     private List<AccountRef> account;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", embedProperty = true)}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class, fromProperties = true)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class)}))
     private List<AgreementRef> agreement;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristics")}))

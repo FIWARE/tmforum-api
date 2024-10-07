@@ -101,7 +101,7 @@ public class Agreement extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty", targetClass = RelatedParty.class, fromProperties = true) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty", targetClass = RelatedParty.class) }))
 	private List<RelatedParty> engagedParty;
 
 	@Override

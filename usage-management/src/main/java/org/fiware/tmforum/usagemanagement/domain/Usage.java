@@ -49,7 +49,7 @@ public class Usage extends EntityWithId {
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class, fromProperties = true) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class) }))
 	private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({

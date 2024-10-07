@@ -1,5 +1,6 @@
 package org.fiware.tmforum.serviceinventory;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
@@ -14,8 +15,10 @@ import org.fiware.serviceinventory.model.EventSubscriptionVO;
 import org.fiware.serviceinventory.model.EventSubscriptionVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -51,9 +54,14 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 		this.eventsSubscriptionApiTestClient = eventsSubscriptionApiTestClient;
 	}
 
+	@BeforeEach
+	public void fixObjectMapper() {
+		// without, the test client will try to create an empty q subscription
+		this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+	}
 	@Override
 	protected String getEntityType() {
-		return Subscription.TYPE_SUBSCRIPTION;
+		return TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION;
 	}
 
 	@ParameterizedTest
@@ -144,13 +152,6 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 				Arguments.of(
 						EventSubscriptionInputVOTestExample.build()
 								.query(null)
-								.callback(ANY_CALLBACK)
-				)
-		);
-		testEntries.add(
-				Arguments.of(
-						EventSubscriptionInputVOTestExample.build()
-								.query("")
 								.callback(ANY_CALLBACK)
 				)
 		);

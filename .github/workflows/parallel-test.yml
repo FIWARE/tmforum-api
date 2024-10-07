@@ -4,12 +4,37 @@ on:
   push
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+          java-package: jdk
+
+      - name: Build project
+        id: build
+        run: |
+          mvn clean install -Pbuild-only
+
+      - name: Upload m2
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-repo
+          path: ~/.m2
+          if-no-files-found: error
+          include-hidden-files: true
+
   test:
+    needs: [ "build" ]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        module: [ customer-bill-management, customer-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog ]
+        module: [ customer-bill-management, customer-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog, usage-management, service-inventory, agreement, account ]
 
     steps:
       - uses: actions/checkout@v2
@@ -19,7 +44,14 @@ jobs:
           java-version: '17'
           java-package: jdk
 
+      - name: Restore m2
+        id: download
+        uses: actions/download-artifact@v4
+        with:
+          name: m2-repo
+          path: ~/.m2
+
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=orion-ld -Dcache=in-memory
+          mvn test integration-test verify -B --projects ${{matrix.module}} -Dbroker=orion-ld -Dcache=in-memory

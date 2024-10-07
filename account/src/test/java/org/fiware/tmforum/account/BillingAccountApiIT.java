@@ -34,7 +34,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.account" })
+@MicronautTest(packages = {"org.fiware.tmforum.account"})
 public class BillingAccountApiIT extends AbstractApiIT implements BillingAccountApiTestSpec {
 
     public final BillingAccountApiTestClient billingAccountApiTestClient;
@@ -45,7 +45,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
     private BillingAccountVO expectedBillingAccount;
 
     public BillingAccountApiIT(BillingAccountApiTestClient billingAccountApiTestClient, EntitiesApiClient entitiesApiClient,
-                             ObjectMapper objectMapper, GeneralProperties generalProperties) {
+                               ObjectMapper objectMapper, GeneralProperties generalProperties) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.billingAccountApiTestClient = billingAccountApiTestClient;
     }
@@ -344,17 +344,15 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
             BillingAccountVO billingAccountVO = BillingAccountVOTestExample.build();
             fixExampleExpected(billingAccountVO);
             BillingCycleSpecificationRefOrValueVO billingCycleRV = billingAccountVO.getBillStructure()
-                    .getCycleSpecification().validFor(null);
+                    .getCycleSpecification();
             BillStructureVO billStructure = billingAccountVO.getBillStructure()
-                    .cycleSpecification(billingCycleRV)
-                    .presentationMedia(null);
+                    .cycleSpecification(billingCycleRV);
             billingAccountVO
                     .id(id)
                     .href(id)
                     .billStructure(billStructure)
                     .defaultPaymentMethod(null)
-                    .financialAccount(null)
-                    .relatedParty(null);
+                    .financialAccount(null);
             expectedBillingAccounts.add(billingAccountVO);
         }
 
@@ -489,16 +487,14 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 
         BillingAccountVO updatedBillingAccount = updateResponse.body();
         fixExampleExpected(expectedBillingAccount);
-        expectedBillingAccount.setHref(billingAccountId);
-        expectedBillingAccount.setId(billingAccountId);
-        expectedBillingAccount.setRelatedParty(null);
-        expectedBillingAccount.setFinancialAccount(null);
-        expectedBillingAccount.setDefaultPaymentMethod(null);
+        expectedBillingAccount.href(billingAccountId)
+                .id(billingAccountId)
+                .financialAccount(null)
+                .defaultPaymentMethod(null);
         BillingCycleSpecificationRefOrValueVO billingCycleRV = expectedBillingAccount.getBillStructure()
-                .getCycleSpecification().validFor(null);
+                .getCycleSpecification();
         BillStructureVO billStructure = expectedBillingAccount.getBillStructure()
-                .cycleSpecification(billingCycleRV)
-                .presentationMedia(null);
+                .cycleSpecification(billingCycleRV);
         expectedBillingAccount.billStructure(billStructure);
 
         assertEquals(expectedBillingAccount, updatedBillingAccount, message);
@@ -666,16 +662,12 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
         BillingAccountVO expectedBillingAccount = BillingAccountVOTestExample.build();
         expectedBillingAccount.setId(id);
         expectedBillingAccount.setHref(id);
-        // empty list is mapped to null
-        expectedBillingAccount.setFinancialAccount(null);
-        expectedBillingAccount.setDefaultPaymentMethod(null);
-        expectedBillingAccount.setRelatedParty(null);
+        expectedBillingAccount.financialAccount(null).defaultPaymentMethod(null);
         fixExampleExpected(expectedBillingAccount);
         BillingCycleSpecificationRefOrValueVO billingCycleRV = expectedBillingAccount.getBillStructure()
-                .getCycleSpecification().validFor(null);
+                .getCycleSpecification();
         BillStructureVO billStructure = expectedBillingAccount.getBillStructure()
-                .cycleSpecification(billingCycleRV)
-                .presentationMedia(null);
+                .cycleSpecification(billingCycleRV);
         expectedBillingAccount.billStructure(billStructure);
 
         //then retrieve
