@@ -16,7 +16,10 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.product.ProductSpecification;
+import org.fiware.tmforum.product.ProductSpecificationRelationship;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -769,6 +772,39 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
     protected String getEntityType() {
         return ProductSpecification.TYPE_PRODUCT_SPECIFICATION;
     }
+
+    @DisplayName("Duplicate relationship issue - DOME#83519")
+    @Test
+    public void duplicateRelationshipIssue() throws Exception {
+        ProductSpecificationCreateVO productSpecCreate1 = ProductSpecificationCreateVOTestExample.build();
+        HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
+                () -> productSpecificationApiTestClient.createProductSpecification(productSpecCreate1));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+                "The productSpecification should have been created first.");
+        String specOne = createResponse.body().getId();
+
+        ProductSpecificationRelationshipVO specRel1 = ProductSpecificationRelationshipVOTestExample.build()
+                .id(specOne)
+                .href(URI.create(specOne))
+                .name("spec-one-1");
+        ProductSpecificationRelationshipVO specRel2 = ProductSpecificationRelationshipVOTestExample.build()
+                .id(specOne)
+                .href(URI.create(specOne))
+                .name("spec-one-2");
+
+        ProductSpecificationCreateVO productSpecCreate2 = ProductSpecificationCreateVOTestExample.build()
+                .productSpecificationRelationship(List.of(specRel1, specRel2));
+       createResponse = callAndCatch(
+                () -> productSpecificationApiTestClient.createProductSpecification(productSpecCreate2));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+                "The productSpecification should have been created first.");
+        String specTwo = createResponse.body().getId();
+
+        HttpResponse<ProductSpecificationVO> retrievalResponse = callAndCatch(() -> productSpecificationApiTestClient.retrieveProductSpecification(specTwo, null));
+        assertEquals(HttpStatus.OK, retrievalResponse.getStatus(), "The spec should have been retrieved.");
+
+    }
+
 }
 
 
