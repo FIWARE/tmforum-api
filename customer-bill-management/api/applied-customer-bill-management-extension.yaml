@@ -1,0 +1,438 @@
+swagger: '2.0'
+info:
+  title: API CustomerBill management extension
+  description: |-
+    ## TMF API Reference: TMF 678 - Customer bill Management
+
+    The TMForum CustomerBill Management API allows to retrieve the appliedCustomerBillingRate-objects. 
+    It does not specify any creation of such objects, since it expects them to be created by the billing-application 
+    itself. In order to be used as part of a microservice architecture, additional create and update methods are provided
+    here as an extension.
+  version: 4.0.0
+host: serverRoot
+basePath: /tmf-api/customerBillManagement/v4/
+schemes:
+  - https
+consumes:
+  - application/json;charset=utf-8
+produces:
+  - application/json;charset=utf-8
+tags:
+  - name: appliedCustomerBillingRateExtension
+paths:
+  /appliedCustomerBillingRate:
+    post:
+      operationId: createAppliedCustomerBillingRate
+      summary: Create AppliedCustomerBillingRate objects
+      description: This operation creates AppliedCustomerBillingRate entities
+      tags:
+        - appliedCustomerBillingRate
+      parameters:
+        - name: appliedCustomerBillingRate
+          description: The AppliedCustomerBillingRate to be created
+          required: true
+          schema:
+            $ref: '#/definitions/AppliedCustomerBillingRate_Create'
+          in: body
+      responses:
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/AppliedCustomerBillingRate'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        '405':
+          description: Method Not allowed
+          schema:
+            $ref: '#/definitions/Error'
+        '409':
+          description: Conflict
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Error'
+  /appliedCustomerBillingRate/{id}:
+    patch:
+      operationId: updateAppliedCustomerBillingRate
+      summary: Updates partially an AppliedCustomerBillingRate by ID
+      description: This operation updates partially an AppliedCustomerBillingRate entity.
+      tags:
+        - appliedCustomerBillingRate
+      parameters:
+        - name: id
+          description: Identifier of the AppliedCustomerBillingRate
+          required: true
+          type: string
+          in: path
+        - name: appliedCustomerBillingRate
+          description: The AppliedCustomerBillingRate to be updated
+          required: true
+          schema:
+            $ref: '#/definitions/AppliedCustomerBillingRate_Update'
+          in: body
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/AppliedCustomerBillingRate'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+        '405':
+          description: Method Not allowed
+          schema:
+            $ref: '#/definitions/Error'
+        '409':
+          description: Conflict
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  Any: {}
+  AppliedBillingRateCharacteristic:
+    type: object
+    description: An applied billing rate has dynamic characteristics according to the its type (characteristics are based on the service type, line of business or on others parameters)
+    required:
+      - name
+      - value
+    properties:
+      name:
+        type: string
+        description: Name of the characteristic
+      valueType:
+        type: string
+        description: Data type of the value of the characteristic
+      value:
+        $ref: '#/definitions/Any'
+        description: The value of the characteristic
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+  AppliedBillingTaxRate:
+    type: object
+    description: The applied billing tax rate represents taxes applied billing rate it refers to. It is calculated during the billing process.
+    properties:
+      taxCategory:
+        type: string
+        description: A categorization of the tax rate
+      taxRate:
+        type: number
+        format: float
+        description: Applied rate
+      taxAmount:
+        $ref: '#/definitions/Money'
+        description: Tax amount expressed in the given currency
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+  AppliedCustomerBillingRate:
+    type: object
+    description: A customer bill displays applied billing rates created before or during the billing process.
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: Unique identifier of the customer applied billing rate
+      href:
+        type: string
+        description: Reference of the customer applied billing rate
+      date:
+        type: string
+        format: date-time
+        description: Creation date of the applied billing rate
+      description:
+        type: string
+        description: Additional data to be displayed on the bill for this customer applied billing rate
+      isBilled:
+        type: boolean
+        description: If isBilled = true then bill should be provided, if false then billingAccount should be provided
+      name:
+        type: string
+        description: Name of the customer applied billing rate
+      type:
+        type: string
+        description: 'Type of the applied billing rate : appliedBillingCharge (any kind of charge except taxation charges : recurringCharge, oneTimeCharge, usageCharge),  appliedBillingCredit (any kind of credit : rebate or productAlteration) or appliedPenaltyCharge (penalty charges such as late fees, payment rejection fees,...)'
+      appliedTax:
+        type: array
+        items:
+          $ref: '#/definitions/AppliedBillingTaxRate'
+      bill:
+        $ref: '#/definitions/BillRef'
+      billingAccount:
+        $ref: '#/definitions/BillingAccountRef'
+      characteristic:
+        type: array
+        items:
+          $ref: '#/definitions/AppliedBillingRateCharacteristic'
+      periodCoverage:
+        $ref: '#/definitions/TimePeriod'
+        description: periodCoverage for RecurringCharge (RC) indicating the RC coverage period dates for different purposes, such as RC proration, display on bill, GL reporting, etc. periodCoverage for OC start and end date will be the same
+      product:
+        $ref: '#/definitions/ProductRef'
+        description: Usually this information should be provided by the PRODUCT, which implies that there is a valid reference to product. In this case, this property should be empty. For all other situations, a text or structured info could be provided using this property. Regular modelling would suggest tu use the reforvalue pattern for this case. It is not choosen here because it would generate declarational dependencies which would be hard to maintain.
+      taxExcludedAmount:
+        $ref: '#/definitions/Money'
+      taxIncludedAmount:
+        $ref: '#/definitions/Money'
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+  AppliedCustomerBillingRate_Create:
+    type: object
+    description: Manages the creation request of an AppliedCustomerBillingRate
+    properties:
+      date:
+        type: string
+        format: date-time
+        description: Creation date of the applied billing rate
+      description:
+        type: string
+        description: Additional data to be displayed on the bill for this customer applied billing rate
+      isBilled:
+        type: boolean
+        description: If isBilled = true then bill should be provided, if false then billingAccount should be provided
+      name:
+        type: string
+        description: Name of the customer applied billing rate
+      type:
+        type: string
+        description: 'Type of the applied billing rate : appliedBillingCharge (any kind of charge except taxation charges : recurringCharge, oneTimeCharge, usageCharge),  appliedBillingCredit (any kind of credit : rebate or productAlteration) or appliedPenaltyCharge (penalty charges such as late fees, payment rejection fees,...)'
+      appliedTax:
+        type: array
+        items:
+          $ref: '#/definitions/AppliedBillingTaxRate'
+      bill:
+        $ref: '#/definitions/BillRef'
+      billingAccount:
+        $ref: '#/definitions/BillingAccountRef'
+      characteristic:
+        type: array
+        items:
+          $ref: '#/definitions/AppliedBillingRateCharacteristic'
+      periodCoverage:
+        $ref: '#/definitions/TimePeriod'
+        description: periodCoverage for RecurringCharge (RC) indicating the RC coverage period dates for different purposes, such as RC proration, display on bill, GL reporting, etc. periodCoverage for OC start and end date will be the same
+      product:
+        $ref: '#/definitions/ProductRef'
+        description: Usually this information should be provided by the PRODUCT, which implies that there is a valid reference to product. In this case, this property should be empty. For all other situations, a text or structured info could be provided using this property. Regular modelling would suggest tu use the reforvalue pattern for this case. It is not choosen here because it would generate declarational dependencies which would be hard to maintain.
+      taxExcludedAmount:
+        $ref: '#/definitions/Money'
+      taxIncludedAmount:
+        $ref: '#/definitions/Money'
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+  AppliedCustomerBillingRate_Update:
+    type: object
+    description: Manages the update request of an AppliedCustomerBillingRate
+    properties:
+      isBilled:
+        type: boolean
+        description: If isBilled = true then bill should be provided, if false then billingAccount should be provided
+      bill:
+        $ref: '#/definitions/BillRef'
+      billingAccount:
+        $ref: '#/definitions/BillingAccountRef'
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+  BillRef:
+    type: object
+    description: Bill reference.
+    properties:
+      id:
+        type: string
+        description: Unique-Identifier for this <123>
+      href:
+        type: string
+        description: URL serving as reference for the <xyz> resource
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+      '@referredType':
+        type: string
+        description: The actual type of the target instance when needed for disambiguation.
+    required:
+      - id
+  BillingAccountRef:
+    type: object
+    description: Reference to the billing account in case of not billed item.
+    properties:
+      id:
+        type: string
+        description: Unique-Identifier for this <123>
+      href:
+        type: string
+        description: URL serving as reference for the <xyz> resource
+      name:
+        type: string
+        description: Name of the Billingaccount
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+      '@referredType':
+        type: string
+        description: The actual type of the target instance when needed for disambiguation.
+    required:
+      - id
+  Money:
+    type: object
+    description: A base / value business entity used to represent money
+    properties:
+      unit:
+        type: string
+        description: Currency (ISO4217 norm uses 3 letters to define the currency)
+      value:
+        type: number
+        format: float
+        description: A positive floating point number
+  ProductRef:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Unique identifier of a related entity.
+      href:
+        type: string
+        description: Reference of the related entity.
+      name:
+        type: string
+        description: Name of the related entity.
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name
+      '@referredType':
+        type: string
+        description: The actual type of the target instance when needed for disambiguation.
+    required:
+      - id
+  TimePeriod:
+    type: object
+    description: A period of time, either as a deadline (endDateTime only) a startDateTime only, or both
+    properties:
+      endDateTime:
+        type: string
+        format: date-time
+        description: End of the time period, using IETC-RFC-3339 format
+      startDateTime:
+        type: string
+        format: date-time
+        description: Start of the time period, using IETC-RFC-3339 format. If you define a start, you must also define an end
+  Error:
+    description: Used when an API throws an Error, typically with a HTTP error response-code (3xx, 4xx, 5xx)
+    type: object
+    required:
+      - code
+      - reason
+    properties:
+      code:
+        type: string
+        description: Application relevant detail, defined in the API or a common list.
+      reason:
+        type: string
+        description: Explanation of the reason for the error which can be shown to a client user.
+      message:
+        type: string
+        description: More details and corrective actions related to the error which can be shown to a client user.
+      status:
+        type: string
+        description: HTTP Error code extension
+      referenceError:
+        type: string
+        format: uri
+        description: URI of documentation describing the error.
+      '@baseType':
+        type: string
+        description: When sub-classing, this defines the super-class.
+      '@schemaLocation':
+        type: string
+        format: uri
+        description: A URI to a JSON-Schema file that defines additional attributes and relationships
+      '@type':
+        type: string
+        description: When sub-classing, this defines the sub-class entity name.

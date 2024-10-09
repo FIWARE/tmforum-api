@@ -223,6 +223,37 @@
                             </typeMappings>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>openapi-customer-bill-management-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>api/applied-customer-bill-management-extension.yaml</inputSpec>
+                            <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
+                            <strictSpec>true</strictSpec>
+                            <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
+                            <generatorName>micronaut</generatorName>
+                            <modelNameSuffix>VO</modelNameSuffix>
+                            <output>${project.build.directory}</output>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <fullJavaUtil>true</fullJavaUtil>
+                                <useOptional>false</useOptional>
+                                <useGenericResponse>true</useGenericResponse>
+                                <useLombokGenerated>true</useLombokGenerated>
+                                <introspected>true</introspected>
+                                <useBeanValidation>false</useBeanValidation>
+                                <supportAsync>true</supportAsync>
+                                <jacksonDatabindNullable>false</jacksonDatabindNullable>
+                                <generateExamples>true</generateExamples>
+                            </configOptions>
+                            <typeMappings>
+                                <typeMapping>java.util.Date=java.time.Instant</typeMapping>
+                            </typeMappings>
+                        </configuration>
+                    </execution>
                 </executions>
                 <dependencies>
                     <dependency>
