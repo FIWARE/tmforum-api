@@ -299,7 +299,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
     @Override
     public void retrieveCustomerBill200() throws Exception {
-        String billId = "urn:ngsi-ld:customer-bill:test-bill";
+        String billId = "urn:ngsi-ld:customer-bill:" + UUID.randomUUID();
         expectedCustomerBillVo.id(billId);
 
         CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().id(billId)
