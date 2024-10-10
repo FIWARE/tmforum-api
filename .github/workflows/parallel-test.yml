@@ -17,7 +17,7 @@ jobs:
       - name: Build project
         id: build
         run: |
-          mvn clean install -Pbuild-only -X
+          mvn clean install -Pbuild-only
 
       - name: Upload m2
         id: upload
