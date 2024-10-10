@@ -230,7 +230,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>./api/applied-customer-bill-management-extension.yaml</inputSpec>
+                            <inputSpec>${project.parent.basedir}/${artifactId}/api/applied-customer-bill-management-extension.yaml</inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
                             <strictSpec>true</strictSpec>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
