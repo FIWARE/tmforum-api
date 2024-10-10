@@ -18,7 +18,6 @@ import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.customerbillmanagement.TMForumMapper;
-import org.fiware.tmforum.customerbillmanagement.configuration.ApiExtensionProperties;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import reactor.core.publisher.Mono;
 
@@ -28,9 +27,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// TODO: check activation
+
 @Slf4j
 @Controller("${general.basepath:/}")
-@Requires(bean = ApiExtensionProperties.class, beanProperty = "enabled")
+@Requires(property = "apiExtension.enabled", value = "true")
 public class ExtendedAppliedCustomerBillingRateApiController extends AbstractApiController<AppliedCustomerBillingRate> implements AppliedCustomerBillingRateApi {
 
     private final TMForumMapper tmForumMapper;

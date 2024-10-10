@@ -2,11 +2,11 @@ package org.fiware.tmforum.customerbillmanagement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.checkerframework.checker.units.qual.A;
 import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateApiTestClient;
 import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateApiTestSpec;
 import org.fiware.customerbillmanagement.model.*;
@@ -14,10 +14,8 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
-import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
-import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -25,23 +23,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
+@Property(name = "apiExtension.enabled", value = "true")
 public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT implements
         AppliedCustomerBillingRateApiTestSpec {
 
