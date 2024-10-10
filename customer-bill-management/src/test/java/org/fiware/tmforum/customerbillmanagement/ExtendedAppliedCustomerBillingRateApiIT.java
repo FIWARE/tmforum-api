@@ -1,7 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -12,9 +11,11 @@ import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateApiTe
 import org.fiware.customerbillmanagement.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.customerbillmanagement.configuration.ApiExtensionProperties;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,9 +47,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
     private final AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient;
     private final EntitiesApiClient entitiesApiClient;
-    private final JavaObjectMapper javaObjectMapper;
-    private final TMForumMapper tmForumMapper;
-
+    private final ApiExtensionProperties apiExtensionProperties;
 
     private String message;
     private AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreateVO;
@@ -59,12 +58,11 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
     protected ExtendedAppliedCustomerBillingRateApiIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
                                                       GeneralProperties generalProperties,
-                                                      AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient, EntitiesApiClient entitiesApiClient1, JavaObjectMapper javaObjectMapper, TMForumMapper tmForumMapper) {
+                                                      AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient, ApiExtensionProperties apiExtensionProperties) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.appliedCustomerBillingRateApiTestClient = appliedCustomerBillingRateApiTestClient;
-        this.entitiesApiClient = entitiesApiClient1;
-        this.javaObjectMapper = javaObjectMapper;
-        this.tmForumMapper = tmForumMapper;
+        this.entitiesApiClient = entitiesApiClient;
+        this.apiExtensionProperties = apiExtensionProperties;
     }
 
     @MockBean(Clock.class)
@@ -85,12 +83,14 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
                 .atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
                 .id(URI.create(BILL_ID))
                 .type("customer-bill");
+        billEntityVO.setAdditionalProperties("atSchemaLocation", new PropertyVO().value("my:uri"));
         entitiesApiClient.createEntity(billEntityVO, null).block();
 
         EntityVO billingAccountEntityVO = new EntityVO()
                 .atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
                 .id(URI.create(BILLING_ACCOUNT_ID))
                 .type("billing-account");
+        billingAccountEntityVO.setAdditionalProperties("atSchemaLocation", new PropertyVO().value("my:uri"));
         entitiesApiClient.createEntity(billingAccountEntityVO, null).block();
     }
 
