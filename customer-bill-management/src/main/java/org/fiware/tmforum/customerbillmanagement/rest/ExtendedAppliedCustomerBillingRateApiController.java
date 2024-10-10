@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-// TODO: check activation
-
 @Slf4j
 @Controller("${general.basepath:/}")
 @Requires(property = "apiExtension.enabled", value = "true")
