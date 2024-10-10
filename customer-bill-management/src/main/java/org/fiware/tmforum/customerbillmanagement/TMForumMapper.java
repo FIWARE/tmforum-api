@@ -1,10 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement;
 
-import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
-import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVO;
-import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
-import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
-import org.fiware.customerbillmanagement.model.CustomerBillVO;
+import org.fiware.customerbillmanagement.model.*;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
@@ -43,6 +39,14 @@ public interface TMForumMapper {
 	CustomerBillOnDemand map(CustomerBillOnDemandVO customerBillOnDemandVO);
 
 	// applied customer billing rate
+
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	AppliedCustomerBillingRateVO map(AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreateVO, URI id);
+
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	AppliedCustomerBillingRateVO map(AppliedCustomerBillingRateUpdateVO appliedCustomerBillingRateUpdateVO, String id);
 
 	@Mapping(target = "rateType", source = "type")
 	AppliedCustomerBillingRate map(AppliedCustomerBillingRateVO appliedCustomerBillingRateVO);

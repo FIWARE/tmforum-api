@@ -15,6 +15,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.customerbillmanagement.configuration.ApiExtensionProperties;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,13 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@MockBean(Clock.class)
 	public Clock clock() {
 		return clock;
+	}
+
+	@MockBean(ApiExtensionProperties.class)
+	public ApiExtensionProperties apiExtensionProperties() {
+		ApiExtensionProperties apiExtensionProperties = new ApiExtensionProperties();
+		apiExtensionProperties.setEnabled(true);
+		return apiExtensionProperties;
 	}
 
 	@MockBean(TMForumEventHandler.class)
