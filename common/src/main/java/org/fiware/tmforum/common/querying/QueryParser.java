@@ -130,6 +130,9 @@ public class QueryParser {
 	}
 
 	private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
+		if(attribute.path().isEmpty()) {
+			return false;
+		}
 		Optional<AttributeGetter> getter = getGetterMethodByName(queryClass, attribute.path().get(0))
 			.map(m -> {
 				return Arrays.stream(m.getAnnotations())
