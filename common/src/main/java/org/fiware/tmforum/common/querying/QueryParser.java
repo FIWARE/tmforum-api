@@ -164,8 +164,11 @@ public class QueryParser {
 
         String attrPath;
         if (isRel) {
-            attribute.path().remove(attribute.path().size()-1);
             attrPath = String.join(".", attribute.path());
+            // remove .id, since it will be added in case of referenced entities
+            if(attrPath.endsWith(".id")) {
+                attrPath = attrPath.substring(0, attrPath.length() - 3);
+            }
         } else {
             String first = attribute.path().remove(0);
             attrPath = first + String.join("", attribute.path()
