@@ -27,8 +27,8 @@ class QueryParserTest {
     private static Stream<Arguments> queries() {
         return Stream.of(
                 // Property attributes queries
-                Arguments.of("status=Active,Started&color=Red", "status==(\"Active\"|\"Started\");color==\"Red\"", MyPojo.class),
-                Arguments.of("status=Active,Started;color=Red", "color==\"Red\"|status==(\"Active\"|\"Started\")", MyPojo.class),
+                Arguments.of("status=Active,Started&color=Red", "(status==\"Active\"|status==\"Started\");color==\"Red\"", MyPojo.class),
+                Arguments.of("status=Active,Started;color=Red", "color==\"Red\"|(status==\"Active\"|status==\"Started\")", MyPojo.class),
                 Arguments.of("status=Active;status=Started", "status==(\"Active\"|\"Started\")", MyPojo.class),
                 Arguments.of("status=Active;status=Started;color=Red", "color==\"Red\"|status==(\"Active\"|\"Started\")",
                         MyPojo.class),
@@ -39,9 +39,9 @@ class QueryParserTest {
                 Arguments.of("temperature<20&temperature>10", "temperature<20;temperature>10", MyPojo.class),
                 Arguments.of("temperature<=20;temperature=30", "temperature==30|temperature<=20", MyPojo.class),
                 Arguments.of("temperature>=20;temperature<3", "temperature<3|temperature>=20", MyPojo.class),
-                Arguments.of("status.eq=Active,Started&color.eq=Red", "status==(\"Active\"|\"Started\");color==\"Red\"",
+                Arguments.of("status.eq=Active,Started&color.eq=Red", "(status==\"Active\"|status==\"Started\");color==\"Red\"",
                         MyPojo.class),
-                Arguments.of("status.eq=Active,Started;color.eq=Red", "color==\"Red\"|status==(\"Active\"|\"Started\")",
+                Arguments.of("status.eq=Active,Started;color.eq=Red", "color==\"Red\"|(status==\"Active\"|status==\"Started\")",
                         MyPojo.class),
                 Arguments.of("status.eq=Active;status.eq=Started", "status==(\"Active\"|\"Started\")", MyPojo.class),
                 Arguments.of("status.eq=Active;status.eq=Started;color.eq=Red", "color==\"Red\"|status==(\"Active\"|\"Started\")",
@@ -59,7 +59,7 @@ class QueryParserTest {
                 Arguments.of("relList.name=therel", "relList.name==\"therel\"", MyPojo.class),
 
                 // Id queries
-                Arguments.of("id=urn:ngsi-ld:service:c2016f17-997d-468a-be23-7657bc5b4c5b,urn:ngsi-ld:service:u2096f17-997d-468a-be23-7657bc5b4c67", "id==(\"urn:ngsi-ld:service:c2016f17-997d-468a-be23-7657bc5b4c5b\"|\"urn:ngsi-ld:service:u2096f17-997d-468a-be23-7657bc5b4c67\")", MyPojo.class)
+                Arguments.of("id=urn:ngsi-ld:service:c2016f17-997d-468a-be23-7657bc5b4c5b,urn:ngsi-ld:service:u2096f17-997d-468a-be23-7657bc5b4c67", "(id==\"urn:ngsi-ld:service:c2016f17-997d-468a-be23-7657bc5b4c5b\"|id==\"urn:ngsi-ld:service:u2096f17-997d-468a-be23-7657bc5b4c67\")", MyPojo.class)
         );
     }
 
@@ -78,12 +78,12 @@ class QueryParserTest {
 
     private static Stream<Arguments> scorpioQueries() {
         return Stream.of(
-                Arguments.of("status=Active,Started&color=Red", "status==\"Active\",\"Started\";color==\"Red\"", MyPojo.class),
-                Arguments.of("status=Active;status=Started", "status==\"Active\",\"Started\"", MyPojo.class),
+                Arguments.of("status=Active,Started&color=Red", "(status==\"Active\",status==\"Started\");color==\"Red\"", MyPojo.class),
+                Arguments.of("status=Active;status=Started", "(status==\"Active\",status==\"Started\")", MyPojo.class),
                 Arguments.of("sub.status=Active&status=Started&color=Red", "sub[status]==\"Active\";status==\"Started\";color==\"Red\"", MyPojo.class),
                 Arguments.of("temperature<20&temperature>10", "temperature<20;temperature>10", MyPojo.class),
-                Arguments.of("status.eq=Active,Started&color.eq=Red", "status==\"Active\",\"Started\";color==\"Red\"", MyPojo.class),
-                Arguments.of("status.eq=Active;status.eq=Started", "status==\"Active\",\"Started\"", MyPojo.class)
+                Arguments.of("status.eq=Active,Started&color.eq=Red", "(status==\"Active\",status==\"Started\");color==\"Red\"", MyPojo.class),
+                Arguments.of("status.eq=Active;status.eq=Started", "(status==\"Active\",status==\"Started\")", MyPojo.class)
         );
     }
 }
