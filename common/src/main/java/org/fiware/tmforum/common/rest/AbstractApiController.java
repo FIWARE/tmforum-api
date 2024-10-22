@@ -97,7 +97,6 @@ public abstract class AbstractApiController<T> {
                 log.debug("A filter is included in the request.");
                 String queryString = theRequest.getUri().getQuery();
                 query = queryParser.toNgsiLdQuery(entityClass, queryString);
-			}
             }
         }
         offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
