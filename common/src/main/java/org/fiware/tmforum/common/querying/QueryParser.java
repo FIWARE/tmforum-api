@@ -5,6 +5,7 @@ import io.github.wistefan.mapping.NgsiLdAttribute;
 import io.github.wistefan.mapping.QueryAttributeType;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
+import io.github.wistefan.mapping.annotations.RelationshipObject;
 import io.micronaut.context.annotation.Bean;
 import lombok.RequiredArgsConstructor;
 
@@ -12,6 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 
+import javax.smartcardio.ATR;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,7 +82,7 @@ public class QueryParser {
 
         List<String> parameters;
         LogicalOperator logicalOperator = LogicalOperator.AND;
-        // tmforum does not define queries combining AND and OR
+        // tm-forum does not define queries combining AND and OR
         if (queryString.contains(TMFORUM_AND) && queryString.contains(TMFORUM_OR_KEY)) {
             throw new QueryException("Combining AND(&) and OR(;) on query level is not supported by the TMForum API.");
         }
@@ -100,7 +104,7 @@ public class QueryParser {
         // collect the or values to single entries if they use the same key
         if (logicalOperator == LogicalOperator.OR) {
             Map<String, List<QueryPart>> collectedParts = queryPartsStream.collect(
-                    Collectors.toMap(QueryPart::attribute, qp -> new ArrayList<QueryPart>(List.of(qp)),
+                    Collectors.toMap(QueryPart::attribute, qp -> new ArrayList<>(List.of(qp)),
                             (qp1, qp2) -> {
                                 qp1.addAll(qp2);
                                 return qp1;
@@ -118,10 +122,9 @@ public class QueryParser {
                         log.info("Attribute {} does not have a path.", qp.attribute());
                         return null;
                     }
-                    return getQueryPart(attribute, qp, isRelationship(queryClass, attribute));
+                    return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
                 })
-                .filter(Objects::nonNull)
-                .map(QueryParser::toQueryString);
+                .filter(Objects::nonNull);
 
         String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
         return switch (logicalOperator) {
@@ -131,21 +134,29 @@ public class QueryParser {
     }
 
     private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
+        log.warn("Is relationship? {}", attribute);
 
-        Optional<AttributeGetter> getter = getGetterMethodByName(queryClass, attribute.path().get(0))
-                .map(m -> {
+        Optional<Annotation> relevantAnnotation = getGetterMethodByName(queryClass, attribute.path().get(0))
                     return Arrays.stream(m.getAnnotations())
                             .filter(AttributeGetter.class::isInstance)
-                            .map(AttributeGetter.class::cast)
-                            .findFirst();
-                })
+                        .filter(annotation -> (annotation instanceof AttributeGetter attributeGetter || annotation instanceof RelationshipObject))
+                        .findFirst()
+                        .get())
                 .filter(a -> a.isPresent())
-                .map(a -> a.get())
                 .findFirst();
-
-        return getter.isPresent() &&
-                (getter.get().value().equals(AttributeType.RELATIONSHIP) ||
-                        getter.get().value().equals(AttributeType.RELATIONSHIP_LIST));
+        if (relevantAnnotation.isEmpty()) {
+            return false;
+        }
+        return relevantAnnotation.map(annotation -> {
+            if (annotation instanceof AttributeGetter attributeGetter) {
+                return attributeGetter.value().equals(AttributeType.RELATIONSHIP)
+                        || attributeGetter.value().equals(AttributeType.RELATIONSHIP_LIST);
+            }
+            if (annotation instanceof RelationshipObject) {
+                return true;
+            }
+            return false;
+        }).get();
     }
 
     private QueryPart getQueryPart(NgsiLdAttribute attribute, QueryPart qp, boolean isRel) {
@@ -153,6 +164,8 @@ public class QueryParser {
         // if the query is to a relationship subproperties will be joined with .
         // if the query is to a property with structured values the path will be
         // added between brackets
+
+        log.warn("Is rel: {}", isRel);
 
         String attrPath;
         if (isRel) {
@@ -168,15 +181,16 @@ public class QueryParser {
         return new QueryPart(
                 attrPath,
                 qp.operator(),
-                encodeValue(qp.value(), attribute.type()));
+                qp.value());
     }
 
     private String encodeValue(String value, QueryAttributeType type) {
-        return switch (type) {
+        value = switch (type) {
             case STRING -> encodeStringValue(value);
             case BOOLEAN -> value;
             case NUMBER -> value;
         };
+        return value;
     }
 
     private String encodeStringValue(String value) {
@@ -223,17 +237,21 @@ public class QueryParser {
                             .map(QueryPart::value)
                             .collect(Collectors.joining(ngsildOrValue));
 
-                    //if (entry.getValue().size() > 1) {
-                    //	value = String.format("(%s)", value);
-                    //}
-
                     return new QueryPart(attribute, entry.getKey(), value);
                 })
                 .collect(Collectors.toList());
     }
 
-    private static String toQueryString(QueryPart queryPart) {
-        return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), queryPart.value());
+    private String toQueryString(QueryPart queryPart, QueryAttributeType queryAttributeType) {
+
+        if (queryPart.value().contains(TMFORUM_OR_VALUE)) {
+            return "(" + Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
+                    .map(v -> encodeValue(v, queryAttributeType))
+                    .map(v -> String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), v))
+                    .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())) + ")";
+        }
+
+        return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodeValue(queryPart.value(), queryAttributeType));
     }
 
     private QueryPart paramsToQueryPart(String parameter, Operator operator) {
@@ -244,15 +262,10 @@ public class QueryParser {
                     parameter,
                     operator.getTmForumOperator().operator()));
         }
-        String value = parameterParts[1];
-        if (value.contains(TMFORUM_OR_VALUE)) {
-            value = String.format("%s", value.replace(TMFORUM_OR_VALUE, ngsildOrValue));
-        }
-
         return new QueryPart(
                 parameterParts[0],
                 operator.getNgsiLdOperator(),
-                value);
+                parameterParts[1]);
     }
 
     private QueryPart getQueryFromEquals(String parameter) {

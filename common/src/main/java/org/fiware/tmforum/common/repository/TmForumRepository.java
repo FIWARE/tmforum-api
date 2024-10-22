@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -14,6 +15,7 @@ import javax.inject.Singleton;
 import java.net.URI;
 import java.util.List;
 
+@Slf4j
 @Singleton
 public class TmForumRepository extends NgsiLdBaseRepository {
 
@@ -48,6 +50,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
 				.map(List::stream)
 				.flatMap(entityVOStream -> zipToList(entityVOStream, entityClass))
 				.onErrorResume(t -> {
+					log.warn("Was not able to list entities.", t);
 					throw new TmForumException("Was not able to list entities.", t, TmForumExceptionReason.UNKNOWN);
 				});
 	}
