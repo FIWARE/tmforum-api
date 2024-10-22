@@ -162,10 +162,9 @@ public class QueryParser {
         // if the query is to a property with structured values the path will be
         // added between brackets
 
-        log.warn("Is rel: {}", isRel);
-
         String attrPath;
         if (isRel) {
+            attribute.path().remove(attribute.path().size()-1);
             attrPath = String.join(".", attribute.path());
         } else {
             String first = attribute.path().remove(0);
