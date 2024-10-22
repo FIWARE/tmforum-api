@@ -137,12 +137,12 @@ public class QueryParser {
         log.warn("Is relationship? {}", attribute);
 
         Optional<Annotation> relevantAnnotation = getGetterMethodByName(queryClass, attribute.path().get(0))
-                    return Arrays.stream(m.getAnnotations())
-                            .filter(AttributeGetter.class::isInstance)
+                .map(m -> Arrays.stream(m.getAnnotations())
+                        .filter(AttributeGetter.class::isInstance)
                         .filter(annotation -> (annotation instanceof AttributeGetter attributeGetter || annotation instanceof RelationshipObject))
                         .findFirst()
-                        .get())
-                .filter(a -> a.isPresent())
+                        .get()
+                )
                 .findFirst();
         if (relevantAnnotation.isEmpty()) {
             return false;
