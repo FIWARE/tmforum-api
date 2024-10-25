@@ -88,11 +88,11 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
     }
 
     private Mono<TMForumSubscription> findExistingTMForumSubscription(TMForumSubscription subscription) {
-        String query = String.format(queryParser.toNgsiLdQuery(TMForumSubscription.class, "callback=%s&rawQuery=%s"),
+        String query = String.format(queryParser.toNgsiLdQuery(TMForumSubscription.class, "callback=%s&rawQuery=%s").query(),
                 subscription.getCallback(), subscription.getRawQuery());
 
         return repository.findEntities(CommonConstants.DEFAULT_OFFSET, 1, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
-                    TMForumSubscription.class, query)
+                        TMForumSubscription.class, query)
                 .flatMap(list -> list.isEmpty() ? Mono.empty() :
                         Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
     }
@@ -139,9 +139,9 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
         notificationParams.setFormat(EventConstants.NOTIFICATION_FORMAT);
         notificationParams.setEndpoint(
                 new Endpoint(
-                    getCallbackURI(),
-                    EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
-                    List.of(new KeyValuePair(RECEIVER_INFO_LISTENER_ENDPOINT, callback))));
+                        getCallbackURI(),
+                        EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
+                        List.of(new KeyValuePair(RECEIVER_INFO_LISTENER_ENDPOINT, callback))));
         return notificationParams;
     }
 

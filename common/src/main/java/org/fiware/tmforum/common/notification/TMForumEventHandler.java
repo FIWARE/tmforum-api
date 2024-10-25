@@ -11,6 +11,7 @@ import org.fiware.tmforum.common.notification.checkers.tmforum.AttributeValueCha
 import org.fiware.tmforum.common.notification.checkers.tmforum.CreateTmForumEventChecker;
 import org.fiware.tmforum.common.notification.checkers.tmforum.StateChangeTmForumEventChecker;
 import org.fiware.tmforum.common.notification.checkers.tmforum.TmForumEventChecker;
+import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
 import org.fiware.tmforum.common.repository.TmForumRepository;
@@ -47,7 +48,7 @@ public class TMForumEventHandler extends EventHandler {
                 TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
                 TMForumSubscription.class,
                 queryParser.toNgsiLdQuery(TMForumSubscription.class,
-                        String.format("entities=%s&eventTypes=%s", eventDetails.entityType(), eventDetails.eventType()))
+                        String.format("entities=%s&eventTypes=%s", eventDetails.entityType(), eventDetails.eventType())).query()
         );
     }
 
