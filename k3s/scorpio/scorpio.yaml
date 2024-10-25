@@ -107,7 +107,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: scorpio
-          image: "scorpiobroker/all-in-one-runner:java-4.1.11"
+          image: "scorpiobroker/all-in-one-runner:java-5.0.3"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9090
