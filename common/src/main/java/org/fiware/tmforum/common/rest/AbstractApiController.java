@@ -109,7 +109,10 @@ public abstract class AbstractApiController<T> {
         }
 
         return repository
-                .findEntities(offset, limit, entityClass, queryParams.query(), queryParams.id(), Optional.ofNullable(queryParams.type()).orElse(type))
+                .findEntities(offset, limit, entityClass,
+                        Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
+                        Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
+                        Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type))
                 .map(List::stream);
     }
 
