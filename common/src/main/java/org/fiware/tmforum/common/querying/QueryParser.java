@@ -77,7 +77,7 @@ public class QueryParser {
         return String.join(TMFORUM_AND, parameters);
     }
 
-    public String toNgsiLdQuery(Class<?> queryClass, String queryString) {
+    public QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {
         queryString = removeWellKnownParameters(queryString);
 
         List<String> parameters;
@@ -112,7 +112,8 @@ public class QueryParser {
             queryPartsStream = collectedParts.entrySet().stream()
                     .flatMap(entry -> combineParts(entry.getKey(), entry.getValue()).stream());
         }
-
+        List<String> ids = new ArrayList<>();
+        List<String> types = new ArrayList<>();
         // translate the attributes
         Stream<String> queryStrings = queryPartsStream.map(qp -> {
                     NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
@@ -122,15 +123,36 @@ public class QueryParser {
                         log.info("Attribute {} does not have a path.", qp.attribute());
                         return null;
                     }
+                    if (attribute.path().size() == 1 && attribute.path().contains("id")) {
+                        ids.add(qp.value());
+                        return null;
+                    }
+                    if (attribute.path().size() == 1 && attribute.path().contains("type")) {
+                        types.add(qp.value());
+                        return null;
+                    }
                     return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
                 })
                 .filter(Objects::nonNull);
 
         String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
-        return switch (logicalOperator) {
+        String query = switch (logicalOperator) {
             case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
             case OR -> queryStrings.collect(Collectors.joining(ngsidOrKey));
         };
+
+        String idList = null;
+        if (!ids.isEmpty()) {
+            idList = String.join(",", ids);
+        }
+        String typeList = null;
+        if (!types.isEmpty()) {
+            typeList = String.join(",", types);
+        }
+        if (query.isEmpty()) {
+            query = null;
+        }
+        return new QueryParams(idList, typeList, query);
     }
 
     private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
@@ -166,7 +188,7 @@ public class QueryParser {
         if (isRel) {
             attrPath = String.join(".", attribute.path());
             // remove .id, since it will be added in case of referenced entities
-            if(attrPath.endsWith(".id")) {
+            if (attrPath.endsWith(".id")) {
                 attrPath = attrPath.substring(0, attrPath.length() - 3);
             }
         } else {
@@ -254,7 +276,6 @@ public class QueryParser {
     }
 
     private QueryPart paramsToQueryPart(String parameter, Operator operator) {
-        String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
         String[] parameterParts = parameter.split(operator.getTmForumOperator().operator());
         if (parameterParts.length != 2) {
             throw new QueryException(String.format("%s is not a valid %s parameter.",

@@ -11,6 +11,7 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
@@ -87,7 +88,7 @@ public abstract class AbstractApiController<T> {
     protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {
 
         Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
-        String query = null;
+        QueryParams queryParams = null;
         if (optionalHttpRequest.isEmpty()) {
             log.warn("The original request is not available, no filters will be applied.");
         } else {
@@ -96,7 +97,7 @@ public abstract class AbstractApiController<T> {
             if (QueryParser.hasFilter(parameters)) {
                 log.debug("A filter is included in the request.");
                 String queryString = theRequest.getUri().getQuery();
-                query = queryParser.toNgsiLdQuery(entityClass, queryString);
+                queryParams = queryParser.toNgsiLdQuery(entityClass, queryString);
             }
         }
         offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
@@ -108,7 +109,10 @@ public abstract class AbstractApiController<T> {
         }
 
         return repository
-                .findEntities(offset, limit, type, entityClass, query)
+                .findEntities(offset, limit, entityClass,
+                        Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
+                        Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
+                        Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type))
                 .map(List::stream);
     }
 
