@@ -48,4 +48,10 @@ public class GeneralProperties {
 	 * Whether to enclose queries using brackets or not
 	 */
 	private Boolean encloseQuery=false;
+
+	/**
+	 * Whether to include the attribute name in each list object or not
+	 * E.g. (status==\"Active\",\"Started\") or (status==\"Active\",status==\"Started\")
+	 */
+	private Boolean includeAttributeInList=false;
 }
