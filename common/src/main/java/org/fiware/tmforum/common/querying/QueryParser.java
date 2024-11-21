@@ -241,7 +241,6 @@ public class QueryParser {
     }
 
     private List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
-        String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
         Map<String, List<QueryPart>> collectedParts = uncombinedParts.stream()
                 .collect(
                         Collectors.toMap(QueryPart::operator, qp -> new ArrayList<>(List.of(qp)),
@@ -256,7 +255,7 @@ public class QueryParser {
                     String value = entry.getValue()
                             .stream()
                             .map(QueryPart::value)
-                            .collect(Collectors.joining(ngsildOrValue));
+                            .collect(Collectors.joining(TMFORUM_OR_VALUE));
 
                     return new QueryPart(attribute, entry.getKey(), value);
                 })
@@ -266,10 +265,32 @@ public class QueryParser {
     private String toQueryString(QueryPart queryPart, QueryAttributeType queryAttributeType) {
 
         if (queryPart.value().contains(TMFORUM_OR_VALUE)) {
-            return "(" + Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
+            String theQuery = "";
+            List<String> encodedValues = new ArrayList<>(Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
                     .map(v -> encodeValue(v, queryAttributeType))
-                    .map(v -> String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), v))
-                    .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())) + ")";
+                    .toList());
+
+            if (generalProperties.getIncludeAttributeInList()) {
+                theQuery = encodedValues
+                        .stream()
+                        .map(v -> String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), v))
+                        .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue()));
+                if(generalProperties.getEncloseQuery()) {
+                    return "(" + theQuery + ")";
+                }
+            } else {
+                if (generalProperties.getEncloseQuery()) {
+                    return  String.format("%s%s(%s)", queryPart.attribute(), queryPart.operator(), encodedValues
+                            .stream()
+                            .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
+                } else {
+                    return  String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodedValues
+                            .stream()
+                            .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
+                }
+            }
+
+            return theQuery;
         }
 
         return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodeValue(queryPart.value(), queryAttributeType));
