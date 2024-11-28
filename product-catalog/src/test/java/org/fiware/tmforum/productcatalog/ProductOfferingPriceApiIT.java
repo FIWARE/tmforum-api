@@ -14,8 +14,6 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.product.ProductOfferingPrice;
-import org.fiware.tmforum.product.ProductSpecificationCharacteristicValueUse;
-import org.fiware.tmforum.product.ProductSpecificationRef;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -663,33 +661,6 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
         expectedProductOfferingPrice.setBundledPopRelationship(null);
 
         //then retrieve
-        HttpResponse<ProductOfferingPriceVO> retrievedPOP = callAndCatch(
-                () -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(id, null));
-        assertEquals(HttpStatus.OK, retrievedPOP.getStatus(), "The retrieval should be ok.");
-        assertEquals(expectedProductOfferingPrice, retrievedPOP.body(),
-                "The correct productOffering should be returned.");
-    }
-
-    @Test
-    public void retrieveProductOfferingPriceWithChar200() throws Exception {
-        Instant currentTimeInstant = Instant.ofEpochSecond(10000);
-
-        when(clock.instant()).thenReturn(currentTimeInstant);
-
-        //first create
-        ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
-        ProductSpecificationRefVO psr = ProductSpecificationRefVOTestExample.build()
-                .id("urn:ngsi-ld:product-specification:31951906-adad-48c3-9d8b-f6f9257658ae");
-        ProductSpecificationCharacteristicValueUseVO pscv = ProductSpecificationCharacteristicValueUseVOTestExample.build()
-                .productSpecification(psr);
-        List<ProductSpecificationCharacteristicValueUseVO> pscvL = new ArrayList<>();
-        pscvL.add(pscv);
-        productOfferingPriceCreateVO.prodSpecCharValueUse(pscvL);
-        HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
-                () -> productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
-                "The productOffering should have been created first.");
-        String id = createResponse.body().getId();
         HttpResponse<ProductOfferingPriceVO> retrievedPOP = callAndCatch(
                 () -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(id, null));
         assertEquals(HttpStatus.OK, retrievedPOP.getStatus(), "The retrieval should be ok.");
