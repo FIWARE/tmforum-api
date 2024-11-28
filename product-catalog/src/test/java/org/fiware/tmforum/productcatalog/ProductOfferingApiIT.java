@@ -773,7 +773,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         //first create
         ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build();
         // default generates invalid ids
-        productOfferingCreateVO.setProductSpecification(null);
+        productOfferingCreateVO.setProductSpecification(ProductSpecificationRefVOTestExample.build().id("urn:ngsi-ld:product-specification:90f52d67-f257-40d0-88e7-051d7ebd196e"));
         productOfferingCreateVO.setResourceCandidate(null);
         productOfferingCreateVO.setServiceCandidate(null);
         productOfferingCreateVO.setServiceLevelAgreement(null);

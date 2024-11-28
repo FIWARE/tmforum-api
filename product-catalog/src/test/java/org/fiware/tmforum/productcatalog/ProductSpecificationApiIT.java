@@ -687,6 +687,37 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
     }
 
     @Test
+    public void refInstantiationIssuer() throws Exception {
+        Instant currentTimeInstant = Instant.ofEpochSecond(10000);
+
+        when(clock.instant()).thenReturn(currentTimeInstant);
+
+        //first create
+        ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
+
+        HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
+                () -> productSpecificationApiTestClient.createProductSpecification(productSpecificationCreateVO));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+                "The productSpecification should have been created first.");
+        String id = createResponse.body().getId();
+
+        ProductSpecificationRelationshipVO productSpecificationRelationshipVO = ProductSpecificationRelationshipVOTestExample.build()
+                .id(id);
+        ProductSpecificationCreateVO productSpecificationCreateVO2 = ProductSpecificationCreateVOTestExample.build();
+        productSpecificationCreateVO2.setProductSpecificationRelationship(List.of(productSpecificationRelationshipVO));
+        createResponse = callAndCatch(
+                () -> productSpecificationApiTestClient.createProductSpecification(productSpecificationCreateVO2));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+                "The second productSpecification should have been created.");
+        String id2 = createResponse.body().getId();
+
+        //then retrieve
+        HttpResponse<ProductSpecificationVO> retrievedPOP = callAndCatch(
+                () -> productSpecificationApiTestClient.retrieveProductSpecification(id2, null));
+        assertEquals(HttpStatus.OK, retrievedPOP.getStatus(), "The retrieval should be ok.");
+    }
+
+    @Test
     @Override
     public void retrieveProductSpecification200() throws Exception {
         Instant currentTimeInstant = Instant.ofEpochSecond(10000);
@@ -768,7 +799,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
     @Override
     protected String getEntityType() {
-        return ProductSpecification.TYPE_PRODUCT_SPECIFICATION;
+        return "ProductSpecification.TYPE_PRODUCT_SPECIFICATION";
     }
 
     @DisplayName("Duplicate relationship issue - DOME#83519")
@@ -792,7 +823,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
         ProductSpecificationCreateVO productSpecCreate2 = ProductSpecificationCreateVOTestExample.build()
                 .productSpecificationRelationship(List.of(specRel1, specRel2));
-       createResponse = callAndCatch(
+        createResponse = callAndCatch(
                 () -> productSpecificationApiTestClient.createProductSpecification(productSpecCreate2));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The productSpecification should have been created first.");
