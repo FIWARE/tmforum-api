@@ -14,17 +14,17 @@ import java.util.Map;
 
 public class PreservingDeserializer extends DelegatingDeserializer {
     private final BeanDescription beanDescription;
-    private final EntityExtender entityExtender;
+    private final ApplicationContext applicationContext;
 
-    public PreservingDeserializer(JsonDeserializer<?> d, BeanDescription beanDescription, EntityExtender entityExtender) {
+    public PreservingDeserializer(JsonDeserializer<?> d, BeanDescription beanDescription, ApplicationContext applicationContext) {
         super(d);
         this.beanDescription = beanDescription;
-        this.entityExtender = entityExtender;
+        this.applicationContext = applicationContext;
     }
 
     @Override
     protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> newDelegatee) {
-        return new PreservingDeserializer(newDelegatee, beanDescription, entityExtender);
+        return new PreservingDeserializer(newDelegatee, beanDescription, applicationContext);
 
     }
 
@@ -35,6 +35,8 @@ public class PreservingDeserializer extends DelegatingDeserializer {
             return super.deserialize(p, ctxt);
         }
         Map plainValue = ctxt.readValue(p, Map.class);
-        return entityExtender.addAndDeserializeVO(ServerRequestContext.currentRequest().hashCode(), plainValue, beanDescription.getBeanClass());
+        return applicationContext
+                .getBean(EntityExtender.class)
+                .addAndDeserializeVO(ServerRequestContext.currentRequest().hashCode(), plainValue, beanDescription.getBeanClass());
     }
 }

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,9 @@ import javax.inject.Singleton;
 @RequiredArgsConstructor
 public class ObjectMapperEventListener implements BeanCreatedEventListener<ObjectMapper> {
 
-    private final EntityExtender entityExtender;
+    // we need to inject the application context here and then get the entity extender in the serializer,
+    // since the extender requires the object mapper which would create a circular dependency
+    private final ApplicationContext applicationContext;
 
     @Override
     public ObjectMapper onCreated(BeanCreatedEvent<ObjectMapper> event) {
@@ -31,7 +34,7 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
             public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,
                                                           BeanDescription beanDescription,
                                                           JsonDeserializer<?> originalDeserializer) {
-                return new PreservingDeserializer(originalDeserializer, beanDescription, entityExtender);
+                return new PreservingDeserializer(originalDeserializer, beanDescription, applicationContext);
             }
         });
         objectMapper.registerModule(deserializerModule);
