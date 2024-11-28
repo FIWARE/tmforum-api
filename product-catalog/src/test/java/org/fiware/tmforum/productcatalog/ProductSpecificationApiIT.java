@@ -792,7 +792,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
         ProductSpecificationCreateVO productSpecCreate2 = ProductSpecificationCreateVOTestExample.build()
                 .productSpecificationRelationship(List.of(specRel1, specRel2));
-       createResponse = callAndCatch(
+        createResponse = callAndCatch(
                 () -> productSpecificationApiTestClient.createProductSpecification(productSpecCreate2));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The productSpecification should have been created first.");

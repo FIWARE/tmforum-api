@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resourcefunction.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +10,7 @@ import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode
@@ -17,12 +20,13 @@ public class ConnectionPointRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version")}))
     private String version;
 
-    public ConnectionPointRef(String id) {
+    public ConnectionPointRef(@JsonProperty("id") String id) {
         super(id);
     }
 
     @Override
+    @JsonIgnore
     public List<String> getReferencedTypes() {
-        return List.of(getAtReferredType());
+        return new ArrayList<>(List.of(getAtReferredType()));
     }
 }

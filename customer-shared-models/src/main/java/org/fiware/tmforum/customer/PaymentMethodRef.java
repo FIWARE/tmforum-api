@@ -1,22 +1,25 @@
 package org.fiware.tmforum.customer;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
 import io.github.wistefan.mapping.annotations.Ignore;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 public class PaymentMethodRef extends RefEntity {
-    
-    public PaymentMethodRef(URI id) {
+
+    public PaymentMethodRef(@JsonProperty("id") URI id) {
         super(id);
     }
 
     @Override
-    @Ignore
+    @JsonIgnore
     public List<String> getReferencedTypes() {
-        return List.of(getAtReferredType());
+        return new ArrayList<>(List.of(getAtReferredType()));
     }
 }

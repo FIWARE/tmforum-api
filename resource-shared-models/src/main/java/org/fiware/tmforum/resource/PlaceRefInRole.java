@@ -1,5 +1,6 @@
 package org.fiware.tmforum.resource;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.PlaceRef;
@@ -13,7 +14,7 @@ public class PlaceRefInRole extends PlaceRef {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "role", fromProperties = true)}))
     private String role;
 
-    public PlaceRefInRole(String id) {
+    public PlaceRefInRole(@JsonProperty("id") String id) {
         super(id);
     }
 
