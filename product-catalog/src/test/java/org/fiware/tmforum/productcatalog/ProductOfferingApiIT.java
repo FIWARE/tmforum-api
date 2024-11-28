@@ -1,5 +1,6 @@
 package org.fiware.tmforum.productcatalog;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -799,6 +800,65 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
         assertEquals(HttpStatus.OK, retrievedCatalog.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedProductOffering, retrievedCatalog.body(),
                 "The correct productOffering should be returned.");
+    }
+
+    @Test
+    public void retrieveProductOfferingWithExtension200() throws Exception {
+        POT pot = new POT();
+        pot.setAtSchemaLocation(URI.create("https://raw.githubusercontent.com/smart-data-models/dataModel.WasteWater/3adac42646ce9b5a8266b9524b3d23185c1b8d86/WasteWater-schema.json"));
+        pot.setPh(14);
+
+        PAA paa = new PAA();
+        paa.setAtSchemaLocation(URI.create("https://raw.githubusercontent.com/smart-data-models/dataModel.WasteWater/3adac42646ce9b5a8266b9524b3d23185c1b8d86/WasteWater-schema.json"));
+        paa.setNh4(1);
+        paa.setTss(2);
+        paa.setNo3(3);
+        paa.setDescription("string");
+        paa.setLifecycleStatus("string");
+        paa.setName("string");
+        paa.setProductSpecification(null);
+        paa.setResourceCandidate(null);
+        paa.setServiceCandidate(null);
+        paa.setServiceLevelAgreement(null);
+        paa.setProductOfferingTerm(List.of(pot));
+
+        Instant currentTimeInstant = Instant.ofEpochSecond(10000);
+
+        when(clock.instant()).thenReturn(currentTimeInstant);
+
+
+        // we dont have a parent
+        HttpResponse<ProductOfferingVO> createResponse = callAndCatch(
+                () -> productOfferingApiTestClient.createProductOffering(paa));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+                "The product offering should have been created first.");
+        String id = createResponse.body().getId();
+
+        POE poe = new POE();
+        poe.setAtSchemaLocation(URI.create("https://raw.githubusercontent.com/smart-data-models/dataModel.WasteWater/3adac42646ce9b5a8266b9524b3d23185c1b8d86/WasteWater-schema.json"));
+        poe.setNh4(1);
+        poe.setTss(2);
+        poe.setNo3(3);
+        poe.setDescription("string");
+        poe.setLifecycleStatus("string");
+        poe.setName("string");
+        poe.setId(id);
+        poe.setHref(id);
+        poe.setLastUpdate(currentTimeInstant);
+        poe.productSpecification(null);
+        poe.resourceCandidate(null);
+        poe.serviceCandidate(null);
+        poe.serviceLevelAgreement(null);
+        poe.setProductOfferingTerm(List.of(pot));
+
+        //then retrieve
+        HttpResponse<ProductOfferingVO> retrievedCatalog = callAndCatch(
+                () -> productOfferingApiTestClient.retrieveProductOffering(id, null));
+
+        Map expectedAsMap = objectMapper.convertValue(poe, new TypeReference<Map<String, Object>>() {
+        });
+        Map responseAsMap = retrievedCatalog.getBody(Map.class).get();
+        assertEquals(expectedAsMap, responseAsMap, "The correct catalog should be returned.");
     }
 
     @Disabled("400 cannot happen, only 404")

@@ -1,8 +1,10 @@
 package org.fiware.tmforum.productcatalog;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
@@ -21,6 +23,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,15 +84,19 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         expectedCatalog.setId(catalogId);
         expectedCatalog.setHref(catalogId);
 
-        assertEquals(expectedCatalog, catalogVOHttpResponse.body(), message);
-
+        Map expectedAsMap = objectMapper.convertValue(expectedCatalog, new TypeReference<Map<String, Object>>() {
+        });
+        Map responseAsMap = catalogVOHttpResponse.getBody(Map.class).get();
+        assertEquals(expectedAsMap, responseAsMap, message);
     }
 
     private static Stream<Arguments> provideValidCatalogs() {
         List<Arguments> testEntries = new ArrayList<>();
 
         CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
+        catalogCreateVO.setAtSchemaLocation(null);
         CatalogVO expectedCatalog = CatalogVOTestExample.build();
+        expectedCatalog.setAtSchemaLocation(null);
         testEntries.add(Arguments.of("An empty catalog should have been created.", catalogCreateVO, expectedCatalog));
 
         return testEntries.stream();
@@ -566,6 +573,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 
         //first create
         CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
+        catalogCreateVO.setAtSchemaLocation(null);
         HttpResponse<CatalogVO> createResponse = callAndCatch(
                 () -> catalogApiTestClient.createCatalog(catalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
@@ -574,6 +582,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         CatalogVO expectedCatalog = CatalogVOTestExample.build();
         expectedCatalog.setId(id);
         expectedCatalog.setHref(id);
+        expectedCatalog.setAtSchemaLocation(null);
 
         //then retrieve
         HttpResponse<CatalogVO> retrievedCatalog = callAndCatch(() -> catalogApiTestClient.retrieveCatalog(id, null));
@@ -581,11 +590,11 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         assertEquals(expectedCatalog, retrievedCatalog.body(), "The correct catalog should be returned.");
     }
 
+
     @Disabled("400 cannot happen, only 404")
     @Test
     @Override
     public void retrieveCatalog400() throws Exception {
-
     }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
