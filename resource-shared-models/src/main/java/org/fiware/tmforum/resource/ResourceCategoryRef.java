@@ -1,5 +1,7 @@
 package org.fiware.tmforum.resource;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +13,7 @@ import io.github.wistefan.mapping.annotations.Ignore;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -21,13 +24,13 @@ public class ResourceCategoryRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version", targetClass = String.class)}))
     private String version;
 
-    public ResourceCategoryRef(URI id) {
+    public ResourceCategoryRef(@JsonProperty("id") URI id) {
         super(id);
     }
 
     @Override
-    @Ignore
+    @JsonIgnore
     public List<String> getReferencedTypes() {
-        return List.of(ResourceCategory.TYPE_RESOURCE_CATEGORY);
+        return new ArrayList<>(List.of(ResourceCategory.TYPE_RESOURCE_CATEGORY));
     }
 }

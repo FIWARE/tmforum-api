@@ -1,5 +1,7 @@
 package org.fiware.tmforum.customer;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,6 +12,7 @@ import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.Ignore;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -19,14 +22,13 @@ public class AccountRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description", targetClass = String.class)}))
     private String description;
 
-    public AccountRef(URI id) {
+    public AccountRef(@JsonProperty("id") URI id) {
         super(id);
     }
 
-    // TODO: fix when account domain is created
     @Override
-    @Ignore
+    @JsonIgnore
     public List<String> getReferencedTypes() {
-        return List.of("account");
+        return new ArrayList<>(List.of("account"));
     }
 }

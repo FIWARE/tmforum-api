@@ -1,5 +1,6 @@
 package org.fiware.tmforum.party.domain.organization;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 
@@ -7,8 +8,8 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 @MappingEnabled(entityType = Organization.TYPE_ORGANIZATION)
 public class OrganizationChildRelationship extends OrganizationRelationship {
 
-	public OrganizationChildRelationship(String id) {
-		super(id);
-	}
+    public OrganizationChildRelationship(@JsonProperty("id") String id) {
+        super(id);
+    }
 
 }
