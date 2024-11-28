@@ -1,21 +1,24 @@
 package org.fiware.tmforum.customer;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 public class PaymentRef extends RefEntity {
 
-	public PaymentRef(String id) {
-		super(id);
-	}
+    public PaymentRef(@JsonProperty("id") String id) {
+        super(id);
+    }
 
-	//TODO: check the reference when payment is implemented
-	@Override
-	public List<String> getReferencedTypes() {
-		return List.of("payment");
-	}
+    @Override
+    @JsonIgnore
+    public List<String> getReferencedTypes() {
+        return new ArrayList<>(List.of("payment"));
+    }
 }

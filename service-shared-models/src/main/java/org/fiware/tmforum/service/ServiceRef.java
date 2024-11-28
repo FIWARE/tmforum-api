@@ -1,17 +1,22 @@
 package org.fiware.tmforum.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 public class ServiceRef extends RefEntity {
-	public ServiceRef(String id) {
-		super(id);
-	}
+    public ServiceRef(@JsonProperty("id") String id) {
+        super(id);
+    }
 
-	@Override public List<String> getReferencedTypes() {
-		return List.of("service");
-	}
+    @Override
+    @JsonIgnore
+    public List<String> getReferencedTypes() {
+        return new ArrayList<>(List.of("service"));
+    }
 }
