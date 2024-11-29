@@ -161,6 +161,17 @@
                 <artifactId>javax.inject</artifactId>
                 <version>${version.javax.inject}</version>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>3.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>3.0.0</version>
+            </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
@@ -198,6 +209,11 @@
                 <groupId>io.micronaut.redis</groupId>
                 <artifactId>micronaut-redis-lettuce</artifactId>
                 <version>${version.io.micronaut.redis.micronaut-redis-lettuce}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>json-schema-validator</artifactId>
+                <version>1.5.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -489,7 +505,18 @@
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
+                                            <portBinding>3000:3000</portBinding>
                                         </portBindings>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-schemas</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -528,7 +555,18 @@
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
+                                            <portBinding>3000:3000</portBinding>
                                         </portBindings>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-schemas</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                             </executions>

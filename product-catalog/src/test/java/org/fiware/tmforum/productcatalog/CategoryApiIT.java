@@ -83,7 +83,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     public void createCategory201() throws Exception {
 
         HttpResponse<CategoryVO> categoryVOHttpResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, categoryVOHttpResponse.getStatus(), message);
         String categoryId = categoryVOHttpResponse.body().getId();
         expectedCategory.setId(categoryId);
@@ -116,7 +116,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void createCategory400() throws Exception {
         HttpResponse<CategoryVO> creationResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -207,17 +207,17 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> categoryApiTestClient.deleteCategory(catalogId)).getStatus(),
+                callAndCatch(() -> categoryApiTestClient.deleteCategory(null, catalogId)).getStatus(),
                 "The category should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> categoryApiTestClient.retrieveCategory(catalogId, null)).status(),
+                callAndCatch(() -> categoryApiTestClient.retrieveCategory(null, catalogId, null)).status(),
                 "The category should not exist anymore.");
 
     }
@@ -247,7 +247,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void deleteCategory404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> categoryApiTestClient.deleteCategory("urn:ngsi-ld:category:no-catalog"));
+                () -> categoryApiTestClient.deleteCategory(null, "urn:ngsi-ld:category:no-catalog"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such catalog should exist.");
@@ -255,7 +255,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> categoryApiTestClient.deleteCategory("invalid-id"));
+        notFoundResponse = callAndCatch(() -> categoryApiTestClient.deleteCategory(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such catalog should exist.");
@@ -289,7 +289,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         List<CategoryVO> expectedCategorys = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().parentId(null);
-            String id = categoryApiTestClient.createCategory(categoryCreateVO).body().getId();
+            String id = categoryApiTestClient.createCategory(null, categoryCreateVO).body().getId();
             CategoryVO categoryVO = CategoryVOTestExample.build();
             categoryVO
                     .id(id)
@@ -299,7 +299,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         }
 
         HttpResponse<List<CategoryVO>> categoryResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, null, null));
+                () -> categoryApiTestClient.listCategory(null, null, null, null));
 
         assertEquals(HttpStatus.OK, categoryResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedCategorys.size(), categoryResponse.getBody().get().size(),
@@ -320,11 +320,11 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<CategoryVO>> firstPartResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, 0, limit));
+                () -> categoryApiTestClient.listCategory(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<CategoryVO>> secondPartResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, 0 + limit, limit));
+                () -> categoryApiTestClient.listCategory(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -343,7 +343,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void listCategory400() throws Exception {
         HttpResponse<List<CategoryVO>> badRequestResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, -1, null));
+                () -> categoryApiTestClient.listCategory(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -351,7 +351,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> categoryApiTestClient.listCategory(null, null, -1));
+        badRequestResponse = callAndCatch(() -> categoryApiTestClient.listCategory(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -416,7 +416,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
@@ -425,7 +425,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         categoryUpdateVO.setParentId(null);
 
         HttpResponse<CategoryVO> updateResponse = callAndCatch(
-                () -> categoryApiTestClient.patchCategory(catalogId, categoryUpdateVO));
+                () -> categoryApiTestClient.patchCategory(null, catalogId, categoryUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         CategoryVO updatedCategory = updateResponse.body();
@@ -496,13 +496,13 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
         HttpResponse<CategoryVO> updateResponse = callAndCatch(
-                () -> categoryApiTestClient.patchCategory(catalogId, categoryUpdateVO));
+                () -> categoryApiTestClient.patchCategory(null, catalogId, categoryUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -576,7 +576,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         CategoryUpdateVO categoryUpdateVO = CategoryUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> categoryApiTestClient.patchCategory("urn:ngsi-ld:category:not-existent",
+                callAndCatch(() -> categoryApiTestClient.patchCategory(null, "urn:ngsi-ld:category:not-existent",
                         categoryUpdateVO)).getStatus(),
                 "Non existent categories should not be updated.");
     }
@@ -612,7 +612,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         // we dont have a parent
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The category should have been created first.");
         String id = createResponse.body().getId();
 
@@ -624,7 +624,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 
         //then retrieve
         HttpResponse<CategoryVO> retrievedCategory = callAndCatch(
-                () -> categoryApiTestClient.retrieveCategory(id, null));
+                () -> categoryApiTestClient.retrieveCategory(null, id, null));
         assertEquals(HttpStatus.OK, retrievedCategory.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedCategory, retrievedCategory.body(), "The correct category should be returned.");
     }
@@ -653,7 +653,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void retrieveCategory404() throws Exception {
         HttpResponse<CategoryVO> response = callAndCatch(
-                () -> categoryApiTestClient.retrieveCategory("urn:ngsi-ld:category:non-existent", null));
+                () -> categoryApiTestClient.retrieveCategory(null, "urn:ngsi-ld:category:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such category should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

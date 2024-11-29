@@ -18,26 +18,23 @@ import javax.inject.Singleton;
 @RequiredArgsConstructor
 public class ObjectMapperEventListener implements BeanCreatedEventListener<ObjectMapper> {
 
-    // we need to inject the application context here and then get the entity extender in the serializer,
-    // since the extender requires the object mapper which would create a circular dependency
-    private final ApplicationContext applicationContext;
+	@Override
+	public ObjectMapper onCreated(BeanCreatedEvent<ObjectMapper> event) {
+		final ObjectMapper objectMapper = event.getBean();
+		// overwrites the NON_EMPTY default, that breaks empty-list handling
+		objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-    @Override
-    public ObjectMapper onCreated(BeanCreatedEvent<ObjectMapper> event) {
-        final ObjectMapper objectMapper = event.getBean();
-        // overwrites the NON_EMPTY default, that breaks empty-list handling
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        SimpleModule deserializerModule = new SimpleModule();
-        deserializerModule.setDeserializerModifier(new BeanDeserializerModifier() {
-            @Override
-            public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,
-                                                          BeanDescription beanDescription,
-                                                          JsonDeserializer<?> originalDeserializer) {
-                return new PreservingDeserializer(originalDeserializer, beanDescription, applicationContext);
-            }
-        });
-        objectMapper.registerModule(deserializerModule);
-        return objectMapper;
-    }
+		SimpleModule deserializerModule = new SimpleModule();
+		// inject the schema validator for atSchemaLocation handling
+		deserializerModule.setDeserializerModifier(new BeanDeserializerModifier() {
+			@Override
+			public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,
+														  BeanDescription beanDescription,
+														  JsonDeserializer<?> originalDeserializer) {
+				return new ValidatingDeserializer(originalDeserializer, beanDescription);
+			}
+		});
+		objectMapper.registerModule(deserializerModule);
+		return objectMapper;
+	}
 }

@@ -87,7 +87,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		HttpResponse<ProductOfferingPriceVO> productOfferingVOHttpResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO));
+				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
 		assertEquals(HttpStatus.CREATED, productOfferingVOHttpResponse.getStatus(), message);
 		String productOfferingId = productOfferingVOHttpResponse.body().getId();
 
@@ -141,7 +141,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@Override
 	public void createProductOfferingPrice400() throws Exception {
 		HttpResponse<ProductOfferingPriceVO> creationResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO));
+				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -231,19 +231,19 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
 
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO));
+				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The productOfferingPrice should have been created first.");
 
 		String popId = createResponse.body().getId();
 
 		assertEquals(HttpStatus.NO_CONTENT,
-				callAndCatch(() -> productOfferingPriceApiTestClient.deleteProductOfferingPrice(popId)).getStatus(),
+				callAndCatch(() -> productOfferingPriceApiTestClient.deleteProductOfferingPrice(null, popId)).getStatus(),
 				"The productOfferingPrice should have been deleted.");
 
 		assertEquals(HttpStatus.NOT_FOUND,
 				callAndCatch(
-						() -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(popId, null)).status(),
+						() -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(null, popId, null)).status(),
 				"The productOfferingPrice should not exist anymore.");
 
 	}
@@ -274,7 +274,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	public void deleteProductOfferingPrice404() throws Exception {
 		HttpResponse<?> notFoundResponse = callAndCatch(
 				() -> productOfferingPriceApiTestClient.deleteProductOfferingPrice(
-						"urn:ngsi-ld:product-offering-price:no-pop"));
+						null, "urn:ngsi-ld:product-offering-price:no-pop"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such product-offering-price should exist.");
@@ -283,7 +283,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
 		notFoundResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.deleteProductOfferingPrice("invalid-id"));
+				() -> productOfferingPriceApiTestClient.deleteProductOfferingPrice(null, "invalid-id"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such product-offering-price should exist.");
@@ -318,7 +318,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		List<ProductOfferingPriceVO> expectedProductOfferingPrices = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
-			String id = productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO)
+			String id = productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO)
 					.body().getId();
 			ProductOfferingPriceVO productOfferingPriceVO = ProductOfferingPriceVOTestExample.build();
 			productOfferingPriceVO
@@ -329,7 +329,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		}
 
 		HttpResponse<List<ProductOfferingPriceVO>> productOfferingPriceResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, null));
+				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, productOfferingPriceResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedProductOfferingPrices.size(), productOfferingPriceResponse.getBody().get().size(),
@@ -355,11 +355,11 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<ProductOfferingPriceVO>> firstPartResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, 0, limit));
+				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<ProductOfferingPriceVO>> secondPartResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, 0 + limit, limit));
+				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -382,7 +382,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@Override
 	public void listProductOfferingPrice400() throws Exception {
 		HttpResponse<List<ProductOfferingPriceVO>> badRequestResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, -1, null));
+				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -391,7 +391,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
 		badRequestResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, -1));
+				() -> productOfferingPriceApiTestClient.listProductOfferingPrice(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -456,13 +456,13 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
 
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO));
+				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
 		String catalogId = createResponse.body().getId();
 
 		HttpResponse<ProductOfferingPriceVO> updateResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.patchProductOfferingPrice(catalogId,
+				() -> productOfferingPriceApiTestClient.patchProductOfferingPrice(null, catalogId,
 						productOfferingPriceUpdateVO));
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
@@ -534,13 +534,13 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		//first create
 		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO));
+				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
 		String catalogId = createResponse.body().getId();
 
 		HttpResponse<ProductOfferingPriceVO> updateResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.patchProductOfferingPrice(catalogId,
+				() -> productOfferingPriceApiTestClient.patchProductOfferingPrice(null, catalogId,
 						productOfferingPriceUpdateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
@@ -615,7 +615,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> productOfferingPriceApiTestClient.patchProductOfferingPrice(
-						"urn:ngsi-ld:product-offering-price:not-existent", productOfferingPriceUpdateVO)).getStatus(),
+						null, "urn:ngsi-ld:product-offering-price:not-existent", productOfferingPriceUpdateVO)).getStatus(),
 				"Non existent categories should not be updated.");
 	}
 
@@ -649,7 +649,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
 		// we dont have a parent
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
-				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(productOfferingPriceCreateVO));
+				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The productOffering should have been created first.");
 		String id = createResponse.body().getId();
@@ -662,7 +662,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 		//then retrieve
 		HttpResponse<ProductOfferingPriceVO> retrievedPOP = callAndCatch(
-				() -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(id, null));
+				() -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedPOP.getStatus(), "The retrieval should be ok.");
 		assertEquals(expectedProductOfferingPrice, retrievedPOP.body(),
 				"The correct productOffering should be returned.");
@@ -693,7 +693,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	public void retrieveProductOfferingPrice404() throws Exception {
 		HttpResponse<ProductOfferingPriceVO> response = callAndCatch(
 				() -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(
-						"urn:ngsi-ld:productOffering:non-existent", null));
+						null, "urn:ngsi-ld:productOffering:non-existent", null));
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such productOffering should exist.");
 
 		Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);
