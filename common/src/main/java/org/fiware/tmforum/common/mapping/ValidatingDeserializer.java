@@ -47,8 +47,12 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		// copy the current value into the buffer, so that we can re-read it to validate the schema.
 		TokenBuffer tokenBuffer = ctxt.bufferAsCopyOfValue(p);
 		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
-		if (targetObject instanceof UnknownPreservingBase upb && upb.getAtSchemaLocation() != null) {
-			validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString());
+		if (targetObject instanceof UnknownPreservingBase upb) {
+			if (upb.getAtSchemaLocation() != null) {
+				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString());
+			} else if (upb.getUnknownProperties() != null || !upb.getUnknownProperties().isEmpty()) {
+				throw new SchemaValidationException(List.of(), "If no schema is provided, no additional properties are allowed.");
+			}
 		}
 		return targetObject;
 	}
