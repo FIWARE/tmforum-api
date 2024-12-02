@@ -97,8 +97,8 @@ public class ProductOfferingPrice extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "prodSpecCharValueUse", targetClass = ProductSpecificationCharacteristicValueUse.class)}))
 	private List<ProductSpecificationCharacteristicValueUse> prodSpecCharValueUse;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "productOfferingTerm")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "productOfferingTerm", targetClass = ProductOfferingTerm.class)}))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "productOfferingTerm")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "productOfferingTerm", targetClass = ProductOfferingTerm.class)}))
 	private List<ProductOfferingTerm> productOfferingTerm;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "tax")}))
