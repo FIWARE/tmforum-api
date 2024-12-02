@@ -88,7 +88,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         when(clock.instant()).thenReturn(currentTimeInstant);
 
         HttpResponse<ServiceCandidateVO> serviceCandidateVOHttpResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.createServiceCandidate(serviceCandidateCreateVO));
+                () -> serviceCandidateApiTestClient.createServiceCandidate(null, serviceCandidateCreateVO));
         assertEquals(HttpStatus.CREATED, serviceCandidateVOHttpResponse.getStatus(), message);
         String scId = serviceCandidateVOHttpResponse.body().getId();
         expectedServiceCandidate
@@ -132,7 +132,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
     @Override
     public void createServiceCandidate400() throws Exception {
         HttpResponse<ServiceCandidateVO> creationResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.createServiceCandidate(serviceCandidateCreateVO));
+                () -> serviceCandidateApiTestClient.createServiceCandidate(null, serviceCandidateCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -196,7 +196,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
     public void deleteServiceCandidate204() throws Exception {
         ServiceCandidateCreateVO emptyCreate = ServiceCandidateCreateVOTestExample.build().serviceSpecification(null);
 
-        HttpResponse<ServiceCandidateVO> createResponse = serviceCandidateApiTestClient.createServiceCandidate(
+        HttpResponse<ServiceCandidateVO> createResponse = serviceCandidateApiTestClient.createServiceCandidate(null,
                 emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service candidate should have been created first.");
@@ -204,11 +204,11 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> serviceCandidateApiTestClient.deleteServiceCandidate(rfId)).getStatus(),
+                callAndCatch(() -> serviceCandidateApiTestClient.deleteServiceCandidate(null, rfId)).getStatus(),
                 "The service candidate should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCandidateApiTestClient.retrieveServiceCandidate(rfId, null)).status(),
+                callAndCatch(() -> serviceCandidateApiTestClient.retrieveServiceCandidate(null, rfId, null)).status(),
                 "The service candidate should not exist anymore.");
     }
 
@@ -237,7 +237,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
     @Override
     public void deleteServiceCandidate404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.deleteServiceCandidate("urn:ngsi-ld:service-candidate:no-pop"));
+                () -> serviceCandidateApiTestClient.deleteServiceCandidate(null, "urn:ngsi-ld:service-candidate:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-candidate should exist.");
@@ -245,7 +245,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> serviceCandidateApiTestClient.deleteServiceCandidate("invalid-id"));
+        notFoundResponse = callAndCatch(() -> serviceCandidateApiTestClient.deleteServiceCandidate(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-candidate should exist.");
@@ -281,7 +281,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         for (int i = 0; i < 10; i++) {
             ServiceCandidateCreateVO serviceCandidateCreateVO = ServiceCandidateCreateVOTestExample.build()
                     .serviceSpecification(null);
-            String id = serviceCandidateApiTestClient.createServiceCandidate(serviceCandidateCreateVO)
+            String id = serviceCandidateApiTestClient.createServiceCandidate(null, serviceCandidateCreateVO)
                     .body().getId();
             ServiceCandidateVO serviceCandidateVO = ServiceCandidateVOTestExample.build();
             serviceCandidateVO
@@ -292,7 +292,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         }
 
         HttpResponse<List<ServiceCandidateVO>> serviceCandidateResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.listServiceCandidate(null, null, null));
+                () -> serviceCandidateApiTestClient.listServiceCandidate(null, null, null, null));
 
         assertEquals(HttpStatus.OK, serviceCandidateResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedServiceCandidates.size(), serviceCandidateResponse.getBody().get().size(),
@@ -318,11 +318,11 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ServiceCandidateVO>> firstPartResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.listServiceCandidate(null, 0, limit));
+                () -> serviceCandidateApiTestClient.listServiceCandidate(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ServiceCandidateVO>> secondPartResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.listServiceCandidate(null, 0 + limit, limit));
+                () -> serviceCandidateApiTestClient.listServiceCandidate(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -345,7 +345,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
     @Override
     public void listServiceCandidate400() throws Exception {
         HttpResponse<List<ServiceCandidateVO>> badRequestResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.listServiceCandidate(null, -1, null));
+                () -> serviceCandidateApiTestClient.listServiceCandidate(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -353,7 +353,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> serviceCandidateApiTestClient.listServiceCandidate(null, null, -1));
+        badRequestResponse = callAndCatch(() -> serviceCandidateApiTestClient.listServiceCandidate(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -418,14 +418,14 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
                 .serviceSpecification(null);
 
         HttpResponse<ServiceCandidateVO> createResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.createServiceCandidate(serviceCandidateCreateVO));
+                () -> serviceCandidateApiTestClient.createServiceCandidate(null, serviceCandidateCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The resource function should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<ServiceCandidateVO> updateResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.patchServiceCandidate(resourceId, serviceCandidateUpdateVO));
+                () -> serviceCandidateApiTestClient.patchServiceCandidate(null, resourceId, serviceCandidateUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ServiceCandidateVO updatedServiceCandidate = updateResponse.body();
@@ -497,14 +497,14 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
                 .serviceSpecification(null);
 
         HttpResponse<ServiceCandidateVO> createResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.createServiceCandidate(serviceCandidateCreateVO));
+                () -> serviceCandidateApiTestClient.createServiceCandidate(null, serviceCandidateCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The rservice candidate should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<ServiceCandidateVO> updateResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.patchServiceCandidate(resourceId, serviceCandidateUpdateVO));
+                () -> serviceCandidateApiTestClient.patchServiceCandidate(null, resourceId, serviceCandidateUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -553,7 +553,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         ServiceCandidateUpdateVO serviceCandidateUpdateVO = ServiceCandidateUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCandidateApiTestClient.patchServiceCandidate(
+                callAndCatch(() -> serviceCandidateApiTestClient.patchServiceCandidate(null,
                         "urn:ngsi-ld:service-candidate:not-existent", serviceCandidateUpdateVO)).getStatus(),
                 "Non existent service candidate should not be updated.");
     }
@@ -592,7 +592,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
         ServiceCandidateCreateVO serviceCandidateCreateVO = ServiceCandidateCreateVOTestExample.build()
                 .serviceSpecification(null);
         HttpResponse<ServiceCandidateVO> createResponse = callAndCatch(
-                () -> serviceCandidateApiTestClient.createServiceCandidate(serviceCandidateCreateVO));
+                () -> serviceCandidateApiTestClient.createServiceCandidate(null, serviceCandidateCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -602,7 +602,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 
         //then retrieve
         HttpResponse<ServiceCandidateVO> retrievedRF = callAndCatch(
-                () -> serviceCandidateApiTestClient.retrieveServiceCandidate(id, fieldsParameter));
+                () -> serviceCandidateApiTestClient.retrieveServiceCandidate(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedServiceCandidate, retrievedRF.body(), message);
     }
@@ -679,7 +679,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
     @Override
     public void retrieveServiceCandidate404() throws Exception {
         HttpResponse<ServiceCandidateVO> response = callAndCatch(
-                () -> serviceCandidateApiTestClient.retrieveServiceCandidate(
+                () -> serviceCandidateApiTestClient.retrieveServiceCandidate(null,
                         "urn:ngsi-ld:resource-function:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such service-candidate should exist.");
 

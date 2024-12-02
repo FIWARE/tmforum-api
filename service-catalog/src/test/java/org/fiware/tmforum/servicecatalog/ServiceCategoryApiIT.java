@@ -88,7 +88,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         when(clock.instant()).thenReturn(currentTimeInstant);
 
         HttpResponse<ServiceCategoryVO> serviceCategoryVOHttpResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.createServiceCategory(serviceCategoryCreateVO));
+                () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
         assertEquals(HttpStatus.CREATED, serviceCategoryVOHttpResponse.getStatus(), message);
         String rfId = serviceCategoryVOHttpResponse.body().getId();
         expectedServiceCategory.id(rfId)
@@ -131,7 +131,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Override
     public void createServiceCategory400() throws Exception {
         HttpResponse<ServiceCategoryVO> creationResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.createServiceCategory(serviceCategoryCreateVO));
+                () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -201,7 +201,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     public void deleteServiceCategory204() throws Exception {
         ServiceCategoryCreateVO emptyCreate = ServiceCategoryCreateVOTestExample.build().parentId(null);
 
-        HttpResponse<ServiceCategoryVO> createResponse = serviceCategoryApiTestClient.createServiceCategory(
+        HttpResponse<ServiceCategoryVO> createResponse = serviceCategoryApiTestClient.createServiceCategory(null,
                 emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service category should have been created first.");
@@ -209,11 +209,11 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> serviceCategoryApiTestClient.deleteServiceCategory(rfId)).getStatus(),
+                callAndCatch(() -> serviceCategoryApiTestClient.deleteServiceCategory(null, rfId)).getStatus(),
                 "The service category should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCategoryApiTestClient.retrieveServiceCategory(rfId, null)).status(),
+                callAndCatch(() -> serviceCategoryApiTestClient.retrieveServiceCategory(null, rfId, null)).status(),
                 "The service category should not exist anymore.");
     }
 
@@ -242,7 +242,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Override
     public void deleteServiceCategory404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.deleteServiceCategory("urn:ngsi-ld:service-category:no-pop"));
+                () -> serviceCategoryApiTestClient.deleteServiceCategory(null, "urn:ngsi-ld:service-category:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-category should exist.");
@@ -250,7 +250,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> serviceCategoryApiTestClient.deleteServiceCategory("invalid-id"));
+        notFoundResponse = callAndCatch(() -> serviceCategoryApiTestClient.deleteServiceCategory(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-category should exist.");
@@ -285,7 +285,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         List<ServiceCategoryVO> expectedServiceCategorys = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
-            String id = serviceCategoryApiTestClient.createServiceCategory(serviceCategoryCreateVO)
+            String id = serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO)
                     .body().getId();
             ServiceCategoryVO serviceCategoryVO = ServiceCategoryVOTestExample.build();
             serviceCategoryVO
@@ -296,7 +296,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         }
 
         HttpResponse<List<ServiceCategoryVO>> serviceCategoryResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.listServiceCategory(null, null, null));
+                () -> serviceCategoryApiTestClient.listServiceCategory(null, null, null, null));
 
         assertEquals(HttpStatus.OK, serviceCategoryResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedServiceCategorys.size(), serviceCategoryResponse.getBody().get().size(),
@@ -322,11 +322,11 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ServiceCategoryVO>> firstPartResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.listServiceCategory(null, 0, limit));
+                () -> serviceCategoryApiTestClient.listServiceCategory(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ServiceCategoryVO>> secondPartResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.listServiceCategory(null, 0 + limit, limit));
+                () -> serviceCategoryApiTestClient.listServiceCategory(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -349,7 +349,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Override
     public void listServiceCategory400() throws Exception {
         HttpResponse<List<ServiceCategoryVO>> badRequestResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.listServiceCategory(null, -1, null));
+                () -> serviceCategoryApiTestClient.listServiceCategory(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -357,7 +357,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> serviceCategoryApiTestClient.listServiceCategory(null, null, -1));
+        badRequestResponse = callAndCatch(() -> serviceCategoryApiTestClient.listServiceCategory(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -421,14 +421,14 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
 
         HttpResponse<ServiceCategoryVO> createResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.createServiceCategory(serviceCategoryCreateVO));
+                () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service category should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<ServiceCategoryVO> updateResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.patchServiceCategory(resourceId, serviceCategoryUpdateVO));
+                () -> serviceCategoryApiTestClient.patchServiceCategory(null, resourceId, serviceCategoryUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ServiceCategoryVO updatedServiceCategory = updateResponse.body();
@@ -505,14 +505,14 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
 
         HttpResponse<ServiceCategoryVO> createResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.createServiceCategory(serviceCategoryCreateVO));
+                () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service category should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<ServiceCategoryVO> updateResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.patchServiceCategory(resourceId, serviceCategoryUpdateVO));
+                () -> serviceCategoryApiTestClient.patchServiceCategory(null, resourceId, serviceCategoryUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -568,7 +568,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         ServiceCategoryUpdateVO serviceCategoryUpdateVO = ServiceCategoryUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCategoryApiTestClient.patchServiceCategory(
+                callAndCatch(() -> serviceCategoryApiTestClient.patchServiceCategory(null,
                         "urn:ngsi-ld:service-category:not-existent", serviceCategoryUpdateVO)).getStatus(),
                 "Non existent service category should not be updated.");
     }
@@ -605,7 +605,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 
         ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
         HttpResponse<ServiceCategoryVO> createResponse = callAndCatch(
-                () -> serviceCategoryApiTestClient.createServiceCategory(serviceCategoryCreateVO));
+                () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -615,7 +615,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 
         //then retrieve
         HttpResponse<ServiceCategoryVO> retrievedRF = callAndCatch(
-                () -> serviceCategoryApiTestClient.retrieveServiceCategory(id, fieldsParameter));
+                () -> serviceCategoryApiTestClient.retrieveServiceCategory(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedServiceCategory, retrievedRF.body(), message);
     }
@@ -694,7 +694,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Override
     public void retrieveServiceCategory404() throws Exception {
         HttpResponse<ServiceCategoryVO> response = callAndCatch(
-                () -> serviceCategoryApiTestClient.retrieveServiceCategory("urn:ngsi-ld:resource-function:non-existent",
+                () -> serviceCategoryApiTestClient.retrieveServiceCategory(null, "urn:ngsi-ld:resource-function:non-existent",
                         null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such service-category should exist.");
 

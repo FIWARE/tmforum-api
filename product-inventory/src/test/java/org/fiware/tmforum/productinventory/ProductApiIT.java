@@ -78,7 +78,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
     public void createProduct201() throws Exception {
 
         HttpResponse<ProductVO> productVOHttpResponse = callAndCatch(
-                () -> productApiTestClient.createProduct(productCreateVO));
+                () -> productApiTestClient.createProduct(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, productVOHttpResponse.getStatus(), message);
         String rfId = productVOHttpResponse.body().getId();
         expectedProduct.setId(rfId);
@@ -175,7 +175,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
     @Override
     public void createProduct400() throws Exception {
         HttpResponse<ProductVO> creationResponse = callAndCatch(
-                () -> productApiTestClient.createProduct(productCreateVO));
+                () -> productApiTestClient.createProduct(null, productCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -434,17 +434,17 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
                 .billingAccount(null)
                 .productOffering(null);
 
-        HttpResponse<ProductVO> createResponse = productApiTestClient.createProduct(emptyCreate);
+        HttpResponse<ProductVO> createResponse = productApiTestClient.createProduct(null, emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The product should have been created first.");
 
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> productApiTestClient.deleteProduct(rfId)).getStatus(),
+                callAndCatch(() -> productApiTestClient.deleteProduct(null, rfId)).getStatus(),
                 "The product should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> productApiTestClient.retrieveProduct(rfId, null)).status(),
+                callAndCatch(() -> productApiTestClient.retrieveProduct(null, rfId, null)).status(),
                 "The product should not exist anymore.");
     }
 
@@ -473,7 +473,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
     @Override
     public void deleteProduct404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> productApiTestClient.deleteProduct("urn:ngsi-ld:product-catalog:no-pop"));
+                () -> productApiTestClient.deleteProduct(null, "urn:ngsi-ld:product-catalog:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such product-catalog should exist.");
@@ -481,7 +481,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> productApiTestClient.deleteProduct("invalid-id"));
+        notFoundResponse = callAndCatch(() -> productApiTestClient.deleteProduct(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such product-catalog should exist.");
@@ -519,7 +519,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
                     .productSpecification(null)
                     .billingAccount(null)
                     .productOffering(null);
-            String id = productApiTestClient.createProduct(productCreateVO)
+            String id = productApiTestClient.createProduct(null, productCreateVO)
                     .body().getId();
             ProductVO productVO = ProductVOTestExample.build();
             productVO
@@ -539,7 +539,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
         }
 
         HttpResponse<List<ProductVO>> productResponse = callAndCatch(
-                () -> productApiTestClient.listProduct(null, null, null));
+                () -> productApiTestClient.listProduct(null, null, null, null));
 
         assertEquals(HttpStatus.OK, productResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedProducts.size(), productResponse.getBody().get().size(),
@@ -565,11 +565,11 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ProductVO>> firstPartResponse = callAndCatch(
-                () -> productApiTestClient.listProduct(null, 0, limit));
+                () -> productApiTestClient.listProduct(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ProductVO>> secondPartResponse = callAndCatch(
-                () -> productApiTestClient.listProduct(null, 0 + limit, limit));
+                () -> productApiTestClient.listProduct(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -592,7 +592,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
     @Override
     public void listProduct400() throws Exception {
         HttpResponse<List<ProductVO>> badRequestResponse = callAndCatch(
-                () -> productApiTestClient.listProduct(null, -1, null));
+                () -> productApiTestClient.listProduct(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -600,7 +600,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> productApiTestClient.listProduct(null, null, -1));
+        badRequestResponse = callAndCatch(() -> productApiTestClient.listProduct(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -667,14 +667,14 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
                 .productOffering(null);
 
         HttpResponse<ProductVO> createResponse = callAndCatch(
-                () -> productApiTestClient.createProduct(productCreateVO));
+                () -> productApiTestClient.createProduct(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The product function should have been created first.");
 
         String productId = createResponse.body().getId();
 
         HttpResponse<ProductVO> updateResponse = callAndCatch(
-                () -> productApiTestClient.patchProduct(productId, productUpdateVO));
+                () -> productApiTestClient.patchProduct(null, productId, productUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ProductVO updatedProduct = updateResponse.body();
@@ -992,14 +992,14 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
                 .productOffering(null);
 
         HttpResponse<ProductVO> createResponse = callAndCatch(
-                () -> productApiTestClient.createProduct(productCreateVO));
+                () -> productApiTestClient.createProduct(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The product function should have been created first.");
 
         String productId = createResponse.body().getId();
 
         HttpResponse<ProductVO> updateResponse = callAndCatch(
-                () -> productApiTestClient.patchProduct(productId, productUpdateVO));
+                () -> productApiTestClient.patchProduct(null, productId, productUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -1194,7 +1194,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
         ProductUpdateVO productUpdateVO = ProductUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> productApiTestClient.patchProduct("urn:ngsi-ld:product-catalog:not-existent",
+                callAndCatch(() -> productApiTestClient.patchProduct(null, "urn:ngsi-ld:product-catalog:not-existent",
                         productUpdateVO)).getStatus(),
                 "Non existent product should not be updated.");
     }
@@ -1233,7 +1233,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
                 .productOffering(null)
                 .productSpecification(null);
         HttpResponse<ProductVO> createResponse = callAndCatch(
-                () -> productApiTestClient.createProduct(productCreateVO));
+                () -> productApiTestClient.createProduct(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -1243,7 +1243,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 
         //then retrieve
         HttpResponse<ProductVO> retrievedRF = callAndCatch(
-                () -> productApiTestClient.retrieveProduct(id, fieldsParameter));
+                () -> productApiTestClient.retrieveProduct(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedProduct, retrievedRF.body(), message);
     }
@@ -1371,7 +1371,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
     @Override
     public void retrieveProduct404() throws Exception {
         HttpResponse<ProductVO> response = callAndCatch(
-                () -> productApiTestClient.retrieveProduct("urn:ngsi-ld:product-function:non-existent", null));
+                () -> productApiTestClient.retrieveProduct(null, "urn:ngsi-ld:product-function:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such product-catalog should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

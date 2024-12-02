@@ -80,7 +80,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
     public void createCustomer201() throws Exception {
 
         HttpResponse<CustomerVO> customerVOHttpResponse = callAndCatch(
-                () -> customerApiTestClient.createCustomer(customerCreateVO));
+                () -> customerApiTestClient.createCustomer(null, customerCreateVO));
         assertEquals(HttpStatus.CREATED, customerVOHttpResponse.getStatus(), message);
         String rfId = customerVOHttpResponse.body().getId();
         expectedCustomer.id(rfId)
@@ -117,7 +117,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
     @Override
     public void createCustomer400() throws Exception {
         HttpResponse<CustomerVO> creationResponse = callAndCatch(
-                () -> customerApiTestClient.createCustomer(customerCreateVO));
+                () -> customerApiTestClient.createCustomer(null, customerCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -200,17 +200,17 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
     public void deleteCustomer204() throws Exception {
         CustomerCreateVO emptyCreate = CustomerCreateVOTestExample.build().engagedParty(null);
 
-        HttpResponse<CustomerVO> createResponse = customerApiTestClient.createCustomer(emptyCreate);
+        HttpResponse<CustomerVO> createResponse = customerApiTestClient.createCustomer(null, emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The customer should have been created first.");
 
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> customerApiTestClient.deleteCustomer(rfId)).getStatus(),
+                callAndCatch(() -> customerApiTestClient.deleteCustomer(null, rfId)).getStatus(),
                 "The customer should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> customerApiTestClient.retrieveCustomer(rfId, null)).status(),
+                callAndCatch(() -> customerApiTestClient.retrieveCustomer(null, rfId, null)).status(),
                 "The customer should not exist anymore.");
     }
 
@@ -239,7 +239,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
     @Override
     public void deleteCustomer404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> customerApiTestClient.deleteCustomer("urn:ngsi-ld:service-category:no-pop"));
+                () -> customerApiTestClient.deleteCustomer(null, "urn:ngsi-ld:service-category:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-category should exist.");
@@ -247,7 +247,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> customerApiTestClient.deleteCustomer("invalid-id"));
+        notFoundResponse = callAndCatch(() -> customerApiTestClient.deleteCustomer(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-category should exist.");
@@ -282,7 +282,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         for (int i = 0; i < 10; i++) {
             CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build()
                     .engagedParty(null);
-            String id = customerApiTestClient.createCustomer(customerCreateVO).body().getId();
+            String id = customerApiTestClient.createCustomer(null, customerCreateVO).body().getId();
             CustomerVO customerVO = CustomerVOTestExample.build();
             customerVO
                     .id(id)
@@ -294,7 +294,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         }
 
         HttpResponse<List<CustomerVO>> customerResponse = callAndCatch(
-                () -> customerApiTestClient.listCustomer(null, null, null));
+                () -> customerApiTestClient.listCustomer(null, null, null, null));
 
         assertEquals(HttpStatus.OK, customerResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedCustomers.size(), customerResponse.getBody().get().size(),
@@ -315,11 +315,11 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<CustomerVO>> firstPartResponse = callAndCatch(
-                () -> customerApiTestClient.listCustomer(null, 0, limit));
+                () -> customerApiTestClient.listCustomer(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<CustomerVO>> secondPartResponse = callAndCatch(
-                () -> customerApiTestClient.listCustomer(null, 0 + limit, limit));
+                () -> customerApiTestClient.listCustomer(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -337,7 +337,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
     @Override
     public void listCustomer400() throws Exception {
         HttpResponse<List<CustomerVO>> badRequestResponse = callAndCatch(
-                () -> customerApiTestClient.listCustomer(null, -1, null));
+                () -> customerApiTestClient.listCustomer(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -345,7 +345,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> customerApiTestClient.listCustomer(null, null, -1));
+        badRequestResponse = callAndCatch(() -> customerApiTestClient.listCustomer(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -409,13 +409,13 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build().engagedParty(null);
 
         HttpResponse<CustomerVO> createResponse = callAndCatch(
-                () -> customerApiTestClient.createCustomer(customerCreateVO));
+                () -> customerApiTestClient.createCustomer(null, customerCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The customer should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<CustomerVO> updateResponse = callAndCatch(
-                () -> customerApiTestClient.patchCustomer(resourceId, customerUpdateVO));
+                () -> customerApiTestClient.patchCustomer(null, resourceId, customerUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         CustomerVO updatedCustomer = updateResponse.body();
@@ -522,13 +522,13 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build().engagedParty(null);
 
         HttpResponse<CustomerVO> createResponse = callAndCatch(
-                () -> customerApiTestClient.createCustomer(customerCreateVO));
+                () -> customerApiTestClient.createCustomer(null, customerCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The customer should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<CustomerVO> updateResponse = callAndCatch(
-                () -> customerApiTestClient.patchCustomer(resourceId, customerUpdateVO));
+                () -> customerApiTestClient.patchCustomer(null, resourceId, customerUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -599,7 +599,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
         CustomerUpdateVO customerUpdateVO = CustomerUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> customerApiTestClient.patchCustomer("urn:ngsi-ld:service-category:not-existent",
+                callAndCatch(() -> customerApiTestClient.patchCustomer(null, "urn:ngsi-ld:service-category:not-existent",
                         customerUpdateVO)).getStatus(),
                 "Non existent customer should not be updated.");
     }
@@ -635,7 +635,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 
         CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build().engagedParty(null);
         HttpResponse<CustomerVO> createResponse = callAndCatch(
-                () -> customerApiTestClient.createCustomer(customerCreateVO));
+                () -> customerApiTestClient.createCustomer(null, customerCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -645,7 +645,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 
         //then retrieve
         HttpResponse<CustomerVO> retrievedRF = callAndCatch(
-                () -> customerApiTestClient.retrieveCustomer(id, fieldsParameter));
+                () -> customerApiTestClient.retrieveCustomer(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedCustomer, retrievedRF.body(), message);
     }
@@ -733,7 +733,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
     @Override
     public void retrieveCustomer404() throws Exception {
         HttpResponse<CustomerVO> response = callAndCatch(
-                () -> customerApiTestClient.retrieveCustomer("urn:ngsi-ld:resource-function:non-existent", null));
+                () -> customerApiTestClient.retrieveCustomer(null, "urn:ngsi-ld:resource-function:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such service-category should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

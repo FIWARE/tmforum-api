@@ -73,7 +73,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
     public void createResourceFunction201() throws Exception {
 
         HttpResponse<ResourceFunctionVO> resourceFunctionVOHttpResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO));
+                () -> resourceFunctionApiTestClient.createResourceFunction(null, resourceFunctionCreateVO));
         assertEquals(HttpStatus.CREATED, resourceFunctionVOHttpResponse.getStatus(), message);
         String rfId = resourceFunctionVOHttpResponse.body().getId();
         expectedResourceFunction.setId(rfId);
@@ -106,7 +106,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
     @Override
     public void createResourceFunction400() throws Exception {
         HttpResponse<ResourceFunctionVO> creationResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO));
+                () -> resourceFunctionApiTestClient.createResourceFunction(null, resourceFunctionCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -225,7 +225,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         ResourceFunctionCreateVO emptyCreate = ResourceFunctionCreateVOTestExample.build();
         emptyCreate.place(null).resourceSpecification(null);
 
-        HttpResponse<ResourceFunctionVO> createResponse = resourceFunctionApiTestClient.createResourceFunction(
+        HttpResponse<ResourceFunctionVO> createResponse = resourceFunctionApiTestClient.createResourceFunction(null,
                 emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The resource function should have been created first.");
@@ -233,11 +233,11 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> resourceFunctionApiTestClient.deleteResourceFunction(rfId)).getStatus(),
+                callAndCatch(() -> resourceFunctionApiTestClient.deleteResourceFunction(null, rfId)).getStatus(),
                 "The resource function should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> resourceFunctionApiTestClient.retrieveResourceFunction(rfId, null)).status(),
+                callAndCatch(() -> resourceFunctionApiTestClient.retrieveResourceFunction(null, rfId, null)).status(),
                 "The resource function should not exist anymore.");
     }
 
@@ -266,7 +266,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
     @Override
     public void deleteResourceFunction404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.deleteResourceFunction("urn:ngsi-ld:resource-function:no-pop"));
+                () -> resourceFunctionApiTestClient.deleteResourceFunction(null, "urn:ngsi-ld:resource-function:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such resource-function should exist.");
@@ -274,7 +274,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> resourceFunctionApiTestClient.deleteResourceFunction("invalid-id"));
+        notFoundResponse = callAndCatch(() -> resourceFunctionApiTestClient.deleteResourceFunction(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such resource-function should exist.");
@@ -311,7 +311,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
             ResourceFunctionCreateVO resourceFunctionCreateVO = ResourceFunctionCreateVOTestExample.build()
                     .place(null)
                     .resourceSpecification(null);
-            String id = resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO)
+            String id = resourceFunctionApiTestClient.createResourceFunction(null, resourceFunctionCreateVO)
                     .body().getId();
             ResourceFunctionVO resourceFunctionVO = ResourceFunctionVOTestExample.build();
             resourceFunctionVO
@@ -324,7 +324,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         }
 
         HttpResponse<List<ResourceFunctionVO>> resourceFunctionResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.listResourceFunction(null, null, null));
+                () -> resourceFunctionApiTestClient.listResourceFunction(null, null, null, null));
 
         assertEquals(HttpStatus.OK, resourceFunctionResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedResourceFunctions.size(), resourceFunctionResponse.getBody().get().size(),
@@ -350,11 +350,11 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ResourceFunctionVO>> firstPartResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.listResourceFunction(null, 0, limit));
+                () -> resourceFunctionApiTestClient.listResourceFunction(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ResourceFunctionVO>> secondPartResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.listResourceFunction(null, 0 + limit, limit));
+                () -> resourceFunctionApiTestClient.listResourceFunction(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -377,7 +377,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
     @Override
     public void listResourceFunction400() throws Exception {
         HttpResponse<List<ResourceFunctionVO>> badRequestResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.listResourceFunction(null, -1, null));
+                () -> resourceFunctionApiTestClient.listResourceFunction(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -385,7 +385,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> resourceFunctionApiTestClient.listResourceFunction(null, null, -1));
+        badRequestResponse = callAndCatch(() -> resourceFunctionApiTestClient.listResourceFunction(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -450,14 +450,14 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
                 .resourceSpecification(null);
 
         HttpResponse<ResourceFunctionVO> createResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO));
+                () -> resourceFunctionApiTestClient.createResourceFunction(null, resourceFunctionCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The resource function should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<ResourceFunctionVO> updateResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.patchResourceFunction(resourceId, resourceFunctionUpdateVO));
+                () -> resourceFunctionApiTestClient.patchResourceFunction(null, resourceId, resourceFunctionUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ResourceFunctionVO updatedResourceFunction = updateResponse.body();
@@ -719,14 +719,14 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
                 .resourceSpecification(null);
 
         HttpResponse<ResourceFunctionVO> createResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO));
+                () -> resourceFunctionApiTestClient.createResourceFunction(null, resourceFunctionCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The resource function should have been created first.");
 
         String resourceId = createResponse.body().getId();
 
         HttpResponse<ResourceFunctionVO> updateResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.patchResourceFunction(resourceId, resourceFunctionUpdateVO));
+                () -> resourceFunctionApiTestClient.patchResourceFunction(null, resourceId, resourceFunctionUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -859,7 +859,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         ResourceFunctionUpdateVO resourceFunctionUpdateVO = ResourceFunctionUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> resourceFunctionApiTestClient.patchResourceFunction(
+                callAndCatch(() -> resourceFunctionApiTestClient.patchResourceFunction(null,
                         "urn:ngsi-ld:resource-function:not-existent", resourceFunctionUpdateVO)).getStatus(),
                 "Non existent resource functions should not be updated.");
     }
@@ -888,7 +888,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
         ResourceFunctionCreateVO resourceFunctionCreateVO = ResourceFunctionCreateVOTestExample.build().place(null)
                 .resourceSpecification(null);
         HttpResponse<ResourceFunctionVO> createResponse = callAndCatch(
-                () -> resourceFunctionApiTestClient.createResourceFunction(resourceFunctionCreateVO));
+                () -> resourceFunctionApiTestClient.createResourceFunction(null, resourceFunctionCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The productSpecification should have been created first.");
         String id = createResponse.body().getId();
@@ -903,7 +903,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 
         //then retrieve
         HttpResponse<ResourceFunctionVO> retrievedRF = callAndCatch(
-                () -> resourceFunctionApiTestClient.retrieveResourceFunction(id, null));
+                () -> resourceFunctionApiTestClient.retrieveResourceFunction(null, id, null));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedResourceFunctionVO, retrievedRF.body(),
                 "The correct resource function should be returned.");
@@ -934,7 +934,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
     @Override
     public void retrieveResourceFunction404() throws Exception {
         HttpResponse<ResourceFunctionVO> response = callAndCatch(
-                () -> resourceFunctionApiTestClient.retrieveResourceFunction(
+                () -> resourceFunctionApiTestClient.retrieveResourceFunction(null,
                         "urn:ngsi-ld:resource-function:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such resource-function should exist.");
 

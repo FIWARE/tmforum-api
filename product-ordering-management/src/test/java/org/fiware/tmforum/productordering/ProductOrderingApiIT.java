@@ -91,7 +91,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         when(clock.instant()).thenReturn(now);
 
         HttpResponse<ProductOrderVO> productVOHttpResponse = callAndCatch(
-                () -> productOrderApiTestClient.createProductOrder(productCreateVO));
+                () -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, productVOHttpResponse.getStatus(), message);
         String rfId = productVOHttpResponse.body().getId();
         expectedProduct.setId(rfId);
@@ -281,7 +281,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
     @Override
     public void createProductOrder400() throws Exception {
         HttpResponse<ProductOrderVO> creationResponse = callAndCatch(
-                () -> productOrderApiTestClient.createProductOrder(productCreateVO));
+                () -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -568,18 +568,18 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         ProductOrderCreateVO emptyCreate = ProductOrderCreateVOTestExample.build()
                 .billingAccount(null);
 
-        HttpResponse<ProductOrderVO> createResponse = productOrderApiTestClient.createProductOrder(emptyCreate);
+        HttpResponse<ProductOrderVO> createResponse = productOrderApiTestClient.createProductOrder(null, emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The product order should have been created first.");
 
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> productOrderApiTestClient.deleteProductOrder(rfId)).getStatus(),
+                callAndCatch(() -> productOrderApiTestClient.deleteProductOrder(null, rfId)).getStatus(),
                 "The product order should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> productOrderApiTestClient.retrieveProductOrder(rfId, null)).status(),
+                callAndCatch(() -> productOrderApiTestClient.retrieveProductOrder(null, rfId, null)).status(),
                 "The product order should not exist anymore.");
     }
 
@@ -608,7 +608,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
     @Override
     public void deleteProductOrder404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> productOrderApiTestClient.deleteProductOrder("urn:ngsi-ld:product-catalog:no-pop"));
+                () -> productOrderApiTestClient.deleteProductOrder(null, "urn:ngsi-ld:product-catalog:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such product-order should exist.");
@@ -616,7 +616,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> productOrderApiTestClient.deleteProductOrder("invalid-id"));
+        notFoundResponse = callAndCatch(() -> productOrderApiTestClient.deleteProductOrder(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such product-order should exist.");
@@ -654,7 +654,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
             ProductOrderCreateVO productCreateVO = ProductOrderCreateVOTestExample.build()
                     .billingAccount(null);
 
-            String id = productOrderApiTestClient.createProductOrder(productCreateVO)
+            String id = productOrderApiTestClient.createProductOrder(null, productCreateVO)
                     .body().getId();
             ProductOrderVO productOrderVO = ProductOrderVOTestExample.build();
             productOrderVO
@@ -671,7 +671,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         }
 
         HttpResponse<List<ProductOrderVO>> productResponse = callAndCatch(
-                () -> productOrderApiTestClient.listProductOrder(null, null, null));
+                () -> productOrderApiTestClient.listProductOrder(null, null, null, null));
 
         assertEquals(HttpStatus.OK, productResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedProducts.size(), productResponse.getBody().get().size(),
@@ -697,11 +697,11 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ProductOrderVO>> firstPartResponse = callAndCatch(
-                () -> productOrderApiTestClient.listProductOrder(null, 0, limit));
+                () -> productOrderApiTestClient.listProductOrder(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ProductOrderVO>> secondPartResponse = callAndCatch(
-                () -> productOrderApiTestClient.listProductOrder(null, 0 + limit, limit));
+                () -> productOrderApiTestClient.listProductOrder(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -724,7 +724,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
     @Override
     public void listProductOrder400() throws Exception {
         HttpResponse<List<ProductOrderVO>> badRequestResponse = callAndCatch(
-                () -> productOrderApiTestClient.listProductOrder(null, -1, null));
+                () -> productOrderApiTestClient.listProductOrder(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -732,7 +732,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> productOrderApiTestClient.listProductOrder(null, null, -1));
+        badRequestResponse = callAndCatch(() -> productOrderApiTestClient.listProductOrder(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -802,14 +802,14 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
                 .billingAccount(null);
 
         HttpResponse<ProductOrderVO> createResponse = callAndCatch(
-                () -> productOrderApiTestClient.createProductOrder(productCreateVO));
+                () -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The product function should have been created first.");
 
         String productId = createResponse.body().getId();
 
         HttpResponse<ProductOrderVO> updateResponse = callAndCatch(
-                () -> productOrderApiTestClient.patchProductOrder(productId, productUpdateVO));
+                () -> productOrderApiTestClient.patchProductOrder(null, productId, productUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ProductOrderVO updatedProduct = updateResponse.body();
@@ -982,7 +982,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         testEntries.add(Arguments.of("The state should have been updated.",
                 ProductOrderUpdateVOTestExample.build()
                         .billingAccount(null)
-                        .state(ProductOrderStateTypeVO.INPROGRESS),
+                        .state(ProductOrderStateTypeVO.IN_PROGRESS),
                 ProductOrderVOTestExample.build()
                         .billingAccount(null)
                         .channel(null)
@@ -990,7 +990,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
                         .productOfferingQualification(null)
                         .quote(null)
                         .relatedParty(null)
-                        .state(ProductOrderStateTypeVO.INPROGRESS)));
+                        .state(ProductOrderStateTypeVO.IN_PROGRESS)));
 
         return testEntries.stream();
     }
@@ -1010,14 +1010,14 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
                 .billingAccount(null);
 
         HttpResponse<ProductOrderVO> createResponse = callAndCatch(
-                () -> productOrderApiTestClient.createProductOrder(productCreateVO));
+                () -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The product order should have been created first.");
 
         String productId = createResponse.body().getId();
 
         HttpResponse<ProductOrderVO> updateResponse = callAndCatch(
-                () -> productOrderApiTestClient.patchProductOrder(productId, productUpdateVO));
+                () -> productOrderApiTestClient.patchProductOrder(null, productId, productUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -1137,7 +1137,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 callAndCatch(
-                        () -> productOrderApiTestClient.patchProductOrder("urn:ngsi-ld:product-order:not-existent",
+                        () -> productOrderApiTestClient.patchProductOrder(null, "urn:ngsi-ld:product-order:not-existent",
                                 productUpdateVO)).getStatus(),
                 "Non existent product order should not be updated.");
     }
@@ -1175,7 +1175,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         ProductOrderCreateVO productCreateVO = ProductOrderCreateVOTestExample.build()
                 .billingAccount(null);
         HttpResponse<ProductOrderVO> createResponse = callAndCatch(
-                () -> productOrderApiTestClient.createProductOrder(productCreateVO));
+                () -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -1185,7 +1185,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 
         //then retrieve
         HttpResponse<ProductOrderVO> retrievedRF = callAndCatch(
-                () -> productOrderApiTestClient.retrieveProductOrder(id, fieldsParameter));
+                () -> productOrderApiTestClient.retrieveProductOrder(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedProduct, retrievedRF.body(), message);
     }
@@ -1303,7 +1303,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
     @Override
     public void retrieveProductOrder404() throws Exception {
         HttpResponse<ProductOrderVO> response = callAndCatch(
-                () -> productOrderApiTestClient.retrieveProductOrder("urn:ngsi-ld:product-function:non-existent",
+                () -> productOrderApiTestClient.retrieveProductOrder(null, "urn:ngsi-ld:product-function:non-existent",
                         null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such product-catalog should exist.");
 

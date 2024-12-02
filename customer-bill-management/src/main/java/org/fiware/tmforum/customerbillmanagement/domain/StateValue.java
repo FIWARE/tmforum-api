@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum StateValue {
 
 	NEW("new"),
-	ONHOLD("onHold"),
+	ON_HOLD("onHold"),
 	VALIDATED("validated"),
 	SENT("sent"),
-	PARTIALLYPAID("partiallyPaid"),
+	PARTIALLY_PAID("partiallyPaid"),
 	SETTLED("settled");
 
 	private final String value;

@@ -37,7 +37,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.resourceinventory" })
+@MicronautTest(packages = {"org.fiware.tmforum.resourceinventory"})
 public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec {
 
 	public final ResourceApiTestClient resourceApiTestClient;
@@ -49,7 +49,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	private ResourceVO expectedResource;
 
 	public ResourceApiIT(ResourceApiTestClient resourceApiTestClient, EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+						 ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.resourceApiTestClient = resourceApiTestClient;
 	}
@@ -78,7 +78,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	public void createResource201() throws Exception {
 
 		HttpResponse<ResourceVO> resourceVOHttpResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, resourceVOHttpResponse.getStatus(), message);
 		String rfId = resourceVOHttpResponse.body().getId();
 		expectedResource.setId(rfId);
@@ -187,7 +187,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void createResource400() throws Exception {
 		HttpResponse<ResourceVO> creationResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -305,17 +305,17 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 				.place(null)
 				.resourceSpecification(null);
 
-		HttpResponse<ResourceVO> createResponse = resourceApiTestClient.createResource(emptyCreate);
+		HttpResponse<ResourceVO> createResponse = resourceApiTestClient.createResource(null, emptyCreate);
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The resource should have been created first.");
 
 		String rfId = createResponse.body().getId();
 
 		assertEquals(HttpStatus.NO_CONTENT,
-				callAndCatch(() -> resourceApiTestClient.deleteResource(rfId)).getStatus(),
+				callAndCatch(() -> resourceApiTestClient.deleteResource(null, rfId)).getStatus(),
 				"The resource should have been deleted.");
 
 		assertEquals(HttpStatus.NOT_FOUND,
-				callAndCatch(() -> resourceApiTestClient.retrieveResource(rfId, null)).status(),
+				callAndCatch(() -> resourceApiTestClient.retrieveResource(null, rfId, null)).status(),
 				"The resource should not exist anymore.");
 	}
 
@@ -344,7 +344,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void deleteResource404() throws Exception {
 		HttpResponse<?> notFoundResponse = callAndCatch(
-				() -> resourceApiTestClient.deleteResource("urn:ngsi-ld:resource-catalog:no-pop"));
+				() -> resourceApiTestClient.deleteResource(null, "urn:ngsi-ld:resource-catalog:no-pop"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such resource-catalog should exist.");
@@ -352,7 +352,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		notFoundResponse = callAndCatch(() -> resourceApiTestClient.deleteResource("invalid-id"));
+		notFoundResponse = callAndCatch(() -> resourceApiTestClient.deleteResource(null, "invalid-id"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such resource-catalog should exist.");
@@ -389,7 +389,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 			ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build()
 					.place(null)
 					.resourceSpecification(null);
-			String id = resourceApiTestClient.createResource(resourceCreateVO)
+			String id = resourceApiTestClient.createResource(null, resourceCreateVO)
 					.body().getId();
 			ResourceVO resourceVO = ResourceVOTestExample.build();
 			resourceVO
@@ -402,7 +402,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		}
 
 		HttpResponse<List<ResourceVO>> resourceResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, null, null));
+				() -> resourceApiTestClient.listResource(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, resourceResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedResources.size(), resourceResponse.getBody().get().size(),
@@ -428,11 +428,11 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<ResourceVO>> firstPartResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, 0, limit));
+				() -> resourceApiTestClient.listResource(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<ResourceVO>> secondPartResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, 0 + limit, limit));
+				() -> resourceApiTestClient.listResource(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -455,7 +455,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void listResource400() throws Exception {
 		HttpResponse<List<ResourceVO>> badRequestResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, -1, null));
+				() -> resourceApiTestClient.listResource(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -463,7 +463,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		badRequestResponse = callAndCatch(() -> resourceApiTestClient.listResource(null, null, -1));
+		badRequestResponse = callAndCatch(() -> resourceApiTestClient.listResource(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -527,14 +527,14 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().place(null).resourceSpecification(null);
 
 		HttpResponse<ResourceVO> createResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The resource function should have been created first.");
 
 		String resourceId = createResponse.body().getId();
 
 		HttpResponse<ResourceVO> updateResponse = callAndCatch(
-				() -> resourceApiTestClient.patchResource(resourceId, resourceUpdateVO));
+				() -> resourceApiTestClient.patchResource(null, resourceId, resourceUpdateVO));
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceVO updatedResource = updateResponse.body();
@@ -733,14 +733,14 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().place(null).resourceSpecification(null);
 
 		HttpResponse<ResourceVO> createResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The resource function should have been created first.");
 
 		String resourceId = createResponse.body().getId();
 
 		HttpResponse<ResourceVO> updateResponse = callAndCatch(
-				() -> resourceApiTestClient.patchResource(resourceId, resourceUpdateVO));
+				() -> resourceApiTestClient.patchResource(null, resourceId, resourceUpdateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
 		Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -835,7 +835,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		ResourceUpdateVO resourceUpdateVO = ResourceUpdateVOTestExample.build();
 		assertEquals(
 				HttpStatus.NOT_FOUND,
-				callAndCatch(() -> resourceApiTestClient.patchResource("urn:ngsi-ld:resource-catalog:not-existent",
+				callAndCatch(() -> resourceApiTestClient.patchResource(null, "urn:ngsi-ld:resource-catalog:not-existent",
 						resourceUpdateVO)).getStatus(),
 				"Non existent resource should not be updated.");
 	}
@@ -873,7 +873,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 				.place(null)
 				.resourceSpecification(null);
 		HttpResponse<ResourceVO> createResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
 		String id = createResponse.body().getId();
 
@@ -883,7 +883,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 		//then retrieve
 		HttpResponse<ResourceVO> retrievedRF = callAndCatch(
-				() -> resourceApiTestClient.retrieveResource(id, fieldsParameter));
+				() -> resourceApiTestClient.retrieveResource(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
 		assertEquals(expectedResource, retrievedRF.body(), message);
 	}
@@ -972,7 +972,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void retrieveResource404() throws Exception {
 		HttpResponse<ResourceVO> response = callAndCatch(
-				() -> resourceApiTestClient.retrieveResource("urn:ngsi-ld:resource-function:non-existent", null));
+				() -> resourceApiTestClient.retrieveResource(null, "urn:ngsi-ld:resource-function:non-existent", null));
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such resource-catalog should exist.");
 
 		Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);
@@ -998,7 +998,8 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 	}
 
-	@Override protected String getEntityType() {
+	@Override
+	protected String getEntityType() {
 		return Resource.TYPE_RESOURCE;
 	}
 }

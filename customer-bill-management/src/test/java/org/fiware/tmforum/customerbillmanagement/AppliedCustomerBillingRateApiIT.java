@@ -106,7 +106,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		billRates.forEach(this::createBill);
 
 		HttpResponse<List<AppliedCustomerBillingRateVO>> appliedCustomerBillingRateResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, appliedCustomerBillingRateResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedBillVOS.size(), appliedCustomerBillingRateResponse.getBody().get().size(),
@@ -126,11 +126,11 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<AppliedCustomerBillingRateVO>> firstPartResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, 0, limit));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<AppliedCustomerBillingRateVO>> secondPartResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, 0 + limit, limit));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -149,7 +149,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@Override
 	public void listAppliedCustomerBillingRate400() throws Exception {
 		HttpResponse<List<AppliedCustomerBillingRateVO>> badRequestResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, -1, null));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -158,7 +158,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
 		badRequestResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, -1));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -184,7 +184,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@Override
 	public void listAppliedCustomerBillingRate404() throws Exception {
 		HttpResponse<List<AppliedCustomerBillingRateVO>> badRequestResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, badRequestResponse.getStatus(), "We should get an empty list.");
 		assertTrue(badRequestResponse.body().isEmpty(), "We should get an empty list.");
@@ -231,7 +231,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		createBill(tmForumMapper.map(appliedCustomerBillingRateVO));
 
 		HttpResponse<AppliedCustomerBillingRateVO> response = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(billId,
+				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(null, billId,
 						fieldsParameter));
 
 		assertEquals(HttpStatus.OK, response.getStatus(), message);
@@ -345,7 +345,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@Test
 	@Override public void retrieveAppliedCustomerBillingRate404() throws Exception {
 		HttpResponse<AppliedCustomerBillingRateVO> response = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(
+				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(null,
 						"urn:ngsi-ld:customer-bill:non-existent",
 						fieldsParameter));
 

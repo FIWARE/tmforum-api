@@ -3,6 +3,7 @@ package org.fiware.tmforum.productordering;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.productordering.model.*;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.productordering.domain.*;
 import org.mapstruct.Mapper;
@@ -17,69 +18,49 @@ import java.net.URL;
  * Mapper between the internal model and api-domain objects
  */
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
-public interface TMForumMapper {
+public abstract class TMForumMapper extends BaseMapper {
 
 	// product
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	ProductOrderVO map(ProductOrderCreateVO productOrderCreateVO, URI id);
+	public abstract ProductOrderVO map(ProductOrderCreateVO productOrderCreateVO, URI id);
 
-	ProductOrderVO map(ProductOrder productOrder);
+	public abstract ProductOrderVO map(ProductOrder productOrder);
 
-	ProductOrder map(ProductOrderVO productVO);
+	public abstract ProductOrder map(ProductOrderVO productVO);
 
 	@Mapping(target = "id", source = "id")
-	ProductOrder map(ProductOrderUpdateVO productOrderUpdateVO, String id);
+	public abstract ProductOrder map(ProductOrderUpdateVO productOrderUpdateVO, String id);
 
-	@ValueMapping(source = "INPROGRESS", target = "IN_PROGRESS")
-	@ValueMapping(source = "ASSESSINGCANCELLATION", target = "ASSESSING_CANCELLATION")
-	@ValueMapping(source = "PENDINGCANCELLATION", target = "PENDING_CANCELLATION")
-	ProductOrderItemState map(ProductOrderItemStateTypeVO productOrderItemStateTypeVO);
+	public abstract ProductOrderItemState map(ProductOrderItemStateTypeVO productOrderItemStateTypeVO);
 
-	@ValueMapping(target = "INPROGRESS", source = "IN_PROGRESS")
-	@ValueMapping(target = "ASSESSINGCANCELLATION", source = "ASSESSING_CANCELLATION")
-	@ValueMapping(target = "PENDINGCANCELLATION", source = "PENDING_CANCELLATION")
-	ProductOrderItemStateTypeVO map(ProductOrderItemState productOrderItemStateTypeVO);
+	public abstract ProductOrderItemStateTypeVO map(ProductOrderItemState productOrderItemStateTypeVO);
 
-	@ValueMapping(source = "INPROGRESS", target = "IN_PROGRESS")
-	@ValueMapping(source = "ASSESSINGCANCELLATION", target = "ASSESSING_CANCELLATION")
-	@ValueMapping(source = "PENDINGCANCELLATION", target = "PENDING_CANCELLATION")
-	ProductOrderState map(ProductOrderStateTypeVO productOrderStateTypeVO);
+	public abstract ProductOrderState map(ProductOrderStateTypeVO productOrderStateTypeVO);
 
-	@ValueMapping(target = "INPROGRESS", source = "IN_PROGRESS")
-	@ValueMapping(target = "ASSESSINGCANCELLATION", source = "ASSESSING_CANCELLATION")
-	@ValueMapping(target = "PENDINGCANCELLATION", source = "PENDING_CANCELLATION")
-	ProductOrderStateTypeVO map(ProductOrderState productOrderState);
+	public abstract ProductOrderStateTypeVO map(ProductOrderState productOrderState);
 
-	@ValueMapping(source = "NOCHANGE", target = "NO_CHANGE")
-	OrderItemAction map(OrderItemActionTypeVO orderItemActionTypeVO);
+	public abstract OrderItemAction map(OrderItemActionTypeVO orderItemActionTypeVO);
 
-	@ValueMapping(target = "NOCHANGE", source = "NO_CHANGE")
-	OrderItemActionTypeVO map(OrderItemAction orderItemAction);
+	public abstract OrderItemActionTypeVO map(OrderItemAction orderItemAction);
 
 	// cancellation
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "href", source = "id")
-	CancelProductOrderVO map(CancelProductOrderCreateVO cancelProductOrderVO, URI id);
+	public abstract CancelProductOrderVO map(CancelProductOrderCreateVO cancelProductOrderVO, URI id);
 
-	CancelProductOrderVO map(CancelProductOrder cancelProductOrder);
+	public abstract CancelProductOrderVO map(CancelProductOrder cancelProductOrder);
 
-	CancelProductOrder map(CancelProductOrderVO cancelProductOrderVO);
+	public abstract CancelProductOrder map(CancelProductOrderVO cancelProductOrderVO);
 
-	@ValueMapping(source = "INPROGRESS", target = "IN_PROGRESS")
-	@ValueMapping(source = "TERMINATEDWITHERROR", target = "TERMINATED_WITH_ERROR")
-	TaskState map(TaskStateTypeVO taskStateTypeVO);
+	public abstract TaskState map(TaskStateTypeVO taskStateTypeVO);
 
-	@ValueMapping(target = "TERMINATEDWITHERROR", source = "TERMINATED_WITH_ERROR")
-	@ValueMapping(target = "INPROGRESS", source = "IN_PROGRESS")
-	TaskStateTypeVO map(TaskState taskState);
+	public abstract TaskStateTypeVO map(TaskState taskState);
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(TMForumSubscription subscription);
+	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	default URL map(String value) {
+	public URL map(String value) {
 		if (value == null) {
 			return null;
 		}
@@ -90,21 +71,21 @@ public interface TMForumMapper {
 		}
 	}
 
-	default String map(URL value) {
+	public String map(URL value) {
 		if (value == null) {
 			return null;
 		}
 		return value.toString();
 	}
 
-	default URI mapToURI(String value) {
+	public URI mapToURI(String value) {
 		if (value == null) {
 			return null;
 		}
 		return URI.create(value);
 	}
 
-	default String mapFromURI(URI value) {
+	public String mapFromURI(URI value) {
 		if (value == null) {
 			return null;
 		}

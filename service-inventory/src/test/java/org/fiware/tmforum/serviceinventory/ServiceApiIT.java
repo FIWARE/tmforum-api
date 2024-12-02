@@ -84,7 +84,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     public void createService201() throws Exception {
 
         HttpResponse<ServiceVO> serviceVOHttpResponse = callAndCatch(
-                () -> serviceApiTestClient.createService(serviceCreateVO));
+                () -> serviceApiTestClient.createService(null, serviceCreateVO));
         assertEquals(HttpStatus.CREATED, serviceVOHttpResponse.getStatus(), message);
         String rfId = serviceVOHttpResponse.body().getId();
         expectedService.setId(rfId);
@@ -184,7 +184,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     @Override
     public void createService400() throws Exception {
         HttpResponse<ServiceVO> creationResponse = callAndCatch(
-                () -> serviceApiTestClient.createService(serviceCreateVO));
+                () -> serviceApiTestClient.createService(null, serviceCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -254,17 +254,17 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         ServiceCreateVO emptyCreate = ServiceCreateVOTestExample.build()
                 .serviceSpecification(null);
 
-        HttpResponse<ServiceVO> createResponse = serviceApiTestClient.createService(emptyCreate);
+        HttpResponse<ServiceVO> createResponse = serviceApiTestClient.createService(null, emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The service should have been created first.");
 
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> serviceApiTestClient.deleteService(rfId)).getStatus(),
+                callAndCatch(() -> serviceApiTestClient.deleteService(null, rfId)).getStatus(),
                 "The service should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceApiTestClient.retrieveService(rfId, null)).status(),
+                callAndCatch(() -> serviceApiTestClient.retrieveService(null, rfId, null)).status(),
                 "The service should not exist anymore.");
     }
 
@@ -293,7 +293,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     @Override
     public void deleteService404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> serviceApiTestClient.deleteService("urn:ngsi-ld:service-catalog:no-pop"));
+                () -> serviceApiTestClient.deleteService(null, "urn:ngsi-ld:service-catalog:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-catalog should exist.");
@@ -301,7 +301,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> serviceApiTestClient.deleteService("invalid-id"));
+        notFoundResponse = callAndCatch(() -> serviceApiTestClient.deleteService(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-catalog should exist.");
@@ -337,7 +337,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         for (int i = 0; i < 10; i++) {
             ServiceCreateVO serviceCreateVO = ServiceCreateVOTestExample.build()
                     .serviceSpecification(null);
-            String id = serviceApiTestClient.createService(serviceCreateVO)
+            String id = serviceApiTestClient.createService(null, serviceCreateVO)
                     .body().getId();
             ServiceVO serviceVO = ServiceVOTestExample.build();
             serviceVO
@@ -348,7 +348,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         }
 
         HttpResponse<List<ServiceVO>> serviceResponse = callAndCatch(
-                () -> serviceApiTestClient.listService(null, null, null));
+                () -> serviceApiTestClient.listService(null, null, null, null));
 
         assertEquals(HttpStatus.OK, serviceResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedServices.size(), serviceResponse.getBody().get().size(),
@@ -374,11 +374,11 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ServiceVO>> firstPartResponse = callAndCatch(
-                () -> serviceApiTestClient.listService(null, 0, limit));
+                () -> serviceApiTestClient.listService(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ServiceVO>> secondPartResponse = callAndCatch(
-                () -> serviceApiTestClient.listService(null, 0 + limit, limit));
+                () -> serviceApiTestClient.listService(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -401,7 +401,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     @Override
     public void listService400() throws Exception {
         HttpResponse<List<ServiceVO>> badRequestResponse = callAndCatch(
-                () -> serviceApiTestClient.listService(null, -1, null));
+                () -> serviceApiTestClient.listService(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -409,7 +409,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> serviceApiTestClient.listService(null, null, -1));
+        badRequestResponse = callAndCatch(() -> serviceApiTestClient.listService(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -474,14 +474,14 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                 .serviceSpecification(null);
 
         HttpResponse<ServiceVO> createResponse = callAndCatch(
-                () -> serviceApiTestClient.createService(serviceCreateVO));
+                () -> serviceApiTestClient.createService(null, serviceCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service function should have been created first.");
 
         String serviceId = createResponse.body().getId();
 
         HttpResponse<ServiceVO> updateResponse = callAndCatch(
-                () -> serviceApiTestClient.patchService(serviceId, serviceUpdateVO));
+                () -> serviceApiTestClient.patchService(null, serviceId, serviceUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ServiceVO updatedService = updateResponse.body();
@@ -562,14 +562,14 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                 .serviceSpecification(null);
 
         HttpResponse<ServiceVO> createResponse = callAndCatch(
-                () -> serviceApiTestClient.createService(serviceCreateVO));
+                () -> serviceApiTestClient.createService(null, serviceCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service function should have been created first.");
 
         String serviceId = createResponse.body().getId();
 
         HttpResponse<ServiceVO> updateResponse = callAndCatch(
-                () -> serviceApiTestClient.patchService(serviceId, serviceUpdateVO));
+                () -> serviceApiTestClient.patchService(null, serviceId, serviceUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -648,7 +648,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         ServiceUpdateVO serviceUpdateVO = ServiceUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceApiTestClient.patchService("urn:ngsi-ld:service-catalog:not-existent",
+                callAndCatch(() -> serviceApiTestClient.patchService(null, "urn:ngsi-ld:service-catalog:not-existent",
                         serviceUpdateVO)).getStatus(),
                 "Non existent service should not be updated.");
     }
@@ -685,7 +685,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         ServiceCreateVO serviceCreateVO = ServiceCreateVOTestExample.build()
                 .serviceSpecification(null);
         HttpResponse<ServiceVO> createResponse = callAndCatch(
-                () -> serviceApiTestClient.createService(serviceCreateVO));
+                () -> serviceApiTestClient.createService(null, serviceCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -695,7 +695,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
 
         //then retrieve
         HttpResponse<ServiceVO> retrievedRF = callAndCatch(
-                () -> serviceApiTestClient.retrieveService(id, fieldsParameter));
+                () -> serviceApiTestClient.retrieveService(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedService, retrievedRF.body(), message);
     }
@@ -798,7 +798,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     @Override
     public void retrieveService404() throws Exception {
         HttpResponse<ServiceVO> response = callAndCatch(
-                () -> serviceApiTestClient.retrieveService("urn:ngsi-ld:service-function:non-existent", null));
+                () -> serviceApiTestClient.retrieveService(null, "urn:ngsi-ld:service-function:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such service-catalog should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

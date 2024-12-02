@@ -83,7 +83,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
     public void createUsage201() throws Exception {
 
         HttpResponse<UsageVO> usageVOHttpResponse = callAndCatch(
-                () -> usageApiTestClient.createUsage(usageCreateVO));
+                () -> usageApiTestClient.createUsage(null, usageCreateVO));
 
         assertEquals(HttpStatus.CREATED, usageVOHttpResponse.getStatus(), message);
         UsageVO createdUsageVO = usageVOHttpResponse.body();
@@ -122,7 +122,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
     public void createUsage400() throws Exception {
 
         HttpResponse<UsageVO> usageCreateResponse = callAndCatch(
-                () -> usageApiTestClient.createUsage(usageCreateVO));
+                () -> usageApiTestClient.createUsage(null, usageCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, usageCreateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = usageCreateResponse.getBody(ErrorDetails.class);
@@ -207,18 +207,18 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         // first create one
         UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build().usageSpecification(null);
         HttpResponse<UsageVO> usageCreateResponse = callAndCatch(
-                () -> usageApiTestClient.createUsage(usageCreateVO));
+                () -> usageApiTestClient.createUsage(null, usageCreateVO));
         assertEquals(HttpStatus.CREATED, usageCreateResponse.getStatus(),
                 "The Usage should have been created first.");
 
         String usageId = usageCreateResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> usageApiTestClient.deleteUsage(usageId)).getStatus(),
+                callAndCatch(() -> usageApiTestClient.deleteUsage(null, usageId)).getStatus(),
                 "The Usage should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> usageApiTestClient.retrieveUsage(usageId, null)).status(),
+                callAndCatch(() -> usageApiTestClient.retrieveUsage(null, usageId, null)).status(),
                 "The Usage should not exist anymore.");
     }
 
@@ -245,7 +245,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
     @Override
     public void deleteUsage404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> usageApiTestClient.deleteUsage("urn:ngsi-ld:usage:no-usage"));
+                () -> usageApiTestClient.deleteUsage(null, "urn:ngsi-ld:usage:no-usage"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such usage should exist.");
@@ -253,7 +253,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> usageApiTestClient.deleteUsage("invalid-id"));
+        notFoundResponse = callAndCatch(() -> usageApiTestClient.deleteUsage(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such usage should exist.");
@@ -290,7 +290,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         List<UsageVO> expectedUsages = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build().usageSpecification(null);
-            String id = usageApiTestClient.createUsage(usageCreateVO).body().getId();
+            String id = usageApiTestClient.createUsage(null, usageCreateVO).body().getId();
             UsageVO usageVO = UsageVOTestExample.build();
             usageVO
                     .id(id)
@@ -301,7 +301,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 
 
         HttpResponse<List<UsageVO>> usageResponse = callAndCatch(
-                () -> usageApiTestClient.listUsage(null, null, null));
+                () -> usageApiTestClient.listUsage(null, null, null, null));
         assertEquals(HttpStatus.OK, usageResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedUsages.size(), usageResponse.getBody().get().size(),
                 "All usages should have been returned.");
@@ -322,11 +322,11 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<UsageVO>> firstPartResponse = callAndCatch(
-                () -> usageApiTestClient.listUsage(null, 0, limit));
+                () -> usageApiTestClient.listUsage(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<UsageVO>> secondPartResponse = callAndCatch(
-                () -> usageApiTestClient.listUsage(null, 0 + limit, limit));
+                () -> usageApiTestClient.listUsage(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -346,7 +346,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
     @Override
     public void listUsage400() throws Exception {
         HttpResponse<List<UsageVO>> badRequestResponse = callAndCatch(
-                () -> usageApiTestClient.listUsage(null, -1, null));
+                () -> usageApiTestClient.listUsage(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -354,7 +354,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> usageApiTestClient.listUsage(null, null, -1));
+        badRequestResponse = callAndCatch(() -> usageApiTestClient.listUsage(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -421,13 +421,13 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         //first create
         UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build().usageSpecification(null);
         HttpResponse<UsageVO> createResponse = callAndCatch(
-                () -> usageApiTestClient.createUsage(usageCreateVO));
+                () -> usageApiTestClient.createUsage(null, usageCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
 
         String usageId = createResponse.body().getId();
 
         HttpResponse<UsageVO> updateResponse = callAndCatch(
-                () -> usageApiTestClient.patchUsage(usageId, usageUpdateVO));
+                () -> usageApiTestClient.patchUsage(null, usageId, usageUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         UsageVO updatedUsage = updateResponse.body();
@@ -469,13 +469,13 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         //first create
         UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build().usageSpecification(null);
         HttpResponse<UsageVO> createResponse = callAndCatch(
-                () -> usageApiTestClient.createUsage(usageCreateVO));
+                () -> usageApiTestClient.createUsage(null, usageCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
 
         String usageId = createResponse.body().getId();
 
         HttpResponse<UsageVO> updateResponse = callAndCatch(
-                () -> usageApiTestClient.patchUsage(usageId, usageUpdateVO));
+                () -> usageApiTestClient.patchUsage(null, usageId, usageUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -540,7 +540,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         UsageUpdateVO usageUpdateVO = UsageUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> usageApiTestClient.patchUsage("urn:ngsi-ld:usage:not-existent",
+                callAndCatch(() -> usageApiTestClient.patchUsage(null, "urn:ngsi-ld:usage:not-existent",
                         usageUpdateVO)).getStatus(),
                 "Non existent usages should not be updated.");
     }
@@ -573,7 +573,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         //first create
         UsageCreateVO usageCreateVO = UsageCreateVOTestExample.build().usageSpecification(null);
         HttpResponse<UsageVO> createResponse = callAndCatch(
-                () -> usageApiTestClient.createUsage(usageCreateVO));
+                () -> usageApiTestClient.createUsage(null, usageCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
         String id = createResponse.body().getId();
 
@@ -583,7 +583,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
         expectedUsage.usageSpecification(null);
 
         //then retrieve
-        HttpResponse<UsageVO> retrievedUsage = callAndCatch(() -> usageApiTestClient.retrieveUsage(id, null));
+        HttpResponse<UsageVO> retrievedUsage = callAndCatch(() -> usageApiTestClient.retrieveUsage(null, id, null));
         assertEquals(HttpStatus.OK, retrievedUsage.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedUsage, retrievedUsage.body(), "The correct usage should be returned.");
     }
@@ -612,7 +612,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
     @Override
     public void retrieveUsage404() throws Exception {
         HttpResponse<UsageVO> response = callAndCatch(
-                () -> usageApiTestClient.retrieveUsage("urn:ngsi-ld:usage:non-existent", null));
+                () -> usageApiTestClient.retrieveUsage(null, "urn:ngsi-ld:usage:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such usage should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

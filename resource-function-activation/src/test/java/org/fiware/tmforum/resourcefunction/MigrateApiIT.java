@@ -71,7 +71,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
     public void createMigrate201() throws Exception {
 
         HttpResponse<MigrateVO> migrateVOHttpResponse = callAndCatch(
-                () -> migrateApiTestClient.createMigrate(migrateCreateVO));
+                () -> migrateApiTestClient.createMigrate(null, migrateCreateVO));
         assertEquals(HttpStatus.CREATED, migrateVOHttpResponse.getStatus(), message);
         String migrateId = migrateVOHttpResponse.body().getId();
 
@@ -120,9 +120,9 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         testEntries.add(Arguments.of("A migrate with a priority should have been created.", priorityCreateVO,
                 expectedPriorityVO));
 
-        MigrateCreateVO stateCreateVO = MigrateCreateVOTestExample.build().state(TaskStateTypeVO.INPROGRESS).place(null)
+        MigrateCreateVO stateCreateVO = MigrateCreateVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS).place(null)
                 .resourceFunction(null);
-        MigrateVO expectedStateVO = MigrateVOTestExample.build().state(TaskStateTypeVO.INPROGRESS)
+        MigrateVO expectedStateVO = MigrateVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS)
                 .resourceFunction(null).place(null);
         testEntries.add(
                 Arguments.of("A migrate with a state should have been created.", stateCreateVO, expectedStateVO));
@@ -159,7 +159,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
     @Override
     public void createMigrate400() throws Exception {
         HttpResponse<MigrateVO> creationResponse = callAndCatch(
-                () -> migrateApiTestClient.createMigrate(migrateCreateVO));
+                () -> migrateApiTestClient.createMigrate(null, migrateCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -242,7 +242,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
             MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build()
                     .place(null)
                     .resourceFunction(null);
-            String id = migrateApiTestClient.createMigrate(migrateCreateVO)
+            String id = migrateApiTestClient.createMigrate(null, migrateCreateVO)
                     .body().getId();
             MigrateVO migrateVO = MigrateVOTestExample.build();
             migrateVO
@@ -254,7 +254,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         }
 
         HttpResponse<List<MigrateVO>> migrateResponse = callAndCatch(
-                () -> migrateApiTestClient.listMigrate(null, null, null));
+                () -> migrateApiTestClient.listMigrate(null, null, null, null));
 
         assertEquals(HttpStatus.OK, migrateResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedMigrates.size(), migrateResponse.getBody().get().size(),
@@ -280,11 +280,11 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<MigrateVO>> firstPartResponse = callAndCatch(
-                () -> migrateApiTestClient.listMigrate(null, 0, limit));
+                () -> migrateApiTestClient.listMigrate(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<MigrateVO>> secondPartResponse = callAndCatch(
-                () -> migrateApiTestClient.listMigrate(null, 0 + limit, limit));
+                () -> migrateApiTestClient.listMigrate(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -307,7 +307,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
     @Override
     public void listMigrate400() throws Exception {
         HttpResponse<List<MigrateVO>> badRequestResponse = callAndCatch(
-                () -> migrateApiTestClient.listMigrate(null, -1, null));
+                () -> migrateApiTestClient.listMigrate(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -315,7 +315,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> migrateApiTestClient.listMigrate(null, null, -1));
+        badRequestResponse = callAndCatch(() -> migrateApiTestClient.listMigrate(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -370,7 +370,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().place(null).resourceFunction(null);
 
         HttpResponse<MigrateVO> migrateVOHttpResponse = callAndCatch(
-                () -> migrateApiTestClient.createMigrate(migrateCreateVO));
+                () -> migrateApiTestClient.createMigrate(null, migrateCreateVO));
         assertEquals(HttpStatus.CREATED, migrateVOHttpResponse.getStatus(),
                 "The initial create should be successfully.");
         String migrateId = migrateVOHttpResponse.body().getId();
@@ -382,7 +382,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
                 .resourceFunction(null);
 
         HttpResponse<MigrateVO> retrieveResponse = callAndCatch(
-                () -> migrateApiTestClient.retrieveMigrate(migrateId, null));
+                () -> migrateApiTestClient.retrieveMigrate(null, migrateId, null));
         assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), "The retrieval should be successfully.");
         assertEquals(expectedMigrate, retrieveResponse.body(), "The expected migrate should be returend.");
     }
@@ -413,7 +413,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
     public void retrieveMigrate404() throws Exception {
 
         HttpResponse<MigrateVO> response = callAndCatch(
-                () -> migrateApiTestClient.retrieveMigrate("urn:ngsi-ld:migrate:non-existent", null));
+                () -> migrateApiTestClient.retrieveMigrate(null, "urn:ngsi-ld:migrate:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such migrate should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

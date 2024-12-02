@@ -127,7 +127,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
     public void createSettlementAccount201() throws Exception {
 
         HttpResponse<SettlementAccountVO> settlementAccountVOHttpResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.createSettlementAccount(settlementAccountCreateVO));
+                () -> settlementAccountApiTestClient.createSettlementAccount(null, settlementAccountCreateVO));
         assertEquals(HttpStatus.CREATED, settlementAccountVOHttpResponse.getStatus(), message);
         String settlementAccountId = settlementAccountVOHttpResponse.body().getId();
         expectedSettlementAccount.setId(settlementAccountId);
@@ -163,7 +163,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
     @Override
     public void createSettlementAccount400() throws Exception {
         HttpResponse<SettlementAccountVO> creationResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.createSettlementAccount(settlementAccountCreateVO));
+                () -> settlementAccountApiTestClient.createSettlementAccount(null, settlementAccountCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -255,17 +255,17 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         fixExampleCreate(settlementAccountCreateVO);
 
         HttpResponse<SettlementAccountVO> createResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.createSettlementAccount(settlementAccountCreateVO));
+                () -> settlementAccountApiTestClient.createSettlementAccount(null, settlementAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The settlementAccount should have been created first.");
 
         String settlementAccountId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> settlementAccountApiTestClient.deleteSettlementAccount(settlementAccountId)).getStatus(),
+                callAndCatch(() -> settlementAccountApiTestClient.deleteSettlementAccount(null, settlementAccountId)).getStatus(),
                 "The settlementAccount should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> settlementAccountApiTestClient.retrieveSettlementAccount(settlementAccountId, null)).status(),
+                callAndCatch(() -> settlementAccountApiTestClient.retrieveSettlementAccount(null, settlementAccountId, null)).status(),
                 "The settlementAccount should not exist anymore.");
 
     }
@@ -295,7 +295,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
     @Override
     public void deleteSettlementAccount404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.deleteSettlementAccount("urn:ngsi-ld:settlementAccount:no-settlementAccount"));
+                () -> settlementAccountApiTestClient.deleteSettlementAccount(null, "urn:ngsi-ld:settlementAccount:no-settlementAccount"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such settlementAccount should exist.");
@@ -303,7 +303,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> settlementAccountApiTestClient.deleteSettlementAccount("invalid-id"));
+        notFoundResponse = callAndCatch(() -> settlementAccountApiTestClient.deleteSettlementAccount(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such settlementAccount should exist.");
@@ -340,7 +340,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
                     .defaultPaymentMethod(null)
                     .financialAccount(null);
             fixExampleCreate(settlementAccountCreateVO);
-            String id = settlementAccountApiTestClient.createSettlementAccount(settlementAccountCreateVO).body().getId();
+            String id = settlementAccountApiTestClient.createSettlementAccount(null, settlementAccountCreateVO).body().getId();
             SettlementAccountVO settlementAccountVO = SettlementAccountVOTestExample.build();
             fixExampleExpected(settlementAccountVO);
             BillingCycleSpecificationRefOrValueVO billingCycleRV = settlementAccountVO.getBillStructure()
@@ -357,7 +357,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         }
 
         HttpResponse<List<SettlementAccountVO>> settlementAccountResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.listSettlementAccount(null, null, null));
+                () -> settlementAccountApiTestClient.listSettlementAccount(null, null, null, null));
 
         assertEquals(HttpStatus.OK, settlementAccountResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedSettlementAccounts.size(), settlementAccountResponse.getBody().get().size(),
@@ -378,11 +378,11 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<SettlementAccountVO>> firstPartResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.listSettlementAccount(null, 0, limit));
+                () -> settlementAccountApiTestClient.listSettlementAccount(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<SettlementAccountVO>> secondPartResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.listSettlementAccount(null, 0 + limit, limit));
+                () -> settlementAccountApiTestClient.listSettlementAccount(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -401,7 +401,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
     @Override
     public void listSettlementAccount400() throws Exception {
         HttpResponse<List<SettlementAccountVO>> badRequestResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.listSettlementAccount(null, -1, null));
+                () -> settlementAccountApiTestClient.listSettlementAccount(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -409,7 +409,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> settlementAccountApiTestClient.listSettlementAccount(null, null, -1));
+        badRequestResponse = callAndCatch(() -> settlementAccountApiTestClient.listSettlementAccount(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -476,13 +476,13 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
                 .defaultPaymentMethod(null);
         fixExampleCreate(settlementAccountCreateVO);
         HttpResponse<SettlementAccountVO> createResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.createSettlementAccount(settlementAccountCreateVO));
+                () -> settlementAccountApiTestClient.createSettlementAccount(null, settlementAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The settlementAccount should have been created first.");
 
         String settlementAccountId = createResponse.body().getId();
 
         HttpResponse<SettlementAccountVO> updateResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.patchSettlementAccount(settlementAccountId, settlementAccountUpdateVO));
+                () -> settlementAccountApiTestClient.patchSettlementAccount(null, settlementAccountId, settlementAccountUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         SettlementAccountVO updatedSettlementAccount = updateResponse.body();
@@ -549,13 +549,13 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
                 .defaultPaymentMethod(null);
         fixExampleCreate(settlementAccountCreateVO);
         HttpResponse<SettlementAccountVO> createResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.createSettlementAccount(settlementAccountCreateVO));
+                () -> settlementAccountApiTestClient.createSettlementAccount(null, settlementAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The settlementAccount should have been created first.");
 
         String settlementAccountId = createResponse.body().getId();
 
         HttpResponse<SettlementAccountVO> updateResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.patchSettlementAccount(settlementAccountId, settlementAccountUpdateVO));
+                () -> settlementAccountApiTestClient.patchSettlementAccount(null, settlementAccountId, settlementAccountUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -621,7 +621,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         SettlementAccountUpdateVO settlementAccountUpdateVO = SettlementAccountUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> settlementAccountApiTestClient.patchSettlementAccount("urn:ngsi-ld:settlementAccount:not-existent",
+                callAndCatch(() -> settlementAccountApiTestClient.patchSettlementAccount(null, "urn:ngsi-ld:settlementAccount:not-existent",
                         settlementAccountUpdateVO)).getStatus(),
                 "Non existent settlementAccounts should not be updated.");
     }
@@ -655,7 +655,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
                 .defaultPaymentMethod(null);
         fixExampleCreate(settlementAccountCreateVO);
         HttpResponse<SettlementAccountVO> createResponse = callAndCatch(
-                () -> settlementAccountApiTestClient.createSettlementAccount(settlementAccountCreateVO));
+                () -> settlementAccountApiTestClient.createSettlementAccount(null, settlementAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The settlementAccount should have been created first.");
         String id = createResponse.body().getId();
 
@@ -673,7 +673,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
         expectedSettlementAccount.billStructure(billStructure);
 
         //then retrieve
-        HttpResponse<SettlementAccountVO> retrievedSettlementAccount = callAndCatch(() -> settlementAccountApiTestClient.retrieveSettlementAccount(id, null));
+        HttpResponse<SettlementAccountVO> retrievedSettlementAccount = callAndCatch(() -> settlementAccountApiTestClient.retrieveSettlementAccount(null, id, null));
         assertEquals(HttpStatus.OK, retrievedSettlementAccount.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedSettlementAccount, retrievedSettlementAccount.body(), "The correct settlementAccount should be returned.");
     }
@@ -701,7 +701,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
     @Override
     public void retrieveSettlementAccount404() throws Exception {
         HttpResponse<SettlementAccountVO> response = callAndCatch(
-                () -> settlementAccountApiTestClient.retrieveSettlementAccount("urn:ngsi-ld:settlementAccount:non-existent", null));
+                () -> settlementAccountApiTestClient.retrieveSettlementAccount(null, "urn:ngsi-ld:settlementAccount:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such settlementAccount should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

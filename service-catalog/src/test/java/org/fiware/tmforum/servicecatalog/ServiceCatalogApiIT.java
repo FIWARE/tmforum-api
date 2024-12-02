@@ -88,7 +88,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         when(clock.instant()).thenReturn(currentTimeInstant);
 
         HttpResponse<ServiceCatalogVO> serviceCatalogVOHttpResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, serviceCatalogVOHttpResponse.getStatus(), message);
         String scId = serviceCatalogVOHttpResponse.body().getId();
         expectedServiceCatalog
@@ -129,7 +129,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void createServiceCatalog400() throws Exception {
         HttpResponse<ServiceCatalogVO> creationResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -190,18 +190,18 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     public void deleteServiceCatalog204() throws Exception {
         ServiceCatalogCreateVO emptyCreate = ServiceCatalogCreateVOTestExample.build();
 
-        HttpResponse<ServiceCatalogVO> createResponse = serviceCatalogApiTestClient.createServiceCatalog(emptyCreate);
+        HttpResponse<ServiceCatalogVO> createResponse = serviceCatalogApiTestClient.createServiceCatalog(null, emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service catalog should have been created first.");
 
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog(rfId)).getStatus(),
+                callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog(null, rfId)).getStatus(),
                 "The service catalog should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCatalogApiTestClient.retrieveServiceCatalog(rfId, null)).status(),
+                callAndCatch(() -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, rfId, null)).status(),
                 "The service catalog should not exist anymore.");
     }
 
@@ -230,7 +230,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void deleteServiceCatalog404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.deleteServiceCatalog("urn:ngsi-ld:service-catalog:no-pop"));
+                () -> serviceCatalogApiTestClient.deleteServiceCatalog(null, "urn:ngsi-ld:service-catalog:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-catalog should exist.");
@@ -238,7 +238,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog("invalid-id"));
+        notFoundResponse = callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-catalog should exist.");
@@ -273,7 +273,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         List<ServiceCatalogVO> expectedServiceCatalogs = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
-            String id = serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO)
+            String id = serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO)
                     .body().getId();
             ServiceCatalogVO serviceCatalogVO = ServiceCatalogVOTestExample.build();
             serviceCatalogVO
@@ -283,7 +283,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         }
 
         HttpResponse<List<ServiceCatalogVO>> serviceCatalogResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, null));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, null, null));
 
         assertEquals(HttpStatus.OK, serviceCatalogResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedServiceCatalogs.size(), serviceCatalogResponse.getBody().get().size(),
@@ -309,11 +309,11 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ServiceCatalogVO>> firstPartResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, 0, limit));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ServiceCatalogVO>> secondPartResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, 0 + limit, limit));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -336,7 +336,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void listServiceCatalog400() throws Exception {
         HttpResponse<List<ServiceCatalogVO>> badRequestResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, -1, null));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -344,7 +344,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> serviceCatalogApiTestClient.listServiceCatalog(null, null, -1));
+        badRequestResponse = callAndCatch(() -> serviceCatalogApiTestClient.listServiceCatalog(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -408,14 +408,14 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
 
         HttpResponse<ServiceCatalogVO> createResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service function should have been created first.");
 
         String serviceId = createResponse.body().getId();
 
         HttpResponse<ServiceCatalogVO> updateResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.patchServiceCatalog(serviceId, serviceCatalogUpdateVO));
+                () -> serviceCatalogApiTestClient.patchServiceCatalog(null, serviceId, serviceCatalogUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ServiceCatalogVO updatedServiceCatalog = updateResponse.body();
@@ -478,14 +478,14 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
 
         HttpResponse<ServiceCatalogVO> createResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service function should have been created first.");
 
         String serviceId = createResponse.body().getId();
 
         HttpResponse<ServiceCatalogVO> updateResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.patchServiceCatalog(serviceId, serviceCatalogUpdateVO));
+                () -> serviceCatalogApiTestClient.patchServiceCatalog(null, serviceId, serviceCatalogUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -534,7 +534,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         ServiceCatalogUpdateVO serviceCatalogUpdateVO = ServiceCatalogUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCatalogApiTestClient.patchServiceCatalog(
+                callAndCatch(() -> serviceCatalogApiTestClient.patchServiceCatalog(null,
                         "urn:ngsi-ld:service-catalog:not-existent", serviceCatalogUpdateVO)).getStatus(),
                 "Non existent service catalog should not be updated.");
     }
@@ -571,7 +571,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
 
         ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
         HttpResponse<ServiceCatalogVO> createResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -581,7 +581,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
 
         //then retrieve
         HttpResponse<ServiceCatalogVO> retrievedRF = callAndCatch(
-                () -> serviceCatalogApiTestClient.retrieveServiceCatalog(id, fieldsParameter));
+                () -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedServiceCatalog, retrievedRF.body(), message);
     }
@@ -656,7 +656,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void retrieveServiceCatalog404() throws Exception {
         HttpResponse<ServiceCatalogVO> response = callAndCatch(
-                () -> serviceCatalogApiTestClient.retrieveServiceCatalog("urn:ngsi-ld:service-function:non-existent",
+                () -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, "urn:ngsi-ld:service-function:non-existent",
                         null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such service-catalog should exist.");
 

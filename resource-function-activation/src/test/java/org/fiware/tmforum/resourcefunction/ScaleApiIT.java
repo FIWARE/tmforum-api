@@ -71,7 +71,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
     @Override
     public void createScale201() throws Exception {
 
-        HttpResponse<ScaleVO> scaleVOHttpResponse = callAndCatch(() -> scaleApiTestClient.createScale(scaleCreateVO));
+        HttpResponse<ScaleVO> scaleVOHttpResponse = callAndCatch(() -> scaleApiTestClient.createScale(null, scaleCreateVO));
         assertEquals(HttpStatus.CREATED, scaleVOHttpResponse.getStatus(), message);
         String scaleId = scaleVOHttpResponse.body().getId();
 
@@ -106,9 +106,9 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
         ScaleVO expectedNameVO = ScaleVOTestExample.build().name("my-name").resourceFunction(null);
         testEntries.add(Arguments.of("A scale with a name should have been created.", nameCreateVO, expectedNameVO));
 
-        ScaleCreateVO stateCreateVO = ScaleCreateVOTestExample.build().state(TaskStateTypeVO.INPROGRESS)
+        ScaleCreateVO stateCreateVO = ScaleCreateVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS)
                 .resourceFunction(null);
-        ScaleVO expectedStateVO = ScaleVOTestExample.build().state(TaskStateTypeVO.INPROGRESS).resourceFunction(null);
+        ScaleVO expectedStateVO = ScaleVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS).resourceFunction(null);
         testEntries.add(Arguments.of("A scale with a state should have been created.", stateCreateVO, expectedStateVO));
 
         return testEntries.stream();
@@ -124,7 +124,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
 
     @Override
     public void createScale400() throws Exception {
-        HttpResponse<ScaleVO> creationResponse = callAndCatch(() -> scaleApiTestClient.createScale(scaleCreateVO));
+        HttpResponse<ScaleVO> creationResponse = callAndCatch(() -> scaleApiTestClient.createScale(null, scaleCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -190,7 +190,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
         List<ScaleVO> expectedScales = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             ScaleCreateVO scaleCreateVO = ScaleCreateVOTestExample.build().resourceFunction(null);
-            String id = scaleApiTestClient.createScale(scaleCreateVO)
+            String id = scaleApiTestClient.createScale(null, scaleCreateVO)
                     .body().getId();
             ScaleVO scaleVO = ScaleVOTestExample.build();
             scaleVO
@@ -201,7 +201,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
         }
 
         HttpResponse<List<ScaleVO>> scaleResponse = callAndCatch(
-                () -> scaleApiTestClient.listScale(null, null, null));
+                () -> scaleApiTestClient.listScale(null, null, null, null));
 
         assertEquals(HttpStatus.OK, scaleResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedScales.size(), scaleResponse.getBody().get().size(),
@@ -227,11 +227,11 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ScaleVO>> firstPartResponse = callAndCatch(
-                () -> scaleApiTestClient.listScale(null, 0, limit));
+                () -> scaleApiTestClient.listScale(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ScaleVO>> secondPartResponse = callAndCatch(
-                () -> scaleApiTestClient.listScale(null, 0 + limit, limit));
+                () -> scaleApiTestClient.listScale(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -254,7 +254,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
     @Override
     public void listScale400() throws Exception {
         HttpResponse<List<ScaleVO>> badRequestResponse = callAndCatch(
-                () -> scaleApiTestClient.listScale(null, -1, null));
+                () -> scaleApiTestClient.listScale(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -262,7 +262,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> scaleApiTestClient.listScale(null, null, -1));
+        badRequestResponse = callAndCatch(() -> scaleApiTestClient.listScale(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -316,13 +316,13 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
 
         ScaleCreateVO scaleCreateVO = ScaleCreateVOTestExample.build().resourceFunction(null);
 
-        HttpResponse<ScaleVO> scaleVOHttpResponse = callAndCatch(() -> scaleApiTestClient.createScale(scaleCreateVO));
+        HttpResponse<ScaleVO> scaleVOHttpResponse = callAndCatch(() -> scaleApiTestClient.createScale(null, scaleCreateVO));
         assertEquals(HttpStatus.CREATED, scaleVOHttpResponse.getStatus(), "The initial create should be successfully.");
         String scaleId = scaleVOHttpResponse.body().getId();
 
         ScaleVO expectedScale = ScaleVOTestExample.build().id(scaleId).href(scaleId).resourceFunction(null);
 
-        HttpResponse<ScaleVO> retreiveResponse = callAndCatch(() -> scaleApiTestClient.retrieveScale(scaleId, null));
+        HttpResponse<ScaleVO> retreiveResponse = callAndCatch(() -> scaleApiTestClient.retrieveScale(null, scaleId, null));
         assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");
         assertEquals(expectedScale, retreiveResponse.body(), "The expected scale should be returend.");
     }
@@ -353,7 +353,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
     public void retrieveScale404() throws Exception {
 
         HttpResponse<ScaleVO> response = callAndCatch(
-                () -> scaleApiTestClient.retrieveScale("urn:ngsi-ld:scale:non-existent", null));
+                () -> scaleApiTestClient.retrieveScale(null, "urn:ngsi-ld:scale:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such scale should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

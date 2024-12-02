@@ -50,7 +50,7 @@ public class PartyApiIT extends AbstractApiIT {
 	public void testRelatedParties() throws Exception {
 		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
-				() -> individualApiTestClient.createIndividual(individualCreateVO));
+				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(),
 				"Initial individual should have been created");
 		String individualId = individualCreateResponse.body().getId();
@@ -64,7 +64,7 @@ public class PartyApiIT extends AbstractApiIT {
 		OrganizationCreateVO parentOrgCreateVO = OrganizationCreateVOTestExample.build();
 		parentOrgCreateVO.setOrganizationParentRelationship(null);
 		HttpResponse<OrganizationVO> parentOrgCreateResponse = callAndCatch(
-				() -> organizationApiTestClient.createOrganization(parentOrgCreateVO));
+				() -> organizationApiTestClient.createOrganization(null, parentOrgCreateVO));
 		assertEquals(HttpStatus.CREATED, parentOrgCreateResponse.getStatus(),
 				"Initial parent organization should have been created");
 		String parentOrgId = parentOrgCreateResponse.body().getId();
@@ -92,7 +92,7 @@ public class PartyApiIT extends AbstractApiIT {
 		childOrganizationCreateVO.setRelatedParty(List.of(relatedPartyVOParent, relatedPartyVOIndividual));
 
 		HttpResponse<OrganizationVO> childOrgCreateResponse = callAndCatch(
-				() -> organizationApiTestClient.createOrganization(childOrganizationCreateVO));
+				() -> organizationApiTestClient.createOrganization(null, childOrganizationCreateVO));
 		assertEquals(HttpStatus.CREATED, childOrgCreateResponse.getStatus(),
 				"Initial child organization should have been created");
 		String childId = childOrgCreateResponse.body().getId();
@@ -129,7 +129,7 @@ public class PartyApiIT extends AbstractApiIT {
 		parentUpdateVO.setOrganizationChildRelationship(List.of(childRelationshipVO));
 
 		HttpResponse<OrganizationVO> parentUpdateResponse = callAndCatch(
-				() -> organizationApiTestClient.patchOrganization(parentOrgId, parentUpdateVO));
+				() -> organizationApiTestClient.patchOrganization(null, parentOrgId, parentUpdateVO));
 		assertEquals(HttpStatus.OK, parentUpdateResponse.getStatus(), "The parent should have been updated.");
 		expectedParent.setOrganizationChildRelationship(List.of(childRelationshipVO));
 		expectedParent.setRelatedParty(null);
@@ -137,7 +137,7 @@ public class PartyApiIT extends AbstractApiIT {
 		assertEquals(expectedParent, parentUpdateResponse.body(), "The parent should have been updated.");
 
 		HttpResponse<OrganizationVO> parentGet = callAndCatch(
-				() -> organizationApiTestClient.retrieveOrganization(parentOrgId, null));
+				() -> organizationApiTestClient.retrieveOrganization(null, parentOrgId, null));
 		assertEquals(expectedParent, parentGet.body(), "The parent via get should also be equal.");
 	}
 

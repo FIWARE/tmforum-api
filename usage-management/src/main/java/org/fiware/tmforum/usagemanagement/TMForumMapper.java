@@ -1,6 +1,7 @@
 package org.fiware.tmforum.usagemanagement;
 
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.usagemanagement.model.TimePeriodVO;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -15,55 +16,55 @@ import java.net.URI;
 import java.net.URL;
 
 
-@Mapper(componentModel = "jsr330", uses = { IdHelper.class, MappingHelper.class })
-public interface TMForumMapper {
+@Mapper(componentModel = "jsr330", uses = {IdHelper.class, MappingHelper.class})
+public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	UsageVO map(UsageCreateVO usageCreateVO, URI id);
+	public abstract UsageVO map(UsageCreateVO usageCreateVO, URI id);
 
 	@Mapping(target = "id", source = "id")
-	Usage map(UsageUpdateVO usageUpdateVO, String id);
+	public abstract Usage map(UsageUpdateVO usageUpdateVO, String id);
 
 	@Mapping(target = "href", source = "id")
-	Usage map(UsageVO usageVO);
+	public abstract Usage map(UsageVO usageVO);
 
 	@Mapping(target = "id", source = "id")
-	UsageVO map(Usage usage);
+	public abstract UsageVO map(Usage usage);
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	UsageSpecificationVO map(UsageSpecificationCreateVO usageSpecificationCreate, URI id);
+	public abstract UsageSpecificationVO map(UsageSpecificationCreateVO usageSpecificationCreate, URI id);
 
 	@Mapping(target = "id", source = "id")
-	UsageSpecification map(UsageSpecificationUpdateVO usageSpecificationUpdateVO, String id);
+	public abstract UsageSpecification map(UsageSpecificationUpdateVO usageSpecificationUpdateVO, String id);
 
 	@Mapping(target = "id", source = "id")
-	UsageSpecification map(UsageSpecificationVO usageSpecificationUpdateVO);
+	public abstract UsageSpecification map(UsageSpecificationVO usageSpecificationUpdateVO);
 
 	@Mapping(target = "id", source = "id")
-	UsageSpecificationVO map(UsageSpecification usageSpecificationUpdateVO);
+	public abstract UsageSpecificationVO map(UsageSpecification usageSpecificationUpdateVO);
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(TMForumSubscription subscription);
+	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	TimePeriod map(TimePeriodVO value);
+	public abstract TimePeriod map(TimePeriodVO value);
 
-    default String map(URL value) {
+	public String map(URL value) {
 		if (value == null) {
 			return null;
 		}
 		return value.toString();
 	}
 
-	default URI mapToURI(String value) {
+	public URI mapToURI(String value) {
 		if (value == null) {
 			return null;
 		}
 		return URI.create(value);
 	}
 
-	default URL mapToURL(String value) {
+	public URL mapToURL(String value) {
 		if (value == null) {
 			return null;
 		}
@@ -75,7 +76,7 @@ public interface TMForumMapper {
 		return null;
 	}
 
-	default String mapFromURI(URI value) {
+	public String mapFromURI(URI value) {
 		if (value == null) {
 			return null;
 		}

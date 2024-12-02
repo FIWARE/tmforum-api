@@ -22,7 +22,7 @@ public class TaxDefinition {
 	private String name;
 	private String taxType;
 	private String atBaseType;
-	private String atSchemaLocation;
+	private URI atSchemaLocation;
 	private String atType;
 	private String atReferredType;
 

@@ -84,7 +84,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	public void createIndividual201() throws Exception {
 
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
-				() -> individualApiTestClient.createIndividual(individualCreateVO));
+				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(), message);
 		IndividualVO createdIndividualVO = individualCreateResponse.body();
 
@@ -189,7 +189,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	public void createIndividual400() throws Exception {
 		for (IndividualCreateVO ocVO : provideInvalidIndividualCreate()) {
 			HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
-					() -> individualApiTestClient.createIndividual(ocVO));
+					() -> individualApiTestClient.createIndividual(null, ocVO));
 			assertEquals(HttpStatus.BAD_REQUEST, individualCreateResponse.getStatus(),
 					"Individual should not have been created.");
 
@@ -251,18 +251,18 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		// first create one
 		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
-				() -> individualApiTestClient.createIndividual(individualCreateVO));
+				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(),
 				"The Individual should have been created first.");
 
 		String individualId = individualCreateResponse.body().getId();
 
 		assertEquals(HttpStatus.NO_CONTENT,
-				callAndCatch(() -> individualApiTestClient.deleteIndividual(individualId)).getStatus(),
+				callAndCatch(() -> individualApiTestClient.deleteIndividual(null, individualId)).getStatus(),
 				"The Individual should have been deleted.");
 
 		assertEquals(HttpStatus.NOT_FOUND,
-				callAndCatch(() -> individualApiTestClient.retrieveIndividual(individualId, null)).status(),
+				callAndCatch(() -> individualApiTestClient.retrieveIndividual(null, individualId, null)).status(),
 				"The Individual should not exist anymore.");
 
 	}
@@ -293,7 +293,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		String ngsiLdOrgId = "urn:ngsi-ld:Individual:valid";
 		String nonNgsiLdOrgId = "non-ngsi";
 
-		HttpResponse<?> notFoundResponse = callAndCatch(() -> individualApiTestClient.deleteIndividual(ngsiLdOrgId));
+		HttpResponse<?> notFoundResponse = callAndCatch(() -> individualApiTestClient.deleteIndividual(null, ngsiLdOrgId));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such individual should exist.");
@@ -301,7 +301,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		notFoundResponse = callAndCatch(() -> individualApiTestClient.deleteIndividual(nonNgsiLdOrgId));
+		notFoundResponse = callAndCatch(() -> individualApiTestClient.deleteIndividual(null, nonNgsiLdOrgId));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such individual should exist.");
@@ -333,7 +333,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		List<IndividualVO> expectedIndividuals = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
-			String id = individualApiTestClient.createIndividual(individualCreateVO).body().getId();
+			String id = individualApiTestClient.createIndividual(null, individualCreateVO).body().getId();
 			IndividualVO individualVO = IndividualVOTestExample.build();
 			individualVO
 					.id(id)
@@ -343,7 +343,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		}
 
 		HttpResponse<List<IndividualVO>> individualResponse = callAndCatch(
-				() -> individualApiTestClient.listIndividual(null, null, null));
+				() -> individualApiTestClient.listIndividual(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, individualResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedIndividuals.size(), individualResponse.getBody().get().size(),
@@ -364,11 +364,11 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<IndividualVO>> firstPartResponse = callAndCatch(
-				() -> individualApiTestClient.listIndividual(null, 0, limit));
+				() -> individualApiTestClient.listIndividual(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<IndividualVO>> secondPartResponse = callAndCatch(
-				() -> individualApiTestClient.listIndividual(null, 0 + limit, limit));
+				() -> individualApiTestClient.listIndividual(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -386,7 +386,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Override
 	public void listIndividual400() throws Exception {
 		HttpResponse<List<IndividualVO>> badRequestResponse = callAndCatch(
-				() -> individualApiTestClient.listIndividual(null, -1, null));
+				() -> individualApiTestClient.listIndividual(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -394,7 +394,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		badRequestResponse = callAndCatch(() -> individualApiTestClient.listIndividual(null, null, -1));
+		badRequestResponse = callAndCatch(() -> individualApiTestClient.listIndividual(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -459,13 +459,13 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
 
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
-				() -> individualApiTestClient.createIndividual(individualCreateVO));
+				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(), message);
 
 		String individualId = individualCreateResponse.body().getId();
 
 		HttpResponse<IndividualVO> individualUpdateResponse = callAndCatch(
-				() -> individualApiTestClient.patchIndividual(individualId, individualUpdateVO));
+				() -> individualApiTestClient.patchIndividual(null, individualId, individualUpdateVO));
 		assertEquals(HttpStatus.OK, individualUpdateResponse.getStatus(), message);
 
 		expectedIndividual.href(individualId).id(individualId);
@@ -477,7 +477,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		assertEquals(expectedIndividual, individualUpdateResponse.body(), message);
 
 		HttpResponse<IndividualVO> individualGetResponse = callAndCatch(
-				() -> individualApiTestClient.retrieveIndividual(individualId, null));
+				() -> individualApiTestClient.retrieveIndividual(null, individualId, null));
 		assertEquals(expectedIndividual, individualGetResponse.body(), message);
 	}
 
@@ -593,7 +593,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
-				() -> individualApiTestClient.createIndividual(individualCreateVO));
+				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(),
 				"The individual should have been initially created. ");
 
@@ -601,7 +601,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 		for (IndividualUpdateVO ouVO : provideInvalidIndividualUpdate()) {
 			HttpResponse<IndividualVO> individualUpdateResponse = callAndCatch(
-					() -> individualApiTestClient.patchIndividual(individualId, ouVO));
+					() -> individualApiTestClient.patchIndividual(null, individualId, ouVO));
 			assertEquals(HttpStatus.BAD_REQUEST, individualUpdateResponse.getStatus(),
 					"Individual should not have been created.");
 
@@ -647,7 +647,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		IndividualUpdateVO individualUpdateVO = IndividualUpdateVOTestExample.build();
 		assertEquals(
 				HttpStatus.NOT_FOUND,
-				callAndCatch(() -> individualApiTestClient.patchIndividual("urn:ngsi-ld:Individual:not-existent",
+				callAndCatch(() -> individualApiTestClient.patchIndividual(null, "urn:ngsi-ld:Individual:not-existent",
 						individualUpdateVO)).getStatus(),
 				"Non existent individuals should not be updated.");
 	}
@@ -676,7 +676,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	public void retrieveIndividual200() throws Exception {
 		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
 		HttpResponse<IndividualVO> createdOrg = callAndCatch(
-				() -> individualApiTestClient.createIndividual(individualCreateVO));
+				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, createdOrg.getStatus(), "Create the org to retrieve.");
 
 		String individualId = createdOrg.body().getId();
@@ -687,7 +687,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 				.relatedParty(null);
 
 		HttpResponse<IndividualVO> retrievedIndividual = callAndCatch(
-				() -> individualApiTestClient.retrieveIndividual(individualId, null));
+				() -> individualApiTestClient.retrieveIndividual(null, individualId, null));
 		assertEquals(HttpStatus.OK, retrievedIndividual.getStatus(), "The retrieval should be ok.");
 		assertEquals(expectedIndividual, retrievedIndividual.body(), "The correct org should be returned.");
 	}
@@ -717,7 +717,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Override
 	public void retrieveIndividual404() throws Exception {
 		HttpResponse<IndividualVO> notFoundResponse = callAndCatch(
-				() -> individualApiTestClient.retrieveIndividual("urn:ngsi-ld:individual:not-found", null));
+				() -> individualApiTestClient.retrieveIndividual(null, "urn:ngsi-ld:individual:not-found", null));
 
 		assertEquals(HttpStatus.NOT_FOUND, notFoundResponse.getStatus(), "No such org exists.");
 

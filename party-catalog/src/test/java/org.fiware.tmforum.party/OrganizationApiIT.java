@@ -84,7 +84,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
     public void createOrganization201() throws Exception {
 
         HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(
-                () -> organizationApiTestClient.createOrganization(organizationCreateVO));
+                () -> organizationApiTestClient.createOrganization(null, organizationCreateVO));
         assertEquals(HttpStatus.CREATED, organizationCreateResponse.getStatus(), message);
 
         OrganizationVO createdOrganizationVO = organizationCreateResponse.body();
@@ -177,7 +177,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
     public void createOrganization400() throws Exception {
         for (OrganizationCreateVO ocVO : provideInvalidOrganizationCreate()) {
             HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(
-                    () -> organizationApiTestClient.createOrganization(ocVO));
+                    () -> organizationApiTestClient.createOrganization(null, ocVO));
             assertEquals(HttpStatus.BAD_REQUEST, organizationCreateResponse.getStatus(),
                     "Organization should not have been created.");
 
@@ -246,18 +246,18 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
         organizationCreateVO.setOrganizationParentRelationship(null);
         HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(
-                () -> organizationApiTestClient.createOrganization(organizationCreateVO));
+                () -> organizationApiTestClient.createOrganization(null, organizationCreateVO));
         assertEquals(HttpStatus.CREATED, organizationCreateResponse.getStatus(),
                 "The organization should have been created first.");
 
         String orgId = organizationCreateResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> organizationApiTestClient.deleteOrganization(orgId)).getStatus(),
+                callAndCatch(() -> organizationApiTestClient.deleteOrganization(null, orgId)).getStatus(),
                 "The organization should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> organizationApiTestClient.retrieveOrganization(orgId, null)).status(),
+                callAndCatch(() -> organizationApiTestClient.retrieveOrganization(null, orgId, null)).status(),
                 "The organization should not exist anymore.");
 
     }
@@ -289,7 +289,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         String nonNgsiLdOrgId = "non-ngsi";
 
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> organizationApiTestClient.deleteOrganization(ngsiLdOrgId));
+                () -> organizationApiTestClient.deleteOrganization(null, ngsiLdOrgId));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such organization should exist.");
@@ -297,7 +297,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> organizationApiTestClient.deleteOrganization(nonNgsiLdOrgId));
+        notFoundResponse = callAndCatch(() -> organizationApiTestClient.deleteOrganization(null, nonNgsiLdOrgId));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such organization should exist.");
@@ -331,7 +331,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         for (int i = 0; i < 10; i++) {
             OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build()
                     .organizationParentRelationship(null);
-            String id = organizationApiTestClient.createOrganization(organizationCreateVO).body().getId();
+            String id = organizationApiTestClient.createOrganization(null, organizationCreateVO).body().getId();
             OrganizationVO organizationVO = OrganizationVOTestExample.build();
             organizationVO
                     .id(id)
@@ -342,7 +342,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         }
 
         HttpResponse<List<OrganizationVO>> organizationResponse = callAndCatch(
-                () -> organizationApiTestClient.listOrganization(null, null, null));
+                () -> organizationApiTestClient.listOrganization(null, null, null, null));
 
         assertEquals(HttpStatus.OK, organizationResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedOrganizations.size(), organizationResponse.getBody().get().size(),
@@ -365,11 +365,11 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<OrganizationVO>> firstPartResponse = callAndCatch(
-                () -> organizationApiTestClient.listOrganization(null, 0, limit));
+                () -> organizationApiTestClient.listOrganization(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<OrganizationVO>> secondPartResponse = callAndCatch(
-                () -> organizationApiTestClient.listOrganization(null, 0 + limit, limit));
+                () -> organizationApiTestClient.listOrganization(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -390,7 +390,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
     @Override
     public void listOrganization400() throws Exception {
         HttpResponse<List<OrganizationVO>> badRequestResponse = callAndCatch(
-                () -> organizationApiTestClient.listOrganization(null, -1, null));
+                () -> organizationApiTestClient.listOrganization(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -398,7 +398,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> organizationApiTestClient.listOrganization(null, null, -1));
+        badRequestResponse = callAndCatch(() -> organizationApiTestClient.listOrganization(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -484,7 +484,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         orgWithTaxExemption.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
 
         HttpResponse<OrganizationVO> createResponse = callAndCatch(
-                () -> organizationApiTestClient.createOrganization(orgWithTaxExemption));
+                () -> organizationApiTestClient.createOrganization(null, orgWithTaxExemption));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The initial organization was created.");
 
         String id = createResponse.body().getId();
@@ -502,7 +502,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         expectedOrg.setOrganizationParentRelationship(null);
 
         HttpResponse<OrganizationVO> updateResponse = callAndCatch(
-                () -> organizationApiTestClient.patchOrganization(id, updateVO));
+                () -> organizationApiTestClient.patchOrganization(null, id, updateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), "The organization should have been updated");
         assertEquals(expectedOrg, updateResponse.body(), "The changes should have been set.");
 
@@ -515,13 +515,13 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         organizationCreateVO.setOrganizationParentRelationship(null);
 
         HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(
-                () -> organizationApiTestClient.createOrganization(organizationCreateVO));
+                () -> organizationApiTestClient.createOrganization(null, organizationCreateVO));
         assertEquals(HttpStatus.CREATED, organizationCreateResponse.getStatus(), message);
 
         String organizationId = organizationCreateResponse.body().getId();
 
         HttpResponse<OrganizationVO> organizationUpdateResponse = callAndCatch(
-                () -> organizationApiTestClient.patchOrganization(organizationId, organizationUpdateVO));
+                () -> organizationApiTestClient.patchOrganization(null, organizationId, organizationUpdateVO));
         assertEquals(HttpStatus.OK, organizationUpdateResponse.getStatus(), message);
 
         expectedOrganization.setHref(organizationId);
@@ -536,7 +536,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         assertEquals(expectedOrganization, organizationUpdateResponse.body(), message);
 
         HttpResponse<OrganizationVO> organizationGetResponse = callAndCatch(
-                () -> organizationApiTestClient.retrieveOrganization(organizationId, null));
+                () -> organizationApiTestClient.retrieveOrganization(null, organizationId, null));
         assertEquals(expectedOrganization, organizationGetResponse.body(), message);
 
     }
@@ -648,7 +648,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
         organizationCreateVO.setOrganizationParentRelationship(null);
         HttpResponse<OrganizationVO> organizationCreateResponse = callAndCatch(
-                () -> organizationApiTestClient.createOrganization(organizationCreateVO));
+                () -> organizationApiTestClient.createOrganization(null, organizationCreateVO));
         assertEquals(HttpStatus.CREATED, organizationCreateResponse.getStatus(),
                 "The organization should have been initially created. ");
 
@@ -656,7 +656,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
         for (OrganizationUpdateVO ouVO : provideInvalidOrganizationUpdate()) {
             HttpResponse<OrganizationVO> organizationUpdateResponse = callAndCatch(
-                    () -> organizationApiTestClient.patchOrganization(organizationId, ouVO));
+                    () -> organizationApiTestClient.patchOrganization(null, organizationId, ouVO));
             assertEquals(HttpStatus.BAD_REQUEST, organizationUpdateResponse.getStatus(),
                     "Organization should not have been created.");
 
@@ -710,7 +710,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         organizationUpdateVO.setOrganizationParentRelationship(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> organizationApiTestClient.patchOrganization("urn:ngsi-ld:organization:not-existent",
+                callAndCatch(() -> organizationApiTestClient.patchOrganization(null, "urn:ngsi-ld:organization:not-existent",
                         organizationUpdateVO)).getStatus(),
                 "Non existent organizations should not be updated.");
     }
@@ -740,7 +740,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         OrganizationCreateVO organizationCreateVO = OrganizationCreateVOTestExample.build();
         organizationCreateVO.setOrganizationParentRelationship(null);
         HttpResponse<OrganizationVO> createdOrg = callAndCatch(
-                () -> organizationApiTestClient.createOrganization(organizationCreateVO));
+                () -> organizationApiTestClient.createOrganization(null, organizationCreateVO));
         assertEquals(HttpStatus.CREATED, createdOrg.getStatus(), "Create the org to retrieve.");
 
         String organizationId = createdOrg.body().getId();
@@ -753,7 +753,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
         ;
 
         HttpResponse<OrganizationVO> retrievedOrganization = callAndCatch(
-                () -> organizationApiTestClient.retrieveOrganization(organizationId, null));
+                () -> organizationApiTestClient.retrieveOrganization(null, organizationId, null));
         assertEquals(HttpStatus.OK, retrievedOrganization.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedOrg, retrievedOrganization.body(), "The correct org should be returned.");
     }
@@ -783,7 +783,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
     @Override
     public void retrieveOrganization404() throws Exception {
         HttpResponse<OrganizationVO> notFoundResponse = callAndCatch(
-                () -> organizationApiTestClient.retrieveOrganization("urn:ngsi-ld:organization:not-found", null));
+                () -> organizationApiTestClient.retrieveOrganization(null, "urn:ngsi-ld:organization:not-found", null));
 
         assertEquals(HttpStatus.NOT_FOUND, notFoundResponse.getStatus(), "No such org exists.");
 

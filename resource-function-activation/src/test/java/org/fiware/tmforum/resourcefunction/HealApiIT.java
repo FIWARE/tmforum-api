@@ -72,7 +72,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 	@Override
 	public void createHeal201() throws Exception {
 
-		HttpResponse<HealVO> healVOHttpResponse = callAndCatch(() -> healApiTestClient.createHeal(healCreateVO));
+		HttpResponse<HealVO> healVOHttpResponse = callAndCatch(() -> healApiTestClient.createHeal(null, healCreateVO));
 		assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), message);
 		String healId = healVOHttpResponse.body().getId();
 
@@ -113,9 +113,9 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		HealVO expectedNameVO = HealVOTestExample.build().name("my-name").resourceFunction(null).healPolicy(null);
 		testEntries.add(Arguments.of("A heal with a name should have been created.", nameCreateVO, expectedNameVO));
 
-		HealCreateVO stateCreateVO = HealCreateVOTestExample.build().state(TaskStateTypeVO.INPROGRESS).healPolicy(null)
+		HealCreateVO stateCreateVO = HealCreateVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS).healPolicy(null)
 				.resourceFunction(null);
-		HealVO expectedStateVO = HealVOTestExample.build().state(TaskStateTypeVO.INPROGRESS).resourceFunction(null)
+		HealVO expectedStateVO = HealVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS).resourceFunction(null)
 				.healPolicy(null);
 		testEntries.add(Arguments.of("A heal with a state should have been created.", stateCreateVO, expectedStateVO));
 
@@ -147,7 +147,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 
 	@Override
 	public void createHeal400() throws Exception {
-		HttpResponse<HealVO> creationResponse = callAndCatch(() -> healApiTestClient.createHeal(healCreateVO));
+		HttpResponse<HealVO> creationResponse = callAndCatch(() -> healApiTestClient.createHeal(null, healCreateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -214,7 +214,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 			HealCreateVO healCreateVO = HealCreateVOTestExample.build()
 					.healPolicy(null)
 					.resourceFunction(null);
-			String id = healApiTestClient.createHeal(healCreateVO)
+			String id = healApiTestClient.createHeal(null, healCreateVO)
 					.body()
 					.getId();
 			HealVO healVO = HealVOTestExample.build();
@@ -227,7 +227,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		}
 
 		HttpResponse<List<HealVO>> healResponse = callAndCatch(
-				() -> healApiTestClient.listHeal(null, null, null));
+				() -> healApiTestClient.listHeal(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, healResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedHeals.size(), healResponse.getBody().get().size(),
@@ -253,11 +253,11 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<HealVO>> firstPartResponse = callAndCatch(
-				() -> healApiTestClient.listHeal(null, 0, limit));
+				() -> healApiTestClient.listHeal(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<HealVO>> secondPartResponse = callAndCatch(
-				() -> healApiTestClient.listHeal(null, 0 + limit, limit));
+				() -> healApiTestClient.listHeal(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -279,7 +279,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 	@Test
 	@Override
 	public void listHeal400() throws Exception {
-		HttpResponse<List<HealVO>> badRequestResponse = callAndCatch(() -> healApiTestClient.listHeal(null, -1, null));
+		HttpResponse<List<HealVO>> badRequestResponse = callAndCatch(() -> healApiTestClient.listHeal(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -287,7 +287,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		badRequestResponse = callAndCatch(() -> healApiTestClient.listHeal(null, null, -1));
+		badRequestResponse = callAndCatch(() -> healApiTestClient.listHeal(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -341,13 +341,13 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 
 		HealCreateVO healCreateVO = HealCreateVOTestExample.build().healPolicy(null).resourceFunction(null);
 
-		HttpResponse<HealVO> healVOHttpResponse = callAndCatch(() -> healApiTestClient.createHeal(healCreateVO));
+		HttpResponse<HealVO> healVOHttpResponse = callAndCatch(() -> healApiTestClient.createHeal(null, healCreateVO));
 		assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), "The initial create should be successfully.");
 		String healId = healVOHttpResponse.body().getId();
 
 		HealVO expectedHeal = HealVOTestExample.build().id(healId).href(URI.create(healId)).healPolicy(null).resourceFunction(null);
 
-		HttpResponse<HealVO> retreiveResponse = callAndCatch(() -> healApiTestClient.retrieveHeal(healId, null));
+		HttpResponse<HealVO> retreiveResponse = callAndCatch(() -> healApiTestClient.retrieveHeal(null, healId, null));
 		assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");
 		assertEquals(expectedHeal, retreiveResponse.body(), "The expected heal should be returend.");
 	}
@@ -378,7 +378,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 	public void retrieveHeal404() throws Exception {
 
 		HttpResponse<HealVO> response = callAndCatch(
-				() -> healApiTestClient.retrieveHeal("urn:ngsi-ld:heal:non-existent", null));
+				() -> healApiTestClient.retrieveHeal(null, "urn:ngsi-ld:heal:non-existent", null));
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such heal should exist.");
 
 		Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

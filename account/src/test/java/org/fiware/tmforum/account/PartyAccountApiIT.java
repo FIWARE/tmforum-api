@@ -127,7 +127,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
     public void createPartyAccount201() throws Exception {
 
         HttpResponse<PartyAccountVO> partyAccountVOHttpResponse = callAndCatch(
-                () -> partyAccountApiTestClient.createPartyAccount(partyAccountCreateVO));
+                () -> partyAccountApiTestClient.createPartyAccount(null, partyAccountCreateVO));
         assertEquals(HttpStatus.CREATED, partyAccountVOHttpResponse.getStatus(), message);
         String partyAccountId = partyAccountVOHttpResponse.body().getId();
         expectedPartyAccount.setId(partyAccountId);
@@ -163,7 +163,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
     @Override
     public void createPartyAccount400() throws Exception {
         HttpResponse<PartyAccountVO> creationResponse = callAndCatch(
-                () -> partyAccountApiTestClient.createPartyAccount(partyAccountCreateVO));
+                () -> partyAccountApiTestClient.createPartyAccount(null, partyAccountCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -255,17 +255,17 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         fixExampleCreate(partyAccountCreateVO);
 
         HttpResponse<PartyAccountVO> createResponse = callAndCatch(
-                () -> partyAccountApiTestClient.createPartyAccount(partyAccountCreateVO));
+                () -> partyAccountApiTestClient.createPartyAccount(null, partyAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The partyAccount should have been created first.");
 
         String partyAccountId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> partyAccountApiTestClient.deletePartyAccount(partyAccountId)).getStatus(),
+                callAndCatch(() -> partyAccountApiTestClient.deletePartyAccount(null, partyAccountId)).getStatus(),
                 "The partyAccount should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> partyAccountApiTestClient.retrievePartyAccount(partyAccountId, null)).status(),
+                callAndCatch(() -> partyAccountApiTestClient.retrievePartyAccount(null, partyAccountId, null)).status(),
                 "The partyAccount should not exist anymore.");
 
     }
@@ -295,7 +295,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
     @Override
     public void deletePartyAccount404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> partyAccountApiTestClient.deletePartyAccount("urn:ngsi-ld:partyAccount:no-partyAccount"));
+                () -> partyAccountApiTestClient.deletePartyAccount(null, "urn:ngsi-ld:partyAccount:no-partyAccount"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such partyAccount should exist.");
@@ -303,7 +303,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> partyAccountApiTestClient.deletePartyAccount("invalid-id"));
+        notFoundResponse = callAndCatch(() -> partyAccountApiTestClient.deletePartyAccount(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such partyAccount should exist.");
@@ -340,7 +340,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
                     .defaultPaymentMethod(null)
                     .financialAccount(null);
             fixExampleCreate(partyAccountCreateVO);
-            String id = partyAccountApiTestClient.createPartyAccount(partyAccountCreateVO).body().getId();
+            String id = partyAccountApiTestClient.createPartyAccount(null, partyAccountCreateVO).body().getId();
             PartyAccountVO partyAccountVO = PartyAccountVOTestExample.build();
             fixExampleExpected(partyAccountVO);
             BillingCycleSpecificationRefOrValueVO billingCycleRV = partyAccountVO.getBillStructure()
@@ -357,7 +357,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         }
 
         HttpResponse<List<PartyAccountVO>> partyAccountResponse = callAndCatch(
-                () -> partyAccountApiTestClient.listPartyAccount(null, null, null));
+                () -> partyAccountApiTestClient.listPartyAccount(null, null, null, null));
 
         assertEquals(HttpStatus.OK, partyAccountResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedPartyAccounts.size(), partyAccountResponse.getBody().get().size(),
@@ -378,11 +378,11 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<PartyAccountVO>> firstPartResponse = callAndCatch(
-                () -> partyAccountApiTestClient.listPartyAccount(null, 0, limit));
+                () -> partyAccountApiTestClient.listPartyAccount(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<PartyAccountVO>> secondPartResponse = callAndCatch(
-                () -> partyAccountApiTestClient.listPartyAccount(null, 0 + limit, limit));
+                () -> partyAccountApiTestClient.listPartyAccount(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -401,7 +401,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
     @Override
     public void listPartyAccount400() throws Exception {
         HttpResponse<List<PartyAccountVO>> badRequestResponse = callAndCatch(
-                () -> partyAccountApiTestClient.listPartyAccount(null, -1, null));
+                () -> partyAccountApiTestClient.listPartyAccount(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -409,7 +409,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> partyAccountApiTestClient.listPartyAccount(null, null, -1));
+        badRequestResponse = callAndCatch(() -> partyAccountApiTestClient.listPartyAccount(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -476,13 +476,13 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
                 .defaultPaymentMethod(null);
         fixExampleCreate(partyAccountCreateVO);
         HttpResponse<PartyAccountVO> createResponse = callAndCatch(
-                () -> partyAccountApiTestClient.createPartyAccount(partyAccountCreateVO));
+                () -> partyAccountApiTestClient.createPartyAccount(null, partyAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The partyAccount should have been created first.");
 
         String partyAccountId = createResponse.body().getId();
 
         HttpResponse<PartyAccountVO> updateResponse = callAndCatch(
-                () -> partyAccountApiTestClient.patchPartyAccount(partyAccountId, partyAccountUpdateVO));
+                () -> partyAccountApiTestClient.patchPartyAccount(null, partyAccountId, partyAccountUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         PartyAccountVO updatedPartyAccount = updateResponse.body();
@@ -549,13 +549,13 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
                 .defaultPaymentMethod(null);
         fixExampleCreate(partyAccountCreateVO);
         HttpResponse<PartyAccountVO> createResponse = callAndCatch(
-                () -> partyAccountApiTestClient.createPartyAccount(partyAccountCreateVO));
+                () -> partyAccountApiTestClient.createPartyAccount(null, partyAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The partyAccount should have been created first.");
 
         String partyAccountId = createResponse.body().getId();
 
         HttpResponse<PartyAccountVO> updateResponse = callAndCatch(
-                () -> partyAccountApiTestClient.patchPartyAccount(partyAccountId, partyAccountUpdateVO));
+                () -> partyAccountApiTestClient.patchPartyAccount(null, partyAccountId, partyAccountUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -621,7 +621,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         PartyAccountUpdateVO partyAccountUpdateVO = PartyAccountUpdateVOTestExample.build();
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> partyAccountApiTestClient.patchPartyAccount("urn:ngsi-ld:partyAccount:not-existent",
+                callAndCatch(() -> partyAccountApiTestClient.patchPartyAccount(null, "urn:ngsi-ld:partyAccount:not-existent",
                         partyAccountUpdateVO)).getStatus(),
                 "Non existent partyAccounts should not be updated.");
     }
@@ -655,7 +655,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
                 .defaultPaymentMethod(null);
         fixExampleCreate(partyAccountCreateVO);
         HttpResponse<PartyAccountVO> createResponse = callAndCatch(
-                () -> partyAccountApiTestClient.createPartyAccount(partyAccountCreateVO));
+                () -> partyAccountApiTestClient.createPartyAccount(null, partyAccountCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The partyAccount should have been created first.");
         String id = createResponse.body().getId();
 
@@ -672,7 +672,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
         expectedPartyAccount.billStructure(billStructure);
 
         //then retrieve
-        HttpResponse<PartyAccountVO> retrievedPartyAccount = callAndCatch(() -> partyAccountApiTestClient.retrievePartyAccount(id, null));
+        HttpResponse<PartyAccountVO> retrievedPartyAccount = callAndCatch(() -> partyAccountApiTestClient.retrievePartyAccount(null, id, null));
         assertEquals(HttpStatus.OK, retrievedPartyAccount.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedPartyAccount, retrievedPartyAccount.body(), "The correct partyAccount should be returned.");
     }
@@ -700,7 +700,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
     @Override
     public void retrievePartyAccount404() throws Exception {
         HttpResponse<PartyAccountVO> response = callAndCatch(
-                () -> partyAccountApiTestClient.retrievePartyAccount("urn:ngsi-ld:partyAccount:non-existent", null));
+                () -> partyAccountApiTestClient.retrievePartyAccount(null, "urn:ngsi-ld:partyAccount:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such partyAccount should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);
