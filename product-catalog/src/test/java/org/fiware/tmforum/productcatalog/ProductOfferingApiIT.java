@@ -366,12 +366,16 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		//Persist Product Specification to be used
 		ProductSpecificationVO productSpecification = productSpecificationApiTestClient.createProductSpecification(null,
 				ProductSpecificationCreateVOTestExample.build()
-						.productSpecCharacteristic(List.of(ProductSpecificationCharacteristicVOTestExample.build().id("urn:spec")))).body();
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.productSpecCharacteristic(List.of(ProductSpecificationCharacteristicVOTestExample.build().id("urn:spec")
+								.atSchemaLocation(null)))).body();
 		String productSpecId = productSpecification.getId();
 		ProductSpecificationRefVO productSpecReference = ProductSpecificationRefVOTestExample.build()
 				.targetProductSchema(productSpecification.getTargetProductSchema())
 				.id(productSpecId)
 				.href(URI.create(productSpecId))
+				.atSchemaLocation(null)
 				.atType(null)
 				.atReferredType(null);
 
@@ -379,6 +383,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		for (int i = 0; i < 10; i++) {
 			ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build()
 					.productSpecification(new ProductSpecificationRefVO().id(productSpecId))
+					.atSchemaLocation(null)
 					.resourceCandidate(null)
 					.serviceCandidate(null)
 					.serviceLevelAgreement(null);
@@ -387,6 +392,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 			productOfferingVO
 					.id(id)
 					.href(id)
+					.atSchemaLocation(null)
 					.productSpecification(productSpecReference)
 					.resourceCandidate(null)
 					.serviceCandidate(null)
@@ -841,6 +847,13 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 
 	private static Stream<Arguments> provideInvalidExtensions() {
 		return Stream.of(
+				Arguments.of(ProductOfferingCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.productSpecification(null)
+						.resourceCandidate(null)
+						.serviceCandidate(null)
+						.serviceLevelAgreement(null)
+						.unknownProperties(Map.of("unknownProperty", "a")), "With no schema defined, no additional properties are allowed."),
 				Arguments.of(
 						ProductOfferingCreateVOTestExample.build()
 								.atSchemaLocation(URI.create("http://localhost:3000/schemas/no-additional-extension-schema.json"))

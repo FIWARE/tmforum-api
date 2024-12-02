@@ -50,7 +50,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		if (targetObject instanceof UnknownPreservingBase upb) {
 			if (upb.getAtSchemaLocation() != null) {
 				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString());
-			} else if (upb.getUnknownProperties() != null || !upb.getUnknownProperties().isEmpty()) {
+			} else if (upb.getUnknownProperties() != null && !upb.getUnknownProperties().isEmpty()) {
 				throw new SchemaValidationException(List.of(), "If no schema is provided, no additional properties are allowed.");
 			}
 		}
