@@ -1,5 +1,7 @@
 package org.fiware.tmforum.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +13,7 @@ import io.github.wistefan.mapping.annotations.AttributeType;
 import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -28,12 +31,13 @@ public class ServiceSpecificationRelationship extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor", targetClass = TimePeriod.class)}))
     private TimePeriod validFor;
 
-    public ServiceSpecificationRelationship(URI id) {
+    public ServiceSpecificationRelationship(@JsonProperty("id") URI id) {
         super(id);
     }
 
     @Override
+    @JsonIgnore
     public List<String> getReferencedTypes() {
-        return List.of(ServiceSpecification.TYPE_SERVICE_SPECIFICATION);
+        return new ArrayList<>(List.of(ServiceSpecification.TYPE_SERVICE_SPECIFICATION));
     }
 }

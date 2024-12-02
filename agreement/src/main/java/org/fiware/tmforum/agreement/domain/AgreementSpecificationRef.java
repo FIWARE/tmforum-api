@@ -1,7 +1,10 @@
 package org.fiware.tmforum.agreement.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.fiware.tmforum.common.domain.RefEntity;
 
 import io.github.wistefan.mapping.annotations.AttributeGetter;
@@ -14,17 +17,18 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 public class AgreementSpecificationRef extends RefEntity {
 
-    public AgreementSpecificationRef(String id) {
+    public AgreementSpecificationRef(@JsonProperty("id") String id) {
         super(id);
     }
 
-    @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "description") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "description") }))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "description")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description")}))
     private String description;
 
     @Override
+    @JsonIgnore
     public List<String> getReferencedTypes() {
-        return List.of(AgreementSpecification.TYPE_AGSP);
+        return new ArrayList<>(List.of(AgreementSpecification.TYPE_AGSP));
     }
 
 }

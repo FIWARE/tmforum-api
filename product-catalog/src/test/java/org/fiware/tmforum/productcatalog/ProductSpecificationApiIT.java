@@ -790,13 +790,13 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 				.href(URI.create(specOne))
 				.name("spec-one-2");
 
-		ProductSpecificationCreateVO productSpecCreate2 = ProductSpecificationCreateVOTestExample.build()
-				.productSpecificationRelationship(List.of(specRel1, specRel2));
-		createResponse = callAndCatch(
-				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecCreate2));
-		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
-				"The productSpecification should have been created first.");
-		String specTwo = createResponse.body().getId();
+        ProductSpecificationCreateVO productSpecCreate2 = ProductSpecificationCreateVOTestExample.build()
+                .productSpecificationRelationship(List.of(specRel1, specRel2));
+        createResponse = callAndCatch(
+                () -> productSpecificationApiTestClient.createProductSpecification(productSpecCreate2));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+                "The productSpecification should have been created first.");
+        String specTwo = createResponse.body().getId();
 
 		HttpResponse<ProductSpecificationVO> retrievalResponse = callAndCatch(() -> productSpecificationApiTestClient.retrieveProductSpecification(null, specTwo, null));
 		assertEquals(HttpStatus.OK, retrievalResponse.getStatus(), "The spec should have been retrieved.");

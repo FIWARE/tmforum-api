@@ -14,6 +14,7 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.product.ProductOfferingPrice;
+import org.fiware.tmforum.product.ProductOfferingTerm;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +37,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.productcatalog" })
+@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"})
 public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductOfferingPriceApiTestSpec {
 
 	public final ProductOfferingPriceApiTestClient productOfferingPriceApiTestClient;
@@ -49,7 +50,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	private Clock clock = mock(Clock.class);
 
 	public ProductOfferingPriceApiIT(ProductOfferingPriceApiTestClient productOfferingPriceApiTestClient,
-			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
+									 EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productOfferingPriceApiTestClient = productOfferingPriceApiTestClient;
 	}
@@ -72,7 +73,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@ParameterizedTest
 	@MethodSource("provideValidProductOfferingPrices")
 	public void createProductOfferingPrice201(String message, ProductOfferingPriceCreateVO productOfferingPriceCreateVO,
-			ProductOfferingPriceVO expectedProductOfferingPrice) throws Exception {
+											  ProductOfferingPriceVO expectedProductOfferingPrice) throws Exception {
 		this.message = message;
 		this.productOfferingPriceCreateVO = productOfferingPriceCreateVO;
 		this.expectedProductOfferingPrice = expectedProductOfferingPrice;
@@ -125,6 +126,37 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedWithTax.setTax(List.of(taxItemVO));
 		testEntries.add(
 				Arguments.of("A product offering with a tax should have been created.", withTaxItem, expectedWithTax));
+
+		ProductOfferingTermVO pot = new ProductOfferingTermVO()
+				.duration(new DurationVO().amount(6).units("month"));
+		ProductOfferingPriceCreateVO withProductOfferingTerm = new ProductOfferingPriceCreateVO()
+				.description("Six months 50% special price")
+				.isBundle(false)
+				.lifecycleStatus("Active")
+				.name("Six months 50% special price")
+				.percentage(50f)
+				.priceType("discount")
+				.version("1.0")
+				.atSchemaLocation(null)
+				.atType("ProductOfferingPrice")
+				.atBaseType("ProductOfferingPrice")
+				.productOfferingTerm(List.of(pot));
+		ProductOfferingPriceVO expectedWithProductOfferingTerm = new ProductOfferingPriceVO()
+				.description("Six months 50% special price")
+				.isBundle(false)
+				.lifecycleStatus("Active")
+				.name("Six months 50% special price")
+				.percentage(50f)
+				.priceType("discount")
+				.version("1.0")
+				.atSchemaLocation(null)
+				.atType("ProductOfferingPrice")
+				.atBaseType("ProductOfferingPrice")
+				.productOfferingTerm(List.of(pot));
+
+		testEntries.add(
+				Arguments.of("A product offering with a product offering term should have been created.", withProductOfferingTerm, expectedWithProductOfferingTerm));
+
 
 		return testEntries.stream();
 	}
@@ -443,7 +475,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@ParameterizedTest
 	@MethodSource("provideProductOfferingPriceUpdates")
 	public void patchProductOfferingPrice200(String message, ProductOfferingPriceUpdateVO productOfferingPriceUpdateVO,
-			ProductOfferingPriceVO expectedProductOfferingPrice) throws Exception {
+											 ProductOfferingPriceVO expectedProductOfferingPrice) throws Exception {
 		this.message = message;
 		this.productOfferingPriceUpdateVO = productOfferingPriceUpdateVO;
 		this.expectedProductOfferingPrice = expectedProductOfferingPrice;
@@ -646,7 +678,11 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		//first create
+		ProductOfferingTermVO pot = new ProductOfferingTermVO()
+				.duration(new DurationVO().amount(6).units("month"));
 		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
+		productOfferingPriceCreateVO.productOfferingTerm(List.of(pot));
+
 		// we dont have a parent
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
 				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
@@ -659,6 +695,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedProductOfferingPrice.setHref(id);
 		expectedProductOfferingPrice.setLastUpdate(currentTimeInstant);
 		expectedProductOfferingPrice.setBundledPopRelationship(null);
+		expectedProductOfferingPrice.productOfferingTerm(List.of(pot));
 
 		//then retrieve
 		HttpResponse<ProductOfferingPriceVO> retrievedPOP = callAndCatch(
@@ -667,6 +704,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		assertEquals(expectedProductOfferingPrice, retrievedPOP.body(),
 				"The correct productOffering should be returned.");
 	}
+
 
 	@Disabled("400 cannot happen, only 404")
 	@Test

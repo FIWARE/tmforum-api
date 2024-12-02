@@ -41,7 +41,7 @@ public abstract class RefEntity extends Entity implements ReferencedEntity {
         this.id = URI.create(id);
     }
 
-    protected RefEntity(@JsonProperty("id") URI id) {
+    protected RefEntity(URI id) {
         this.id = id;
     }
 

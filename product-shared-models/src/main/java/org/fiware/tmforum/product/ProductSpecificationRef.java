@@ -1,5 +1,6 @@
 package org.fiware.tmforum.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.Ignore;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.fiware.tmforum.product.ProductSpecification.TYPE_PRODUCT_SPECIFICATION;
@@ -32,13 +33,13 @@ public class ProductSpecificationRef extends RefEntity {
             @AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetProductSchema", fromProperties = true)}))
     private TargetProductSchema targetProductSchema;
 
-    public ProductSpecificationRef(URI id) {
+    public ProductSpecificationRef(@JsonProperty("id") String id) {
         super(id);
     }
 
     @Override
-    @Ignore
+    @JsonIgnore
     public List<String> getReferencedTypes() {
-        return List.of(TYPE_PRODUCT_SPECIFICATION);
+        return new ArrayList<>(List.of(TYPE_PRODUCT_SPECIFICATION));
     }
 }

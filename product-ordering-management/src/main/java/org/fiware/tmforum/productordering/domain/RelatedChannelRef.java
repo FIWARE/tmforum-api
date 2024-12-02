@@ -1,5 +1,7 @@
 package org.fiware.tmforum.productordering.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,24 +10,26 @@ import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 public class RelatedChannelRef extends RefEntity {
 
-	public RelatedChannelRef(String id) {
-		super(id);
-	}
+    public RelatedChannelRef(@JsonProperty("id") String id) {
+        super(id);
+    }
 
-	@Getter(onMethod = @__({
-			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "role", embedProperty = true) }))
-	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "role", fromProperties = true) }))
-	private String role;
+    @Getter(onMethod = @__({
+            @AttributeGetter(value = AttributeType.PROPERTY, targetName = "role", embedProperty = true)}))
+    @Setter(onMethod = @__({
+            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "role", fromProperties = true)}))
+    private String role;
 
-	@Override
-	public List<String> getReferencedTypes() {
-		return Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of());
-	}
+    @Override
+    @JsonIgnore
+    public List<String> getReferencedTypes() {
+        return new ArrayList<>(Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of()));
+    }
 }
