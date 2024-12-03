@@ -83,63 +83,63 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
     private static Stream<Arguments> provideValidMigrates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().resourceFunction(null).place(null);
-        MigrateVO expectedMigrateVO = MigrateVOTestExample.build().resourceFunction(null).place(null);
+        MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).resourceFunction(null).place(null);
+        MigrateVO expectedMigrateVO = MigrateVOTestExample.build().atSchemaLocation(null).resourceFunction(null).place(null);
         testEntries.add(Arguments.of("An empty migrate should have been created.", migrateCreateVO, expectedMigrateVO));
 
-        MigrateCreateVO adminStateModificationCreateVO = MigrateCreateVOTestExample.build()
+        MigrateCreateVO adminStateModificationCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null)
                 .adminStateModification("make-it-migratethy").place(null).resourceFunction(null);
-        MigrateVO expectedAdminStateModificationVO = MigrateVOTestExample.build()
+        MigrateVO expectedAdminStateModificationVO = MigrateVOTestExample.build().atSchemaLocation(null)
                 .adminStateModification("make-it-migratethy").resourceFunction(null).place(null);
         testEntries.add(Arguments.of("A migrate with an adminStateModification should have been created.",
                 adminStateModificationCreateVO, expectedAdminStateModificationVO));
 
-        MigrateCreateVO causeCreateVO = MigrateCreateVOTestExample.build().cause("needs to move").place(null)
+        MigrateCreateVO causeCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).cause("needs to move").place(null)
                 .resourceFunction(null);
-        MigrateVO expectedCauseVO = MigrateVOTestExample.build().cause("needs to move").resourceFunction(null)
+        MigrateVO expectedCauseVO = MigrateVOTestExample.build().atSchemaLocation(null).cause("needs to move").resourceFunction(null)
                 .place(null);
         testEntries.add(
                 Arguments.of("A migrate with a cause should have been created.", causeCreateVO, expectedCauseVO));
 
-        MigrateCreateVO completionModeCreateVO = MigrateCreateVOTestExample.build().completionMode("done").place(null)
+        MigrateCreateVO completionModeCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).completionMode("done").place(null)
                 .resourceFunction(null);
-        MigrateVO expectedCompletionModeVO = MigrateVOTestExample.build().completionMode("done").resourceFunction(null)
+        MigrateVO expectedCompletionModeVO = MigrateVOTestExample.build().atSchemaLocation(null).completionMode("done").resourceFunction(null)
                 .place(null);
         testEntries.add(
                 Arguments.of("A migrate with a completionMode should have been created.", completionModeCreateVO,
                         expectedCompletionModeVO));
 
-        MigrateCreateVO nameCreateVO = MigrateCreateVOTestExample.build().name("my-name").place(null)
+        MigrateCreateVO nameCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).name("my-name").place(null)
                 .resourceFunction(null);
-        MigrateVO expectedNameVO = MigrateVOTestExample.build().name("my-name").resourceFunction(null).place(null);
+        MigrateVO expectedNameVO = MigrateVOTestExample.build().atSchemaLocation(null).name("my-name").resourceFunction(null).place(null);
         testEntries.add(Arguments.of("A migrate with a name should have been created.", nameCreateVO, expectedNameVO));
 
-        MigrateCreateVO priorityCreateVO = MigrateCreateVOTestExample.build().priority(10).place(null)
+        MigrateCreateVO priorityCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).priority(10).place(null)
                 .resourceFunction(null);
-        MigrateVO expectedPriorityVO = MigrateVOTestExample.build().priority(10).resourceFunction(null).place(null);
+        MigrateVO expectedPriorityVO = MigrateVOTestExample.build().atSchemaLocation(null).priority(10).resourceFunction(null).place(null);
         testEntries.add(Arguments.of("A migrate with a priority should have been created.", priorityCreateVO,
                 expectedPriorityVO));
 
-        MigrateCreateVO stateCreateVO = MigrateCreateVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS).place(null)
+        MigrateCreateVO stateCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).state(TaskStateTypeVO.IN_PROGRESS).place(null)
                 .resourceFunction(null);
-        MigrateVO expectedStateVO = MigrateVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS)
+        MigrateVO expectedStateVO = MigrateVOTestExample.build().atSchemaLocation(null).state(TaskStateTypeVO.IN_PROGRESS)
                 .resourceFunction(null).place(null);
         testEntries.add(
                 Arguments.of("A migrate with a state should have been created.", stateCreateVO, expectedStateVO));
 
-        MigrateCreateVO startTimeCreateVO = MigrateCreateVOTestExample.build().startTime("10-10-2022").place(null)
+        MigrateCreateVO startTimeCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).startTime("10-10-2022").place(null)
                 .resourceFunction(null);
-        MigrateVO expectedStartTimeVO = MigrateVOTestExample.build().startTime("10-10-2022").resourceFunction(null)
+        MigrateVO expectedStartTimeVO = MigrateVOTestExample.build().atSchemaLocation(null).startTime("10-10-2022").resourceFunction(null)
                 .place(null);
         testEntries.add(Arguments.of("A migrate with a start time should have been created.", startTimeCreateVO,
                 expectedStartTimeVO));
 
         String charId = "urn:" + UUID.randomUUID();
-        MigrateCreateVO additionalParamsCreateVO = MigrateCreateVOTestExample.build()
-                .characteristics(List.of(CharacteristicVOTestExample.build().id(charId))).place(null)
+        MigrateCreateVO additionalParamsCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null)
+                .characteristics(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id(charId))).place(null)
                 .resourceFunction(null);
-        MigrateVO expectedAdditionalParamsVO = MigrateVOTestExample.build()
-                .characteristics(List.of(CharacteristicVOTestExample.build().id(charId))).resourceFunction(null)
+        MigrateVO expectedAdditionalParamsVO = MigrateVOTestExample.build().atSchemaLocation(null)
+                .characteristics(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id(charId))).resourceFunction(null)
                 .place(null);
         testEntries.add(
                 Arguments.of("A migrate with additional parameters should have been created.", additionalParamsCreateVO,
@@ -169,33 +169,33 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(Arguments.of("A migrate with an invalid place ref should not have been created.",
-                MigrateCreateVOTestExample.build().place(PlaceRefVOTestExample.build()).resourceFunction(null)));
+                MigrateCreateVOTestExample.build().atSchemaLocation(null).place(PlaceRefVOTestExample.build().atSchemaLocation(null)).resourceFunction(null)));
         testEntries.add(Arguments.of("A migrate with a non existent place ref should not have been created.",
-                MigrateCreateVOTestExample.build()
-                        .place(PlaceRefVOTestExample.build().id("urn:ngsi-ld:place:non-existent"))
+                MigrateCreateVOTestExample.build().atSchemaLocation(null)
+                        .place(PlaceRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:place:non-existent"))
                         .resourceFunction(null)));
 
         testEntries.add(Arguments.of("A migrate with an invalid resource function should not have been created.",
-                MigrateCreateVOTestExample.build().place(null)
-                        .resourceFunction(ResourceFunctionRefVOTestExample.build())));
+                MigrateCreateVOTestExample.build().atSchemaLocation(null).place(null)
+                        .resourceFunction(ResourceFunctionRefVOTestExample.build().atSchemaLocation(null))));
         testEntries.add(Arguments.of("A migrate with a non existent resource function should not have been created.",
-                MigrateCreateVOTestExample.build().place(null).resourceFunction(
-                        ResourceFunctionRefVOTestExample.build().id("urn:ngsi-ld:resource-function:non-existent"))));
+                MigrateCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceFunction(
+                        ResourceFunctionRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:resource-function:non-existent"))));
 
         testEntries.add(Arguments.of("A migrate with invalid add connection points should not have been created.",
-                MigrateCreateVOTestExample.build().place(null).resourceFunction(null)
-                        .addConnectionPoint(List.of(ConnectionPointRefVOTestExample.build()))));
+                MigrateCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceFunction(null)
+                        .addConnectionPoint(List.of(ConnectionPointRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A migrate with nonexitent add connection points should not have been created.",
-                MigrateCreateVOTestExample.build().place(null).resourceFunction(null).addConnectionPoint(
-                        List.of(ConnectionPointRefVOTestExample.build()
+                MigrateCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceFunction(null).addConnectionPoint(
+                        List.of(ConnectionPointRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:connection-point:non-existent")))));
 
         testEntries.add(Arguments.of("A migrate with invalid remove connection points should not have been created.",
-                MigrateCreateVOTestExample.build().place(null).resourceFunction(null)
-                        .removeConnectionPoint(List.of(ConnectionPointRefVOTestExample.build()))));
+                MigrateCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceFunction(null)
+                        .removeConnectionPoint(List.of(ConnectionPointRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A migrate with nonexitent remove connection points should not have been created.",
-                MigrateCreateVOTestExample.build().place(null).resourceFunction(null).removeConnectionPoint(
-                        List.of(ConnectionPointRefVOTestExample.build()
+                MigrateCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceFunction(null).removeConnectionPoint(
+                        List.of(ConnectionPointRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:connection-point:non-existent")))));
 
         return testEntries.stream();
@@ -239,12 +239,12 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 
         List<MigrateVO> expectedMigrates = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build()
+            MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null)
                     .place(null)
                     .resourceFunction(null);
             String id = migrateApiTestClient.createMigrate(null, migrateCreateVO)
                     .body().getId();
-            MigrateVO migrateVO = MigrateVOTestExample.build();
+            MigrateVO migrateVO = MigrateVOTestExample.build().atSchemaLocation(null);
             migrateVO
                     .id(id)
                     .href(URI.create(id))
@@ -367,7 +367,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
     @Override
     public void retrieveMigrate200() throws Exception {
 
-        MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().place(null).resourceFunction(null);
+        MigrateCreateVO migrateCreateVO = MigrateCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceFunction(null);
 
         HttpResponse<MigrateVO> migrateVOHttpResponse = callAndCatch(
                 () -> migrateApiTestClient.createMigrate(null, migrateCreateVO));
@@ -375,7 +375,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
                 "The initial create should be successfully.");
         String migrateId = migrateVOHttpResponse.body().getId();
 
-        MigrateVO expectedMigrate = MigrateVOTestExample.build()
+        MigrateVO expectedMigrate = MigrateVOTestExample.build().atSchemaLocation(null)
                 .id(migrateId)
                 .href(URI.create(migrateId))
                 .place(null)

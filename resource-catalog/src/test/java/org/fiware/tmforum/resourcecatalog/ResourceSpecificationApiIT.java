@@ -102,16 +102,27 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		List<Arguments> testEntries = new ArrayList<>();
 
 		ResourceSpecificationCreateVO emptyCreate = ResourceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.lifecycleStatus("created");
-		ResourceSpecificationVO expectedEmpty = ResourceSpecificationVOTestExample.build().lifecycleStatus("created");
+		ResourceSpecificationVO expectedEmpty = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
+				.lifecycleStatus("created");
 		testEntries.add(
 				Arguments.of("An empty resource specification should have been created.", emptyCreate, expectedEmpty));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
 		ResourceSpecificationCreateVO createValidFor = ResourceSpecificationCreateVOTestExample.build()
-				.validFor(timePeriodVO).lifecycleStatus("created");
-		ResourceSpecificationVO expectedValidFor = ResourceSpecificationVOTestExample.build().validFor(timePeriodVO)
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
+				.validFor(timePeriodVO)
+				.lifecycleStatus("created");
+		ResourceSpecificationVO expectedValidFor = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
+				.validFor(timePeriodVO)
 				.lifecycleStatus("created");
 		testEntries.add(
 				Arguments.of("An resource specification with a validFor should have been created.", createValidFor,
@@ -120,9 +131,15 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		provideValidFeatureSpecs().map(ap ->
 						Arguments.of(
 								ap.message(),
-								ResourceSpecificationCreateVOTestExample.build().lifecycleStatus("created")
+								ResourceSpecificationCreateVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetResourceSchema(null)
+										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value())),
-								ResourceSpecificationVOTestExample.build().lifecycleStatus("created")
+								ResourceSpecificationVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetResourceSchema(null)
+										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value()))))
 				.forEach(testEntries::add);
 
@@ -133,30 +150,30 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		List<ArgumentPair<FeatureSpecificationVO>> validFeatureSpecs = new ArrayList<>();
 
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec char rel should be created.",
-				FeatureSpecificationVOTestExample.build()
+				FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
 						.constraint(null)
 						.id("urn:feature-spec")
 						.validFor(null)
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
-								FeatureSpecificationCharacteristicVOTestExample.build()
+								FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 										.id("urn:feature-spec-char")
 										.validFor(null)
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
-												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
+												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 														.id("urn:feature-spec-char-rel")
 														.validFor(null)
 														.resourceSpecificationId(null)))
 						))));
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec rel should be created.",
-				FeatureSpecificationVOTestExample.build()
+				FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
 						.constraint(null)
 						.id("urn:feature-spec")
 						.validFor(null)
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
-								FeatureSpecificationRelationshipVOTestExample.build()
+								FeatureSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 										.id("urn:feature-spec-rel")
 										.validFor(null)
 										.parentSpecificationId(null)))));
@@ -186,31 +203,31 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A resource specification with an invalid relatedParty should not be created.",
-				ResourceSpecificationCreateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A resource specification with a non-existent relatedParty should not be created.",
-				ResourceSpecificationCreateVOTestExample.build().relatedParty(
-						List.of(RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organization:non-existent")))));
+				ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null).relatedParty(
+						List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organization:non-existent")))));
 
 		testEntries.add(Arguments.of(
 				"A resource specification with an invalid resource spec id on the resource spec char rel should not be created.",
-				ResourceSpecificationCreateVOTestExample.build()
-						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build()
+				ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 								.resourceSpecCharRelationship(
-										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build()
+										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 												.resourceSpecificationId("invalid")))))));
 
 		testEntries.add(Arguments.of(
 				"A resource specification with an non-existent resource spec id on the resource spec char rel should not be created.",
-				ResourceSpecificationCreateVOTestExample.build()
-						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build()
+				ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 								.resourceSpecCharRelationship(
-										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build()
+										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 												.resourceSpecificationId(
 														"urn:ngsi-ld:resource-specification:non-existent")))))));
 		testEntries
 				.addAll(provideInvalidFeatureSpecs()
-						.map(ap -> Arguments.of(ap.message(), ResourceSpecificationCreateVOTestExample.build()
+						.map(ap -> Arguments.of(ap.message(), ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
 								.featureSpecification(List.of(ap.value()))))
 						.toList());
 
@@ -222,22 +239,22 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with invalid resource spec id on spec char rel should fail.",
-						FeatureSpecificationVOTestExample.build()
+						FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
 								.featureSpecCharacteristic(List.of(
-										FeatureSpecificationCharacteristicVOTestExample.build()
+										FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 												.featureSpecCharRelationship(
-														List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
+														List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 																.featureId(null)
 																.resourceSpecificationId("invalid")))
 								))));
 
 		invalidFeatureSpecs.add(new ArgumentPair<>(
 				"Feature specification with non-existent resource spec id on spec char rel should fail.",
-				FeatureSpecificationVOTestExample.build()
+				FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
 						.featureSpecCharacteristic(List.of(
-								FeatureSpecificationCharacteristicVOTestExample.build()
+								FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 										.featureSpecCharRelationship(
-												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
+												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 														.resourceSpecificationId(
 																"urn:ngsi-ld:resource-specification:non-existent")
 														.featureId(null)))
@@ -245,26 +262,26 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 		// constraint
 		invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with invalid constraint ref should fail.",
-				FeatureSpecificationVOTestExample.build()
-						.constraint(List.of(ConstraintRefVOTestExample.build().id("invalid")))));
+				FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
+						.constraint(List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null).id("invalid")))));
 
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent constraint ref should fail.",
-						FeatureSpecificationVOTestExample.build()
-								.constraint(List.of(ConstraintRefVOTestExample.build()
+						FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
+								.constraint(List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:constraint:non-existent")))));
 
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with invalid resource id on spec rel should fail.",
-						FeatureSpecificationVOTestExample.build()
-								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
+						FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
+								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 										.featureId(null)
 										.parentSpecificationId("invalid")))));
 
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent resource id on spec rel should fail.",
-						FeatureSpecificationVOTestExample.build()
-								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build()
+						FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
+								.featureSpecRelationship(List.of(FeatureSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 										.parentSpecificationId("urn:ngsi-ld:resource-specification:non-existent")
 										.featureId(null)))));
 
@@ -306,7 +323,9 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	@Test
 	@Override
 	public void deleteResourceSpecification204() throws Exception {
-		ResourceSpecificationCreateVO emptyCreate = ResourceSpecificationCreateVOTestExample.build();
+		ResourceSpecificationCreateVO emptyCreate = ResourceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null);
 
 		HttpResponse<ResourceSpecificationVO> createResponse = resourceSpecificationApiTestClient.createResourceSpecification(null,
 				emptyCreate);
@@ -395,10 +414,10 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 		List<ResourceSpecificationVO> expectedResourceSpecifications = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build();
+			ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null);
 			String id = resourceSpecificationApiTestClient.createResourceSpecification(null, resourceSpecificationCreateVO)
 					.body().getId();
-			ResourceSpecificationVO resourceSpecificationVO = ResourceSpecificationVOTestExample.build();
+			ResourceSpecificationVO resourceSpecificationVO = ResourceSpecificationVOTestExample.build().atSchemaLocation(null);
 			resourceSpecificationVO
 					.id(id)
 					.href(URI.create(id))
@@ -535,7 +554,9 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		//first create
-		ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build();
+		ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null);
 
 		HttpResponse<ResourceSpecificationVO> createResponse = callAndCatch(
 				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, resourceSpecificationCreateVO));
@@ -560,45 +581,71 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		List<Arguments> testEntries = new ArrayList<>();
 
 		ResourceSpecificationUpdateVO lifecycleStatusUpdate = ResourceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.lifecycleStatus("dead");
 		ResourceSpecificationVO expectedLifecycleStatus = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
 				expectedLifecycleStatus));
 
 		ResourceSpecificationUpdateVO descriptionUpdate = ResourceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.description("new-description");
 		ResourceSpecificationVO expectedDescriptionUpdate = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
 				expectedDescriptionUpdate));
 
 		ResourceSpecificationUpdateVO nameUpdate = ResourceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.name("new-name");
 		ResourceSpecificationVO expectedNameUpdate = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
 		ResourceSpecificationUpdateVO versionUpdate = ResourceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.version("v0.0.2");
 		ResourceSpecificationVO expectedVersionUpdate = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
 		ResourceSpecificationUpdateVO validForUpdate = ResourceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.validFor(timePeriodVO);
 		ResourceSpecificationVO expectedValidForUpdate = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null)
 				.validFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
 		provideValidFeatureSpecs().map(ap ->
 						Arguments.of(
 								ap.message(),
-								ResourceSpecificationUpdateVOTestExample.build().lifecycleStatus("created")
+								ResourceSpecificationUpdateVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetResourceSchema(null)
+										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value())),
-								ResourceSpecificationVOTestExample.build().lifecycleStatus("created")
+								ResourceSpecificationVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetResourceSchema(null)
+										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value()))))
 				.forEach(testEntries::add);
 
@@ -617,7 +664,9 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	@Override
 	public void patchResourceSpecification400() throws Exception {
 		//first create
-		ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build();
+		ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null);
 
 		HttpResponse<ResourceSpecificationVO> createResponse = callAndCatch(
 				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, resourceSpecificationCreateVO));
@@ -639,32 +688,32 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("An update with an invalid relatedParty is not allowed.",
-				ResourceSpecificationUpdateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ResourceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("An update with an non existent relatedParty is not allowed.",
-				ResourceSpecificationUpdateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()
+				ResourceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:organization:non-existent")))));
 		testEntries
 				.addAll(provideInvalidFeatureSpecs()
-						.map(ap -> Arguments.of(ap.message(), ResourceSpecificationUpdateVOTestExample.build()
+						.map(ap -> Arguments.of(ap.message(), ResourceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
 								.featureSpecification(List.of(ap.value()))))
 						.toList());
 
 		testEntries.add(Arguments.of(
 				"A resource specification with an invalid resource spec id on the resource spec char rel should not be accepted.",
-				ResourceSpecificationUpdateVOTestExample.build()
-						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build()
+				ResourceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 								.resourceSpecCharRelationship(
-										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build()
+										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 												.resourceSpecificationId("invalid")))))));
 
 		testEntries.add(Arguments.of(
 				"A resource specification with an non-existent resource spec id on the resource spec char rel should not be accepted.",
-				ResourceSpecificationUpdateVOTestExample.build()
-						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build()
+				ResourceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecCharacteristic(List.of(ResourceSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 								.resourceSpecCharRelationship(
-										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build()
+										List.of(ResourceSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 												.resourceSpecificationId(
 														"urn:ngsi-ld:resource-specification:non-existent")))))));
 
@@ -688,7 +737,9 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	@Test
 	@Override
 	public void patchResourceSpecification404() throws Exception {
-		ResourceSpecificationUpdateVO resourceSpecificationUpdateVO = ResourceSpecificationUpdateVOTestExample.build();
+		ResourceSpecificationUpdateVO resourceSpecificationUpdateVO = ResourceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> resourceSpecificationApiTestClient.patchResourceSpecification(null,
@@ -726,7 +777,9 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	@Override
 	public void retrieveResourceSpecification200() throws Exception {
 
-		ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build();
+		ResourceSpecificationCreateVO resourceSpecificationCreateVO = ResourceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetResourceSchema(null);
 		HttpResponse<ResourceSpecificationVO> createResponse = callAndCatch(
 				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, resourceSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
@@ -746,9 +799,12 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						ResourceSpecificationVOTestExample.build().resourceSpecRelationship(null)),
-				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
 						ResourceSpecificationVOTestExample.build()
+								.atSchemaLocation(null)
+								.targetResourceSchema(null)
+								.resourceSpecRelationship(null)),
+				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
+						ResourceSpecificationVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.lastUpdate(null)
 								.isBundle(null)
@@ -767,7 +823,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 								.atType(null)),
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", ResourceSpecificationVOTestExample.build()
+						"nothingToSeeHere", ResourceSpecificationVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.lastUpdate(null)
 								.isBundle(null)
@@ -787,7 +843,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 								.atType(null)),
 				Arguments.of(
 						"Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
-						"version,lastUpdate,lifecycleStatus,description", ResourceSpecificationVOTestExample.build()
+						"version,lastUpdate,lifecycleStatus,description", ResourceSpecificationVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.isBundle(null)
 								.resourceSpecRelationship(null)

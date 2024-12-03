@@ -115,9 +115,9 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	private static Stream<Arguments> provideValidProductOfferings() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build();
+		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build().atSchemaLocation(null);
 
-		ProductOfferingVO expectedProductOffering = ProductOfferingVOTestExample.build();
+		ProductOfferingVO expectedProductOffering = ProductOfferingVOTestExample.build().atSchemaLocation(null);
 		testEntries.add(Arguments.of("An empty productOffering should have been created.", productOfferingCreateVO,
 				expectedProductOffering));
 
@@ -145,99 +145,99 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A productOffering with invalid agreements should not be created.",
-				ProductOfferingCreateVOTestExample.build().agreement(List.of(AgreementRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).agreement(List.of(AgreementRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent agreements should not be created.",
-				ProductOfferingCreateVOTestExample.build().agreement(
-						List.of(AgreementRefVOTestExample.build().id("urn:ngsi-ld:agreement:non-existent")))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).agreement(
+						List.of(AgreementRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:agreement:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid bundled offerings should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.bundledProductOffering(List.of(BundledProductOfferingVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.bundledProductOffering(List.of(BundledProductOfferingVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent agreements should not be created.",
-				ProductOfferingCreateVOTestExample.build().bundledProductOffering(
-						List.of(BundledProductOfferingVOTestExample.build()
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).bundledProductOffering(
+						List.of(BundledProductOfferingVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:bundle-product-offering:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid category should not be created.",
-				ProductOfferingCreateVOTestExample.build().category(List.of(CategoryRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).category(List.of(CategoryRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent category should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.category(List.of(CategoryRefVOTestExample.build().id("urn:ngsi-ld:category:non-existent")))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.category(List.of(CategoryRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:category:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid channel should not be created.",
-				ProductOfferingCreateVOTestExample.build().channel(List.of(ChannelRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).channel(List.of(ChannelRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent channel should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.channel(List.of(ChannelRefVOTestExample.build().id("urn:ngsi-ld:channel:non-existent")))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.channel(List.of(ChannelRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:channel:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid marketSegment should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.marketSegment(List.of(MarketSegmentRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.marketSegment(List.of(MarketSegmentRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent marketSegment should not be created.",
-				ProductOfferingCreateVOTestExample.build().marketSegment(
-						List.of(MarketSegmentRefVOTestExample.build().id("urn:ngsi-ld:market-segment:non-existent")))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).marketSegment(
+						List.of(MarketSegmentRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:market-segment:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid place should not be created.",
-				ProductOfferingCreateVOTestExample.build().place(List.of(PlaceRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent place should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.place(List.of(PlaceRefVOTestExample.build().id("urn:ngsi-ld:place:non-existent")))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:place:non-existent")))));
 
 		testEntries.add(
 				Arguments.of("A productOffering with invalid prod-spec-characteristic-value-use should not be created.",
-						ProductOfferingCreateVOTestExample.build().prodSpecCharValueUse(
-								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()))));
+						ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of(
 				"A productOffering with non-existent prod-spec-characteristic-value-use should not be created.",
-				ProductOfferingCreateVOTestExample.build().prodSpecCharValueUse(
-						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:prod-spec-characteristic-value-use:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid productOfferingPrice should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.productOfferingPrice(List.of(ProductOfferingPriceRefOrValueVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.productOfferingPrice(List.of(ProductOfferingPriceRefOrValueVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent productOfferingPrice should not be created.",
-				ProductOfferingCreateVOTestExample.build().productOfferingPrice(
-						List.of(ProductOfferingPriceRefOrValueVOTestExample.build()
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).productOfferingPrice(
+						List.of(ProductOfferingPriceRefOrValueVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-offering-price:non-existent")))));
 
 		testEntries.add(
 				Arguments.of("A productOffering with invalid productOfferingRelationship should not be created.",
-						ProductOfferingCreateVOTestExample.build().productOfferingRelationship(
-								List.of(ProductOfferingRelationshipVOTestExample.build()))));
+						ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).productOfferingRelationship(
+								List.of(ProductOfferingRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(
 				Arguments.of("A productOffering with non-existent productOfferingRelationship should not be created.",
-						ProductOfferingCreateVOTestExample.build().productOfferingRelationship(
-								List.of(ProductOfferingRelationshipVOTestExample.build()
+						ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).productOfferingRelationship(
+								List.of(ProductOfferingRelationshipVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:product-offering:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid productSpecification should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.productSpecification((ProductSpecificationRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.productSpecification((ProductSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent productSpecification should not be created.",
-				ProductOfferingCreateVOTestExample.build().productSpecification(
-						(ProductSpecificationRefVOTestExample.build()
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).productSpecification(
+						(ProductSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-specification:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid resourceCandidate should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.resourceCandidate((ResourceCandidateRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.resourceCandidate((ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent resourceCandidate should not be created.",
-				ProductOfferingCreateVOTestExample.build().resourceCandidate((ResourceCandidateRefVOTestExample.build()
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).resourceCandidate((ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)
 						.id("urn:ngsi-ld:resource-candidate:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid serviceCandidate should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.serviceCandidate((ServiceCandidateRefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.serviceCandidate((ServiceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent serviceCandidate should not be created.",
-				ProductOfferingCreateVOTestExample.build().serviceCandidate(
-						(ServiceCandidateRefVOTestExample.build().id("urn:ngsi-ld:service-candidate:non-existent")))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).serviceCandidate(
+						(ServiceCandidateRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:service-candidate:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid SLAs should not be created.",
-				ProductOfferingCreateVOTestExample.build().serviceLevelAgreement((SLARefVOTestExample.build()))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null).serviceLevelAgreement((SLARefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent SLAs should not be created.",
-				ProductOfferingCreateVOTestExample.build()
-						.serviceLevelAgreement((SLARefVOTestExample.build().id("urn:ngsi-ld:sla:non-existent")))));
+				ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+						.serviceLevelAgreement((SLARefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:sla:non-existent")))));
 
 		return testEntries.stream();
 	}
@@ -277,7 +277,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	@Override
 	public void deleteProductOffering204() throws Exception {
 		//first create
-		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build();
+		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build().atSchemaLocation(null);
 		productOfferingCreateVO.setProductSpecification(null);
 		productOfferingCreateVO.setResourceCandidate(null);
 		productOfferingCreateVO.setServiceCandidate(null);
@@ -365,30 +365,29 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	public void listProductOffering200() throws Exception {
 		//Persist Product Specification to be used
 		ProductSpecificationVO productSpecification = productSpecificationApiTestClient.createProductSpecification(null,
-				ProductSpecificationCreateVOTestExample.build()
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null)
 						.atSchemaLocation(null)
 						.targetProductSchema(null)
-						.productSpecCharacteristic(List.of(ProductSpecificationCharacteristicVOTestExample.build().id("urn:spec")
+						.productSpecCharacteristic(List.of(ProductSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:spec")
 								.atSchemaLocation(null)))).body();
 		String productSpecId = productSpecification.getId();
-		ProductSpecificationRefVO productSpecReference = ProductSpecificationRefVOTestExample.build()
+		ProductSpecificationRefVO productSpecReference = ProductSpecificationRefVOTestExample.build().atSchemaLocation(null)
 				.targetProductSchema(productSpecification.getTargetProductSchema())
 				.id(productSpecId)
 				.href(URI.create(productSpecId))
 				.atSchemaLocation(null)
-				.atType(null)
 				.atReferredType(null);
 
 		List<ProductOfferingVO> expectedProductOfferings = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build()
+			ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 					.productSpecification(new ProductSpecificationRefVO().id(productSpecId))
 					.atSchemaLocation(null)
 					.resourceCandidate(null)
 					.serviceCandidate(null)
 					.serviceLevelAgreement(null);
 			String id = productOfferingApiTestClient.createProductOffering(null, productOfferingCreateVO).body().getId();
-			ProductOfferingVO productOfferingVO = ProductOfferingVOTestExample.build();
+			ProductOfferingVO productOfferingVO = ProductOfferingVOTestExample.build().atSchemaLocation(null);
 			productOfferingVO
 					.id(id)
 					.href(id)
@@ -522,7 +521,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	@Override
 	public void patchProductOffering200() throws Exception {
 		//first create
-		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build();
+		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build().atSchemaLocation(null);
 		productOfferingCreateVO.setProductSpecification(null);
 		productOfferingCreateVO.setResourceCandidate(null);
 		productOfferingCreateVO.setServiceCandidate(null);
@@ -557,37 +556,37 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	private static Stream<Arguments> provideProductOfferingUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ProductOfferingUpdateVO newDesc = ProductOfferingUpdateVOTestExample.build();
+		ProductOfferingUpdateVO newDesc = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		ProductOfferingVO expectedNewDesc = ProductOfferingVOTestExample.build();
+		ProductOfferingVO expectedNewDesc = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		ProductOfferingUpdateVO newLifeCycle = ProductOfferingUpdateVOTestExample.build();
+		ProductOfferingUpdateVO newLifeCycle = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newLifeCycle.setLifecycleStatus("Dead");
-		ProductOfferingVO expectedNewLifeCycle = ProductOfferingVOTestExample.build();
+		ProductOfferingVO expectedNewLifeCycle = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
-		ProductOfferingUpdateVO newName = ProductOfferingUpdateVOTestExample.build();
+		ProductOfferingUpdateVO newName = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newName.setName("New name");
-		ProductOfferingVO expectedNewName = ProductOfferingVOTestExample.build();
+		ProductOfferingVO expectedNewName = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
-		ProductOfferingUpdateVO newVersion = ProductOfferingUpdateVOTestExample.build();
+		ProductOfferingUpdateVO newVersion = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newVersion.setVersion("1.23.1");
-		ProductOfferingVO expectedNewVersion = ProductOfferingVOTestExample.build();
+		ProductOfferingVO expectedNewVersion = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
-		ProductOfferingUpdateVO newValidFor = ProductOfferingUpdateVOTestExample.build();
+		ProductOfferingUpdateVO newValidFor = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
 		timePeriodVO.setEndDateTime(Instant.now());
 		timePeriodVO.setStartDateTime(Instant.now());
 		newValidFor.setValidFor(timePeriodVO);
-		ProductOfferingVO expectedNewValidFor = ProductOfferingVOTestExample.build();
+		ProductOfferingVO expectedNewValidFor = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		expectedNewValidFor.setValidFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
 
@@ -605,7 +604,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	@Override
 	public void patchProductOffering400() throws Exception {
 		//first create
-		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build();
+		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build().atSchemaLocation(null);
 		productOfferingCreateVO.setProductSpecification(null);
 		productOfferingCreateVO.setResourceCandidate(null);
 		productOfferingCreateVO.setServiceCandidate(null);
@@ -629,99 +628,101 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A productOffering with invalid agreements should not be created.",
-				ProductOfferingUpdateVOTestExample.build().agreement(List.of(AgreementRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).agreement(List.of(AgreementRefVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent agreements should not be created.",
-				ProductOfferingUpdateVOTestExample.build().agreement(
-						List.of(AgreementRefVOTestExample.build().id("urn:ngsi-ld:agreement:non-existent")))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).agreement(
+						List.of(AgreementRefVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).id("urn:ngsi-ld:agreement:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid bundled offerings should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.bundledProductOffering(List.of(BundledProductOfferingVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.atSchemaLocation(null)
+						.bundledProductOffering(List.of(BundledProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent agreements should not be created.",
-				ProductOfferingUpdateVOTestExample.build().bundledProductOffering(
-						List.of(BundledProductOfferingVOTestExample.build()
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).bundledProductOffering(
+						List.of(BundledProductOfferingVOTestExample.build().atSchemaLocation(null)
+								.atSchemaLocation(null)
 								.id("urn:ngsi-ld:bundle-product-offering:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid category should not be created.",
-				ProductOfferingUpdateVOTestExample.build().category(List.of(CategoryRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).category(List.of(CategoryRefVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent category should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.category(List.of(CategoryRefVOTestExample.build().id("urn:ngsi-ld:category:non-existent")))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null)
+						.category(List.of(CategoryRefVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).id("urn:ngsi-ld:category:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid channel should not be created.",
-				ProductOfferingUpdateVOTestExample.build().channel(List.of(ChannelRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).channel(List.of(ChannelRefVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent channel should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.channel(List.of(ChannelRefVOTestExample.build().id("urn:ngsi-ld:channel:non-existent")))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.channel(List.of(ChannelRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:channel:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid marketSegment should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.marketSegment(List.of(MarketSegmentRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.marketSegment(List.of(MarketSegmentRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent marketSegment should not be created.",
-				ProductOfferingUpdateVOTestExample.build().marketSegment(
-						List.of(MarketSegmentRefVOTestExample.build().id("urn:ngsi-ld:market-segment:non-existent")))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).marketSegment(
+						List.of(MarketSegmentRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:market-segment:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid place should not be created.",
-				ProductOfferingUpdateVOTestExample.build().place(List.of(PlaceRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent place should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.place(List.of(PlaceRefVOTestExample.build().id("urn:ngsi-ld:place:non-existent")))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:place:non-existent")))));
 
 		testEntries.add(
 				Arguments.of("A productOffering with invalid prod-spec-characteristic-value-use should not be created.",
-						ProductOfferingUpdateVOTestExample.build().prodSpecCharValueUse(
-								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()))));
+						ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of(
 				"A productOffering with non-existent prod-spec-characteristic-value-use should not be created.",
-				ProductOfferingUpdateVOTestExample.build().prodSpecCharValueUse(
-						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:prod-spec-characteristic-value-use:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid productOfferingPrice should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.productOfferingPrice(List.of(ProductOfferingPriceRefOrValueVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.productOfferingPrice(List.of(ProductOfferingPriceRefOrValueVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent productOfferingPrice should not be created.",
-				ProductOfferingUpdateVOTestExample.build().productOfferingPrice(
-						List.of(ProductOfferingPriceRefOrValueVOTestExample.build()
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).productOfferingPrice(
+						List.of(ProductOfferingPriceRefOrValueVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-offering-price:non-existent")))));
 
 		testEntries.add(
 				Arguments.of("A productOffering with invalid productOfferingRelationship should not be created.",
-						ProductOfferingUpdateVOTestExample.build().productOfferingRelationship(
-								List.of(ProductOfferingRelationshipVOTestExample.build()))));
+						ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).productOfferingRelationship(
+								List.of(ProductOfferingRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(
 				Arguments.of("A productOffering with non-existent productOfferingRelationship should not be created.",
-						ProductOfferingUpdateVOTestExample.build().productOfferingRelationship(
-								List.of(ProductOfferingRelationshipVOTestExample.build()
+						ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).productOfferingRelationship(
+								List.of(ProductOfferingRelationshipVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:product-offering:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid productSpecification should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.productSpecification((ProductSpecificationRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.productSpecification((ProductSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent productSpecification should not be created.",
-				ProductOfferingUpdateVOTestExample.build().productSpecification(
-						(ProductSpecificationRefVOTestExample.build()
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).productSpecification(
+						(ProductSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-specification:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid resourceCandidate should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.resourceCandidate((ResourceCandidateRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.resourceCandidate((ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent resourceCandidate should not be created.",
-				ProductOfferingUpdateVOTestExample.build().resourceCandidate((ResourceCandidateRefVOTestExample.build()
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).resourceCandidate((ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)
 						.id("urn:ngsi-ld:resource-candidate:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid serviceCandidate should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.serviceCandidate((ServiceCandidateRefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.serviceCandidate((ServiceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent serviceCandidate should not be created.",
-				ProductOfferingUpdateVOTestExample.build().serviceCandidate(
-						(ServiceCandidateRefVOTestExample.build().id("urn:ngsi-ld:service-candidate:non-existent")))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).serviceCandidate(
+						(ServiceCandidateRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:service-candidate:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid SLAs should not be created.",
-				ProductOfferingUpdateVOTestExample.build().serviceLevelAgreement((SLARefVOTestExample.build()))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).serviceLevelAgreement((SLARefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent SLAs should not be created.",
-				ProductOfferingUpdateVOTestExample.build()
-						.serviceLevelAgreement((SLARefVOTestExample.build().id("urn:ngsi-ld:sla:non-existent")))));
+				ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+						.serviceLevelAgreement((SLARefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:sla:non-existent")))));
 
 		return testEntries.stream();
 	}
@@ -743,7 +744,12 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	@Test
 	@Override
 	public void patchProductOffering404() throws Exception {
-		ProductOfferingUpdateVO productOfferingUpdateVO = ProductOfferingUpdateVOTestExample.build();
+		ProductOfferingUpdateVO productOfferingUpdateVO = ProductOfferingUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.productSpecification(null)
+				.resourceCandidate(null)
+				.serviceLevelAgreement(null)
+				.serviceCandidate(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> productOfferingApiTestClient.patchProductOffering(
@@ -778,12 +784,13 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		//first create
-		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build();
+		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build().atSchemaLocation(null);
 		// default generates invalid ids
 		productOfferingCreateVO.setProductSpecification(null);
 		productOfferingCreateVO.setResourceCandidate(null);
 		productOfferingCreateVO.setServiceCandidate(null);
 		productOfferingCreateVO.setServiceLevelAgreement(null);
+		productOfferingCreateVO.setAtSchemaLocation(null);
 		// we dont have a parent
 		HttpResponse<ProductOfferingVO> createResponse = callAndCatch(
 				() -> productOfferingApiTestClient.createProductOffering(null, productOfferingCreateVO));
@@ -791,7 +798,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				"The product offering should have been created first.");
 		String id = createResponse.body().getId();
 
-		ProductOfferingVO expectedProductOffering = ProductOfferingVOTestExample.build();
+		ProductOfferingVO expectedProductOffering = ProductOfferingVOTestExample.build().atSchemaLocation(null);
 		expectedProductOffering.setId(id);
 		expectedProductOffering.setHref(id);
 		expectedProductOffering.setLastUpdate(currentTimeInstant);
@@ -847,7 +854,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 
 	private static Stream<Arguments> provideInvalidExtensions() {
 		return Stream.of(
-				Arguments.of(ProductOfferingCreateVOTestExample.build()
+				Arguments.of(ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 						.atSchemaLocation(null)
 						.productSpecification(null)
 						.resourceCandidate(null)
@@ -855,7 +862,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 						.serviceLevelAgreement(null)
 						.unknownProperties(Map.of("unknownProperty", "a")), "With no schema defined, no additional properties are allowed."),
 				Arguments.of(
-						ProductOfferingCreateVOTestExample.build()
+						ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 								.atSchemaLocation(URI.create("http://localhost:3000/schemas/no-additional-extension-schema.json"))
 								.productSpecification(null)
 								.resourceCandidate(null)
@@ -863,7 +870,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 								.serviceLevelAgreement(null)
 								.unknownProperties(Map.of("undefinedProperty", "a")), "Undefined properties should not be allowed."),
 				Arguments.of(
-						ProductOfferingCreateVOTestExample.build()
+						ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 								.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
 								.productSpecification(null)
 								.resourceCandidate(null)
@@ -871,7 +878,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 								.serviceLevelAgreement(null)
 								.unknownProperties(Map.of("extensionNumber", "a")), "Properties in the wrong format should not be allowed."),
 				Arguments.of(
-						ProductOfferingCreateVOTestExample.build()
+						ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 								.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
 								.productSpecification(null)
 								.resourceCandidate(null)
@@ -879,7 +886,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 								.serviceLevelAgreement(null)
 								.unknownProperties(Map.of("extensionObject", Map.of("a", 2))), "When a sub-object contains the wrong type, validation should fail."),
 				Arguments.of(
-						ProductOfferingCreateVOTestExample.build()
+						ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 								.atSchemaLocation(URI.create("http://localhost:3000/schemas/required-properties-schema.json"))
 								.productSpecification(null)
 								.resourceCandidate(null)
@@ -892,15 +899,15 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 
 	private static Stream<Arguments> extendedOfferingProvider() {
 		List<Arguments> testEntries = new ArrayList<>();
-		ProductOfferingTermVO productOfferingTermVO = ProductOfferingTermVOTestExample.build()
+		ProductOfferingTermVO productOfferingTermVO = ProductOfferingTermVOTestExample.build().atSchemaLocation(null)
 				.atSchemaLocation(URI.create("http://localhost:3000/schemas/required-properties-schema.json"));
 		productOfferingTermVO.getUnknownProperties().put("extensionNumber", 3);
 		productOfferingTermVO.getUnknownProperties().put("extensionString", "extension");
 
-		ProductOfferingCreateVO productOfferingCreateVO = (ProductOfferingCreateVO) ProductOfferingCreateVOTestExample.build()
+		ProductOfferingCreateVO productOfferingCreateVO = (ProductOfferingCreateVO) ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 				.description("string")
 				.name("string")
-				.atSchemaLocation(URI.create("http://localhost:3000/schemas/definitions-extension-schema.json"))
+				.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
 				.lifecycleStatus("string")
 				.productSpecification(null)
 				.resourceCandidate(null)
@@ -908,10 +915,10 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				.serviceLevelAgreement(null)
 				.productOfferingTerm(List.of(productOfferingTermVO))
 				.unknownProperties(Map.of("extensionArray", List.of("a", "b")));
-		ProductOfferingVO expectedProductOfferingVO = ProductOfferingVOTestExample.build()
+		ProductOfferingVO expectedProductOfferingVO = ProductOfferingVOTestExample.build().atSchemaLocation(null)
 				.description("string")
 				.name("string")
-				.atSchemaLocation(URI.create("http://localhost:3000/schemas/definitions-extension-schema.json"))
+				.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
 				.lifecycleStatus("string")
 				.productSpecification(null)
 				.resourceCandidate(null)
@@ -920,20 +927,20 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				.productOfferingTerm(List.of(productOfferingTermVO));
 		expectedProductOfferingVO.getUnknownProperties().put("extensionArray", List.of("a", "b"));
 		testEntries.add(Arguments.of(productOfferingCreateVO, expectedProductOfferingVO, "The extended offering should have been created."));
-		ProductOfferingCreateVO productOfferingCreateVO2 = (ProductOfferingCreateVO) ProductOfferingCreateVOTestExample.build()
+		ProductOfferingCreateVO productOfferingCreateVO2 = (ProductOfferingCreateVO) ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 				.description("string")
 				.name("string")
-				.atSchemaLocation(URI.create("http://localhost:3000/schemas/definitions-extension-schema.json"))
+				.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
 				.lifecycleStatus("string")
 				.productSpecification(null)
 				.resourceCandidate(null)
 				.serviceCandidate(null)
 				.serviceLevelAgreement(null)
 				.unknownProperties(Map.of("extensionObject", Map.of("a", "a")));
-		ProductOfferingVO expectedProductOfferingVO2 = (ProductOfferingVO) ProductOfferingVOTestExample.build()
+		ProductOfferingVO expectedProductOfferingVO2 = (ProductOfferingVO) ProductOfferingVOTestExample.build().atSchemaLocation(null)
 				.description("string")
 				.name("string")
-				.atSchemaLocation(URI.create("http://localhost:3000/schemas/definitions-extension-schema.json"))
+				.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
 				.lifecycleStatus("string")
 				.productSpecification(null)
 				.resourceCandidate(null)

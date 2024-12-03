@@ -101,18 +101,18 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     private static Stream<Arguments> provideValidServiceCategorys() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        ServiceCategoryCreateVO emptyCreate = ServiceCategoryCreateVOTestExample.build().lifecycleStatus("created")
+        ServiceCategoryCreateVO emptyCreate = ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created")
                 .parentId(null);
-        ServiceCategoryVO expectedEmpty = ServiceCategoryVOTestExample.build().lifecycleStatus("created")
+        ServiceCategoryVO expectedEmpty = ServiceCategoryVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created")
                 .parentId(null);
         testEntries.add(
                 Arguments.of("An empty service category should have been created.", emptyCreate, expectedEmpty));
 
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
                 .startDateTime(Instant.now());
-        ServiceCategoryCreateVO createValidFor = ServiceCategoryCreateVOTestExample.build().validFor(timePeriodVO)
+        ServiceCategoryCreateVO createValidFor = ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
                 .lifecycleStatus("created").parentId(null);
-        ServiceCategoryVO expectedValidFor = ServiceCategoryVOTestExample.build().validFor(timePeriodVO)
+        ServiceCategoryVO expectedValidFor = ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
                 .lifecycleStatus("created").parentId(null);
         testEntries.add(Arguments.of("An service category with a validFor should have been created.", createValidFor,
                 expectedValidFor));
@@ -141,24 +141,24 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(Arguments.of("A service category with an invalid parent category should not be created.",
-                ServiceCategoryCreateVOTestExample.build().parentId("my-invalid-id")));
+                ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId("my-invalid-id")));
         testEntries.add(Arguments.of("A service category with a non-existent parent category should not be created.",
-                ServiceCategoryCreateVOTestExample.build().parentId("urn:ngsi-ld:service-category:non-existent")));
+                ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId("urn:ngsi-ld:service-category:non-existent")));
 
         testEntries.add(Arguments.of("A service category with an invalid service category should not be created.",
-                ServiceCategoryCreateVOTestExample.build().parentId(null)
-                        .category(List.of(ServiceCategoryRefVOTestExample.build()))));
+                ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null)
+                        .category(List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A service category with a non-existent service category should not be created.",
-                ServiceCategoryCreateVOTestExample.build().parentId(null).category(
-                        List.of(ServiceCategoryRefVOTestExample.build()
+                ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null).category(
+                        List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:service-category:non-existent")))));
 
         testEntries.add(Arguments.of("A service category with an invalid service candidate should not be created.",
-                ServiceCategoryCreateVOTestExample.build().parentId(null)
-                        .serviceCandidate(List.of(ServiceCandidateRefVOTestExample.build()))));
+                ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null)
+                        .serviceCandidate(List.of(ServiceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A service category with a non-existent service candidate should not be created.",
-                ServiceCategoryCreateVOTestExample.build().parentId(null).serviceCandidate(
-                        List.of(ServiceCandidateRefVOTestExample.build()
+                ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null).serviceCandidate(
+                        List.of(ServiceCandidateRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:service-candidate:non-existent")))));
 
         return testEntries.stream();
@@ -199,7 +199,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Test
     @Override
     public void deleteServiceCategory204() throws Exception {
-        ServiceCategoryCreateVO emptyCreate = ServiceCategoryCreateVOTestExample.build().parentId(null);
+        ServiceCategoryCreateVO emptyCreate = ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
 
         HttpResponse<ServiceCategoryVO> createResponse = serviceCategoryApiTestClient.createServiceCategory(null,
                 emptyCreate);
@@ -284,10 +284,10 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 
         List<ServiceCategoryVO> expectedServiceCategorys = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
+            ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
             String id = serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO)
                     .body().getId();
-            ServiceCategoryVO serviceCategoryVO = ServiceCategoryVOTestExample.build();
+            ServiceCategoryVO serviceCategoryVO = ServiceCategoryVOTestExample.build().atSchemaLocation(null);
             serviceCategoryVO
                     .id(id)
                     .href(URI.create(id))
@@ -418,7 +418,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Override
     public void patchServiceCategory200() throws Exception {
         //first create
-        ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
+        ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
 
         HttpResponse<ServiceCategoryVO> createResponse = callAndCatch(
                 () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
@@ -440,44 +440,44 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     private static Stream<Arguments> provideServiceCategoryUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        ServiceCategoryUpdateVO lifecycleStatusUpdate = ServiceCategoryUpdateVOTestExample.build()
+        ServiceCategoryUpdateVO lifecycleStatusUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .lifecycleStatus("dead");
-        ServiceCategoryVO expectedLifecycleStatus = ServiceCategoryVOTestExample.build()
+        ServiceCategoryVO expectedLifecycleStatus = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .lifecycleStatus("dead");
         testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
                 expectedLifecycleStatus));
 
-        ServiceCategoryUpdateVO descriptionUpdate = ServiceCategoryUpdateVOTestExample.build()
+        ServiceCategoryUpdateVO descriptionUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .description("new-description");
-        ServiceCategoryVO expectedDescriptionUpdate = ServiceCategoryVOTestExample.build()
+        ServiceCategoryVO expectedDescriptionUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .description("new-description");
         testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
                 expectedDescriptionUpdate));
 
-        ServiceCategoryUpdateVO nameUpdate = ServiceCategoryUpdateVOTestExample.build()
+        ServiceCategoryUpdateVO nameUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .name("new-name");
-        ServiceCategoryVO expectedNameUpdate = ServiceCategoryVOTestExample.build()
+        ServiceCategoryVO expectedNameUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .name("new-name");
         testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
-        ServiceCategoryUpdateVO isRootUpdate = ServiceCategoryUpdateVOTestExample.build()
+        ServiceCategoryUpdateVO isRootUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .isRoot(true);
-        ServiceCategoryVO expectedIsRoot = ServiceCategoryVOTestExample.build()
+        ServiceCategoryVO expectedIsRoot = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .isRoot(true);
         testEntries.add(Arguments.of("isRoot should have been updated.", isRootUpdate, expectedIsRoot));
 
-        ServiceCategoryUpdateVO versionUpdate = ServiceCategoryUpdateVOTestExample.build()
+        ServiceCategoryUpdateVO versionUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .version("v0.0.2");
-        ServiceCategoryVO expectedVersionUpdate = ServiceCategoryVOTestExample.build()
+        ServiceCategoryVO expectedVersionUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                 .parentId(null)
                 .version("v0.0.2");
         testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
@@ -485,8 +485,8 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
                 .startDateTime(Instant.now());
         testEntries.add(Arguments.of("The validFor should have been updated.",
-                ServiceCategoryUpdateVOTestExample.build().validFor(timePeriodVO).parentId(null),
-                ServiceCategoryVOTestExample.build().validFor(timePeriodVO).parentId(null)));
+                ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO).parentId(null),
+                ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO).parentId(null)));
 
         return testEntries.stream();
     }
@@ -502,7 +502,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Override
     public void patchServiceCategory400() throws Exception {
         //first create
-        ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
+        ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
 
         HttpResponse<ServiceCategoryVO> createResponse = callAndCatch(
                 () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
@@ -523,26 +523,26 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(Arguments.of("An update with an invalid parent spe ref is not allowed.",
-                ServiceCategoryUpdateVOTestExample.build()
+                ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
                         .parentId("invalid")));
         testEntries.add(Arguments.of("An update with an non existent parent is not allowed.",
-                ServiceCategoryUpdateVOTestExample.build()
+                ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
                         .parentId("urn:ngsi-ld:service-category:non-existent")));
 
         testEntries.add(Arguments.of("An update with an invalid category ref is not allowed.",
-                ServiceCategoryUpdateVOTestExample.build()
-                        .category(List.of(ServiceCategoryRefVOTestExample.build()))));
+                ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+                        .category(List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("An update with an non existent category is not allowed.",
-                ServiceCategoryUpdateVOTestExample.build()
-                        .category(List.of(ServiceCategoryRefVOTestExample.build()
+                ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+                        .category(List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:service-category:non-existent")))));
 
         testEntries.add(Arguments.of("An update with an invalid serviceCandidate ref is not allowed.",
-                ServiceCategoryUpdateVOTestExample.build()
-                        .serviceCandidate(List.of(ServiceCandidateRefVOTestExample.build()))));
+                ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+                        .serviceCandidate(List.of(ServiceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("An update with an non existent serviceCandidate is not allowed.",
-                ServiceCategoryUpdateVOTestExample.build()
-                        .serviceCandidate(List.of(ServiceCandidateRefVOTestExample.build()
+                ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+                        .serviceCandidate(List.of(ServiceCandidateRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:service-candidate:non-existent")))));
 
         return testEntries.stream();
@@ -565,7 +565,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Test
     @Override
     public void patchServiceCategory404() throws Exception {
-        ServiceCategoryUpdateVO serviceCategoryUpdateVO = ServiceCategoryUpdateVOTestExample.build();
+        ServiceCategoryUpdateVO serviceCategoryUpdateVO = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 callAndCatch(() -> serviceCategoryApiTestClient.patchServiceCategory(null,
@@ -603,7 +603,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     @Override
     public void retrieveServiceCategory200() throws Exception {
 
-        ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().parentId(null);
+        ServiceCategoryCreateVO serviceCategoryCreateVO = ServiceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
         HttpResponse<ServiceCategoryVO> createResponse = callAndCatch(
                 () -> serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
@@ -623,10 +623,10 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
-                        ServiceCategoryVOTestExample.build()
+                        ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                                 .parentId(null)),
                 Arguments.of("Only version and the mandatory parameters should have been included.", "version",
-                        ServiceCategoryVOTestExample.build()
+                        ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                                 .lastUpdate(null)
                                 .isRoot(null)
                                 .category(null)
@@ -641,7 +641,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
                                 .atType(null)),
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
-                        "nothingToSeeHere", ServiceCategoryVOTestExample.build()
+                        "nothingToSeeHere", ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                                 .lastUpdate(null)
                                 .isRoot(null)
                                 .category(null)
@@ -657,7 +657,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
                                 .atType(null)),
                 Arguments.of(
                         "Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
-                        "version,lastUpdate,lifecycleStatus,description", ServiceCategoryVOTestExample.build()
+                        "version,lastUpdate,lifecycleStatus,description", ServiceCategoryVOTestExample.build().atSchemaLocation(null)
                                 .isRoot(null)
                                 .category(null)
                                 .serviceCandidate(null)

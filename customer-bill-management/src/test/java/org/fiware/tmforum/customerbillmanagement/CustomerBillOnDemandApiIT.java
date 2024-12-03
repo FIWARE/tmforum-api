@@ -93,12 +93,12 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	private static Stream<Arguments> provideValidCustomerBillOnDemands() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		CustomerBillOnDemandCreateVO emptyCreate = CustomerBillOnDemandCreateVOTestExample.build()
+		CustomerBillOnDemandCreateVO emptyCreate = CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 				.lastUpdate(Instant.MAX.toString())
 				.billingAccount(null)
 				.relatedParty(null)
 				.customerBill(null);
-		CustomerBillOnDemandVO expectedEmpty = CustomerBillOnDemandVOTestExample.build()
+		CustomerBillOnDemandVO expectedEmpty = CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 				.lastUpdate(Instant.MAX.toString())
 				.billingAccount(null)
 				.relatedParty(null)
@@ -133,55 +133,55 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid billing account should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
 								.customerBill(null)
-								.billingAccount(BillingAccountRefVOTestExample.build())));
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of(
 				"A customerBillOnDemand with a non-existent billing account should not be created.",
-				CustomerBillOnDemandCreateVOTestExample.build()
+				CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 						.lastUpdate(null)
 						.relatedParty(null)
 						.customerBill(null)
 						.billingAccount(
-								BillingAccountRefVOTestExample.build()
+								BillingAccountRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:billing-account:non-existent"))));
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid related party should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
-								.relatedParty(RelatedPartyRefVOTestExample.build())
+								.relatedParty(RelatedPartyRefVOTestExample.build().atSchemaLocation(null))
 								.customerBill(null)
 								.billingAccount(null)));
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with a non-existent related party should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(
-										RelatedPartyRefVOTestExample.build().id("urn:ngsi-ld:organition:non-existent"))
+										RelatedPartyRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organition:non-existent"))
 								.customerBill(null)
 								.billingAccount(null)));
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid bill ref should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
-								.customerBill(BillRefVOTestExample.build())
+								.customerBill(BillRefVOTestExample.build().atSchemaLocation(null))
 								.billingAccount(null)));
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with a non-existent bill ref should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
 								.customerBill(
-										BillRefVOTestExample.build().id("urn:ngsi-ld:customer-bill:non-existent"))));
+										BillRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:customer-bill:non-existent"))));
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid lastUpdate should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate("no-date")
 								.relatedParty(null)
 								.customerBill(null)
@@ -227,14 +227,14 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	public void listCustomerBillOnDemand200() throws Exception {
 		List<CustomerBillOnDemandVO> expectedCustomerBillOnDemands = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build()
+			CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 					.customerBill(null)
 					.relatedParty(null)
 					.billingAccount(null)
 					.lastUpdate(Instant.MAX.toString());
 			String id = customerBillOnDemandApiTestClient.createCustomerBillOnDemand(null,
 					customerBillOnDemandCreateVO).body().getId();
-			CustomerBillOnDemandVO customerBillOnDemandVO = CustomerBillOnDemandVOTestExample.build();
+			CustomerBillOnDemandVO customerBillOnDemandVO = CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null);
 			customerBillOnDemandVO
 					.id(id)
 					.href(id)
@@ -364,7 +364,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	@Override
 	public void retrieveCustomerBillOnDemand200() throws Exception {
 
-		CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build()
+		CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 				.relatedParty(null)
 				.billingAccount(null)
 				.customerBill(null)
@@ -389,13 +389,13 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						CustomerBillOnDemandVOTestExample.build()
+						CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.billingAccount(null)
 								.customerBill(null)
 								.lastUpdate(Instant.MAX.toString())),
 				Arguments.of("Only name and the mandatory parameters should have been included.", "name",
-						CustomerBillOnDemandVOTestExample.build()
+						CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.description(null)
 								.lastUpdate(null)
 								.state(null)
@@ -407,7 +407,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 								.atSchemaLocation(null)),
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", CustomerBillOnDemandVOTestExample.build()
+						"nothingToSeeHere", CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.description(null)
 								.lastUpdate(null)
 								.state(null)
@@ -419,7 +419,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 								.atBaseType(null)
 								.atSchemaLocation(null)),
 				Arguments.of("Only name, state, description and the mandatory parameters should have been included.",
-						"name,state,description", CustomerBillOnDemandVOTestExample.build()
+						"name,state,description", CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
 								.customerBill(null)

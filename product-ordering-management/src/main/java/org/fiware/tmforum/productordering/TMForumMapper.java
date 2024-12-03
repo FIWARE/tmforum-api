@@ -47,6 +47,8 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	// cancellation
 
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
 	public abstract CancelProductOrderVO map(CancelProductOrderCreateVO cancelProductOrderVO, URI id);
 
 	public abstract CancelProductOrderVO map(CancelProductOrder cancelProductOrder);

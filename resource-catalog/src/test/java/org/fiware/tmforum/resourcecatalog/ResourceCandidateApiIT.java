@@ -103,18 +103,18 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 	private static Stream<Arguments> provideValidResourceCandidates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ResourceCandidateCreateVO emptyCreate = ResourceCandidateCreateVOTestExample.build().lifecycleStatus("created")
+		ResourceCandidateCreateVO emptyCreate = ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created")
 				.resourceSpecification(null);
-		ResourceCandidateVO expectedEmpty = ResourceCandidateVOTestExample.build().lifecycleStatus("created")
+		ResourceCandidateVO expectedEmpty = ResourceCandidateVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created")
 				.resourceSpecification(null);
 		testEntries.add(
 				Arguments.of("An empty resource candidate should have been created.", emptyCreate, expectedEmpty));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
-		ResourceCandidateCreateVO createValidFor = ResourceCandidateCreateVOTestExample.build().validFor(timePeriodVO)
+		ResourceCandidateCreateVO createValidFor = ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.lifecycleStatus("created").resourceSpecification(null);
-		ResourceCandidateVO expectedValidFor = ResourceCandidateVOTestExample.build().validFor(timePeriodVO)
+		ResourceCandidateVO expectedValidFor = ResourceCandidateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.lifecycleStatus("created").resourceSpecification(null);
 		testEntries.add(Arguments.of("An resource candidate with a validFor should have been created.", createValidFor,
 				expectedValidFor));
@@ -143,20 +143,20 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A resource candidate with an spec ref should not be created.",
-				ResourceCandidateCreateVOTestExample.build()
-						.resourceSpecification(ResourceSpecificationRefVOTestExample.build())));
+				ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecification(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of("A resource candidate with a non-existent spec ref should not be created.",
-				ResourceCandidateCreateVOTestExample.build().resourceSpecification(
-						ResourceSpecificationRefVOTestExample.build()
+				ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null).resourceSpecification(
+						ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-specification:non-existent"))));
 
 		testEntries.add(Arguments.of("A resource candidate with an invalid resource category should not be created.",
-				ResourceCandidateCreateVOTestExample.build()
-						.category(List.of(ResourceCategoryRefVOTestExample.build()))));
+				ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null)
+						.category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(
 				Arguments.of("A resource candidate with a non-existent resource category should not be created.",
-						ResourceCandidateCreateVOTestExample.build().category(
-								List.of(ResourceCategoryRefVOTestExample.build()
+						ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null).category(
+								List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:category:non-existent")))));
 
 		return testEntries.stream();
@@ -197,7 +197,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 	@Test
 	@Override
 	public void deleteResourceCandidate204() throws Exception {
-		ResourceCandidateCreateVO emptyCreate = ResourceCandidateCreateVOTestExample.build()
+		ResourceCandidateCreateVO emptyCreate = ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null);
 
 		HttpResponse<ResourceCandidateVO> createResponse = resourceCandidateApiTestClient.createResourceCandidate(null,
@@ -283,11 +283,11 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 
 		List<ResourceCandidateVO> expectedResourceCandidates = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build()
+			ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null)
 					.resourceSpecification(null);
 			String id = resourceCandidateApiTestClient.createResourceCandidate(null, resourceCandidateCreateVO)
 					.body().getId();
-			ResourceCandidateVO resourceCandidateVO = ResourceCandidateVOTestExample.build();
+			ResourceCandidateVO resourceCandidateVO = ResourceCandidateVOTestExample.build().atSchemaLocation(null);
 			resourceCandidateVO
 					.id(id)
 					.href(URI.create(id))
@@ -418,7 +418,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 	@Override
 	public void patchResourceCandidate200() throws Exception {
 		//first create
-		ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build()
+		ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null);
 
 		HttpResponse<ResourceCandidateVO> createResponse = callAndCatch(
@@ -441,45 +441,45 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 	private static Stream<Arguments> provideResourceCandidateUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ResourceCandidateUpdateVO lifecycleStatusUpdate = ResourceCandidateUpdateVOTestExample.build()
+		ResourceCandidateUpdateVO lifecycleStatusUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.lifecycleStatus("dead");
-		ResourceCandidateVO expectedLifecycleStatus = ResourceCandidateVOTestExample.build()
+		ResourceCandidateVO expectedLifecycleStatus = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
 				expectedLifecycleStatus));
 
-		ResourceCandidateUpdateVO descriptionUpdate = ResourceCandidateUpdateVOTestExample.build()
+		ResourceCandidateUpdateVO descriptionUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.description("new-description");
-		ResourceCandidateVO expectedDescriptionUpdate = ResourceCandidateVOTestExample.build()
+		ResourceCandidateVO expectedDescriptionUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
 				expectedDescriptionUpdate));
 
-		ResourceCandidateUpdateVO nameUpdate = ResourceCandidateUpdateVOTestExample.build()
+		ResourceCandidateUpdateVO nameUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.name("new-name");
-		ResourceCandidateVO expectedNameUpdate = ResourceCandidateVOTestExample.build()
+		ResourceCandidateVO expectedNameUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
-		ResourceCandidateUpdateVO versionUpdate = ResourceCandidateUpdateVOTestExample.build()
+		ResourceCandidateUpdateVO versionUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.version("v0.0.2");
-		ResourceCandidateVO expectedVersionUpdate = ResourceCandidateVOTestExample.build()
+		ResourceCandidateVO expectedVersionUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
-		ResourceCandidateUpdateVO validForUpdate = ResourceCandidateUpdateVOTestExample.build().validFor(timePeriodVO)
+		ResourceCandidateUpdateVO validForUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.resourceSpecification(null);
-		ResourceCandidateVO expectedValidForUpdate = ResourceCandidateVOTestExample.build().validFor(timePeriodVO)
+		ResourceCandidateVO expectedValidForUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.resourceSpecification(null);
 		testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
@@ -497,7 +497,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 	@Override
 	public void patchResourceCandidate400() throws Exception {
 		//first create
-		ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build()
+		ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null);
 
 		HttpResponse<ResourceCandidateVO> createResponse = callAndCatch(
@@ -519,19 +519,19 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("An update with an invalid resource spe ref is not allowed.",
-				ResourceCandidateUpdateVOTestExample.build()
-						.resourceSpecification(ResourceSpecificationRefVOTestExample.build())));
+				ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecification(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of("An update with an non existent related party is not allowed.",
-				ResourceCandidateUpdateVOTestExample.build()
-						.resourceSpecification(ResourceSpecificationRefVOTestExample.build()
+				ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecification(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-specification:non-existent"))));
 
 		testEntries.add(Arguments.of("An update with an invalid category ref is not allowed.",
-				ResourceCandidateUpdateVOTestExample.build()
-						.category(List.of(ResourceCategoryRefVOTestExample.build()))));
+				ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
+						.category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("An update with an non existent category is not allowed.",
-				ResourceCandidateUpdateVOTestExample.build()
-						.category(List.of(ResourceCategoryRefVOTestExample.build()
+				ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
+						.category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-category:non-existent")))));
 
 		return testEntries.stream();
@@ -554,7 +554,9 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 	@Test
 	@Override
 	public void patchResourceCandidate404() throws Exception {
-		ResourceCandidateUpdateVO resourceCandidateUpdateVO = ResourceCandidateUpdateVOTestExample.build();
+		ResourceCandidateUpdateVO resourceCandidateUpdateVO = ResourceCandidateUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.resourceSpecification(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> resourceCandidateApiTestClient.patchResourceCandidate(null,
@@ -592,7 +594,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 	@Override
 	public void retrieveResourceCandidate200() throws Exception {
 
-		ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build()
+		ResourceCandidateCreateVO resourceCandidateCreateVO = ResourceCandidateCreateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null);
 		HttpResponse<ResourceCandidateVO> createResponse = callAndCatch(
 				() -> resourceCandidateApiTestClient.createResourceCandidate(null, resourceCandidateCreateVO));
@@ -614,11 +616,11 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.",
 						null,
-						ResourceCandidateVOTestExample.build()
+						ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 								.resourceSpecification(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.",
 						"version",
-						ResourceCandidateVOTestExample.build()
+						ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.category(null)
 								.description(null)
@@ -632,7 +634,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
 						"nothingToSeeHere",
-						ResourceCandidateVOTestExample.build()
+						ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.category(null)
 								.description(null)
@@ -647,7 +649,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 				Arguments.of(
 						"Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
 						"version,lastUpdate,lifecycleStatus,description",
-						ResourceCandidateVOTestExample.build()
+						ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 								.category(null)
 								.name(null)
 								.validFor(null)

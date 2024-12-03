@@ -97,86 +97,86 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	private static Stream<Arguments> provideValidIndividuals() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
-		IndividualVO expectedIndividual = IndividualVOTestExample.build();
+		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		IndividualVO expectedIndividual = IndividualVOTestExample.build().atSchemaLocation(null);
 		testEntries.add(
 				Arguments.of("Empty individual should have been created.", individualCreateVO, expectedIndividual));
 
-		IndividualCreateVO withContactMediumCreateVO = IndividualCreateVOTestExample.build();
-		withContactMediumCreateVO.setContactMedium(List.of(ContactMediumVOTestExample.build()));
-		IndividualVO expectedWithContactMedium = IndividualVOTestExample.build();
-		expectedWithContactMedium.setContactMedium(List.of(ContactMediumVOTestExample.build()));
+		IndividualCreateVO withContactMediumCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		withContactMediumCreateVO.setContactMedium(List.of(ContactMediumVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithContactMedium = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithContactMedium.setContactMedium(List.of(ContactMediumVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(Arguments.of("Individual with contact medium should have been created.", individualCreateVO,
 				expectedIndividual));
 
-		IndividualCreateVO withPartyCreditProfileCreateVO = IndividualCreateVOTestExample.build();
-		withPartyCreditProfileCreateVO.setCreditRating(List.of(PartyCreditProfileVOTestExample.build()));
-		IndividualVO expectedWithPartyCreditProfile = IndividualVOTestExample.build();
-		expectedWithPartyCreditProfile.setCreditRating(List.of(PartyCreditProfileVOTestExample.build()));
+		IndividualCreateVO withPartyCreditProfileCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		withPartyCreditProfileCreateVO.setCreditRating(List.of(PartyCreditProfileVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithPartyCreditProfile = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithPartyCreditProfile.setCreditRating(List.of(PartyCreditProfileVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(
 				Arguments.of("Individual with credit profile should have been created.", withPartyCreditProfileCreateVO,
 						expectedWithPartyCreditProfile));
 
-		IndividualCreateVO withDisabilityCreateVO = IndividualCreateVOTestExample.build();
-		withDisabilityCreateVO.setDisability(List.of(DisabilityVOTestExample.build()));
-		IndividualVO expectedWithDisability = IndividualVOTestExample.build();
-		expectedWithDisability.setDisability(List.of(DisabilityVOTestExample.build()));
+		IndividualCreateVO withDisabilityCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		withDisabilityCreateVO.setDisability(List.of(DisabilityVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithDisability = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithDisability.setDisability(List.of(DisabilityVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(Arguments.of("Individual with disability should have been created.", withDisabilityCreateVO,
 				expectedWithDisability));
 
-		IndividualCreateVO withExternalRefCreateVO = IndividualCreateVOTestExample.build();
-		withExternalRefCreateVO.setExternalReference(List.of(ExternalReferenceVOTestExample.build()));
-		IndividualVO expectedWithExternalRef = IndividualVOTestExample.build();
-		expectedWithExternalRef.setExternalReference(List.of(ExternalReferenceVOTestExample.build()));
+		IndividualCreateVO withExternalRefCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		withExternalRefCreateVO.setExternalReference(List.of(ExternalReferenceVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithExternalRef = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithExternalRef.setExternalReference(List.of(ExternalReferenceVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(
 				Arguments.of("Individual with external reference should have been created.", withExternalRefCreateVO,
 						expectedWithExternalRef));
 
-		IndividualCreateVO withIdCreateVO = IndividualCreateVOTestExample.build();
-		IndividualIdentificationVO id = IndividualIdentificationVOTestExample.build();
+		IndividualCreateVO withIdCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		IndividualIdentificationVO id = IndividualIdentificationVOTestExample.build().atSchemaLocation(null);
 		id.setAttachment(null);
 		withIdCreateVO.setIndividualIdentification(List.of(id));
-		IndividualVO expectedWithId = IndividualVOTestExample.build();
+		IndividualVO expectedWithId = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithId.setIndividualIdentification(List.of(id));
 		testEntries.add(Arguments.of("Individual with id should have been created.", withIdCreateVO, expectedWithId));
 
-		IndividualCreateVO withLanguageCreateVO = IndividualCreateVOTestExample.build();
-		withLanguageCreateVO.setLanguageAbility(List.of(LanguageAbilityVOTestExample.build()));
-		IndividualVO expectedWithLanguage = IndividualVOTestExample.build();
-		expectedWithLanguage.setLanguageAbility(List.of(LanguageAbilityVOTestExample.build()));
+		IndividualCreateVO withLanguageCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		withLanguageCreateVO.setLanguageAbility(List.of(LanguageAbilityVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithLanguage = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithLanguage.setLanguageAbility(List.of(LanguageAbilityVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(Arguments.of("Individual with language ability should have been created.", withLanguageCreateVO,
 				expectedWithLanguage));
 
-		IndividualCreateVO withOtherNameCreateVO = IndividualCreateVOTestExample.build();
-		withOtherNameCreateVO.setOtherName(List.of(OtherNameIndividualVOTestExample.build()));
-		IndividualVO expectedWithOtherName = IndividualVOTestExample.build();
-		expectedWithOtherName.setOtherName(List.of(OtherNameIndividualVOTestExample.build()));
+		IndividualCreateVO withOtherNameCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		withOtherNameCreateVO.setOtherName(List.of(OtherNameIndividualVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithOtherName = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithOtherName.setOtherName(List.of(OtherNameIndividualVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(Arguments.of("Individual with other name should have been created.", withOtherNameCreateVO,
 				expectedWithOtherName));
 
-		IndividualCreateVO withSkillsCreateVO = IndividualCreateVOTestExample.build();
-		withSkillsCreateVO.setSkill(List.of(SkillVOTestExample.build()));
-		IndividualVO expectedWithSkills = IndividualVOTestExample.build();
-		expectedWithSkills.setSkill(List.of(SkillVOTestExample.build()));
+		IndividualCreateVO withSkillsCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		withSkillsCreateVO.setSkill(List.of(SkillVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithSkills = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithSkills.setSkill(List.of(SkillVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(Arguments.of("Individual with skill should have been created.", withSkillsCreateVO,
 				expectedWithSkills));
 
-		IndividualCreateVO withTaxExCreateVO = IndividualCreateVOTestExample.build();
-		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build();
+		IndividualCreateVO withTaxExCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build().atSchemaLocation(null);
 		taxDefinitionVO.setId("urn:" + UUID.randomUUID());
-		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build();
+		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build().atSchemaLocation(null);
 		// prevent duplicates
 		taxExemptionCertificateVO.setId("urn:" + UUID.randomUUID());
 		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
 		// fix the example
-		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build();
+		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build().atSchemaLocation(null);
 		attachmentRefOrValueVO.setHref("http://my-ref.de");
 		attachmentRefOrValueVO.setUrl("http://my-url.de");
 		attachmentRefOrValueVO.setId("urn:attachment");
 		taxExemptionCertificateVO.setAttachment(attachmentRefOrValueVO);
 
 		withTaxExCreateVO.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
-		IndividualVO expectedWithTaxEx = IndividualVOTestExample.build();
+		IndividualVO expectedWithTaxEx = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithTaxEx.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
 		testEntries.add(Arguments.of("Individual with tax exemption should have been created.", withTaxExCreateVO,
 				expectedWithTaxEx));
@@ -200,12 +200,12 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 	public List<IndividualCreateVO> provideInvalidIndividualCreate() {
 
-		IndividualCreateVO invalidRelatedPartyOrg = IndividualCreateVOTestExample.build();
-		RelatedPartyVO invalidRelatedPartyRef = RelatedPartyVOTestExample.build();
+		IndividualCreateVO invalidRelatedPartyOrg = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		RelatedPartyVO invalidRelatedPartyRef = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		invalidRelatedPartyOrg.setRelatedParty(List.of(invalidRelatedPartyRef));
 
-		IndividualCreateVO nonExistentRelatedPartyOrg = IndividualCreateVOTestExample.build();
-		RelatedPartyVO nonExistentRelatedPartyRef = RelatedPartyVOTestExample.build();
+		IndividualCreateVO nonExistentRelatedPartyOrg = IndividualCreateVOTestExample.build().atSchemaLocation(null);
+		RelatedPartyVO nonExistentRelatedPartyRef = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		nonExistentRelatedPartyRef.setId("urn:ngsi-ld:individual:non-existent");
 		nonExistentRelatedPartyOrg.setRelatedParty(List.of(nonExistentRelatedPartyRef));
 
@@ -249,7 +249,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Override
 	public void deleteIndividual204() throws Exception {
 		// first create one
-		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
+		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
 				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(),
@@ -332,9 +332,9 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	public void listIndividual200() throws Exception {
 		List<IndividualVO> expectedIndividuals = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
+			IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
 			String id = individualApiTestClient.createIndividual(null, individualCreateVO).body().getId();
-			IndividualVO individualVO = IndividualVOTestExample.build();
+			IndividualVO individualVO = IndividualVOTestExample.build().atSchemaLocation(null);
 			individualVO
 					.id(id)
 					.href(id)
@@ -456,7 +456,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Override
 	public void patchIndividual200() throws Exception {
 
-		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
+		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
 
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
 				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
@@ -484,94 +484,94 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	private static Stream<Arguments> provideValidPatches() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		IndividualUpdateVO individualUpdateVO = IndividualUpdateVOTestExample.build();
-		IndividualVO expectedIndividual = IndividualVOTestExample.build();
+		IndividualUpdateVO individualUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		IndividualVO expectedIndividual = IndividualVOTestExample.build().atSchemaLocation(null);
 		testEntries.add(
 				Arguments.of("Empty individual should have been updated.", individualUpdateVO, expectedIndividual));
 
-		IndividualUpdateVO withContactMediumUpdateVO = IndividualUpdateVOTestExample.build();
-		withContactMediumUpdateVO.setContactMedium(List.of(ContactMediumVOTestExample.build()));
-		IndividualVO expectedWithContactMedium = IndividualVOTestExample.build();
-		expectedWithContactMedium.setContactMedium(List.of(ContactMediumVOTestExample.build()));
+		IndividualUpdateVO withContactMediumUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		withContactMediumUpdateVO.setContactMedium(List.of(ContactMediumVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithContactMedium = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithContactMedium.setContactMedium(List.of(ContactMediumVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(Arguments.of("Individual with contact medium should have been updated.", individualUpdateVO,
 				expectedIndividual));
 
-		IndividualUpdateVO withPartyCreditProfileUpdateVO = IndividualUpdateVOTestExample.build();
-		PartyCreditProfileVO partyCreditProfileVO = PartyCreditProfileVOTestExample.build();
+		IndividualUpdateVO withPartyCreditProfileUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		PartyCreditProfileVO partyCreditProfileVO = PartyCreditProfileVOTestExample.build().atSchemaLocation(null);
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
 		timePeriodVO.setStartDateTime(Instant.now());
 		timePeriodVO.setStartDateTime(Instant.now());
 		partyCreditProfileVO.setValidFor(timePeriodVO);
 		withPartyCreditProfileUpdateVO.setCreditRating(List.of(partyCreditProfileVO));
-		IndividualVO expectedWithPartyCreditProfile = IndividualVOTestExample.build();
+		IndividualVO expectedWithPartyCreditProfile = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithPartyCreditProfile.setCreditRating(List.of(partyCreditProfileVO));
 		testEntries.add(
 				Arguments.of("Individual with credit profile should have been updated.", withPartyCreditProfileUpdateVO,
 						expectedWithPartyCreditProfile));
 
-		IndividualUpdateVO withDisabilityUpdateVO = IndividualUpdateVOTestExample.build();
-		DisabilityVO disabilityVO = DisabilityVOTestExample.build();
+		IndividualUpdateVO withDisabilityUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		DisabilityVO disabilityVO = DisabilityVOTestExample.build().atSchemaLocation(null);
 		disabilityVO.setValidFor(timePeriodVO);
 		withDisabilityUpdateVO.setDisability(List.of(disabilityVO));
-		IndividualVO expectedWithDisability = IndividualVOTestExample.build();
+		IndividualVO expectedWithDisability = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithDisability.setDisability(List.of(disabilityVO));
 		testEntries.add(Arguments.of("Individual with disability should have been updated.", withDisabilityUpdateVO,
 				expectedWithDisability));
 
-		IndividualUpdateVO withExternalRefUpdateVO = IndividualUpdateVOTestExample.build();
-		withExternalRefUpdateVO.setExternalReference(List.of(ExternalReferenceVOTestExample.build()));
-		IndividualVO expectedWithExternalRef = IndividualVOTestExample.build();
-		expectedWithExternalRef.setExternalReference(List.of(ExternalReferenceVOTestExample.build()));
+		IndividualUpdateVO withExternalRefUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		withExternalRefUpdateVO.setExternalReference(List.of(ExternalReferenceVOTestExample.build().atSchemaLocation(null)));
+		IndividualVO expectedWithExternalRef = IndividualVOTestExample.build().atSchemaLocation(null);
+		expectedWithExternalRef.setExternalReference(List.of(ExternalReferenceVOTestExample.build().atSchemaLocation(null)));
 		testEntries.add(
 				Arguments.of("Individual with external reference should have been updated.", withExternalRefUpdateVO,
 						expectedWithExternalRef));
 
-		IndividualUpdateVO withIdUpdateVO = IndividualUpdateVOTestExample.build();
-		IndividualIdentificationVO id = IndividualIdentificationVOTestExample.build();
+		IndividualUpdateVO withIdUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		IndividualIdentificationVO id = IndividualIdentificationVOTestExample.build().atSchemaLocation(null);
 		id.setAttachment(null);
 		id.setValidFor(timePeriodVO);
 		withIdUpdateVO.setIndividualIdentification(List.of(id));
-		IndividualVO expectedWithId = IndividualVOTestExample.build();
+		IndividualVO expectedWithId = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithId.setIndividualIdentification(List.of(id));
 		testEntries.add(Arguments.of("Individual with id should have been updated.", withIdUpdateVO, expectedWithId));
 
-		IndividualUpdateVO withLanguageUpdateVO = IndividualUpdateVOTestExample.build();
-		LanguageAbilityVO languageAbilityVO = LanguageAbilityVOTestExample.build();
+		IndividualUpdateVO withLanguageUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		LanguageAbilityVO languageAbilityVO = LanguageAbilityVOTestExample.build().atSchemaLocation(null);
 		languageAbilityVO.setValidFor(timePeriodVO);
 		withLanguageUpdateVO.setLanguageAbility(List.of(languageAbilityVO));
-		IndividualVO expectedWithLanguage = IndividualVOTestExample.build();
+		IndividualVO expectedWithLanguage = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithLanguage.setLanguageAbility(List.of(languageAbilityVO));
 		testEntries.add(Arguments.of("Individual with language ability should have been updated.", withLanguageUpdateVO,
 				expectedWithLanguage));
 
-		IndividualUpdateVO withOtherNameUpdateVO = IndividualUpdateVOTestExample.build();
-		OtherNameIndividualVO otherNameIndividualVO = OtherNameIndividualVOTestExample.build();
+		IndividualUpdateVO withOtherNameUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		OtherNameIndividualVO otherNameIndividualVO = OtherNameIndividualVOTestExample.build().atSchemaLocation(null);
 		otherNameIndividualVO.setValidFor(timePeriodVO);
 		withOtherNameUpdateVO.setOtherName(List.of(otherNameIndividualVO));
-		IndividualVO expectedWithOtherName = IndividualVOTestExample.build();
+		IndividualVO expectedWithOtherName = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithOtherName.setOtherName(List.of(otherNameIndividualVO));
 		testEntries.add(Arguments.of("Individual with other name should have been updated.", withOtherNameUpdateVO,
 				expectedWithOtherName));
 
-		IndividualUpdateVO withSkillsUpdateVO = IndividualUpdateVOTestExample.build();
-		SkillVO skillVO = SkillVOTestExample.build();
+		IndividualUpdateVO withSkillsUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		SkillVO skillVO = SkillVOTestExample.build().atSchemaLocation(null);
 		skillVO.setValidFor(timePeriodVO);
 		withSkillsUpdateVO.setSkill(List.of(skillVO));
-		IndividualVO expectedWithSkills = IndividualVOTestExample.build();
+		IndividualVO expectedWithSkills = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithSkills.setSkill(List.of(skillVO));
 		testEntries.add(Arguments.of("Individual with skill should have been updated.", withSkillsUpdateVO,
 				expectedWithSkills));
 
-		IndividualUpdateVO withTaxExUpdateVO = IndividualUpdateVOTestExample.build();
-		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build();
+		IndividualUpdateVO withTaxExUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		TaxDefinitionVO taxDefinitionVO = TaxDefinitionVOTestExample.build().atSchemaLocation(null);
 		taxDefinitionVO.setId("urn:" + UUID.randomUUID());
-		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build();
+		TaxExemptionCertificateVO taxExemptionCertificateVO = TaxExemptionCertificateVOTestExample.build().atSchemaLocation(null);
 		// prevent duplicates
 		taxExemptionCertificateVO.setId("urn:" + UUID.randomUUID());
 		taxExemptionCertificateVO.setTaxDefinition(List.of(taxDefinitionVO));
 		taxExemptionCertificateVO.setValidFor(timePeriodVO);
 		// fix the example
-		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build();
+		AttachmentRefOrValueVO attachmentRefOrValueVO = AttachmentRefOrValueVOTestExample.build().atSchemaLocation(null);
 		attachmentRefOrValueVO.setHref("http://my-ref.de");
 		attachmentRefOrValueVO.setUrl("http://my-url.de");
 		attachmentRefOrValueVO.setId("urn:attachment");
@@ -579,7 +579,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		taxExemptionCertificateVO.setAttachment(attachmentRefOrValueVO);
 
 		withTaxExUpdateVO.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
-		IndividualVO expectedWithTaxEx = IndividualVOTestExample.build();
+		IndividualVO expectedWithTaxEx = IndividualVOTestExample.build().atSchemaLocation(null);
 		expectedWithTaxEx.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
 		testEntries.add(Arguments.of("Individual with tax exemption should have been updated.", withTaxExUpdateVO,
 				expectedWithTaxEx));
@@ -591,7 +591,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Override
 	public void patchIndividual400() throws Exception {
 
-		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
+		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
 				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(),
@@ -612,12 +612,12 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 	public static List<IndividualUpdateVO> provideInvalidIndividualUpdate() {
 
-		IndividualUpdateVO invalidRelatedPartyIndividual = IndividualUpdateVOTestExample.build();
-		RelatedPartyVO invalidRelatedPartyRef = RelatedPartyVOTestExample.build();
+		IndividualUpdateVO invalidRelatedPartyIndividual = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		RelatedPartyVO invalidRelatedPartyRef = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		invalidRelatedPartyIndividual.setRelatedParty(List.of(invalidRelatedPartyRef));
 
-		IndividualUpdateVO nonExistentRelatedPartyOrg = IndividualUpdateVOTestExample.build();
-		RelatedPartyVO nonExistentRelatedPartyRef = RelatedPartyVOTestExample.build();
+		IndividualUpdateVO nonExistentRelatedPartyOrg = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
+		RelatedPartyVO nonExistentRelatedPartyRef = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		nonExistentRelatedPartyRef.setId("urn:ngsi-ld:individual:non-existent");
 		nonExistentRelatedPartyOrg.setRelatedParty(List.of(nonExistentRelatedPartyRef));
 
@@ -644,7 +644,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Test
 	@Override
 	public void patchIndividual404() throws Exception {
-		IndividualUpdateVO individualUpdateVO = IndividualUpdateVOTestExample.build();
+		IndividualUpdateVO individualUpdateVO = IndividualUpdateVOTestExample.build().atSchemaLocation(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> individualApiTestClient.patchIndividual(null, "urn:ngsi-ld:Individual:not-existent",
@@ -674,14 +674,14 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@Test
 	@Override
 	public void retrieveIndividual200() throws Exception {
-		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build();
+		IndividualCreateVO individualCreateVO = IndividualCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<IndividualVO> createdOrg = callAndCatch(
 				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
 		assertEquals(HttpStatus.CREATED, createdOrg.getStatus(), "Create the org to retrieve.");
 
 		String individualId = createdOrg.body().getId();
 
-		IndividualVO expectedIndividual = IndividualVOTestExample.build()
+		IndividualVO expectedIndividual = IndividualVOTestExample.build().atSchemaLocation(null)
 				.id(individualId)
 				.href(individualId)
 				.relatedParty(null);

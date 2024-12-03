@@ -94,8 +94,8 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 	private static Stream<Arguments> provideValidBillingCycleSpecifications() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build();
-		BillingCycleSpecificationVO expectedBillingCycleSpecification = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build().atSchemaLocation(null);
+		BillingCycleSpecificationVO expectedBillingCycleSpecification = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		testEntries.add(Arguments.of("An empty billingCycleSpecification should have been created.", billingCycleSpecificationCreateVO, expectedBillingCycleSpecification));
 
 		return testEntries.stream();
@@ -144,7 +144,7 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 	@Override
 	public void deleteBillingCycleSpecification204() throws Exception {
 		//first create
-		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build();
+		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<BillingCycleSpecificationVO> createResponse = callAndCatch(
 				() -> billingCycleSpecificationApiTestClient.createBillingCycleSpecification(null, billingCycleSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billingCycleSpecification should have been created first.");
@@ -227,9 +227,9 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 	public void listBillingCycleSpecification200() throws Exception {
 		List<BillingCycleSpecificationVO> expectedBillingCycleSpecifications = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build();
+			BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build().atSchemaLocation(null);
 			String id = billingCycleSpecificationApiTestClient.createBillingCycleSpecification(null, billingCycleSpecificationCreateVO).body().getId();
-			BillingCycleSpecificationVO billingCycleSpecificationVO = BillingCycleSpecificationVOTestExample.build();
+			BillingCycleSpecificationVO billingCycleSpecificationVO = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 			billingCycleSpecificationVO
 					.id(id)
 					.href(id);
@@ -351,7 +351,7 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 	@Override
 	public void patchBillingCycleSpecification200() throws Exception {
 		//first create
-		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build();
+		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<BillingCycleSpecificationVO> createResponse = callAndCatch(
 				() -> billingCycleSpecificationApiTestClient.createBillingCycleSpecification(null, billingCycleSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billingCycleSpecification should have been created first.");
@@ -372,66 +372,66 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 	private static Stream<Arguments> provideBillingCycleSpecificationUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillingCycleSpecificationUpdateVO newBillingDateShift = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newBillingDateShift = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newBillingDateShift.setBillingDateShift(10);
-		BillingCycleSpecificationVO expectedNewBillingDateShift = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedNewBillingDateShift = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedNewBillingDateShift.setBillingDateShift(10);
 		testEntries.add(Arguments.of("The billing date shift should have been updated.", newBillingDateShift, expectedNewBillingDateShift));
 
-		BillingCycleSpecificationUpdateVO newBillingPeriod = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newBillingPeriod = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newBillingPeriod.setBillingPeriod("New billingPeriod");
-		BillingCycleSpecificationVO expectedNewBillingPeriod = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedNewBillingPeriod = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedNewBillingPeriod.setBillingPeriod("New billingPeriod");
 		testEntries.add(Arguments.of("The billingPeriod should have been updated.", newBillingPeriod, expectedNewBillingPeriod));
 
-		BillingCycleSpecificationUpdateVO newChargeDateOffset = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newChargeDateOffset = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newChargeDateOffset.setChargeDateOffset(10);
-		BillingCycleSpecificationVO expectedChargeDateOffset = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedChargeDateOffset = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedChargeDateOffset.setChargeDateOffset(10);
 		testEntries.add(Arguments.of("The chargeDateOffset should have been updated.", newChargeDateOffset, expectedChargeDateOffset));
 
-		BillingCycleSpecificationUpdateVO newCreditDateOffset = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newCreditDateOffset = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newCreditDateOffset.setCreditDateOffset(10);
-		BillingCycleSpecificationVO expectedCreditDateOffset = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedCreditDateOffset = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedCreditDateOffset.setCreditDateOffset(10);
 		testEntries.add(Arguments.of("The creditDateOffset should have been updated.", newCreditDateOffset, expectedCreditDateOffset));
 
-		BillingCycleSpecificationUpdateVO newDesc = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newDesc = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		BillingCycleSpecificationVO expectedNewDesc = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedNewDesc = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		BillingCycleSpecificationUpdateVO newFrequency = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newFrequency = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newFrequency.setFrequency("New frequency");
-		BillingCycleSpecificationVO expectedNewFrequency = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedNewFrequency = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedNewFrequency.setFrequency("New frequency");
 		testEntries.add(Arguments.of("The frequency should have been updated.", newFrequency, expectedNewFrequency));
 
-		BillingCycleSpecificationUpdateVO newMailingDateOffset = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newMailingDateOffset = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newMailingDateOffset.setMailingDateOffset(10);
-		BillingCycleSpecificationVO expectedMailingDateOffset = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedMailingDateOffset = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedMailingDateOffset.setMailingDateOffset(10);
 		testEntries.add(Arguments.of("The mailingDateOffset should have been updated.", newMailingDateOffset, expectedMailingDateOffset));
 
-		BillingCycleSpecificationUpdateVO newName = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newName = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		BillingCycleSpecificationVO expectedNewName = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedNewName = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
-		BillingCycleSpecificationUpdateVO newPaymentDateOffset = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newPaymentDateOffset = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		newPaymentDateOffset.setPaymentDueDateOffset(10);
-		BillingCycleSpecificationVO expectedPaymentDateOffset = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedPaymentDateOffset = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedPaymentDateOffset.setPaymentDueDateOffset(10);
 		testEntries.add(Arguments.of("The paymentDueDateOffset should have been updated.", newPaymentDateOffset, expectedPaymentDateOffset));
 
-		BillingCycleSpecificationUpdateVO newValidFor = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO newValidFor = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
 		timePeriodVO.setEndDateTime(Instant.now());
 		timePeriodVO.setStartDateTime(Instant.now());
 		newValidFor.setValidFor(timePeriodVO);
-		BillingCycleSpecificationVO expectedNewValidFor = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedNewValidFor = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedNewValidFor.setValidFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
 
@@ -462,7 +462,7 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 	@Test
 	@Override
 	public void patchBillingCycleSpecification404() throws Exception {
-		BillingCycleSpecificationUpdateVO billingCycleSpecificationUpdateVO = BillingCycleSpecificationUpdateVOTestExample.build();
+		BillingCycleSpecificationUpdateVO billingCycleSpecificationUpdateVO = BillingCycleSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> billingCycleSpecificationApiTestClient.patchBillingCycleSpecification(null, "urn:ngsi-ld:billingCycleSpecification:not-existent",
@@ -494,13 +494,13 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 	public void retrieveBillingCycleSpecification200() throws Exception {
 
 		//first create
-		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build();
+		BillingCycleSpecificationCreateVO billingCycleSpecificationCreateVO = BillingCycleSpecificationCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<BillingCycleSpecificationVO> createResponse = callAndCatch(
 				() -> billingCycleSpecificationApiTestClient.createBillingCycleSpecification(null, billingCycleSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billingCycleSpecification should have been created first.");
 		String id = createResponse.body().getId();
 
-		BillingCycleSpecificationVO expectedBillingCycleSpecification = BillingCycleSpecificationVOTestExample.build();
+		BillingCycleSpecificationVO expectedBillingCycleSpecification = BillingCycleSpecificationVOTestExample.build().atSchemaLocation(null);
 		expectedBillingCycleSpecification.setId(id);
 		expectedBillingCycleSpecification.setHref(id);
 

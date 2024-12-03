@@ -102,18 +102,18 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	private static Stream<Arguments> provideValidResourceCategorys() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ResourceCategoryCreateVO emptyCreate = ResourceCategoryCreateVOTestExample.build().lifecycleStatus("created")
+		ResourceCategoryCreateVO emptyCreate = ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created")
 				.parentId(null);
-		ResourceCategoryVO expectedEmpty = ResourceCategoryVOTestExample.build().lifecycleStatus("created")
+		ResourceCategoryVO expectedEmpty = ResourceCategoryVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created")
 				.parentId(null);
 		testEntries.add(
 				Arguments.of("An empty resource category should have been created.", emptyCreate, expectedEmpty));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
-		ResourceCategoryCreateVO createValidFor = ResourceCategoryCreateVOTestExample.build().validFor(timePeriodVO)
+		ResourceCategoryCreateVO createValidFor = ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.lifecycleStatus("created").parentId(null);
-		ResourceCategoryVO expectedValidFor = ResourceCategoryVOTestExample.build().validFor(timePeriodVO)
+		ResourceCategoryVO expectedValidFor = ResourceCategoryVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.lifecycleStatus("created").parentId(null);
 		testEntries.add(Arguments.of("An resource category with a validFor should have been created.", createValidFor,
 				expectedValidFor));
@@ -142,31 +142,31 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A resource category with an invalid parent category should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId("my-invalid-id")));
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId("my-invalid-id")));
 		testEntries.add(Arguments.of("A resource category with a non-existent parent category should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId("urn:ngsi-ld:resource-category:non-existent")));
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId("urn:ngsi-ld:resource-category:non-existent")));
 
 		testEntries.add(Arguments.of("A resource category with an invalid resource category should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId(null)
-						.category(List.of(ResourceCategoryRefVOTestExample.build()))));
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null)
+						.category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A resource category with a non-existent resource category should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId(null).category(
-						List.of(ResourceCategoryRefVOTestExample.build()
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null).category(
+						List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-category:non-existent")))));
 
 		testEntries.add(Arguments.of("A resource category with an invalid related party should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId(null)
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A resource category with a non-existent resource category should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId(null).relatedParty(
-						List.of(RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organization:non-existent")))));
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null).relatedParty(
+						List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organization:non-existent")))));
 
 		testEntries.add(Arguments.of("A resource category with an invalid resource category should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId(null)
-						.resourceCandidate(List.of(ResourceCandidateRefVOTestExample.build()))));
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null)
+						.resourceCandidate(List.of(ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A resource category with a non-existent resource category should not be created.",
-				ResourceCategoryCreateVOTestExample.build().parentId(null).resourceCandidate(
-						List.of(ResourceCandidateRefVOTestExample.build()
+				ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null).resourceCandidate(
+						List.of(ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-candidate:non-existent")))));
 
 		return testEntries.stream();
@@ -207,7 +207,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	@Test
 	@Override
 	public void deleteResourceCategory204() throws Exception {
-		ResourceCategoryCreateVO emptyCreate = ResourceCategoryCreateVOTestExample.build().parentId(null);
+		ResourceCategoryCreateVO emptyCreate = ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
 
 		HttpResponse<ResourceCategoryVO> createResponse = resourceCategoryApiTestClient.createResourceCategory(null,
 				emptyCreate);
@@ -292,11 +292,11 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 
 		List<ResourceCategoryVO> expectedResourceCategorys = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build()
+			ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null)
 					.parentId(null);
 			String id = resourceCategoryApiTestClient.createResourceCategory(null, resourceCategoryCreateVO)
 					.body().getId();
-			ResourceCategoryVO resourceCategoryVO = ResourceCategoryVOTestExample.build();
+			ResourceCategoryVO resourceCategoryVO = ResourceCategoryVOTestExample.build().atSchemaLocation(null);
 			resourceCategoryVO
 					.id(id)
 					.href(URI.create(id))
@@ -427,7 +427,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	@Override
 	public void patchResourceCategory200() throws Exception {
 		//first create
-		ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().parentId(null);
+		ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
 
 		HttpResponse<ResourceCategoryVO> createResponse = callAndCatch(
 				() -> resourceCategoryApiTestClient.createResourceCategory(null, resourceCategoryCreateVO));
@@ -449,53 +449,53 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	private static Stream<Arguments> provideResourceCategoryUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ResourceCategoryUpdateVO lifecycleStatusUpdate = ResourceCategoryUpdateVOTestExample.build()
+		ResourceCategoryUpdateVO lifecycleStatusUpdate = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.lifecycleStatus("dead");
-		ResourceCategoryVO expectedLifecycleStatus = ResourceCategoryVOTestExample.build()
+		ResourceCategoryVO expectedLifecycleStatus = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
 				expectedLifecycleStatus));
 
-		ResourceCategoryUpdateVO descriptionUpdate = ResourceCategoryUpdateVOTestExample.build()
+		ResourceCategoryUpdateVO descriptionUpdate = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.description("new-description");
-		ResourceCategoryVO expectedDescriptionUpdate = ResourceCategoryVOTestExample.build()
+		ResourceCategoryVO expectedDescriptionUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
 				expectedDescriptionUpdate));
 
-		ResourceCategoryUpdateVO nameUpdate = ResourceCategoryUpdateVOTestExample.build()
+		ResourceCategoryUpdateVO nameUpdate = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.name("new-name");
-		ResourceCategoryVO expectedNameUpdate = ResourceCategoryVOTestExample.build()
+		ResourceCategoryVO expectedNameUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
-		ResourceCategoryUpdateVO isRootUpdate = ResourceCategoryUpdateVOTestExample.build()
+		ResourceCategoryUpdateVO isRootUpdate = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.isRoot(true);
-		ResourceCategoryVO expectedIsRoot = ResourceCategoryVOTestExample.build()
+		ResourceCategoryVO expectedIsRoot = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.isRoot(true);
 		testEntries.add(Arguments.of("isRoot should have been updated.", isRootUpdate, expectedIsRoot));
 
-		ResourceCategoryUpdateVO versionUpdate = ResourceCategoryUpdateVOTestExample.build()
+		ResourceCategoryUpdateVO versionUpdate = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.version("v0.0.2");
-		ResourceCategoryVO expectedVersionUpdate = ResourceCategoryVOTestExample.build()
+		ResourceCategoryVO expectedVersionUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
-		ResourceCategoryUpdateVO validForUpdate = ResourceCategoryUpdateVOTestExample.build().validFor(timePeriodVO)
+		ResourceCategoryUpdateVO validForUpdate = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.parentId(null);
-		ResourceCategoryVO expectedValidForUpdate = ResourceCategoryVOTestExample.build().validFor(timePeriodVO)
+		ResourceCategoryVO expectedValidForUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.parentId(null);
 		testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
@@ -513,7 +513,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	@Override
 	public void patchResourceCategory400() throws Exception {
 		//first create
-		ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().parentId(null);
+		ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
 
 		HttpResponse<ResourceCategoryVO> createResponse = callAndCatch(
 				() -> resourceCategoryApiTestClient.createResourceCategory(null, resourceCategoryCreateVO));
@@ -534,34 +534,34 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("An update with an invalid parent spe ref is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 						.parentId("invalid")));
 		testEntries.add(Arguments.of("An update with an non existent parent is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 						.parentId("urn:ngsi-ld:resource-category:non-existent")));
 
 		testEntries.add(Arguments.of("An update with an invalid category ref is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
-						.category(List.of(ResourceCategoryRefVOTestExample.build()))));
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+						.category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("An update with an non existent category is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
-						.category(List.of(ResourceCategoryRefVOTestExample.build()
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+						.category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-category:non-existent")))));
 
 		testEntries.add(Arguments.of("An update with an invalid relatedParty ref is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("An update with an non existent relatedParty is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:organization:non-existent")))));
 
 		testEntries.add(Arguments.of("An update with an invalid resourceCandidate ref is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
-						.resourceCandidate(List.of(ResourceCandidateRefVOTestExample.build()))));
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+						.resourceCandidate(List.of(ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("An update with an non existent resourceCandidate is not allowed.",
-				ResourceCategoryUpdateVOTestExample.build()
-						.resourceCandidate(List.of(ResourceCandidateRefVOTestExample.build()
+				ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
+						.resourceCandidate(List.of(ResourceCandidateRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-candidate:non-existent")))));
 
 		return testEntries.stream();
@@ -584,7 +584,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	@Test
 	@Override
 	public void patchResourceCategory404() throws Exception {
-		ResourceCategoryUpdateVO resourceCategoryUpdateVO = ResourceCategoryUpdateVOTestExample.build();
+		ResourceCategoryUpdateVO resourceCategoryUpdateVO = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> resourceCategoryApiTestClient.patchResourceCategory(null,
@@ -622,7 +622,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	@Override
 	public void retrieveResourceCategory200() throws Exception {
 
-		ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().parentId(null);
+		ResourceCategoryCreateVO resourceCategoryCreateVO = ResourceCategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
 		HttpResponse<ResourceCategoryVO> createResponse = callAndCatch(
 				() -> resourceCategoryApiTestClient.createResourceCategory(null, resourceCategoryCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
@@ -642,10 +642,10 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						ResourceCategoryVOTestExample.build()
+						ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 								.parentId(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
-						ResourceCategoryVOTestExample.build()
+						ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.lastUpdate(null)
 								.isRoot(null)
@@ -662,7 +662,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 								.atType(null)),
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", ResourceCategoryVOTestExample.build()
+						"nothingToSeeHere", ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.lastUpdate(null)
 								.isRoot(null)
@@ -680,7 +680,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 								.atType(null)),
 				Arguments.of(
 						"Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
-						"version,lastUpdate,lifecycleStatus,description", ResourceCategoryVOTestExample.build()
+						"version,lastUpdate,lifecycleStatus,description", ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.isRoot(null)
 								.category(null)

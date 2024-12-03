@@ -102,27 +102,27 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	private static Stream<Arguments> provideValidProductOfferingPrices() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
+		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
 
-		ProductOfferingPriceVO expectedProductOfferingPrice = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedProductOfferingPrice = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		testEntries.add(Arguments.of("An empty productOffering should have been created.", productOfferingPriceCreateVO,
 				expectedProductOfferingPrice));
 
-		ProductOfferingPriceCreateVO withPriceLogic = ProductOfferingPriceCreateVOTestExample.build();
-		PricingLogicAlgorithmVO pricingLogicAlgorithmVO = PricingLogicAlgorithmVOTestExample.build();
+		ProductOfferingPriceCreateVO withPriceLogic = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
+		PricingLogicAlgorithmVO pricingLogicAlgorithmVO = PricingLogicAlgorithmVOTestExample.build().atSchemaLocation(null);
 		pricingLogicAlgorithmVO.setId("urn:price-logic");
 		pricingLogicAlgorithmVO.setPlaSpecId(null);
 		withPriceLogic.setPricingLogicAlgorithm(List.of(pricingLogicAlgorithmVO));
-		ProductOfferingPriceVO expectedWithPriceLogic = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedWithPriceLogic = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedWithPriceLogic.setPricingLogicAlgorithm(List.of(pricingLogicAlgorithmVO));
 		testEntries.add(Arguments.of("A product offering with a price logic should have been created.", withPriceLogic,
 				expectedWithPriceLogic));
 
-		ProductOfferingPriceCreateVO withTaxItem = ProductOfferingPriceCreateVOTestExample.build();
-		TaxItemVO taxItemVO = TaxItemVOTestExample.build();
+		ProductOfferingPriceCreateVO withTaxItem = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
+		TaxItemVO taxItemVO = TaxItemVOTestExample.build().atSchemaLocation(null);
 		taxItemVO.setId("urn:tax-item");
 		withTaxItem.setTax(List.of(taxItemVO));
-		ProductOfferingPriceVO expectedWithTax = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedWithTax = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedWithTax.setTax(List.of(taxItemVO));
 		testEntries.add(
 				Arguments.of("A product offering with a tax should have been created.", withTaxItem, expectedWithTax));
@@ -183,43 +183,43 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A productOfferingPrice with invalid popRel should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build().bundledPopRelationship(
-						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build()))));
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null).bundledPopRelationship(
+						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent popRel should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build().bundledPopRelationship(
-						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build()
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null).bundledPopRelationship(
+						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-offering-price:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid constraint should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build()
-						.constraint(List.of(ConstraintRefVOTestExample.build()))));
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null)
+						.constraint(List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent constraint should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build().constraint(
-						List.of(ConstraintRefVOTestExample.build().id("urn:ngsi-ld:constraint:non-existent")))));
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null).constraint(
+						List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:constraint:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid place should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build().place(List.of(PlaceRefVOTestExample.build()))));
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null).place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent place should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build()
-						.place(List.of(PlaceRefVOTestExample.build().id("urn:ngsi-ld:place:non-existent")))));
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null)
+						.place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:place:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid popRelationship should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build()
-						.popRelationship(List.of(ProductOfferingPriceRelationshipVOTestExample.build()))));
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null)
+						.popRelationship(List.of(ProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent popRelationship should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build().popRelationship(
-						List.of(ProductOfferingPriceRelationshipVOTestExample.build()
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null).popRelationship(
+						List.of(ProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-offering-price:non-existent")))));
 
 		// TODO: Add test for sub-relationships
 		testEntries.add(
 				Arguments.of("A productOffering with invalid prod-spec-characteristic-value-use should not be created.",
-						ProductOfferingPriceCreateVOTestExample.build().prodSpecCharValueUse(
-								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()))));
+						ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of(
 				"A productOffering with non-existent prod-spec-characteristic-value-use should not be created.",
-				ProductOfferingPriceCreateVOTestExample.build().prodSpecCharValueUse(
-						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()
+				ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:prod-spec-characteristic-value-use:non-existent")))));
 
 		return testEntries.stream();
@@ -260,7 +260,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@Override
 	public void deleteProductOfferingPrice204() throws Exception {
 		//first create
-		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
+		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
 
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
 				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
@@ -349,10 +349,10 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 		List<ProductOfferingPriceVO> expectedProductOfferingPrices = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
+			ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
 			String id = productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO)
 					.body().getId();
-			ProductOfferingPriceVO productOfferingPriceVO = ProductOfferingPriceVOTestExample.build();
+			ProductOfferingPriceVO productOfferingPriceVO = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 			productOfferingPriceVO
 					.id(id)
 					.href(id)
@@ -485,7 +485,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@Override
 	public void patchProductOfferingPrice200() throws Exception {
 		//first create
-		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
+		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
 
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
 				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
@@ -509,44 +509,44 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	private static Stream<Arguments> provideProductOfferingPriceUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ProductOfferingPriceUpdateVO newDesc = ProductOfferingPriceUpdateVOTestExample.build();
+		ProductOfferingPriceUpdateVO newDesc = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		ProductOfferingPriceVO expectedNewDesc = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedNewDesc = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		ProductOfferingPriceUpdateVO newLifeCycle = ProductOfferingPriceUpdateVOTestExample.build();
+		ProductOfferingPriceUpdateVO newLifeCycle = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newLifeCycle.setLifecycleStatus("Dead");
-		ProductOfferingPriceVO expectedNewLifeCycle = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedNewLifeCycle = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
-		ProductOfferingPriceUpdateVO newName = ProductOfferingPriceUpdateVOTestExample.build();
+		ProductOfferingPriceUpdateVO newName = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		ProductOfferingPriceVO expectedNewName = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedNewName = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
-		ProductOfferingPriceUpdateVO newVersion = ProductOfferingPriceUpdateVOTestExample.build();
+		ProductOfferingPriceUpdateVO newVersion = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newVersion.setVersion("1.23.1");
-		ProductOfferingPriceVO expectedNewVersion = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedNewVersion = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
-		ProductOfferingPriceUpdateVO newValidFor = ProductOfferingPriceUpdateVOTestExample.build();
+		ProductOfferingPriceUpdateVO newValidFor = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
 		timePeriodVO.setEndDateTime(Instant.now());
 		timePeriodVO.setStartDateTime(Instant.now());
 		newValidFor.setValidFor(timePeriodVO);
-		ProductOfferingPriceVO expectedNewValidFor = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedNewValidFor = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedNewValidFor.setValidFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
 
-		ProductOfferingPriceUpdateVO newTax = ProductOfferingPriceUpdateVOTestExample.build();
-		newTax.setTax(List.of(TaxItemVOTestExample.build().id("urn:tax-item")));
-		ProductOfferingPriceVO expectedNewTax = ProductOfferingPriceVOTestExample.build();
-		expectedNewTax.setTax(List.of(TaxItemVOTestExample.build().id("urn:tax-item")));
+		ProductOfferingPriceUpdateVO newTax = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
+		newTax.setTax(List.of(TaxItemVOTestExample.build().atSchemaLocation(null).id("urn:tax-item")));
+		ProductOfferingPriceVO expectedNewTax = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
+		expectedNewTax.setTax(List.of(TaxItemVOTestExample.build().atSchemaLocation(null).id("urn:tax-item")));
 		testEntries.add(Arguments.of("The tax should have been updated.", newTax, expectedNewTax));
 
 		return testEntries.stream();
@@ -564,7 +564,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@Override
 	public void patchProductOfferingPrice400() throws Exception {
 		//first create
-		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
+		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<ProductOfferingPriceVO> createResponse = callAndCatch(
 				() -> productOfferingPriceApiTestClient.createProductOfferingPrice(null, productOfferingPriceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
@@ -584,43 +584,43 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A productOfferingPrice with invalid popRel should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build().bundledPopRelationship(
-						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build()))));
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null).bundledPopRelationship(
+						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent popRel should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build().bundledPopRelationship(
-						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build()
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null).bundledPopRelationship(
+						List.of(BundledProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-offering-price:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid constraint should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build()
-						.constraint(List.of(ConstraintRefVOTestExample.build()))));
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null)
+						.constraint(List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent constraint should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build().constraint(
-						List.of(ConstraintRefVOTestExample.build().id("urn:ngsi-ld:constraint:non-existent")))));
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null).constraint(
+						List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:constraint:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid place should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build().place(List.of(PlaceRefVOTestExample.build()))));
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null).place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent place should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build()
-						.place(List.of(PlaceRefVOTestExample.build().id("urn:ngsi-ld:place:non-existent")))));
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null)
+						.place(List.of(PlaceRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:place:non-existent")))));
 
 		testEntries.add(Arguments.of("A productOffering with invalid popRelationship should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build()
-						.popRelationship(List.of(ProductOfferingPriceRelationshipVOTestExample.build()))));
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null)
+						.popRelationship(List.of(ProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A productOffering with non-existent popRelationship should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build().popRelationship(
-						List.of(ProductOfferingPriceRelationshipVOTestExample.build()
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null).popRelationship(
+						List.of(ProductOfferingPriceRelationshipVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-offering-price:non-existent")))));
 
 		// TODO: Add test for sub-relationships
 		testEntries.add(
 				Arguments.of("A productOffering with invalid prod-spec-characteristic-value-use should not be created.",
-						ProductOfferingPriceUpdateVOTestExample.build().prodSpecCharValueUse(
-								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()))));
+						ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+								List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of(
 				"A productOffering with non-existent prod-spec-characteristic-value-use should not be created.",
-				ProductOfferingPriceUpdateVOTestExample.build().prodSpecCharValueUse(
-						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build()
+				ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null).prodSpecCharValueUse(
+						List.of(ProductSpecificationCharacteristicValueUseVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:prod-spec-characteristic-value-use:non-existent")))));
 
 		return testEntries.stream();
@@ -643,7 +643,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 	@Test
 	@Override
 	public void patchProductOfferingPrice404() throws Exception {
-		ProductOfferingPriceUpdateVO productOfferingPriceUpdateVO = ProductOfferingPriceUpdateVOTestExample.build();
+		ProductOfferingPriceUpdateVO productOfferingPriceUpdateVO = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> productOfferingPriceApiTestClient.patchProductOfferingPrice(
@@ -680,7 +680,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		//first create
 		ProductOfferingTermVO pot = new ProductOfferingTermVO()
 				.duration(new DurationVO().amount(6).units("month"));
-		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build();
+		ProductOfferingPriceCreateVO productOfferingPriceCreateVO = ProductOfferingPriceCreateVOTestExample.build().atSchemaLocation(null);
 		productOfferingPriceCreateVO.productOfferingTerm(List.of(pot));
 
 		// we dont have a parent
@@ -690,7 +690,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 				"The productOffering should have been created first.");
 		String id = createResponse.body().getId();
 
-		ProductOfferingPriceVO expectedProductOfferingPrice = ProductOfferingPriceVOTestExample.build();
+		ProductOfferingPriceVO expectedProductOfferingPrice = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
 		expectedProductOfferingPrice.setId(id);
 		expectedProductOfferingPrice.setHref(id);
 		expectedProductOfferingPrice.setLastUpdate(currentTimeInstant);

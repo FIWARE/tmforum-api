@@ -88,7 +88,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 		List<CustomerBill> bills = new ArrayList<>();
 		List<CustomerBillVO> expectedBillVOS = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			CustomerBillVO customerBillVO = CustomerBillVOTestExample.build()
+			CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null)
 					.id("urn:ngsi-ld:customer-bill:" + UUID.randomUUID().toString())
 					.billingAccount(null)
 					.financialAccount(null)
@@ -207,7 +207,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 		String billId = "urn:ngsi-ld:customer-bill:test-bill";
 
-		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().id(billId)
+		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null).id(billId)
 				.relatedParty(null)
 				.financialAccount(null)
 				.billingAccount(null)
@@ -216,7 +216,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 		HttpResponse<CustomerBillVO> updateResponse = callAndCatch(
 				() -> customerBillApiTestClient.patchCustomerBill(null, billId,
-						CustomerBillUpdateVOTestExample.build().state(StateValueVO.ON_HOLD)));
+						CustomerBillUpdateVOTestExample.build().atSchemaLocation(null).state(StateValueVO.ON_HOLD)));
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), "The update should be successfull");
 		CustomerBillVO updatedCustomerBill = updateResponse.body();
 
@@ -233,7 +233,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 		String billId = "urn:ngsi-ld:customer-bill:test-bill";
 
-		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().id(billId)
+		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null).id(billId)
 				.relatedParty(null)
 				.financialAccount(null)
 				.billingAccount(null)
@@ -264,7 +264,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	public void patchCustomerBill404() throws Exception {
 		HttpResponse<CustomerBillVO> updateResponse = callAndCatch(
 				() -> customerBillApiTestClient.patchCustomerBill(null, "urn:ngsi-ld:customer-bill:non-existent",
-						CustomerBillUpdateVOTestExample.build()));
+						CustomerBillUpdateVOTestExample.build().atSchemaLocation(null)));
 		assertEquals(HttpStatus.NOT_FOUND, updateResponse.getStatus(), "The update should not be successfull");
 	}
 
@@ -302,7 +302,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 		String billId = "urn:ngsi-ld:customer-bill:" + UUID.randomUUID();
 		expectedCustomerBillVo.id(billId);
 
-		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().id(billId)
+		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null).id(billId)
 				.relatedParty(null)
 				.financialAccount(null)
 				.billingAccount(null)
@@ -319,14 +319,14 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						CustomerBillVOTestExample.build()
+						CustomerBillVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.billingAccount(null)
 								.financialAccount(null)
 								.paymentMethod(null)
 				),
 				Arguments.of("With an empty fields parameter only mandatory should be returned.", "",
-						CustomerBillVOTestExample.build()
+						CustomerBillVOTestExample.build().atSchemaLocation(null)
 								.billNo(null)
 								.category(null)
 								.state(null)
@@ -351,7 +351,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 								.atSchemaLocation(null)
 								.atType(null)),
 				Arguments.of("Only mandatory and billNo should be returned.", "billNo",
-						CustomerBillVOTestExample.build()
+						CustomerBillVOTestExample.build().atSchemaLocation(null)
 								.billDate(null)
 								.category(null)
 								.lastUpdate(null)
@@ -375,7 +375,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 								.atSchemaLocation(null)
 								.atType(null)),
 				Arguments.of("Only mandatory, billNo, category and state should be returned.", "billNo,category,state",
-						CustomerBillVOTestExample.build()
+						CustomerBillVOTestExample.build().atSchemaLocation(null)
 								.billDate(null)
 								.lastUpdate(null)
 								.nextBillDate(null)
@@ -397,7 +397,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 								.atSchemaLocation(null)
 								.atType(null)),
 				Arguments.of("Only mandatory should be returned for non-existent.", "non-existent",
-						CustomerBillVOTestExample.build()
+						CustomerBillVOTestExample.build().atSchemaLocation(null)
 								.billNo(null)
 								.category(null)
 								.state(null)

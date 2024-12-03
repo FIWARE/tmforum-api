@@ -102,16 +102,16 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     private static Stream<Arguments> provideValidResourceCatalogs() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        ResourceCatalogCreateVO emptyCreate = ResourceCatalogCreateVOTestExample.build().lifecycleStatus("created");
-        ResourceCatalogVO expectedEmpty = ResourceCatalogVOTestExample.build().lifecycleStatus("created");
+        ResourceCatalogCreateVO emptyCreate = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created");
+        ResourceCatalogVO expectedEmpty = ResourceCatalogVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created");
         testEntries.add(
                 Arguments.of("An empty resource catalog should have been created.", emptyCreate, expectedEmpty));
 
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
                 .startDateTime(Instant.now());
-        ResourceCatalogCreateVO createValidFor = ResourceCatalogCreateVOTestExample.build().validFor(timePeriodVO)
+        ResourceCatalogCreateVO createValidFor = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
                 .lifecycleStatus("created");
-        ResourceCatalogVO expectedValidFor = ResourceCatalogVOTestExample.build().validFor(timePeriodVO)
+        ResourceCatalogVO expectedValidFor = ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
                 .lifecycleStatus("created");
         testEntries.add(Arguments.of("An resource catalog with a validFor should have been created.", createValidFor,
                 expectedValidFor));
@@ -140,17 +140,17 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(Arguments.of("A resource catalog with invalid related parties should not be created.",
-                ResourceCatalogCreateVOTestExample.build().relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+                ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null).relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A resource catalog with non-existent related parties should not be created.",
-                ResourceCatalogCreateVOTestExample.build().relatedParty(
-                        List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
+                ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null).relatedParty(
+                        List.of((RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organisation:non-existent"))))));
 
         testEntries.add(Arguments.of("A resource catalog with an invalid resource category should not be created.",
-                ResourceCatalogCreateVOTestExample.build()
-                        .category(List.of(ResourceCategoryRefVOTestExample.build()))));
+                ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null)
+                        .category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A resource catalog with a non-existent resource category should not be created.",
-                ResourceCatalogCreateVOTestExample.build().category(
-                        List.of(ResourceCategoryRefVOTestExample.build().id("urn:ngsi-ld:category:non-existent")))));
+                ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null).category(
+                        List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:category:non-existent")))));
 
         return testEntries.stream();
     }
@@ -190,7 +190,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     @Test
     @Override
     public void deleteResourceCatalog204() throws Exception {
-        ResourceCatalogCreateVO emptyCreate = ResourceCatalogCreateVOTestExample.build();
+        ResourceCatalogCreateVO emptyCreate = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null);
 
         HttpResponse<ResourceCatalogVO> createResponse = resourceCatalogApiTestClient.createResourceCatalog(null,
                 emptyCreate);
@@ -275,10 +275,10 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 
         List<ResourceCatalogVO> expectedResourceCatalogs = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build();
+            ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null);
             String id = resourceCatalogApiTestClient.createResourceCatalog(null, resourceCatalogCreateVO)
                     .body().getId();
-            ResourceCatalogVO resourceCatalogVO = ResourceCatalogVOTestExample.build();
+            ResourceCatalogVO resourceCatalogVO = ResourceCatalogVOTestExample.build().atSchemaLocation(null);
             resourceCatalogVO
                     .id(id)
                     .href(URI.create(id));
@@ -408,7 +408,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     @Override
     public void patchResourceCatalog200() throws Exception {
         //first create
-        ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build();
+        ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null);
 
         HttpResponse<ResourceCatalogVO> createResponse = callAndCatch(
                 () -> resourceCatalogApiTestClient.createResourceCatalog(null, resourceCatalogCreateVO));
@@ -430,36 +430,36 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     private static Stream<Arguments> provideResourceCatalogUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        ResourceCatalogUpdateVO lifecycleStatusUpdate = ResourceCatalogUpdateVOTestExample.build()
+        ResourceCatalogUpdateVO lifecycleStatusUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .lifecycleStatus("dead");
-        ResourceCatalogVO expectedLifecycleStatus = ResourceCatalogVOTestExample.build()
+        ResourceCatalogVO expectedLifecycleStatus = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
                 .lifecycleStatus("dead");
         testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
                 expectedLifecycleStatus));
 
-        ResourceCatalogUpdateVO descriptionUpdate = ResourceCatalogUpdateVOTestExample.build()
+        ResourceCatalogUpdateVO descriptionUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .description("new-description");
-        ResourceCatalogVO expectedDescriptionUpdate = ResourceCatalogVOTestExample.build()
+        ResourceCatalogVO expectedDescriptionUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
                 .description("new-description");
         testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
                 expectedDescriptionUpdate));
 
-        ResourceCatalogUpdateVO nameUpdate = ResourceCatalogUpdateVOTestExample.build()
+        ResourceCatalogUpdateVO nameUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .name("new-name");
-        ResourceCatalogVO expectedNameUpdate = ResourceCatalogVOTestExample.build()
+        ResourceCatalogVO expectedNameUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
                 .name("new-name");
         testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
-        ResourceCatalogUpdateVO versionUpdate = ResourceCatalogUpdateVOTestExample.build()
+        ResourceCatalogUpdateVO versionUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .version("v0.0.2");
-        ResourceCatalogVO expectedVersionUpdate = ResourceCatalogVOTestExample.build()
+        ResourceCatalogVO expectedVersionUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
                 .version("v0.0.2");
         testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
                 .startDateTime(Instant.now());
-        ResourceCatalogUpdateVO validForUpdate = ResourceCatalogUpdateVOTestExample.build().validFor(timePeriodVO);
-        ResourceCatalogVO expectedValidForUpdate = ResourceCatalogVOTestExample.build().validFor(timePeriodVO);
+        ResourceCatalogUpdateVO validForUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO);
+        ResourceCatalogVO expectedValidForUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO);
         testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
         return testEntries.stream();
@@ -476,7 +476,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     @Override
     public void patchResourceCatalog400() throws Exception {
         //first create
-        ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build();
+        ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null);
 
         HttpResponse<ResourceCatalogVO> createResponse = callAndCatch(
                 () -> resourceCatalogApiTestClient.createResourceCatalog(null, resourceCatalogCreateVO));
@@ -497,19 +497,19 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(Arguments.of("An update with an invalid related party ref is not allowed.",
-                ResourceCatalogUpdateVOTestExample.build()
-                        .relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+                ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("An update with an non existent related party is not allowed.",
-                ResourceCatalogUpdateVOTestExample.build()
-                        .relatedParty(List.of(RelatedPartyVOTestExample.build()
+                ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:organisation:non-existent")))));
 
         testEntries.add(Arguments.of("An update with an invalid category ref is not allowed.",
-                ResourceCatalogUpdateVOTestExample.build()
-                        .category(List.of(ResourceCategoryRefVOTestExample.build()))));
+                ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("An update with an non existent category is not allowed.",
-                ResourceCatalogUpdateVOTestExample.build()
-                        .category(List.of(ResourceCategoryRefVOTestExample.build()
+                ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .category(List.of(ResourceCategoryRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:resource-category:non-existent")))));
 
         return testEntries.stream();
@@ -532,7 +532,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     @Test
     @Override
     public void patchResourceCatalog404() throws Exception {
-        ResourceCatalogUpdateVO resourceCatalogUpdateVO = ResourceCatalogUpdateVOTestExample.build();
+        ResourceCatalogUpdateVO resourceCatalogUpdateVO = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 callAndCatch(() -> resourceCatalogApiTestClient.patchResourceCatalog(null,
@@ -570,7 +570,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     @Override
     public void retrieveResourceCatalog200() throws Exception {
 
-        ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build();
+        ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<ResourceCatalogVO> createResponse = callAndCatch(
                 () -> resourceCatalogApiTestClient.createResourceCatalog(null, resourceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
@@ -590,9 +590,9 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
-                        ResourceCatalogVOTestExample.build()),
+                        ResourceCatalogVOTestExample.build().atSchemaLocation(null)),
                 Arguments.of("Only version and the mandatory parameters should have been included.", "version",
-                        ResourceCatalogVOTestExample.build()
+                        ResourceCatalogVOTestExample.build().atSchemaLocation(null)
                                 .relatedParty(null)
                                 .lastUpdate(null)
                                 .category(null)
@@ -606,7 +606,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
                                 .atType(null)),
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
-                        "nothingToSeeHere", ResourceCatalogVOTestExample.build()
+                        "nothingToSeeHere", ResourceCatalogVOTestExample.build().atSchemaLocation(null)
                                 .relatedParty(null)
                                 .lastUpdate(null)
                                 .category(null)
@@ -621,7 +621,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
                                 .atType(null)),
                 Arguments.of(
                         "Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
-                        "version,lastUpdate,lifecycleStatus,description", ResourceCatalogVOTestExample.build()
+                        "version,lastUpdate,lifecycleStatus,description", ResourceCatalogVOTestExample.build().atSchemaLocation(null)
                                 .relatedParty(null)
                                 .category(null)
                                 .relatedParty(null)

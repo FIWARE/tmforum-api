@@ -95,8 +95,8 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 	private static Stream<Arguments> provideValidBillPresentationMedias() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build();
-		BillPresentationMediaVO expectedBillPresentationMedia = BillPresentationMediaVOTestExample.build();
+		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build().atSchemaLocation(null);
+		BillPresentationMediaVO expectedBillPresentationMedia = BillPresentationMediaVOTestExample.build().atSchemaLocation(null);
 		testEntries.add(Arguments.of("An empty billPresentationMedia should have been created.", billPresentationMediaCreateVO, expectedBillPresentationMedia));
 
 		return testEntries.stream();
@@ -143,7 +143,7 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 	@Override
 	public void deleteBillPresentationMedia204() throws Exception {
 
-		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build();
+		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<BillPresentationMediaVO> createResponse = callAndCatch(
 				() -> billPresentationMediaApiTestClient.createBillPresentationMedia(null, billPresentationMediaCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billPresentationMedia should have been created first.");
@@ -221,9 +221,9 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 	public void listBillPresentationMedia200() throws Exception {
 		List<BillPresentationMediaVO> expectedBillPresentationMedias = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build();
+			BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build().atSchemaLocation(null);
 			String id = billPresentationMediaApiTestClient.createBillPresentationMedia(null, billPresentationMediaCreateVO).body().getId();
-			BillPresentationMediaVO billPresentationMediaVO = BillPresentationMediaVOTestExample.build();
+			BillPresentationMediaVO billPresentationMediaVO = BillPresentationMediaVOTestExample.build().atSchemaLocation(null);
 			billPresentationMediaVO
 					.id(id)
 					.href(id);
@@ -340,7 +340,7 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 	@Override
 	public void patchBillPresentationMedia200() throws Exception {
 		//first create
-		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build();
+		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<BillPresentationMediaVO> createResponse = callAndCatch(
 				() -> billPresentationMediaApiTestClient.createBillPresentationMedia(null, billPresentationMediaCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billPresentationMedia should have been created first.");
@@ -360,15 +360,15 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 	private static Stream<Arguments> provideBillPresentationMediaUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillPresentationMediaUpdateVO newDesc = BillPresentationMediaUpdateVOTestExample.build();
+		BillPresentationMediaUpdateVO newDesc = BillPresentationMediaUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		BillPresentationMediaVO expectedNewDesc = BillPresentationMediaVOTestExample.build();
+		BillPresentationMediaVO expectedNewDesc = BillPresentationMediaVOTestExample.build().atSchemaLocation(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		BillPresentationMediaUpdateVO newName = BillPresentationMediaUpdateVOTestExample.build();
+		BillPresentationMediaUpdateVO newName = BillPresentationMediaUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		BillPresentationMediaVO expectedNewName = BillPresentationMediaVOTestExample.build();
+		BillPresentationMediaVO expectedNewName = BillPresentationMediaVOTestExample.build().atSchemaLocation(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
@@ -403,7 +403,7 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 
 	@Override
 	public void patchBillPresentationMedia404() throws Exception {
-		BillPresentationMediaUpdateVO billPresentationMediaUpdateVO = BillPresentationMediaUpdateVOTestExample.build();
+		BillPresentationMediaUpdateVO billPresentationMediaUpdateVO = BillPresentationMediaUpdateVOTestExample.build().atSchemaLocation(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> billPresentationMediaApiTestClient.patchBillPresentationMedia(null, "urn:ngsi-ld:billPresentationMedia:not-existent",
@@ -432,13 +432,13 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 	@Override
 	public void retrieveBillPresentationMedia200() throws Exception {
 		//first create
-		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build();
+		BillPresentationMediaCreateVO billPresentationMediaCreateVO = BillPresentationMediaCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<BillPresentationMediaVO> createResponse = callAndCatch(
 				() -> billPresentationMediaApiTestClient.createBillPresentationMedia(null, billPresentationMediaCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billPresentationMedia should have been created first.");
 		String id = createResponse.body().getId();
 
-		BillPresentationMediaVO expectedBillPresentationMedia = BillPresentationMediaVOTestExample.build();
+		BillPresentationMediaVO expectedBillPresentationMedia = BillPresentationMediaVOTestExample.build().atSchemaLocation(null);
 		expectedBillPresentationMedia.setId(id);
 		expectedBillPresentationMedia.setHref(id);
 

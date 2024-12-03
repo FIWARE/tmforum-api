@@ -161,13 +161,13 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         List<ArgumentPair<List<CharacteristicVO>>> characteristicArguments = new ArrayList<>();
 
         characteristicArguments.add(new ArgumentPair<>("Single characteristics should be valid.",
-                List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null))));
+                List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-1").characteristicRelationship(null))));
         characteristicArguments.add(new ArgumentPair<>("Mulitple characteristics should be valid.",
-                List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
-                        CharacteristicVOTestExample.build().id("urn:c-2").characteristicRelationship(null))));
+                List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-1").characteristicRelationship(null),
+                        CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-2").characteristicRelationship(null))));
         characteristicArguments.add(new ArgumentPair<>("Referencing characteristics should be valid.",
-                List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
-                        CharacteristicVOTestExample.build().id("urn:c-2")
+                List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-1").characteristicRelationship(null),
+                        CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-2")
                                 .characteristicRelationship(
                                         List.of(CharacteristicRelationshipVOTestExample.build().id("urn:c-1"))))));
         return characteristicArguments.stream();
@@ -196,21 +196,21 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         testEntries.add(Arguments.of("A service with invalid related parties should not be created.",
                 ServiceCreateVOTestExample.build()
                         .serviceSpecification(null)
-                        .relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+                        .relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A service with non-existent related parties should not be created.",
                 ServiceCreateVOTestExample.build()
                         .serviceSpecification(null)
                         .relatedParty(
-                                List.of((RelatedPartyVOTestExample.build()
+                                List.of((RelatedPartyVOTestExample.build().atSchemaLocation(null)
                                         .id("urn:ngsi-ld:organisation:non-existent"))))));
 
         testEntries.add(Arguments.of("A service with invalid service specification should not be created.",
                 ServiceCreateVOTestExample.build()
-                        .serviceSpecification(ServiceSpecificationRefVOTestExample.build())));
+                        .serviceSpecification(ServiceSpecificationRefVOTestExample.build().atSchemaLocation(null))));
         testEntries.add(Arguments.of("A service with non-existent service specifications should not be created.",
                 ServiceCreateVOTestExample.build()
                         .serviceSpecification(
-                                (ServiceSpecificationRefVOTestExample.build()
+                                (ServiceSpecificationRefVOTestExample.build().atSchemaLocation(null)
                                         .id("urn:ngsi-ld:organisation:non-existent")))));
 
         return testEntries.stream();
@@ -537,11 +537,11 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         testEntries.add(Arguments.of("The characteristic should have been updated.",
                 ServiceUpdateVOTestExample.build()
                         .serviceSpecification(null)
-                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
+                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).name("new")
                                 .id(null))),
                 ServiceVOTestExample.build()
                         .serviceSpecification(null)
-                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().name("new")
+                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).name("new")
                                 .id(null)))));
 
         return testEntries.stream();
@@ -581,10 +581,10 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
 
         testEntries.add(Arguments.of("A service with invalid related parties should not be created.",
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
-                        .relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+                        .relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A service with non-existent related parties should not be created.",
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null).relatedParty(
-                        List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
+                        List.of((RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organisation:non-existent"))))));
 
         testEntries.add(Arguments.of("A service with duplicate feature ids should not be created.",
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
@@ -599,13 +599,13 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
 
         testEntries.add(Arguments.of("A service with duplicate service characteristic ids should not be created.",
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
-                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-                                CharacteristicVOTestExample.build().id("my-characteristic")))));
+                        .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+                                CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic")))));
         testEntries.add(Arguments.of("A service with invalid feature references should not be created.",
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
                         .serviceCharacteristic(List.of(
-                                CharacteristicVOTestExample.build().id("my-feature"),
-                                CharacteristicVOTestExample.build().characteristicRelationship(
+                                CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-feature"),
+                                CharacteristicVOTestExample.build().atSchemaLocation(null).characteristicRelationship(
                                         List.of(CharacteristicRelationshipVOTestExample.build()
                                                 .id("non-existent")))))));
 
@@ -613,14 +613,14 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
                         .feature(List.of(FeatureVOTestExample.build()
                                 .featureCharacteristic(
-                                        List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-                                                CharacteristicVOTestExample.build().id("my-characteristic")))))));
+                                        List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+                                                CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic")))))));
         testEntries.add(Arguments.of("A service with invalid feature references should not be created.",
                 ServiceUpdateVOTestExample.build().place(null).serviceSpecification(null)
                         .feature(List.of(FeatureVOTestExample.build()
                                 .featureCharacteristic(
-                                        List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-                                                CharacteristicVOTestExample.build()
+                                        List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+                                                CharacteristicVOTestExample.build().atSchemaLocation(null)
                                                         .characteristicRelationship(
                                                                 List.of(CharacteristicRelationshipVOTestExample.build()
                                                                         .id("non-existent")))))))));
@@ -645,7 +645,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     @Test
     @Override
     public void patchService404() throws Exception {
-        ServiceUpdateVO serviceUpdateVO = ServiceUpdateVOTestExample.build();
+        ServiceUpdateVO serviceUpdateVO = ServiceUpdateVOTestExample.build().serviceSpecification(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 callAndCatch(() -> serviceApiTestClient.patchService(null, "urn:ngsi-ld:service-catalog:not-existent",

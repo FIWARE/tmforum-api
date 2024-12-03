@@ -67,15 +67,15 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 
 	private static void fixExampleCreate(BillingAccountCreateVO billingAccount) {
 		// fix the example
-		BillingCycleSpecificationRefOrValueVO billingCycleSpecificationRefOrValueVO = BillingCycleSpecificationRefOrValueVOTestExample.build();
+		BillingCycleSpecificationRefOrValueVO billingCycleSpecificationRefOrValueVO = BillingCycleSpecificationRefOrValueVOTestExample.build().atSchemaLocation(null);
 		billingCycleSpecificationRefOrValueVO.setHref("http://my-ref.de");
 		billingCycleSpecificationRefOrValueVO.setId("http://my-url.de");
 
-		BillFormatRefOrValueVO billFormatRefOrValueVO = BillFormatRefOrValueVOTestExample.build();
+		BillFormatRefOrValueVO billFormatRefOrValueVO = BillFormatRefOrValueVOTestExample.build().atSchemaLocation(null);
 		billFormatRefOrValueVO.setHref("http://my-ref.de");
 		billFormatRefOrValueVO.setId("http://my-url.de");
 
-		BillStructureVO billStructure = BillStructureVOTestExample.build();
+		BillStructureVO billStructure = BillStructureVOTestExample.build().atSchemaLocation(null);
 		billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
 		billStructure.setFormat(billFormatRefOrValueVO);
 		billingAccount.setBillStructure(billStructure);
@@ -83,15 +83,15 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 
 	private static void fixExampleUpdate(BillingAccountUpdateVO billingAccount) {
 		// fix the example
-		BillingCycleSpecificationRefOrValueVO billingCycleSpecificationRefOrValueVO = BillingCycleSpecificationRefOrValueVOTestExample.build();
+		BillingCycleSpecificationRefOrValueVO billingCycleSpecificationRefOrValueVO = BillingCycleSpecificationRefOrValueVOTestExample.build().atSchemaLocation(null);
 		billingCycleSpecificationRefOrValueVO.setHref("http://my-ref.de");
 		billingCycleSpecificationRefOrValueVO.setId("http://my-url.de");
 
-		BillFormatRefOrValueVO billFormatRefOrValueVO = BillFormatRefOrValueVOTestExample.build();
+		BillFormatRefOrValueVO billFormatRefOrValueVO = BillFormatRefOrValueVOTestExample.build().atSchemaLocation(null);
 		billFormatRefOrValueVO.setHref("http://my-ref.de");
 		billFormatRefOrValueVO.setId("http://my-url.de");
 
-		BillStructureVO billStructure = BillStructureVOTestExample.build();
+		BillStructureVO billStructure = BillStructureVOTestExample.build().atSchemaLocation(null);
 		billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
 		billStructure.setFormat(billFormatRefOrValueVO);
 		billingAccount.setBillStructure(billStructure);
@@ -99,15 +99,15 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 
 	private static void fixExampleExpected(BillingAccountVO billingAccount) {
 		// fix the example
-		BillingCycleSpecificationRefOrValueVO billingCycleSpecificationRefOrValueVO = BillingCycleSpecificationRefOrValueVOTestExample.build();
+		BillingCycleSpecificationRefOrValueVO billingCycleSpecificationRefOrValueVO = BillingCycleSpecificationRefOrValueVOTestExample.build().atSchemaLocation(null);
 		billingCycleSpecificationRefOrValueVO.setHref("http://my-ref.de");
 		billingCycleSpecificationRefOrValueVO.setId("http://my-url.de");
 
-		BillFormatRefOrValueVO billFormatRefOrValueVO = BillFormatRefOrValueVOTestExample.build();
+		BillFormatRefOrValueVO billFormatRefOrValueVO = BillFormatRefOrValueVOTestExample.build().atSchemaLocation(null);
 		billFormatRefOrValueVO.setHref("http://my-ref.de");
 		billFormatRefOrValueVO.setId("http://my-url.de");
 
-		BillStructureVO billStructure = BillStructureVOTestExample.build();
+		BillStructureVO billStructure = BillStructureVOTestExample.build().atSchemaLocation(null);
 		billStructure.setCycleSpecification(billingCycleSpecificationRefOrValueVO);
 		billStructure.setFormat(billFormatRefOrValueVO);
 		billingAccount.setBillStructure(billStructure);
@@ -141,8 +141,8 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	private static Stream<Arguments> provideValidBillingAccounts() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build().defaultPaymentMethod(null).financialAccount(null);
-		BillingAccountVO expectedBillingAccount = BillingAccountVOTestExample.build().defaultPaymentMethod(null).financialAccount(null);
+		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build().atSchemaLocation(null).defaultPaymentMethod(null).financialAccount(null);
+		BillingAccountVO expectedBillingAccount = BillingAccountVOTestExample.build().atSchemaLocation(null).defaultPaymentMethod(null).financialAccount(null);
 
 		fixExampleCreate(billingAccountCreateVO);
 		fixExampleExpected(expectedBillingAccount);
@@ -172,33 +172,33 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	private static Stream<Arguments> provideInvalidBillingAccounts() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillingAccountCreateVO invalidRelatedPartyCreate = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO invalidRelatedPartyCreate = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.defaultPaymentMethod(null)
 				.financialAccount(null);
 		// no valid id
-		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		invalidRelatedPartyCreate.setRelatedParty(List.of(invalidRelatedParty));
 		testEntries.add(Arguments.of("A billingAccount with invalid related parties should not be created.",
 				invalidRelatedPartyCreate));
 
-		BillingAccountCreateVO nonExistentRelatedPartyCreate = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO nonExistentRelatedPartyCreate = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.defaultPaymentMethod(null)
 				.financialAccount(null);
 		// no existent id
-		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		nonExistentRelatedParty.setId("urn:ngsi-ld:individual:non-existent");
 		nonExistentRelatedPartyCreate.setRelatedParty(List.of(nonExistentRelatedParty));
 		testEntries.add(Arguments.of("A billingAccount with non-existent related parties should not be created.",
 				nonExistentRelatedPartyCreate));
 
-		BillingAccountCreateVO nonExistentDefaultPaymentMethodCreate = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO nonExistentDefaultPaymentMethodCreate = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.financialAccount(null);
 		// no existent id
 		nonExistentDefaultPaymentMethodCreate.setRelatedParty(List.of(nonExistentRelatedParty));
 		testEntries.add(Arguments.of("A billingAccount with non-existent related parties should not be created.",
 				nonExistentDefaultPaymentMethodCreate));
 
-		BillingAccountCreateVO nonExistentFinancialAccountCreate = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO nonExistentFinancialAccountCreate = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.defaultPaymentMethod(null);
 		// no existent id
 		nonExistentFinancialAccountCreate.setRelatedParty(List.of(nonExistentRelatedParty));
@@ -248,7 +248,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	@Override
 	public void deleteBillingAccount204() throws Exception {
 		//first create
-		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.defaultPaymentMethod(null)
 				.financialAccount(null);
 
@@ -336,12 +336,12 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	public void listBillingAccount200() throws Exception {
 		List<BillingAccountVO> expectedBillingAccounts = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build()
+			BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 					.defaultPaymentMethod(null)
 					.financialAccount(null);
 			fixExampleCreate(billingAccountCreateVO);
 			String id = billingAccountApiTestClient.createBillingAccount(null, billingAccountCreateVO).body().getId();
-			BillingAccountVO billingAccountVO = BillingAccountVOTestExample.build();
+			BillingAccountVO billingAccountVO = BillingAccountVOTestExample.build().atSchemaLocation(null);
 			fixExampleExpected(billingAccountVO);
 			BillingCycleSpecificationRefOrValueVO billingCycleRV = billingAccountVO.getBillStructure()
 					.getCycleSpecification();
@@ -471,7 +471,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	@Override
 	public void patchBillingAccount200() throws Exception {
 		//first create
-		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleCreate(billingAccountCreateVO);
@@ -503,30 +503,30 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	private static Stream<Arguments> provideBillingAccountUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillingAccountUpdateVO newTypeBillingAccount = BillingAccountUpdateVOTestExample.build()
+		BillingAccountUpdateVO newTypeBillingAccount = BillingAccountUpdateVOTestExample.build().billStructure(null).atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newTypeBillingAccount);
 		newTypeBillingAccount.setAccountType("New-Type");
-		BillingAccountVO expectedNewType = BillingAccountVOTestExample.build();
+		BillingAccountVO expectedNewType = BillingAccountVOTestExample.build().atSchemaLocation(null);
 		expectedNewType.setAccountType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeBillingAccount, expectedNewType));
 
-		BillingAccountUpdateVO newDesc = BillingAccountUpdateVOTestExample.build()
+		BillingAccountUpdateVO newDesc = BillingAccountUpdateVOTestExample.build().billStructure(null).atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newDesc);
 		newDesc.setDescription("New description");
-		BillingAccountVO expectedNewDesc = BillingAccountVOTestExample.build();
+		BillingAccountVO expectedNewDesc = BillingAccountVOTestExample.build().atSchemaLocation(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		BillingAccountUpdateVO newName = BillingAccountUpdateVOTestExample.build()
+		BillingAccountUpdateVO newName = BillingAccountUpdateVOTestExample.build().billStructure(null).atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newName);
 		newName.setName("New name");
-		BillingAccountVO expectedNewName = BillingAccountVOTestExample.build();
+		BillingAccountVO expectedNewName = BillingAccountVOTestExample.build().atSchemaLocation(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
@@ -544,7 +544,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	@Override
 	public void patchBillingAccount400() throws Exception {
 		//first create
-		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleCreate(billingAccountCreateVO);
@@ -565,34 +565,34 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	private static Stream<Arguments> provideInvalidUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		BillingAccountUpdateVO invalidRelatedPartyUpdate = BillingAccountUpdateVOTestExample.build()
+		BillingAccountUpdateVO invalidRelatedPartyUpdate = BillingAccountUpdateVOTestExample.build().billStructure(null).atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(invalidRelatedPartyUpdate);
 		// no valid id
-		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		invalidRelatedPartyUpdate.setRelatedParty(List.of(invalidRelatedParty));
 		testEntries.add(Arguments.of("A billingAccount with invalid related parties should not be updated.",
 				invalidRelatedPartyUpdate));
 
-		BillingAccountUpdateVO nonExistentRelatedPartyUpdate = BillingAccountUpdateVOTestExample.build()
+		BillingAccountUpdateVO nonExistentRelatedPartyUpdate = BillingAccountUpdateVOTestExample.build().billStructure(null).atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(nonExistentRelatedPartyUpdate);
 		// no existent id
-		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		nonExistentRelatedParty.setId("urn:ngsi-ld:individual:non-existent");
 		nonExistentRelatedPartyUpdate.setRelatedParty(List.of(nonExistentRelatedParty));
 		testEntries.add(Arguments.of("A billingAccount with non-existent related parties should not be updated.",
 				nonExistentRelatedPartyUpdate));
 
-		BillingAccountUpdateVO nonExistentFinancialAccountUpdate = BillingAccountUpdateVOTestExample.build()
+		BillingAccountUpdateVO nonExistentFinancialAccountUpdate = BillingAccountUpdateVOTestExample.build().billStructure(null).atSchemaLocation(null)
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(nonExistentFinancialAccountUpdate);
 		testEntries.add(Arguments.of("A billingAccount with non-existent Financial Account should not be updated.",
 				nonExistentFinancialAccountUpdate));
 
-		BillingAccountUpdateVO nonExistentDefaultPaymentMethodUpdate = BillingAccountUpdateVOTestExample.build()
+		BillingAccountUpdateVO nonExistentDefaultPaymentMethodUpdate = BillingAccountUpdateVOTestExample.build().billStructure(null).atSchemaLocation(null)
 				.financialAccount(null);
 		fixExampleUpdate(nonExistentDefaultPaymentMethodUpdate);
 		testEntries.add(Arguments.of("A billingAccount with non-existent default payment method should not be updated.",
@@ -618,7 +618,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	@Test
 	@Override
 	public void patchBillingAccount404() throws Exception {
-		BillingAccountUpdateVO billingAccountUpdateVO = BillingAccountUpdateVOTestExample.build();
+		BillingAccountUpdateVO billingAccountUpdateVO = BillingAccountUpdateVOTestExample.build().atSchemaLocation(null).billStructure(null).defaultPaymentMethod(null).financialAccount(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> billingAccountApiTestClient.patchBillingAccount(null, "urn:ngsi-ld:billingAccount:not-existent",
@@ -650,7 +650,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 	public void retrieveBillingAccount200() throws Exception {
 
 		//first create
-		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build()
+		BillingAccountCreateVO billingAccountCreateVO = BillingAccountCreateVOTestExample.build().atSchemaLocation(null)
 				.financialAccount(null)
 				.defaultPaymentMethod(null);
 		fixExampleCreate(billingAccountCreateVO);
@@ -659,7 +659,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billingAccount should have been created first.");
 		String id = createResponse.body().getId();
 
-		BillingAccountVO expectedBillingAccount = BillingAccountVOTestExample.build();
+		BillingAccountVO expectedBillingAccount = BillingAccountVOTestExample.build().atSchemaLocation(null);
 		expectedBillingAccount.setId(id);
 		expectedBillingAccount.setHref(id);
 		expectedBillingAccount.financialAccount(null).defaultPaymentMethod(null);

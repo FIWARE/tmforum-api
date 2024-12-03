@@ -107,9 +107,13 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	private static Stream<Arguments> provideValidProductSpecifications() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
+		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 
-		ProductSpecificationVO expectedProductOfferingPrice = ProductSpecificationVOTestExample.build();
+		ProductSpecificationVO expectedProductOfferingPrice = ProductSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		testEntries.add(Arguments.of("An empty product spec should have been created.", productSpecificationCreateVO,
 				expectedProductOfferingPrice));
 
@@ -138,49 +142,49 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A product spec with invalid bundled ps rel should not be created.",
-				ProductSpecificationCreateVOTestExample.build()
-						.bundledProductSpecification(List.of(BundledProductSpecificationVOTestExample.build()))));
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.bundledProductSpecification(List.of(BundledProductSpecificationVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent bundled ps rel should not be created.",
-				ProductSpecificationCreateVOTestExample.build().bundledProductSpecification(
-						List.of(BundledProductSpecificationVOTestExample.build()
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null).bundledProductSpecification(
+						List.of(BundledProductSpecificationVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-specification:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid product spec relationship should not be created.",
-				ProductSpecificationCreateVOTestExample.build().productSpecificationRelationship(
-						List.of(ProductSpecificationRelationshipVOTestExample.build()))));
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null).productSpecificationRelationship(
+						List.of(ProductSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(
 				Arguments.of("A product spec with non-existent product spec relationship should not be created.",
-						ProductSpecificationCreateVOTestExample.build().productSpecificationRelationship(
-								List.of(ProductSpecificationRelationshipVOTestExample.build()
+						ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null).productSpecificationRelationship(
+								List.of(ProductSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:product-specification:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid related party should not be created.",
-				ProductSpecificationCreateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent related party should not be created.",
-				ProductSpecificationCreateVOTestExample.build().relatedParty(
-						List.of(RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organization:non-existent")))));
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null).relatedParty(
+						List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organization:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid resource spec should not be created.",
-				ProductSpecificationCreateVOTestExample.build()
-						.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build()))));
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent resource spec should not be created.",
-				ProductSpecificationCreateVOTestExample.build().resourceSpecification(
-						List.of(ResourceSpecificationRefVOTestExample.build()
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null).resourceSpecification(
+						List.of(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid service spec should not be created.",
-				ProductSpecificationCreateVOTestExample.build()
-						.serviceSpecification(List.of(ServiceSpecificationRefVOTestExample.build()))));
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.serviceSpecification(List.of(ServiceSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent service spec should not be created.",
-				ProductSpecificationCreateVOTestExample.build().serviceSpecification(
-						List.of(ServiceSpecificationRefVOTestExample.build().id("urn:ngsi-ld:service:non-existent")))));
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null).serviceSpecification(
+						List.of(ServiceSpecificationRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:service:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid prod-spec-characteristic should not be created.",
-				ProductSpecificationCreateVOTestExample.build().productSpecCharacteristic(List.of(
-						ProductSpecificationCharacteristicVOTestExample.build()
+				ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null).productSpecCharacteristic(List.of(
+						ProductSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 								.productSpecCharRelationship(
-										List.of(ProductSpecificationCharacteristicRelationshipVOTestExample.build()))))));
+										List.of(ProductSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)))))));
 		return testEntries.stream();
 	}
 
@@ -219,7 +223,9 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	@Override
 	public void deleteProductSpecification204() throws Exception {
 		//first create
-		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
+		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 
 		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecificationCreateVO));
@@ -308,10 +314,14 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
 		List<ProductSpecificationVO> expectedProductSpecifications = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
+			ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build()
+					.atSchemaLocation(null)
+					.targetProductSchema(null);
 			String id = productSpecificationApiTestClient.createProductSpecification(null, productSpecificationCreateVO)
 					.body().getId();
-			ProductSpecificationVO productSpecificationVO = ProductSpecificationVOTestExample.build();
+			ProductSpecificationVO productSpecificationVO = ProductSpecificationVOTestExample.build()
+					.atSchemaLocation(null)
+					.targetProductSchema(null);
 			productSpecificationVO
 					.id(id)
 					.href(id);
@@ -442,7 +452,9 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	@Override
 	public void patchProductSpecification200() throws Exception {
 		//first create
-		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
+		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 
 		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecificationCreateVO));
@@ -464,7 +476,15 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
 	@Test
 	public void patchSpecEmptyList() throws Exception {
+
 		String resourceSpecId = "urn:ngsi-ld:resource-specification:test-spec";
+		try {
+			entitiesApi.removeEntityById(URI.create(resourceSpecId), null, null).block();
+		} catch (Exception e) {
+			// ignore, just for cleanup
+			e.getMessage();
+		}
+
 		EntityVO resourceSpecEntity = new EntityVO()
 				.atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
 				.id(URI.create(resourceSpecId))
@@ -472,8 +492,6 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
 		PropertyVO isBundle = new PropertyVO().value(false);
 		resourceSpecEntity.setAdditionalProperties("isBundle", isBundle);
-		PropertyVO atSchemaLocation = new PropertyVO().value("my:uri");
-		resourceSpecEntity.setAdditionalProperties("atSchemaLocation", atSchemaLocation);
 		PropertyVO lifecycleStatus = new PropertyVO().value("string");
 		resourceSpecEntity.setAdditionalProperties("lifecycleStatus", lifecycleStatus);
 		PropertyVO description = new PropertyVO().value("string");
@@ -487,15 +505,17 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		entitiesApi.createEntity(resourceSpecEntity, null).block();
 
 		ResourceSpecificationRefVO rsrV = new ResourceSpecificationRefVO()
+				.atSchemaLocation(null)
 				.id(resourceSpecId)
 				.href(URI.create(resourceSpecId))
 				.name("myTestRsrv");
 
 
 		//first create
-		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
-
-		productSpecificationCreateVO.setResourceSpecification(List.of(rsrV));
+		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null)
+				.resourceSpecification(List.of(rsrV));
 
 		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecificationCreateVO));
@@ -504,8 +524,10 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		String specId = createResponse.body().getId();
 
 		// null updates should not change anything
-		ProductSpecificationUpdateVO productSpecificationUpdateNullList = ProductSpecificationUpdateVOTestExample.build();
-		productSpecificationUpdateNullList.resourceSpecification(null);
+		ProductSpecificationUpdateVO productSpecificationUpdateNullList = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null)
+				.resourceSpecification(null);
 		HttpResponse<ProductSpecificationVO> nullUpdateResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.patchProductSpecification(null, specId,
 						productSpecificationUpdateNullList));
@@ -513,50 +535,71 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		assertEquals(1, nullUpdateResponse.body().getResourceSpecification().size(), "If set to null, the spec-list should stay untouched.");
 
 		// empty list updates should empty the list
-		ProductSpecificationUpdateVO productSpecificationUpdateEmptyList = ProductSpecificationUpdateVOTestExample.build();
-		productSpecificationUpdateNullList.resourceSpecification(List.of());
+		ProductSpecificationUpdateVO productSpecificationUpdateEmptyList = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null)
+				.resourceSpecification(List.of());
 		HttpResponse<ProductSpecificationVO> emptyUpdateResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.patchProductSpecification(null, specId,
 						productSpecificationUpdateEmptyList));
 		assertEquals(HttpStatus.OK, emptyUpdateResponse.getStatus(), message);
 		assertEquals(0, emptyUpdateResponse.body().getResourceSpecification().size(), "If set to empty, the spec-list should be emptied.");
 	}
-
-
+	
 	private static Stream<Arguments> provideProductOfferingUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		ProductSpecificationUpdateVO newDesc = ProductSpecificationUpdateVOTestExample.build();
+		ProductSpecificationUpdateVO newDesc = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		newDesc.setDescription("New description");
-		ProductSpecificationVO expectedNewDesc = ProductSpecificationVOTestExample.build();
+		ProductSpecificationVO expectedNewDesc = ProductSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		ProductSpecificationUpdateVO newLifeCycle = ProductSpecificationUpdateVOTestExample.build();
+		ProductSpecificationUpdateVO newLifeCycle = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		newLifeCycle.setLifecycleStatus("Dead");
-		ProductSpecificationVO expectedNewLifeCycle = ProductSpecificationVOTestExample.build();
+		ProductSpecificationVO expectedNewLifeCycle = ProductSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
-		ProductSpecificationUpdateVO newName = ProductSpecificationUpdateVOTestExample.build();
+		ProductSpecificationUpdateVO newName = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		newName.setName("New name");
-		ProductSpecificationVO expectedNewName = ProductSpecificationVOTestExample.build();
+		ProductSpecificationVO expectedNewName = ProductSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
-		ProductSpecificationUpdateVO newVersion = ProductSpecificationUpdateVOTestExample.build();
+		ProductSpecificationUpdateVO newVersion = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		newVersion.setVersion("1.23.1");
-		ProductSpecificationVO expectedNewVersion = ProductSpecificationVOTestExample.build();
+		ProductSpecificationVO expectedNewVersion = ProductSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
-		ProductSpecificationUpdateVO newValidFor = ProductSpecificationUpdateVOTestExample.build();
+		ProductSpecificationUpdateVO newValidFor = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
 		timePeriodVO.setEndDateTime(Instant.now());
 		timePeriodVO.setStartDateTime(Instant.now());
 		newValidFor.setValidFor(timePeriodVO);
-		ProductSpecificationVO expectedNewValidFor = ProductSpecificationVOTestExample.build();
+		ProductSpecificationVO expectedNewValidFor = ProductSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		expectedNewValidFor.setValidFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
 
@@ -575,7 +618,9 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	@Override
 	public void patchProductSpecification400() throws Exception {
 		//first create
-		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
+		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
@@ -596,48 +641,77 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
 		testEntries.add(Arguments.of("A product spec with invalid bundled ps rel should not be created.",
 				ProductSpecificationUpdateVOTestExample.build()
-						.bundledProductSpecification(List.of(BundledProductSpecificationVOTestExample.build()))));
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.bundledProductSpecification(List.of(BundledProductSpecificationVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent bundled ps rel should not be created.",
-				ProductSpecificationUpdateVOTestExample.build().bundledProductSpecification(
-						List.of(BundledProductSpecificationVOTestExample.build()
-								.id("urn:ngsi-ld:product-specification:non-existent")))));
+				ProductSpecificationUpdateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.bundledProductSpecification(
+								List.of(BundledProductSpecificationVOTestExample.build().atSchemaLocation(null)
+										.id("urn:ngsi-ld:product-specification:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid product spec relationship should not be created.",
-				ProductSpecificationUpdateVOTestExample.build().productSpecificationRelationship(
-						List.of(ProductSpecificationRelationshipVOTestExample.build()))));
+				ProductSpecificationUpdateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.productSpecificationRelationship(
+								List.of(ProductSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(
 				Arguments.of("A product spec with non-existent product spec relationship should not be created.",
-						ProductSpecificationUpdateVOTestExample.build().productSpecificationRelationship(
-								List.of(ProductSpecificationRelationshipVOTestExample.build()
-										.id("urn:ngsi-ld:product-specification:non-existent")))));
+						ProductSpecificationUpdateVOTestExample.build()
+								.atSchemaLocation(null)
+								.targetProductSchema(null)
+								.productSpecificationRelationship(
+										List.of(ProductSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
+												.id("urn:ngsi-ld:product-specification:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid related party should not be created.",
 				ProductSpecificationUpdateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent related party should not be created.",
-				ProductSpecificationUpdateVOTestExample.build().relatedParty(
-						List.of(RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organization:non-existent")))));
+				ProductSpecificationUpdateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.relatedParty(
+								List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organization:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid resource spec should not be created.",
 				ProductSpecificationUpdateVOTestExample.build()
-						.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build()))));
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent resource spec should not be created.",
-				ProductSpecificationUpdateVOTestExample.build().resourceSpecification(
-						List.of(ResourceSpecificationRefVOTestExample.build()
-								.id("urn:ngsi-ld:resource:non-existent")))));
+				ProductSpecificationUpdateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.resourceSpecification(
+								List.of(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)
+										.id("urn:ngsi-ld:resource:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid service spec should not be created.",
 				ProductSpecificationUpdateVOTestExample.build()
-						.serviceSpecification(List.of(ServiceSpecificationRefVOTestExample.build()))));
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.serviceSpecification(List.of(ServiceSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A product spec with non-existent service spec should not be created.",
-				ProductSpecificationUpdateVOTestExample.build().serviceSpecification(
-						List.of(ServiceSpecificationRefVOTestExample.build().id("urn:ngsi-ld:service:non-existent")))));
+				ProductSpecificationUpdateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.serviceSpecification(
+								List.of(ServiceSpecificationRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:service:non-existent")))));
 
 		testEntries.add(Arguments.of("A product spec with invalid prod-spec-characteristic should not be created.",
-				ProductSpecificationUpdateVOTestExample.build().productSpecCharacteristic(List.of(
-						ProductSpecificationCharacteristicVOTestExample.build()
-								.productSpecCharRelationship(
-										List.of(ProductSpecificationCharacteristicRelationshipVOTestExample.build()))))));
+				ProductSpecificationUpdateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetProductSchema(null)
+						.productSpecCharacteristic(List.of(
+								ProductSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
+										.productSpecCharRelationship(
+												List.of(ProductSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)))))));
 
 		return testEntries.stream();
 	}
@@ -659,7 +733,9 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	@Test
 	@Override
 	public void patchProductSpecification404() throws Exception {
-		ProductSpecificationUpdateVO productSpecificationUpdateVO = ProductSpecificationUpdateVOTestExample.build();
+		ProductSpecificationUpdateVO productSpecificationUpdateVO = ProductSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> productSpecificationApiTestClient.patchProductSpecification(
@@ -694,7 +770,9 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		//first create
-		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build();
+		ProductSpecificationCreateVO productSpecificationCreateVO = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		// we dont have a parent
 		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecificationCreateVO));
@@ -702,10 +780,12 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 				"The productSpecification should have been created first.");
 		String id = createResponse.body().getId();
 
-		ProductSpecificationVO expectedProductOfferingPrice = ProductSpecificationVOTestExample.build();
-		expectedProductOfferingPrice.setId(id);
-		expectedProductOfferingPrice.setHref(id);
-		expectedProductOfferingPrice.setLastUpdate(currentTimeInstant);
+		ProductSpecificationVO expectedProductOfferingPrice = ProductSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null)
+				.id(id)
+				.href(id)
+				.lastUpdate(currentTimeInstant);
 
 		//then retrieve
 		HttpResponse<ProductSpecificationVO> retrievedPOP = callAndCatch(
@@ -774,29 +854,33 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	@DisplayName("Duplicate relationship issue - DOME#83519")
 	@Test
 	public void duplicateRelationshipIssue() throws Exception {
-		ProductSpecificationCreateVO productSpecCreate1 = ProductSpecificationCreateVOTestExample.build();
+		ProductSpecificationCreateVO productSpecCreate1 = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
 		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
 				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecCreate1));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The productSpecification should have been created first.");
 		String specOne = createResponse.body().getId();
 
-		ProductSpecificationRelationshipVO specRel1 = ProductSpecificationRelationshipVOTestExample.build()
+		ProductSpecificationRelationshipVO specRel1 = ProductSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 				.id(specOne)
 				.href(URI.create(specOne))
 				.name("spec-one-1");
-		ProductSpecificationRelationshipVO specRel2 = ProductSpecificationRelationshipVOTestExample.build()
+		ProductSpecificationRelationshipVO specRel2 = ProductSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 				.id(specOne)
 				.href(URI.create(specOne))
 				.name("spec-one-2");
 
-        ProductSpecificationCreateVO productSpecCreate2 = ProductSpecificationCreateVOTestExample.build()
-                .productSpecificationRelationship(List.of(specRel1, specRel2));
-        createResponse = callAndCatch(
-                () -> productSpecificationApiTestClient.createProductSpecification(productSpecCreate2));
-        assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
-                "The productSpecification should have been created first.");
-        String specTwo = createResponse.body().getId();
+		ProductSpecificationCreateVO productSpecCreate2 = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null)
+				.productSpecificationRelationship(List.of(specRel1, specRel2));
+		createResponse = callAndCatch(
+				() -> productSpecificationApiTestClient.createProductSpecification(null, productSpecCreate2));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+				"The productSpecification should have been created first.");
+		String specTwo = createResponse.body().getId();
 
 		HttpResponse<ProductSpecificationVO> retrievalResponse = callAndCatch(() -> productSpecificationApiTestClient.retrieveProductSpecification(null, specTwo, null));
 		assertEquals(HttpStatus.OK, retrievalResponse.getStatus(), "The spec should have been retrieved.");

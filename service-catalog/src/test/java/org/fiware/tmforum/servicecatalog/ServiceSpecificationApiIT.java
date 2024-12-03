@@ -101,24 +101,51 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		List<Arguments> testEntries = new ArrayList<>();
 
 		ServiceSpecificationCreateVO emptyCreate = ServiceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.lifecycleStatus("created");
-		ServiceSpecificationVO expectedEmpty = ServiceSpecificationVOTestExample.build().lifecycleStatus("created");
+		ServiceSpecificationVO expectedEmpty = ServiceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
+				.lifecycleStatus("created");
 		testEntries.add(
 				Arguments.of("An empty service specification should have been created.", emptyCreate, expectedEmpty));
 
 		testEntries.add(Arguments.of("A service without feature specs should have been created.",
-				ServiceSpecificationCreateVOTestExample.build().lifecycleStatus("created").featureSpecification(null),
-				ServiceSpecificationVOTestExample.build().lifecycleStatus("created").featureSpecification(null)));
+				ServiceSpecificationCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetEntitySchema(null)
+						.lifecycleStatus("created")
+						.featureSpecification(null),
+				ServiceSpecificationVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetEntitySchema(null)
+						.lifecycleStatus("created")
+						.featureSpecification(null)));
 
 		testEntries.add(Arguments.of("A service without characteristic specs should have been created.",
-				ServiceSpecificationCreateVOTestExample.build().lifecycleStatus("created").specCharacteristic(null),
-				ServiceSpecificationVOTestExample.build().lifecycleStatus("created").specCharacteristic(null)));
+				ServiceSpecificationCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetEntitySchema(null)
+						.lifecycleStatus("created")
+						.specCharacteristic(null),
+				ServiceSpecificationVOTestExample.build()
+						.atSchemaLocation(null)
+						.targetEntitySchema(null)
+						.lifecycleStatus("created")
+						.specCharacteristic(null)));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
 		ServiceSpecificationCreateVO createValidFor = ServiceSpecificationCreateVOTestExample.build()
-				.validFor(timePeriodVO).lifecycleStatus("created");
-		ServiceSpecificationVO expectedValidFor = ServiceSpecificationVOTestExample.build().validFor(timePeriodVO)
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
+				.validFor(timePeriodVO)
+				.lifecycleStatus("created");
+		ServiceSpecificationVO expectedValidFor = ServiceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
+				.validFor(timePeriodVO)
 				.lifecycleStatus("created");
 		testEntries.add(
 				Arguments.of("An service specification with a validFor should have been created.", createValidFor,
@@ -127,18 +154,30 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		provideValidFeatureSpecs().map(ap ->
 						Arguments.of(
 								ap.message(),
-								ServiceSpecificationCreateVOTestExample.build().lifecycleStatus("created")
+								ServiceSpecificationCreateVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
+										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value())),
-								ServiceSpecificationVOTestExample.build().lifecycleStatus("created")
+								ServiceSpecificationVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
+										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value()))))
 				.forEach(testEntries::add);
 
 		provideValidCharacteristicSpecLists().map(ap ->
 						Arguments.of(
 								String.format("Service should have been created - %s", ap.message()),
-								ServiceSpecificationCreateVOTestExample.build().lifecycleStatus("created")
+								ServiceSpecificationCreateVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
+										.lifecycleStatus("created")
 										.specCharacteristic(ap.value()),
-								ServiceSpecificationVOTestExample.build().lifecycleStatus("created")
+								ServiceSpecificationVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
+										.lifecycleStatus("created")
 										.specCharacteristic(ap.value())
 						))
 				.forEach(testEntries::add);
@@ -151,21 +190,21 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("A single char without rels should be valid", List.of(
-						CharacteristicSpecificationVOTestExample.build().id("urn:cs-1").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-1").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null))));
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("Multiple chars without rels should be valid", List.of(
-						CharacteristicSpecificationVOTestExample.build().id("urn:cs-1").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-1").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null),
-						CharacteristicSpecificationVOTestExample.build().id("urn:cs-2").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-2").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null))));
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("Multiple chars with rels should be valid", List.of(
-						CharacteristicSpecificationVOTestExample.build().id("urn:cs-1").charSpecRelationship(null)
+						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-1").charSpecRelationship(null)
 								.characteristicValueSpecification(null).validFor(null),
-						CharacteristicSpecificationVOTestExample.build().id("urn:cs-2")
+						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-2")
 								.characteristicValueSpecification(null).validFor(null)
 								.charSpecRelationship(
 										List.of(CharacteristicSpecificationRelationshipVOTestExample.build()
@@ -183,7 +222,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 						.validFor(null)
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
-								FeatureSpecificationCharacteristicVOTestExample.build()
+								FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 										.validFor(null)
 										.id("urn:feature-spec")
 										.featureSpecCharacteristicValue(null)
@@ -230,63 +269,63 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A service specification with an invalid relatedParty should not be created.",
-				ServiceSpecificationCreateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A service specification with a non-existent relatedParty should not be created.",
-				ServiceSpecificationCreateVOTestExample.build().relatedParty(
-						List.of(RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organization:non-existent")))));
+				ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null).relatedParty(
+						List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organization:non-existent")))));
 
 		testEntries
 				.addAll(provideInvalidFeatureSpecs()
-						.map(ap -> Arguments.of(ap.message(), ServiceSpecificationCreateVOTestExample.build()
+						.map(ap -> Arguments.of(ap.message(), ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
 								.featureSpecification(List.of(ap.value()))))
 						.toList());
 
 		testEntries.add(
 				Arguments.of("A service specification with an invalid entitySpecRelationship should not be created.",
-						ServiceSpecificationCreateVOTestExample.build().entitySpecRelationship(
-								List.of(EntitySpecificationRelationshipVOTestExample.build()))));
+						ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null).entitySpecRelationship(
+								List.of(EntitySpecificationRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of(
 				"A service specification with a non-existent entitySpecRelationship should not be created.",
-				ServiceSpecificationCreateVOTestExample.build().entitySpecRelationship(
-						List.of(EntitySpecificationRelationshipVOTestExample.build()
+				ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null).entitySpecRelationship(
+						List.of(EntitySpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:entity:non-existent")))));
 
 		testEntries.add(Arguments.of("A service specification with an invalid resource spec ref should not be created.",
-				ServiceSpecificationCreateVOTestExample.build()
-						.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build()))));
+				ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(
 				Arguments.of("A service specification with a non-existent resource spec ref should not be created.",
-						ServiceSpecificationCreateVOTestExample.build()
-								.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build()
+						ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+								.resourceSpecification(List.of(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:resource-specification:non-existent")))));
 
 		testEntries.add(
 				Arguments.of("A service specification with an invalid service level spec ref should not be created.",
-						ServiceSpecificationCreateVOTestExample.build()
+						ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
 								.serviceLevelSpecification(
-										List.of(ServiceLevelSpecificationRefVOTestExample.build()))));
+										List.of(ServiceLevelSpecificationRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of(
 				"A service specification with a non-existent service level spec ref should not be created.",
-				ServiceSpecificationCreateVOTestExample.build()
-						.serviceLevelSpecification(List.of(ServiceLevelSpecificationRefVOTestExample.build()
+				ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.serviceLevelSpecification(List.of(ServiceLevelSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:service-level-specification:non-existent")))));
 
 		testEntries.add(
 				Arguments.of("A service specification with an invalid service spec relationship should not be created.",
-						ServiceSpecificationCreateVOTestExample.build()
-								.serviceSpecRelationship(List.of(ServiceSpecRelationshipVOTestExample.build()))));
+						ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+								.serviceSpecRelationship(List.of(ServiceSpecRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of(
 				"A service specification with a non-existent service spec relationship should not be created.",
-				ServiceSpecificationCreateVOTestExample.build()
-						.serviceSpecRelationship(List.of(ServiceSpecRelationshipVOTestExample.build()
+				ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.serviceSpecRelationship(List.of(ServiceSpecRelationshipVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:service-specification:non-existent")))));
 
 		provideInvalidCharacteristicSpecsLists()
 				.map(ap -> Arguments.of(
 						String.format("A service specifcation with invalid char specs should not be created - %s",
 								ap.message()),
-						ServiceSpecificationCreateVOTestExample.build()
+						ServiceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
 								.specCharacteristic(ap.value())
 				))
 				.forEach(testEntries::add);
@@ -299,14 +338,14 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 
 		invalidCharacteristicSpecLists.add(new ArgumentPair<>(
 				"A char spec with an invalid char spec rel is invalid.",
-				List.of(CharacteristicSpecificationVOTestExample.build()
+				List.of(CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null)
 						.charSpecRelationship(List.of(CharacteristicSpecificationRelationshipVOTestExample.build()
 								.characteristicSpecificationId("non-existent"))))
 		));
 		invalidCharacteristicSpecLists.add(new ArgumentPair<>(
 				"Char specs with duplicate IDs are invalid.",
-				List.of(CharacteristicSpecificationVOTestExample.build().id("cs-1"),
-						CharacteristicSpecificationVOTestExample.build().id("cs-1"))
+				List.of(CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("cs-1"),
+						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("cs-1"))
 		));
 
 		return invalidCharacteristicSpecLists.stream();
@@ -319,7 +358,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				new ArgumentPair<>("Feature specification with invalid resource spec id on spec char rel should fail.",
 						FeatureSpecificationVOTestExample.build()
 								.featureSpecCharacteristic(List.of(
-										FeatureSpecificationCharacteristicVOTestExample.build()
+										FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 												.featureSpecCharRelationship(
 														List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
 																.featureId(null)
@@ -330,7 +369,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				"Feature specification with non-existent resource spec id on spec char rel should fail.",
 				FeatureSpecificationVOTestExample.build()
 						.featureSpecCharacteristic(List.of(
-								FeatureSpecificationCharacteristicVOTestExample.build()
+								FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 										.featureSpecCharRelationship(
 												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
 														.resourceSpecificationId(
@@ -341,12 +380,12 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		// constraint
 		invalidFeatureSpecs.add(new ArgumentPair<>("Feature specification with invalid constraint ref should fail.",
 				FeatureSpecificationVOTestExample.build()
-						.constraint(List.of(ConstraintRefVOTestExample.build().id("invalid")))));
+						.constraint(List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null).id("invalid")))));
 
 		invalidFeatureSpecs.add(
 				new ArgumentPair<>("Feature specification with non-existent constraint ref should fail.",
 						FeatureSpecificationVOTestExample.build()
-								.constraint(List.of(ConstraintRefVOTestExample.build()
+								.constraint(List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:constraint:non-existent")))));
 
 		invalidFeatureSpecs.add(
@@ -393,7 +432,9 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 	@Test
 	@Override
 	public void deleteServiceSpecification204() throws Exception {
-		ServiceSpecificationCreateVO emptyCreate = ServiceSpecificationCreateVOTestExample.build();
+		ServiceSpecificationCreateVO emptyCreate = ServiceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null);
 
 		HttpResponse<ServiceSpecificationVO> createResponse = serviceSpecificationApiTestClient.createServiceSpecification(null,
 				emptyCreate);
@@ -480,10 +521,14 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 
 		List<ServiceSpecificationVO> expectedServiceSpecifications = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build();
+			ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build()
+					.atSchemaLocation(null)
+					.targetEntitySchema(null);
 			String id = serviceSpecificationApiTestClient.createServiceSpecification(null, serviceSpecificationCreateVO)
 					.body().getId();
-			ServiceSpecificationVO serviceSpecificationVO = ServiceSpecificationVOTestExample.build();
+			ServiceSpecificationVO serviceSpecificationVO = ServiceSpecificationVOTestExample.build()
+					.atSchemaLocation(null)
+					.targetEntitySchema(null);
 			serviceSpecificationVO
 					.id(id)
 					.href(URI.create(id))
@@ -619,7 +664,9 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		//first create
-		ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build();
+		ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null);
 
 		HttpResponse<ServiceSpecificationVO> createResponse = callAndCatch(
 				() -> serviceSpecificationApiTestClient.createServiceSpecification(null, serviceSpecificationCreateVO));
@@ -645,58 +692,73 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		List<Arguments> testEntries = new ArrayList<>();
 
 		ServiceSpecificationUpdateVO lifecycleStatusUpdate = ServiceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
 				.lifecycleStatus("dead")
 				.relatedParty(null)
 				.constraint(null)
+				.targetEntitySchema(null)
 				.entitySpecRelationship(null)
 				.resourceSpecification(null)
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedLifecycleStatus = ServiceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
 				expectedLifecycleStatus));
 
-		ServiceSpecificationUpdateVO descriptionUpdate = ServiceSpecificationUpdateVOTestExample.build()
+		ServiceSpecificationUpdateVO descriptionUpdate = ServiceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
 				.description("new-description")
 				.relatedParty(null)
 				.constraint(null)
+				.targetEntitySchema(null)
 				.entitySpecRelationship(null)
 				.resourceSpecification(null)
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedDescriptionUpdate = ServiceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
 				expectedDescriptionUpdate));
 
-		ServiceSpecificationUpdateVO nameUpdate = ServiceSpecificationUpdateVOTestExample.build()
+		ServiceSpecificationUpdateVO nameUpdate = ServiceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
 				.name("new-name")
 				.relatedParty(null)
 				.constraint(null)
+				.targetEntitySchema(null)
 				.entitySpecRelationship(null)
 				.resourceSpecification(null)
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedNameUpdate = ServiceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
-		ServiceSpecificationUpdateVO versionUpdate = ServiceSpecificationUpdateVOTestExample.build()
+		ServiceSpecificationUpdateVO versionUpdate = ServiceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
 				.version("v0.0.2")
 				.relatedParty(null)
 				.constraint(null)
+				.targetEntitySchema(null)
 				.entitySpecRelationship(null)
 				.resourceSpecification(null)
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedVersionUpdate = ServiceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
 				.startDateTime(Instant.now());
 		ServiceSpecificationUpdateVO validForUpdate = ServiceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.validFor(timePeriodVO)
 				.relatedParty(null)
 				.constraint(null)
@@ -705,6 +767,8 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedValidForUpdate = ServiceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.validFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
@@ -712,6 +776,8 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 						Arguments.of(
 								ap.message(),
 								ServiceSpecificationUpdateVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
 										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value()))
 										.relatedParty(null)
@@ -721,6 +787,8 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceLevelSpecification(null)
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
 										.lifecycleStatus("created")
 										.featureSpecification(List.of(ap.value()))))
 				.forEach(testEntries::add);
@@ -728,6 +796,8 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		provideValidCharacteristicSpecLists().map(ap ->
 						Arguments.of(String.format("Characteristic spec should be updated - %s", ap.message()),
 								ServiceSpecificationUpdateVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
 										.lifecycleStatus("updated")
 										.specCharacteristic(ap.value())
 										.relatedParty(null)
@@ -737,6 +807,8 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceLevelSpecification(null)
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
+										.atSchemaLocation(null)
+										.targetEntitySchema(null)
 										.lifecycleStatus("updated")
 										.specCharacteristic(ap.value())))
 				.forEach(testEntries::add);
@@ -756,7 +828,9 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 	@Override
 	public void patchServiceSpecification400() throws Exception {
 		//first create
-		ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build();
+		ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null);
 
 		HttpResponse<ServiceSpecificationVO> createResponse = callAndCatch(
 				() -> serviceSpecificationApiTestClient.createServiceSpecification(null, serviceSpecificationCreateVO));
@@ -778,15 +852,15 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("An update with an invalid relatedParty is not allowed.",
-				ServiceSpecificationUpdateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ServiceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("An update with an non existent relatedParty is not allowed.",
-				ServiceSpecificationUpdateVOTestExample.build()
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()
+				ServiceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:organization:non-existent")))));
 		testEntries.addAll(
 				provideInvalidFeatureSpecs()
-						.map(ap -> Arguments.of(ap.message(), ServiceSpecificationUpdateVOTestExample.build()
+						.map(ap -> Arguments.of(ap.message(), ServiceSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
 								.featureSpecification(List.of(ap.value()))))
 						.toList());
 		testEntries.addAll(
@@ -794,7 +868,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 						.map(ap -> Arguments.of(
 								String.format("Updates with invalid char specs should not be allowed - %s",
 										ap.message()),
-								ServiceSpecificationUpdateVOTestExample.build().specCharacteristic(ap.value())))
+								ServiceSpecificationUpdateVOTestExample.build().atSchemaLocation(null).specCharacteristic(ap.value())))
 						.toList());
 
 		return testEntries.stream();
@@ -817,7 +891,9 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 	@Test
 	@Override
 	public void patchServiceSpecification404() throws Exception {
-		ServiceSpecificationUpdateVO serviceSpecificationUpdateVO = ServiceSpecificationUpdateVOTestExample.build();
+		ServiceSpecificationUpdateVO serviceSpecificationUpdateVO = ServiceSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> serviceSpecificationApiTestClient.patchServiceSpecification(null,
@@ -857,7 +933,9 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 
 		when(clock.instant()).thenReturn(Instant.MAX);
 
-		ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build();
+		ServiceSpecificationCreateVO serviceSpecificationCreateVO = ServiceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null);
 		HttpResponse<ServiceSpecificationVO> createResponse = callAndCatch(
 				() -> serviceSpecificationApiTestClient.createServiceSpecification(null, serviceSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
@@ -878,10 +956,11 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						ServiceSpecificationVOTestExample.build()
+						ServiceSpecificationVOTestExample.build().atSchemaLocation(null)
+								.targetEntitySchema(null)
 								.lastUpdate(Instant.MAX)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
-						ServiceSpecificationVOTestExample.build()
+						ServiceSpecificationVOTestExample.build().atSchemaLocation(null)
 								.description(null)
 								.isBundle(null)
 								.lastUpdate(null)
@@ -903,7 +982,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 								.atType(null)),
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", ServiceSpecificationVOTestExample.build()
+						"nothingToSeeHere", ServiceSpecificationVOTestExample.build().atSchemaLocation(null)
 								.description(null)
 								.isBundle(null)
 								.lastUpdate(null)
@@ -926,7 +1005,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 								.atType(null)),
 				Arguments.of(
 						"Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
-						"version,lastUpdate,lifecycleStatus,description", ServiceSpecificationVOTestExample.build()
+						"version,lastUpdate,lifecycleStatus,description", ServiceSpecificationVOTestExample.build().atSchemaLocation(null)
 								.isBundle(null)
 								.name(null)
 								.lastUpdate(Instant.MAX)

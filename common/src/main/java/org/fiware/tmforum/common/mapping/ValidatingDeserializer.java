@@ -67,22 +67,29 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 			throw new SchemaValidationException(List.of(), "No valid schema address was provided");
 		}
 
-		JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(
-				SpecVersion.VersionFlag.V202012,
-				builder -> builder.schemaLoaders(sb -> {
-					sb.add(new ClasspathSchemaLoader());
-					sb.add(new UriSchemaLoader());
-				})
-		);
-		SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
-		SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
-		JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(schemaAddress), schemaValidatorsConfig);
-		Set<ValidationMessage> assertions = schema.validate(jsonString, InputFormat.JSON, executionContext -> {
-			executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
-		});
-		if (!assertions.isEmpty()) {
-			log.debug("Entity {} is not valid for schema {}. Assertions: {}.", jsonString, schemaAddress, assertions);
-			throw new SchemaValidationException(assertions.stream().map(ValidationMessage::getMessage).toList(), "Input is not valid for the given schema.");
+		try {
+
+			JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(
+					SpecVersion.VersionFlag.V202012,
+					builder -> builder.schemaLoaders(sb -> {
+						sb.add(new ClasspathSchemaLoader());
+						sb.add(new UriSchemaLoader());
+					})
+			);
+			SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
+			SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
+			JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(schemaAddress), schemaValidatorsConfig);
+			Set<ValidationMessage> assertions = schema.validate(jsonString, InputFormat.JSON, executionContext -> {
+				executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
+			});
+
+			if (!assertions.isEmpty()) {
+				log.debug("Entity {} is not valid for schema {}. Assertions: {}.", jsonString, schemaAddress, assertions);
+				throw new SchemaValidationException(assertions.stream().map(ValidationMessage::getMessage).toList(), "Input is not valid for the given schema.");
+			}
+		} catch (Exception e) {
+			throw new SchemaValidationException(List.of(), "Was not able to validate the input.");
 		}
+
 	}
 }

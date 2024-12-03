@@ -78,7 +78,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 	@BeforeEach
 	public void createRequiredReferences() {
 
-		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build();
+		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null);
 		EntityVO billEntityVO = new EntityVO()
 				.atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
 				.id(URI.create(BILL_ID))
@@ -139,99 +139,99 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		return Stream.of(
 				Arguments.of(
 						"When the appliedCustomerBillingRate is not yet billed and the account is provided, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
 								.bill(null)
 								.product(null)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
 								.product(null)
 								.bill(null)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
 				),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is billed and the bill is provided, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.billingAccount(null)
 								.product(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.product(null)
 								.billingAccount(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))),
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))),
 				Arguments.of(
 						"When the name is included, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.name("my-name")
 								.billingAccount(null)
 								.product(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.name("my-name")
 								.product(null)
 								.billingAccount(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))),
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))),
 				Arguments.of(
 						"When the description is included, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.description("my-desc")
 								.billingAccount(null)
 								.product(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.description("my-desc")
 								.product(null)
 								.billingAccount(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))),
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))),
 				Arguments.of(
 						"When the type is included, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.type("type")
 								.billingAccount(null)
 								.product(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.type("type")
 								.product(null)
 								.billingAccount(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))),
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))),
 				Arguments.of(
 						"When the appliedTaxes are included, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
-								.appliedTax(List.of(AppliedBillingTaxRateVOTestExample.build()))
+								.appliedTax(List.of(AppliedBillingTaxRateVOTestExample.build().atSchemaLocation(null)))
 								.billingAccount(null)
 								.product(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
-								.appliedTax(List.of(AppliedBillingTaxRateVOTestExample.build()))
+								.appliedTax(List.of(AppliedBillingTaxRateVOTestExample.build().atSchemaLocation(null)))
 								.product(null)
 								.billingAccount(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))),
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))),
 				Arguments.of(
 						"When the billing rate characteristics are included, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
-								.characteristic(List.of(AppliedBillingRateCharacteristicVOTestExample.build()))
+								.characteristic(List.of(AppliedBillingRateCharacteristicVOTestExample.build().atSchemaLocation(null)))
 								.billingAccount(null)
 								.product(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
-								.characteristic(List.of(AppliedBillingRateCharacteristicVOTestExample.build()))
+								.characteristic(List.of(AppliedBillingRateCharacteristicVOTestExample.build().atSchemaLocation(null)))
 								.product(null)
 								.billingAccount(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)))
 		);
 	}
 
@@ -257,7 +257,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		return Stream.of(
 				Arguments.of(
 						"When the appliedCustomerBillingRate is not yet billed and the account is not provided, it should fail.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
 								.bill(null)
 								.product(null)
@@ -265,32 +265,32 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 				),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is not yet billed and the account is not provided, it should fail.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))
 								.product(null)
 								.billingAccount(null)
 				),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is billed and the bill is not provided, it should fail.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.billingAccount(null)
 								.product(null)
 								.bill(null)),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is billed and the bill is not provided, it should fail.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
 								.product(null)
 								.bill(null)),
 				Arguments.of(
 						"When an invalid productRef is provided, it should fail.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))
-								.product(ProductRefVOTestExample.build())
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))
+								.product(ProductRefVOTestExample.build().atSchemaLocation(null))
 								.billingAccount(null))
 		);
 	}
@@ -371,37 +371,37 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		return Stream.of(
 				Arguments.of(
 						"When the appliedCustomerBillingRate is not yet billed and the account is provided, it should be update.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
 								.bill(null)
 								.product(null)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID)),
-						AppliedCustomerBillingRateUpdateVOTestExample.build()
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID)),
+						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.billingAccount(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.product(null)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))
 				),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is billed and the bill is provided, it should be created.",
-						AppliedCustomerBillingRateCreateVOTestExample.build()
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.billingAccount(null)
 								.product(null)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)),
-						AppliedCustomerBillingRateUpdateVOTestExample.build()
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
 								.bill(null),
-						AppliedCustomerBillingRateVOTestExample.build()
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
 								.product(null)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID)))
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)))
 		);
 	}
 
@@ -419,11 +419,11 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		//first create
-		AppliedCustomerBillingRateCreateVO initialCreate = AppliedCustomerBillingRateCreateVOTestExample.build()
+		AppliedCustomerBillingRateCreateVO initialCreate = AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 				.product(null)
 				.isBilled(true)
 				.billingAccount(null)
-				.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID));
+				.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID));
 
 		HttpResponse<AppliedCustomerBillingRateVO> createResponse = callAndCatch(
 				() -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(null, initialCreate));
@@ -444,29 +444,29 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		return Stream.of(
 				Arguments.of(
 						"When the appliedCustomerBillingRate is not yet billed and the account is not provided, it should fail.",
-						AppliedCustomerBillingRateUpdateVOTestExample.build()
+						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
 								.bill(null)
 								.billingAccount(null)
 				),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is not yet billed and the account is not provided, it should fail.",
-						AppliedCustomerBillingRateUpdateVOTestExample.build()
+						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(false)
-								.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))
 								.billingAccount(null)
 				),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is billed and the bill is not provided, it should fail.",
-						AppliedCustomerBillingRateUpdateVOTestExample.build()
+						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.billingAccount(null)
 								.bill(null)),
 				Arguments.of(
 						"When the appliedCustomerBillingRate is billed and the bill is not provided, it should fail.",
-						AppliedCustomerBillingRateUpdateVOTestExample.build()
+						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
-								.billingAccount(BillingAccountRefVOTestExample.build().id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
 								.bill(null))
 		);
 	}
@@ -488,8 +488,8 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 	@Test
 	@Override
 	public void updateAppliedCustomerBillingRate404() throws Exception {
-		AppliedCustomerBillingRateUpdateVO updateVO = AppliedCustomerBillingRateUpdateVOTestExample.build()
-				.bill(BillRefVOTestExample.build().id(BILL_ID).href(BILL_ID))
+		AppliedCustomerBillingRateUpdateVO updateVO = AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
+				.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))
 				.isBilled(true)
 				.billingAccount(null);
 

@@ -94,8 +94,8 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	private static Stream<Arguments> provideValidFinancialAccounts() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build();
-		FinancialAccountVO expectedFinancialAccount = FinancialAccountVOTestExample.build();
+		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
+		FinancialAccountVO expectedFinancialAccount = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 		testEntries.add(Arguments.of("An empty financialAccount should have been created.", financialAccountCreateVO, expectedFinancialAccount));
 
 		return testEntries.stream();
@@ -121,16 +121,16 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	private static Stream<Arguments> provideInvalidFinancialAccounts() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		FinancialAccountCreateVO invalidRelatedPartyCreate = FinancialAccountCreateVOTestExample.build();
+		FinancialAccountCreateVO invalidRelatedPartyCreate = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
 		// no valid id
-		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		invalidRelatedPartyCreate.setRelatedParty(List.of(invalidRelatedParty));
 		testEntries.add(Arguments.of("A financialAccount with invalid related parties should not be created.",
 				invalidRelatedPartyCreate));
 
-		FinancialAccountCreateVO nonExistentRelatedPartyCreate = FinancialAccountCreateVOTestExample.build();
+		FinancialAccountCreateVO nonExistentRelatedPartyCreate = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
 		// no existent id
-		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		nonExistentRelatedParty.setId("urn:ngsi-ld:individual:non-existent");
 		nonExistentRelatedPartyCreate.setRelatedParty(List.of(nonExistentRelatedParty));
 		testEntries.add(Arguments.of("A financialAccount with non-existent related parties should not be created.",
@@ -176,7 +176,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	@Override
 	public void deleteFinancialAccount204() throws Exception {
 		//first create
-		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build();
+		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<FinancialAccountVO> createResponse = callAndCatch(
 				() -> financialAccountApiTestClient.createFinancialAccount(null, financialAccountCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The financialAccount should have been created first.");
@@ -259,9 +259,9 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	public void listFinancialAccount200() throws Exception {
 		List<FinancialAccountVO> expectedFinancialAccounts = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build();
+			FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
 			String id = financialAccountApiTestClient.createFinancialAccount(null, financialAccountCreateVO).body().getId();
-			FinancialAccountVO financialAccountVO = FinancialAccountVOTestExample.build();
+			FinancialAccountVO financialAccountVO = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 			financialAccountVO
 					.id(id)
 					.href(id);
@@ -383,7 +383,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	@Override
 	public void patchFinancialAccount200() throws Exception {
 		//first create
-		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build();
+		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<FinancialAccountVO> createResponse = callAndCatch(
 				() -> financialAccountApiTestClient.createFinancialAccount(null, financialAccountCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The financialAccount should have been created first.");
@@ -404,27 +404,27 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	private static Stream<Arguments> provideFinancialAccountUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		FinancialAccountUpdateVO newTypeFinancialAccount = FinancialAccountUpdateVOTestExample.build();
+		FinancialAccountUpdateVO newTypeFinancialAccount = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newTypeFinancialAccount.setAccountType("New-Type");
-		FinancialAccountVO expectedNewType = FinancialAccountVOTestExample.build();
+		FinancialAccountVO expectedNewType = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 		expectedNewType.setAccountType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeFinancialAccount, expectedNewType));
 
-		FinancialAccountUpdateVO newDesc = FinancialAccountUpdateVOTestExample.build();
+		FinancialAccountUpdateVO newDesc = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		FinancialAccountVO expectedNewDesc = FinancialAccountVOTestExample.build();
+		FinancialAccountVO expectedNewDesc = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		FinancialAccountUpdateVO newName = FinancialAccountUpdateVOTestExample.build();
+		FinancialAccountUpdateVO newName = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		FinancialAccountVO expectedNewName = FinancialAccountVOTestExample.build();
+		FinancialAccountVO expectedNewName = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
-		FinancialAccountUpdateVO newState = FinancialAccountUpdateVOTestExample.build();
+		FinancialAccountUpdateVO newState = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newState.setState("New state");
-		FinancialAccountVO expectedNewState = FinancialAccountVOTestExample.build();
+		FinancialAccountVO expectedNewState = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 		expectedNewState.setState("New state");
 		testEntries.add(Arguments.of("The state should have been updated.", newState, expectedNewState));
 
@@ -443,7 +443,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	@Override
 	public void patchFinancialAccount400() throws Exception {
 		//first create
-		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build();
+		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<FinancialAccountVO> createResponse = callAndCatch(
 				() -> financialAccountApiTestClient.createFinancialAccount(null, financialAccountCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The financialAccount should have been created first.");
@@ -461,16 +461,16 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	private static Stream<Arguments> provideInvalidUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		FinancialAccountUpdateVO invalidRelatedPartyUpdate = FinancialAccountUpdateVOTestExample.build();
+		FinancialAccountUpdateVO invalidRelatedPartyUpdate = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		// no valid id
-		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		invalidRelatedPartyUpdate.setRelatedParty(List.of(invalidRelatedParty));
 		testEntries.add(Arguments.of("A financialAccount with invalid related parties should not be updated.",
 				invalidRelatedPartyUpdate));
 
-		FinancialAccountUpdateVO nonExistentRelatedPartyUpdate = FinancialAccountUpdateVOTestExample.build();
+		FinancialAccountUpdateVO nonExistentRelatedPartyUpdate = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		// no existent id
-		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		nonExistentRelatedParty.setId("urn:ngsi-ld:individual:non-existent");
 		nonExistentRelatedPartyUpdate.setRelatedParty(List.of(nonExistentRelatedParty));
 		testEntries.add(Arguments.of("A financialAccount with non-existent related parties should not be updated.",
@@ -496,7 +496,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	@Test
 	@Override
 	public void patchFinancialAccount404() throws Exception {
-		FinancialAccountUpdateVO financialAccountUpdateVO = FinancialAccountUpdateVOTestExample.build();
+		FinancialAccountUpdateVO financialAccountUpdateVO = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> financialAccountApiTestClient.patchFinancialAccount(null, "urn:ngsi-ld:financialAccount:not-existent",
@@ -528,13 +528,13 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 	public void retrieveFinancialAccount200() throws Exception {
 
 		//first create
-		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build();
+		FinancialAccountCreateVO financialAccountCreateVO = FinancialAccountCreateVOTestExample.build().atSchemaLocation(null);
 		HttpResponse<FinancialAccountVO> createResponse = callAndCatch(
 				() -> financialAccountApiTestClient.createFinancialAccount(null, financialAccountCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The financialAccount should have been created first.");
 		String id = createResponse.body().getId();
 
-		FinancialAccountVO expectedFinancialAccount = FinancialAccountVOTestExample.build();
+		FinancialAccountVO expectedFinancialAccount = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 		expectedFinancialAccount.setId(id);
 		expectedFinancialAccount.setHref(id);
 

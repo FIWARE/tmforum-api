@@ -88,9 +88,9 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		UsageSpecificationVO createdUsageSpecificationVO = usageSpecificationVOHttpResponse.body();
 		String usageId = usageSpecificationVOHttpResponse.body().getId();
 
-
 		expectedUsageSpecification.setId(usageId);
 		expectedUsageSpecification.setHref(new URI(usageId));
+
 		editExpectedTimePeriod(expectedUsageSpecification);
 		assertEquals(expectedUsageSpecification, createdUsageSpecificationVO, message);
 	}
@@ -98,16 +98,27 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 	private static Stream<Arguments> provideValidUsageSpecifications() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build();
-		UsageSpecificationVO expectedUsageSpecification = UsageSpecificationVOTestExample.build();
+		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
+		UsageSpecificationVO expectedUsageSpecification = UsageSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		testEntries.add(
 				Arguments.of("Empty usageSpecification should have been created.", usageSpecificationCreateVO, expectedUsageSpecification));
 
 		TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
-				.startDateTime(Instant.now());
+				.startDateTime(Instant.now())
+				.atSchemaLocation(null);
 		usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.validFor(timePeriodVO);
 		expectedUsageSpecification = UsageSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetEntitySchema(null)
 				.validFor(timePeriodVO);
 		testEntries.add(
 				Arguments.of("UsageSpecification with a validFor should have been created",
@@ -118,6 +129,9 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 	}
 
 	private void editExpectedTimePeriod(UsageSpecificationVO expected) {
+		if (expected.getValidFor() == null) {
+			return;
+		}
 		TimePeriodVO expectedTimePeriod = expected.getValidFor();
 		expectedTimePeriod.setId(null);
 		expectedTimePeriod.setHref(null);
@@ -148,22 +162,22 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A service catalog with invalid related parties should not be created.",
-				UsageSpecificationCreateVOTestExample.build().relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				UsageSpecificationCreateVOTestExample.build().atSchemaLocation(null).relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A service catalog with non-existent related parties should not be created.",
-				UsageSpecificationCreateVOTestExample.build().relatedParty(
-						List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
+				UsageSpecificationCreateVOTestExample.build().atSchemaLocation(null).relatedParty(
+						List.of((RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organisation:non-existent"))))));
 
 		testEntries.add(Arguments.of("A service catalog with an invalid constraint should not be created.",
-				UsageSpecificationCreateVOTestExample.build().constraint(List.of(ConstraintRefVOTestExample.build()))));
+				UsageSpecificationCreateVOTestExample.build().atSchemaLocation(null).constraint(List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A service catalog with a non-existent constraint should not be created.",
-				UsageSpecificationCreateVOTestExample.build().constraint(
-						List.of(ConstraintRefVOTestExample.build().id("urn:ngsi-ld:usageSpecification:non-existent")))));
+				UsageSpecificationCreateVOTestExample.build().atSchemaLocation(null).constraint(
+						List.of(ConstraintRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:usageSpecification:non-existent")))));
 
 		testEntries.add(Arguments.of("A service catalog with an invalid entity specification should not be created.",
-				UsageSpecificationCreateVOTestExample.build().entitySpecRelationship(List.of(EntitySpecificationRelationshipVOTestExample.build()))));
+				UsageSpecificationCreateVOTestExample.build().atSchemaLocation(null).entitySpecRelationship(List.of(EntitySpecificationRelationshipVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A service catalog with a non-existent entity specification should not be created.",
-				UsageSpecificationCreateVOTestExample.build().entitySpecRelationship(
-						List.of(EntitySpecificationRelationshipVOTestExample.build().id("urn:ngsi-ld:usageSpecification:non-existent")))));
+				UsageSpecificationCreateVOTestExample.build().atSchemaLocation(null).entitySpecRelationship(
+						List.of(EntitySpecificationRelationshipVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:usageSpecification:non-existent")))));
 
 		return testEntries.stream();
 	}
@@ -204,7 +218,10 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 	@Test
 	@Override
 	public void deleteUsageSpecification204() throws Exception {
-		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build();
+		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		HttpResponse<UsageSpecificationVO> usageSpecificationCreateResponse = callAndCatch(
 				() -> usageSpecificationApiTestClient.createUsageSpecification(null, usageSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, usageSpecificationCreateResponse.getStatus(),
@@ -285,9 +302,15 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 
 		List<UsageSpecificationVO> expectedUsageSpecifications = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build();
+			UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build()
+					.atSchemaLocation(null)
+					.validFor(null)
+					.targetEntitySchema(null);
 			String id = usageSpecificationApiTestClient.createUsageSpecification(null, usageSpecificationCreateVO).body().getId();
-			UsageSpecificationVO usageSpecificationVO = UsageSpecificationVOTestExample.build();
+			UsageSpecificationVO usageSpecificationVO = UsageSpecificationVOTestExample.build()
+					.atSchemaLocation(null)
+					.validFor(null)
+					.targetEntitySchema(null);
 			usageSpecificationVO
 					.id(id)
 					.href(new URI(id));
@@ -406,7 +429,10 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 	@Override
 	public void patchUsageSpecification200() throws Exception {
 		//first create
-		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build();
+		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		HttpResponse<UsageSpecificationVO> createResponse = callAndCatch(
 				() -> usageSpecificationApiTestClient.createUsageSpecification(null, usageSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage specification should have been created first.");
@@ -430,27 +456,51 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 
 		List<Arguments> testEntries = new ArrayList<>();
 
-		UsageSpecificationUpdateVO newNameUsage = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO newNameUsage = UsageSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		newNameUsage.setName("New-Name");
-		UsageSpecificationVO expectedNewName = UsageSpecificationVOTestExample.build();
+		UsageSpecificationVO expectedNewName = UsageSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		expectedNewName.setName("New-Name");
 		testEntries.add(Arguments.of("The type should have been updated.", newNameUsage, expectedNewName));
 
-		UsageSpecificationUpdateVO newDesc = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO newDesc = UsageSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		newDesc.setDescription("New description");
-		UsageSpecificationVO expectedNewDesc = UsageSpecificationVOTestExample.build();
+		UsageSpecificationVO expectedNewDesc = UsageSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-		UsageSpecificationUpdateVO newLife = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO newLife = UsageSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		newLife.lifecycleStatus("New life");
-		UsageSpecificationVO expectedNewLife = UsageSpecificationVOTestExample.build();
+		UsageSpecificationVO expectedNewLife = UsageSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		expectedNewLife.lifecycleStatus("New life");
 		testEntries.add(Arguments.of("The life cycle status should have been updated.", newLife, expectedNewLife));
 
 		UsageSpecificationUpdateVO versionUpdate = UsageSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null)
 				.version("v0.0.2");
 		UsageSpecificationVO expectedVersionUpdate = UsageSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
@@ -469,7 +519,10 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 	@Override
 	public void patchUsageSpecification400() throws Exception {
 		//first create
-		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build();
+		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		HttpResponse<UsageSpecificationVO> createResponse = callAndCatch(
 				() -> usageSpecificationApiTestClient.createUsageSpecification(null, usageSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
@@ -488,46 +541,46 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 
 		List<Arguments> testEntries = new ArrayList<>();
 
-		UsageSpecificationUpdateVO invalidRelatedPartyUpdate = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO invalidRelatedPartyUpdate = UsageSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		// no valid id
-		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		invalidRelatedPartyUpdate.setRelatedParty(List.of(invalidRelatedParty));
 		testEntries.add(Arguments.of("A usage with invalid related parties should not be Updated.",
 				invalidRelatedPartyUpdate));
 
-		UsageSpecificationUpdateVO nonExistentRelatedPartyUpdate = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO nonExistentRelatedPartyUpdate = UsageSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		// no existent id
-		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
+		RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
 		nonExistentRelatedParty.setId("urn:ngsi-ld:usage:non-existent");
 		nonExistentRelatedPartyUpdate.setRelatedParty(List.of(nonExistentRelatedParty));
 		testEntries.add(Arguments.of("A usage with non-existent related parties should not be Updated.",
 				nonExistentRelatedPartyUpdate));
 
-		UsageSpecificationUpdateVO invalidConstraintRefUpdate = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO invalidConstraintRefUpdate = UsageSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		// no valid id
-		ConstraintRefVO invalidConstraintRef = ConstraintRefVOTestExample.build();
+		ConstraintRefVO invalidConstraintRef = ConstraintRefVOTestExample.build().atSchemaLocation(null);
 		invalidConstraintRefUpdate.setConstraint(List.of(invalidConstraintRef));
 		testEntries.add(Arguments.of("A usage with invalid constraint should not be Updated.",
 				invalidConstraintRefUpdate));
 
-		UsageSpecificationUpdateVO nonExistentConstraintUpdate = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO nonExistentConstraintUpdate = UsageSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		// no existent id
-		ConstraintRefVO nonExistentConstraintRef = ConstraintRefVOTestExample.build();
+		ConstraintRefVO nonExistentConstraintRef = ConstraintRefVOTestExample.build().atSchemaLocation(null);
 		nonExistentConstraintRef.setId("urn:ngsi-ld:usage:non-existent");
 		nonExistentConstraintUpdate.setConstraint(List.of(nonExistentConstraintRef));
 		testEntries.add(Arguments.of("A usage with non-existent constraint should not be Updated.",
 				nonExistentConstraintUpdate));
 
-		UsageSpecificationUpdateVO invalidEntitySpecificationRelationshipUpdate = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO invalidEntitySpecificationRelationshipUpdate = UsageSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		// no valid id
-		EntitySpecificationRelationshipVO invalidEntitySpecificationRelationship = EntitySpecificationRelationshipVOTestExample.build();
+		EntitySpecificationRelationshipVO invalidEntitySpecificationRelationship = EntitySpecificationRelationshipVOTestExample.build().atSchemaLocation(null);
 		invalidEntitySpecificationRelationshipUpdate.setEntitySpecRelationship(List.of(invalidEntitySpecificationRelationship));
 		testEntries.add(Arguments.of("A usage with invalid entity spec should not be Updated.",
 				invalidEntitySpecificationRelationshipUpdate));
 
-		UsageSpecificationUpdateVO nonEntitySpecificationRelationshipUpdate = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO nonEntitySpecificationRelationshipUpdate = UsageSpecificationUpdateVOTestExample.build().atSchemaLocation(null);
 		// no existent id
-		EntitySpecificationRelationshipVO nonExistentEntitySpecificationRelationship = EntitySpecificationRelationshipVOTestExample.build();
+		EntitySpecificationRelationshipVO nonExistentEntitySpecificationRelationship = EntitySpecificationRelationshipVOTestExample.build().atSchemaLocation(null);
 		nonExistentEntitySpecificationRelationship.setId("urn:ngsi-ld:usage:non-existent");
 		nonEntitySpecificationRelationshipUpdate.setEntitySpecRelationship(List.of(nonExistentEntitySpecificationRelationship));
 		testEntries.add(Arguments.of("A usage with non-existent entity spec should not be Updated.",
@@ -551,7 +604,10 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 	@Test
 	@Override
 	public void patchUsageSpecification404() throws Exception {
-		UsageSpecificationUpdateVO usageSpecificationUpdateVO = UsageSpecificationUpdateVOTestExample.build();
+		UsageSpecificationUpdateVO usageSpecificationUpdateVO = UsageSpecificationUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
 				callAndCatch(() -> usageSpecificationApiTestClient.patchUsageSpecification(null, "urn:ngsi-ld:usage:not-existent",
@@ -580,15 +636,21 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 	@Override
 	public void retrieveUsageSpecification200() throws Exception {
 		//first create
-		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build();
+		UsageSpecificationCreateVO usageSpecificationCreateVO = UsageSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.targetEntitySchema(null);
 		HttpResponse<UsageSpecificationVO> createResponse = callAndCatch(
 				() -> usageSpecificationApiTestClient.createUsageSpecification(null, usageSpecificationCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
 		String id = createResponse.body().getId();
 
-		UsageSpecificationVO expectedUsageSpecification = UsageSpecificationVOTestExample.build();
-		expectedUsageSpecification.setId(id);
-		expectedUsageSpecification.setHref(new URI(id));
+		UsageSpecificationVO expectedUsageSpecification = UsageSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.id(id)
+				.href(new URI(id))
+				.validFor(null)
+				.targetEntitySchema(null);
 		editExpectedTimePeriod(expectedUsageSpecification);
 
 		//then retrieve

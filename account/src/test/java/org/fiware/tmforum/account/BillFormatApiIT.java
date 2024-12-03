@@ -95,8 +95,8 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
     private static Stream<Arguments> provideValidBillFormats() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build();
-        BillFormatVO expectedBillFormat = BillFormatVOTestExample.build();
+        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build().atSchemaLocation(null);
+        BillFormatVO expectedBillFormat = BillFormatVOTestExample.build().atSchemaLocation(null);
         testEntries.add(Arguments.of("An empty billFormat should have been created.", billFormatCreateVO, expectedBillFormat));
 
         return testEntries.stream();
@@ -143,7 +143,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
     @Override
     public void deleteBillFormat204() throws Exception {
 
-        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build();
+        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<BillFormatVO> createResponse = callAndCatch(
                 () -> billFormatApiTestClient.createBillFormat(null, billFormatCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billFormat should have been created first.");
@@ -221,9 +221,9 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
     public void listBillFormat200() throws Exception {
         List<BillFormatVO> expectedBillFormats = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build();
+            BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build().atSchemaLocation(null);
             String id = billFormatApiTestClient.createBillFormat(null, billFormatCreateVO).body().getId();
-            BillFormatVO billFormatVO = BillFormatVOTestExample.build();
+            BillFormatVO billFormatVO = BillFormatVOTestExample.build().atSchemaLocation(null);
             billFormatVO
                     .id(id)
                     .href(id);
@@ -339,7 +339,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
     @Override
     public void patchBillFormat200() throws Exception {
         //first create
-        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build();
+        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<BillFormatVO> createResponse = callAndCatch(
                 () -> billFormatApiTestClient.createBillFormat(null, billFormatCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billFormat should have been created first.");
@@ -359,15 +359,15 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
     private static Stream<Arguments> provideBillFormatUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        BillFormatUpdateVO newDesc = BillFormatUpdateVOTestExample.build();
+        BillFormatUpdateVO newDesc = BillFormatUpdateVOTestExample.build().atSchemaLocation(null);
         newDesc.setDescription("New description");
-        BillFormatVO expectedNewDesc = BillFormatVOTestExample.build();
+        BillFormatVO expectedNewDesc = BillFormatVOTestExample.build().atSchemaLocation(null);
         expectedNewDesc.setDescription("New description");
         testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-        BillFormatUpdateVO newName = BillFormatUpdateVOTestExample.build();
+        BillFormatUpdateVO newName = BillFormatUpdateVOTestExample.build().atSchemaLocation(null);
         newName.setName("New name");
-        BillFormatVO expectedNewName = BillFormatVOTestExample.build();
+        BillFormatVO expectedNewName = BillFormatVOTestExample.build().atSchemaLocation(null);
         expectedNewName.setName("New name");
         testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
         
@@ -393,7 +393,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
 
     @Override
     public void patchBillFormat404() throws Exception {
-        BillFormatUpdateVO billFormatUpdateVO = BillFormatUpdateVOTestExample.build();
+        BillFormatUpdateVO billFormatUpdateVO = BillFormatUpdateVOTestExample.build().atSchemaLocation(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
                 callAndCatch(() -> billFormatApiTestClient.patchBillFormat(null, "urn:ngsi-ld:billFormat:not-existent",
@@ -422,13 +422,13 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
     @Override
     public void retrieveBillFormat200() throws Exception {
         //first create
-        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build();
+        BillFormatCreateVO billFormatCreateVO = BillFormatCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<BillFormatVO> createResponse = callAndCatch(
                 () -> billFormatApiTestClient.createBillFormat(null, billFormatCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billFormat should have been created first.");
         String id = createResponse.body().getId();
 
-        BillFormatVO expectedBillFormat = BillFormatVOTestExample.build();
+        BillFormatVO expectedBillFormat = BillFormatVOTestExample.build().atSchemaLocation(null);
         expectedBillFormat.setId(id);
         expectedBillFormat.setHref(id);
 

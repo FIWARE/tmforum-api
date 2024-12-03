@@ -84,52 +84,52 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 	private static Stream<Arguments> provideValidHeals() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		HealCreateVO healCreateVO = HealCreateVOTestExample.build().healPolicy(null).resourceFunction(null);
-		HealVO expectedHealVO = HealVOTestExample.build().resourceFunction(null).healPolicy(null);
+		HealCreateVO healCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).healPolicy(null).resourceFunction(null);
+		HealVO expectedHealVO = HealVOTestExample.build().atSchemaLocation(null).resourceFunction(null).healPolicy(null);
 		testEntries.add(Arguments.of("An empty heal should have been created.", healCreateVO, expectedHealVO));
 
-		HealCreateVO actionCreateVO = HealCreateVOTestExample.build().healAction("make-it-healthy").healPolicy(null)
+		HealCreateVO actionCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).healAction("make-it-healthy").healPolicy(null)
 				.resourceFunction(null);
-		HealVO expectedActionVO = HealVOTestExample.build().healAction("make-it-healthy").resourceFunction(null)
+		HealVO expectedActionVO = HealVOTestExample.build().atSchemaLocation(null).healAction("make-it-healthy").resourceFunction(null)
 				.healPolicy(null);
 		testEntries.add(
 				Arguments.of("A heal with an action should have been created.", actionCreateVO, expectedActionVO));
 
-		HealCreateVO causeCreateVO = HealCreateVOTestExample.build().cause("its-unhealthy").healPolicy(null)
+		HealCreateVO causeCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).cause("its-unhealthy").healPolicy(null)
 				.resourceFunction(null);
-		HealVO expectedCauseVO = HealVOTestExample.build().cause("its-unhealthy").resourceFunction(null)
+		HealVO expectedCauseVO = HealVOTestExample.build().atSchemaLocation(null).cause("its-unhealthy").resourceFunction(null)
 				.healPolicy(null);
 		testEntries.add(Arguments.of("A heal with a cause should have been created.", causeCreateVO, expectedCauseVO));
 
-		HealCreateVO degreeCreateVO = HealCreateVOTestExample.build().degreeOfHealing("not-yet-healthy-again")
+		HealCreateVO degreeCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).degreeOfHealing("not-yet-healthy-again")
 				.healPolicy(null).resourceFunction(null);
-		HealVO expectedDegreeVO = HealVOTestExample.build().degreeOfHealing("not-yet-healthy-again")
+		HealVO expectedDegreeVO = HealVOTestExample.build().atSchemaLocation(null).degreeOfHealing("not-yet-healthy-again")
 				.resourceFunction(null).healPolicy(null);
 		testEntries.add(Arguments.of("A heal with a degree of healing should have been created.", degreeCreateVO,
 				expectedDegreeVO));
 
-		HealCreateVO nameCreateVO = HealCreateVOTestExample.build().name("my-name").healPolicy(null)
+		HealCreateVO nameCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).name("my-name").healPolicy(null)
 				.resourceFunction(null);
-		HealVO expectedNameVO = HealVOTestExample.build().name("my-name").resourceFunction(null).healPolicy(null);
+		HealVO expectedNameVO = HealVOTestExample.build().atSchemaLocation(null).name("my-name").resourceFunction(null).healPolicy(null);
 		testEntries.add(Arguments.of("A heal with a name should have been created.", nameCreateVO, expectedNameVO));
 
-		HealCreateVO stateCreateVO = HealCreateVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS).healPolicy(null)
+		HealCreateVO stateCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).state(TaskStateTypeVO.IN_PROGRESS).healPolicy(null)
 				.resourceFunction(null);
-		HealVO expectedStateVO = HealVOTestExample.build().state(TaskStateTypeVO.IN_PROGRESS).resourceFunction(null)
+		HealVO expectedStateVO = HealVOTestExample.build().atSchemaLocation(null).state(TaskStateTypeVO.IN_PROGRESS).resourceFunction(null)
 				.healPolicy(null);
 		testEntries.add(Arguments.of("A heal with a state should have been created.", stateCreateVO, expectedStateVO));
 
-		HealCreateVO startTimeCreateVO = HealCreateVOTestExample.build().startTime("10-10-2022").healPolicy(null)
+		HealCreateVO startTimeCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).startTime("10-10-2022").healPolicy(null)
 				.resourceFunction(null);
-		HealVO expectedStartTimeVO = HealVOTestExample.build().startTime("10-10-2022").resourceFunction(null)
+		HealVO expectedStartTimeVO = HealVOTestExample.build().atSchemaLocation(null).startTime("10-10-2022").resourceFunction(null)
 				.healPolicy(null);
 		testEntries.add(Arguments.of("A heal with a start time should have been created.", startTimeCreateVO,
 				expectedStartTimeVO));
 
-		HealCreateVO additionalParamsCreateVO = HealCreateVOTestExample.build()
-				.additionalParms(List.of(CharacteristicVOTestExample.build().id("urn:char"))).healPolicy(null).resourceFunction(null);
-		HealVO expectedAdditionalParamsVO = HealVOTestExample.build()
-				.additionalParms(List.of(CharacteristicVOTestExample.build().id("urn:char"))).resourceFunction(null).healPolicy(null);
+		HealCreateVO additionalParamsCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null)
+				.additionalParms(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:char"))).healPolicy(null).resourceFunction(null);
+		HealVO expectedAdditionalParamsVO = HealVOTestExample.build().atSchemaLocation(null)
+				.additionalParms(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:char"))).resourceFunction(null).healPolicy(null);
 		testEntries.add(
 				Arguments.of("A heal with additional parameters should have been created.", additionalParamsCreateVO,
 						expectedAdditionalParamsVO));
@@ -157,18 +157,18 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A heal with an invalid policy should not have been created.",
-				HealCreateVOTestExample.build().healPolicy(HealPolicyRefVOTestExample.build()).resourceFunction(null)));
+				HealCreateVOTestExample.build().atSchemaLocation(null).healPolicy(HealPolicyRefVOTestExample.build().atSchemaLocation(null)).resourceFunction(null)));
 		testEntries.add(Arguments.of("A heal with a non existent policy should not have been created.",
-				HealCreateVOTestExample.build()
-						.healPolicy(HealPolicyRefVOTestExample.build().id("urn:ngsi-ld:heal-policy:non-existent"))
+				HealCreateVOTestExample.build().atSchemaLocation(null)
+						.healPolicy(HealPolicyRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:heal-policy:non-existent"))
 						.resourceFunction(null)));
 
 		testEntries.add(Arguments.of("A heal with an invalid resource function should not have been created.",
-				HealCreateVOTestExample.build().healPolicy(null)
-						.resourceFunction(ResourceFunctionRefVOTestExample.build())));
+				HealCreateVOTestExample.build().atSchemaLocation(null).healPolicy(null)
+						.resourceFunction(ResourceFunctionRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of("A heal with a non existent resource function should not have been created.",
-				HealCreateVOTestExample.build().healPolicy(null).resourceFunction(
-						ResourceFunctionRefVOTestExample.build().id("urn:ngsi-ld:resource-function:non-existent"))));
+				HealCreateVOTestExample.build().atSchemaLocation(null).healPolicy(null).resourceFunction(
+						ResourceFunctionRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:resource-function:non-existent"))));
 
 		return testEntries.stream();
 	}
@@ -211,13 +211,13 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 
 		List<HealVO> expectedHeals = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			HealCreateVO healCreateVO = HealCreateVOTestExample.build()
+			HealCreateVO healCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null)
 					.healPolicy(null)
 					.resourceFunction(null);
 			String id = healApiTestClient.createHeal(null, healCreateVO)
 					.body()
 					.getId();
-			HealVO healVO = HealVOTestExample.build();
+			HealVO healVO = HealVOTestExample.build().atSchemaLocation(null);
 			healVO
 					.id(id)
 					.href(URI.create(id))
@@ -339,13 +339,13 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 	@Override
 	public void retrieveHeal200() throws Exception {
 
-		HealCreateVO healCreateVO = HealCreateVOTestExample.build().healPolicy(null).resourceFunction(null);
+		HealCreateVO healCreateVO = HealCreateVOTestExample.build().atSchemaLocation(null).healPolicy(null).resourceFunction(null);
 
 		HttpResponse<HealVO> healVOHttpResponse = callAndCatch(() -> healApiTestClient.createHeal(null, healCreateVO));
 		assertEquals(HttpStatus.CREATED, healVOHttpResponse.getStatus(), "The initial create should be successfully.");
 		String healId = healVOHttpResponse.body().getId();
 
-		HealVO expectedHeal = HealVOTestExample.build().id(healId).href(URI.create(healId)).healPolicy(null).resourceFunction(null);
+		HealVO expectedHeal = HealVOTestExample.build().atSchemaLocation(null).id(healId).href(URI.create(healId)).healPolicy(null).resourceFunction(null);
 
 		HttpResponse<HealVO> retreiveResponse = callAndCatch(() -> healApiTestClient.retrieveHeal(null, healId, null));
 		assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");
