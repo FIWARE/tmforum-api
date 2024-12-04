@@ -1,8 +1,10 @@
 package org.fiware.tmforum.productcatalog;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
@@ -21,6 +23,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,21 +78,25 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     public void createCatalog201() throws Exception {
 
         HttpResponse<CatalogVO> catalogVOHttpResponse = callAndCatch(
-                () -> catalogApiTestClient.createCatalog(catalogCreateVO));
+                () -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
         assertEquals(HttpStatus.CREATED, catalogVOHttpResponse.getStatus(), message);
         String catalogId = catalogVOHttpResponse.body().getId();
         expectedCatalog.setId(catalogId);
         expectedCatalog.setHref(catalogId);
 
-        assertEquals(expectedCatalog, catalogVOHttpResponse.body(), message);
-
+        Map expectedAsMap = objectMapper.convertValue(expectedCatalog, new TypeReference<Map<String, Object>>() {
+        });
+        Map responseAsMap = catalogVOHttpResponse.getBody(Map.class).get();
+        assertEquals(expectedAsMap, responseAsMap, message);
     }
 
     private static Stream<Arguments> provideValidCatalogs() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
-        CatalogVO expectedCatalog = CatalogVOTestExample.build();
+        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build().atSchemaLocation(null);
+        catalogCreateVO.setAtSchemaLocation(null);
+        CatalogVO expectedCatalog = CatalogVOTestExample.build().atSchemaLocation(null);
+        expectedCatalog.setAtSchemaLocation(null);
         testEntries.add(Arguments.of("An empty catalog should have been created.", catalogCreateVO, expectedCatalog));
 
         return testEntries.stream();
@@ -106,7 +113,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Override
     public void createCatalog400() throws Exception {
         HttpResponse<CatalogVO> creationResponse = callAndCatch(
-                () -> catalogApiTestClient.createCatalog(catalogCreateVO));
+                () -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -115,31 +122,31 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     private static Stream<Arguments> provideInvalidCatalogs() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CatalogCreateVO invalidRelatedPartyCreate = CatalogCreateVOTestExample.build();
+        CatalogCreateVO invalidRelatedPartyCreate = CatalogCreateVOTestExample.build().atSchemaLocation(null);
         // no valid id
-        RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
+        RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
         invalidRelatedPartyCreate.setRelatedParty(List.of(invalidRelatedParty));
         testEntries.add(Arguments.of("A catalog with invalid related parties should not be created.",
                 invalidRelatedPartyCreate));
 
-        CatalogCreateVO nonExistentRelatedPartyCreate = CatalogCreateVOTestExample.build();
+        CatalogCreateVO nonExistentRelatedPartyCreate = CatalogCreateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
+        RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
         nonExistentRelatedParty.setId("urn:ngsi-ld:individual:non-existent");
         nonExistentRelatedPartyCreate.setRelatedParty(List.of(nonExistentRelatedParty));
         testEntries.add(Arguments.of("A catalog with non-existent related parties should not be created.",
                 nonExistentRelatedPartyCreate));
 
-        CatalogCreateVO invalidCategoryCreate = CatalogCreateVOTestExample.build();
+        CatalogCreateVO invalidCategoryCreate = CatalogCreateVOTestExample.build().atSchemaLocation(null);
         // no valid id
-        CategoryRefVO categoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO categoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         invalidCategoryCreate.setCategory(List.of(categoryRef));
         testEntries.add(
                 Arguments.of("A catalog with invalid categories should not be created.", invalidCategoryCreate));
 
-        CatalogCreateVO nonExistentCategoryCreate = CatalogCreateVOTestExample.build();
+        CatalogCreateVO nonExistentCategoryCreate = CatalogCreateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         nonExistentCategoryRef.setId("urn:ngsi-ld:category:non-existent");
         nonExistentCategoryCreate.setCategory(List.of(nonExistentCategoryRef));
         testEntries.add(Arguments.of("A catalog with non-existent categories should not be created.",
@@ -183,19 +190,19 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Override
     public void deleteCatalog204() throws Exception {
         //first create
-        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
+        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<CatalogVO> createResponse = callAndCatch(
-                () -> catalogApiTestClient.createCatalog(catalogCreateVO));
+                () -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> catalogApiTestClient.deleteCatalog(catalogId)).getStatus(),
+                callAndCatch(() -> catalogApiTestClient.deleteCatalog(null, catalogId)).getStatus(),
                 "The catalog should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> catalogApiTestClient.retrieveCatalog(catalogId, null)).status(),
+                callAndCatch(() -> catalogApiTestClient.retrieveCatalog(null, catalogId, null)).status(),
                 "The catalog should not exist anymore.");
 
     }
@@ -225,7 +232,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Override
     public void deleteCatalog404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> catalogApiTestClient.deleteCatalog("urn:ngsi-ld:catalog:no-catalog"));
+                () -> catalogApiTestClient.deleteCatalog(null, "urn:ngsi-ld:catalog:no-catalog"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such catalog should exist.");
@@ -233,7 +240,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> catalogApiTestClient.deleteCatalog("invalid-id"));
+        notFoundResponse = callAndCatch(() -> catalogApiTestClient.deleteCatalog(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such catalog should exist.");
@@ -266,9 +273,9 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     public void listCatalog200() throws Exception {
         List<CatalogVO> expectedCatalogs = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
-            String id = catalogApiTestClient.createCatalog(catalogCreateVO).body().getId();
-            CatalogVO catalogVO = CatalogVOTestExample.build();
+            CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build().atSchemaLocation(null);
+            String id = catalogApiTestClient.createCatalog(null, catalogCreateVO).body().getId();
+            CatalogVO catalogVO = CatalogVOTestExample.build().atSchemaLocation(null);
             catalogVO
                     .id(id)
                     .href(id);
@@ -276,7 +283,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         }
 
         HttpResponse<List<CatalogVO>> catalogResponse = callAndCatch(
-                () -> catalogApiTestClient.listCatalog(null, null, null));
+                () -> catalogApiTestClient.listCatalog(null, null, null, null));
 
         assertEquals(HttpStatus.OK, catalogResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedCatalogs.size(), catalogResponse.getBody().get().size(),
@@ -297,11 +304,11 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<CatalogVO>> firstPartResponse = callAndCatch(
-                () -> catalogApiTestClient.listCatalog(null, 0, limit));
+                () -> catalogApiTestClient.listCatalog(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<CatalogVO>> secondPartResponse = callAndCatch(
-                () -> catalogApiTestClient.listCatalog(null, 0 + limit, limit));
+                () -> catalogApiTestClient.listCatalog(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -320,7 +327,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Override
     public void listCatalog400() throws Exception {
         HttpResponse<List<CatalogVO>> badRequestResponse = callAndCatch(
-                () -> catalogApiTestClient.listCatalog(null, -1, null));
+                () -> catalogApiTestClient.listCatalog(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -328,7 +335,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> catalogApiTestClient.listCatalog(null, null, -1));
+        badRequestResponse = callAndCatch(() -> catalogApiTestClient.listCatalog(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -390,15 +397,15 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Override
     public void patchCatalog200() throws Exception {
         //first create
-        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
+        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<CatalogVO> createResponse = callAndCatch(
-                () -> catalogApiTestClient.createCatalog(catalogCreateVO));
+                () -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
         HttpResponse<CatalogVO> updateResponse = callAndCatch(
-                () -> catalogApiTestClient.patchCatalog(catalogId, catalogUpdateVO));
+                () -> catalogApiTestClient.patchCatalog(null, catalogId, catalogUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         CatalogVO updatedCatalog = updateResponse.body();
@@ -411,43 +418,43 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     private static Stream<Arguments> provideCatalogUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CatalogUpdateVO newTypeCatalog = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO newTypeCatalog = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         newTypeCatalog.setCatalogType("New-Type");
-        CatalogVO expectedNewType = CatalogVOTestExample.build();
+        CatalogVO expectedNewType = CatalogVOTestExample.build().atSchemaLocation(null);
         expectedNewType.setCatalogType("New-Type");
         testEntries.add(Arguments.of("The type should have been updated.", newTypeCatalog, expectedNewType));
 
-        CatalogUpdateVO newDesc = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO newDesc = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         newDesc.setDescription("New description");
-        CatalogVO expectedNewDesc = CatalogVOTestExample.build();
+        CatalogVO expectedNewDesc = CatalogVOTestExample.build().atSchemaLocation(null);
         expectedNewDesc.setDescription("New description");
         testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-        CatalogUpdateVO newLifeCycle = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO newLifeCycle = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         newLifeCycle.setLifecycleStatus("Dead");
-        CatalogVO expectedNewLifeCycle = CatalogVOTestExample.build();
+        CatalogVO expectedNewLifeCycle = CatalogVOTestExample.build().atSchemaLocation(null);
         expectedNewLifeCycle.setLifecycleStatus("Dead");
         testEntries.add(
                 Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
-        CatalogUpdateVO newName = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO newName = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         newName.setName("New name");
-        CatalogVO expectedNewName = CatalogVOTestExample.build();
+        CatalogVO expectedNewName = CatalogVOTestExample.build().atSchemaLocation(null);
         expectedNewName.setName("New name");
         testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
-        CatalogUpdateVO newVersion = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO newVersion = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         newVersion.setVersion("1.23.1");
-        CatalogVO expectedNewVersion = CatalogVOTestExample.build();
+        CatalogVO expectedNewVersion = CatalogVOTestExample.build().atSchemaLocation(null);
         expectedNewVersion.setVersion("1.23.1");
         testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
-        CatalogUpdateVO newValidFor = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO newValidFor = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
         timePeriodVO.setEndDateTime(Instant.now());
         timePeriodVO.setStartDateTime(Instant.now());
         newValidFor.setValidFor(timePeriodVO);
-        CatalogVO expectedNewValidFor = CatalogVOTestExample.build();
+        CatalogVO expectedNewValidFor = CatalogVOTestExample.build().atSchemaLocation(null);
         expectedNewValidFor.setValidFor(timePeriodVO);
         testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
 
@@ -465,15 +472,15 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Override
     public void patchCatalog400() throws Exception {
         //first create
-        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
+        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<CatalogVO> createResponse = callAndCatch(
-                () -> catalogApiTestClient.createCatalog(catalogCreateVO));
+                () -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
         HttpResponse<CatalogVO> updateResponse = callAndCatch(
-                () -> catalogApiTestClient.patchCatalog(catalogId, catalogUpdateVO));
+                () -> catalogApiTestClient.patchCatalog(null, catalogId, catalogUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -483,31 +490,31 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     private static Stream<Arguments> provideInvalidUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CatalogUpdateVO invalidRelatedPartyUpdate = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO invalidRelatedPartyUpdate = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         // no valid id
-        RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build();
+        RelatedPartyVO invalidRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
         invalidRelatedPartyUpdate.setRelatedParty(List.of(invalidRelatedParty));
         testEntries.add(Arguments.of("A catalog with invalid related parties should not be updated.",
                 invalidRelatedPartyUpdate));
 
-        CatalogUpdateVO nonExistentRelatedPartyUpdate = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO nonExistentRelatedPartyUpdate = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build();
+        RelatedPartyVO nonExistentRelatedParty = RelatedPartyVOTestExample.build().atSchemaLocation(null);
         nonExistentRelatedParty.setId("urn:ngsi-ld:individual:non-existent");
         nonExistentRelatedPartyUpdate.setRelatedParty(List.of(nonExistentRelatedParty));
         testEntries.add(Arguments.of("A catalog with non-existent related parties should not be updated.",
                 nonExistentRelatedPartyUpdate));
 
-        CatalogUpdateVO invalidCategoryUpdate = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO invalidCategoryUpdate = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         // no valid id
-        CategoryRefVO categoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO categoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         invalidCategoryUpdate.setCategory(List.of(categoryRef));
         testEntries.add(
                 Arguments.of("A catalog with invalid categories should not be updated.", invalidCategoryUpdate));
 
-        CatalogUpdateVO nonExistentCategoryUpdate = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO nonExistentCategoryUpdate = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         nonExistentCategoryRef.setId("urn:ngsi-ld:category:non-existent");
         nonExistentCategoryUpdate.setCategory(List.of(nonExistentCategoryRef));
         testEntries.add(Arguments.of("A catalog with non-existent categories should not be updated.",
@@ -533,10 +540,10 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Test
     @Override
     public void patchCatalog404() throws Exception {
-        CatalogUpdateVO catalogUpdateVO = CatalogUpdateVOTestExample.build();
+        CatalogUpdateVO catalogUpdateVO = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> catalogApiTestClient.patchCatalog("urn:ngsi-ld:catalog:not-existent",
+                callAndCatch(() -> catalogApiTestClient.patchCatalog(null, "urn:ngsi-ld:catalog:not-existent",
                         catalogUpdateVO)).getStatus(),
                 "Non existent catalogs should not be updated.");
     }
@@ -565,27 +572,29 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     public void retrieveCatalog200() throws Exception {
 
         //first create
-        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build();
+        CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build().atSchemaLocation(null);
+        catalogCreateVO.setAtSchemaLocation(null);
         HttpResponse<CatalogVO> createResponse = callAndCatch(
-                () -> catalogApiTestClient.createCatalog(catalogCreateVO));
+                () -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
         String id = createResponse.body().getId();
 
-        CatalogVO expectedCatalog = CatalogVOTestExample.build();
+        CatalogVO expectedCatalog = CatalogVOTestExample.build().atSchemaLocation(null);
         expectedCatalog.setId(id);
         expectedCatalog.setHref(id);
+        expectedCatalog.setAtSchemaLocation(null);
 
         //then retrieve
-        HttpResponse<CatalogVO> retrievedCatalog = callAndCatch(() -> catalogApiTestClient.retrieveCatalog(id, null));
+        HttpResponse<CatalogVO> retrievedCatalog = callAndCatch(() -> catalogApiTestClient.retrieveCatalog(null, id, null));
         assertEquals(HttpStatus.OK, retrievedCatalog.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedCatalog, retrievedCatalog.body(), "The correct catalog should be returned.");
     }
+
 
     @Disabled("400 cannot happen, only 404")
     @Test
     @Override
     public void retrieveCatalog400() throws Exception {
-
     }
 
     @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
@@ -605,7 +614,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
     @Override
     public void retrieveCatalog404() throws Exception {
         HttpResponse<CatalogVO> response = callAndCatch(
-                () -> catalogApiTestClient.retrieveCatalog("urn:ngsi-ld:catalog:non-existent", null));
+                () -> catalogApiTestClient.retrieveCatalog(null, "urn:ngsi-ld:catalog:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such catalog should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);

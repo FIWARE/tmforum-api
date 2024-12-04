@@ -77,7 +77,7 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 	@Override
 	public void registerListener201() throws Exception {
 		HttpResponse<EventSubscriptionVO> registerResponse =
-				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));
 		assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), message);
 		assertTrue(registerResponse.getBody().isPresent());
 		expectedEventSubscription.setId(registerResponse.getBody().get().getId());
@@ -97,7 +97,7 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 	@Override
 	public void registerListener400() throws Exception {
 		HttpResponse<EventSubscriptionVO> registerResponse = callAndCatch(
-				() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+				() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));
 		assertEquals(HttpStatus.BAD_REQUEST, registerResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = registerResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -137,11 +137,11 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 	@Override
 	public void registerListener409() throws Exception {
 		HttpResponse<EventSubscriptionVO> registerResponse =
-				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));
 		assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), message);
 
 		HttpResponse<EventSubscriptionVO> duplicatedListenerRegisterResponse =
-				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));
 		assertEquals(HttpStatus.CONFLICT, duplicatedListenerRegisterResponse.getStatus(), message);
 	}
 
@@ -177,14 +177,14 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 				.query(null)
 				.callback(ANY_CALLBACK);
 		HttpResponse<EventSubscriptionVO> eventSubscriptionVOHttpResponse =
-				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(eventSubscriptionInputVO));
+				callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));
 		assertEquals(HttpStatus.CREATED, eventSubscriptionVOHttpResponse.getStatus(),
 				"A listener with callback should have been created.");
 		assertTrue(eventSubscriptionVOHttpResponse.getBody().isPresent());
 
 		String hubId = eventSubscriptionVOHttpResponse.getBody().get().getId();
 		HttpResponse<?> httpResponse =
-				callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener(hubId));
+				callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener(null, hubId));
 		assertEquals(HttpStatus.NO_CONTENT, httpResponse.getStatus(),
 				"A listener with callback should have been deleted.");
 	}
@@ -192,7 +192,7 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 	@Override
 	public void unregisterListener400() throws Exception {
 		HttpResponse<?> httpResponse =
-				callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener(null));
+				callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener(null, null));
 		assertEquals(HttpStatus.BAD_REQUEST, httpResponse.getStatus(),
 				"Should have returned 400 when ID is null");
 	}
@@ -213,7 +213,7 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 	@Override
 	public void unregisterListener404() throws Exception {
 		HttpResponse<?> httpResponse =
-				callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener("non-existing-id"));
+				callAndCatch(() -> eventsSubscriptionApiTestClient.unregisterListener(null, "non-existing-id"));
 		assertEquals(HttpStatus.NOT_FOUND, httpResponse.getStatus(),
 				"Should have return 404 when non-existing ID provided.");
 	}

@@ -35,7 +35,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.customerbillmanagement" })
+@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
 public class CustomerBillOnDemandApiIT extends AbstractApiIT implements CustomerBillOnDemandApiTestSpec {
 
 	public final CustomerBillOnDemandApiTestClient customerBillOnDemandApiTestClient;
@@ -46,8 +46,8 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	private CustomerBillOnDemandVO expectedCustomerBillOnDemand;
 
 	public CustomerBillOnDemandApiIT(CustomerBillOnDemandApiTestClient customerBillOnDemandApiTestClient,
-			EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+									 EntitiesApiClient entitiesApiClient,
+									 ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.customerBillOnDemandApiTestClient = customerBillOnDemandApiTestClient;
 	}
@@ -65,8 +65,8 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	@ParameterizedTest
 	@MethodSource("provideValidCustomerBillOnDemands")
 	public void createCustomerBillOnDemand201(String message,
-			CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO,
-			CustomerBillOnDemandVO expectedCustomerBillOnDemand)
+											  CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO,
+											  CustomerBillOnDemandVO expectedCustomerBillOnDemand)
 			throws Exception {
 		this.message = message;
 		this.customerBillOnDemandCreateVO = customerBillOnDemandCreateVO;
@@ -78,7 +78,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	public void createCustomerBillOnDemand201() throws Exception {
 
 		HttpResponse<CustomerBillOnDemandVO> customerBillOnDemandVOHttpResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.createCustomerBillOnDemand(
+				() -> customerBillOnDemandApiTestClient.createCustomerBillOnDemand(null,
 						customerBillOnDemandCreateVO));
 		assertEquals(HttpStatus.CREATED, customerBillOnDemandVOHttpResponse.getStatus(), message);
 		String rfId = customerBillOnDemandVOHttpResponse.body().getId();
@@ -93,12 +93,12 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	private static Stream<Arguments> provideValidCustomerBillOnDemands() {
 		List<Arguments> testEntries = new ArrayList<>();
 
-		CustomerBillOnDemandCreateVO emptyCreate = CustomerBillOnDemandCreateVOTestExample.build()
+		CustomerBillOnDemandCreateVO emptyCreate = CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 				.lastUpdate(Instant.MAX.toString())
 				.billingAccount(null)
 				.relatedParty(null)
 				.customerBill(null);
-		CustomerBillOnDemandVO expectedEmpty = CustomerBillOnDemandVOTestExample.build()
+		CustomerBillOnDemandVO expectedEmpty = CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 				.lastUpdate(Instant.MAX.toString())
 				.billingAccount(null)
 				.relatedParty(null)
@@ -121,7 +121,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	@Override
 	public void createCustomerBillOnDemand400() throws Exception {
 		HttpResponse<CustomerBillOnDemandVO> creationResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.createCustomerBillOnDemand(
+				() -> customerBillOnDemandApiTestClient.createCustomerBillOnDemand(null,
 						customerBillOnDemandCreateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
@@ -133,55 +133,55 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid billing account should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
 								.customerBill(null)
-								.billingAccount(BillingAccountRefVOTestExample.build())));
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of(
 				"A customerBillOnDemand with a non-existent billing account should not be created.",
-				CustomerBillOnDemandCreateVOTestExample.build()
+				CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 						.lastUpdate(null)
 						.relatedParty(null)
 						.customerBill(null)
 						.billingAccount(
-								BillingAccountRefVOTestExample.build()
+								BillingAccountRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:billing-account:non-existent"))));
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid related party should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
-								.relatedParty(RelatedPartyRefVOTestExample.build())
+								.relatedParty(RelatedPartyRefVOTestExample.build().atSchemaLocation(null))
 								.customerBill(null)
 								.billingAccount(null)));
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with a non-existent related party should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(
-										RelatedPartyRefVOTestExample.build().id("urn:ngsi-ld:organition:non-existent"))
+										RelatedPartyRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organition:non-existent"))
 								.customerBill(null)
 								.billingAccount(null)));
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid bill ref should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
-								.customerBill(BillRefVOTestExample.build())
+								.customerBill(BillRefVOTestExample.build().atSchemaLocation(null))
 								.billingAccount(null)));
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with a non-existent bill ref should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
 								.customerBill(
-										BillRefVOTestExample.build().id("urn:ngsi-ld:customer-bill:non-existent"))));
+										BillRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:customer-bill:non-existent"))));
 
 		testEntries.add(
 				Arguments.of("A customerBillOnDemand with an invalid lastUpdate should not be created.",
-						CustomerBillOnDemandCreateVOTestExample.build()
+						CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate("no-date")
 								.relatedParty(null)
 								.customerBill(null)
@@ -227,14 +227,14 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	public void listCustomerBillOnDemand200() throws Exception {
 		List<CustomerBillOnDemandVO> expectedCustomerBillOnDemands = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build()
+			CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 					.customerBill(null)
 					.relatedParty(null)
 					.billingAccount(null)
 					.lastUpdate(Instant.MAX.toString());
-			String id = customerBillOnDemandApiTestClient.createCustomerBillOnDemand(
+			String id = customerBillOnDemandApiTestClient.createCustomerBillOnDemand(null,
 					customerBillOnDemandCreateVO).body().getId();
-			CustomerBillOnDemandVO customerBillOnDemandVO = CustomerBillOnDemandVOTestExample.build();
+			CustomerBillOnDemandVO customerBillOnDemandVO = CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null);
 			customerBillOnDemandVO
 					.id(id)
 					.href(id)
@@ -246,7 +246,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 		}
 
 		HttpResponse<List<CustomerBillOnDemandVO>> customerBillOnDemandResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, null, null));
+				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, customerBillOnDemandResponse.getStatus(),
 				"The list should be accessible.");
@@ -270,11 +270,11 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<CustomerBillOnDemandVO>> firstPartResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, 0, limit));
+				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<CustomerBillOnDemandVO>> secondPartResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, 0 + limit, limit));
+				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -294,7 +294,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	@Override
 	public void listCustomerBillOnDemand400() throws Exception {
 		HttpResponse<List<CustomerBillOnDemandVO>> badRequestResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, -1, null));
+				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -303,7 +303,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
 		badRequestResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, null, -1));
+				() -> customerBillOnDemandApiTestClient.listCustomerBillOnDemand(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -354,7 +354,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	@ParameterizedTest
 	@MethodSource("provideFieldParameters")
 	public void retrieveCustomerBillOnDemand200(String message, String fields,
-			CustomerBillOnDemandVO expectedCustomerBillOnDemand) throws Exception {
+												CustomerBillOnDemandVO expectedCustomerBillOnDemand) throws Exception {
 		this.fieldsParameter = fields;
 		this.message = message;
 		this.expectedCustomerBillOnDemand = expectedCustomerBillOnDemand;
@@ -364,13 +364,13 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	@Override
 	public void retrieveCustomerBillOnDemand200() throws Exception {
 
-		CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build()
+		CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO = CustomerBillOnDemandCreateVOTestExample.build().atSchemaLocation(null)
 				.relatedParty(null)
 				.billingAccount(null)
 				.customerBill(null)
 				.lastUpdate(Instant.MAX.toString());
 		HttpResponse<CustomerBillOnDemandVO> createResponse = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.createCustomerBillOnDemand(
+				() -> customerBillOnDemandApiTestClient.createCustomerBillOnDemand(null,
 						customerBillOnDemandCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
 		String id = createResponse.body().getId();
@@ -381,7 +381,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 
 		//then retrieve
 		HttpResponse<CustomerBillOnDemandVO> retrievedRF = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.retrieveCustomerBillOnDemand(id, fieldsParameter));
+				() -> customerBillOnDemandApiTestClient.retrieveCustomerBillOnDemand(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
 		assertEquals(expectedCustomerBillOnDemand, retrievedRF.body(), message);
 	}
@@ -389,13 +389,13 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						CustomerBillOnDemandVOTestExample.build()
+						CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.billingAccount(null)
 								.customerBill(null)
 								.lastUpdate(Instant.MAX.toString())),
 				Arguments.of("Only name and the mandatory parameters should have been included.", "name",
-						CustomerBillOnDemandVOTestExample.build()
+						CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.description(null)
 								.lastUpdate(null)
 								.state(null)
@@ -407,7 +407,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 								.atSchemaLocation(null)),
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", CustomerBillOnDemandVOTestExample.build()
+						"nothingToSeeHere", CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.description(null)
 								.lastUpdate(null)
 								.state(null)
@@ -419,7 +419,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 								.atBaseType(null)
 								.atSchemaLocation(null)),
 				Arguments.of("Only name, state, description and the mandatory parameters should have been included.",
-						"name,state,description", CustomerBillOnDemandVOTestExample.build()
+						"name,state,description", CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.lastUpdate(null)
 								.relatedParty(null)
 								.customerBill(null)
@@ -454,7 +454,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 	@Override
 	public void retrieveCustomerBillOnDemand404() throws Exception {
 		HttpResponse<CustomerBillOnDemandVO> response = callAndCatch(
-				() -> customerBillOnDemandApiTestClient.retrieveCustomerBillOnDemand(
+				() -> customerBillOnDemandApiTestClient.retrieveCustomerBillOnDemand(null,
 						"urn:ngsi-ld:resource-function:non-existent", null));
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such service-category should exist.");
 
@@ -481,7 +481,8 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 
 	}
 
-	@Override protected String getEntityType() {
+	@Override
+	protected String getEntityType() {
 		return CustomerBillOnDemand.TYPE_CUSTOMER_BILL_ON_DEMAND;
 	}
 }

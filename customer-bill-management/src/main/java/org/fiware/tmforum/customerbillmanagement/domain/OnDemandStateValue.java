@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum OnDemandStateValue {
 
-	INPROGRESS("inProgress"),
+	IN_PROGRESS("inProgress"),
 	REJECTED("rejected"),
 	DONE("done"),
-	TERMINATEDWITHERROR("terminatedWithError");
+	TERMINATED_WITH_ERROR("terminatedWithError");
 
 	private final String value;
 
