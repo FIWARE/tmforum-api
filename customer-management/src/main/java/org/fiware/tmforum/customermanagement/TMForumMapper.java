@@ -6,6 +6,7 @@ import org.fiware.customermanagement.model.CustomerUpdateVO;
 import org.fiware.customermanagement.model.CustomerVO;
 import org.fiware.customermanagement.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customermanagement.domain.Customer;
 import org.mapstruct.Mapper;
@@ -19,25 +20,25 @@ import java.net.URL;
  * Mapper between the internal model and api-domain objects
  */
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
-public interface TMForumMapper {
+public abstract class TMForumMapper extends BaseMapper {
 
     // customer management
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    CustomerVO map(CustomerCreateVO customerCreateVO, URI id);
+    public abstract CustomerVO map(CustomerCreateVO customerCreateVO, URI id);
 
-    CustomerVO map(Customer customer);
+    public abstract CustomerVO map(Customer customer);
 
-    Customer map(CustomerVO serviceCatalogVO);
+    public abstract Customer map(CustomerVO serviceCatalogVO);
 
     @Mapping(target = "id", source = "id")
-    Customer map(CustomerUpdateVO customerUpdateVO, String id);
+    public abstract Customer map(CustomerUpdateVO customerUpdateVO, String id);
 
     @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(TMForumSubscription subscription);
+    public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-    default URL map(String value) {
+    public URL map(String value) {
         if (value == null) {
             return null;
         }
@@ -48,21 +49,21 @@ public interface TMForumMapper {
         }
     }
 
-    default String map(URL value) {
+    public String map(URL value) {
         if (value == null) {
             return null;
         }
         return value.toString();
     }
 
-    default URI mapToURI(String value) {
+    public URI mapToURI(String value) {
         if (value == null) {
             return null;
         }
         return URI.create(value);
     }
 
-    default String mapFromURI(URI value) {
+    public String mapFromURI(URI value) {
         if (value == null) {
             return null;
         }

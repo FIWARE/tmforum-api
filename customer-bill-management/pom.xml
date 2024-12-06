@@ -128,6 +128,16 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- jakarta -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+
         <!-- testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -190,39 +200,13 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>${version.org.openapitools.generator-maven-plugin}</version>
+                <configuration>
+                    <skip>false</skip>
+                    <inputSpec>${tmforum.api.url}</inputSpec>
+                    <apiPackage>org.fiware.customerbillmanagement.api</apiPackage>
+                    <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
+                </configuration>
                 <executions>
-                    <execution>
-                        <id>openapi-customer-bill-management-api</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${tmforum.api.url}</inputSpec>
-                            <apiPackage>org.fiware.customerbillmanagement.api</apiPackage>
-                            <strictSpec>true</strictSpec>
-                            <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
-                            <generatorName>micronaut</generatorName>
-                            <modelNameSuffix>VO</modelNameSuffix>
-                            <output>${project.build.directory}</output>
-                            <generateSupportingFiles>false</generateSupportingFiles>
-                            <configOptions>
-                                <fullJavaUtil>true</fullJavaUtil>
-                                <useOptional>false</useOptional>
-                                <useGenericResponse>true</useGenericResponse>
-                                <useLombokGenerated>true</useLombokGenerated>
-                                <introspected>true</introspected>
-                                <useBeanValidation>false</useBeanValidation>
-                                <supportAsync>true</supportAsync>
-                                <jacksonDatabindNullable>false</jacksonDatabindNullable>
-                                <generateExamples>true</generateExamples>
-                            </configOptions>
-                            <typeMappings>
-                                <typeMapping>java.util.Date=java.time.Instant</typeMapping>
-                            </typeMappings>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>openapi-customer-bill-management-api-extension</id>
                         <phase>generate-sources</phase>
@@ -230,38 +214,15 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.parent.basedir}/${artifactId}/api/applied-customer-bill-management-extension.yaml</inputSpec>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/applied-customer-bill-management-extension.yaml
+                            </inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
-                            <strictSpec>true</strictSpec>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
-                            <generatorName>micronaut</generatorName>
-                            <modelNameSuffix>VO</modelNameSuffix>
-                            <output>${project.build.directory}</output>
-                            <generateSupportingFiles>false</generateSupportingFiles>
-                            <configOptions>
-                                <fullJavaUtil>true</fullJavaUtil>
-                                <useOptional>false</useOptional>
-                                <useGenericResponse>true</useGenericResponse>
-                                <useLombokGenerated>true</useLombokGenerated>
-                                <introspected>true</introspected>
-                                <useBeanValidation>false</useBeanValidation>
-                                <supportAsync>true</supportAsync>
-                                <jacksonDatabindNullable>false</jacksonDatabindNullable>
-                                <generateExamples>true</generateExamples>
-                            </configOptions>
-                            <typeMappings>
-                                <typeMapping>java.util.Date=java.time.Instant</typeMapping>
-                            </typeMappings>
                         </configuration>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>io.kokuwa.micronaut</groupId>
-                        <artifactId>micronaut-openapi-codegen</artifactId>
-                        <version>${version.io.kokuwa.micronaut.codegen}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
             <!-- add generated sources -->
             <plugin>

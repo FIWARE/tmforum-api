@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum ProductStatusType {
 
 	CREATED("created"),
-	PENDINGACTIVE("pendingActive"),
+	PENDING_ACTIVE("pendingActive"),
 	CANCELLED("cancelled"),
 	ACTIVE("active"),
-	PENDINGTERMINATE("pendingTerminate"),
+	PENDING_TERMINATE("pendingTerminate"),
 	TERMINATED("terminated"),
 	SUSPENDED("suspended"),
 	ABORTED_("aborted ");

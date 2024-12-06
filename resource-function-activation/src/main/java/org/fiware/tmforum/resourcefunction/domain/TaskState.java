@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum TaskState {
 
     ACCEPTED("accepted"),
-    TERMINATEDWITHERROR("terminatedWithError"),
-    INPROGRESS("inProgress"),
+    TERMINATED_WITH_ERROR("terminatedWithError"),
+    IN_PROGRESS("inProgress"),
     DONE("done");
 
     private final String value;

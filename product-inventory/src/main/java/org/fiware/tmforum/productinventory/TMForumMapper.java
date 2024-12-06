@@ -3,6 +3,7 @@ package org.fiware.tmforum.productinventory;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.productinventory.model.*;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.product.RelatedProductOrderItemRef;
@@ -17,24 +18,24 @@ import java.net.URL;
  * Mapper between the internal model and api-domain objects
  */
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
-public interface TMForumMapper {
+public abstract class TMForumMapper extends BaseMapper {
 
 	// product
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	ProductVO map(ProductCreateVO productCreateVO, URI id);
+	public abstract ProductVO map(ProductCreateVO productCreateVO, URI id);
 
-	ProductVO map(Product product);
+	public abstract ProductVO map(Product product);
 
-	Product map(ProductVO productVO);
+	public abstract Product map(ProductVO productVO);
 
 	@Mapping(target = "id", source = "id")
-	Product map(ProductUpdateVO productUpdateVO, String id);
+	public abstract Product map(ProductUpdateVO productUpdateVO, String id);
 
-	RelatedProductOrderItemRef map (RelatedProductOrderItemVO relatedProductOrderItemVO);
+	public abstract RelatedProductOrderItemRef map(RelatedProductOrderItemVO relatedProductOrderItemVO);
 
-	default URL map(String value) {
+	public URL map(String value) {
 		if (value == null) {
 			return null;
 		}
@@ -46,23 +47,23 @@ public interface TMForumMapper {
 	}
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(TMForumSubscription subscription);
+	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	default String map(URL value) {
+	public String map(URL value) {
 		if (value == null) {
 			return null;
 		}
 		return value.toString();
 	}
 
-	default URI mapToURI(String value) {
+	public URI mapToURI(String value) {
 		if (value == null) {
 			return null;
 		}
 		return URI.create(value);
 	}
 
-	default String mapFromURI(URI value) {
+	public String mapFromURI(URI value) {
 		if (value == null) {
 			return null;
 		}

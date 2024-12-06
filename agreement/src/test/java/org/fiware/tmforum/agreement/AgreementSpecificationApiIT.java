@@ -84,18 +84,18 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 
     private static Stream<Arguments> provideValidAgSpec() {
         List<Arguments> testEntries = new ArrayList<>();
-        AgreementSpecificationCreateVO agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build()
+        AgreementSpecificationCreateVO agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null);
-        AgreementSpecificationVO expectedAgSpec = AgreementSpecificationVOTestExample.build()
+        AgreementSpecificationVO expectedAgSpec = AgreementSpecificationVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null);
         testEntries.add(
                 Arguments.of("Empty AgreementSpecificacion should have been created", agSpecCreateVO,
                         expectedAgSpec));
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
                 .startDateTime(Instant.now());
-        agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build()
+        agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null).validFor(timePeriodVO);
-        expectedAgSpec = AgreementSpecificationVOTestExample.build().serviceCategory(null)
+        expectedAgSpec = AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null)
                 .validFor(timePeriodVO);
         testEntries.add(
                 Arguments.of("AgreementSpecificacion with a validFor should have been created",
@@ -108,7 +108,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     @Override
     public void createAgreement201() throws Exception {
         HttpResponse<AgreementSpecificationVO> agSpecCreateResponse = callAndCatch(
-                () -> agSpecApiTestClient.createAgreementSpecification(agSpecCreateVO));
+                () -> agSpecApiTestClient.createAgreementSpecification(null, agSpecCreateVO));
         assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(), message);
         String id = agSpecCreateResponse.body().getId();
         expectedAgSpec.id(id).href(id);
@@ -117,18 +117,18 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 
     @Test
     public void createAgreement201WithAgSpecRelationship() throws Exception {
-        AgreementSpecificationCreateVO auxAgSpecCreateVO = AgreementSpecificationCreateVOTestExample.build()
+        AgreementSpecificationCreateVO auxAgSpecCreateVO = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null).isBundle(true);
         HttpResponse<AgreementSpecificationVO> auxAgSpecCreateResponse = callAndCatch(
-                () -> agSpecApiTestClient.createAgreementSpecification(auxAgSpecCreateVO));
+                () -> agSpecApiTestClient.createAgreementSpecification(null, auxAgSpecCreateVO));
         assertEquals(HttpStatus.CREATED, auxAgSpecCreateResponse.getStatus(),
                 "Auxiliar AgreementSpecification should have been created");
         String id = auxAgSpecCreateResponse.body().getId();
-        agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build().serviceCategory(null)
+        agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null).serviceCategory(null)
                 .specificationRelationship(List
-                        .of(AgreementSpecificationRelationshipVOTestExample.build().id(id)));
+                        .of(AgreementSpecificationRelationshipVOTestExample.build().atSchemaLocation(null).id(id)));
         HttpResponse<AgreementSpecificationVO> agSpecCreateResponse = callAndCatch(
-                () -> agSpecApiTestClient.createAgreementSpecification(agSpecCreateVO));
+                () -> agSpecApiTestClient.createAgreementSpecification(null, agSpecCreateVO));
         message = "AgreementSpecification with a relationship with another valid AgreementSpecification should have been created";
         assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(), message);
         assertEquals(id, agSpecCreateResponse.body().getSpecificationRelationship().get(0).getId(), message);
@@ -144,17 +144,17 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 
     private static Stream<Arguments> provideInvalidAgSpec() {
         List<Arguments> testEntries = new ArrayList<>();
-        CategoryRefVO category = CategoryRefVOTestExample.build();
+        CategoryRefVO category = CategoryRefVOTestExample.build().atSchemaLocation(null);
         category.setId("urn:ngsi-ld:agreementSpecification:non-existent");
-        AgreementSpecificationCreateVO agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build()
+        AgreementSpecificationCreateVO agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(category);
         testEntries.add(
                 Arguments.of("An AgreementSpecificacion with an invalid serviceCategory should not be created",
                         agSpecCreateVO));
 
-        agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build()
+        agSpecCreateVO = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null).relatedParty(List
-                        .of(RelatedPartyVOTestExample.build().id(
+                        .of(RelatedPartyVOTestExample.build().atSchemaLocation(null).id(
                                 "urn:ngsi-ld:agreementSpecification:non-existent")));
         testEntries.add(
                 Arguments.of("AgreementSpecificacion with an invalid relatedParty should not be created",
@@ -166,7 +166,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     @Override
     public void createAgreement400() throws Exception {
         HttpResponse<AgreementSpecificationVO> agSpecCreateResponse = callAndCatch(
-                () -> agSpecApiTestClient.createAgreementSpecification(agSpecCreateVO));
+                () -> agSpecApiTestClient.createAgreementSpecification(null, agSpecCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, agSpecCreateResponse.getStatus(), message);
     }
 
@@ -209,21 +209,21 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 
     @Override
     public void deleteAgreement204() throws Exception {
-        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build()
+        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null);
         HttpResponse<AgreementSpecificationVO> createAgSpecResponse = agSpecApiTestClient
-                .createAgreementSpecification(agSpecCreate);
+                .createAgreementSpecification(null, agSpecCreate);
         assertEquals(HttpStatus.CREATED, createAgSpecResponse.getStatus(),
                 "Agreement specification should be created");
 
         String agId = createAgSpecResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> agSpecApiTestClient.deleteAgreementSpecification(agId)).getStatus(),
+                callAndCatch(() -> agSpecApiTestClient.deleteAgreementSpecification(null, agId)).getStatus(),
                 "The agreement specification should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> agSpecApiTestClient.retrieveAgreementSpecification(agId, null))
+                callAndCatch(() -> agSpecApiTestClient.retrieveAgreementSpecification(null, agId, null))
                         .status(),
                 "The agreement specification should not exist anymore.");
     }
@@ -255,7 +255,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
         String agId = "urn:ngsi-ld:agreementSpecification:non-existent";
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> agSpecApiTestClient.deleteAgreementSpecification(agId)).getStatus(),
+                callAndCatch(() -> agSpecApiTestClient.deleteAgreementSpecification(null, agId)).getStatus(),
                 "The customer should have been deleted.");
     }
 
@@ -285,13 +285,13 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
         HttpResponse<AgreementSpecificationVO> createAgSpecResponse;
         AgreementSpecificationCreateVO createAgSpec;
         for (int i = 0; i < 10; i++) {
-            createAgSpec = AgreementSpecificationCreateVOTestExample.build()
+            createAgSpec = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                     .serviceCategory(null);
-            createAgSpecResponse = agSpecApiTestClient.createAgreementSpecification(createAgSpec);
+            createAgSpecResponse = agSpecApiTestClient.createAgreementSpecification(null, createAgSpec);
             expectedAgSpec.add(createAgSpecResponse.body());
         }
         HttpResponse<List<AgreementSpecificationVO>> listResponse = callAndCatch(
-                () -> agSpecApiTestClient.listAgreementSpecification(null, null, null));
+                () -> agSpecApiTestClient.listAgreementSpecification(null, null, null, null));
         assertEquals(HttpStatus.OK, listResponse.getStatus(),
                 "Agreement specification list should be accessible");
         assertEquals(expectedAgSpec.size(), listResponse.body().size(),
@@ -304,7 +304,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
         // get with limit
         Integer limit = 5;
         listResponse = callAndCatch(
-                () -> agSpecApiTestClient.listAgreementSpecification(null, null, limit));
+                () -> agSpecApiTestClient.listAgreementSpecification(null, null, null, limit));
         assertEquals(HttpStatus.OK, listResponse.getStatus(),
                 "Agreement specification list should be accessible");
         assertEquals(limit, listResponse.body().size(),
@@ -315,11 +315,11 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     @Override
     public void listAgreement400() throws Exception {
         HttpResponse<List<AgreementSpecificationVO>> listResponse = callAndCatch(
-                () -> agSpecApiTestClient.listAgreementSpecification(null, -1, null));
+                () -> agSpecApiTestClient.listAgreementSpecification(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST, listResponse.getStatus(),
                 "Agreement specification list should be accessible");
         listResponse = callAndCatch(
-                () -> agSpecApiTestClient.listAgreementSpecification(null, null, -1));
+                () -> agSpecApiTestClient.listAgreementSpecification(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST, listResponse.getStatus(),
                 "Agreement specification list should be accessible");
     }
@@ -382,15 +382,15 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     private static Stream<Arguments> provideAgSpecUpdates() {
         List<Arguments> result = new ArrayList<>();
         result.add(Arguments.of("The name should have been updated",
-                AgreementSpecificationUpdateVOTestExample.build().serviceCategory(null).name("Updated"),
-                AgreementSpecificationVOTestExample.build().serviceCategory(null).name("Updated")));
+                AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null).serviceCategory(null).name("Updated"),
+                AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).name("Updated")));
         result.add(Arguments.of("The version should have been updated",
-                AgreementSpecificationUpdateVOTestExample.build().serviceCategory(null).version("2.2"),
-                AgreementSpecificationVOTestExample.build().serviceCategory(null).version("2.2")));
+                AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null).serviceCategory(null).version("2.2"),
+                AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).version("2.2")));
         Instant now = Instant.now();
         result.add(Arguments.of("The last updated info should have been updated",
-                AgreementSpecificationUpdateVOTestExample.build().serviceCategory(null).lastUpdate(now),
-                AgreementSpecificationVOTestExample.build().serviceCategory(null).lastUpdate(now)));
+                AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null).serviceCategory(null).lastUpdate(now),
+                AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).lastUpdate(now)));
 
         return result.stream();
     }
@@ -398,15 +398,15 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     @Override
     public void patchAgreement200() throws Exception {
         // Agreement specification creation
-        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build()
+        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null);
         HttpResponse<AgreementSpecificationVO> agSpecCreateResponse = callAndCatch(
-                () -> agSpecApiTestClient.createAgreementSpecification(agSpecCreate));
+                () -> agSpecApiTestClient.createAgreementSpecification(null, agSpecCreate));
         String id = agSpecCreateResponse.body().getId();
         assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(),
                 "An agreeement specification should have been created firstly");
         HttpResponse<AgreementSpecificationVO> updateAgSpecResponse = callAndCatch(
-                () -> agSpecApiTestClient.patchAgreementSpecification(id, agSpecUpdateVO));
+                () -> agSpecApiTestClient.patchAgreementSpecification(null, id, agSpecUpdateVO));
         assertEquals(HttpStatus.OK, updateAgSpecResponse.getStatus(), message);
         AgreementSpecificationVO updatedAgSpec = updateAgSpecResponse.body();
         expectedAgSpec.id(id).href(id);
@@ -424,27 +424,27 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     private static Stream<Arguments> provideInvalidUpdates() {
         List<Arguments> result = new ArrayList<>();
         result.add(Arguments.of("An update with an invalid service category is not allowed.",
-                AgreementSpecificationUpdateVOTestExample.build()
-                        .serviceCategory(CategoryRefVOTestExample.build().id("invalid"))));
+                AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+                        .serviceCategory(CategoryRefVOTestExample.build().atSchemaLocation(null).id("invalid"))));
         result.add(Arguments.of("An update with an invalid related party is not allowed.",
-                AgreementSpecificationUpdateVOTestExample.build()
+                AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
                         .serviceCategory(null).relatedParty(List
-                                .of(RelatedPartyVOTestExample.build().id("invalid")))));
+                                .of(RelatedPartyVOTestExample.build().atSchemaLocation(null).id("invalid")))));
         return result.stream();
     }
 
     @Override
     public void patchAgreement400() throws Exception {
         // Agreement specification creation
-        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build()
+        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null);
         HttpResponse<AgreementSpecificationVO> agSpecCreateResponse = callAndCatch(
-                () -> agSpecApiTestClient.createAgreementSpecification(agSpecCreate));
+                () -> agSpecApiTestClient.createAgreementSpecification(null, agSpecCreate));
         String id = agSpecCreateResponse.body().getId();
         assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(),
                 "An agreeement specification should have been created firstly");
         HttpResponse<AgreementSpecificationVO> updateAgSpecResponse = callAndCatch(
-                () -> agSpecApiTestClient.patchAgreementSpecification(id, agSpecUpdateVO));
+                () -> agSpecApiTestClient.patchAgreementSpecification(null, id, agSpecUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateAgSpecResponse.getStatus(), message);
     }
 
@@ -467,9 +467,9 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     @Test
     @Override
     public void patchAgreement404() throws Exception {
-        AgreementSpecificationUpdateVO agspec = AgreementSpecificationUpdateVOTestExample.build();
+        AgreementSpecificationUpdateVO agspec = AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null).serviceCategory(null);
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> agSpecApiTestClient.patchAgreementSpecification("non-existent",
+                callAndCatch(() -> agSpecApiTestClient.patchAgreementSpecification(null, "non-existent",
                         agspec)).getStatus(),
                 "It should not be able to find a non-existent agreement specification");
     }
@@ -505,11 +505,11 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     private static Stream<Arguments> provideFieldsRetrieve() {
         List<Arguments> result = new ArrayList<>();
         result.add(Arguments.of("If no fields are established, all attributes should be returned", null,
-                AgreementSpecificationVOTestExample.build().serviceCategory(null)));
+                AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null)));
         result.add(Arguments.of(
                 "It should only show name, version and description attributes with attachment empty",
                 "name,version,description",
-                AgreementSpecificationVOTestExample.build().serviceCategory(null).relatedParty(null)
+                AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).relatedParty(null)
                         .specificationRelationship(null).atType(null).atSchemaLocation(null)
                         .atBaseType(null).specificationCharacteristic(null).isBundle(null)
                         .lifecycleStatus(null)
@@ -520,17 +520,17 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     @Override
     public void retrieveAgreement200() throws Exception {
         // Agreement specification creation
-        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build()
+        AgreementSpecificationCreateVO agSpecCreate = AgreementSpecificationCreateVOTestExample.build().atSchemaLocation(null)
                 .serviceCategory(null);
         HttpResponse<AgreementSpecificationVO> agSpecCreateResponse = callAndCatch(
-                () -> agSpecApiTestClient.createAgreementSpecification(agSpecCreate));
+                () -> agSpecApiTestClient.createAgreementSpecification(null, agSpecCreate));
         String id = agSpecCreateResponse.body().getId();
         assertEquals(HttpStatus.CREATED, agSpecCreateResponse.getStatus(),
                 "An agreeement specification should have been created firstly");
         expectedAgSpec.id(id).href(id);
 
         HttpResponse<AgreementSpecificationVO> retrieveResponse = callAndCatch(
-                () -> agSpecApiTestClient.retrieveAgreementSpecification(id, fields));
+                () -> agSpecApiTestClient.retrieveAgreementSpecification(null, id, fields));
         assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message);
         assertEquals(expectedAgSpec, retrieveResponse.body(), message);
     }
@@ -562,7 +562,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
     @Override
     public void retrieveAgreement404() throws Exception {
         HttpResponse<AgreementSpecificationVO> response = callAndCatch(
-                () -> agSpecApiTestClient.retrieveAgreementSpecification(
+                () -> agSpecApiTestClient.retrieveAgreementSpecification(null,
                         "urn:ngsi-ld:agreementSpecification:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(),
                 "No such agreement specification should exist");

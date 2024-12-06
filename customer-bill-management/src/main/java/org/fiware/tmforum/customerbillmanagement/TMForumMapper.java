@@ -1,6 +1,7 @@
 package org.fiware.tmforum.customerbillmanagement;
 
 import org.fiware.customerbillmanagement.model.*;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
@@ -17,44 +18,44 @@ import java.net.URL;
  * Mapper between the internal model and api-domain objects
  */
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
-public interface TMForumMapper {
+public abstract class TMForumMapper extends BaseMapper {
 
 	// customer bill
 
-	CustomerBillVO map(CustomerBill customer);
+	public abstract CustomerBillVO map(CustomerBill customer);
 
-	CustomerBill map(CustomerBillVO customerBillVOs);
+	public abstract CustomerBill map(CustomerBillVO customerBillVOs);
 
 	@Mapping(target = "id", source = "id")
-	CustomerBill map(CustomerBillUpdateVO customerUpdateVO, String id);
+	public abstract CustomerBill map(CustomerBillUpdateVO customerUpdateVO, String id);
 
 	// customer bill on demand
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	CustomerBillOnDemandVO map(CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO, URI id);
+	public abstract CustomerBillOnDemandVO map(CustomerBillOnDemandCreateVO customerBillOnDemandCreateVO, URI id);
 
-	CustomerBillOnDemandVO map(CustomerBillOnDemand customerBillOnDemand);
+	public abstract CustomerBillOnDemandVO map(CustomerBillOnDemand customerBillOnDemand);
 
-	CustomerBillOnDemand map(CustomerBillOnDemandVO customerBillOnDemandVO);
+	public abstract CustomerBillOnDemand map(CustomerBillOnDemandVO customerBillOnDemandVO);
 
 	// applied customer billing rate
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	AppliedCustomerBillingRateVO map(AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreateVO, URI id);
+	public abstract AppliedCustomerBillingRateVO map(AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreateVO, URI id);
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	AppliedCustomerBillingRateVO map(AppliedCustomerBillingRateUpdateVO appliedCustomerBillingRateUpdateVO, String id);
+	public abstract AppliedCustomerBillingRateVO map(AppliedCustomerBillingRateUpdateVO appliedCustomerBillingRateUpdateVO, String id);
 
 	@Mapping(target = "rateType", source = "type")
-	AppliedCustomerBillingRate map(AppliedCustomerBillingRateVO appliedCustomerBillingRateVO);
+	public abstract AppliedCustomerBillingRate map(AppliedCustomerBillingRateVO appliedCustomerBillingRateVO);
 
 	@Mapping(target = "type", source = "rateType")
-	AppliedCustomerBillingRateVO map(AppliedCustomerBillingRate appliedCustomerBillingRate);
+	public abstract AppliedCustomerBillingRateVO map(AppliedCustomerBillingRate appliedCustomerBillingRate);
 
-	default URL map(String value) {
+	public URL map(String value) {
 		if (value == null) {
 			return null;
 		}
@@ -65,21 +66,21 @@ public interface TMForumMapper {
 		}
 	}
 
-	default String map(URL value) {
+	public String map(URL value) {
 		if (value == null) {
 			return null;
 		}
 		return value.toString();
 	}
 
-	default URI mapToURI(String value) {
+	public URI mapToURI(String value) {
 		if (value == null) {
 			return null;
 		}
 		return URI.create(value);
 	}
 
-	default String mapFromURI(URI value) {
+	public String mapFromURI(URI value) {
 		if (value == null) {
 			return null;
 		}

@@ -83,7 +83,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     public void createCategory201() throws Exception {
 
         HttpResponse<CategoryVO> categoryVOHttpResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, categoryVOHttpResponse.getStatus(), message);
         String categoryId = categoryVOHttpResponse.body().getId();
         expectedCategory.setId(categoryId);
@@ -96,9 +96,9 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     private static Stream<Arguments> provideValidCategories() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
+        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         categoryCreateVO.parentId(null);
-        CategoryVO expectedCategory = CategoryVOTestExample.build();
+        CategoryVO expectedCategory = CategoryVOTestExample.build().atSchemaLocation(null);
         testEntries.add(
                 Arguments.of("An empty category should have been created.", categoryCreateVO, expectedCategory));
 
@@ -116,7 +116,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void createCategory400() throws Exception {
         HttpResponse<CategoryVO> creationResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -125,43 +125,43 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     private static Stream<Arguments> provideInvalidCategories() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CategoryCreateVO invalidProductOfferingCreate = CategoryCreateVOTestExample.build();
+        CategoryCreateVO invalidProductOfferingCreate = CategoryCreateVOTestExample.build().atSchemaLocation(null);
 
         // no valid id
-        ProductOfferingRefVO invalidProductOffering = ProductOfferingRefVOTestExample.build();
+        ProductOfferingRefVO invalidProductOffering = ProductOfferingRefVOTestExample.build().atSchemaLocation(null);
         invalidProductOfferingCreate.setProductOffering(List.of(invalidProductOffering));
         testEntries.add(Arguments.of("A category with invalid product offerings should not be created.",
                 invalidProductOfferingCreate));
 
-        CategoryCreateVO nonExistentProductOfferingCreate = CategoryCreateVOTestExample.build();
+        CategoryCreateVO nonExistentProductOfferingCreate = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        ProductOfferingRefVO nonExistentProductOffering = ProductOfferingRefVOTestExample.build();
+        ProductOfferingRefVO nonExistentProductOffering = ProductOfferingRefVOTestExample.build().atSchemaLocation(null);
         nonExistentProductOffering.setId("urn:ngsi-ld:product-offering:non-existent");
         nonExistentProductOfferingCreate.setProductOffering(List.of(nonExistentProductOffering));
         testEntries.add(Arguments.of("A category with non-existent product offerings should not be created.",
                 nonExistentProductOfferingCreate));
 
-        CategoryCreateVO invalidCategoryCreate = CategoryCreateVOTestExample.build();
+        CategoryCreateVO invalidCategoryCreate = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         // no valid id
-        CategoryRefVO categoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO categoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         invalidCategoryCreate.setSubCategory(List.of(categoryRef));
         testEntries.add(
                 Arguments.of("A category with invalid sub-categories should not be created.", invalidCategoryCreate));
 
-        CategoryCreateVO nonExistentCategoryCreate = CategoryCreateVOTestExample.build();
+        CategoryCreateVO nonExistentCategoryCreate = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         nonExistentCategoryRef.setId("urn:ngsi-ld:category:non-existent");
         nonExistentCategoryCreate.subCategory(List.of(nonExistentCategoryRef));
         testEntries.add(Arguments.of("A category with non-existent sub-categories should not be created.",
                 nonExistentCategoryCreate));
 
-        CategoryCreateVO invalidParentCreate = CategoryCreateVOTestExample.build();
+        CategoryCreateVO invalidParentCreate = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         // no valid id
         invalidParentCreate.setParentId("invalid");
         testEntries.add(Arguments.of("A category with an invalid parent should not be created.", invalidParentCreate));
 
-        CategoryCreateVO nonExistentParentCreate = CategoryCreateVOTestExample.build();
+        CategoryCreateVO nonExistentParentCreate = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         nonExistentParentCreate.setParentId("urn:ngsi-ld:category:non-existent");
         testEntries.add(
                 Arguments.of("A category with non-existent parent should not be created.", nonExistentParentCreate));
@@ -204,20 +204,20 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void deleteCategory204() throws Exception {
         //first create
-        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
+        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> categoryApiTestClient.deleteCategory(catalogId)).getStatus(),
+                callAndCatch(() -> categoryApiTestClient.deleteCategory(null, catalogId)).getStatus(),
                 "The category should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> categoryApiTestClient.retrieveCategory(catalogId, null)).status(),
+                callAndCatch(() -> categoryApiTestClient.retrieveCategory(null, catalogId, null)).status(),
                 "The category should not exist anymore.");
 
     }
@@ -247,7 +247,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void deleteCategory404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> categoryApiTestClient.deleteCategory("urn:ngsi-ld:category:no-catalog"));
+                () -> categoryApiTestClient.deleteCategory(null, "urn:ngsi-ld:category:no-catalog"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such catalog should exist.");
@@ -255,7 +255,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> categoryApiTestClient.deleteCategory("invalid-id"));
+        notFoundResponse = callAndCatch(() -> categoryApiTestClient.deleteCategory(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such catalog should exist.");
@@ -288,9 +288,9 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     public void listCategory200() throws Exception {
         List<CategoryVO> expectedCategorys = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().parentId(null);
-            String id = categoryApiTestClient.createCategory(categoryCreateVO).body().getId();
-            CategoryVO categoryVO = CategoryVOTestExample.build();
+            CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null);
+            String id = categoryApiTestClient.createCategory(null, categoryCreateVO).body().getId();
+            CategoryVO categoryVO = CategoryVOTestExample.build().atSchemaLocation(null);
             categoryVO
                     .id(id)
                     .href(id)
@@ -299,7 +299,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         }
 
         HttpResponse<List<CategoryVO>> categoryResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, null, null));
+                () -> categoryApiTestClient.listCategory(null, null, null, null));
 
         assertEquals(HttpStatus.OK, categoryResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedCategorys.size(), categoryResponse.getBody().get().size(),
@@ -320,11 +320,11 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<CategoryVO>> firstPartResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, 0, limit));
+                () -> categoryApiTestClient.listCategory(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<CategoryVO>> secondPartResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, 0 + limit, limit));
+                () -> categoryApiTestClient.listCategory(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -343,7 +343,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void listCategory400() throws Exception {
         HttpResponse<List<CategoryVO>> badRequestResponse = callAndCatch(
-                () -> categoryApiTestClient.listCategory(null, -1, null));
+                () -> categoryApiTestClient.listCategory(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -351,7 +351,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> categoryApiTestClient.listCategory(null, null, -1));
+        badRequestResponse = callAndCatch(() -> categoryApiTestClient.listCategory(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -413,10 +413,10 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void patchCategory200() throws Exception {
         //first create
-        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
+        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
@@ -425,7 +425,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         categoryUpdateVO.setParentId(null);
 
         HttpResponse<CategoryVO> updateResponse = callAndCatch(
-                () -> categoryApiTestClient.patchCategory(catalogId, categoryUpdateVO));
+                () -> categoryApiTestClient.patchCategory(null, catalogId, categoryUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         CategoryVO updatedCategory = updateResponse.body();
@@ -439,43 +439,43 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     private static Stream<Arguments> provideCategoryUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CategoryUpdateVO newDesc = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO newDesc = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         newDesc.setDescription("New description");
-        CategoryVO expectedNewDesc = CategoryVOTestExample.build();
+        CategoryVO expectedNewDesc = CategoryVOTestExample.build().atSchemaLocation(null);
         expectedNewDesc.setDescription("New description");
         testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
-        CategoryUpdateVO newLifeCycle = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO newLifeCycle = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         newLifeCycle.setLifecycleStatus("Dead");
-        CategoryVO expectedNewLifeCycle = CategoryVOTestExample.build();
+        CategoryVO expectedNewLifeCycle = CategoryVOTestExample.build().atSchemaLocation(null);
         expectedNewLifeCycle.setLifecycleStatus("Dead");
         testEntries.add(
                 Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
-        CategoryUpdateVO newName = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO newName = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         newName.setName("New name");
-        CategoryVO expectedNewName = CategoryVOTestExample.build();
+        CategoryVO expectedNewName = CategoryVOTestExample.build().atSchemaLocation(null);
         expectedNewName.setName("New name");
         testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
-        CategoryUpdateVO newVersion = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO newVersion = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         newVersion.setVersion("1.23.1");
-        CategoryVO expectedNewVersion = CategoryVOTestExample.build();
+        CategoryVO expectedNewVersion = CategoryVOTestExample.build().atSchemaLocation(null);
         expectedNewVersion.setVersion("1.23.1");
         testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
-        CategoryUpdateVO newValidFor = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO newValidFor = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build();
         timePeriodVO.setEndDateTime(Instant.now());
         timePeriodVO.setStartDateTime(Instant.now());
         newValidFor.setValidFor(timePeriodVO);
-        CategoryVO expectedNewValidFor = CategoryVOTestExample.build();
+        CategoryVO expectedNewValidFor = CategoryVOTestExample.build().atSchemaLocation(null);
         expectedNewValidFor.setValidFor(timePeriodVO);
         testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
 
-        CategoryUpdateVO newIsRoot = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO newIsRoot = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         newIsRoot.setIsRoot(true);
-        CategoryVO expectedNewIsRoot = CategoryVOTestExample.build();
+        CategoryVO expectedNewIsRoot = CategoryVOTestExample.build().atSchemaLocation(null);
         expectedNewIsRoot.setIsRoot(true);
         testEntries.add(Arguments.of("The isRoot should have been updated.", newIsRoot, expectedNewIsRoot));
 
@@ -493,16 +493,16 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void patchCategory400() throws Exception {
         //first create
-        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
+        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
         String catalogId = createResponse.body().getId();
 
         HttpResponse<CategoryVO> updateResponse = callAndCatch(
-                () -> categoryApiTestClient.patchCategory(catalogId, categoryUpdateVO));
+                () -> categoryApiTestClient.patchCategory(null, catalogId, categoryUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -512,43 +512,43 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     private static Stream<Arguments> provideInvalidUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        CategoryUpdateVO invalidProductOfferingCreate = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO invalidProductOfferingCreate = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
 
         // no valid id
-        ProductOfferingRefVO invalidProductOffering = ProductOfferingRefVOTestExample.build();
+        ProductOfferingRefVO invalidProductOffering = ProductOfferingRefVOTestExample.build().atSchemaLocation(null);
         invalidProductOfferingCreate.setProductOffering(List.of(invalidProductOffering));
         testEntries.add(Arguments.of("A category with invalid product offerings should not be created.",
                 invalidProductOfferingCreate));
 
-        CategoryUpdateVO nonExistentProductOfferingCreate = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO nonExistentProductOfferingCreate = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        ProductOfferingRefVO nonExistentProductOffering = ProductOfferingRefVOTestExample.build();
+        ProductOfferingRefVO nonExistentProductOffering = ProductOfferingRefVOTestExample.build().atSchemaLocation(null);
         nonExistentProductOffering.setId("urn:ngsi-ld:product-offering:non-existent");
         nonExistentProductOfferingCreate.setProductOffering(List.of(nonExistentProductOffering));
         testEntries.add(Arguments.of("A category with non-existent product offerings should not be created.",
                 nonExistentProductOfferingCreate));
 
-        CategoryUpdateVO invalidCategoryCreate = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO invalidCategoryCreate = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         // no valid id
-        CategoryRefVO categoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO categoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         invalidCategoryCreate.setSubCategory(List.of(categoryRef));
         testEntries.add(
                 Arguments.of("A category with invalid sub-categories should not be created.", invalidCategoryCreate));
 
-        CategoryUpdateVO nonExistentCategoryCreate = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO nonExistentCategoryCreate = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         // no existent id
-        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build();
+        CategoryRefVO nonExistentCategoryRef = CategoryRefVOTestExample.build().atSchemaLocation(null);
         nonExistentCategoryRef.setId("urn:ngsi-ld:category:non-existent");
         nonExistentCategoryCreate.subCategory(List.of(nonExistentCategoryRef));
         testEntries.add(Arguments.of("A category with non-existent sub-categories should not be created.",
                 nonExistentCategoryCreate));
 
-        CategoryUpdateVO invalidParentCreate = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO invalidParentCreate = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         // no valid id
         invalidParentCreate.setParentId("invalid");
         testEntries.add(Arguments.of("A category with an invalid parent should not be created.", invalidParentCreate));
 
-        CategoryUpdateVO nonExistentParentCreate = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO nonExistentParentCreate = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         nonExistentParentCreate.setParentId("urn:ngsi-ld:category:non-existent");
         testEntries.add(
                 Arguments.of("A category with non-existent parent should not be created.", nonExistentParentCreate));
@@ -573,10 +573,10 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Test
     @Override
     public void patchCategory404() throws Exception {
-        CategoryUpdateVO categoryUpdateVO = CategoryUpdateVOTestExample.build();
+        CategoryUpdateVO categoryUpdateVO = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> categoryApiTestClient.patchCategory("urn:ngsi-ld:category:not-existent",
+                callAndCatch(() -> categoryApiTestClient.patchCategory(null, "urn:ngsi-ld:category:not-existent",
                         categoryUpdateVO)).getStatus(),
                 "Non existent categories should not be updated.");
     }
@@ -608,15 +608,15 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
         when(clock.instant()).thenReturn(currentTimeInstant);
 
         //first create
-        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build();
+        CategoryCreateVO categoryCreateVO = CategoryCreateVOTestExample.build().atSchemaLocation(null);
         // we dont have a parent
         categoryCreateVO.setParentId(null);
         HttpResponse<CategoryVO> createResponse = callAndCatch(
-                () -> categoryApiTestClient.createCategory(categoryCreateVO));
+                () -> categoryApiTestClient.createCategory(null, categoryCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The category should have been created first.");
         String id = createResponse.body().getId();
 
-        CategoryVO expectedCategory = CategoryVOTestExample.build();
+        CategoryVO expectedCategory = CategoryVOTestExample.build().atSchemaLocation(null);
         expectedCategory.setId(id);
         expectedCategory.setHref(id);
         expectedCategory.setLastUpdate(currentTimeInstant);
@@ -624,7 +624,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 
         //then retrieve
         HttpResponse<CategoryVO> retrievedCategory = callAndCatch(
-                () -> categoryApiTestClient.retrieveCategory(id, null));
+                () -> categoryApiTestClient.retrieveCategory(null, id, null));
         assertEquals(HttpStatus.OK, retrievedCategory.getStatus(), "The retrieval should be ok.");
         assertEquals(expectedCategory, retrievedCategory.body(), "The correct category should be returned.");
     }
@@ -653,7 +653,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
     @Override
     public void retrieveCategory404() throws Exception {
         HttpResponse<CategoryVO> response = callAndCatch(
-                () -> categoryApiTestClient.retrieveCategory("urn:ngsi-ld:category:non-existent", null));
+                () -> categoryApiTestClient.retrieveCategory(null, "urn:ngsi-ld:category:non-existent", null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such category should exist.");
 
         Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);
