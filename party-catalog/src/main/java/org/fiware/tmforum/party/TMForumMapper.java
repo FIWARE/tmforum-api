@@ -4,6 +4,7 @@ import io.github.wistefan.mapping.MappingException;
 import org.fiware.party.model.*;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.individual.LanguageAbility;
@@ -21,40 +22,40 @@ import java.net.URL;
  * Mapper between the internal model and api-domain objects
  */
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
-public interface TMForumMapper {
+public abstract class TMForumMapper extends BaseMapper {
 
 	// using inline expression, since else it might overwrite the String-String mapping
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	OrganizationVO map(OrganizationCreateVO organizationCreateVO, URI id);
+	public abstract OrganizationVO map(OrganizationCreateVO organizationCreateVO, URI id);
 
-	OrganizationVO map(Organization organization);
-
-	@Mapping(target = "href", source = "id")
-	Organization map(OrganizationVO organizationVO);
-
-	@Mapping(target = "id", source = "id")
-	Organization map(OrganizationUpdateVO organizationUpdateVO, String id);
-
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "href", source = "id")
-	IndividualVO map(IndividualCreateVO individualCreateVO, URI id);
-
-	@Mapping(target = "id", source = "id")
-	Individual map(IndividualUpdateVO individualUpdateVO, String id);
-
-	IndividualVO map(Individual individual);
+	public abstract OrganizationVO map(Organization organization);
 
 	@Mapping(target = "href", source = "id")
-	Individual map(IndividualVO individualVO);
+	public abstract Organization map(OrganizationVO organizationVO);
+
+	@Mapping(target = "id", source = "id")
+	public abstract Organization map(OrganizationUpdateVO organizationUpdateVO, String id);
+
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract IndividualVO map(IndividualCreateVO individualCreateVO, URI id);
+
+	@Mapping(target = "id", source = "id")
+	public abstract Individual map(IndividualUpdateVO individualUpdateVO, String id);
+
+	public abstract IndividualVO map(Individual individual);
+
+	@Mapping(target = "href", source = "id")
+	public abstract Individual map(IndividualVO individualVO);
 
 	@Mapping(target = "isFavouriteLanguage", source = "favouriteLanguage")
-	LanguageAbilityVO map(LanguageAbility languageAbility);
+	public abstract LanguageAbilityVO map(LanguageAbility languageAbility);
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(TMForumSubscription subscription);
+	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	default OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
+	public OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
 		if (organizationParentRelationship == null) {
 			return null;
 		}
@@ -65,7 +66,7 @@ public interface TMForumMapper {
 		organizationParentRelationshipVO.setAtType(organizationParentRelationship.getAtType());
 		OrganizationRefVO organizationRefVO = new OrganizationRefVO();
 		organizationRefVO.setId(organizationParentRelationship.getEntityId().toString());
-		if(organizationParentRelationship.getHref() != null) {
+		if (organizationParentRelationship.getHref() != null) {
 			organizationRefVO.setHref(organizationParentRelationship.getHref().toString());
 		}
 		organizationRefVO.setName(organizationParentRelationship.getName());
@@ -80,7 +81,7 @@ public interface TMForumMapper {
 		return organizationParentRelationshipVO;
 	}
 
-	default OrganizationChildRelationshipVO map(OrganizationChildRelationship organizationChildRelationship) {
+	public OrganizationChildRelationshipVO map(OrganizationChildRelationship organizationChildRelationship) {
 		if (organizationChildRelationship == null) {
 			return null;
 		}
@@ -92,7 +93,7 @@ public interface TMForumMapper {
 		organizationChildRelationship.setAtReferredType(organizationChildRelationship.getAtReferredType());
 		OrganizationRefVO organizationRefVO = new OrganizationRefVO();
 		organizationRefVO.setId(organizationChildRelationship.getEntityId().toString());
-		if(organizationChildRelationship.getHref() != null) {
+		if (organizationChildRelationship.getHref() != null) {
 			organizationRefVO.setHref(organizationChildRelationship.getHref().toString());
 		}
 		organizationRefVO.setName(organizationChildRelationship.getName());
@@ -107,7 +108,7 @@ public interface TMForumMapper {
 		return organizationChildRelationshipVO;
 	}
 
-	default OrganizationParentRelationship map(OrganizationParentRelationshipVO organizationParentRelationshipVO) {
+	public OrganizationParentRelationship map(OrganizationParentRelationshipVO organizationParentRelationshipVO) {
 		if (organizationParentRelationshipVO == null) {
 			return null;
 		}
@@ -130,7 +131,7 @@ public interface TMForumMapper {
 		return organizationParentRelationship;
 	}
 
-	default OrganizationChildRelationship map(OrganizationChildRelationshipVO organizationChildRelationshipVO) {
+	public OrganizationChildRelationship map(OrganizationChildRelationshipVO organizationChildRelationshipVO) {
 		if (organizationChildRelationshipVO == null) {
 			return null;
 		}
@@ -153,9 +154,9 @@ public interface TMForumMapper {
 		return organizationChildRelationship;
 	}
 
-	TimePeriod map(TimePeriodVO value);
+	public abstract TimePeriod map(TimePeriodVO value);
 
-	default URL map(String value) {
+	public URL map(String value) {
 		if (value == null) {
 			return null;
 		}
@@ -166,21 +167,21 @@ public interface TMForumMapper {
 		}
 	}
 
-	default String map(URL value) {
+	public String map(URL value) {
 		if (value == null) {
 			return null;
 		}
 		return value.toString();
 	}
 
-	default URI mapToURI(String value) {
+	public URI mapToURI(String value) {
 		if (value == null) {
 			return null;
 		}
 		return URI.create(value);
 	}
 
-	default String mapFromURI(URI value) {
+	public String mapFromURI(URI value) {
 		if (value == null) {
 			return null;
 		}

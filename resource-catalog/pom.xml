@@ -14,11 +14,15 @@
 
     <properties>
         <tmforum.api.url>${project.parent.basedir}/api/tm-forum/${project.artifactId}/api.json</tmforum.api.url>
-        <module.ctk.url>https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF634-ResourceCatalog.zip</module.ctk.url>
+        <module.ctk.url>
+            https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/ctk/TMF634-ResourceCatalog.zip
+        </module.ctk.url>
         <module.ctk.script-folder>TMF634-ResourceCatalog</module.ctk.script-folder>
         <module.ctk.run-script>Mac-Linux-RUNCTK.sh</module.ctk.run-script>
         <module.ctk.base-path>/tmf-api/resourceCatalog/v4</module.ctk.base-path>
-        <module.ctk.additionalCommands>sed -i 's/tmf634:8080/localhost:8632/g' /opt/ctk/TMF634-ResourceCatalog/config.json</module.ctk.additionalCommands>
+        <module.ctk.additionalCommands>sed -i 's/tmf634:8080/localhost:8632/g'
+            /opt/ctk/TMF634-ResourceCatalog/config.json
+        </module.ctk.additionalCommands>
     </properties>
 
     <dependencies>
@@ -117,6 +121,16 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- jakarta -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+
         <!-- testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -179,47 +193,12 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>${version.org.openapitools.generator-maven-plugin}</version>
-                <executions>
-                    <execution>
-                        <id>openapi-resource-catalog-api</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${tmforum.api.url}</inputSpec>
-                            <apiPackage>org.fiware.resourcecatalog.api</apiPackage>
-                            <strictSpec>true</strictSpec>
-                            <modelPackage>org.fiware.resourcecatalog.model</modelPackage>
-                            <generatorName>micronaut</generatorName>
-                            <modelNameSuffix>VO</modelNameSuffix>
-                            <output>${project.build.directory}</output>
-                            <generateSupportingFiles>false</generateSupportingFiles>
-                            <configOptions>
-                                <fullJavaUtil>true</fullJavaUtil>
-                                <useOptional>false</useOptional>
-                                <useGenericResponse>true</useGenericResponse>
-                                <useLombokGenerated>true</useLombokGenerated>
-                                <introspected>true</introspected>
-                                <useBeanValidation>false</useBeanValidation>
-                                <supportAsync>true</supportAsync>
-                                <jacksonDatabindNullable>false</jacksonDatabindNullable>
-                                <generateExamples>true</generateExamples>
-                            </configOptions>
-                            <typeMappings>
-                                <typeMapping>java.util.Date=java.time.Instant</typeMapping>
-                            </typeMappings>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>io.kokuwa.micronaut</groupId>
-                        <artifactId>micronaut-openapi-codegen</artifactId>
-                        <version>${version.io.kokuwa.micronaut.codegen}</version>
-                    </dependency>
-                </dependencies>
+                <configuration>
+                    <skip>false</skip>
+                    <inputSpec>${tmforum.api.url}</inputSpec>
+                    <apiPackage>org.fiware.resourcecatalog.api</apiPackage>
+                    <modelPackage>org.fiware.resourcecatalog.model</modelPackage>
+                </configuration>
             </plugin>
             <!-- add generated sources -->
             <plugin>

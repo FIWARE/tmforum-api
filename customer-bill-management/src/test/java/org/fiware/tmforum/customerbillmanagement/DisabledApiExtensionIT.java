@@ -37,17 +37,17 @@ public class DisabledApiExtensionIT extends AbstractApiIT {
     @Test
     public void createAppliedCustomerBillingRate405() throws Exception {
         HttpResponse<AppliedCustomerBillingRateVO> appliedCustomerBillingRateVOHttpResponse = callAndCatch(
-                () -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(AppliedCustomerBillingRateCreateVOTestExample.build()));
+                () -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(null, AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)));
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, appliedCustomerBillingRateVOHttpResponse.getStatus(), "When the extension API is not enabled, creation should not be supported.");
     }
 
     @Test
     public void updateAppliedCustomerBillingRate405() throws Exception {
-        AppliedCustomerBillingRateUpdateVO updateVO = AppliedCustomerBillingRateUpdateVOTestExample.build();
+        AppliedCustomerBillingRateUpdateVO updateVO = AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null);
 
         assertEquals(
                 HttpStatus.METHOD_NOT_ALLOWED,
-                callAndCatch(() -> appliedCustomerBillingRateApiTestClient.updateAppliedCustomerBillingRate(
+                callAndCatch(() -> appliedCustomerBillingRateApiTestClient.updateAppliedCustomerBillingRate(null,
                         "urn:ngsi-ld:applied-customer-billing-rate:some-id", updateVO)).getStatus(),
                 "When the extension API is not enabled, updates should not be supported.)");
 

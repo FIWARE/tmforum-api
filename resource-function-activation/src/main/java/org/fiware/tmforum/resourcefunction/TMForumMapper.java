@@ -3,6 +3,7 @@ package org.fiware.tmforum.resourcefunction;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.resourcefunction.model.*;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.Resource;
 import org.fiware.tmforum.resourcefunction.domain.*;
@@ -17,63 +18,63 @@ import java.net.URL;
  * Mapper between the internal model and api-domain objects
  */
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
-public interface TMForumMapper {
+public abstract class TMForumMapper extends BaseMapper {
 
     // resource function
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    ResourceFunctionVO map(ResourceFunctionCreateVO resourceFunctionCreateVO, URI id);
+    public abstract ResourceFunctionVO map(ResourceFunctionCreateVO resourceFunctionCreateVO, URI id);
 
-    ResourceFunctionVO map(ResourceFunction resourceFunction);
+    public abstract ResourceFunctionVO map(ResourceFunction resourceFunction);
 
-    ResourceFunction map(ResourceFunctionVO resourceFunctionVO);
+    public abstract ResourceFunction map(ResourceFunctionVO resourceFunctionVO);
 
     @Mapping(target = "id", source = "id")
-    ResourceFunction map(ResourceFunctionUpdateVO resourceFunctionUpdateVO, String id);
+    public abstract ResourceFunction map(ResourceFunctionUpdateVO resourceFunctionUpdateVO, String id);
 
     // monitor
 
-    MonitorVO map(Monitor monitor);
+    public abstract MonitorVO map(Monitor monitor);
 
     // heal
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    HealVO map(HealCreateVO healCreateVO, URI id);
+    public abstract HealVO map(HealCreateVO healCreateVO, URI id);
 
-    HealVO map(Heal heal);
+    public abstract HealVO map(Heal heal);
 
-    Heal map(HealVO healVO);
+    public abstract Heal map(HealVO healVO);
 
     // migrate
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    MigrateVO map(MigrateCreateVO migrateCreateVO, URI id);
+    public abstract MigrateVO map(MigrateCreateVO migrateCreateVO, URI id);
 
-    MigrateVO map(Migrate migrate);
+    public abstract MigrateVO map(Migrate migrate);
 
-    Migrate map(MigrateVO migrateVO);
+    public abstract Migrate map(MigrateVO migrateVO);
 
     // scale
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    ScaleVO map(ScaleCreateVO scaleCreateVOVO, URI id);
+    public abstract ScaleVO map(ScaleCreateVO scaleCreateVOVO, URI id);
 
-    ScaleVO map(Scale scale);
+    public abstract ScaleVO map(Scale scale);
 
-    Scale map(ScaleVO scaleVO);
+    public abstract Scale map(ScaleVO scaleVO);
 
     // sub-entities
 
-    Resource map(ResourceRefOrValueVO resourceRefOrValueVO);
+    public abstract Resource map(ResourceRefOrValueVO resourceRefOrValueVO);
 
     @Mapping(target = "query", source = "rawQuery")
-    EventSubscriptionVO map(TMForumSubscription subscription);
+    public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-    default URL map(String value) {
+    public URL map(String value) {
         if (value == null) {
             return null;
         }
@@ -84,21 +85,21 @@ public interface TMForumMapper {
         }
     }
 
-    default String map(URL value) {
+    public String map(URL value) {
         if (value == null) {
             return null;
         }
         return value.toString();
     }
 
-    default URI mapToURI(String value) {
+    public URI mapToURI(String value) {
         if (value == null) {
             return null;
         }
         return URI.create(value);
     }
 
-    default String mapFromURI(URI value) {
+    public String mapFromURI(URI value) {
         if (value == null) {
             return null;
         }

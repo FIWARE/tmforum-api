@@ -88,7 +88,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         when(clock.instant()).thenReturn(currentTimeInstant);
 
         HttpResponse<ServiceCatalogVO> serviceCatalogVOHttpResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, serviceCatalogVOHttpResponse.getStatus(), message);
         String scId = serviceCatalogVOHttpResponse.body().getId();
         expectedServiceCatalog
@@ -102,15 +102,15 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     private static Stream<Arguments> provideValidServiceCatalogs() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        ServiceCatalogCreateVO emptyCreate = ServiceCatalogCreateVOTestExample.build().lifecycleStatus("created");
-        ServiceCatalogVO expectedEmpty = ServiceCatalogVOTestExample.build().lifecycleStatus("created");
+        ServiceCatalogCreateVO emptyCreate = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created");
+        ServiceCatalogVO expectedEmpty = ServiceCatalogVOTestExample.build().atSchemaLocation(null).lifecycleStatus("created");
         testEntries.add(Arguments.of("An empty service catalog should have been created.", emptyCreate, expectedEmpty));
 
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
                 .startDateTime(Instant.now());
-        ServiceCatalogCreateVO createValidFor = ServiceCatalogCreateVOTestExample.build().validFor(timePeriodVO)
+        ServiceCatalogCreateVO createValidFor = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
                 .lifecycleStatus("created");
-        ServiceCatalogVO expectedValidFor = ServiceCatalogVOTestExample.build().validFor(timePeriodVO)
+        ServiceCatalogVO expectedValidFor = ServiceCatalogVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
                 .lifecycleStatus("created");
         testEntries.add(Arguments.of("An service catalog with a validFor should have been created.", createValidFor,
                 expectedValidFor));
@@ -129,7 +129,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void createServiceCatalog400() throws Exception {
         HttpResponse<ServiceCatalogVO> creationResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
         Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -139,16 +139,16 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(Arguments.of("A service catalog with invalid related parties should not be created.",
-                ServiceCatalogCreateVOTestExample.build().relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+                ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null).relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A service catalog with non-existent related parties should not be created.",
-                ServiceCatalogCreateVOTestExample.build().relatedParty(
-                        List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
+                ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null).relatedParty(
+                        List.of((RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organisation:non-existent"))))));
 
         testEntries.add(Arguments.of("A service catalog with an invalid service category should not be created.",
-                ServiceCatalogCreateVOTestExample.build().category(List.of(ServiceCategoryRefVOTestExample.build()))));
+                ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null).category(List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("A service catalog with a non-existent service category should not be created.",
-                ServiceCatalogCreateVOTestExample.build().category(
-                        List.of(ServiceCategoryRefVOTestExample.build().id("urn:ngsi-ld:category:non-existent")))));
+                ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null).category(
+                        List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:category:non-existent")))));
 
         return testEntries.stream();
     }
@@ -188,20 +188,20 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Test
     @Override
     public void deleteServiceCatalog204() throws Exception {
-        ServiceCatalogCreateVO emptyCreate = ServiceCatalogCreateVOTestExample.build();
+        ServiceCatalogCreateVO emptyCreate = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null);
 
-        HttpResponse<ServiceCatalogVO> createResponse = serviceCatalogApiTestClient.createServiceCatalog(emptyCreate);
+        HttpResponse<ServiceCatalogVO> createResponse = serviceCatalogApiTestClient.createServiceCatalog(null, emptyCreate);
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service catalog should have been created first.");
 
         String rfId = createResponse.body().getId();
 
         assertEquals(HttpStatus.NO_CONTENT,
-                callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog(rfId)).getStatus(),
+                callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog(null, rfId)).getStatus(),
                 "The service catalog should have been deleted.");
 
         assertEquals(HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCatalogApiTestClient.retrieveServiceCatalog(rfId, null)).status(),
+                callAndCatch(() -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, rfId, null)).status(),
                 "The service catalog should not exist anymore.");
     }
 
@@ -230,7 +230,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void deleteServiceCatalog404() throws Exception {
         HttpResponse<?> notFoundResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.deleteServiceCatalog("urn:ngsi-ld:service-catalog:no-pop"));
+                () -> serviceCatalogApiTestClient.deleteServiceCatalog(null, "urn:ngsi-ld:service-catalog:no-pop"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-catalog should exist.");
@@ -238,7 +238,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        notFoundResponse = callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog("invalid-id"));
+        notFoundResponse = callAndCatch(() -> serviceCatalogApiTestClient.deleteServiceCatalog(null, "invalid-id"));
         assertEquals(HttpStatus.NOT_FOUND,
                 notFoundResponse.getStatus(),
                 "No such service-catalog should exist.");
@@ -272,10 +272,10 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
 
         List<ServiceCatalogVO> expectedServiceCatalogs = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
-            String id = serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO)
+            ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null);
+            String id = serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO)
                     .body().getId();
-            ServiceCatalogVO serviceCatalogVO = ServiceCatalogVOTestExample.build();
+            ServiceCatalogVO serviceCatalogVO = ServiceCatalogVOTestExample.build().atSchemaLocation(null);
             serviceCatalogVO
                     .id(id)
                     .href(URI.create(id));
@@ -283,7 +283,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         }
 
         HttpResponse<List<ServiceCatalogVO>> serviceCatalogResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, null));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, null, null));
 
         assertEquals(HttpStatus.OK, serviceCatalogResponse.getStatus(), "The list should be accessible.");
         assertEquals(expectedServiceCatalogs.size(), serviceCatalogResponse.getBody().get().size(),
@@ -309,11 +309,11 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         // get with pagination
         Integer limit = 5;
         HttpResponse<List<ServiceCatalogVO>> firstPartResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, 0, limit));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, 0, limit));
         assertEquals(limit, firstPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
         HttpResponse<List<ServiceCatalogVO>> secondPartResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, 0 + limit, limit));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, 0 + limit, limit));
         assertEquals(limit, secondPartResponse.body().size(),
                 "Only the requested number of entries should be returend.");
 
@@ -336,7 +336,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void listServiceCatalog400() throws Exception {
         HttpResponse<List<ServiceCatalogVO>> badRequestResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.listServiceCatalog(null, -1, null));
+                () -> serviceCatalogApiTestClient.listServiceCatalog(null, null, -1, null));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative offsets are impossible.");
@@ -344,7 +344,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
         assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-        badRequestResponse = callAndCatch(() -> serviceCatalogApiTestClient.listServiceCatalog(null, null, -1));
+        badRequestResponse = callAndCatch(() -> serviceCatalogApiTestClient.listServiceCatalog(null, null, null, -1));
         assertEquals(HttpStatus.BAD_REQUEST,
                 badRequestResponse.getStatus(),
                 "Negative limits are impossible.");
@@ -405,17 +405,17 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void patchServiceCatalog200() throws Exception {
         //first create
-        ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
+        ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null);
 
         HttpResponse<ServiceCatalogVO> createResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service function should have been created first.");
 
         String serviceId = createResponse.body().getId();
 
         HttpResponse<ServiceCatalogVO> updateResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.patchServiceCatalog(serviceId, serviceCatalogUpdateVO));
+                () -> serviceCatalogApiTestClient.patchServiceCatalog(null, serviceId, serviceCatalogUpdateVO));
         assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
         ServiceCatalogVO updatedServiceCatalog = updateResponse.body();
@@ -429,36 +429,36 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     private static Stream<Arguments> provideServiceCatalogUpdates() {
         List<Arguments> testEntries = new ArrayList<>();
 
-        ServiceCatalogUpdateVO lifecycleStatusUpdate = ServiceCatalogUpdateVOTestExample.build()
+        ServiceCatalogUpdateVO lifecycleStatusUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .lifecycleStatus("dead");
-        ServiceCatalogVO expectedLifecycleStatus = ServiceCatalogVOTestExample.build()
+        ServiceCatalogVO expectedLifecycleStatus = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                 .lifecycleStatus("dead");
         testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
                 expectedLifecycleStatus));
 
-        ServiceCatalogUpdateVO descriptionUpdate = ServiceCatalogUpdateVOTestExample.build()
+        ServiceCatalogUpdateVO descriptionUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .description("new-description");
-        ServiceCatalogVO expectedDescriptionUpdate = ServiceCatalogVOTestExample.build()
+        ServiceCatalogVO expectedDescriptionUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                 .description("new-description");
         testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
                 expectedDescriptionUpdate));
 
-        ServiceCatalogUpdateVO nameUpdate = ServiceCatalogUpdateVOTestExample.build()
+        ServiceCatalogUpdateVO nameUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .name("new-name");
-        ServiceCatalogVO expectedNameUpdate = ServiceCatalogVOTestExample.build()
+        ServiceCatalogVO expectedNameUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                 .name("new-name");
         testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
-        ServiceCatalogUpdateVO versionUpdate = ServiceCatalogUpdateVOTestExample.build()
+        ServiceCatalogUpdateVO versionUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .version("v0.0.2");
-        ServiceCatalogVO expectedVersionUpdate = ServiceCatalogVOTestExample.build()
+        ServiceCatalogVO expectedVersionUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                 .version("v0.0.2");
         testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
         TimePeriodVO timePeriodVO = TimePeriodVOTestExample.build().endDateTime(Instant.now())
                 .startDateTime(Instant.now());
-        ServiceCatalogUpdateVO validForUpdate = ServiceCatalogUpdateVOTestExample.build().validFor(timePeriodVO);
-        ServiceCatalogVO expectedValidForUpdate = ServiceCatalogVOTestExample.build().validFor(timePeriodVO);
+        ServiceCatalogUpdateVO validForUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO);
+        ServiceCatalogVO expectedValidForUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO);
         testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
         return testEntries.stream();
@@ -475,17 +475,17 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void patchServiceCatalog400() throws Exception {
         //first create
-        ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
+        ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null);
 
         HttpResponse<ServiceCatalogVO> createResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
                 "The service function should have been created first.");
 
         String serviceId = createResponse.body().getId();
 
         HttpResponse<ServiceCatalogVO> updateResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.patchServiceCatalog(serviceId, serviceCatalogUpdateVO));
+                () -> serviceCatalogApiTestClient.patchServiceCatalog(null, serviceId, serviceCatalogUpdateVO));
         assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
         Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -496,19 +496,19 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         List<Arguments> testEntries = new ArrayList<>();
 
         testEntries.add(Arguments.of("An update with an invalid related party ref is not allowed.",
-                ServiceCatalogUpdateVOTestExample.build()
-                        .relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+                ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("An update with an non existent related party is not allowed.",
-                ServiceCatalogUpdateVOTestExample.build()
-                        .relatedParty(List.of(RelatedPartyVOTestExample.build()
+                ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:organisation:non-existent")))));
 
         testEntries.add(Arguments.of("An update with an invalid category ref is not allowed.",
-                ServiceCatalogUpdateVOTestExample.build()
-                        .category(List.of(ServiceCategoryRefVOTestExample.build()))));
+                ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .category(List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null)))));
         testEntries.add(Arguments.of("An update with an non existent category is not allowed.",
-                ServiceCatalogUpdateVOTestExample.build()
-                        .category(List.of(ServiceCategoryRefVOTestExample.build()
+                ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
+                        .category(List.of(ServiceCategoryRefVOTestExample.build().atSchemaLocation(null)
                                 .id("urn:ngsi-ld:service-category:non-existent")))));
 
         return testEntries.stream();
@@ -531,10 +531,10 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Test
     @Override
     public void patchServiceCatalog404() throws Exception {
-        ServiceCatalogUpdateVO serviceCatalogUpdateVO = ServiceCatalogUpdateVOTestExample.build();
+        ServiceCatalogUpdateVO serviceCatalogUpdateVO = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null);
         assertEquals(
                 HttpStatus.NOT_FOUND,
-                callAndCatch(() -> serviceCatalogApiTestClient.patchServiceCatalog(
+                callAndCatch(() -> serviceCatalogApiTestClient.patchServiceCatalog(null,
                         "urn:ngsi-ld:service-catalog:not-existent", serviceCatalogUpdateVO)).getStatus(),
                 "Non existent service catalog should not be updated.");
     }
@@ -569,9 +569,9 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void retrieveServiceCatalog200() throws Exception {
 
-        ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build();
+        ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null);
         HttpResponse<ServiceCatalogVO> createResponse = callAndCatch(
-                () -> serviceCatalogApiTestClient.createServiceCatalog(serviceCatalogCreateVO));
+                () -> serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO));
         assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
         String id = createResponse.body().getId();
 
@@ -581,7 +581,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
 
         //then retrieve
         HttpResponse<ServiceCatalogVO> retrievedRF = callAndCatch(
-                () -> serviceCatalogApiTestClient.retrieveServiceCatalog(id, fieldsParameter));
+                () -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
         assertEquals(expectedServiceCatalog, retrievedRF.body(), message);
     }
@@ -589,9 +589,9 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
-                        ServiceCatalogVOTestExample.build()),
+                        ServiceCatalogVOTestExample.build().atSchemaLocation(null)),
                 Arguments.of("Only version and the mandatory parameters should have been included.", "version",
-                        ServiceCatalogVOTestExample.build()
+                        ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                                 .relatedParty(null)
                                 .lastUpdate(null)
                                 .category(null)
@@ -605,7 +605,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
                                 .atType(null)),
                 Arguments.of(
                         "Only the mandatory parameters should have been included when a non-existent field was requested.",
-                        "nothingToSeeHere", ServiceCatalogVOTestExample.build()
+                        "nothingToSeeHere", ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                                 .relatedParty(null)
                                 .lastUpdate(null)
                                 .category(null)
@@ -620,7 +620,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
                                 .atType(null)),
                 Arguments.of(
                         "Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
-                        "version,lastUpdate,lifecycleStatus,description", ServiceCatalogVOTestExample.build()
+                        "version,lastUpdate,lifecycleStatus,description", ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                                 .relatedParty(null)
                                 .category(null)
                                 .relatedParty(null)
@@ -656,7 +656,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     @Override
     public void retrieveServiceCatalog404() throws Exception {
         HttpResponse<ServiceCatalogVO> response = callAndCatch(
-                () -> serviceCatalogApiTestClient.retrieveServiceCatalog("urn:ngsi-ld:service-function:non-existent",
+                () -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, "urn:ngsi-ld:service-function:non-existent",
                         null));
         assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such service-catalog should exist.");
 

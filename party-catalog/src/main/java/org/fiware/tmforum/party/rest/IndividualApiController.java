@@ -38,7 +38,7 @@ public class IndividualApiController extends AbstractPartyApiController<Individu
 	}
 
 	@Override
-	public Mono<HttpResponse<IndividualVO>> createIndividual(@NonNull @Valid IndividualCreateVO individualCreateVO) {
+	public Mono<HttpResponse<IndividualVO>> createIndividual(@NonNull IndividualCreateVO individualCreateVO) {
 
 		Individual individual = tmForumMapper.map(tmForumMapper.map(individualCreateVO,
 				IdHelper.toNgsiLd(UUID.randomUUID().toString(), Individual.TYPE_INDIVIDUAL)));

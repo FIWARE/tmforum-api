@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ServiceStateType {
 
-    FEASIBILITYCHECKED("feasibilityChecked"),
+    FEASIBILITY_CHECKED("feasibilityChecked"),
     DESIGNED("designed"),
     RESERVED("reserved"),
     INACTIVE("inactive"),

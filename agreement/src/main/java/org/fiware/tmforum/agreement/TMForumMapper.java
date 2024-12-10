@@ -5,6 +5,7 @@ import org.fiware.tmforum.agreement.domain.Agreement;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,54 +15,54 @@ import java.net.URI;
 import java.net.URL;
 
 @Mapper(componentModel = "jsr330", uses = { IdHelper.class, MappingHelper.class })
-public interface TMForumMapper {
+public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	AgreementVO map(AgreementCreateVO agreementCreateVO, URI id);
+	public abstract AgreementVO map(AgreementCreateVO agreementCreateVO, URI id);
 
 	@Mapping(target = "id", source = "id")
-	Agreement map(AgreementUpdateVO agreementUpdateVO, String id);
+	public abstract Agreement map(AgreementUpdateVO agreementUpdateVO, String id);
 
 	@Mapping(target = "id", source = "id")
-	Agreement map(AgreementVO agreementUpdateVO);
+	public abstract Agreement map(AgreementVO agreementUpdateVO);
 
 	@Mapping(target = "id", source = "id")
-	AgreementVO map(Agreement agreementUpdateVO);
+	public abstract AgreementVO map(Agreement agreementUpdateVO);
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
-	AgreementSpecificationVO map(AgreementSpecificationCreateVO agreementspecCreate, URI id);
+	public abstract AgreementSpecificationVO map(AgreementSpecificationCreateVO agreementspecCreate, URI id);
 
 	@Mapping(target = "id", source = "id")
-	AgreementSpecification map(AgreementSpecificationUpdateVO agreementspecUpdateVO, String id);
+	public abstract AgreementSpecification map(AgreementSpecificationUpdateVO agreementspecUpdateVO, String id);
 
 	@Mapping(target = "id", source = "id")
-	AgreementSpecification map(AgreementSpecificationVO agreementspecUpdateVO);
+	public abstract AgreementSpecification map(AgreementSpecificationVO agreementspecUpdateVO);
 
 	@Mapping(target = "id", source = "id")
-	AgreementSpecificationVO map(AgreementSpecification agreementspecUpdateVO);
+	public abstract AgreementSpecificationVO map(AgreementSpecification agreementspecUpdateVO);
 
 	@Mapping(target = "query", source = "rawQuery")
-	EventSubscriptionVO map(TMForumSubscription subscription);
+	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	TimePeriod map(TimePeriodVO value);
+	public abstract TimePeriod map(TimePeriodVO value);
 
-	default String map(URL value) {
+	public String map(URL value) {
 		if (value == null) {
 			return null;
 		}
 		return value.toString();
 	}
 
-	default URI mapToURI(String value) {
+	public URI mapToURI(String value) {
 		if (value == null) {
 			return null;
 		}
 		return URI.create(value);
 	}
 
-	default URL mapToURL(String value) {
+	public URL mapToURL(String value) {
 		if (value == null) {
 			return null;
 		}
@@ -73,7 +74,7 @@ public interface TMForumMapper {
 		return null;
 	}
 
-	default String mapFromURI(URI value) {
+	public String mapFromURI(URI value) {
 		if (value == null) {
 			return null;
 		}
