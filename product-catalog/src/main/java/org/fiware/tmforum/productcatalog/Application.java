@@ -1,6 +1,5 @@
 package org.fiware.tmforum.productcatalog;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.micronaut.context.annotation.Bean;
@@ -9,11 +8,7 @@ import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
 import lombok.RequiredArgsConstructor;
-import org.fiware.productcatalog.model.CatalogVO;
-import org.fiware.productcatalog.model.CategoryVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceVO;
-import org.fiware.productcatalog.model.ProductOfferingVO;
-import org.fiware.productcatalog.model.ProductSpecificationVO;
+import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
 import javax.inject.Singleton;

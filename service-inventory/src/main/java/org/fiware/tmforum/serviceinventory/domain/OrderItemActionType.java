@@ -7,7 +7,7 @@ public enum OrderItemActionType {
     ADD("add"),
     MODIFY("modify"),
     DELETE("delete"),
-    NOCHANGE("noChange");
+    NO_CHANGE("noChange");
 
     private final String value;
 

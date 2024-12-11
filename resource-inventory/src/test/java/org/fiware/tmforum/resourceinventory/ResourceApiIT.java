@@ -37,7 +37,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.resourceinventory" })
+@MicronautTest(packages = {"org.fiware.tmforum.resourceinventory"})
 public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec {
 
 	public final ResourceApiTestClient resourceApiTestClient;
@@ -49,7 +49,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	private ResourceVO expectedResource;
 
 	public ResourceApiIT(ResourceApiTestClient resourceApiTestClient, EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+						 ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.resourceApiTestClient = resourceApiTestClient;
 	}
@@ -78,7 +78,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	public void createResource201() throws Exception {
 
 		HttpResponse<ResourceVO> resourceVOHttpResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, resourceVOHttpResponse.getStatus(), message);
 		String rfId = resourceVOHttpResponse.body().getId();
 		expectedResource.setId(rfId);
@@ -92,39 +92,39 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 		testEntries.add(
 				Arguments.of("An empty resource should have been created.",
-						ResourceCreateVOTestExample.build().place(null).resourceSpecification(null),
-						ResourceVOTestExample.build().place(null).resourceSpecification(null)));
+						ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null),
+						ResourceVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)));
 
 		Instant start = Instant.now();
 		Instant end = Instant.now();
 		testEntries.add(
 				Arguments.of("A resource with operating times should have been created.",
-						ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+						ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 								.startOperatingDate(start).endOperatingDate(end),
-						ResourceVOTestExample.build().place(null).resourceSpecification(null).startOperatingDate(start)
+						ResourceVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null).startOperatingDate(start)
 								.endOperatingDate(end)));
 
-		List<NoteVO> notes = List.of(NoteVOTestExample.build().id("urn:note-1"), NoteVOTestExample.build().id("urn:note-2"));
+		List<NoteVO> notes = List.of(NoteVOTestExample.build().atSchemaLocation(null).id("urn:note-1"), NoteVOTestExample.build().atSchemaLocation(null).id("urn:note-2"));
 		testEntries.add(
 				Arguments.of("A resource with notes should have been created.",
-						ResourceCreateVOTestExample.build().place(null).resourceSpecification(null).note(notes),
-						ResourceVOTestExample.build().place(null).resourceSpecification(null).note(notes)));
+						ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null).note(notes),
+						ResourceVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null).note(notes)));
 
 		provideValidFeatureLists()
 				.map(ap ->
 						Arguments.of(
 								ap.message(),
-								ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+								ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 										.activationFeature(ap.value()),
-								ResourceVOTestExample.build().place(null).resourceSpecification(null)
+								ResourceVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 										.activationFeature(ap.value()))
 				).forEach(testEntries::add);
 
 		provideValidCharacteristicLists()
 				.map(ap -> Arguments.of(ap.message(),
-						ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+						ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 								.resourceCharacteristic(ap.value()),
-						ResourceVOTestExample.build().place(null).resourceSpecification(null)
+						ResourceVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 								.resourceCharacteristic(ap.value())))
 				.forEach(testEntries::add);
 
@@ -164,15 +164,15 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		List<ArgumentPair<List<CharacteristicVO>>> characteristicArguments = new ArrayList<>();
 
 		characteristicArguments.add(new ArgumentPair<>("Single characteristics should be valid.",
-				List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null))));
+				List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-1").characteristicRelationship(null))));
 		characteristicArguments.add(new ArgumentPair<>("Mulitple characteristics should be valid.",
-				List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
-						CharacteristicVOTestExample.build().id("urn:c-2").characteristicRelationship(null))));
+				List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-1").characteristicRelationship(null),
+						CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-2").characteristicRelationship(null))));
 		characteristicArguments.add(new ArgumentPair<>("Referencing characteristics should be valid.",
-				List.of(CharacteristicVOTestExample.build().id("urn:c-1").characteristicRelationship(null),
-						CharacteristicVOTestExample.build().id("urn:c-2")
+				List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-1").characteristicRelationship(null),
+						CharacteristicVOTestExample.build().atSchemaLocation(null).id("urn:c-2")
 								.characteristicRelationship(
-										List.of(CharacteristicRelationshipVOTestExample.build().id("urn:c-1"))))));
+										List.of(CharacteristicRelationshipVOTestExample.build().atSchemaLocation(null).id("urn:c-1"))))));
 		return characteristicArguments.stream();
 	}
 
@@ -187,7 +187,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void createResource400() throws Exception {
 		HttpResponse<ResourceVO> creationResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -197,70 +197,70 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A resource with invalid related parties should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A resource with non-existent related parties should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null).relatedParty(
-						List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null).relatedParty(
+						List.of((RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organisation:non-existent"))))));
 
 		testEntries.add(Arguments.of("A resource with an invalid place ref should not be created.",
-				ResourceCreateVOTestExample.build().place(RelatedPlaceRefOrValueVOTestExample.build())
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(RelatedPlaceRefOrValueVOTestExample.build().atSchemaLocation(null))
 						.resourceSpecification(null)));
 		testEntries.add(Arguments.of("A resource with non-existent place ref should not be created.",
-				ResourceCreateVOTestExample.build()
-						.place(RelatedPlaceRefOrValueVOTestExample.build().id("urn:ngsi-ld:place:non-existent"))
+				ResourceCreateVOTestExample.build().atSchemaLocation(null)
+						.place(RelatedPlaceRefOrValueVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:place:non-existent"))
 						.resourceSpecification(null)));
 
 		testEntries.add(Arguments.of("A resource with an invalid resource ref should not be created.",
-				ResourceCreateVOTestExample.build().place(null)
-						.resourceSpecification(ResourceSpecificationRefVOTestExample.build())));
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null)
+						.resourceSpecification(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of("A resource with non-existent resource ref should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(
-						ResourceSpecificationRefVOTestExample.build()
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(
+						ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-specification:non-existent"))));
 
-		List<NoteVO> duplicateNoteVOS = List.of(NoteVOTestExample.build().id("note"),
-				NoteVOTestExample.build().id("note"));
+		List<NoteVO> duplicateNoteVOS = List.of(NoteVOTestExample.build().atSchemaLocation(null).id("note"),
+				NoteVOTestExample.build().atSchemaLocation(null).id("note"));
 		testEntries.add(Arguments.of("A resource with duplicate note ids should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null).note(duplicateNoteVOS)));
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null).note(duplicateNoteVOS)));
 
 		testEntries.add(Arguments.of("A resource with duplicate feature ids should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(FeatureVOTestExample.build().id("my-feature"),
 								FeatureVOTestExample.build().id("my-feature")))));
 		testEntries.add(Arguments.of("A resource with invalid feature references should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(
 								FeatureVOTestExample.build().id("my-feature"),
 								FeatureVOTestExample.build().featureRelationship(
 										List.of(FeatureRelationshipVOTestExample.build().id("non-existent")))))));
 
 		testEntries.add(Arguments.of("A resource with duplicate resource characteristic ids should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
-						.resourceCharacteristic(List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-								CharacteristicVOTestExample.build().id("my-characteristic")))));
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.resourceCharacteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+								CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic")))));
 		testEntries.add(Arguments.of("A resource with invalid feature references should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.resourceCharacteristic(List.of(
-								CharacteristicVOTestExample.build().id("my-feature"),
-								CharacteristicVOTestExample.build().characteristicRelationship(
-										List.of(CharacteristicRelationshipVOTestExample.build()
+								CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-feature"),
+								CharacteristicVOTestExample.build().atSchemaLocation(null).characteristicRelationship(
+										List.of(CharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 												.id("non-existent")))))));
 
 		testEntries.add(Arguments.of("A resource with duplicate feature characteristic ids should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(FeatureVOTestExample.build()
 								.featureCharacteristic(
-										List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-												CharacteristicVOTestExample.build().id("my-characteristic")))))));
+										List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+												CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic")))))));
 		testEntries.add(Arguments.of("A resource with invalid feature references should not be created.",
-				ResourceCreateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(FeatureVOTestExample.build()
 								.featureCharacteristic(
-										List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-												CharacteristicVOTestExample.build()
+										List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+												CharacteristicVOTestExample.build().atSchemaLocation(null)
 														.characteristicRelationship(
-																List.of(CharacteristicRelationshipVOTestExample.build()
+																List.of(CharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 																		.id("non-existent")))))))));
 
 		return testEntries.stream();
@@ -301,21 +301,21 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Test
 	@Override
 	public void deleteResource204() throws Exception {
-		ResourceCreateVO emptyCreate = ResourceCreateVOTestExample.build()
+		ResourceCreateVO emptyCreate = ResourceCreateVOTestExample.build().atSchemaLocation(null)
 				.place(null)
 				.resourceSpecification(null);
 
-		HttpResponse<ResourceVO> createResponse = resourceApiTestClient.createResource(emptyCreate);
+		HttpResponse<ResourceVO> createResponse = resourceApiTestClient.createResource(null, emptyCreate);
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The resource should have been created first.");
 
 		String rfId = createResponse.body().getId();
 
 		assertEquals(HttpStatus.NO_CONTENT,
-				callAndCatch(() -> resourceApiTestClient.deleteResource(rfId)).getStatus(),
+				callAndCatch(() -> resourceApiTestClient.deleteResource(null, rfId)).getStatus(),
 				"The resource should have been deleted.");
 
 		assertEquals(HttpStatus.NOT_FOUND,
-				callAndCatch(() -> resourceApiTestClient.retrieveResource(rfId, null)).status(),
+				callAndCatch(() -> resourceApiTestClient.retrieveResource(null, rfId, null)).status(),
 				"The resource should not exist anymore.");
 	}
 
@@ -344,7 +344,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void deleteResource404() throws Exception {
 		HttpResponse<?> notFoundResponse = callAndCatch(
-				() -> resourceApiTestClient.deleteResource("urn:ngsi-ld:resource-catalog:no-pop"));
+				() -> resourceApiTestClient.deleteResource(null, "urn:ngsi-ld:resource-catalog:no-pop"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such resource-catalog should exist.");
@@ -352,7 +352,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		notFoundResponse = callAndCatch(() -> resourceApiTestClient.deleteResource("invalid-id"));
+		notFoundResponse = callAndCatch(() -> resourceApiTestClient.deleteResource(null, "invalid-id"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
 				"No such resource-catalog should exist.");
@@ -386,12 +386,12 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 		List<ResourceVO> expectedResources = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build()
+			ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().atSchemaLocation(null)
 					.place(null)
 					.resourceSpecification(null);
-			String id = resourceApiTestClient.createResource(resourceCreateVO)
+			String id = resourceApiTestClient.createResource(null, resourceCreateVO)
 					.body().getId();
-			ResourceVO resourceVO = ResourceVOTestExample.build();
+			ResourceVO resourceVO = ResourceVOTestExample.build().atSchemaLocation(null);
 			resourceVO
 					.id(id)
 					.href(id)
@@ -402,7 +402,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		}
 
 		HttpResponse<List<ResourceVO>> resourceResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, null, null));
+				() -> resourceApiTestClient.listResource(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, resourceResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedResources.size(), resourceResponse.getBody().get().size(),
@@ -428,11 +428,11 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<ResourceVO>> firstPartResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, 0, limit));
+				() -> resourceApiTestClient.listResource(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<ResourceVO>> secondPartResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, 0 + limit, limit));
+				() -> resourceApiTestClient.listResource(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -455,7 +455,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void listResource400() throws Exception {
 		HttpResponse<List<ResourceVO>> badRequestResponse = callAndCatch(
-				() -> resourceApiTestClient.listResource(null, -1, null));
+				() -> resourceApiTestClient.listResource(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -463,7 +463,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		badRequestResponse = callAndCatch(() -> resourceApiTestClient.listResource(null, null, -1));
+		badRequestResponse = callAndCatch(() -> resourceApiTestClient.listResource(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -524,17 +524,17 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void patchResource200() throws Exception {
 		//first create
-		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().place(null).resourceSpecification(null);
+		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null);
 
 		HttpResponse<ResourceVO> createResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The resource function should have been created first.");
 
 		String resourceId = createResponse.body().getId();
 
 		HttpResponse<ResourceVO> updateResponse = callAndCatch(
-				() -> resourceApiTestClient.patchResource(resourceId, resourceUpdateVO));
+				() -> resourceApiTestClient.patchResource(null, resourceId, resourceUpdateVO));
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ResourceVO updatedResource = updateResponse.body();
@@ -547,73 +547,73 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("The description should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.description("new-description"),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.description("new-description")));
 
 		testEntries.add(Arguments.of("The name should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.name("new-name"),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.name("new-name")));
 
 		testEntries.add(Arguments.of("The category should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.category("new-category"),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.category("new-category")));
 
 		Instant date = Instant.now();
 		testEntries.add(Arguments.of("The endOperatingDate should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.endOperatingDate(date),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.endOperatingDate(date)));
 
 		testEntries.add(Arguments.of("The startOperatingDate should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.startOperatingDate(date),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.startOperatingDate(date)));
 
 		testEntries.add(Arguments.of("The resourceVersion should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.resourceVersion("new-version"),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.resourceVersion("new-version")));
 
-		List<NoteVO> notes = List.of(NoteVOTestExample.build().id("urn:note-1"), NoteVOTestExample.build().id("urn:note-2"));
+		List<NoteVO> notes = List.of(NoteVOTestExample.build().atSchemaLocation(null).id("urn:note-1"), NoteVOTestExample.build().atSchemaLocation(null).id("urn:note-2"));
 		testEntries.add(Arguments.of("The notes should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.note(notes),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.note(notes)));
@@ -621,11 +621,11 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		provideValidCharacteristicLists()
 				.map(ap -> Arguments.of(
 						String.format("Resource characteristics should be updated - %s", ap.message()),
-						ResourceUpdateVOTestExample.build()
+						ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 								.place(null)
 								.resourceSpecification(null)
 								.resourceCharacteristic(ap.value()),
-						ResourceVOTestExample.build()
+						ResourceVOTestExample.build().atSchemaLocation(null)
 								.place(null)
 								.resourceSpecification(null)
 								.resourceCharacteristic(ap.value())
@@ -635,11 +635,11 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		provideValidFeatureLists()
 				.map(ap -> Arguments.of(
 						String.format("Activation feature should be updated - %s", ap.message()),
-						ResourceUpdateVOTestExample.build()
+						ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 								.place(null)
 								.resourceSpecification(null)
 								.activationFeature(ap.value()),
-						ResourceVOTestExample.build()
+						ResourceVOTestExample.build().atSchemaLocation(null)
 								.place(null)
 								.resourceSpecification(null)
 								.activationFeature(ap.value())
@@ -647,71 +647,61 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 				.forEach(testEntries::add);
 
 		testEntries.add(Arguments.of("The operational state should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.operationalState(ResourceOperationalStateTypeVO.DISABLE),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.operationalState(ResourceOperationalStateTypeVO.DISABLE)));
 
 		testEntries.add(Arguments.of("The status should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.resourceStatus(ResourceStatusTypeVO.ALARM),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.resourceStatus(ResourceStatusTypeVO.ALARM)));
 
 		testEntries.add(Arguments.of("The usageState should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.usageState(ResourceUsageStateTypeVO.IDLE),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.usageState(ResourceUsageStateTypeVO.IDLE)));
 
 		testEntries.add(Arguments.of("The baseType should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.atBaseType("Resource"),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.atBaseType("Resource")));
 
 		testEntries.add(Arguments.of("The baseType should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.atBaseType("Resource"),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.atBaseType("Resource")));
 
-		testEntries.add(Arguments.of("The schemaLocation should have been updated.",
-				ResourceUpdateVOTestExample.build()
-						.place(null)
-						.resourceSpecification(null)
-						.atSchemaLocation(URI.create("/my-shema/location/Resource")),
-				ResourceVOTestExample.build()
-						.place(null)
-						.resourceSpecification(null)
-						.atSchemaLocation(URI.create("/my-shema/location/Resource"))));
-
 		testEntries.add(Arguments.of("The type should have been updated.",
-				ResourceUpdateVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.atType("CloudResource"),
-				ResourceVOTestExample.build()
+				ResourceVOTestExample.build().atSchemaLocation(null)
 						.place(null)
 						.resourceSpecification(null)
 						.atType("CloudResource")));
@@ -730,17 +720,17 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void patchResource400() throws Exception {
 		//first create
-		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().place(null).resourceSpecification(null);
+		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null);
 
 		HttpResponse<ResourceVO> createResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The resource function should have been created first.");
 
 		String resourceId = createResponse.body().getId();
 
 		HttpResponse<ResourceVO> updateResponse = callAndCatch(
-				() -> resourceApiTestClient.patchResource(resourceId, resourceUpdateVO));
+				() -> resourceApiTestClient.patchResource(null, resourceId, resourceUpdateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
 		Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -751,65 +741,65 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A resource with invalid related parties should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null)
-						.relatedParty(List.of(RelatedPartyVOTestExample.build()))));
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.relatedParty(List.of(RelatedPartyVOTestExample.build().atSchemaLocation(null)))));
 		testEntries.add(Arguments.of("A resource with non-existent related parties should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null).relatedParty(
-						List.of((RelatedPartyVOTestExample.build().id("urn:ngsi-ld:organisation:non-existent"))))));
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null).relatedParty(
+						List.of((RelatedPartyVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:organisation:non-existent"))))));
 
 		testEntries.add(Arguments.of("A resource with an invalid place ref should not be created.",
-				ResourceUpdateVOTestExample.build().place(RelatedPlaceRefOrValueVOTestExample.build())
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(RelatedPlaceRefOrValueVOTestExample.build().atSchemaLocation(null))
 						.resourceSpecification(null)));
 		testEntries.add(Arguments.of("A resource with non-existent place ref should not be created.",
-				ResourceUpdateVOTestExample.build()
-						.place(RelatedPlaceRefOrValueVOTestExample.build().id("urn:ngsi-ld:place:non-existent"))
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null)
+						.place(RelatedPlaceRefOrValueVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:place:non-existent"))
 						.resourceSpecification(null)));
 
 		testEntries.add(Arguments.of("A resource with an invalid resource ref should not be created.",
-				ResourceUpdateVOTestExample.build().place(null)
-						.resourceSpecification(ResourceSpecificationRefVOTestExample.build())));
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null)
+						.resourceSpecification(ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of("A resource with non-existent resource ref should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(
-						ResourceSpecificationRefVOTestExample.build()
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(
+						ResourceSpecificationRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:resource-specification:non-existent"))));
 
 		testEntries.add(Arguments.of("A resource with duplicate feature ids should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(FeatureVOTestExample.build().id("my-feature"),
 								FeatureVOTestExample.build().id("my-feature")))));
 		testEntries.add(Arguments.of("A resource with invalid feature references should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(
 								FeatureVOTestExample.build().id("my-feature"),
 								FeatureVOTestExample.build().featureRelationship(
 										List.of(FeatureRelationshipVOTestExample.build().id("non-existent")))))));
 
 		testEntries.add(Arguments.of("A resource with duplicate resource characteristic ids should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null)
-						.resourceCharacteristic(List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-								CharacteristicVOTestExample.build().id("my-characteristic")))));
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.resourceCharacteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+								CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic")))));
 		testEntries.add(Arguments.of("A resource with invalid feature references should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.resourceCharacteristic(List.of(
-								CharacteristicVOTestExample.build().id("my-feature"),
-								CharacteristicVOTestExample.build().characteristicRelationship(
-										List.of(CharacteristicRelationshipVOTestExample.build()
+								CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-feature"),
+								CharacteristicVOTestExample.build().atSchemaLocation(null).characteristicRelationship(
+										List.of(CharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 												.id("non-existent")))))));
 
 		testEntries.add(Arguments.of("A resource with duplicate feature characteristic ids should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(FeatureVOTestExample.build()
 								.featureCharacteristic(
-										List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-												CharacteristicVOTestExample.build().id("my-characteristic")))))));
+										List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+												CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic")))))));
 		testEntries.add(Arguments.of("A resource with invalid feature references should not be created.",
-				ResourceUpdateVOTestExample.build().place(null).resourceSpecification(null)
+				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.activationFeature(List.of(FeatureVOTestExample.build()
 								.featureCharacteristic(
-										List.of(CharacteristicVOTestExample.build().id("my-characteristic"),
-												CharacteristicVOTestExample.build()
+										List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).id("my-characteristic"),
+												CharacteristicVOTestExample.build().atSchemaLocation(null)
 														.characteristicRelationship(
-																List.of(CharacteristicRelationshipVOTestExample.build()
+																List.of(CharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 																		.id("non-existent")))))))));
 
 		return testEntries.stream();
@@ -832,10 +822,13 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Test
 	@Override
 	public void patchResource404() throws Exception {
-		ResourceUpdateVO resourceUpdateVO = ResourceUpdateVOTestExample.build();
+		ResourceUpdateVO resourceUpdateVO = ResourceUpdateVOTestExample.build()
+				.atSchemaLocation(null)
+				.place(null)
+				.resourceSpecification(null);
 		assertEquals(
 				HttpStatus.NOT_FOUND,
-				callAndCatch(() -> resourceApiTestClient.patchResource("urn:ngsi-ld:resource-catalog:not-existent",
+				callAndCatch(() -> resourceApiTestClient.patchResource(null, "urn:ngsi-ld:resource-catalog:not-existent",
 						resourceUpdateVO)).getStatus(),
 				"Non existent resource should not be updated.");
 	}
@@ -869,11 +862,11 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void retrieveResource200() throws Exception {
 
-		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build()
+		ResourceCreateVO resourceCreateVO = ResourceCreateVOTestExample.build().atSchemaLocation(null)
 				.place(null)
 				.resourceSpecification(null);
 		HttpResponse<ResourceVO> createResponse = callAndCatch(
-				() -> resourceApiTestClient.createResource(resourceCreateVO));
+				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
 		String id = createResponse.body().getId();
 
@@ -883,7 +876,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 		//then retrieve
 		HttpResponse<ResourceVO> retrievedRF = callAndCatch(
-				() -> resourceApiTestClient.retrieveResource(id, fieldsParameter));
+				() -> resourceApiTestClient.retrieveResource(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
 		assertEquals(expectedResource, retrievedRF.body(), message);
 	}
@@ -891,13 +884,13 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						ResourceVOTestExample.build()
+						ResourceVOTestExample.build().atSchemaLocation(null)
 								// get nulled without values
 								.relatedParty(null)
 								.place(null)
 								.resourceSpecification(null)),
 				Arguments.of("Only category and the mandatory parameters should have been included.", "category",
-						ResourceVOTestExample.build()
+						ResourceVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.place(null)
 								.resourceVersion(null)
@@ -914,7 +907,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 								.atType(null)),
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", ResourceVOTestExample.build()
+						"nothingToSeeHere", ResourceVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.place(null)
 								.category(null)
@@ -931,7 +924,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 								.atSchemaLocation(null)
 								.atType(null)),
 				Arguments.of("Only description, name and the mandatory parameters should have been included.",
-						"name,description", ResourceVOTestExample.build()
+						"name,description", ResourceVOTestExample.build().atSchemaLocation(null)
 								.relatedParty(null)
 								.place(null)
 								.resourceVersion(null)
@@ -972,7 +965,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	@Override
 	public void retrieveResource404() throws Exception {
 		HttpResponse<ResourceVO> response = callAndCatch(
-				() -> resourceApiTestClient.retrieveResource("urn:ngsi-ld:resource-function:non-existent", null));
+				() -> resourceApiTestClient.retrieveResource(null, "urn:ngsi-ld:resource-function:non-existent", null));
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such resource-catalog should exist.");
 
 		Optional<ErrorDetails> optionalErrorDetails = response.getBody(ErrorDetails.class);
@@ -998,7 +991,8 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 	}
 
-	@Override protected String getEntityType() {
+	@Override
+	protected String getEntityType() {
 		return Resource.TYPE_RESOURCE;
 	}
 }
