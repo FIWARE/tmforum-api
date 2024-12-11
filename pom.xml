@@ -90,8 +90,8 @@
         </version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>
 
         <!-- code gen -->
-        <version.org.openapitools.generator-maven-plugin>6.1.0</version.org.openapitools.generator-maven-plugin>
-        <version.io.kokuwa.micronaut.codegen>3.1.0</version.io.kokuwa.micronaut.codegen>
+        <version.org.openapitools.generator-maven-plugin>7.10.0</version.org.openapitools.generator-maven-plugin>
+        <version.io.kokuwa.micronaut.codegen>4.4.1</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
         <version.io.github.wistefan.ngsi-ld-mapping-java>1.2.10</version.io.github.wistefan.ngsi-ld-mapping-java>
@@ -161,6 +161,17 @@
                 <artifactId>javax.inject</artifactId>
                 <version>${version.javax.inject}</version>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>3.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>3.0.0</version>
+            </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
@@ -198,6 +209,11 @@
                 <groupId>io.micronaut.redis</groupId>
                 <artifactId>micronaut-redis-lettuce</artifactId>
                 <version>${version.io.micronaut.redis.micronaut-redis-lettuce}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>json-schema-validator</artifactId>
+                <version>1.5.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -458,6 +474,51 @@
                         </archive>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>${version.org.openapitools.generator-maven-plugin}</version>
+                    <configuration>
+                        <skip>true</skip>
+                        <strictSpec>true</strictSpec>
+                        <generatorName>micronaut</generatorName>
+                        <modelNameSuffix>VO</modelNameSuffix>
+                        <output>${project.build.directory}</output>
+                        <generateSupportingFiles>false</generateSupportingFiles>
+                        <configOptions>
+                            <fullJavaUtil>true</fullJavaUtil>
+                            <useOptional>false</useOptional>
+                            <useGenericResponse>true</useGenericResponse>
+                            <useLombokGenerated>true</useLombokGenerated>
+                            <introspected>true</introspected>
+                            <supportAsync>true</supportAsync>
+                            <jacksonDatabindNullable>false</jacksonDatabindNullable>
+                            <generateExamples>true</generateExamples>
+                            <serdeable>false</serdeable>
+                            <modelBaseClass>org.fiware.tmforum.common.mapping.UnknownPreservingBase
+                            </modelBaseClass>
+                        </configOptions>
+                        <typeMappings>
+                            <typeMapping>java.util.Date=java.time.Instant</typeMapping>
+                        </typeMappings>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>openapi-service-api</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>generate</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>io.kokuwa.micronaut</groupId>
+                            <artifactId>micronaut-openapi-codegen</artifactId>
+                            <version>${version.io.kokuwa.micronaut.codegen}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
                 <!-- run tests -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -556,7 +617,18 @@
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
+                                            <portBinding>3000:3000</portBinding>
                                         </portBindings>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-schemas</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -595,7 +667,18 @@
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
+                                            <portBinding>3000:3000</portBinding>
                                         </portBindings>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-schemas</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                             </executions>

@@ -39,7 +39,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.productordering" })
+@MicronautTest(packages = {"org.fiware.tmforum.productordering"})
 public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProductOrderApiTestSpec {
 
 	public final CancelProductOrderApiTestClient cancelProductOrderApiTestClient;
@@ -69,9 +69,9 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 	}
 
 	public CancelProductOrderApiIT(CancelProductOrderApiTestClient productOrderApiTestClient,
-			EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties,
-			ProductOrderApiTestClient productOrderApiTestClient1) {
+								   EntitiesApiClient entitiesApiClient,
+								   ObjectMapper objectMapper, GeneralProperties generalProperties,
+								   ProductOrderApiTestClient productOrderApiTestClient1) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.cancelProductOrderApiTestClient = productOrderApiTestClient;
 		this.productOrderApiTestClient = productOrderApiTestClient1;
@@ -79,25 +79,25 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 
 	@BeforeEach
 	public void setupProduct() {
-		ProductOrderCreateVO productCreateVO = ProductOrderCreateVOTestExample.build()
+		ProductOrderCreateVO productCreateVO = ProductOrderCreateVOTestExample.build().atSchemaLocation(null)
 				.billingAccount(null);
-		productId = productOrderApiTestClient.createProductOrder(productCreateVO)
+		productId = productOrderApiTestClient.createProductOrder(null, productCreateVO)
 				.body().getId();
 	}
 
 	@AfterEach
 	public void cleanProduct() {
-		productOrderApiTestClient.deleteProductOrder(productId);
+		productOrderApiTestClient.deleteProductOrder(null, productId);
 	}
 
 	@ParameterizedTest
 	@MethodSource("provideValidProducts")
 	public void createCancelProductOrder201(String message, CancelProductOrderCreateVO productCreateVO,
-			CancelProductOrderVO expectedProduct)
+											CancelProductOrderVO expectedProduct)
 			throws Exception {
 		this.message = message;
-		this.productCreateVO = productCreateVO.productOrder(ProductOrderRefVOTestExample.build().id(productId));
-		this.expectedProduct = expectedProduct.productOrder(ProductOrderRefVOTestExample.build().id(productId));
+		this.productCreateVO = productCreateVO.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null).id(productId));
+		this.expectedProduct = expectedProduct.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null).id(productId));
 		createCancelProductOrder201();
 	}
 
@@ -108,7 +108,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 		when(clock.instant()).thenReturn(fixed);
 
 		HttpResponse<CancelProductOrderVO> productVOHttpResponse = callAndCatch(
-				() -> cancelProductOrderApiTestClient.createCancelProductOrder(productCreateVO));
+				() -> cancelProductOrderApiTestClient.createCancelProductOrder(null, productCreateVO));
 		assertEquals(HttpStatus.CREATED, productVOHttpResponse.getStatus(), message);
 		String rfId = productVOHttpResponse.body().getId();
 		expectedProduct.setId(rfId);
@@ -121,25 +121,25 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 
 		testEntries.add(
 				Arguments.of("An empty product order should have been created.",
-						CancelProductOrderCreateVOTestExample.build()
+						CancelProductOrderCreateVOTestExample.build().atSchemaLocation(null)
 								.productOrder(null),
-						CancelProductOrderVOTestExample.build()
+						CancelProductOrderVOTestExample.build().atSchemaLocation(null)
 								.productOrder(null)));
 
 		testEntries.add(
 				Arguments.of("A product order with cancellation reason should have been created.",
-						CancelProductOrderCreateVOTestExample.build()
+						CancelProductOrderCreateVOTestExample.build().atSchemaLocation(null)
 								.cancellationReason("Wrong product.")
 								.productOrder(null),
-						CancelProductOrderVOTestExample.build()
+						CancelProductOrderVOTestExample.build().atSchemaLocation(null)
 								.cancellationReason("Wrong product.")
 								.productOrder(null)));
 		testEntries.add(
 				Arguments.of("A product order with a requestedCancellationDate should have been created.",
-						CancelProductOrderCreateVOTestExample.build()
+						CancelProductOrderCreateVOTestExample.build().atSchemaLocation(null)
 								.requestedCancellationDate(Instant.ofEpochSecond(10000))
 								.productOrder(null),
-						CancelProductOrderVOTestExample.build()
+						CancelProductOrderVOTestExample.build().atSchemaLocation(null)
 								.requestedCancellationDate(Instant.ofEpochSecond(10000))
 								.productOrder(null)));
 
@@ -158,7 +158,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 	@Override
 	public void createCancelProductOrder400() throws Exception {
 		HttpResponse<CancelProductOrderVO> creationResponse = callAndCatch(
-				() -> cancelProductOrderApiTestClient.createCancelProductOrder(productCreateVO));
+				() -> cancelProductOrderApiTestClient.createCancelProductOrder(null, productCreateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -168,11 +168,11 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("A cancellation with an invalid product order should not be created.",
-				CancelProductOrderCreateVOTestExample.build()
-						.productOrder(ProductOrderRefVOTestExample.build())));
+				CancelProductOrderCreateVOTestExample.build().atSchemaLocation(null)
+						.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null))));
 		testEntries.add(Arguments.of("A product with non-existent related parties should not be created.",
-				CancelProductOrderCreateVOTestExample.build()
-						.productOrder(ProductOrderRefVOTestExample.build()
+				CancelProductOrderCreateVOTestExample.build().atSchemaLocation(null)
+						.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null)
 								.id("urn:ngsi-ld:product-order:non-existent"))));
 
 		return testEntries.stream();
@@ -217,23 +217,23 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 		when(clock.instant()).thenReturn(now);
 		List<CancelProductOrderVO> expectedProducts = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			CancelProductOrderCreateVO productCreateVO = CancelProductOrderCreateVOTestExample.build()
+			CancelProductOrderCreateVO productCreateVO = CancelProductOrderCreateVOTestExample.build().atSchemaLocation(null)
 					.productOrder(null);
 
-			productCreateVO.productOrder(ProductOrderRefVOTestExample.build().id(productId));
+			productCreateVO.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null).id(productId));
 
-			String id = cancelProductOrderApiTestClient.createCancelProductOrder(productCreateVO)
+			String id = cancelProductOrderApiTestClient.createCancelProductOrder(null, productCreateVO)
 					.body().getId();
-			CancelProductOrderVO productOrderVO = CancelProductOrderVOTestExample.build();
+			CancelProductOrderVO productOrderVO = CancelProductOrderVOTestExample.build().atSchemaLocation(null);
 			productOrderVO
 					.id(id)
 					.href(id)
-					.productOrder(ProductOrderRefVOTestExample.build().id(productId));
+					.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null).id(productId));
 			expectedProducts.add(productOrderVO);
 		}
 
 		HttpResponse<List<CancelProductOrderVO>> productResponse = callAndCatch(
-				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, null, null));
+				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, productResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedProducts.size(), productResponse.getBody().get().size(),
@@ -259,11 +259,11 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<CancelProductOrderVO>> firstPartResponse = callAndCatch(
-				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, 0, limit));
+				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<CancelProductOrderVO>> secondPartResponse = callAndCatch(
-				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, 0 + limit, limit));
+				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -286,7 +286,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 	@Override
 	public void listCancelProductOrder400() throws Exception {
 		HttpResponse<List<CancelProductOrderVO>> badRequestResponse = callAndCatch(
-				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, -1, null));
+				() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -294,7 +294,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 		Optional<ErrorDetails> optionalErrorDetails = badRequestResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
-		badRequestResponse = callAndCatch(() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, null, -1));
+		badRequestResponse = callAndCatch(() -> cancelProductOrderApiTestClient.listCancelProductOrder(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -355,10 +355,10 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 	@Override
 	public void retrieveCancelProductOrder200() throws Exception {
 
-		CancelProductOrderCreateVO productCreateVO = CancelProductOrderCreateVOTestExample.build()
-				.productOrder(ProductOrderRefVOTestExample.build().id(productId));
+		CancelProductOrderCreateVO productCreateVO = CancelProductOrderCreateVOTestExample.build().atSchemaLocation(null)
+				.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null).id(productId));
 		HttpResponse<CancelProductOrderVO> createResponse = callAndCatch(
-				() -> cancelProductOrderApiTestClient.createCancelProductOrder(productCreateVO));
+				() -> cancelProductOrderApiTestClient.createCancelProductOrder(null, productCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
 		String id = createResponse.body().getId();
 
@@ -367,11 +367,11 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 				.href(id);
 
 		Optional.ofNullable(expectedProduct.getProductOrder())
-				.ifPresent(po -> expectedProduct.productOrder(ProductOrderRefVOTestExample.build().id(productId)));
+				.ifPresent(po -> expectedProduct.productOrder(ProductOrderRefVOTestExample.build().atSchemaLocation(null).id(productId)));
 
 		//then retrieve
 		HttpResponse<CancelProductOrderVO> retrievedRF = callAndCatch(
-				() -> cancelProductOrderApiTestClient.retrieveCancelProductOrder(id, fieldsParameter));
+				() -> cancelProductOrderApiTestClient.retrieveCancelProductOrder(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
 		assertEquals(expectedProduct, retrievedRF.body(), message);
 	}
@@ -379,10 +379,10 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						CancelProductOrderVOTestExample.build()),
+						CancelProductOrderVOTestExample.build().atSchemaLocation(null)),
 				Arguments.of("Only cancellationReason and the mandatory parameters should have been included.",
 						"cancellationReason",
-						CancelProductOrderVOTestExample.build()
+						CancelProductOrderVOTestExample.build().atSchemaLocation(null)
 								.productOrder(null)
 								.effectiveCancellationDate(null)
 								.requestedCancellationDate(null)
@@ -392,7 +392,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 								.atSchemaLocation(null)),
 				Arguments.of(
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", CancelProductOrderVOTestExample.build()
+						"nothingToSeeHere", CancelProductOrderVOTestExample.build().atSchemaLocation(null)
 								.productOrder(null)
 								.cancellationReason(null)
 								.effectiveCancellationDate(null)
@@ -402,7 +402,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 								.atType(null)
 								.atSchemaLocation(null)),
 				Arguments.of("Only state, cancellationReason and the mandatory parameters should have been included.",
-						"state,cancellationReason", CancelProductOrderVOTestExample.build()
+						"state,cancellationReason", CancelProductOrderVOTestExample.build().atSchemaLocation(null)
 								.productOrder(null)
 								.effectiveCancellationDate(null)
 								.requestedCancellationDate(null)
@@ -436,7 +436,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 	@Override
 	public void retrieveCancelProductOrder404() throws Exception {
 		HttpResponse<CancelProductOrderVO> response = callAndCatch(
-				() -> cancelProductOrderApiTestClient.retrieveCancelProductOrder(
+				() -> cancelProductOrderApiTestClient.retrieveCancelProductOrder(null,
 						"urn:ngsi-ld:product-function:non-existent",
 						null));
 		assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such product-catalog should exist.");
@@ -464,7 +464,8 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 
 	}
 
-	@Override protected String getEntityType() {
+	@Override
+	protected String getEntityType() {
 		return CancelProductOrder.TYPE_CANCEL_PRODUCT_ORDER;
 	}
 }

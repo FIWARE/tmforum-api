@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.domain;
 
 import lombok.Data;
 
+import java.net.URI;
 import java.util.List;
 
 @Data
@@ -12,6 +13,6 @@ public class TaxExemptionCertificate {
 	private List<TaxDefinition> taxDefinition;
 	private TimePeriod validFor;
 	private String atBaseType;
-	private String atSchemaLocation;
+	private URI atSchemaLocation;
 	private String atType;
 }
