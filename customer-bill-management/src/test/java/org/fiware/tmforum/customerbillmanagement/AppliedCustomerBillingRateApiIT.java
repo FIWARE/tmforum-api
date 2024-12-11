@@ -95,7 +95,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		List<AppliedCustomerBillingRate> billRates = new ArrayList<>();
 		List<AppliedCustomerBillingRateVO> expectedBillVOS = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
-			AppliedCustomerBillingRateVO appliedCustomerBillingRateVO = AppliedCustomerBillingRateVOTestExample.build()
+			AppliedCustomerBillingRateVO appliedCustomerBillingRateVO = AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 					.id("urn:ngsi-ld:applied-customer-billing-rate:" + UUID.randomUUID().toString())
 					.billingAccount(null)
 					.product(null)
@@ -106,7 +106,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		billRates.forEach(this::createBill);
 
 		HttpResponse<List<AppliedCustomerBillingRateVO>> appliedCustomerBillingRateResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, appliedCustomerBillingRateResponse.getStatus(), "The list should be accessible.");
 		assertEquals(expectedBillVOS.size(), appliedCustomerBillingRateResponse.getBody().get().size(),
@@ -126,11 +126,11 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		// get with pagination
 		Integer limit = 5;
 		HttpResponse<List<AppliedCustomerBillingRateVO>> firstPartResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, 0, limit));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, 0, limit));
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<AppliedCustomerBillingRateVO>> secondPartResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, 0 + limit, limit));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, 0 + limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
@@ -149,7 +149,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@Override
 	public void listAppliedCustomerBillingRate400() throws Exception {
 		HttpResponse<List<AppliedCustomerBillingRateVO>> badRequestResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, -1, null));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, -1, null));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative offsets are impossible.");
@@ -158,7 +158,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 
 		badRequestResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, -1));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null, -1));
 		assertEquals(HttpStatus.BAD_REQUEST,
 				badRequestResponse.getStatus(),
 				"Negative limits are impossible.");
@@ -184,7 +184,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@Override
 	public void listAppliedCustomerBillingRate404() throws Exception {
 		HttpResponse<List<AppliedCustomerBillingRateVO>> badRequestResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null));
+				() -> appliedCustomerBillingRateApiTestClient.listAppliedCustomerBillingRate(null, null, null, null));
 
 		assertEquals(HttpStatus.OK, badRequestResponse.getStatus(), "We should get an empty list.");
 		assertTrue(badRequestResponse.body().isEmpty(), "We should get an empty list.");
@@ -223,15 +223,15 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		String billId = "urn:ngsi-ld:applied-customer-billing-rate:test-rate";
 		expectedAppliedCustomerBillingRateVo.id(billId);
 
-		AppliedCustomerBillingRateVO appliedCustomerBillingRateVO = AppliedCustomerBillingRateVOTestExample.build()
+		AppliedCustomerBillingRateVO appliedCustomerBillingRateVO = AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 				.id(billId)
-				.bill(BillRefVOTestExample.build().id("urn:ngsi-ld:bill:bill"))
-				.billingAccount(BillingAccountRefVOTestExample.build().id("urn:ngsi-ld:billing-account:account"))
-				.product(ProductRefVOTestExample.build().id("urn:ngsi-ld:product:product"));
+				.bill(BillRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:bill:bill"))
+				.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:billing-account:account"))
+				.product(ProductRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:product:product"));
 		createBill(tmForumMapper.map(appliedCustomerBillingRateVO));
 
 		HttpResponse<AppliedCustomerBillingRateVO> response = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(billId,
+				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(null, billId,
 						fieldsParameter));
 
 		assertEquals(HttpStatus.OK, response.getStatus(), message);
@@ -241,13 +241,13 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						AppliedCustomerBillingRateVOTestExample.build()
-								.billingAccount(BillingAccountRefVOTestExample.build()
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
+								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:billing-account:account"))
-								.product(ProductRefVOTestExample.build().id("urn:ngsi-ld:product:product"))
-								.bill(BillRefVOTestExample.build().id("urn:ngsi-ld:bill:bill"))),
+								.product(ProductRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:product:product"))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:bill:bill"))),
 				Arguments.of("With an empty fields parameter only mandatory should be returned.", "",
-						AppliedCustomerBillingRateVOTestExample.build()
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.date(null)
 								.description(null)
 								.isBilled(null)
@@ -266,7 +266,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 								.atType(null)
 								.type(null)),
 				Arguments.of("Only mandatory and name should be returned.", "name",
-						AppliedCustomerBillingRateVOTestExample.build()
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.date(null)
 								.description(null)
 								.isBilled(null)
@@ -284,12 +284,12 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 								.atType(null)
 								.type(null)),
 				Arguments.of("Only mandatory, name, bill and type should be returned.", "name,bill,type",
-						AppliedCustomerBillingRateVOTestExample.build()
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.date(null)
 								.description(null)
 								.isBilled(null)
 								.appliedTax(null)
-								.bill(BillRefVOTestExample.build().id("urn:ngsi-ld:bill:bill"))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:bill:bill"))
 								.billingAccount(null)
 								.characteristic(null)
 								.periodCoverage(null)
@@ -300,7 +300,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 								.atSchemaLocation(null)
 								.atType(null)),
 				Arguments.of("Only mandatory should be returned for non-existent.", "non-existent",
-						AppliedCustomerBillingRateVOTestExample.build()
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
 								.date(null)
 								.description(null)
 								.isBilled(null)
@@ -345,7 +345,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@Test
 	@Override public void retrieveAppliedCustomerBillingRate404() throws Exception {
 		HttpResponse<AppliedCustomerBillingRateVO> response = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(
+				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(null,
 						"urn:ngsi-ld:customer-bill:non-existent",
 						fieldsParameter));
 

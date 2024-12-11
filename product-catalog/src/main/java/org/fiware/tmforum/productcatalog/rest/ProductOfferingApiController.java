@@ -35,16 +35,15 @@ public class ProductOfferingApiController extends AbstractProductCatalogApiContr
 	private final Clock clock;
 
 	public ProductOfferingApiController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock, TMForumEventHandler eventHandler) {
+										TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper,
+										Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}
 
 	@Override
-	public Mono<HttpResponse<ProductOfferingVO>> createProductOffering(
-			ProductOfferingCreateVO productOfferingCreateVO) {
+	public Mono<HttpResponse<ProductOfferingVO>> createProductOffering(ProductOfferingCreateVO productOfferingCreateVO) {
 		ProductOffering productOffering = tmForumMapper.map(
 				tmForumMapper.map(productOfferingCreateVO,
 						IdHelper.toNgsiLd(UUID.randomUUID().toString(), ProductOffering.TYPE_PRODUCT_OFFERING)));
@@ -89,7 +88,7 @@ public class ProductOfferingApiController extends AbstractProductCatalogApiContr
 
 	@Override
 	public Mono<HttpResponse<List<ProductOfferingVO>>> listProductOffering(@Nullable String fields,
-			@Nullable Integer offset, @Nullable Integer limit) {
+																		   @Nullable Integer offset, @Nullable Integer limit) {
 		return list(offset, limit, ProductOffering.TYPE_PRODUCT_OFFERING, ProductOffering.class)
 				.map(productOfferingStream -> productOfferingStream.map(tmForumMapper::map).toList())
 				.switchIfEmpty(Mono.just(List.of()))
@@ -98,7 +97,7 @@ public class ProductOfferingApiController extends AbstractProductCatalogApiContr
 
 	@Override
 	public Mono<HttpResponse<ProductOfferingVO>> patchProductOffering(String id,
-			ProductOfferingUpdateVO productOffering) {
+																	  ProductOfferingUpdateVO productOffering) {
 		// non-ngsi-ld ids cannot exist.
 		if (!IdHelper.isNgsiLdId(id)) {
 			throw new TmForumException("Did not receive a valid id, such product offering cannot exist.",

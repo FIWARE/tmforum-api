@@ -1,7 +1,6 @@
 # FIWARE implementation of the TMFORUM-APIs
- 
-## Structure
 
+## Structure
 
 The project is setup as a maven multi-module project, to ease the development of independent implementations for each
 API.
@@ -25,7 +24,6 @@ The project also contains 3 non-module folders:
 - [conformance-test](conformance-test) - contains a dockerfile to be used for running the TMForum-Conformance Tests
   inside the K3S setup. Also contains a kubernetes manifest for running the api-implementations.
 
-
 ## Testing
 
 The current implementation supports multiple layers of testing:
@@ -39,7 +37,8 @@ The current implementation supports multiple layers of testing:
 - Integration-Tests,
   using [JUnit5](https://junit.org/junit5/docs/current/user-guide/),[Micronaut-Test](https://micronaut-projects.github.io/micronaut-test/latest/guide/)
   and [k3s](https://k3s.io/) to test the application with its real external dependencies running
-- Conformance-Test, using the CTK-Implementations provided by TMForum and [k3s](https://k3s.io/) to test conformance of the implementations
+- Conformance-Test, using the CTK-Implementations provided by TMForum and [k3s](https://k3s.io/) to test conformance of
+  the implementations
 
 In order to reduce the overhead of test implementation, the OpenAPI-Generator provides the following test-helpers:
 
@@ -52,7 +51,8 @@ In order to reduce the overhead of test implementation, the OpenAPI-Generator pr
 ### Running unit-tests
 
 The unit-tests are integrated into
-the [maven-lifecycle's](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html) ```test-phase```
+the [maven-lifecycle's](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html)
+```test-phase```
 via the [surfire-plugin](https://maven.apache.org/surefire/maven-surefire-plugin/). They can be executed
 via ```mvn test```. Since they don't have any external dependencies, they also can be run via the IDEs(only tested
 with [IntelliJ](https://www.jetbrains.com/idea/)) integrated test runners. All tests with suffix ```*Test``` will be
@@ -61,7 +61,8 @@ executed.
 ### Running integration-tests
 
 The integration-tests are integrated into
-the [maven-lifecycle's](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html) ```integration-test phase```
+the [maven-lifecycle's](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html)
+```integration-test phase```
 via the [failsafe-plugin](https://maven.apache.org/surefire/maven-failsafe-plugin/). Since the tests require a running
 broker at ```localhost:1026```, the [k3s-plugin](https://github.com/kokuwaio/k3s-maven-plugin) is integrated in
 the ```pre-integration-test``` and ```post-intgeration-test``` phases to spin-up a k3s-cluster inside docker and deploy
@@ -111,3 +112,67 @@ See the logs via:
   export KUBECONFIG=/tmp/k3s-maven-plugin/mount/kubeconfig.yaml && kubectl get all --all-namespaces
   kubectl logs <BROKER_POD>
 ```
+
+## Extension with @schemaLocation
+
+TMForum supports the extension of API entities through the ```@schemaLocation``` property. In order to extend an entity,
+the property should contain a valid(and reachable) URL to a [JSON-Schema](https://json-schema.org/), defining the
+extension.
+When a schema is provided, the entity is validated against it during deserialization on insertion or update.
+For example, in order to extend the ```ProductOfferingTerm``` with a policy, the following schema could be used:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "http://localhost:3000/ProductOfferingTerm-schema.json",
+  "title": "Test Schema - Extension with a policy",
+  "description": "Test Schema - Extension with a policy",
+  "type": "object",
+  "properties": {
+    "policy": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "policy"
+  ]
+}
+```
+
+With that schema, a product offering could be created as following:
+
+```json
+{
+  "id": "string",
+  "href": "string",
+  "description": "string",
+  "productOfferingTerm": [
+    {
+      "description": "string",
+      "name": "string",
+      "validFor": {
+        "endDateTime": "1985-04-12T23:20:50.52Z",
+        "startDateTime": "1985-04-12T23:20:50.52Z"
+      },
+      "policy": {
+        "the": "policy"
+      },
+      "@baseType": "ProductOfferingTerm",
+      "@schemaLocation": "http://localhost:3000/ProductOfferingTerm-schema.json",
+      "@type": "ProductOfferingTermWithPolicy"
+    }
+  ]
+}
+```
+
+The API will validate the policy is present and actually an object. Its possible to define in detail the properties of
+the policy itself and let them be validated, too.
+
+Notes:
+
+* All schemas need to define there meta-schema. When using the meta-schemas from ```json-schema.org```, only
+  ```draft/2020-12/schema```, ```draft/2019-09/schema```, ```draft-04/schema```, ```draft-06/schema``` and
+  ```draft-07/schema``` are allowed.
+* It is possible to set ```additionalProperties: false``` for the object to be extended. However, in this case the
+  schema needs to contain the full definition of the object, including the properties from the baseType. Else, they will
+  be considered as additional properties and validation will fail.  
