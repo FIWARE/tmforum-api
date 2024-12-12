@@ -47,7 +47,6 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
 	private final AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient;
 	private final EntitiesApiClient entitiesApiClient;
-	private final ApiExtensionProperties apiExtensionProperties;
 
 	private String message;
 	private AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreateVO;
@@ -58,11 +57,10 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
 	protected ExtendedAppliedCustomerBillingRateApiIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
 													  GeneralProperties generalProperties,
-													  AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient, ApiExtensionProperties apiExtensionProperties) {
+													  AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.appliedCustomerBillingRateApiTestClient = appliedCustomerBillingRateApiTestClient;
 		this.entitiesApiClient = entitiesApiClient;
-		this.apiExtensionProperties = apiExtensionProperties;
 	}
 
 	@MockBean(Clock.class)

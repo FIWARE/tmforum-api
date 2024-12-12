@@ -50,7 +50,7 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 				.map(HttpResponse::ok);
 	}
 
-	private Mono<CustomerBill> getCheckingMono(CustomerBill customer) {
+	protected Mono<CustomerBill> getCheckingMono(CustomerBill customer) {
 		Optional.ofNullable(customer.getTaxItem()).ifPresent(this::validateTaxItems);
 
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
@@ -67,7 +67,7 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 								TmForumExceptionReason.INVALID_RELATIONSHIP));
 	}
 
-	private void validateTaxItems(List<TaxItem> taxItems) {
+	protected void validateTaxItems(List<TaxItem> taxItems) {
 		List<String> taxItemIds = taxItems.stream()
 				.map(TaxItem::getId)
 				.toList();

@@ -22,6 +22,10 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	// customer bill
 
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract CustomerBillVO map(CustomerBillCreateVO customerBillCreateVO, URI id);
+
 	public abstract CustomerBillVO map(CustomerBill customer);
 
 	public abstract CustomerBill map(CustomerBillVO customerBillVOs);
