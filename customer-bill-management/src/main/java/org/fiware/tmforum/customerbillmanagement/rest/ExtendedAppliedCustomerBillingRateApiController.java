@@ -32,66 +32,70 @@ import java.util.UUID;
 @Requires(property = "apiExtension.enabled", value = "true")
 public class ExtendedAppliedCustomerBillingRateApiController extends AbstractApiController<AppliedCustomerBillingRate> implements AppliedCustomerBillingRateApi {
 
-    private final TMForumMapper tmForumMapper;
-    private final Clock clock;
+	private final TMForumMapper tmForumMapper;
+	private final Clock clock;
 
-    public ExtendedAppliedCustomerBillingRateApiController(
-            QueryParser queryParser,
-            ReferenceValidationService validationService,
-            TmForumRepository repository, TMForumMapper tmForumMapper, TMForumEventHandler eventHandler, Clock clock) {
-        super(queryParser, validationService, repository, eventHandler);
-        this.tmForumMapper = tmForumMapper;
-        this.clock = clock;
-    }
+	public ExtendedAppliedCustomerBillingRateApiController(
+			QueryParser queryParser,
+			ReferenceValidationService validationService,
+			TmForumRepository repository, TMForumMapper tmForumMapper, TMForumEventHandler eventHandler, Clock clock) {
+		super(queryParser, validationService, repository, eventHandler);
+		this.tmForumMapper = tmForumMapper;
+		this.clock = clock;
+	}
 
-    @Override
-    public Mono<HttpResponse<AppliedCustomerBillingRateVO>> createAppliedCustomerBillingRate(AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreate) {
+	@Override
+	public Mono<HttpResponse<AppliedCustomerBillingRateVO>> createAppliedCustomerBillingRate(AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreate) {
 
-        if (appliedCustomerBillingRateCreate.getIsBilled() && appliedCustomerBillingRateCreate.getBill() == null) {
-            throw new TmForumException("If an AppliedCustomerBillingRate is billed, the bill needs to be included.", TmForumExceptionReason.INVALID_DATA);
-        }
+		if (getNullSafeBoolean(appliedCustomerBillingRateCreate.getIsBilled()) && appliedCustomerBillingRateCreate.getBill() == null) {
+			throw new TmForumException("If an AppliedCustomerBillingRate is billed, the bill needs to be included.", TmForumExceptionReason.INVALID_DATA);
+		}
 
-        if (!appliedCustomerBillingRateCreate.getIsBilled() && appliedCustomerBillingRateCreate.getBillingAccount() == null) {
-            throw new TmForumException("If an AppliedCustomerBillingRate is not yet billed, the billing account needs to be included.", TmForumExceptionReason.INVALID_DATA);
-        }
+		if (!getNullSafeBoolean(appliedCustomerBillingRateCreate.getIsBilled()) && appliedCustomerBillingRateCreate.getBillingAccount() == null) {
+			throw new TmForumException("If an AppliedCustomerBillingRate is not yet billed, the billing account needs to be included.", TmForumExceptionReason.INVALID_DATA);
+		}
 
-        AppliedCustomerBillingRate appliedCustomerBillingRate = tmForumMapper.map(
-                tmForumMapper.map(appliedCustomerBillingRateCreate, IdHelper.toNgsiLd(UUID.randomUUID().toString(), AppliedCustomerBillingRate.TYPE_APPLIED_CUSTOMER_BILLING_RATE)));
-        appliedCustomerBillingRate.setDate(clock.instant());
+		AppliedCustomerBillingRate appliedCustomerBillingRate = tmForumMapper.map(
+				tmForumMapper.map(appliedCustomerBillingRateCreate, IdHelper.toNgsiLd(UUID.randomUUID().toString(), AppliedCustomerBillingRate.TYPE_APPLIED_CUSTOMER_BILLING_RATE)));
+		appliedCustomerBillingRate.setDate(clock.instant());
 
-        return create(getCheckingMono(appliedCustomerBillingRate), AppliedCustomerBillingRate.class)
-                .map(tmForumMapper::map)
-                .map(HttpResponse::created);
-    }
+		return create(getCheckingMono(appliedCustomerBillingRate), AppliedCustomerBillingRate.class)
+				.map(tmForumMapper::map)
+				.map(HttpResponse::created);
+	}
 
-    private Mono<AppliedCustomerBillingRate> getCheckingMono(AppliedCustomerBillingRate appliedCustomerBillingRate) {
-        List<List<? extends ReferencedEntity>> references = new ArrayList<>();
-        Optional.ofNullable(appliedCustomerBillingRate.getBill()).ifPresent(bill -> references.add(List.of(bill)));
-        Optional.ofNullable(appliedCustomerBillingRate.getBillingAccount()).ifPresent(billingAccount -> references.add(List.of(billingAccount)));
-        Optional.ofNullable(appliedCustomerBillingRate.getProduct()).ifPresent(productRef -> references.add(List.of(productRef)));
-        return getCheckingMono(appliedCustomerBillingRate, references)
-                .onErrorMap(throwable -> new TmForumException(
-                        String.format("Was not able to create appliedCustomerBillingRate %s", appliedCustomerBillingRate.getId()), throwable,
-                        TmForumExceptionReason.INVALID_RELATIONSHIP));
-    }
+	private Mono<AppliedCustomerBillingRate> getCheckingMono(AppliedCustomerBillingRate appliedCustomerBillingRate) {
+		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
+		Optional.ofNullable(appliedCustomerBillingRate.getBill()).ifPresent(bill -> references.add(List.of(bill)));
+		Optional.ofNullable(appliedCustomerBillingRate.getBillingAccount()).ifPresent(billingAccount -> references.add(List.of(billingAccount)));
+		Optional.ofNullable(appliedCustomerBillingRate.getProduct()).ifPresent(productRef -> references.add(List.of(productRef)));
+		return getCheckingMono(appliedCustomerBillingRate, references)
+				.onErrorMap(throwable -> new TmForumException(
+						String.format("Was not able to create appliedCustomerBillingRate %s", appliedCustomerBillingRate.getId()), throwable,
+						TmForumExceptionReason.INVALID_RELATIONSHIP));
+	}
 
-    @Override
-    public Mono<HttpResponse<AppliedCustomerBillingRateVO>> updateAppliedCustomerBillingRate(String id, AppliedCustomerBillingRateUpdateVO appliedCustomerBillingRateUdpate) {
-        // non-ngsi-ld ids cannot exist.
-        if (!IdHelper.isNgsiLdId(id)) {
-            throw new TmForumException("Did not receive a valid id, such appliedCustomerBillingRate cannot exist.",
-                    TmForumExceptionReason.NOT_FOUND);
-        }
-        if (appliedCustomerBillingRateUdpate.getIsBilled() && appliedCustomerBillingRateUdpate.getBill() == null) {
-            throw new TmForumException("If an AppliedCustomerBillingRate is billed, the bill needs to be included.", TmForumExceptionReason.INVALID_DATA);
-        }
-        if (!appliedCustomerBillingRateUdpate.getIsBilled() && appliedCustomerBillingRateUdpate.getBillingAccount() == null) {
-            throw new TmForumException("If an AppliedCustomerBillingRate is not yet billed, the billing account needs to be included.", TmForumExceptionReason.INVALID_DATA);
-        }
-        AppliedCustomerBillingRate updatedCustomerBillingRate = tmForumMapper.map(tmForumMapper.map(appliedCustomerBillingRateUdpate, id));
+	@Override
+	public Mono<HttpResponse<AppliedCustomerBillingRateVO>> updateAppliedCustomerBillingRate(String id, AppliedCustomerBillingRateUpdateVO appliedCustomerBillingRateUdpate) {
+		// non-ngsi-ld ids cannot exist.
+		if (!IdHelper.isNgsiLdId(id)) {
+			throw new TmForumException("Did not receive a valid id, such appliedCustomerBillingRate cannot exist.",
+					TmForumExceptionReason.NOT_FOUND);
+		}
+		if (getNullSafeBoolean(appliedCustomerBillingRateUdpate.getIsBilled()) && appliedCustomerBillingRateUdpate.getBill() == null) {
+			throw new TmForumException("If an AppliedCustomerBillingRate is billed, the bill needs to be included.", TmForumExceptionReason.INVALID_DATA);
+		}
+		if (!getNullSafeBoolean(appliedCustomerBillingRateUdpate.getIsBilled()) && appliedCustomerBillingRateUdpate.getBillingAccount() == null) {
+			throw new TmForumException("If an AppliedCustomerBillingRate is not yet billed, the billing account needs to be included.", TmForumExceptionReason.INVALID_DATA);
+		}
+		AppliedCustomerBillingRate updatedCustomerBillingRate = tmForumMapper.map(tmForumMapper.map(appliedCustomerBillingRateUdpate, id));
 
-        return patch(id, updatedCustomerBillingRate, getCheckingMono(updatedCustomerBillingRate), AppliedCustomerBillingRate.class)
-                .map(tmForumMapper::map)
-                .map(HttpResponse::ok);
-    }
+		return patch(id, updatedCustomerBillingRate, getCheckingMono(updatedCustomerBillingRate), AppliedCustomerBillingRate.class)
+				.map(tmForumMapper::map)
+				.map(HttpResponse::ok);
+	}
+
+	private boolean getNullSafeBoolean(Boolean booleanValue) {
+		return Optional.ofNullable(booleanValue).orElse(false);
+	}
 }
