@@ -1,0 +1,566 @@
+openapi: 3.0.3
+info:
+  title: API CustomerBill management extension
+  description: |-
+    ## TMF API Reference: TMF 678 - Customer bill Management
+
+    The TMForum CustomerBill Management API allows to retrieve the appliedCustomerBillingRate-objects. 
+    It does not specify any creation of such objects, since it expects them to be created by the billing-application 
+    itself. In order to be used as part of a microservice architecture, additional create and update methods are provided
+    here as an extension.
+  version: 4.0.0
+tags:
+  - name: customerBillExtension
+paths:
+  /customerBill:
+    post:
+      operationId: createCustomerBill
+      summary: Create CustomerBill objects
+      description: This operation creates CustomerBill entities
+      tags:
+        - customerBillExtension
+      requestBody:
+        description: The CustomerBill to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerBill_Create'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerBill'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '405':
+          description: Method Not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Money:
+      type: object
+      description: A base / value business entity used to represent money
+      properties:
+        unit:
+          type: string
+          description: Currency (ISO4217 norm uses 3 letters to define the currency)
+        value:
+          type: number
+          format: float
+          description: A positive floating point number
+    PaymentRef:
+      type: object
+      description: If an immediate payment has been done at the product order submission, the payment information are captured and stored (as a reference) in the order.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of a related entity.
+        href:
+          type: string
+          description: Reference of the related entity.
+        name:
+          type: string
+          description: A name for the payment
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+        '@referredType':
+          type: string
+          description: The actual type of the target instance when needed for disambiguation.
+      required:
+        - id
+    AppliedPayment:
+      type: object
+      description: The applied payment is the result of lettering process. It enables to assign automatically or manually part of incoming payment amount to a bill.
+      properties:
+        appliedAmount:
+          $ref: '#/components/schemas/Money'
+        payment:
+          $ref: '#/components/schemas/PaymentRef'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+    Quantity:
+      type: object
+      description: An amount in a given unit
+      properties:
+        amount:
+          default: 1
+          type: number
+          format: float
+          description: Numeric value in a given unit
+        units:
+          type: string
+          description: Unit
+    TimePeriod:
+      type: object
+      description: A period of time, either as a deadline (endDateTime only) a startDateTime only, or both
+      properties:
+        endDateTime:
+          type: string
+          format: date-time
+          description: End of the time period, using IETC-RFC-3339 format
+        startDateTime:
+          type: string
+          format: date-time
+          description: Start of the time period, using IETC-RFC-3339 format. If you define a start, you must also define an end
+    AttachmentRefOrValue:
+      type: object
+      description: An attachment by value or by reference. For AttachmentRefOrValue, the attribute type,schemaLocation and referredType are related to the contained entity and not to AttchmentRefOrValue itself
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this particular attachment
+        href:
+          type: string
+          description: URI for this Attachment
+        attachmentType:
+          type: string
+          description: Attachment type such as video, picture
+        content:
+          type: string
+          description: The actual contents of the attachment object, if embedded, encoded as base64
+        description:
+          type: string
+          description: A narrative text describing the content of the attachment
+        mimeType:
+          type: string
+          description: Attachment mime type such as extension file for video, picture and document
+        name:
+          type: string
+          description: The name of the attachment
+        url:
+          type: string
+          description: Uniform Resource Locator, is a web page address (a subset of URI)
+        size:
+          $ref: '#/components/schemas/Quantity'
+        validFor:
+          $ref: '#/components/schemas/TimePeriod'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+        '@referredType':
+          type: string
+          description: The actual type of the target instance when needed for disambiguation.
+    BillingAccountRef:
+      type: object
+      description: Reference to the billing account in case of not billed item.
+      properties:
+        id:
+          type: string
+          description: Unique-Identifier for this <123>
+        href:
+          type: string
+          description: URL serving as reference for the <xyz> resource
+        name:
+          type: string
+          description: Name of the Billingaccount
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+        '@referredType':
+          type: string
+          description: The actual type of the target instance when needed for disambiguation.
+      required:
+        - id
+    AccountBalance:
+      type: object
+      description: Balances linked to the account
+      required:
+        - amount
+        - balanceType
+        - validFor
+      properties:
+        balanceType:
+          type: string
+          description: 'Type of the balance : deposit balance, disputed balance, loyalty balance, receivable balance...'
+        amount:
+          $ref: '#/components/schemas/Money'
+        validFor:
+          $ref: '#/components/schemas/TimePeriod'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+    FinancialAccountRef:
+      type: object
+      description: AccountReceivable reference. An account of money owed by a party to another entity in exchange for goods or services that have been delivered or used. An account receivable aggregates the amounts of one or more party accounts (billing or settlement) owned by a given party.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the account
+        href:
+          type: string
+          description: Unique reference of the account
+        name:
+          type: string
+          description: Name of the account
+        accountBalance:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountBalance'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+        '@referredType':
+          type: string
+          description: The actual type of the target instance when needed for disambiguation.
+      required:
+        - id
+    PaymentMethodRef:
+      type: object
+      description: PaymentMethod reference. A payment method defines a specific mean of payment (e.g direct debit).
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the payment mean
+        href:
+          type: string
+          description: Reference of the payment mean
+        name:
+          type: string
+          description: Name of the payment mean
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+        '@referredType':
+          type: string
+          description: The actual type of the target instance when needed for disambiguation.
+      required:
+        - id
+    RelatedPartyRef:
+      type: object
+      description: RelatedParty reference. A related party defines party or party role linked to a specific entity.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of a related party
+        href:
+          type: string
+          description: Reference of the related party, could be a party reference or a party role reference
+        name:
+          type: string
+          description: Name of the related party
+        role:
+          type: string
+          description: Role of the related party.
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+        '@referredType':
+          type: string
+          description: The actual type of the target instance when needed for disambiguation.
+      required:
+        - id
+    StateValue:
+      type: string
+      description: ''
+      enum:
+        - new
+        - onHold
+        - validated
+        - sent
+        - partiallyPaid
+        - settled
+    TaxItem:
+      type: object
+      description: A tax item is created for each tax rate and tax type used in the bill.
+      properties:
+        taxCategory:
+          type: string
+          description: Tax category
+        taxRate:
+          type: number
+          format: float
+          description: Applied rate of the tax
+        taxAmount:
+          $ref: '#/components/schemas/Money'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+    CustomerBill:
+      type: object
+      description: |-
+        The billing account receives all charges (recurring, one time and usage) of the offers and products assigned to it during order process. Periodically according to billing cycle specifications attached to the billing account or as a result of an event, a customer bill (aka invoice) is produced. This customer bill concerns different related parties which play a role on it : for example, a customer bill is produced by an operator, is sent to a bill receiver and has to be paid by a payer.
+        A payment method could be assigned to the customer bill to build the call of payment. Lettering process enables to assign automatically or manually incoming amount from payments to customer bills (payment items).
+        A tax item is created for each tax rate used in the customer bill.
+        The financial account represents a financial entity which records all customer’s accounting events : payment amount are recorded as credit and invoices amount are recorded as debit. It gives the customer overall balance (account balance).
+        The customer bill is linked to one or more documents that can be downloaded via a provided url.
+      properties:
+        id:
+          type: string
+          description: Unique identifier of he bill
+        href:
+          type: string
+          description: Bill unique reference
+        billDate:
+          type: string
+          format: date-time
+          description: Bill date
+        billNo:
+          type: string
+          description: Bill reference known by the customer or the party and displayed on the bill. Could be different from the id
+        category:
+          type: string
+          description: 'Category of the bill produced : normal, duplicate, interim, last, trial customer or credit note for example'
+        lastUpdate:
+          type: string
+          format: date-time
+          description: Date of bill last update
+        nextBillDate:
+          type: string
+          format: date-time
+          description: ). Approximate date of  the next bill production given for information (only used for onCycle bill)
+        paymentDueDate:
+          type: string
+          format: date-time
+          description: Date at which the amount due should have been paid
+        runType:
+          type: string
+          description: onCycle (a bill can be created as a result of a cycle run) or offCycle (a bill can be created as a result of other events such as customer request or account close)
+        amountDue:
+          $ref: '#/components/schemas/Money'
+        appliedPayment:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPayment'
+        billDocument:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentRefOrValue'
+        billingAccount:
+          $ref: '#/components/schemas/BillingAccountRef'
+        billingPeriod:
+          $ref: '#/components/schemas/TimePeriod'
+        financialAccount:
+          $ref: '#/components/schemas/FinancialAccountRef'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethodRef'
+        relatedParty:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedPartyRef'
+        remainingAmount:
+          $ref: '#/components/schemas/Money'
+        state:
+          $ref: '#/components/schemas/StateValue'
+        taxExcludedAmount:
+          $ref: '#/components/schemas/Money'
+        taxIncludedAmount:
+          $ref: '#/components/schemas/Money'
+        taxItem:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxItem'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+    CustomerBill_Create:
+      type: object
+      properties:
+        billDate:
+          type: string
+          format: date-time
+          description: Bill date
+        billNo:
+          type: string
+          description: Bill reference known by the customer or the party and displayed on the bill. Could be different from the id
+        category:
+          type: string
+          description: 'Category of the bill produced : normal, duplicate, interim, last, trial customer or credit note for example'
+        lastUpdate:
+          type: string
+          format: date-time
+          description: Date of bill last update
+        nextBillDate:
+          type: string
+          format: date-time
+          description: ). Approximate date of  the next bill production given for information (only used for onCycle bill)
+        paymentDueDate:
+          type: string
+          format: date-time
+          description: Date at which the amount due should have been paid
+        runType:
+          type: string
+          description: onCycle (a bill can be created as a result of a cycle run) or offCycle (a bill can be created as a result of other events such as customer request or account close)
+        amountDue:
+          $ref: '#/components/schemas/Money'
+        appliedPayment:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPayment'
+        billDocument:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttachmentRefOrValue'
+        billingAccount:
+          $ref: '#/components/schemas/BillingAccountRef'
+        billingPeriod:
+          $ref: '#/components/schemas/TimePeriod'
+        financialAccount:
+          $ref: '#/components/schemas/FinancialAccountRef'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethodRef'
+        relatedParty:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedPartyRef'
+        remainingAmount:
+          $ref: '#/components/schemas/Money'
+        state:
+          $ref: '#/components/schemas/StateValue'
+        taxExcludedAmount:
+          $ref: '#/components/schemas/Money'
+        taxIncludedAmount:
+          $ref: '#/components/schemas/Money'
+        taxItem:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxItem'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+    Error:
+      description: Used when an API throws an Error, typically with a HTTP error response-code (3xx, 4xx, 5xx)
+      type: object
+      required:
+        - code
+        - reason
+      properties:
+        code:
+          type: string
+          description: Application relevant detail, defined in the API or a common list.
+        reason:
+          type: string
+          description: Explanation of the reason for the error which can be shown to a client user.
+        message:
+          type: string
+          description: More details and corrective actions related to the error which can be shown to a client user.
+        status:
+          type: string
+          description: HTTP Error code extension
+        referenceError:
+          type: string
+          format: uri
+          description: URI of documentation describing the error.
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class.
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name.

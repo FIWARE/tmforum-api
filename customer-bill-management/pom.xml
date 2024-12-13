@@ -208,7 +208,7 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>openapi-customer-bill-management-api-extension</id>
+                        <id>openapi-applied-customer-bill-management-api-extension</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
@@ -217,6 +217,21 @@
                             <skip>false</skip>
                             <inputSpec>
                                 ${project.parent.basedir}/${artifactId}/api/applied-customer-bill-management-extension.yaml
+                            </inputSpec>
+                            <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
+                            <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>openapi-customer-bill-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/customer-bill-extension.yaml
                             </inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
