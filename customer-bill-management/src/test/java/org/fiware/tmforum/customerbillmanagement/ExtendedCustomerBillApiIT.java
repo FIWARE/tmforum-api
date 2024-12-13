@@ -102,22 +102,22 @@ public class ExtendedCustomerBillApiIT extends AbstractApiIT implements Customer
 						.billingAccount(null)
 						.financialAccount(null)
 						.paymentMethod(null)),
-				Arguments.of("Creation with invalid billing accounts are not allowed.", CustomerBillVOTestExample.build()
+				Arguments.of("Creation with invalid billing accounts are not allowed.", CustomerBillCreateVOTestExample.build()
 						.billingAccount(BillingAccountRefVOTestExample.build())
 						.financialAccount(null)
 						.paymentMethod(null)
 						.atSchemaLocation(null)),
-				Arguments.of("Creation with invalid financial accounts are not allowed.", CustomerBillVOTestExample.build()
+				Arguments.of("Creation with invalid financial accounts are not allowed.", CustomerBillCreateVOTestExample.build()
 						.billingAccount(null)
 						.financialAccount(FinancialAccountRefVOTestExample.build())
 						.paymentMethod(null)
 						.atSchemaLocation(null)),
-				Arguments.of("Creation with invalid payment methods are not allowed.", CustomerBillVOTestExample.build()
+				Arguments.of("Creation with invalid payment methods are not allowed.", CustomerBillCreateVOTestExample.build()
 						.billingAccount(null)
 						.financialAccount(null)
 						.paymentMethod(PaymentMethodRefVOTestExample.build())
 						.atSchemaLocation(null)),
-				Arguments.of("Creation with additional properties without a schema is not allowed.", CustomerBillVOTestExample.build()
+				Arguments.of("Creation with additional properties without a schema is not allowed.", CustomerBillCreateVOTestExample.build()
 						.billingAccount(null)
 						.financialAccount(null)
 						.paymentMethod(PaymentMethodRefVOTestExample.build())

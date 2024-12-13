@@ -14,7 +14,6 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.customerbillmanagement.TMForumMapper;
-import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 import reactor.core.publisher.Mono;
 
