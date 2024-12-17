@@ -20,25 +20,25 @@ import java.util.Optional;
 @EqualsAndHashCode(callSuper = true)
 public class BundleProductOffering extends RefEntity implements ReferencedEntity {
 
-    @Getter(onMethod = @__({
-            @AttributeGetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus", embedProperty = true)}))
-    @Setter(onMethod = @__({
-            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus", fromProperties = true)}))
-    private String lifecycleStatus;
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus", embedProperty = true)}))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "lifecycleStatus", fromProperties = true)}))
+	private String lifecycleStatus;
 
-    @Getter(onMethod = @__({
-            @AttributeGetter(value = AttributeType.PROPERTY, targetName = "bundledProductOfferingOption", embedProperty = true)}))
-    @Setter(onMethod = @__({
-            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "bundledProductOfferingOption", fromProperties = true, targetClass = BundleProductOfferingOption.class)}))
-    private BundleProductOfferingOption bundledProductOfferingOption;
+	@Getter(onMethod = @__({
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "bundledProductOfferingOption", embedProperty = true)}))
+	@Setter(onMethod = @__({
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "bundledProductOfferingOption", fromProperties = true, targetClass = BundleProductOfferingOption.class)}))
+	private BundleProductOfferingOption bundledProductOfferingOption;
 
-    public BundleProductOffering(@JsonProperty("id") String id) {
-        super(id);
-    }
+	public BundleProductOffering(@JsonProperty("id") String id) {
+		super(id);
+	}
 
-    @Override
-    @JsonIgnore
-    public List<String> getReferencedTypes() {
-        return new ArrayList<>(Optional.ofNullable(getAtReferredType()).map(List::of).orElse(List.of()));
-    }
+	@Override
+	@JsonIgnore
+	public List<String> getReferencedTypes() {
+		return new ArrayList<>(List.of(ProductOffering.TYPE_PRODUCT_OFFERING));
+	}
 }
