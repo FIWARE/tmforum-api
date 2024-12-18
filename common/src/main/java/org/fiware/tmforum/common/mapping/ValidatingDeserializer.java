@@ -88,6 +88,9 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 				throw new SchemaValidationException(assertions.stream().map(ValidationMessage::getMessage).toList(), "Input is not valid for the given schema.");
 			}
 		} catch (Exception e) {
+			if(e instanceof SchemaValidationException) {
+				throw e;
+			}
 			throw new SchemaValidationException(List.of(), "Was not able to validate the input.", e);
 		}
 
