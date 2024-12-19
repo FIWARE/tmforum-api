@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
+import org.fiware.tmforum.product.ProductOfferingPrice;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,13 +12,13 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class ProductOfferingPriceRef extends RefEntity {
 
-    public ProductOfferingPriceRef(@JsonProperty("id") String id) {
-        super(id);
-    }
+	public ProductOfferingPriceRef(@JsonProperty("id") String id) {
+		super(id);
+	}
 
-    @Override
-    @JsonIgnore
-    public List<String> getReferencedTypes() {
-        return new ArrayList<>(List.of(getAtReferredType()));
-    }
+	@Override
+	@JsonIgnore
+	public List<String> getReferencedTypes() {
+		return new ArrayList<>(List.of(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE));
+	}
 }
