@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.domain.Entity;
+import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.RelatedPartyRefValue;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.resource.ResourceRef;
@@ -46,7 +47,7 @@ public class ProductRefOrValue extends Entity implements ReferencedEntity {
 	private List<ProductTerm> productTerm;
 	private List<ResourceRef> realizingResource;
 	private List<ServiceRef> realizingService;
-	private List<RelatedPartyRefValue> relatedParty;
+	private List<RelatedParty> relatedParty;
 	private ProductStatusType status;
 
 	@Override
