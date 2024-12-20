@@ -5,6 +5,7 @@ import org.mapstruct.Context;
 import org.mapstruct.Named;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -58,4 +59,8 @@ public class IdHelper {
 				.orElseThrow(() -> new RuntimeException(String.format("Did not receive a valid uri: %s", id)));
 	}
 
+	@Named("NullableListMapper")
+	public static <T> List<T> nullableListMapper(List<T> theNullableList) {
+		return theNullableList;
+	}
 }
