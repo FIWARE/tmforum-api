@@ -782,10 +782,10 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 
 	@ParameterizedTest
 	@MethodSource("provideProductOrderUpdates")
-	public void patchProductOrder200(String message, ProductOrderUpdateVO productUpdateVO,
-									 ProductOrderVO expectedProduct)
-			throws Exception {
+	public void patchProductOrder200(String message, ProductOrderCreateVO productCreateVO, ProductOrderUpdateVO productUpdateVO,
+									 ProductOrderVO expectedProduct) throws Exception {
 		this.message = message;
+		this.productCreateVO = productCreateVO;
 		this.productUpdateVO = productUpdateVO;
 		this.expectedProduct = expectedProduct;
 		patchProductOrder200();
@@ -796,10 +796,6 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 
 		Instant now = Instant.now();
 		when(clock.instant()).thenReturn(now);
-
-		//first create
-		ProductOrderCreateVO productCreateVO = ProductOrderCreateVOTestExample.build().atSchemaLocation(null)
-				.billingAccount(null);
 
 		HttpResponse<ProductOrderVO> createResponse = callAndCatch(
 				() -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
@@ -822,6 +818,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		List<Arguments> testEntries = new ArrayList<>();
 
 		testEntries.add(Arguments.of("The description should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.description("new-description"),
@@ -834,9 +833,237 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.relatedParty(null)
 						.description("new-description")));
 
+		testEntries.add(Arguments.of("The description should have been updated and the item should be preserved.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null)
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(1)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null))),
+				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.description("new-description")
+						.productOrderItem(null),
+				ProductOrderVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.channel(null)
+						.payment(null)
+						.productOfferingQualification(null)
+						.quote(null)
+						.relatedParty(null)
+						.description("new-description")
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(1)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null)))));
+
+		testEntries.add(Arguments.of("The description should have been updated and the item should have been removed.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null)
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(1)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null))),
+				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.description("new-description")
+						.productOrderItem(List.of()),
+				ProductOrderVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.channel(null)
+						.payment(null)
+						.productOfferingQualification(null)
+						.quote(null)
+						.relatedParty(null)
+						.description("new-description")
+						.productOrderItem(List.of())));
+
+		testEntries.add(Arguments.of("The description should have been updated and the item quantity should have been increased.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null)
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(1)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null))),
+				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.description("new-description")
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(3)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null))),
+				ProductOrderVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.channel(null)
+						.payment(null)
+						.productOfferingQualification(null)
+						.quote(null)
+						.relatedParty(null)
+						.description("new-description")
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(3)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null)))));
+
+		testEntries.add(Arguments.of("The description should have been updated and the item should have been replaced.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null)
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(1)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null))),
+				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.description("new-description")
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item-new")
+								.quantity(3)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null))),
+				ProductOrderVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.channel(null)
+						.payment(null)
+						.productOfferingQualification(null)
+						.quote(null)
+						.relatedParty(null)
+						.description("new-description")
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item-new")
+								.quantity(3)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null)))));
+
+		testEntries.add(Arguments.of("The description should have been updated and the new item should have been added.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null)
+						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
+								.atSchemaLocation(null)
+								.id("test-item")
+								.quantity(1)
+								.appointment(null)
+								.billingAccount(null)
+								.product(null)
+								.productOffering(null)
+								.productOfferingQualificationItem(null)
+								.quoteItem(null))),
+				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.description("new-description")
+						.productOrderItem(List.of(
+								ProductOrderItemVOTestExample.build()
+										.atSchemaLocation(null)
+										.id("test-item")
+										.quantity(1)
+										.appointment(null)
+										.billingAccount(null)
+										.product(null)
+										.productOffering(null)
+										.productOfferingQualificationItem(null)
+										.quoteItem(null),
+								ProductOrderItemVOTestExample.build()
+										.atSchemaLocation(null)
+										.id("test-item-new")
+										.quantity(3)
+										.appointment(null)
+										.billingAccount(null)
+										.product(null)
+										.productOffering(null)
+										.productOfferingQualificationItem(null)
+										.quoteItem(null))),
+				ProductOrderVOTestExample.build().atSchemaLocation(null)
+						.billingAccount(null)
+						.channel(null)
+						.payment(null)
+						.productOfferingQualification(null)
+						.quote(null)
+						.relatedParty(null)
+						.description("new-description")
+						.productOrderItem(List.of(
+								ProductOrderItemVOTestExample.build()
+										.atSchemaLocation(null)
+										.id("test-item")
+										.quantity(1)
+										.appointment(null)
+										.billingAccount(null)
+										.product(null)
+										.productOffering(null)
+										.productOfferingQualificationItem(null)
+										.quoteItem(null),
+								ProductOrderItemVOTestExample.build()
+										.atSchemaLocation(null)
+										.id("test-item-new")
+										.quantity(3)
+										.appointment(null)
+										.billingAccount(null)
+										.product(null)
+										.productOffering(null)
+										.productOfferingQualificationItem(null)
+										.quoteItem(null)))));
+
 		Instant date = Instant.now().plus(10, ChronoUnit.MINUTES);
 
 		testEntries.add(Arguments.of("The cancellationDate should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.cancellationDate(date),
@@ -850,6 +1077,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.cancellationDate(date)));
 
 		testEntries.add(Arguments.of("The cancellationReason should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.cancellationReason("To big."),
@@ -863,6 +1093,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.cancellationReason("To big.")));
 
 		testEntries.add(Arguments.of("The category should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.category("D"),
@@ -876,6 +1109,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.category("D")));
 
 		testEntries.add(Arguments.of("The completionDate should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.completionDate(date),
@@ -889,6 +1125,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.completionDate(date)));
 
 		testEntries.add(Arguments.of("The expectedCompletionDate should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.expectedCompletionDate(date),
@@ -902,6 +1141,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.expectedCompletionDate(date)));
 
 		testEntries.add(Arguments.of("The requestedCompletionDate should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.requestedCompletionDate(date),
@@ -915,6 +1157,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.requestedCompletionDate(date)));
 
 		testEntries.add(Arguments.of("The externalId should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.externalId("otherId"),
@@ -928,6 +1173,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.externalId("otherId")));
 
 		testEntries.add(Arguments.of("The notificationContact should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.notificationContact("otherContact"),
@@ -941,6 +1189,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.notificationContact("otherContact")));
 
 		testEntries.add(Arguments.of("The priority should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.priority("2"),
@@ -954,6 +1205,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.priority("2")));
 
 		testEntries.add(Arguments.of("The requestedStartDate should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.requestedStartDate(date),
@@ -967,6 +1221,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.requestedStartDate(date)));
 
 		testEntries.add(Arguments.of("The note should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.note(List.of(NoteVOTestExample.build().atSchemaLocation(null).id("urn:note").text("my note"))),
@@ -980,6 +1237,9 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.note(List.of(NoteVOTestExample.build().atSchemaLocation(null).id("urn:note").text("my note")))));
 
 		testEntries.add(Arguments.of("The state should have been updated.",
+				ProductOrderCreateVOTestExample.build()
+						.atSchemaLocation(null)
+						.billingAccount(null),
 				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
 						.billingAccount(null)
 						.state(ProductOrderStateTypeVO.IN_PROGRESS),

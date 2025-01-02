@@ -6,13 +6,12 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.productordering.domain.*;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.ValueMapping;
+import org.mapstruct.*;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 
 /**
  * Mapper between the internal model and api-domain objects
@@ -24,6 +23,7 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "id")
 	@Mapping(target = "href", source = "id")
+	@Mapping(target = "productOrderItem", qualifiedByName = "NullableListMapper")
 	public abstract ProductOrderVO map(ProductOrderCreateVO productOrderCreateVO, URI id);
 
 	public abstract ProductOrderVO map(ProductOrder productOrder);

@@ -36,13 +36,14 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 	private final Clock clock;
 
 	public ProductOrderingApiController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, TMForumEventHandler eventHandler) {
+										TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}
 
-	@Override public Mono<HttpResponse<ProductOrderVO>> createProductOrder(
+	@Override
+	public Mono<HttpResponse<ProductOrderVO>> createProductOrder(
 			@NonNull ProductOrderCreateVO productOrderCreateVO) {
 		ProductOrder productOrder = tmForumMapper.map(
 				tmForumMapper.map(productOrderCreateVO,
@@ -54,13 +55,15 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 				.map(HttpResponse::created);
 	}
 
-	@Override public Mono<HttpResponse<Object>> deleteProductOrder(@NonNull String id) {
+	@Override
+	public Mono<HttpResponse<Object>> deleteProductOrder(@NonNull String id) {
 		return delete(id);
 	}
 
-	@Override public Mono<HttpResponse<List<ProductOrderVO>>> listProductOrder(@Nullable String fields,
-			@Nullable Integer offset,
-			@Nullable Integer limit) {
+	@Override
+	public Mono<HttpResponse<List<ProductOrderVO>>> listProductOrder(@Nullable String fields,
+																	 @Nullable Integer offset,
+																	 @Nullable Integer limit) {
 		return list(offset, limit, ProductOrder.TYPE_PRODUCT_ORDER, ProductOrder.class)
 				.map(productOrderStream -> productOrderStream
 						.map(tmForumMapper::map)
@@ -69,8 +72,9 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 				.map(HttpResponse::ok);
 	}
 
-	@Override public Mono<HttpResponse<ProductOrderVO>> patchProductOrder(@NonNull String id,
-			@NonNull ProductOrderUpdateVO productOrderUpdateVO) {
+	@Override
+	public Mono<HttpResponse<ProductOrderVO>> patchProductOrder(@NonNull String id,
+																@NonNull ProductOrderUpdateVO productOrderUpdateVO) {
 		// non-ngsi-ld ids cannot exist.
 		if (!IdHelper.isNgsiLdId(id)) {
 			throw new TmForumException("Did not receive a valid id, such product order cannot exist.",
@@ -84,8 +88,9 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 				.map(HttpResponse::ok);
 	}
 
-	@Override public Mono<HttpResponse<ProductOrderVO>> retrieveProductOrder(@NonNull String id,
-			@Nullable String fields) {
+	@Override
+	public Mono<HttpResponse<ProductOrderVO>> retrieveProductOrder(@NonNull String id,
+																   @Nullable String fields) {
 		return retrieve(id, ProductOrder.class)
 				.switchIfEmpty(Mono.error(new TmForumException("No such product order exists.",
 						TmForumExceptionReason.NOT_FOUND)))
@@ -112,8 +117,8 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 							Collectors.toList())));
 		}));
 
-		List<Mono<ProductOrder>> checkingMonos = productOrder
-				.getProductOrderItem()
+		List<Mono<ProductOrder>> checkingMonos = Optional.ofNullable(productOrder.getProductOrderItem())
+				.orElse(List.of())
 				.stream()
 				.map(poi -> getOrderItemCheckingMono(productOrder, poi))
 				.collect(Collectors.toList());
@@ -129,7 +134,7 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 	}
 
 	private Mono<ProductOrder> getOrderItemCheckingMono(ProductOrder productOrder,
-			ProductOrderItem productOrderItem) {
+														ProductOrderItem productOrderItem) {
 
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
 		Optional.ofNullable(productOrderItem.getAppointment()).map(List::of).ifPresent(references::add);
