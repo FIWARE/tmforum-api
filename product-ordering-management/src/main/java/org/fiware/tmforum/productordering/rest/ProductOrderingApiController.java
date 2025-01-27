@@ -84,7 +84,7 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 		ProductOrder productOrder = tmForumMapper.map(productOrderUpdateVO, id);
 
 		// the list is not allowed to be emptied
-		if(productOrder.getProductOrderItem().isEmpty()) {
+		if (Optional.ofNullable(productOrder.getProductOrderItem()).map(List::isEmpty).orElse(false)) {
 			productOrder.setProductOrderItem(null);
 		}
 
