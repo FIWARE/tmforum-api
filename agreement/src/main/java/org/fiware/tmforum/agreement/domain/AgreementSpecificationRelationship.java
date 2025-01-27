@@ -32,6 +32,6 @@ public class AgreementSpecificationRelationship extends RefEntity {
     @Override
     @JsonIgnore
     public List<String> getReferencedTypes() {
-        return new ArrayList<>(List.of(AgreementSpecification.TYPE_AGSP));
+        return new ArrayList<>(List.of(AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION));
     }
 }

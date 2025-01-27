@@ -59,7 +59,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 
     @Override
     protected String getEntityType() {
-        return AgreementSpecification.TYPE_AGSP;
+        return AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION;
     }
 
     @MockBean(TMForumEventHandler.class)
