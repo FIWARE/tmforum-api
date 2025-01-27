@@ -27,81 +27,81 @@ public class Agreement extends EntityWithId {
 		super(TYPE_AG, id);
 	}
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "href") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "href") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "href")}))
 	private URI href;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "agreementType") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "agreementType") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "agreementType")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "agreementType")}))
 	private String agreementType;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "description") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "description") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "description")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description")}))
 	private String description;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "documentNumber") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "documentNumber") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "documentNumber")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "documentNumber")}))
 	private int documentNumber;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "initialDate") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "initialDate") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "initialDate")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "initialDate")}))
 	private Instant initialDate;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "name") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "name") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "name")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "name")}))
 	private String name;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "statementOfIntent") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "statementOfIntent") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "statementOfIntent")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "statementOfIntent")}))
 	private String statementOfIntent;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "status") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "status") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "status")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "status")}))
 	private String status;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "version") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "version") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "version")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version")}))
 	private String version;
 
 	@Getter(onMethod = @__({
-			@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementAuthorization") }))
+			@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementAuthorization")}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementAuthorization", targetClass = AgreementAuth.class) }))
+			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementAuthorization", targetClass = AgreementAuth.class)}))
 	private List<AgreementAuth> agreementAuthorization;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementItem") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementItem")}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementItem", targetClass = AgreementItem.class) }))
+			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "agreementItem", targetClass = AgreementItem.class)}))
 	private List<AgreementItem> agreementItem;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "agreementPeriod") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "agreementPeriod") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "agreementPeriod")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "agreementPeriod")}))
 	private TimePeriod agreementPeriod;
 
 	@Getter(onMethod = @__({
-			@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "agreementSpecification") }))
+			@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "agreementSpecification", embedProperty = true)}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "agreementSpecification", targetClass = AgreementSpecificationRef.class, fromProperties = true) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "agreementSpecification", targetClass = AgreementSpecificationRef.class, fromProperties = true)}))
 	private AgreementSpecificationRef agreementSpecification;
 
 	@Getter(onMethod = @__({
-			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "associatedAgreement") }))
+			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "associatedAgreement")}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "associatedAgreement", targetClass = AgreementRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "associatedAgreement", targetClass = AgreementRef.class)}))
 	private List<AgreementRef> associatedAgreement;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristic") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristic")}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristic", targetClass = Characteristic.class) }))
+			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristic", targetClass = Characteristic.class)}))
 	private List<Characteristic> characteristic;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "completionDate") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "completionDate") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "completionDate")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "completionDate")}))
 	private TimePeriod completionDate;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty")}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty", targetClass = RelatedParty.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty", targetClass = RelatedParty.class)}))
 	private List<RelatedParty> engagedParty;
 
 	@Override
