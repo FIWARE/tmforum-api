@@ -19,12 +19,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled(entityType = Agreement.TYPE_AG)
+@MappingEnabled(entityType = Agreement.TYPE_AGREEMENT)
 public class Agreement extends EntityWithId {
-	public static final String TYPE_AG = "agreement";
+	public static final String TYPE_AGREEMENT = "agreement";
 
 	public Agreement(String id) {
-		super(TYPE_AG, id);
+		super(TYPE_AGREEMENT, id);
 	}
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "href")}))

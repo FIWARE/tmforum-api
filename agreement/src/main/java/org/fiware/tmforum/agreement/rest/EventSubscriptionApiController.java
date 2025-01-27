@@ -33,14 +33,14 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
     private final TMForumMapper tmForumMapper;
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-		entry(EVENT_GROUP_AGREEMENT, Agreement.TYPE_AG),
-		entry(EVENT_GROUP_AGREEMENT_SPECIFICATION, AgreementSpecification.TYPE_AGSP)
+		entry(EVENT_GROUP_AGREEMENT, Agreement.TYPE_AGREEMENT),
+		entry(EVENT_GROUP_AGREEMENT_SPECIFICATION, AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION)
 	);
     private static final List<String> EVENT_GROUPS = List.of(
             EVENT_GROUP_AGREEMENT, EVENT_GROUP_AGREEMENT_SPECIFICATION);
     private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-        entry(Agreement.TYPE_AG, Agreement.class),
-        entry(AgreementSpecification.TYPE_AGSP, AgreementSpecification.class)
+        entry(Agreement.TYPE_AGREEMENT, Agreement.class),
+        entry(AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION, AgreementSpecification.class)
     );
 
     public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,

@@ -44,7 +44,7 @@ public class AgreementSpecController extends AbstractApiController<AgreementSpec
         public Mono<HttpResponse<AgreementSpecificationVO>> createAgreementSpecification(
                         @NonNull AgreementSpecificationCreateVO agreementSpecification) {
                 AgreementSpecification agreement = tmForumMapper.map(tmForumMapper.map(agreementSpecification,
-                                IdHelper.toNgsiLd(UUID.randomUUID().toString(), AgreementSpecification.TYPE_AGSP)));
+                                IdHelper.toNgsiLd(UUID.randomUUID().toString(), AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION)));
                 return create(getCheckingMono(agreement), AgreementSpecification.class)
                                 .map(tmForumMapper::map)
                                 .map(HttpResponse::created);
@@ -73,7 +73,7 @@ public class AgreementSpecController extends AbstractApiController<AgreementSpec
                         @Nullable Integer offset,
                         @Nullable Integer limit) {
                 Mono<HttpResponse<List<AgreementSpecificationVO>>> res = list(offset, limit,
-                                AgreementSpecification.TYPE_AGSP,
+                                AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION,
                                 AgreementSpecification.class)
                                 .map(agStream -> agStream.map(tmForumMapper::map).toList())
                                 .switchIfEmpty(Mono.just(List.of()))

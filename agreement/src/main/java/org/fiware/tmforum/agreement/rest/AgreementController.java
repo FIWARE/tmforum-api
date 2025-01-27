@@ -42,21 +42,21 @@ public class AgreementController extends AbstractApiController<Agreement> implem
 	@Override
 	public Mono<HttpResponse<AgreementVO>> createAgreement(@NonNull AgreementCreateVO agreementCreateVO) {
 		Agreement agreement = tmForumMapper.map(tmForumMapper.map(agreementCreateVO,
-				IdHelper.toNgsiLd(UUID.randomUUID().toString(), Agreement.TYPE_AG)));
+				IdHelper.toNgsiLd(UUID.randomUUID().toString(), Agreement.TYPE_AGREEMENT)));
 		return create(getCheckingMono(agreement), Agreement.class)
 				.map(tmForumMapper::map)
 				.map(HttpResponse::created);
 	}
 
-	private Mono<Agreement> getCheckingMono(Agreement ag) {
+	private Mono<Agreement> getCheckingMono(Agreement agreement) {
 		List<List<? extends ReferencedEntity>> references = new ArrayList<>();
-		references.add(ag.getEngagedParty());
-		references.add(ag.getAssociatedAgreement());
-		Optional.ofNullable(ag.getAgreementSpecification()).map(List::of).ifPresent(references::add);
-		return getCheckingMono(ag, references)
+		references.add(agreement.getEngagedParty());
+		references.add(agreement.getAssociatedAgreement());
+		Optional.ofNullable(agreement.getAgreementSpecification()).map(List::of).ifPresent(references::add);
+		return getCheckingMono(agreement, references)
 				.onErrorMap(throwable -> new TmForumException(
-						String.format("Was not able to create individual %s",
-								ag.getId()),
+						String.format("Was not able to create agreement %s",
+								agreement.getId()),
 						throwable,
 						TmForumExceptionReason.INVALID_RELATIONSHIP));
 	}
@@ -69,7 +69,7 @@ public class AgreementController extends AbstractApiController<Agreement> implem
 	@Override
 	public Mono<HttpResponse<List<AgreementVO>>> listAgreement(@Nullable String fields, @Nullable Integer offset,
 															   @Nullable Integer limit) {
-		Mono<HttpResponse<List<AgreementVO>>> res = list(offset, limit, Agreement.TYPE_AG, Agreement.class)
+		Mono<HttpResponse<List<AgreementVO>>> res = list(offset, limit, Agreement.TYPE_AGREEMENT, Agreement.class)
 				.map(agStream -> agStream.map(tmForumMapper::map).toList())
 				.switchIfEmpty(Mono.just(List.of()))
 				.map(HttpResponse::ok);
