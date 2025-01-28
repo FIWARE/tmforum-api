@@ -59,7 +59,7 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
 
 	@Override
 	protected String getEntityType() {
-		return Agreement.TYPE_AG;
+		return Agreement.TYPE_AGREEMENT;
 	}
 
 	@MockBean(TMForumEventHandler.class)

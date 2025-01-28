@@ -36,6 +36,7 @@
         <module>product-shared-models</module>
         <module>service-shared-models</module>
         <module>party-catalog</module>
+        <module>agreement</module>
         <module>product-inventory</module>
         <module>product-catalog</module>
         <module>product-ordering-management</module>
@@ -45,7 +46,6 @@
         <module>service-catalog</module>
         <module>customer-management</module>
         <module>customer-bill-management</module>
-        <module>agreement</module>
         <module>usage-management</module>
         <module>account</module>
         <module>service-inventory</module>

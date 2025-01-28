@@ -869,35 +869,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 								.productOffering(null)
 								.productOfferingQualificationItem(null)
 								.quoteItem(null)))));
-
-		testEntries.add(Arguments.of("The description should have been updated and the item should have been removed.",
-				ProductOrderCreateVOTestExample.build()
-						.atSchemaLocation(null)
-						.billingAccount(null)
-						.productOrderItem(List.of(ProductOrderItemVOTestExample.build()
-								.atSchemaLocation(null)
-								.id("test-item")
-								.quantity(1)
-								.appointment(null)
-								.billingAccount(null)
-								.product(null)
-								.productOffering(null)
-								.productOfferingQualificationItem(null)
-								.quoteItem(null))),
-				ProductOrderUpdateVOTestExample.build().atSchemaLocation(null)
-						.billingAccount(null)
-						.description("new-description")
-						.productOrderItem(List.of()),
-				ProductOrderVOTestExample.build().atSchemaLocation(null)
-						.billingAccount(null)
-						.channel(null)
-						.payment(null)
-						.productOfferingQualification(null)
-						.quote(null)
-						.relatedParty(null)
-						.description("new-description")
-						.productOrderItem(List.of())));
-
+		
 		testEntries.add(Arguments.of("The description should have been updated and the item quantity should have been increased.",
 				ProductOrderCreateVOTestExample.build()
 						.atSchemaLocation(null)
