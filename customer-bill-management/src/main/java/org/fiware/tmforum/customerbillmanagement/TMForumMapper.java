@@ -53,10 +53,10 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "href", source = "id")
 	public abstract AppliedCustomerBillingRateVO map(AppliedCustomerBillingRateUpdateVO appliedCustomerBillingRateUpdateVO, String id);
 
-	@Mapping(target = "rateType", source = "type")
+	@Mapping(target = "rateType", source = "appliedBillingRateType")
 	public abstract AppliedCustomerBillingRate map(AppliedCustomerBillingRateVO appliedCustomerBillingRateVO);
 
-	@Mapping(target = "type", source = "rateType")
+	@Mapping(target = "appliedBillingRateType", source = "rateType")
 	public abstract AppliedCustomerBillingRateVO map(AppliedCustomerBillingRate appliedCustomerBillingRate);
 
 	public URL map(String value) {
