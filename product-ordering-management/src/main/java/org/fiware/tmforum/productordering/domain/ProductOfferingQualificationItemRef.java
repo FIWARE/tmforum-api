@@ -10,6 +10,7 @@ import io.github.wistefan.mapping.annotations.DatasetId;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -25,7 +26,7 @@ public class ProductOfferingQualificationItemRef extends Entity implements Refer
 	private String atReferredType;
 
 	@Override public List<String> getReferencedTypes() {
-		return List.of(atReferredType);
+		return new ArrayList<>(List.of(atReferredType));
 	}
 
 	@Override public URI getEntityId() {

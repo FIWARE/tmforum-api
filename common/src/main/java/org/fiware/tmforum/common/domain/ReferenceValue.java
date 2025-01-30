@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.domain;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -17,7 +18,7 @@ public class ReferenceValue implements ReferencedEntity {
 
     @Override
     public List<String> getReferencedTypes() {
-        return List.of("");
+        return new ArrayList<>(List.of(""));
     }
 
     @Override
