@@ -14,7 +14,7 @@ import org.fiware.tmforum.common.domain.ReferenceValue;
 @EqualsAndHashCode(callSuper = true)
 public class ProductOfferingPriceRefValue extends RefEntity {
 
-	protected ProductOfferingPriceRefValue(@JsonProperty("id") String id) {
+	public ProductOfferingPriceRefValue(@JsonProperty("id") String id) {
 		super(id);
 	}
 
