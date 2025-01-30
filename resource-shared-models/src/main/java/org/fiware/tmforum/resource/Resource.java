@@ -14,6 +14,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -118,7 +119,7 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 
 	@Override
 	public List<String> getReferencedTypes() {
-		return List.of(TYPE_RESOURCE);
+		return new ArrayList<>(List.of(TYPE_RESOURCE));
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import io.github.wistefan.mapping.annotations.DatasetId;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -54,7 +55,7 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 	private String atReferredType;
 
 	@Override public List<String> getReferencedTypes() {
-		return List.of("product-order");
+		return new ArrayList<>(List.of("product-order"));
 	}
 
 	@RelationshipObject
