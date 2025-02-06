@@ -1,26 +1,22 @@
 package org.fiware.tmforum.common.mapping;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.networknt.schema.*;
 import com.networknt.schema.resource.ClasspathSchemaLoader;
 import com.networknt.schema.resource.UriSchemaLoader;
-import io.github.wistefan.mapping.UnmappedProperty;
+import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.domain.Entity;
-import org.fiware.tmforum.common.exception.SchemaValidationException;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.MappingTarget;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Extension for the tmforum-api mappers, to handle unknown properties to extend model-vos.
  */
+@Slf4j
 public abstract class BaseMapper {
 
 
@@ -38,29 +34,36 @@ public abstract class BaseMapper {
 	@AfterMapping
 	public void afterMappingFromEntity(Entity source, @MappingTarget UnknownPreservingBase target) {
 		if (source.getAtSchemaLocation() != null && source.getAdditionalProperties() != null) {
-			JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(
-					SpecVersion.VersionFlag.V202012,
-					builder -> builder.schemaLoaders(sb -> {
-						sb.add(new ClasspathSchemaLoader());
-						sb.add(new UriSchemaLoader());
-					})
-			);
+			try {
 
-			SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
-			SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
-			JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(source.getAtSchemaLocation().toString()), schemaValidatorsConfig);
-			var propertiesNode = schema.getSchemaNode().get(PROPERTIES_KEY);
+				JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(
+						SpecVersion.VersionFlag.V202012,
+						builder -> builder.schemaLoaders(sb -> {
+							sb.add(new ClasspathSchemaLoader());
+							sb.add(new UriSchemaLoader());
+						})
+				);
 
-			source.getAdditionalProperties()
-					.forEach(additionalProperty -> {
-						if (!(additionalProperty.getValue() instanceof List) && isArray(additionalProperty.getName(), propertiesNode) && additionalProperty.getValue() != null) {
-							// since json-ld flattens single element lists to plain objects, we have rebuild them to single element lists if the schema requires it.
-							target.setUnknownProperties(additionalProperty.getName(), List.of(additionalProperty.getValue()));
-						} else {
-							target.setUnknownProperties(additionalProperty.getName(), additionalProperty.getValue());
-						}
-					});
+				SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
+				SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
+				JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(source.getAtSchemaLocation().toString()), schemaValidatorsConfig);
+				var propertiesNode = schema.getSchemaNode().get(PROPERTIES_KEY);
 
+				source.getAdditionalProperties()
+						.forEach(additionalProperty -> {
+							if (!(additionalProperty.getValue() instanceof List) && isArray(additionalProperty.getName(), propertiesNode) && additionalProperty.getValue() != null) {
+								// since json-ld flattens single element lists to plain objects, we have rebuild them to single element lists if the schema requires it.
+								target.setUnknownProperties(additionalProperty.getName(), List.of(additionalProperty.getValue()));
+							} else {
+								target.setUnknownProperties(additionalProperty.getName(), additionalProperty.getValue());
+							}
+						});
+			} catch (Exception e) {
+				log.warn("Was not able to get the schema. Will not apply special handling.", e);
+				source.getAdditionalProperties()
+						.forEach(additionalProperty -> target.setUnknownProperties(additionalProperty.getName(), additionalProperty.getValue()))
+				;
+			}
 		}
 	}
 
