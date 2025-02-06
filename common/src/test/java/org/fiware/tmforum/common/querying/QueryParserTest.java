@@ -40,16 +40,19 @@ class QueryParserTest {
 				"The query should have been properly translated.");
 	}
 
-	@Test
-	public void testAtSchema() {
+	@ParameterizedTest
+	@MethodSource("queriesAttributesWithDotPath")
+	public void testQueryParsingWithDotPath(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
 		GeneralProperties properties = new GeneralProperties();
 		properties.setEncloseQuery(true);
 		properties.setNgsildOrQueryKey("|");
 		properties.setNgsildOrQueryValue("|");
 		properties.setIncludeAttributeInList(false);
+		properties.setUseDotSeperator(true);
+
 		QueryParser qp = new QueryParser(properties);
-		String query = "status=Active&color=Red&relatedParty.role=Owner";
-		QueryParams queryParams = qp.toNgsiLdQuery(MyPojo.class, query);
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
+				"The query should have been properly translated.");
 	}
 
 	private static Stream<Arguments> queriesAttributeIncluded() {
@@ -113,6 +116,19 @@ class QueryParserTest {
 				Arguments.of("status.eq=Active;status.eq=Started", new QueryParams(null, null, "status==(\"Active\"|\"Started\")"), MyPojo.class),
 				Arguments.of("status.eq=Active;status.eq=Started;color.eq=Red", new QueryParams(null, null, "color==\"Red\"|status==(\"Active\"|\"Started\")"),
 						MyPojo.class)
+		);
+	}
+
+
+	private static Stream<Arguments> queriesAttributesWithDotPath() {
+		return Stream.of(
+				// Property attributes queries
+				Arguments.of("sub.status=Active;status=Started;color=Red",
+						new QueryParams(null, null, "color==\"Red\"|sub.status==\"Active\"|status==\"Started\""), MyPojo.class),
+				Arguments.of("sub.status=Active;otherNamedSub.status=Started;color=Red",
+						new QueryParams(null, null, "color==\"Red\"|otherSub.status==\"Started\"|sub.status==\"Active\""), MyPojo.class),
+				Arguments.of("sub.status=Active;relatedParty.role=Owner",
+						new QueryParams(null, null, "relatedParty.role==\"Owner\"|sub.status==\"Active\""), MyPojo.class)
 		);
 	}
 

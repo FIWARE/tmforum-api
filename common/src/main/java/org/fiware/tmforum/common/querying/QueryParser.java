@@ -157,9 +157,7 @@ public class QueryParser {
 	}
 
 	private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
-		List<String> path = new ArrayList<>();
-		path.add(Entity.ADDITIONAL_PROPERTIES_KEY);
-		path.addAll(Arrays.asList(queryPart.attribute().split("\\.")));
+		List<String> path = new ArrayList<>(Arrays.asList(queryPart.attribute().split("\\.")));
 		if (isBoolean(queryPart.value())) {
 			return new NgsiLdAttribute(path, QueryAttributeType.BOOLEAN);
 		}
@@ -226,7 +224,7 @@ public class QueryParser {
 			String first = attribute.path().remove(0);
 			attrPath = first + String.join("", attribute.path()
 					.stream()
-					.map(a -> "[" + a + "]")
+					.map(this::mapPathPart)
 					.toList());
 		}
 
@@ -234,6 +232,14 @@ public class QueryParser {
 				attrPath,
 				qp.operator(),
 				qp.value());
+	}
+
+	private String mapPathPart(String part) {
+		if (generalProperties.getUseDotSeperator()) {
+			return "." + part;
+		} else {
+			return "[" + part + "]";
+		}
 	}
 
 	private String encodeValue(String value, QueryAttributeType type) {
