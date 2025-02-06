@@ -816,7 +816,6 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				"The correct productOffering should be returned.");
 	}
 
-	@Disabled("Needs to be temporarily disabled, since orion-ld fails the test due to https://github.com/FIWARE/context.Orion-LD/issues/1741")
 	@MethodSource("extendedOfferingProvider")
 	@ParameterizedTest
 	public void retrieveProductOfferingWithExtension200(ProductOfferingCreateVO productOfferingCreateVO, ProductOfferingVO expectedProductOffering, String message) throws Exception {
