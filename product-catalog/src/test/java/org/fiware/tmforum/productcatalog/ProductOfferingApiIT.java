@@ -816,7 +816,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				"The correct productOffering should be returned.");
 	}
 
-	@Requires(notEnv = "orion-ld")
+	@Requires(env = "scorpio")
 	@MethodSource("extendedOfferingProvider")
 	@ParameterizedTest
 	public void retrieveProductOfferingWithExtension200(ProductOfferingCreateVO productOfferingCreateVO, ProductOfferingVO expectedProductOffering, String message) throws Exception {
