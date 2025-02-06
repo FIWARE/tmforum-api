@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-java@v4.7.0
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
           java-package: jdk
 
@@ -62,7 +62,7 @@ jobs:
 
       - uses: actions/setup-java@v4.7.0
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
           java-package: jdk
 
@@ -86,7 +86,7 @@ jobs:
 
       - uses: actions/setup-java@v4.7.0
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
           java-package: jdk
 

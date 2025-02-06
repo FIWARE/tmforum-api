@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/setup-java@v4.7.0
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '11'
           java-package: jdk
 
