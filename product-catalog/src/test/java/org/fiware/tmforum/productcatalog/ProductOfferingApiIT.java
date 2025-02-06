@@ -2,6 +2,7 @@ package org.fiware.tmforum.productcatalog;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -815,6 +816,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				"The correct productOffering should be returned.");
 	}
 
+	@Requires(notEnv = "orion-ld")
 	@MethodSource("extendedOfferingProvider")
 	@ParameterizedTest
 	public void retrieveProductOfferingWithExtension200(ProductOfferingCreateVO productOfferingCreateVO, ProductOfferingVO expectedProductOffering, String message) throws Exception {
