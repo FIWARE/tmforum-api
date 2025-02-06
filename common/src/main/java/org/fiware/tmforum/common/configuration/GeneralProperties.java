@@ -54,4 +54,12 @@ public class GeneralProperties {
 	 * E.g. (status==\"Active\",\"Started\") or (status==\"Active\",status==\"Started\")
 	 */
 	private Boolean includeAttributeInList=false;
+
+	/**
+	 * Wether to use a dot as seperator for the attribute paths in queries or not(and the ["path-part"] instead)
+	 * E.g.:
+	 * true: entity.attribute.subAttribute
+	 * false: entity[attribute][subAttribute]
+	 */
+	private Boolean useDotSeperator=true;
 }
