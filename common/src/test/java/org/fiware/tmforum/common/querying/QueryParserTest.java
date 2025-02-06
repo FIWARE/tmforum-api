@@ -20,6 +20,7 @@ class QueryParserTest {
 		properties.setNgsildOrQueryKey("|");
 		properties.setNgsildOrQueryValue("|");
 		properties.setIncludeAttributeInList(true);
+		properties.setUseDotSeperator(false);
 
 		QueryParser qp = new QueryParser(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
@@ -34,6 +35,7 @@ class QueryParserTest {
 		properties.setNgsildOrQueryKey("|");
 		properties.setNgsildOrQueryValue("|");
 		properties.setIncludeAttributeInList(false);
+		properties.setUseDotSeperator(false);
 
 		QueryParser qp = new QueryParser(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
@@ -140,6 +142,7 @@ class QueryParserTest {
 		properties.setNgsildOrQueryValue(",");
 		properties.setEncloseQuery(false);
 		properties.setIncludeAttributeInList(false);
+		properties.setUseDotSeperator(false);
 
 		QueryParser qp = new QueryParser(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),

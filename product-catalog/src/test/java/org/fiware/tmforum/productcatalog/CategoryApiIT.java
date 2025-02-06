@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"})
 public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec {
-	
+
 	public final CategoryApiTestClient categoryApiTestClient;
 
 	private String message;
