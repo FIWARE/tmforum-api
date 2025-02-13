@@ -68,7 +68,6 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		}
 
 		try {
-
 			JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(
 					SpecVersion.VersionFlag.V202012,
 					builder -> builder.schemaLoaders(sb -> {
