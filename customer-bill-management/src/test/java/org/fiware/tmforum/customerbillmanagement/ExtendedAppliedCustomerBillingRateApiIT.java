@@ -412,13 +412,13 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 								.name("original-name")
 								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
 						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
-								.isBilled(false)
+								.isBilled(true)
 								.product(null)
 								.billingAccount(null)
 								.name("new-name")
 								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
 						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
-								.isBilled(false)
+								.isBilled(true)
 								.product(null)
 								.billingAccount(null)
 								.name("new-name")
