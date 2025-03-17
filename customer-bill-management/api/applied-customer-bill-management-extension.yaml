@@ -293,6 +293,9 @@ definitions:
       product:
         $ref: '#/definitions/ProductRef'
         description: Usually this information should be provided by the PRODUCT, which implies that there is a valid reference to product. In this case, this property should be empty. For all other situations, a text or structured info could be provided using this property. Regular modelling would suggest tu use the reforvalue pattern for this case. It is not choosen here because it would generate declarational dependencies which would be hard to maintain.
+      name:
+        type: string
+        description: Name of the customer applied billing rate
       '@baseType':
         type: string
         description: When sub-classing, this defines the super-class
