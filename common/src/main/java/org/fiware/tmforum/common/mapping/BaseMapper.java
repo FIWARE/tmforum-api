@@ -6,8 +6,11 @@ import com.networknt.schema.*;
 import com.networknt.schema.resource.ClasspathSchemaLoader;
 import com.networknt.schema.resource.UriSchemaLoader;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.Entity;
+import org.fiware.tmforum.common.domain.Money;
 import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import java.util.List;
@@ -76,5 +79,4 @@ public abstract class BaseMapper {
 				.filter(type -> type.equals(ARRAY_TYPE))
 				.isPresent();
 	}
-
 }

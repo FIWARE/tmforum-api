@@ -17,7 +17,7 @@ import java.util.List;
 @Data
 public class Feature {
 
-    private String id;
+    private String featureId;
     private URI href;
     private Boolean isBundle;
     private Boolean isEnabled;

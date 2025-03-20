@@ -584,7 +584,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.lifecycleStatus("dead");
-		ResourceSpecificationVO expectedLifecycleStatus = ResourceSpecificationVOTestExample.build()
+		ResourceSpecificationVO expectedLifecycleStatus = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.lifecycleStatus("dead");
@@ -595,7 +595,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.description("new-description");
-		ResourceSpecificationVO expectedDescriptionUpdate = ResourceSpecificationVOTestExample.build()
+		ResourceSpecificationVO expectedDescriptionUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.description("new-description");
@@ -606,7 +606,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.name("new-name");
-		ResourceSpecificationVO expectedNameUpdate = ResourceSpecificationVOTestExample.build()
+		ResourceSpecificationVO expectedNameUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.name("new-name");
@@ -616,7 +616,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.version("v0.0.2");
-		ResourceSpecificationVO expectedVersionUpdate = ResourceSpecificationVOTestExample.build()
+		ResourceSpecificationVO expectedVersionUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.version("v0.0.2");
@@ -646,6 +646,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 										.atSchemaLocation(null)
 										.targetResourceSchema(null)
 										.lifecycleStatus("created")
+										.validFor(null)
 										.featureSpecification(List.of(ap.value()))))
 				.forEach(testEntries::add);
 
@@ -801,6 +802,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				Arguments.of("Without a fields parameter everything should be returned.", null,
 						ResourceSpecificationVOTestExample.build()
 								.atSchemaLocation(null)
+								.validFor(null)
 								.targetResourceSchema(null)
 								.resourceSpecRelationship(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",

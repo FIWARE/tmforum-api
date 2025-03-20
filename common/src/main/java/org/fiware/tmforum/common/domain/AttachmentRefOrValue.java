@@ -14,7 +14,7 @@ import java.net.URL;
 @Data
 public class AttachmentRefOrValue extends Entity {
 
-    private URI id;
+    private URI attachementId;
     private URI href;
     private String attachmentType;
     private String content;

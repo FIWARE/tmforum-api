@@ -1,6 +1,7 @@
 package org.fiware.tmforum.customerbillmanagement;
 
 import org.fiware.customerbillmanagement.model.*;
+import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
@@ -58,6 +59,12 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "type", source = "rateType")
 	public abstract AppliedCustomerBillingRateVO map(AppliedCustomerBillingRate appliedCustomerBillingRate);
+
+	@Mapping(target = "moneyValue", source = "value")
+	public abstract Money map(MoneyVO moneyVO);
+
+	@Mapping(target = "value", source = "moneyValue")
+	public abstract MoneyVO map(Money money);
 
 	public URL map(String value) {
 		if (value == null) {

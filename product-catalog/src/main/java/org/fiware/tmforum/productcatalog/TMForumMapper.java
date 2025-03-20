@@ -1,14 +1,15 @@
 package org.fiware.tmforum.productcatalog;
 
 import io.github.wistefan.mapping.MappingException;
+import org.fiware.ngsi.model.KeyValuePairVO;
 import org.fiware.productcatalog.model.*;
+import org.fiware.tmforum.common.domain.Money;
+import org.fiware.tmforum.common.domain.TaxItem;
+import org.fiware.tmforum.common.domain.subscription.KeyValuePair;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.product.Category;
-import org.fiware.tmforum.product.ProductOffering;
-import org.fiware.tmforum.product.ProductOfferingPrice;
-import org.fiware.tmforum.product.ProductSpecification;
+import org.fiware.tmforum.product.*;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.mapstruct.*;
 
@@ -101,6 +102,30 @@ public abstract class TMForumMapper extends BaseMapper {
 
     @Mapping(target = "query", source = "rawQuery")
     public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+
+    @Mapping(target = "moneyValue", source = "value")
+    public abstract Money map(MoneyVO moneyVO);
+
+    @Mapping(target = "value", source = "moneyValue")
+    public abstract MoneyVO map(Money money);
+
+    @Mapping(target = "algorithmId", source = "id")
+    public abstract PricingLogicAlgorithm map(PricingLogicAlgorithmVO pricingLogicAlgorithmVO);
+
+    @Mapping(target = "id", source = "algorithmId")
+    public abstract PricingLogicAlgorithmVO map(PricingLogicAlgorithm pricingLogicAlgorithm);
+
+    @Mapping(target = "itemId", source = "id")
+    public abstract TaxItem map(TaxItemVO taxItemVO);
+
+    @Mapping(target = "id", source = "itemId")
+    public abstract TaxItemVO map(TaxItem taxItem);
+
+    @Mapping(target = "characteristicId", source = "id")
+    public abstract ProductSpecificationCharacteristic map(ProductSpecificationCharacteristicVO productSpecificationCharacteristicVO);
+
+    @Mapping(target = "id", source = "characteristicId")
+    public abstract ProductSpecificationCharacteristicVO map(ProductSpecificationCharacteristic productSpecificationCharacteristic);
 
     public URL map(String value) {
         if (value == null) {

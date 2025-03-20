@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 public class ProductSpecificationCharacteristic {
 
-	private String id;
+	private String characteristicId;
 	private Boolean configurable;
 	private String description;
 	private Boolean extensible;

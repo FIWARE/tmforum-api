@@ -396,7 +396,8 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 					.productSpecification(productSpecReference)
 					.resourceCandidate(null)
 					.serviceCandidate(null)
-					.serviceLevelAgreement(null);
+					.serviceLevelAgreement(null)
+					.validFor(null);
 			expectedProductOfferings.add(productOfferingVO);
 		}
 
@@ -559,26 +560,26 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 
 		ProductOfferingUpdateVO newDesc = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		ProductOfferingVO expectedNewDesc = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
+		ProductOfferingVO expectedNewDesc = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).validFor(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
 		ProductOfferingUpdateVO newLifeCycle = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newLifeCycle.setLifecycleStatus("Dead");
-		ProductOfferingVO expectedNewLifeCycle = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
+		ProductOfferingVO expectedNewLifeCycle = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).validFor(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
 		ProductOfferingUpdateVO newName = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newName.setName("New name");
-		ProductOfferingVO expectedNewName = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
+		ProductOfferingVO expectedNewName = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).validFor(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
 		ProductOfferingUpdateVO newVersion = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
 		newVersion.setVersion("1.23.1");
-		ProductOfferingVO expectedNewVersion = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null);
+		ProductOfferingVO expectedNewVersion = ProductOfferingVOTestExample.build().atSchemaLocation(null).atSchemaLocation(null).validFor(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
@@ -799,7 +800,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				"The product offering should have been created first.");
 		String id = createResponse.body().getId();
 
-		ProductOfferingVO expectedProductOffering = ProductOfferingVOTestExample.build().atSchemaLocation(null);
+		ProductOfferingVO expectedProductOffering = ProductOfferingVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedProductOffering.setId(id);
 		expectedProductOffering.setHref(id);
 		expectedProductOffering.setLastUpdate(currentTimeInstant);
@@ -917,6 +918,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				.productOfferingTerm(List.of(productOfferingTermVO))
 				.unknownProperties(Map.of("extensionArray", List.of("a", "b")));
 		ProductOfferingVO expectedProductOfferingVO = ProductOfferingVOTestExample.build().atSchemaLocation(null)
+				.validFor(null)
 				.description("string")
 				.name("string")
 				.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
@@ -941,6 +943,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		ProductOfferingVO expectedProductOfferingVO2 = (ProductOfferingVO) ProductOfferingVOTestExample.build().atSchemaLocation(null)
 				.description("string")
 				.name("string")
+				.validFor(null)
 				.atSchemaLocation(URI.create("http://localhost:3000/schemas/properties-extension-schema.json"))
 				.lifecycleStatus("string")
 				.productSpecification(null)

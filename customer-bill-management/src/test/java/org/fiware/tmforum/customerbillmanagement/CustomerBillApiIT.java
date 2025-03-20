@@ -92,7 +92,8 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 					.id("urn:ngsi-ld:customer-bill:" + UUID.randomUUID().toString())
 					.billingAccount(null)
 					.financialAccount(null)
-					.paymentMethod(null);
+					.paymentMethod(null)
+					.billingPeriod(null);
 			bills.add(tmForumMapper.map(customerBillVO));
 			expectedBillVOS.add(customerBillVO);
 		}
@@ -222,6 +223,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 		customerBillVO.setState(StateValueVO.ON_HOLD);
 		customerBillVO.setLastUpdate(Instant.ofEpochSecond(1234));
+		customerBillVO.setBillingPeriod(null);
 		assertEquals(customerBillVO, updatedCustomerBill, "The updated bill should be returned");
 
 	}
@@ -324,6 +326,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 								.billingAccount(null)
 								.financialAccount(null)
 								.paymentMethod(null)
+								.billingPeriod(null)
 				),
 				Arguments.of("With an empty fields parameter only mandatory should be returned.", "",
 						CustomerBillVOTestExample.build().atSchemaLocation(null)

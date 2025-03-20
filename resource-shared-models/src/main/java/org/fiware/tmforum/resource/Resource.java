@@ -60,8 +60,8 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "administrativeState") }))
 	private ResourceAdministrativeState administrativeState;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "attachment") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "attachment") }))
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment") }))
 	private List<AttachmentRefOrValue> attachment;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "note") }))

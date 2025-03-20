@@ -5,11 +5,9 @@ import org.fiware.servicecatalog.model.*;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.resource.Feature;
 import org.fiware.tmforum.resource.ResourceSpecificationRef;
-import org.fiware.tmforum.service.ServiceCandidate;
-import org.fiware.tmforum.service.ServiceCategory;
-import org.fiware.tmforum.service.ServiceCategoryRef;
-import org.fiware.tmforum.service.ServiceSpecificationRelationship;
+import org.fiware.tmforum.service.*;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCatalog;
 import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
 import org.mapstruct.Mapper;
@@ -80,6 +78,18 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+
+	@Mapping(target = "id", source = "specId")
+	public abstract FeatureSpecificationVO map(FeatureSpecification feature);
+
+	@Mapping(target = "specId", source = "id")
+	public abstract FeatureSpecification map(FeatureSpecificationVO featureVO);
+
+	@Mapping(target = "id", source = "specId")
+	public abstract CharacteristicSpecificationVO map(CharacteristicSpecification characteristicSpecification);
+
+	@Mapping(target = "specId", source = "id")
+	public abstract CharacteristicSpecification map(CharacteristicSpecificationVO characteristicSpecificationVO);
 
 	public URL map(String value) {
 		if (value == null) {

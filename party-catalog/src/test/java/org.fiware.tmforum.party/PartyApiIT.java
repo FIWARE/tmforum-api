@@ -133,6 +133,7 @@ public class PartyApiIT extends AbstractApiIT {
 		assertEquals(HttpStatus.OK, parentUpdateResponse.getStatus(), "The parent should have been updated.");
 		expectedParent.setOrganizationChildRelationship(List.of(childRelationshipVO));
 		expectedParent.setRelatedParty(null);
+		expectedParent.setExistsDuring(null);
 
 		assertEquals(expectedParent, parentUpdateResponse.body(), "The parent should have been updated.");
 
