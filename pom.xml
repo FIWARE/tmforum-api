@@ -94,7 +94,7 @@
         <version.io.kokuwa.micronaut.codegen>4.4.1</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.4.3</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.0</version.io.github.wistefan.ngsi-ld-mapping-java>
 
         <!-- caching -->
         <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>
@@ -524,7 +524,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
-                        <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                        <argLine>@{argLine} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
                             java.base/java.time=ALL-UNNAMED
                         </argLine>
                     </configuration>
@@ -550,7 +550,7 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
-                        <argLine>${failsafe.jacoco.args} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                        <argLine>${failsafe.jacoco.args} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
                             java.base/java.time=ALL-UNNAMED -Dmicronaut.environments=${cache},${broker}
                         </argLine>
                     </configuration>
@@ -900,6 +900,11 @@
                                         <vendor>${project.vendor}</vendor>
                                         <summary>${project.summary}</summary>
                                     </labels>
+                                    <jvmFlags>
+                                        <jvmFlag>--add-opens java.base/java.net=ALL-UNNAMED</jvmFlag>
+                                        <jvmFlag>--add-opens java.base/java.lang=ALL-UNNAMED</jvmFlag>
+                                        <jvmFlag>--add-opens java.base/java.time=ALL-UNNAMED</jvmFlag>
+                                    </jvmFlags>
                                 </container>
                             </configuration>
                             <executions>

@@ -1,5 +1,7 @@
 package org.fiware.tmforum.account;
 
+import org.fiware.tmforum.common.domain.Characteristic;
+import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -127,6 +129,12 @@ public abstract class TMForumMapper extends BaseMapper {
     public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
     public abstract TimePeriod map(TimePeriodVO value);
+
+    @Mapping(target = "moneyValue", source = "value")
+    public abstract Money map(MoneyVO moneyVO);
+
+    @Mapping(target = "value", source = "moneyValue")
+    public abstract MoneyVO map(Money money);
 
     public String map(URL value) {
         if (value == null) {

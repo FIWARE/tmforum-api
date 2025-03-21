@@ -98,7 +98,7 @@ public class ServiceSpecificationApiController extends AbstractApiController<Ser
 			return;
 		}
 		List<String> charIds = serviceSpecification.getSpecCharacteristic().stream()
-				.map(CharacteristicSpecification::getId).toList();
+				.map(CharacteristicSpecification::getSpecId).toList();
 		if (charIds.size() != new HashSet<>(charIds).size()) {
 			throw new TmForumException("Duplicate characteristic ids are not allowed.",
 					TmForumExceptionReason.INVALID_DATA);
@@ -151,7 +151,7 @@ public class ServiceSpecificationApiController extends AbstractApiController<Ser
 		List<String> featureSpecIds = serviceSpecification
 				.getFeatureSpecification()
 				.stream()
-				.map(FeatureSpecification::getId)
+				.map(FeatureSpecification::getSpecId)
 				.toList();
 		if (featureSpecIds.size() != new HashSet<>(featureSpecIds).size()) {
 			throw new TmForumException("Duplicate featureSpec ids are not allowed.",

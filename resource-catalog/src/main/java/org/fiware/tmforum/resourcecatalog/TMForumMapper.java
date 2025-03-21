@@ -2,6 +2,7 @@ package org.fiware.tmforum.resourcecatalog;
 
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.resourcecatalog.model.*;
+import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -74,6 +75,12 @@ public abstract class TMForumMapper extends BaseMapper {
 
     @Mapping(target = "query", source = "rawQuery")
     public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+
+    @Mapping(target = "specId", source = "id")
+    public abstract FeatureSpecification map(FeatureSpecificationVO featureSpecificationVO);
+
+    @Mapping(target = "id", source = "specId")
+    public abstract FeatureSpecificationVO map(FeatureSpecification featureSpecification);
 
     public URL map(String value) {
         if (value == null) {

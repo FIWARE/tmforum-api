@@ -23,7 +23,8 @@ public class SubscriptionQueryParserTest {
     private static Stream<Arguments> queries() {
         return Stream.of(
                 Arguments.of("eventType=ProductCreateEvent", List.of(),
-                        SubscriptionQueryBuilder.build().eventTypes(List.of("ProductCreateEvent"))
+                        SubscriptionQueryBuilder.build()
+                                .eventTypes(List.of("ProductCreateEvent"))
                                 .eventGroups(Set.of("Product"))),
                 Arguments.of("eventType=ProductCreateEvent;eventType=ProductDeleteEvent", List.of(),
                         SubscriptionQueryBuilder.build()

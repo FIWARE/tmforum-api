@@ -8,7 +8,7 @@ import java.time.Instant;
 @Data
 public class Note {
 
-    private URI id;
+    private URI noteId;
     private URI href;
     private String author;
     private Instant date;

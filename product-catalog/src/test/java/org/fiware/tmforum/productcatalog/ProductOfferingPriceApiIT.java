@@ -356,7 +356,8 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 			productOfferingPriceVO
 					.id(id)
 					.href(id)
-					.bundledPopRelationship(null);
+					.bundledPopRelationship(null)
+					.validFor(null);
 			expectedProductOfferingPrices.add(productOfferingPriceVO);
 		}
 
@@ -511,26 +512,26 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 		ProductOfferingPriceUpdateVO newDesc = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		ProductOfferingPriceVO expectedNewDesc = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
+		ProductOfferingPriceVO expectedNewDesc = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
 		ProductOfferingPriceUpdateVO newLifeCycle = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newLifeCycle.setLifecycleStatus("Dead");
-		ProductOfferingPriceVO expectedNewLifeCycle = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
+		ProductOfferingPriceVO expectedNewLifeCycle = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
 		ProductOfferingPriceUpdateVO newName = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		ProductOfferingPriceVO expectedNewName = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
+		ProductOfferingPriceVO expectedNewName = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
 		ProductOfferingPriceUpdateVO newVersion = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newVersion.setVersion("1.23.1");
-		ProductOfferingPriceVO expectedNewVersion = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
+		ProductOfferingPriceVO expectedNewVersion = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
@@ -545,7 +546,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 
 		ProductOfferingPriceUpdateVO newTax = ProductOfferingPriceUpdateVOTestExample.build().atSchemaLocation(null);
 		newTax.setTax(List.of(TaxItemVOTestExample.build().atSchemaLocation(null).id("urn:tax-item")));
-		ProductOfferingPriceVO expectedNewTax = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null);
+		ProductOfferingPriceVO expectedNewTax = ProductOfferingPriceVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewTax.setTax(List.of(TaxItemVOTestExample.build().atSchemaLocation(null).id("urn:tax-item")));
 		testEntries.add(Arguments.of("The tax should have been updated.", newTax, expectedNewTax));
 
@@ -696,6 +697,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedProductOfferingPrice.setLastUpdate(currentTimeInstant);
 		expectedProductOfferingPrice.setBundledPopRelationship(null);
 		expectedProductOfferingPrice.productOfferingTerm(List.of(pot));
+		expectedProductOfferingPrice.setValidFor(null);
 
 		//then retrieve
 		HttpResponse<ProductOfferingPriceVO> retrievedPOP = callAndCatch(

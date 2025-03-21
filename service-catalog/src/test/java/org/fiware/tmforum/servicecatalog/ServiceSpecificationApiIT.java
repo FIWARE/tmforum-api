@@ -219,11 +219,9 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
 						.id("urn:feature")
-						.validFor(null)
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
 								FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
-										.validFor(null)
 										.id("urn:feature-spec")
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
@@ -236,13 +234,11 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec rel should be created.",
 				FeatureSpecificationVOTestExample.build()
 						.constraint(null)
-						.validFor(null)
 						.id("urn:feature")
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
 								FeatureSpecificationRelationshipVOTestExample.build()
-										.featureId("urn:feature")
-										.validFor(null)))));
+										.featureId("urn:feature")))));
 
 		return validFeatureSpecs.stream();
 	}
@@ -528,10 +524,10 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 					.body().getId();
 			ServiceSpecificationVO serviceSpecificationVO = ServiceSpecificationVOTestExample.build()
 					.atSchemaLocation(null)
-					.targetEntitySchema(null);
-			serviceSpecificationVO
+					.targetEntitySchema(null)
 					.id(id)
 					.href(URI.create(id))
+					.validFor(null)
 					.constraint(null);
 			expectedServiceSpecifications.add(serviceSpecificationVO);
 		}
@@ -702,6 +698,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedLifecycleStatus = ServiceSpecificationVOTestExample.build()
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.lifecycleStatus("dead");
@@ -718,6 +715,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedDescriptionUpdate = ServiceSpecificationVOTestExample.build()
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.description("new-description");
@@ -734,6 +732,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedNameUpdate = ServiceSpecificationVOTestExample.build()
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.name("new-name");
@@ -749,6 +748,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedVersionUpdate = ServiceSpecificationVOTestExample.build()
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.version("v0.0.2");
@@ -787,6 +787,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceLevelSpecification(null)
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
+										.validFor(null)
 										.atSchemaLocation(null)
 										.targetEntitySchema(null)
 										.lifecycleStatus("created")
@@ -807,6 +808,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceLevelSpecification(null)
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
+										.validFor(null)
 										.atSchemaLocation(null)
 										.targetEntitySchema(null)
 										.lifecycleStatus("updated")
@@ -957,6 +959,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
 						ServiceSpecificationVOTestExample.build().atSchemaLocation(null)
+								.validFor(null)
 								.targetEntitySchema(null)
 								.lastUpdate(Instant.MAX)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",

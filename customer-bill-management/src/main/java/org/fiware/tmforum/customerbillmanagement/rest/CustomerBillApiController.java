@@ -69,7 +69,7 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 
 	protected void validateTaxItems(List<TaxItem> taxItems) {
 		List<String> taxItemIds = taxItems.stream()
-				.map(TaxItem::getId)
+				.map(TaxItem::getItemId)
 				.toList();
 		if (taxItemIds.size() != new HashSet<>(taxItemIds).size()) {
 			throw new TmForumException(String.format("Duplicate taxItem ids are not allowed - ids: %s", taxItemIds),

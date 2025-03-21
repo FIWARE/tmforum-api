@@ -99,7 +99,8 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 					.id("urn:ngsi-ld:applied-customer-billing-rate:" + UUID.randomUUID().toString())
 					.billingAccount(null)
 					.product(null)
-					.bill(null);
+					.bill(null)
+					.periodCoverage(null);
 			billRates.add(tmForumMapper.map(appliedCustomerBillingRateVO));
 			expectedBillVOS.add(appliedCustomerBillingRateVO);
 		}
@@ -242,6 +243,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
 						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
+								.periodCoverage(null)
 								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null)
 										.id("urn:ngsi-ld:billing-account:account"))
 								.product(ProductRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:product:product"))

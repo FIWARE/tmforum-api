@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 public class FeatureSpecification {
 
-    private String id;
+    private String specId;
     private URI href;
     private Boolean isBundle;
     private Boolean isEnabled;

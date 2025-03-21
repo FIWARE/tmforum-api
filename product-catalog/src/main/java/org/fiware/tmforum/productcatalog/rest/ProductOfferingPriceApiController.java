@@ -76,7 +76,7 @@ public class ProductOfferingPriceApiController extends AbstractProductCatalogApi
 
 	private void validatePricingLogicAlgorithm(List<PricingLogicAlgorithm> pricingLogicAlgorithms) {
 		List<String> plaIds = pricingLogicAlgorithms.stream()
-				.map(PricingLogicAlgorithm::getId)
+				.map(PricingLogicAlgorithm::getAlgorithmId)
 				.toList();
 		if (plaIds.size() != new HashSet<>(plaIds).size()) {
 			throw new TmForumException(
@@ -97,7 +97,7 @@ public class ProductOfferingPriceApiController extends AbstractProductCatalogApi
 
 	private void validateTaxItems(List<TaxItem> taxItems) {
 		List<String> taxItemIds = taxItems.stream()
-				.map(TaxItem::getId)
+				.map(TaxItem::getItemId)
 				.toList();
 		if (taxItemIds.size() != new HashSet<>(taxItemIds).size()) {
 			throw new TmForumException(String.format("Duplicate taxItem ids are not allowed - ids: %s", taxItemIds),

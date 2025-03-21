@@ -289,7 +289,8 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 					.href(id)
 					.engagedParty(null)
 					.account(null)
-					.paymentMethod(null);
+					.paymentMethod(null)
+					.validFor(null);
 			expectedCustomers.add(customerVO);
 		}
 
@@ -305,11 +306,11 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 				.collect(Collectors.toMap(bill -> bill.getId(), bill -> bill));
 
 		expectedCustomers.stream()
-				.forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
-						String.format("All created customers should be returned - Missing: %s.", expectedBill,
+				.forEach(expectedCustomer -> assertTrue(retrievedMap.containsKey(expectedCustomer.getId()),
+						String.format("All created customers should be returned - Missing: %s.", expectedCustomer,
 								retrievedBills)));
 		expectedCustomers.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedCustomer -> assertEquals(expectedCustomer, retrievedMap.get(expectedCustomer.getId()),
 						"The correct customers should be retrieved."));
 
 		// get with pagination
@@ -435,6 +436,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.engagedParty(null)
 						.account(null)
 						.paymentMethod(null)
+						.validFor(null)
 						.name("Max Mustermann")));
 
 		testEntries.add(Arguments.of("The status should have been updated.",
@@ -445,6 +447,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.engagedParty(null)
 						.account(null)
 						.paymentMethod(null)
+						.validFor(null)
 						.name("pending")));
 
 		testEntries.add(Arguments.of("The statusReason should have been updated.",
@@ -455,6 +458,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.engagedParty(null)
 						.account(null)
 						.paymentMethod(null)
+						.validFor(null)
 						.statusReason("not signed")));
 
 		testEntries.add(Arguments.of("Characteristics should have been updated.",
@@ -465,6 +469,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.engagedParty(null)
 						.account(null)
 						.paymentMethod(null)
+						.validFor(null)
 						.characteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null)))));
 
 		testEntries.add(Arguments.of("ContactMedium should have been updated.",
@@ -477,6 +482,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.engagedParty(null)
 						.account(null)
 						.paymentMethod(null)
+						.validFor(null)
 						.contactMedium(List.of(ContactMediumVOTestExample.build().characteristic(null).atSchemaLocation(null)
 								.validFor(TimePeriodVOTestExample.build().endDateTime(Instant.MAX)
 										.startDateTime(Instant.MIN))))));
@@ -491,6 +497,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.engagedParty(null)
 						.account(null)
 						.paymentMethod(null)
+						.validFor(null)
 						.creditProfile(List.of(CreditProfileVOTestExample.build().atSchemaLocation(null)
 								.validFor(TimePeriodVOTestExample.build().endDateTime(Instant.MAX)
 										.startDateTime(Instant.MIN))))));
@@ -633,7 +640,9 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 	@Override
 	public void retrieveCustomer200() throws Exception {
 
-		CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build().atSchemaLocation(null).engagedParty(null);
+		CustomerCreateVO customerCreateVO = CustomerCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.engagedParty(null);
 		HttpResponse<CustomerVO> createResponse = callAndCatch(
 				() -> customerApiTestClient.createCustomer(null, customerCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
@@ -657,7 +666,9 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 								// get nulled without values
 								.engagedParty(null)
 								.account(null)
-								.paymentMethod(null)),
+								.paymentMethod(null)
+								//empty objects are ignored
+								.validFor(null)),
 				Arguments.of("Only name and the mandatory parameters should have been included.", "name",
 						CustomerVOTestExample.build().atSchemaLocation(null)
 								.status(null)

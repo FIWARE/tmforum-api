@@ -4,6 +4,7 @@ import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
+import io.micronaut.context.annotation.Factory;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,33 +18,32 @@ import java.util.List;
 public class TMForumSubscription extends EntityWithId {
 	public static final String TYPE_TM_FORUM_SUBSCRIPTION = "tm-forum-subscription";
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "callback") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "callback") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "callback")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "callback")}))
 	private URI callback;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "query") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "query") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "query")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "query")}))
 	private String query;
 
-	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "rawQuery") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "rawQuery") }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "rawQuery")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "rawQuery")}))
 	private String rawQuery;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "eventTypes") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "eventTypes", targetClass = String.class) }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "eventTypes")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "eventTypes", targetClass = String.class)}))
 	private List<String> eventTypes;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "entities") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "entities", targetClass = String.class) }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "entities")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "entities", targetClass = String.class)}))
 	private List<String> entities;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "fields") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "fields", targetClass = String.class) }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "fields")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "fields", targetClass = String.class)}))
 	private List<String> fields;
 
-	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "subscription") }))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "subscription",
-					targetClass = Subscription.class) }))
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "subscription")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "subscription", targetClass = Subscription.class, fromProperties = true)}))
 	private Subscription subscription;
 
 	/**
