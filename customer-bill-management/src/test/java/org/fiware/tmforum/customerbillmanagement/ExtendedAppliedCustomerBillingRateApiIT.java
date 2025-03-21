@@ -360,6 +360,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		expectedAppliedCustomerBillingRateVo
 				.href(id)
 				.id(id)
+				.periodCoverage(null)
 				.date(currentTimeInstant);
 
 		assertEquals(expectedAppliedCustomerBillingRateVo, updated, message);
