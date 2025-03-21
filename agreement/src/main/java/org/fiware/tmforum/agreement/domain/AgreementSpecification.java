@@ -55,8 +55,8 @@ public class AgreementSpecification extends EntityWithId {
         @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "version") }))
         private String version;
 
-        @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "attachment") }))
-        @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "attachment") }))
+        @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment") }))
+        @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment", targetClass = AttachmentRefOrValue.class) }))
         private List<AttachmentRefOrValue> attachment;
 
         @Getter(onMethod = @__({
@@ -72,9 +72,9 @@ public class AgreementSpecification extends EntityWithId {
         private CategoryRef serviceCategory;
 
         @Getter(onMethod = @__({
-                        @AttributeGetter(value = AttributeType.PROPERTY, targetName = "specificationCharacteristic") }))
+                        @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specificationCharacteristic") }))
         @Setter(onMethod = @__({
-                        @AttributeSetter(value = AttributeType.PROPERTY, targetName = "specificationCharacteristic") }))
+                        @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "specificationCharacteristic", targetClass = AgreementSpecCharacteristic.class) }))
         private List<AgreementSpecCharacteristic> specificationCharacteristic;
 
         @Getter(onMethod = @__({

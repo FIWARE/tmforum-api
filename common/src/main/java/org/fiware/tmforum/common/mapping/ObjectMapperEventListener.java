@@ -11,6 +11,9 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import lombok.RequiredArgsConstructor;
+import org.fiware.ngsi.model.GeoPropertyListVO;
+import org.fiware.ngsi.model.PropertyListVO;
+import org.fiware.ngsi.model.RelationshipListVO;
 
 import javax.inject.Singleton;
 
@@ -24,6 +27,10 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 		// overwrites the NON_EMPTY default, that breaks empty-list handling
 		objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+		objectMapper.addMixIn(PropertyListVO.class, ListVOMixin.class);
+		objectMapper.addMixIn(RelationshipListVO.class, ListVOMixin.class);
+		objectMapper.addMixIn(GeoPropertyListVO.class, ListVOMixin.class);
+
 		SimpleModule deserializerModule = new SimpleModule();
 		// inject the schema validator for atSchemaLocation handling
 		deserializerModule.setDeserializerModifier(new BeanDeserializerModifier() {
@@ -34,6 +41,7 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 				return new ValidatingDeserializer(originalDeserializer, beanDescription);
 			}
 		});
+
 		objectMapper.registerModule(deserializerModule);
 		return objectMapper;
 	}

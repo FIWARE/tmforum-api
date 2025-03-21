@@ -24,7 +24,7 @@ public class AbstractPartyApiController<T> extends AbstractApiController<T> {
 	protected void validateTaxExemptions(List<TaxExemptionCertificate> taxExemptionCertificates) {
 		List<String> taxExIds = taxExemptionCertificates.stream()
 				.filter(Objects::nonNull)
-				.map(TaxExemptionCertificate::getId)
+				.map(TaxExemptionCertificate::getCertificateId)
 				.toList();
 		if (taxExIds.size() != new HashSet<>(taxExIds).size()) {
 			throw new TmForumException(String.format("Duplicate tax exemption ids are not allowed - ids: %s", taxExIds),

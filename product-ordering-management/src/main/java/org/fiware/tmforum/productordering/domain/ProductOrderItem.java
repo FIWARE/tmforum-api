@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 public class ProductOrderItem extends Entity {
 
-	private String id;
+	private String itemId;
 	private Integer quantity;
 	private OrderItemAction action;
 	private ReferenceValue appointment;

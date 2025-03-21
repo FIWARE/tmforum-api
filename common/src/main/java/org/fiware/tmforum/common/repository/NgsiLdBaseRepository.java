@@ -138,6 +138,7 @@ public abstract class NgsiLdBaseRepository {
 	 * @return an empty mono
 	 */
 	public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
+
 		return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(domainEntity)));
 	}
 

@@ -36,7 +36,7 @@ public class SubscriptionQueryParser {
 			}
 			if (queryString.contains(TMFORUM_AND)) {
 				parameters = Arrays.asList(queryString.split(TMFORUM_AND));
-            } else if (queryString.contains(TMFORUM_OR_KEY)) {
+			} else if (queryString.contains(TMFORUM_OR_KEY)) {
 				parameters = Arrays.asList(queryString.split(TMFORUM_OR_KEY));
 				logicalOperator = LogicalOperator.OR;
 			} else {
@@ -54,9 +54,10 @@ public class SubscriptionQueryParser {
 					queryParams.add(removeEventPrefixFromAttributePath(parameter));
 				}
 			});
-
-			subscriptionQuery.setQuery(String.join(logicalOperator == LogicalOperator.AND ? TMFORUM_AND : TMFORUM_OR_KEY,
-					queryParams));
+			String theQuery = String.join(logicalOperator == LogicalOperator.AND ? TMFORUM_AND : TMFORUM_OR_KEY, queryParams);
+			if (!theQuery.isEmpty()) {
+				subscriptionQuery.setQuery(theQuery);
+			}
 
 			checkLogicalOperator(logicalOperator, subscriptionQuery);
 		}
@@ -79,7 +80,7 @@ public class SubscriptionQueryParser {
 			if (!subscriptionQuery.getFields().isEmpty()) {
 				throw new QueryException("Logical operator OR(;) cannot be used with 'fields' selector");
 			}
-			if (!subscriptionQuery.getEventTypes().isEmpty() && !subscriptionQuery.getQuery().isEmpty()) {
+			if (!subscriptionQuery.getEventTypes().isEmpty() && subscriptionQuery.getQuery() != null && !subscriptionQuery.getQuery().isEmpty()) {
 				throw new QueryException("Logical operator OR(;) cannot be used when both 'eventType' and 'query' are defined");
 			}
 		} else {

@@ -275,8 +275,8 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
             ServiceCatalogCreateVO serviceCatalogCreateVO = ServiceCatalogCreateVOTestExample.build().atSchemaLocation(null);
             String id = serviceCatalogApiTestClient.createServiceCatalog(null, serviceCatalogCreateVO)
                     .body().getId();
-            ServiceCatalogVO serviceCatalogVO = ServiceCatalogVOTestExample.build().atSchemaLocation(null);
-            serviceCatalogVO
+            ServiceCatalogVO serviceCatalogVO = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
+                    .validFor(null)
                     .id(id)
                     .href(URI.create(id));
             expectedServiceCatalogs.add(serviceCatalogVO);
@@ -431,27 +431,27 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
 
         ServiceCatalogUpdateVO lifecycleStatusUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .lifecycleStatus("dead");
-        ServiceCatalogVO expectedLifecycleStatus = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
+        ServiceCatalogVO expectedLifecycleStatus = ServiceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .lifecycleStatus("dead");
         testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
                 expectedLifecycleStatus));
 
         ServiceCatalogUpdateVO descriptionUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .description("new-description");
-        ServiceCatalogVO expectedDescriptionUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
+        ServiceCatalogVO expectedDescriptionUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .description("new-description");
         testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
                 expectedDescriptionUpdate));
 
         ServiceCatalogUpdateVO nameUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .name("new-name");
-        ServiceCatalogVO expectedNameUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
+        ServiceCatalogVO expectedNameUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .name("new-name");
         testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
         ServiceCatalogUpdateVO versionUpdate = ServiceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .version("v0.0.2");
-        ServiceCatalogVO expectedVersionUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null)
+        ServiceCatalogVO expectedVersionUpdate = ServiceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .version("v0.0.2");
         testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
@@ -589,7 +589,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
-                        ServiceCatalogVOTestExample.build().atSchemaLocation(null)),
+                        ServiceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)),
                 Arguments.of("Only version and the mandatory parameters should have been included.", "version",
                         ServiceCatalogVOTestExample.build().atSchemaLocation(null)
                                 .relatedParty(null)

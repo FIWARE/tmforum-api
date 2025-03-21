@@ -294,7 +294,8 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 			categoryVO
 					.id(id)
 					.href(id)
-					.parentId(null);
+					.parentId(null)
+					.validFor(null);
 			expectedCategorys.add(categoryVO);
 		}
 
@@ -441,26 +442,26 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 
 		CategoryUpdateVO newDesc = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		CategoryVO expectedNewDesc = CategoryVOTestExample.build().atSchemaLocation(null);
+		CategoryVO expectedNewDesc = CategoryVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
 		CategoryUpdateVO newLifeCycle = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
 		newLifeCycle.setLifecycleStatus("Dead");
-		CategoryVO expectedNewLifeCycle = CategoryVOTestExample.build().atSchemaLocation(null);
+		CategoryVO expectedNewLifeCycle = CategoryVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
 		CategoryUpdateVO newName = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		CategoryVO expectedNewName = CategoryVOTestExample.build().atSchemaLocation(null);
+		CategoryVO expectedNewName = CategoryVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
 		CategoryUpdateVO newVersion = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
 		newVersion.setVersion("1.23.1");
-		CategoryVO expectedNewVersion = CategoryVOTestExample.build().atSchemaLocation(null);
+		CategoryVO expectedNewVersion = CategoryVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
@@ -475,7 +476,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 
 		CategoryUpdateVO newIsRoot = CategoryUpdateVOTestExample.build().atSchemaLocation(null);
 		newIsRoot.setIsRoot(true);
-		CategoryVO expectedNewIsRoot = CategoryVOTestExample.build().atSchemaLocation(null);
+		CategoryVO expectedNewIsRoot = CategoryVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedNewIsRoot.setIsRoot(true);
 		testEntries.add(Arguments.of("The isRoot should have been updated.", newIsRoot, expectedNewIsRoot));
 
@@ -616,7 +617,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The category should have been created first.");
 		String id = createResponse.body().getId();
 
-		CategoryVO expectedCategory = CategoryVOTestExample.build().atSchemaLocation(null);
+		CategoryVO expectedCategory = CategoryVOTestExample.build().atSchemaLocation(null).validFor(null);
 		expectedCategory.setId(id);
 		expectedCategory.setHref(id);
 		expectedCategory.setLastUpdate(currentTimeInstant);

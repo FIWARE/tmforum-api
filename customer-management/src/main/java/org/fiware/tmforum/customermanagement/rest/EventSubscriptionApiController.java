@@ -10,6 +10,7 @@ import org.fiware.customermanagement.model.EventSubscriptionInputVO;
 import org.fiware.customermanagement.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
@@ -31,20 +32,20 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 	private final TMForumMapper tmForumMapper;
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-		entry(EVENT_GROUP_CUSTOMER, Customer.TYPE_CUSTOMER)
+			entry(EVENT_GROUP_CUSTOMER, Customer.TYPE_CUSTOMER)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_CUSTOMER);
 	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-		entry(Customer.TYPE_CUSTOMER, Customer.class)
+			entry(Customer.TYPE_CUSTOMER, Customer.class)
 	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
-										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper) {
+										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
 		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
 				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
-				generalProperties, entityVOMapper);
+				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
 

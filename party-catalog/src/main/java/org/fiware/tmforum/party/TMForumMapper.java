@@ -2,6 +2,9 @@ package org.fiware.tmforum.party;
 
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.party.model.*;
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+import org.fiware.tmforum.common.domain.Characteristic;
+import org.fiware.tmforum.common.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
@@ -54,6 +57,24 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+
+	@Mapping(target = "characteristicValue", source = "value")
+	public abstract Characteristic map(CharacteristicVO characteristicVO);
+
+	@Mapping(target = "value", source = "characteristicValue")
+	public abstract CharacteristicVO map(Characteristic characteristic);
+
+	@Mapping(target = "certificateId", source = "id")
+	public abstract TaxExemptionCertificate map(TaxExemptionCertificateVO taxExemptionCertificateVO);
+
+	@Mapping(target = "id", source = "certificateId")
+	public abstract TaxExemptionCertificateVO map(TaxExemptionCertificate taxExemptionCertificate);
+
+	@Mapping(target = "attachementId", source = "id")
+	public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO attachmentRefOrValueVO);
+
+	@Mapping(target = "id", source = "attachementId")
+	public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
 
 	public OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
 		if (organizationParentRelationship == null) {

@@ -2,16 +2,18 @@ package org.fiware.tmforum.productordering;
 
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.productordering.model.*;
+import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.productordering.domain.*;
-import org.mapstruct.*;
+import org.fiware.tmforum.resource.Note;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.List;
 
 /**
  * Mapper between the internal model and api-domain objects
@@ -59,8 +61,26 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	public abstract TaskStateTypeVO map(TaskState taskState);
 
+	@Mapping(target = "itemId", source = "id")
+	public abstract ProductOrderItem map(ProductOrderItemVO productOrderItemVO);
+
+	@Mapping(target = "id", source = "itemId")
+	public abstract ProductOrderItemVO map(ProductOrderItem productOrderItem);
+
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+
+	@Mapping(target = "id", source = "noteId")
+	public abstract NoteVO map(Note note);
+
+	@Mapping(target = "noteId", source = "id")
+	public abstract Note map(NoteVO noteVO);
+
+	@Mapping(target = "moneyValue", source = "value")
+	public abstract Money map(MoneyVO moneyVO);
+
+	@Mapping(target = "value", source = "moneyValue")
+	public abstract MoneyVO map(Money money);
 
 	public URL map(String value) {
 		if (value == null) {

@@ -1,14 +1,14 @@
 package org.fiware.tmforum.customermanagement;
 
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.customermanagement.model.CustomerCreateVO;
-import org.fiware.customermanagement.model.CustomerUpdateVO;
-import org.fiware.customermanagement.model.CustomerVO;
-import org.fiware.customermanagement.model.EventSubscriptionVO;
+import org.checkerframework.checker.units.qual.C;
+import org.fiware.customermanagement.model.*;
+import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customermanagement.domain.Customer;
+import org.mapstruct.MapMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -31,6 +31,12 @@ public abstract class TMForumMapper extends BaseMapper {
     public abstract CustomerVO map(Customer customer);
 
     public abstract Customer map(CustomerVO serviceCatalogVO);
+
+    @Mapping(target = "characteristicValue", source = "value")
+    public abstract Characteristic map(CharacteristicVO characteristicVO);
+
+    @Mapping(target = "value", source = "characteristicValue")
+    public abstract CharacteristicVO map(Characteristic characteristic);
 
     @Mapping(target = "id", source = "id")
     public abstract Customer map(CustomerUpdateVO customerUpdateVO, String id);
