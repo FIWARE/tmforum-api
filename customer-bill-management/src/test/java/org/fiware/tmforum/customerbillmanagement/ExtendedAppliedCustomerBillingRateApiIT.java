@@ -387,7 +387,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))
 				),
 				Arguments.of(
-						"When the appliedCustomerBillingRate is billed and the bill is provided, it should be created.",
+						"When the appliedCustomerBillingRate is billed and the bill is provided, it should be updated.",
 						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
 								.isBilled(true)
 								.billingAccount(null)
@@ -403,6 +403,27 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 								.product(null)
 								.periodCoverage(null)
 								.billingAccount(BillingAccountRefVOTestExample.build().atSchemaLocation(null).id(BILLING_ACCOUNT_ID).href(BILLING_ACCOUNT_ID))
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID))
+				),
+				Arguments.of(
+						"When the name is changed, it should be updated.",
+						AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
+								.isBilled(true)
+								.billingAccount(null)
+								.product(null)
+								.name("original-name")
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateUpdateVOTestExample.build().atSchemaLocation(null)
+								.isBilled(true)
+								.product(null)
+								.billingAccount(null)
+								.name("new-name")
+								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)),
+						AppliedCustomerBillingRateVOTestExample.build().atSchemaLocation(null)
+								.isBilled(true)
+								.product(null)
+								.billingAccount(null)
+								.name("new-name")
 								.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID)))
 		);
 	}
