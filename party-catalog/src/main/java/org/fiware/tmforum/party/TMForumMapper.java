@@ -2,6 +2,7 @@ package org.fiware.tmforum.party;
 
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.party.model.*;
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.common.domain.TimePeriod;
@@ -68,6 +69,12 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "certificateId")
 	public abstract TaxExemptionCertificateVO map(TaxExemptionCertificate taxExemptionCertificate);
+
+	@Mapping(target = "attachementId", source = "id")
+	public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO attachmentRefOrValueVO);
+
+	@Mapping(target = "id", source = "attachementId")
+	public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
 
 	public OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {
 		if (organizationParentRelationship == null) {
