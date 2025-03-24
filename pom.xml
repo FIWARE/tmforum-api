@@ -273,6 +273,9 @@
                     <compilerArgs>
                         <arg>-Amicronaut.processing.group=org.fiware.tmforum</arg>
                         <arg>-Amicronaut.processing.module=party</arg>
+                        <arg>-J--add-opens java.base/java.net=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens java.base/java.lang=ALL-UNNAMED</arg>
+                        <arg>-J--add-opens java.base/java.time=ALL-UNNAMED</arg>
                     </compilerArgs>
                 </configuration>
                 <executions>
@@ -900,11 +903,6 @@
                                         <vendor>${project.vendor}</vendor>
                                         <summary>${project.summary}</summary>
                                     </labels>
-                                    <jvmFlags>
-                                        <jvmFlag>--add-opens java.base/java.net=ALL-UNNAMED</jvmFlag>
-                                        <jvmFlag>--add-opens java.base/java.lang=ALL-UNNAMED</jvmFlag>
-                                        <jvmFlag>--add-opens java.base/java.time=ALL-UNNAMED</jvmFlag>
-                                    </jvmFlags>
                                 </container>
                             </configuration>
                             <executions>
