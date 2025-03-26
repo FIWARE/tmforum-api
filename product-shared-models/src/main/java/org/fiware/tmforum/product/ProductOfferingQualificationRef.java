@@ -1,4 +1,4 @@
-package org.fiware.tmforum.productordering.domain;
+package org.fiware.tmforum.product;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
