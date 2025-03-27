@@ -7,7 +7,7 @@ public enum QuoteItemState {
 
 	IN_PROGRESS("inProgress"),
 	APPROVED("approved"),
-	PENDING("rejected"),
+	PENDING("pending"),
 	CANCELLED("cancelled"),
 	ACCEPTED("accepted"),
 	REJECTED("rejected");

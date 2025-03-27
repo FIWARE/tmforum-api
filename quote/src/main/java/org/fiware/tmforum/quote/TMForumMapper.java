@@ -9,6 +9,8 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.quote.domain.Quote;
 import org.fiware.tmforum.quote.domain.QuoteItem;
 import org.fiware.tmforum.quote.domain.QuoteItemRelationship;
+import org.fiware.tmforum.quote.domain.QuoteItemState;
+import org.fiware.tmforum.resource.Note;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -46,6 +48,12 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "value", source = "moneyValue")
 	public abstract MoneyVO map(Money money);
 
+	@Mapping(target = "noteId", source = "id")
+	public abstract Note map(NoteVO noteVO);
+
+	@Mapping(target = "id", source = "noteId")
+	public abstract NoteVO map(Note note);
+
 	@Mapping(target = "itemId", source = "id")
 	public abstract QuoteItem map(QuoteItemVO quoteItemVO);
 
@@ -57,6 +65,14 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "relationshipId")
 	public abstract QuoteItemRelationshipVO map(QuoteItemRelationship quoteItemRelationship);
+
+	public QuoteItemState mapQuoteItemState(String value) {
+		return QuoteItemState.toEnum(value);
+	}
+
+	public String mapQuoteItemState(QuoteItemState value) {
+		return value.getValue();
+	}
 
 	public URL map(String value) {
 		if (value == null) {

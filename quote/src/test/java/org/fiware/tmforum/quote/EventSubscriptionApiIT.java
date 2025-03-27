@@ -220,16 +220,6 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 				)
 		);
 		testEntries.add(
-				Arguments.of("A listener with event types of multiple entities within module should have been created.",
-						EventSubscriptionInputVOTestExample.build()
-								.query("eventType=QuoteCreateEvent;eventType=CategoryCreateEvent")
-								.callback(ANY_CALLBACK),
-						EventSubscriptionVOTestExample.build()
-								.query("eventType=QuoteCreateEvent;eventType=CategoryCreateEvent")
-								.callback(ANY_CALLBACK)
-				)
-		);
-		testEntries.add(
 				Arguments.of("A listener with callback and complex query should have been created.",
 						EventSubscriptionInputVOTestExample.build()
 								.query("eventType=QuoteCreateEvent&event.Quote.lifecycleStatus=created")

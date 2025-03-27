@@ -34,9 +34,8 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	private final TMForumMapper tmForumMapper;
 
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-			entry(EVENT_GROUP_CATALOG, Quote.TYPE_QUOTE));
-	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_CATALOG, EVENT_GROUP_CATEGORY,
-			EVENT_GROUP_PRODUCT_OFFERING, EVENT_GROUP_PRODUCT_OFFERING_PRICE, EVENT_GROUP_PRODUCT_SPECIFICATION);
+			entry(EVENT_GROUP_QUOTE, Quote.TYPE_QUOTE));
+	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_QUOTE);
 	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
 			entry(Quote.TYPE_QUOTE, Quote.class));
 

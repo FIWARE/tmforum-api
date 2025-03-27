@@ -20,10 +20,7 @@ import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.product.PriceAlteration;
 import org.fiware.tmforum.quote.TMForumMapper;
-import org.fiware.tmforum.quote.domain.Authorization;
-import org.fiware.tmforum.quote.domain.Quote;
-import org.fiware.tmforum.quote.domain.QuoteItem;
-import org.fiware.tmforum.quote.domain.QuotePrice;
+import org.fiware.tmforum.quote.domain.*;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
@@ -50,8 +47,9 @@ public class QuoteApiController extends AbstractApiController<Quote> implements 
 				tmForumMapper.map(quoteCreateVO,
 						IdHelper.toNgsiLd(UUID.randomUUID().toString(), Quote.TYPE_QUOTE)));
 		quote.setQuoteDate(clock.instant());
+		quote.setState(QuoteState.IN_PROGRESS);
 
-		if (quote.getQuoteItem() != null || quote.getQuoteItem().isEmpty()) {
+		if (quote.getQuoteItem() == null || quote.getQuoteItem().isEmpty()) {
 			throw new TmForumException("Quotes need at least one QuoteItem.", TmForumExceptionReason.INVALID_DATA);
 		}
 
