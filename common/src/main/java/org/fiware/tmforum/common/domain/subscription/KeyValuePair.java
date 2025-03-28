@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 public class KeyValuePair {
 
-    private String key;
+    private String pairKey;
     private String value;
 
 }

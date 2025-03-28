@@ -1,9 +1,12 @@
 package org.fiware.tmforum.common.mapping;
 
 import org.fiware.ngsi.model.EndpointVO;
+import org.fiware.ngsi.model.KeyValuePairVO;
 import org.fiware.ngsi.model.SubscriptionVO;
+import org.fiware.tmforum.common.domain.subscription.KeyValuePair;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
 public interface SubscriptionMapper {
@@ -23,4 +26,10 @@ public interface SubscriptionMapper {
 	default EndpointVO.Accept mapAccept(String accept) {
 		return EndpointVO.Accept.toEnum(accept);
 	}
+
+	@Mapping(source = "key", target = "pairKey")
+	KeyValuePair map(KeyValuePairVO keyValuePairVO);
+
+	@Mapping(source = "key", target = "pairKey")
+	KeyValuePairVO map(KeyValuePair keyValuePair);
 }

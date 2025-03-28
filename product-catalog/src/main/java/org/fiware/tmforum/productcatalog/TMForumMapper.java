@@ -1,17 +1,16 @@
 package org.fiware.tmforum.productcatalog;
 
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.ngsi.model.KeyValuePairVO;
 import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.TaxItem;
-import org.fiware.tmforum.common.domain.subscription.KeyValuePair;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.*;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.net.MalformedURLException;
 import java.net.URI;
