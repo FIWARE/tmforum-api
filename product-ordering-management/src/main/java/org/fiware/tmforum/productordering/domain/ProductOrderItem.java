@@ -3,6 +3,7 @@ package org.fiware.tmforum.productordering.domain;
 import lombok.Data;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.domain.ReferenceValue;
+import org.fiware.tmforum.product.ProductOfferingQualificationItemRef;
 import org.fiware.tmforum.product.ProductOfferingRefValue;
 import org.fiware.tmforum.product.ProductRefOrValue;
 
