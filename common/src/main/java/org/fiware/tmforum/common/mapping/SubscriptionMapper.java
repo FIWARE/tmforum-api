@@ -30,6 +30,6 @@ public interface SubscriptionMapper {
 	@Mapping(source = "key", target = "pairKey")
 	KeyValuePair map(KeyValuePairVO keyValuePairVO);
 
-	@Mapping(source = "key", target = "pairKey")
+	@Mapping(source = "pairKey", target = "key")
 	KeyValuePairVO map(KeyValuePair keyValuePair);
 }

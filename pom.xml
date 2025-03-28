@@ -346,6 +346,7 @@
                         <exclude>org/fiware/*/model/*</exclude>
                         <!-- needs to be excluded, breaks coveralls linking -->
                         <exclude>**/TMForumMapperImpl*</exclude>
+                        <exclude>**/SubscriptionMapperImpl*</exclude>
                         <exclude>**/NGSIMapperImpl*</exclude>
                     </excludes>
                 </configuration>

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 public class KeyValuePair {
 
+    // key is not allowed as plain entry for mapping
     private String pairKey;
     private String value;
 
