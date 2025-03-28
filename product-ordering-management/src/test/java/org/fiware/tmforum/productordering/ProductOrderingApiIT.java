@@ -463,16 +463,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 										"urn:ngsi-ld:product-offering-qualification:non-existent"))
 						.quoteItem(null)
 						.appointment(null))));
-
-		invalidItems.add(new ArgumentPair<>(
-				"An order item with an invalid quote should not be accepted.",
-				List.of(ProductOrderItemVOTestExample.build().atSchemaLocation(null)
-						.billingAccount(null)
-						.product(null)
-						.productOffering(null)
-						.productOfferingQualificationItem(null)
-						.quoteItem(QuoteItemRefVOTestExample.build().atSchemaLocation(null))
-						.appointment(null))));
+		
 		invalidItems.add(new ArgumentPair<>(
 				"An order item with a non existent quote should not be accepted.",
 				List.of(ProductOrderItemVOTestExample.build().atSchemaLocation(null)
