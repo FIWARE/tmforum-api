@@ -76,6 +76,12 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "noteId", source = "id")
 	public abstract Note map(NoteVO noteVO);
 
+	@Mapping(target = "id", source = "refId")
+	public abstract QuoteItemRefVO map(QuoteItemRef quoteItemRef);
+
+	@Mapping(target = "refId", source = "id")
+	public abstract QuoteItemRef map(QuoteItemRefVO quoteItemRef);
+
 	@Mapping(target = "moneyValue", source = "value")
 	public abstract Money map(MoneyVO moneyVO);
 

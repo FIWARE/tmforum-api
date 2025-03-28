@@ -18,7 +18,7 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.quote.TMForumMapper;
-import org.fiware.tmforum.quote.domain.Quote;
+import org.fiware.tmforum.product.Quote;
 import reactor.core.publisher.Mono;
 
 import java.util.List;

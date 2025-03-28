@@ -18,9 +18,8 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.product.PriceAlteration;
+import org.fiware.tmforum.product.*;
 import org.fiware.tmforum.quote.TMForumMapper;
-import org.fiware.tmforum.quote.domain.*;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
@@ -74,7 +73,9 @@ public class QuoteApiController extends AbstractApiController<Quote> implements 
 					.flatMap(List::stream)
 					.toList());
 		}
-		quote.getQuoteItem().stream().map(this::getReferencesForQuoteItem).forEach(references::addAll);
+		Optional.ofNullable(quote.getQuoteItem()).orElse(List.of())
+				.stream()
+				.map(this::getReferencesForQuoteItem).forEach(references::addAll);
 
 		Optional.ofNullable(quote.getQuoteTotalPrice()).map(this::getReferencesForQuotePrice).ifPresent(references::addAll);
 

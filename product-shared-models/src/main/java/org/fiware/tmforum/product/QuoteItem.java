@@ -1,13 +1,9 @@
-package org.fiware.tmforum.quote.domain;
+package org.fiware.tmforum.product;
 
 import lombok.Data;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.domain.RelatedParty;
-import org.fiware.tmforum.product.AppointmentRef;
-import org.fiware.tmforum.product.ProductOfferingQualificationItemRef;
-import org.fiware.tmforum.product.ProductOfferingRef;
-import org.fiware.tmforum.product.ProductRefOrValue;
 import org.fiware.tmforum.resource.Note;
 
 import java.util.List;
