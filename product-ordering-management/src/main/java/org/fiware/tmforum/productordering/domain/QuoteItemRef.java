@@ -11,23 +11,13 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class QuoteItemRef extends Entity implements ReferencedEntity {
+public class QuoteItemRef extends Entity {
 
-	private String id;
+	private String refId;
 	private URI href;
 	private String name;
 	private URI quoteHref;
 	private URI quoteId;
 	private String quoteName;
 	private String atReferredType;
-
-	@Override
-	public List<String> getReferencedTypes() {
-		return new ArrayList<>(List.of(getAtReferredType()));
-	}
-
-	@Override
-	public URI getEntityId() {
-		return quoteId;
-	}
 }

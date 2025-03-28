@@ -1,20 +1,20 @@
-package org.fiware.tmforum.quote.domain;
+package org.fiware.tmforum.product;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum QuoteState {
+public enum QuoteItemState {
 
 	IN_PROGRESS("inProgress"),
 	APPROVED("approved"),
-	PENDING("rejected"),
+	PENDING("pending"),
 	CANCELLED("cancelled"),
 	ACCEPTED("accepted"),
 	REJECTED("rejected");
 
 	private final String value;
 
-	QuoteState(String value) {
+	QuoteItemState(String value) {
 		this.value = value;
 	}
 
@@ -24,7 +24,7 @@ public enum QuoteState {
 	}
 
 	@JsonCreator
-	public static QuoteState toEnum(String value) {
+	public static QuoteItemState toEnum(String value) {
 		return java.util.Arrays
 				.stream(values())
 				.filter(e -> e.value.equals(value))

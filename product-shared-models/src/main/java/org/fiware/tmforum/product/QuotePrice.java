@@ -1,10 +1,7 @@
-package org.fiware.tmforum.quote.domain;
+package org.fiware.tmforum.product;
 
 import lombok.Data;
 import org.fiware.tmforum.common.domain.Entity;
-import org.fiware.tmforum.product.Price;
-import org.fiware.tmforum.product.PriceAlteration;
-import org.fiware.tmforum.product.ProductOfferingPriceRef;
 
 import java.util.List;
 
