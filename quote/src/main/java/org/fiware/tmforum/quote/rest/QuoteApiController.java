@@ -74,7 +74,9 @@ public class QuoteApiController extends AbstractApiController<Quote> implements 
 					.flatMap(List::stream)
 					.toList());
 		}
-		quote.getQuoteItem().stream().map(this::getReferencesForQuoteItem).forEach(references::addAll);
+		Optional.ofNullable(quote.getQuoteItem()).orElse(List.of())
+				.stream()
+				.map(this::getReferencesForQuoteItem).forEach(references::addAll);
 
 		Optional.ofNullable(quote.getQuoteTotalPrice()).map(this::getReferencesForQuotePrice).ifPresent(references::addAll);
 
