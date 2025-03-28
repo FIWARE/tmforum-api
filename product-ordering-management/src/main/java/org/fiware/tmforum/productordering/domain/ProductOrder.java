@@ -12,6 +12,7 @@ import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
+import org.fiware.tmforum.product.ProductOfferingQualificationRef;
 import org.fiware.tmforum.resource.Note;
 
 import java.net.URI;

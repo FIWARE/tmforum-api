@@ -1,0 +1,40 @@
+micronaut:
+
+  server:
+    port: 8632
+
+  metrics:
+    enabled: false
+    export:
+      prometheus:
+        step: PT2s
+        descriptions: false
+
+  http:
+    services:
+      read-timeout: 30s
+      ngsi:
+        path: ngsi-ld/v1
+        url: http://localhost:1026
+        read-timeout: 30
+---
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+---
+endpoints:
+  metrics:
+    enabled: false
+  health:
+    enabled: false
+
+---
+loggers:
+  levels:
+    ROOT: WARN
+
+---
+general:
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+  serverHost: http://localhost:8632
+  basePath: /tmf-api/quote/v4
