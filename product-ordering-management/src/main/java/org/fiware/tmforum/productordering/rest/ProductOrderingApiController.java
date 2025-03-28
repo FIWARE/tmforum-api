@@ -153,7 +153,6 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 		// TODO: validate item rel, we just validate the ref now
 		Optional.ofNullable(productOrderItem.getProductOfferingQualificationItem()).map(List::of)
 				.ifPresent(references::add);
-		Optional.ofNullable(productOrderItem.getQuoteItem()).map(List::of).ifPresent(references::add);
 
 		references.add(productOrderItem.getPayment());
 		references.add(productOrderItem.getQualification());
