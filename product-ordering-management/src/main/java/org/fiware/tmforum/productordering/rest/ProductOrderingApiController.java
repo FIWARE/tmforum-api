@@ -19,6 +19,7 @@ import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.product.PriceAlteration;
+import org.fiware.tmforum.product.ProductRefOrValue;
 import org.fiware.tmforum.productordering.TMForumMapper;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
 import org.fiware.tmforum.productordering.domain.ProductOrderItem;
@@ -145,11 +146,7 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 		Optional.ofNullable(productOrderItem.getAppointment()).map(List::of).ifPresent(references::add);
 		Optional.ofNullable(productOrderItem.getBillingAccount()).map(List::of).ifPresent(references::add);
 
-		Optional.ofNullable(productOrderItem.getProduct()).map((item) -> {
-			return item.getEntityId();
-		}).ifPresent((uri) -> {
-			references.add(List.of(productOrderItem.getProduct()));
-		});
+		Optional.ofNullable(productOrderItem.getProduct()).map(ProductRefOrValue::getEntityId).ifPresent((uri) -> references.add(List.of(productOrderItem.getProduct())));
 
 		Optional.ofNullable(productOrderItem.getProductOffering()).map(List::of).ifPresent(references::add);
 

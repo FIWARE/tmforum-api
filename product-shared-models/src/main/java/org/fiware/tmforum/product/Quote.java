@@ -1,4 +1,4 @@
-package org.fiware.tmforum.quote.domain;
+package org.fiware.tmforum.product;
 
 
 import io.github.wistefan.mapping.annotations.AttributeGetter;
@@ -9,7 +9,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.*;
-import org.fiware.tmforum.product.ProductOfferingQualificationRef;
 import org.fiware.tmforum.resource.Note;
 
 import java.net.URI;
