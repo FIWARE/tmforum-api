@@ -5,6 +5,7 @@ import org.fiware.productinventory.model.*;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.product.Characteristic;
 import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.product.RelatedProductOrderItemRef;
 import org.mapstruct.Mapper;
@@ -32,6 +33,12 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "id")
 	public abstract Product map(ProductUpdateVO productUpdateVO, String id);
+
+	@Mapping(target = "charValue", source = "value")
+	public abstract Characteristic map(CharacteristicVO characteristicVO);
+
+	@Mapping(target = "value", source = "charValue")
+	public abstract CharacteristicVO map(Characteristic characteristic);
 
 	public abstract RelatedProductOrderItemRef map(RelatedProductOrderItemVO relatedProductOrderItemVO);
 
