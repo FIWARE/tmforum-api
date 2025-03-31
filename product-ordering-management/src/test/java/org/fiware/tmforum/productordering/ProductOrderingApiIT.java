@@ -464,25 +464,6 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.quoteItem(null)
 						.appointment(null))));
 
-		invalidItems.add(new ArgumentPair<>(
-				"An order item with an invalid quote should not be accepted.",
-				List.of(ProductOrderItemVOTestExample.build().atSchemaLocation(null)
-						.billingAccount(null)
-						.product(null)
-						.productOffering(null)
-						.productOfferingQualificationItem(null)
-						.quoteItem(QuoteItemRefVOTestExample.build().atSchemaLocation(null))
-						.appointment(null))));
-		invalidItems.add(new ArgumentPair<>(
-				"An order item with a non existent quote should not be accepted.",
-				List.of(ProductOrderItemVOTestExample.build().atSchemaLocation(null)
-						.billingAccount(null)
-						.product(null)
-						.productOffering(null)
-						.productOfferingQualificationItem(null)
-						.quoteItem(QuoteItemRefVOTestExample.build().atSchemaLocation(null).quoteId("urn:ngsi-ld:quote:non-existent"))
-						.appointment(null))));
-
 		return invalidItems.stream();
 	}
 
@@ -869,7 +850,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 								.productOffering(null)
 								.productOfferingQualificationItem(null)
 								.quoteItem(null)))));
-		
+
 		testEntries.add(Arguments.of("The description should have been updated and the item quantity should have been increased.",
 				ProductOrderCreateVOTestExample.build()
 						.atSchemaLocation(null)

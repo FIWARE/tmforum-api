@@ -35,6 +35,7 @@
         <module>resource-shared-models</module>
         <module>product-shared-models</module>
         <module>service-shared-models</module>
+        <module>quote</module>
         <module>party-catalog</module>
         <module>agreement</module>
         <module>product-inventory</module>
@@ -50,7 +51,6 @@
         <module>account</module>
         <module>service-inventory</module>
         <module>party-role</module>
-        <module>quote</module>
     </modules>
 
     <properties>
@@ -346,6 +346,7 @@
                         <exclude>org/fiware/*/model/*</exclude>
                         <!-- needs to be excluded, breaks coveralls linking -->
                         <exclude>**/TMForumMapperImpl*</exclude>
+                        <exclude>**/SubscriptionMapperImpl*</exclude>
                         <exclude>**/NGSIMapperImpl*</exclude>
                     </excludes>
                 </configuration>

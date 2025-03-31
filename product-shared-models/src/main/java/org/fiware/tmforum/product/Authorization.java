@@ -1,4 +1,4 @@
-package org.fiware.tmforum.quote.domain;
+package org.fiware.tmforum.product;
 
 import lombok.Data;
 import org.fiware.tmforum.common.domain.Entity;
