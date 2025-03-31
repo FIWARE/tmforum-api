@@ -2,6 +2,7 @@ package org.fiware.tmforum.usagemanagement;
 
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
+import org.fiware.tmforum.product.Characteristic;
 import org.fiware.usagemanagement.model.TimePeriodVO;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -47,6 +48,12 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+
+	@Mapping(target = "charValue", source = "value")
+	public abstract Characteristic map(CharacteristicVO characteristicVO);
+
+	@Mapping(target = "value", source = "charValue")
+	public abstract CharacteristicVO map(Characteristic characteristic);
 
 	public abstract TimePeriod map(TimePeriodVO value);
 

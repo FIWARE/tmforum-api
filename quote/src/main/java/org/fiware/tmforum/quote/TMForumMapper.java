@@ -6,10 +6,7 @@ import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.product.Quote;
-import org.fiware.tmforum.product.QuoteItem;
-import org.fiware.tmforum.product.QuoteItemRelationship;
-import org.fiware.tmforum.product.QuoteItemState;
+import org.fiware.tmforum.product.*;
 import org.fiware.tmforum.resource.Note;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -65,6 +62,12 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "relationshipId")
 	public abstract QuoteItemRelationshipVO map(QuoteItemRelationship quoteItemRelationship);
+
+	@Mapping(target = "charValue", source = "value")
+	public abstract Characteristic map(CharacteristicVO characteristicVO);
+
+	@Mapping(target = "value", source = "charValue")
+	public abstract CharacteristicVO map(Characteristic characteristic);
 
 	public QuoteItemState mapQuoteItemState(String value) {
 		return QuoteItemState.toEnum(value);

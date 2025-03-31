@@ -10,5 +10,5 @@ public class Characteristic extends Entity {
 
 	private String name;
 	private String valueType;
-	private Object value;
+	private Object charValue;
 }
