@@ -6,10 +6,12 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.productcatalog.api.EventsSubscriptionApi;
-import org.fiware.productcatalog.model.EventSubscriptionInputVO;
-import org.fiware.productcatalog.model.EventSubscriptionVO;
+import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -46,12 +48,12 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_CATALOG, EVENT_GROUP_CATEGORY,
 			EVENT_GROUP_PRODUCT_OFFERING, EVENT_GROUP_PRODUCT_OFFERING_PRICE, EVENT_GROUP_PRODUCT_SPECIFICATION);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(Catalog.TYPE_CATALOG, Catalog.class),
-			entry(Category.TYPE_CATEGORY, Category.class),
-			entry(ProductOffering.TYPE_PRODUCT_OFFERING, ProductOffering.class),
-			entry(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE, ProductOfferingPrice.class),
-			entry(ProductSpecification.TYPE_PRODUCT_SPECIFICATION, ProductSpecification.class)
+	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+			entry(Catalog.TYPE_CATALOG, new EventMapping(CatalogVO.class, Catalog.class)),
+			entry(Category.TYPE_CATEGORY, new EventMapping(CategoryVO.class, Category.class)),
+			entry(ProductOffering.TYPE_PRODUCT_OFFERING, new EventMapping(ProductOfferingVO.class, ProductOffering.class)),
+			entry(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE, new EventMapping(ProductOfferingPriceVO.class, ProductOfferingPrice.class)),
+			entry(ProductSpecification.TYPE_PRODUCT_SPECIFICATION, new EventMapping(ProductSpecificationVO.class, ProductSpecification.class))
 	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
@@ -79,4 +81,25 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
 	}
+
+	@Override
+	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
+		if (targetClass == Catalog.class) {
+			return tmForumMapper.map((Catalog) rawPayload);
+		}
+		if (targetClass == Category.class) {
+			return tmForumMapper.map((Category) rawPayload);
+		}
+		if (targetClass == ProductOffering.class) {
+			return tmForumMapper.map((ProductOffering) rawPayload);
+		}
+		if (targetClass == ProductOfferingPrice.class) {
+			return tmForumMapper.map((ProductOfferingPrice) rawPayload);
+		}
+		if (targetClass == ProductSpecification.class) {
+			return tmForumMapper.map((ProductSpecification) rawPayload);
+		}
+		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
+	}
+
 }

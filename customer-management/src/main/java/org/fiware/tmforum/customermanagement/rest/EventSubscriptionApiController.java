@@ -6,10 +6,14 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.customermanagement.api.EventsSubscriptionApi;
+import org.fiware.customermanagement.model.CustomerVO;
 import org.fiware.customermanagement.model.EventSubscriptionInputVO;
 import org.fiware.customermanagement.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -35,8 +39,8 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 			entry(EVENT_GROUP_CUSTOMER, Customer.TYPE_CUSTOMER)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_CUSTOMER);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(Customer.TYPE_CUSTOMER, Customer.class)
+	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+			entry(Customer.TYPE_CUSTOMER, new EventMapping(CustomerVO.class, Customer.class))
 	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
@@ -63,5 +67,13 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	@Override
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
+	}
+
+	@Override
+	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
+		if (targetClass == Customer.class) {
+			return tmForumMapper.map((Customer) rawPayload);
+		}
+		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
 	}
 }

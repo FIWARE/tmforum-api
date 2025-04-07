@@ -8,8 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.productinventory.api.EventsSubscriptionApi;
 import org.fiware.productinventory.model.EventSubscriptionInputVO;
 import org.fiware.productinventory.model.EventSubscriptionVO;
+import org.fiware.productinventory.model.ProductVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -17,7 +21,7 @@ import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
-import org.fiware.tmforum.product.Product;
+import org.fiware.tmforum.product.*;
 import org.fiware.tmforum.productinventory.TMForumMapper;
 import reactor.core.publisher.Mono;
 
@@ -32,11 +36,11 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 	private final TMForumMapper tmForumMapper;
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-		entry(EVENT_GROUP_PRODUCT, Product.TYPE_PRODUCT)
+			entry(EVENT_GROUP_PRODUCT, Product.TYPE_PRODUCT)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_PRODUCT);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-		entry(Product.TYPE_PRODUCT, Product.class)
+	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+			entry(Product.TYPE_PRODUCT, new EventMapping(ProductVO.class, Product.class))
 	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
@@ -63,6 +67,14 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	@Override
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
+	}
+
+	@Override
+	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
+		if (targetClass == Product.class) {
+			return tmForumMapper.map((Product) rawPayload);
+		}
+		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
 	}
 
 }

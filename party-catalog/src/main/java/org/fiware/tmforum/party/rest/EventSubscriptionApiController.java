@@ -8,8 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.party.api.EventsSubscriptionApi;
 import org.fiware.party.model.EventSubscriptionInputVO;
 import org.fiware.party.model.EventSubscriptionVO;
+import org.fiware.party.model.IndividualVO;
+import org.fiware.party.model.OrganizationVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -38,9 +43,9 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 			entry(EVENT_GROUP_ORGANIZATION, Organization.TYPE_ORGANIZATION)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_INDIVIDUAL, EVENT_GROUP_ORGANIZATION);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(Individual.TYPE_INDIVIDUAL, Individual.class),
-			entry(Organization.TYPE_ORGANIZATION, Organization.class)
+	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+			entry(Individual.TYPE_INDIVIDUAL, new EventMapping(IndividualVO.class, Individual.class)),
+			entry(Organization.TYPE_ORGANIZATION, new EventMapping(OrganizationVO.class, Organization.class))
 	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
@@ -69,5 +74,17 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	@Override
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
+	}
+
+
+	@Override
+	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
+		if (targetClass == Individual.class) {
+			return tmForumMapper.map((Individual) rawPayload);
+		}
+		if (targetClass == Organization.class) {
+			return tmForumMapper.map((Organization) rawPayload);
+		}
+		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
 	}
 }
