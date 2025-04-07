@@ -22,15 +22,15 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.party" })
+@MicronautTest(packages = {"org.fiware.tmforum.party"})
 public class PartyApiIT extends AbstractApiIT {
 
 	private final OrganizationApiTestClient organizationApiTestClient;
 	private final IndividualApiTestClient individualApiTestClient;
 
 	public PartyApiIT(OrganizationApiTestClient organizationApiTestClient,
-			IndividualApiTestClient individualApiTestClient, EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+					  IndividualApiTestClient individualApiTestClient, EntitiesApiClient entitiesApiClient,
+					  ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.organizationApiTestClient = organizationApiTestClient;
 		this.individualApiTestClient = individualApiTestClient;
@@ -132,8 +132,7 @@ public class PartyApiIT extends AbstractApiIT {
 				() -> organizationApiTestClient.patchOrganization(null, parentOrgId, parentUpdateVO));
 		assertEquals(HttpStatus.OK, parentUpdateResponse.getStatus(), "The parent should have been updated.");
 		expectedParent.setOrganizationChildRelationship(List.of(childRelationshipVO));
-		expectedParent.setRelatedParty(null);
-		expectedParent.setExistsDuring(null);
+		expectedParent.relatedParty(null);
 
 		assertEquals(expectedParent, parentUpdateResponse.body(), "The parent should have been updated.");
 

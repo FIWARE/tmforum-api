@@ -99,9 +99,8 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
 		return repository.findEntities(CommonConstants.DEFAULT_OFFSET, 1, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 						TMForumSubscription.class, query)
-				.flatMap(list -> Mono.empty());
-//				.flatMap(list -> list.isEmpty() ? Mono.empty() :
-//						Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
+				.flatMap(list -> list.isEmpty() ? Mono.empty() :
+						Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
 	}
 
 	protected TMForumSubscription buildSubscription(String callback, String query, List<String> eventGroups) {
