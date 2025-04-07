@@ -3,12 +3,16 @@ package org.fiware.tmforum.common.rest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Consumes;
+import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.tmforum.common.CommonConstants;
@@ -39,7 +43,6 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	private static final String RECEIVER_INFO_LISTENER_ENDPOINT = "Listener-Endpoint";
 
 	private final Map<String, String> eventGroupToEntityNameMapping;
-	private final Map<String, EventMapping> entityNameToEntityClassMapping;
 	private final GeneralProperties generalProperties;
 	protected final EntityVOMapper entityVOMapper;
 	private final NgsiLdEventHandler ngsiLdEventHandler;
@@ -47,18 +50,16 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
 	public AbstractSubscriptionApiController(
 			QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
-			Map<String, String> eventGroupToEntityNameMapping, Map<String, EventMapping> entityNameToEntityClassMapping,
+			Map<String, String> eventGroupToEntityNameMapping,
 			TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 			GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
 		super(queryParser, validationService, repository, tmForumEventHandler);
 		this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
-		this.entityNameToEntityClassMapping = entityNameToEntityClassMapping;
 		this.generalProperties = generalProperties;
 		this.entityVOMapper = entityVOMapper;
 		this.ngsiLdEventHandler = ngsiLdEventHandler;
 		this.subscriptionMapper = subscriptionMapper;
 	}
-
 
 	@CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
 	protected Mono<TMForumSubscription> create(TMForumSubscription tmForumSubscription) {
@@ -176,13 +177,11 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 			assert !notificationVO.getData().isEmpty();
 
 			return this.repository.retrieveSubscriptionById(notificationVO.getSubscriptionId())
-					.flatMap(subscriptionVO -> ngsiLdEventHandler.handle(notificationVO, subscriptionVO,
-							entityNameToEntityClassMapping, (p,t) -> this.mapPayload(p,t)))
+					.flatMap(subscriptionVO -> ngsiLdEventHandler.handle(notificationVO, subscriptionVO))
 					.then(Mono.just(HttpResponse.noContent()));
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public abstract Object mapPayload(Object rawPayload, Class<?> targetClass);
 }

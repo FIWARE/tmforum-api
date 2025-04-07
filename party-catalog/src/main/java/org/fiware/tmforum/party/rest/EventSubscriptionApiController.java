@@ -43,10 +43,6 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 			entry(EVENT_GROUP_ORGANIZATION, Organization.TYPE_ORGANIZATION)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_INDIVIDUAL, EVENT_GROUP_ORGANIZATION);
-	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(Individual.TYPE_INDIVIDUAL, new EventMapping(IndividualVO.class, Individual.class)),
-			entry(Organization.TYPE_ORGANIZATION, new EventMapping(OrganizationVO.class, Organization.class))
-	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
@@ -54,8 +50,7 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 										  GeneralProperties generalProperties,
 										  EntityVOMapper entityVOMapper,
 										  SubscriptionMapper subscriptionMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
@@ -76,15 +71,4 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 		return delete(id);
 	}
 
-
-	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Individual.class) {
-			return tmForumMapper.map((Individual) rawPayload);
-		}
-		if (targetClass == Organization.class) {
-			return tmForumMapper.map((Organization) rawPayload);
-		}
-		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
-	}
 }
