@@ -290,7 +290,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 			ResourceCandidateVO resourceCandidateVO = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 					.id(id)
 					.href(URI.create(id))
-					.validFor(null)
+					
 					.resourceSpecification(null);
 			expectedResourceCandidates.add(resourceCandidateVO);
 		}
@@ -444,7 +444,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		ResourceCandidateUpdateVO lifecycleStatusUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.lifecycleStatus("dead");
-		ResourceCandidateVO expectedLifecycleStatus = ResourceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ResourceCandidateVO expectedLifecycleStatus = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
@@ -453,7 +453,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		ResourceCandidateUpdateVO descriptionUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.description("new-description");
-		ResourceCandidateVO expectedDescriptionUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ResourceCandidateVO expectedDescriptionUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
@@ -462,7 +462,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		ResourceCandidateUpdateVO nameUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.name("new-name");
-		ResourceCandidateVO expectedNameUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ResourceCandidateVO expectedNameUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
@@ -470,7 +470,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		ResourceCandidateUpdateVO versionUpdate = ResourceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.version("v0.0.2");
-		ResourceCandidateVO expectedVersionUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ResourceCandidateVO expectedVersionUpdate = ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 				.resourceSpecification(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
@@ -616,7 +616,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.",
 						null,
-						ResourceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+						ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 								.resourceSpecification(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.",
 						"version",
@@ -640,8 +640,8 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 								.description(null)
 								.lifecycleStatus(null)
 								.name(null)
-								.version(null)
 								.validFor(null)
+								.version(null)
 								.atBaseType(null)
 								.atSchemaLocation(null)
 								.atType(null)
@@ -652,10 +652,10 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 						ResourceCandidateVOTestExample.build().atSchemaLocation(null)
 								.category(null)
 								.name(null)
-								.validFor(null)
 								.atBaseType(null)
 								.atSchemaLocation(null)
 								.atType(null)
+								.validFor(null)
 								.resourceSpecification(null)));
 	}
 
