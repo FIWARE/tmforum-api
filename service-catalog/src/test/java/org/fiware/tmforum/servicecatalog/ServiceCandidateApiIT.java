@@ -283,7 +283,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 					.serviceSpecification(null);
 			String id = serviceCandidateApiTestClient.createServiceCandidate(null, serviceCandidateCreateVO)
 					.body().getId();
-			ServiceCandidateVO serviceCandidateVO = ServiceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+			ServiceCandidateVO serviceCandidateVO = ServiceCandidateVOTestExample.build().atSchemaLocation(null)
 					.id(id)
 					.href(URI.create(id))
 					.serviceSpecification(null);
@@ -439,7 +439,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 		ServiceCandidateUpdateVO lifecycleStatusUpdate = ServiceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.lifecycleStatus("dead");
-		ServiceCandidateVO expectedLifecycleStatus = ServiceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ServiceCandidateVO expectedLifecycleStatus = ServiceCandidateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
@@ -448,7 +448,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 		ServiceCandidateUpdateVO descriptionUpdate = ServiceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.description("new-description");
-		ServiceCandidateVO expectedDescriptionUpdate = ServiceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ServiceCandidateVO expectedDescriptionUpdate = ServiceCandidateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
@@ -457,7 +457,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 		ServiceCandidateUpdateVO nameUpdate = ServiceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.name("new-name");
-		ServiceCandidateVO expectedNameUpdate = ServiceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ServiceCandidateVO expectedNameUpdate = ServiceCandidateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
@@ -465,7 +465,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 		ServiceCandidateUpdateVO versionUpdate = ServiceCandidateUpdateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.version("v0.0.2");
-		ServiceCandidateVO expectedVersionUpdate = ServiceCandidateVOTestExample.build().atSchemaLocation(null).validFor(null)
+		ServiceCandidateVO expectedVersionUpdate = ServiceCandidateVOTestExample.build().atSchemaLocation(null)
 				.serviceSpecification(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
@@ -613,7 +613,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 				Arguments.of("Without a fields parameter everything should be returned.",
 						null,
 						ServiceCandidateVOTestExample.build().atSchemaLocation(null)
-								.validFor(null)
+								
 								.serviceSpecification(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.",
 						"version",

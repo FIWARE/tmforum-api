@@ -153,29 +153,29 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
 						.constraint(null)
 						.id("urn:feature-spec")
-						.validFor(null)
+						
 						.featureSpecRelationship(null)
 						.featureSpecCharacteristic(List.of(
 								FeatureSpecificationCharacteristicVOTestExample.build().atSchemaLocation(null)
 										.id("urn:feature-spec-char")
-										.validFor(null)
+										
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
 												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build().atSchemaLocation(null)
 														.id("urn:feature-spec-char-rel")
-														.validFor(null)
+														
 														.resourceSpecificationId(null)))
 						))));
 		validFeatureSpecs.add(new ArgumentPair<>("Feature specification with feature spec rel should be created.",
 				FeatureSpecificationVOTestExample.build().atSchemaLocation(null)
 						.constraint(null)
 						.id("urn:feature-spec")
-						.validFor(null)
+						
 						.featureSpecCharacteristic(null)
 						.featureSpecRelationship(List.of(
 								FeatureSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
 										.id("urn:feature-spec-rel")
-										.validFor(null)
+										
 										.parentSpecificationId(null)))));
 
 		return validFeatureSpecs.stream();
@@ -584,7 +584,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.lifecycleStatus("dead");
-		ResourceSpecificationVO expectedLifecycleStatus = ResourceSpecificationVOTestExample.build().validFor(null)
+		ResourceSpecificationVO expectedLifecycleStatus = ResourceSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.lifecycleStatus("dead");
@@ -595,7 +595,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.description("new-description");
-		ResourceSpecificationVO expectedDescriptionUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
+		ResourceSpecificationVO expectedDescriptionUpdate = ResourceSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.description("new-description");
@@ -606,7 +606,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.name("new-name");
-		ResourceSpecificationVO expectedNameUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
+		ResourceSpecificationVO expectedNameUpdate = ResourceSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.name("new-name");
@@ -616,7 +616,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.version("v0.0.2");
-		ResourceSpecificationVO expectedVersionUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
+		ResourceSpecificationVO expectedVersionUpdate = ResourceSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.targetResourceSchema(null)
 				.version("v0.0.2");
@@ -646,7 +646,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 										.atSchemaLocation(null)
 										.targetResourceSchema(null)
 										.lifecycleStatus("created")
-										.validFor(null)
+										
 										.featureSpecification(List.of(ap.value()))))
 				.forEach(testEntries::add);
 
@@ -802,7 +802,6 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				Arguments.of("Without a fields parameter everything should be returned.", null,
 						ResourceSpecificationVOTestExample.build()
 								.atSchemaLocation(null)
-								.validFor(null)
 								.targetResourceSchema(null)
 								.resourceSpecRelationship(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
