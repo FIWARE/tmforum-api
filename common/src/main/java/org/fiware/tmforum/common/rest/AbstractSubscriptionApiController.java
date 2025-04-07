@@ -16,6 +16,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.*;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
@@ -38,7 +39,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	private static final String RECEIVER_INFO_LISTENER_ENDPOINT = "Listener-Endpoint";
 
 	private final Map<String, String> eventGroupToEntityNameMapping;
-	private final Map<String, Class<?>> entityNameToEntityClassMapping;
+	private final Map<String, EventMapping> entityNameToEntityClassMapping;
 	private final GeneralProperties generalProperties;
 	protected final EntityVOMapper entityVOMapper;
 	private final NgsiLdEventHandler ngsiLdEventHandler;
@@ -46,7 +47,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
 	public AbstractSubscriptionApiController(
 			QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
-			Map<String, String> eventGroupToEntityNameMapping, Map<String, Class<?>> entityNameToEntityClassMapping,
+			Map<String, String> eventGroupToEntityNameMapping, Map<String, EventMapping> entityNameToEntityClassMapping,
 			TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 			GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
 		super(queryParser, validationService, repository, tmForumEventHandler);
@@ -98,8 +99,9 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
 		return repository.findEntities(CommonConstants.DEFAULT_OFFSET, 1, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 						TMForumSubscription.class, query)
-				.flatMap(list -> list.isEmpty() ? Mono.empty() :
-						Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
+				.flatMap(list -> Mono.empty());
+//				.flatMap(list -> list.isEmpty() ? Mono.empty() :
+//						Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
 	}
 
 	protected TMForumSubscription buildSubscription(String callback, String query, List<String> eventGroups) {
@@ -165,7 +167,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	@Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)
 	@Consumes({"application/json;charset=utf-8"})
 	public Mono<HttpResponse<Void>> callback(@NonNull @Body String payload) {
-		log.debug("Callback for NGSI-LD subscription");
+		log.warn("Callback for NGSI-LD subscription: {}", payload);
 
 		try {
 			NotificationVO notificationVO = this.entityVOMapper.readNotificationFromJSON(payload);
@@ -176,10 +178,12 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
 			return this.repository.retrieveSubscriptionById(notificationVO.getSubscriptionId())
 					.flatMap(subscriptionVO -> ngsiLdEventHandler.handle(notificationVO, subscriptionVO,
-							entityNameToEntityClassMapping))
+							entityNameToEntityClassMapping, (p,t) -> this.mapPayload(p,t)))
 					.then(Mono.just(HttpResponse.noContent()));
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException(e);
 		}
 	}
+
+	public abstract Object mapPayload(Object rawPayload, Class<?> targetClass);
 }

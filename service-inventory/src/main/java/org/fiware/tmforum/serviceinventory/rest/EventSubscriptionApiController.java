@@ -8,8 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.serviceinventory.api.EventsSubscriptionApi;
 import org.fiware.serviceinventory.model.EventSubscriptionInputVO;
 import org.fiware.serviceinventory.model.EventSubscriptionVO;
+import org.fiware.serviceinventory.model.ServiceVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -17,6 +21,9 @@ import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
+import org.fiware.tmforum.service.ServiceCandidate;
+import org.fiware.tmforum.service.ServiceCategory;
+import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
 import org.fiware.tmforum.serviceinventory.TMForumMapper;
 import org.fiware.tmforum.serviceinventory.domain.Service;
 import reactor.core.publisher.Mono;
@@ -35,8 +42,8 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 			entry(EVENT_GROUP_SERVICE, Service.TYPE_SERVICE)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_SERVICE);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(Service.TYPE_SERVICE, Service.class)
+	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+			entry(Service.TYPE_SERVICE, new EventMapping(ServiceVO.class, Service.class))
 	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
@@ -63,5 +70,13 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	@Override
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
+	}
+
+	@Override
+	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
+		if (targetClass == Service.class) {
+			return tmForumMapper.map((Service) rawPayload);
+		}
+		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
 	}
 }

@@ -35,7 +35,6 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "id", source = "id")
 	public abstract Quote map(QuoteUpdateVO quoteUpdateVO, String id);
 
-
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 

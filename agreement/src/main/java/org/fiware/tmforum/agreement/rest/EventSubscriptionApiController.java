@@ -6,6 +6,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.agreement.api.EventsSubscriptionApi;
+import org.fiware.agreement.model.AgreementSpecificationVO;
+import org.fiware.agreement.model.AgreementVO;
 import org.fiware.agreement.model.EventSubscriptionInputVO;
 import org.fiware.agreement.model.EventSubscriptionVO;
 import org.fiware.tmforum.agreement.TMForumMapper;
@@ -13,6 +15,9 @@ import org.fiware.tmforum.agreement.domain.Agreement;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -41,9 +46,9 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
 	private static final List<String> EVENT_GROUPS = List.of(
 			EVENT_GROUP_AGREEMENT, EVENT_GROUP_AGREEMENT_SPECIFICATION);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(Agreement.TYPE_AGREEMENT, Agreement.class),
-			entry(AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION, AgreementSpecification.class)
+	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
+			entry(Agreement.TYPE_AGREEMENT, new EventMapping(AgreementVO.class, Agreement.class)),
+			entry(AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION, new EventMapping(AgreementSpecificationVO.class, AgreementSpecification.class))
 	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
@@ -70,5 +75,16 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	@Override
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
+	}
+
+	@Override
+	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
+		if (targetClass == AgreementSpecification.class) {
+			return tmForumMapper.map((AgreementSpecification) rawPayload);
+		}
+		if (targetClass == Agreement.class) {
+			return tmForumMapper.map((Agreement) rawPayload);
+		}
+		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
 	}
 }
