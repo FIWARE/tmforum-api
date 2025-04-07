@@ -48,20 +48,12 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_CATALOG, EVENT_GROUP_CATEGORY,
 			EVENT_GROUP_PRODUCT_OFFERING, EVENT_GROUP_PRODUCT_OFFERING_PRICE, EVENT_GROUP_PRODUCT_SPECIFICATION);
-	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(Catalog.TYPE_CATALOG, new EventMapping(CatalogVO.class, Catalog.class)),
-			entry(Category.TYPE_CATEGORY, new EventMapping(CategoryVO.class, Category.class)),
-			entry(ProductOffering.TYPE_PRODUCT_OFFERING, new EventMapping(ProductOfferingVO.class, ProductOffering.class)),
-			entry(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE, new EventMapping(ProductOfferingPriceVO.class, ProductOfferingPrice.class)),
-			entry(ProductSpecification.TYPE_PRODUCT_SPECIFICATION, new EventMapping(ProductSpecificationVO.class, ProductSpecification.class))
-	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
@@ -82,24 +74,5 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 		return delete(id);
 	}
 
-	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Catalog.class) {
-			return tmForumMapper.map((Catalog) rawPayload);
-		}
-		if (targetClass == Category.class) {
-			return tmForumMapper.map((Category) rawPayload);
-		}
-		if (targetClass == ProductOffering.class) {
-			return tmForumMapper.map((ProductOffering) rawPayload);
-		}
-		if (targetClass == ProductOfferingPrice.class) {
-			return tmForumMapper.map((ProductOfferingPrice) rawPayload);
-		}
-		if (targetClass == ProductSpecification.class) {
-			return tmForumMapper.map((ProductSpecification) rawPayload);
-		}
-		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
-	}
 
 }

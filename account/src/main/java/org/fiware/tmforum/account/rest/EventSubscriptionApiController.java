@@ -45,22 +45,12 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_BILL_FORMAT, /*EVENT_GROUP_BILLING_ACCOUNT,*/
 			EVENT_GROUP_BILLING_CYCLE_SPECIFICATION, EVENT_GROUP_BILL_PRESENTATION_MEDIA, EVENT_GROUP_FINANCIAL_ACCOUNT,
 			EVENT_GROUP_PARTY_ACCOUNT, EVENT_GROUP_SETTLEMENT_ACCOUNT);
-	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(BillFormat.TYPE_BILLF, new EventMapping(BillFormatVO.class, BillFormat.class)),
-			entry(BillingAccount.TYPE_BILLINGAC, new EventMapping(BillingAccountVO.class, BillingAccount.class)),
-			entry(BillingCycleSpecification.TYPE_BILLCL, new EventMapping(BillingCycleSpecificationVO.class, BillingCycleSpecification.class)),
-			entry(BillPresentationMedia.TYPE_BILLPM, new EventMapping(BillPresentationMediaVO.class, BillPresentationMedia.class)),
-			entry(FinancialAccount.TYPE_FINANCIALAC, new EventMapping(FinancialAccountVO.class, FinancialAccount.class)),
-			entry(PartyAccount.TYPE_PARTYAC, new EventMapping(PartyAccountVO.class, PartyAccount.class)),
-			entry(SettlementAccount.TYPE_SETTLEMENTAC, new EventMapping(SettlementAccountVO.class, SettlementAccount.class))
-	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
@@ -81,29 +71,5 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 		return delete(id);
 	}
 
-	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == BillFormat.class) {
-			return tmForumMapper.map((BillFormat) rawPayload);
-		}
-		if (targetClass == BillingAccount.class) {
-			return tmForumMapper.map((BillingAccount) rawPayload);
-		}
-		if (targetClass == BillingCycleSpecification.class) {
-			return tmForumMapper.map((BillingCycleSpecification) rawPayload);
-		}
-		if (targetClass == BillPresentationMedia.class) {
-			return tmForumMapper.map((BillPresentationMedia) rawPayload);
-		}
-		if (targetClass == FinancialAccount.class) {
-			return tmForumMapper.map((FinancialAccount) rawPayload);
-		}
-		if (targetClass == PartyAccount.class) {
-			return tmForumMapper.map((PartyAccount) rawPayload);
-		}
-		if (targetClass == SettlementAccount.class) {
-			return tmForumMapper.map((SettlementAccount) rawPayload);
-		}
-		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
-	}
+
 }

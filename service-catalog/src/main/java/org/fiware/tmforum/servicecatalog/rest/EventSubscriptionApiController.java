@@ -6,11 +6,10 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.servicecatalog.api.EventsSubscriptionApi;
-import org.fiware.servicecatalog.model.*;
+import org.fiware.servicecatalog.model.EventSubscriptionInputVO;
+import org.fiware.servicecatalog.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
-import org.fiware.tmforum.common.exception.TmForumException;
-import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
@@ -44,19 +43,12 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_SERVICE_CANDIDATE,
 			EVENT_GROUP_SERVICE_CATALOG, EVENT_GROUP_SERVICE_CATEGORY, EVENT_GROUP_SERVICE_SPECIFICATION);
-	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(ServiceCandidate.TYPE_SERVICE_CANDIDATE, new EventMapping(ServiceCandidateVO.class, ServiceCandidate.class)),
-			entry(ServiceCatalog.TYPE_SERVICE_CATALOG, new EventMapping(ServiceCatalogVO.class, ServiceCatalog.class)),
-			entry(ServiceCategory.TYPE_SERVICE_CATEGORY, new EventMapping(ServiceCategoryVO.class, ServiceCategory.class)),
-			entry(ServiceSpecification.TYPE_SERVICE_SPECIFICATION, new EventMapping(ServiceSpecificationVO.class, ServiceSpecification.class))
-	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
@@ -77,20 +69,4 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 		return delete(id);
 	}
 
-	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == ServiceCandidate.class) {
-			return tmForumMapper.map((ServiceCandidate) rawPayload);
-		}
-		if (targetClass == ServiceCatalog.class) {
-			return tmForumMapper.map((ServiceCatalog) rawPayload);
-		}
-		if (targetClass == ServiceCategory.class) {
-			return tmForumMapper.map((ServiceCategory) rawPayload);
-		}
-		if (targetClass == ServiceSpecification.class) {
-			return tmForumMapper.map((ServiceSpecification) rawPayload);
-		}
-		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
-	}
 }

@@ -45,17 +45,12 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	);
 	private static final List<String> EVENT_GROUPS = List.of(
 			EVENT_GROUP_CANCEL_PRODUCT_ORDER, EVENT_GROUP_PRODUCT_ORDER);
-	private static final Map<String, EventMapping> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-			entry(CancelProductOrder.TYPE_CANCEL_PRODUCT_ORDER, new EventMapping(CancelProductOrderVO.class, CancelProductOrder.class)),
-			entry(ProductOrder.TYPE_PRODUCT_ORDER, new EventMapping(ProductOrderVO.class, ProductOrder.class))
-	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
@@ -76,14 +71,4 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 		return delete(id);
 	}
 
-	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == CancelProductOrder.class) {
-			return tmForumMapper.map((CancelProductOrder) rawPayload);
-		}
-		if (targetClass == ProductOrder.class) {
-			return tmForumMapper.map((ProductOrder) rawPayload);
-		}
-		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
-	}
 }
