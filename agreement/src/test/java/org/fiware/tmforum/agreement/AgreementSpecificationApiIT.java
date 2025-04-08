@@ -383,10 +383,10 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 		List<Arguments> result = new ArrayList<>();
 		result.add(Arguments.of("The name should have been updated",
 				AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null).serviceCategory(null).name("Updated"),
-				AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).name("Updated")));
+				AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).validFor(null).name("Updated")));
 		result.add(Arguments.of("The version should have been updated",
 				AgreementSpecificationUpdateVOTestExample.build().atSchemaLocation(null).serviceCategory(null).version("2.2"),
-				AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).version("2.2")));
+				AgreementSpecificationVOTestExample.build().atSchemaLocation(null).serviceCategory(null).validFor(null).version("2.2")));
 		Instant now = Instant.now();
 		result.add(Arguments.of("The last updated info should have been updated",
 				AgreementSpecificationUpdateVOTestExample.build()
@@ -396,6 +396,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 				AgreementSpecificationVOTestExample.build()
 						.atSchemaLocation(null)
 						.serviceCategory(null)
+						.validFor(null)
 						.lastUpdate(now)));
 
 		return result.stream();
@@ -513,7 +514,8 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 		result.add(Arguments.of("If no fields are established, all attributes should be returned", null,
 				AgreementSpecificationVOTestExample.build()
 						.atSchemaLocation(null)
-						.serviceCategory(null)));
+						.serviceCategory(null)
+						.validFor(null)));
 		result.add(Arguments.of(
 				"It should only show name, version and description attributes with attachment empty",
 				"name,version,description",

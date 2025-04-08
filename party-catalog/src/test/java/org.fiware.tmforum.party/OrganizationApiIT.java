@@ -340,7 +340,8 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 					.id(id)
 					.href(id)
 					.organizationParentRelationship(null)
-					.relatedParty(null);
+					.relatedParty(null)
+					.existsDuring(null);
 			expectedOrganizations.add(organizationVO);
 		}
 
@@ -503,6 +504,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		expectedOrg.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
 		expectedOrg.setRelatedParty(null);
 		expectedOrg.setOrganizationParentRelationship(null);
+		expectedOrg.setExistsDuring(null);
 
 		HttpResponse<OrganizationVO> updateResponse = callAndCatch(
 				() -> organizationApiTestClient.patchOrganization(null, id, updateVO));
@@ -553,6 +555,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		OrganizationVO expectedOrganization = OrganizationVOTestExample.build().atSchemaLocation(null);
 		expectedOrganization.setOrganizationParentRelationship(null);
 		expectedOrganization.setName("MyNewName");
+		expectedOrganization.existsDuring(null);
 		validOrgs.add(Arguments.of("Empty org should have been updated.", organizationUpdateVO, expectedOrganization));
 
 		OrganizationUpdateVO orgWithContactMedium = OrganizationUpdateVOTestExample.build().atSchemaLocation(null);
@@ -567,6 +570,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		OrganizationVO expectedOrgWithContactMedium = OrganizationVOTestExample.build().atSchemaLocation(null);
 		expectedOrgWithContactMedium.setOrganizationParentRelationship(null);
 		expectedOrgWithContactMedium.setContactMedium(List.of(contactMediumVO));
+		expectedOrgWithContactMedium.existsDuring(null);
 		validOrgs.add(Arguments.of("Org with contact medium should have been updated.", orgWithContactMedium,
 				expectedOrgWithContactMedium));
 
@@ -579,6 +583,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		OrganizationVO expectedOrgWithCreditRating = OrganizationVOTestExample.build().atSchemaLocation(null);
 		expectedOrgWithCreditRating.setOrganizationParentRelationship(null);
 		expectedOrgWithCreditRating.setCreditRating(List.of(partyCreditProfileVO));
+		expectedOrgWithCreditRating.existsDuring(null);
 		validOrgs.add(Arguments.of("Org with credit rating should have been updated.", orgWithCreditRating,
 				expectedOrgWithCreditRating));
 
@@ -600,6 +605,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		OrganizationVO expectedOrgWithOtherName = OrganizationVOTestExample.build().atSchemaLocation(null);
 		expectedOrgWithOtherName.setOrganizationParentRelationship(null);
 		expectedOrgWithOtherName.setOtherName(List.of(otherNameOrganizationVO));
+		expectedOrgWithOtherName.existsDuring(null);
 		validOrgs.add(Arguments.of("Org with other name should have been updated.", orgWithOtherName,
 				expectedOrgWithOtherName));
 
@@ -611,6 +617,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		OrganizationVO expectedOrgWithPartyChar = OrganizationVOTestExample.build().atSchemaLocation(null);
 		expectedOrgWithPartyChar.setOrganizationParentRelationship(null);
 		expectedOrgWithPartyChar.setPartyCharacteristic(List.of(characteristicVO));
+		expectedOrgWithPartyChar.existsDuring(null);
 		validOrgs.add(Arguments.of("Org with party characteristics should have been updated.", orgWithPartyChar,
 				expectedOrgWithPartyChar));
 
@@ -637,6 +644,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		OrganizationVO expectedOrgWithTaxExemption = OrganizationVOTestExample.build().atSchemaLocation(null);
 		expectedOrgWithTaxExemption.setOrganizationParentRelationship(null);
 		expectedOrgWithTaxExemption.setTaxExemptionCertificate(List.of(taxExemptionCertificateVO));
+		expectedOrgWithTaxExemption.existsDuring(null);
 		validOrgs.add(Arguments.of("Org with tax exemption certificate should have been updated.", orgWithTaxExemption,
 				expectedOrgWithTaxExemption));
 
@@ -753,6 +761,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		expectedOrg.setId(organizationId);
 		expectedOrg.setHref(organizationId);
 		expectedOrg.setRelatedParty(null);
+		expectedOrg.setExistsDuring(null);
 
 		HttpResponse<OrganizationVO> retrievedOrganization = callAndCatch(
 				() -> organizationApiTestClient.retrieveOrganization(null, organizationId, null));

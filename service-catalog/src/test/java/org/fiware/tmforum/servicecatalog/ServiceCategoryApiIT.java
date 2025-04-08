@@ -288,7 +288,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 			String id = serviceCategoryApiTestClient.createServiceCategory(null, serviceCategoryCreateVO)
 					.body().getId();
 			ServiceCategoryVO serviceCategoryVO = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
-
+					.validFor(null)
 					.id(id)
 					.href(URI.create(id))
 					.parentId(null);
@@ -443,7 +443,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		ServiceCategoryUpdateVO lifecycleStatusUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.lifecycleStatus("dead");
-		ServiceCategoryVO expectedLifecycleStatus = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
+		ServiceCategoryVO expectedLifecycleStatus = ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(null)
 				.parentId(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
@@ -452,7 +452,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		ServiceCategoryUpdateVO descriptionUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.description("new-description");
-		ServiceCategoryVO expectedDescriptionUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
+		ServiceCategoryVO expectedDescriptionUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(null)
 				.parentId(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
@@ -461,7 +461,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		ServiceCategoryUpdateVO nameUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.name("new-name");
-		ServiceCategoryVO expectedNameUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
+		ServiceCategoryVO expectedNameUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(null)
 				.parentId(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
@@ -469,7 +469,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		ServiceCategoryUpdateVO isRootUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.isRoot(true);
-		ServiceCategoryVO expectedIsRoot = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
+		ServiceCategoryVO expectedIsRoot = ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(null)
 				.parentId(null)
 				.isRoot(true);
 		testEntries.add(Arguments.of("isRoot should have been updated.", isRootUpdate, expectedIsRoot));
@@ -477,7 +477,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		ServiceCategoryUpdateVO versionUpdate = ServiceCategoryUpdateVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.version("v0.0.2");
-		ServiceCategoryVO expectedVersionUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null)
+		ServiceCategoryVO expectedVersionUpdate = ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(null)
 				.parentId(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
@@ -623,7 +623,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 	private static Stream<Arguments> provideFieldParameters() {
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
-						ServiceCategoryVOTestExample.build().atSchemaLocation(null)
+						ServiceCategoryVOTestExample.build().atSchemaLocation(null).validFor(null)
 								.parentId(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
 						ServiceCategoryVOTestExample.build().atSchemaLocation(null)

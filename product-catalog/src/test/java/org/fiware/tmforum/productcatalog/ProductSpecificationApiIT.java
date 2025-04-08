@@ -322,7 +322,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 			ProductSpecificationVO productSpecificationVO = ProductSpecificationVOTestExample.build()
 					.atSchemaLocation(null)
 					.targetProductSchema(null)
-					
+					.validFor(null)
 					.id(id)
 					.href(id);
 			expectedProductSpecifications.add(productSpecificationVO);
@@ -545,7 +545,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		assertEquals(HttpStatus.OK, emptyUpdateResponse.getStatus(), message);
 		assertEquals(0, emptyUpdateResponse.body().getResourceSpecification().size(), "If set to empty, the spec-list should be emptied.");
 	}
-	
+
 	private static Stream<Arguments> provideProductOfferingUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
@@ -555,7 +555,8 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newDesc.setDescription("New description");
 		ProductSpecificationVO expectedNewDesc = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
-				.targetProductSchema(null);
+				.targetProductSchema(null)
+				.validFor(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
@@ -565,7 +566,8 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newLifeCycle.setLifecycleStatus("Dead");
 		ProductSpecificationVO expectedNewLifeCycle = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
-				.targetProductSchema(null);
+				.targetProductSchema(null)
+				.validFor(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
@@ -576,7 +578,8 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newName.setName("New name");
 		ProductSpecificationVO expectedNewName = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
-				.targetProductSchema(null);
+				.targetProductSchema(null)
+				.validFor(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
@@ -586,7 +589,8 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newVersion.setVersion("1.23.1");
 		ProductSpecificationVO expectedNewVersion = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
-				.targetProductSchema(null);
+				.targetProductSchema(null)
+				.validFor(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
@@ -785,7 +789,8 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 				.targetProductSchema(null)
 				.id(id)
 				.href(id)
-				.lastUpdate(currentTimeInstant);
+				.lastUpdate(currentTimeInstant)
+				.validFor(null);
 
 		//then retrieve
 		HttpResponse<ProductSpecificationVO> retrievedPOP = callAndCatch(
@@ -888,5 +893,3 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	}
 
 }
-
-

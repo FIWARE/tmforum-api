@@ -191,24 +191,24 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("A single char without rels should be valid", List.of(
 						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-1").charSpecRelationship(null)
-								.characteristicValueSpecification(null))));
+								.characteristicValueSpecification(null).validFor(null))));
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("Multiple chars without rels should be valid", List.of(
 						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-1").charSpecRelationship(null)
-								.characteristicValueSpecification(null),
+								.characteristicValueSpecification(null).validFor(null),
 						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-2").charSpecRelationship(null)
-								.characteristicValueSpecification(null))));
+								.characteristicValueSpecification(null).validFor(null))));
 
 		validCharacteristicSpecs.add(
 				new ArgumentPair<>("Multiple chars with rels should be valid", List.of(
 						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-1").charSpecRelationship(null)
-								.characteristicValueSpecification(null),
+								.characteristicValueSpecification(null).validFor(null),
 						CharacteristicSpecificationVOTestExample.build().atSchemaLocation(null).id("urn:cs-2")
-								.characteristicValueSpecification(null)
+								.characteristicValueSpecification(null).validFor(null)
 								.charSpecRelationship(
 										List.of(CharacteristicSpecificationRelationshipVOTestExample.build()
-												.characteristicSpecificationId("urn:cs-1"))))));
+												.characteristicSpecificationId("urn:cs-1").validFor(null))))));
 		return validCharacteristicSpecs.stream();
 	}
 
@@ -226,7 +226,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.featureSpecCharacteristicValue(null)
 										.featureSpecCharRelationship(
 												List.of(FeatureSpecificationCharacteristicRelationshipVOTestExample.build()
-														
+														.validFor(null)
 														.characteristicId("urn:feature-spec")
 														.featureId("urn:feature")
 														.resourceSpecificationId(null)))
@@ -527,7 +527,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 					.targetEntitySchema(null)
 					.id(id)
 					.href(URI.create(id))
-					
+					.validFor(null)
 					.constraint(null);
 			expectedServiceSpecifications.add(serviceSpecificationVO);
 		}
@@ -698,7 +698,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedLifecycleStatus = ServiceSpecificationVOTestExample.build()
-				
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.lifecycleStatus("dead");
@@ -715,7 +715,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedDescriptionUpdate = ServiceSpecificationVOTestExample.build()
-				
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.description("new-description");
@@ -732,7 +732,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedNameUpdate = ServiceSpecificationVOTestExample.build()
-				
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.name("new-name");
@@ -748,7 +748,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceLevelSpecification(null)
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedVersionUpdate = ServiceSpecificationVOTestExample.build()
-				
+				.validFor(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.version("v0.0.2");
@@ -787,7 +787,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceLevelSpecification(null)
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
-										
+										.validFor(null)
 										.atSchemaLocation(null)
 										.targetEntitySchema(null)
 										.lifecycleStatus("created")
@@ -808,7 +808,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceLevelSpecification(null)
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
-										
+										.validFor(null)
 										.atSchemaLocation(null)
 										.targetEntitySchema(null)
 										.lifecycleStatus("updated")
@@ -959,6 +959,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.", null,
 						ServiceSpecificationVOTestExample.build().atSchemaLocation(null)
+								.validFor(null)
 								.targetEntitySchema(null)
 								.lastUpdate(Instant.MAX)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",

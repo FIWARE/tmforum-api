@@ -356,17 +356,17 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
 		List<Arguments> result = new ArrayList<>();
 		result.add(Arguments.of("The name should have been updated",
 				AgreementUpdateVOTestExample.build().atSchemaLocation(null).agreementSpecification(null).name("Updated"),
-				AgreementVOTestExample.build().atSchemaLocation(null).agreementSpecification(null)
-						.name("Updated")));
+				AgreementVOTestExample.build().atSchemaLocation(null).agreementSpecification(null).agreementPeriod(null)
+						.completionDate(null).name("Updated")));
 		result.add(Arguments.of("The version should have been updated",
 				AgreementUpdateVOTestExample.build().atSchemaLocation(null).agreementSpecification(null).version("2.2"),
-				AgreementVOTestExample.build().atSchemaLocation(null).agreementSpecification(null)
-						.version("2.2")));
+				AgreementVOTestExample.build().atSchemaLocation(null).agreementSpecification(null).agreementPeriod(null)
+						.completionDate(null).version("2.2")));
 		Instant now = Instant.now();
 		result.add(Arguments.of("The initial date info should have been updated",
 				AgreementUpdateVOTestExample.build().atSchemaLocation(null).agreementSpecification(null).initialDate(now),
-				AgreementVOTestExample.build().atSchemaLocation(null).agreementSpecification(null)
-						.initialDate(now)));
+				AgreementVOTestExample.build().atSchemaLocation(null).agreementSpecification(null).agreementPeriod(null)
+						.completionDate(null).initialDate(now)));
 
 		return result.stream();
 	}
@@ -484,7 +484,9 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
 		result.add(Arguments.of("If no fields are established, all attributes should be returned", null,
 				AgreementVOTestExample.build()
 						.atSchemaLocation(null)
-						.agreementSpecification(null)));
+						.agreementSpecification(null)
+						.agreementPeriod(null)
+						.completionDate(null)));
 		result.add(Arguments.of(
 				"It should only name,version,description with the mandatory attributes",
 				"name,version,description",

@@ -279,7 +279,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 			catalogVO
 					.id(id)
 					.href(id)
-					
+					.validFor(null)
 					.category(null)
 					.relatedParty(null);
 			expectedCatalogs.add(catalogVO);
@@ -423,32 +423,32 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 
 		CatalogUpdateVO newTypeCatalog = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
 		newTypeCatalog.setCatalogType("New-Type");
-		CatalogVO expectedNewType = CatalogVOTestExample.build().atSchemaLocation(null).category(null).relatedParty(null);
+		CatalogVO expectedNewType = CatalogVOTestExample.build().atSchemaLocation(null).validFor(null).category(null).relatedParty(null);
 		expectedNewType.setCatalogType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeCatalog, expectedNewType));
 
 		CatalogUpdateVO newDesc = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		CatalogVO expectedNewDesc = CatalogVOTestExample.build().atSchemaLocation(null).category(null).relatedParty(null);
+		CatalogVO expectedNewDesc = CatalogVOTestExample.build().atSchemaLocation(null).validFor(null).category(null).relatedParty(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
 		CatalogUpdateVO newLifeCycle = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
 		newLifeCycle.setLifecycleStatus("Dead");
-		CatalogVO expectedNewLifeCycle = CatalogVOTestExample.build().atSchemaLocation(null).category(null).relatedParty(null);
+		CatalogVO expectedNewLifeCycle = CatalogVOTestExample.build().atSchemaLocation(null).validFor(null).category(null).relatedParty(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
 		testEntries.add(
 				Arguments.of("The lifecycle state should have been updated.", newLifeCycle, expectedNewLifeCycle));
 
 		CatalogUpdateVO newName = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		CatalogVO expectedNewName = CatalogVOTestExample.build().atSchemaLocation(null).category(null).relatedParty(null);
+		CatalogVO expectedNewName = CatalogVOTestExample.build().atSchemaLocation(null).validFor(null).category(null).relatedParty(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
 		CatalogUpdateVO newVersion = CatalogUpdateVOTestExample.build().atSchemaLocation(null);
 		newVersion.setVersion("1.23.1");
-		CatalogVO expectedNewVersion = CatalogVOTestExample.build().atSchemaLocation(null).category(null).relatedParty(null);
+		CatalogVO expectedNewVersion = CatalogVOTestExample.build().atSchemaLocation(null).validFor(null).category(null).relatedParty(null);
 		expectedNewVersion.setVersion("1.23.1");
 		testEntries.add(Arguments.of("The version should have been updated.", newVersion, expectedNewVersion));
 
@@ -584,7 +584,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 
 		CatalogVO expectedCatalog = CatalogVOTestExample.build()
 				.atSchemaLocation(null)
-				
+				.validFor(null)
 				.id(id)
 				.href(id)
 				.atSchemaLocation(null)
