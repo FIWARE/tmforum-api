@@ -545,7 +545,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		assertEquals(HttpStatus.OK, emptyUpdateResponse.getStatus(), message);
 		assertEquals(0, emptyUpdateResponse.body().getResourceSpecification().size(), "If set to empty, the spec-list should be emptied.");
 	}
-	
+
 	private static Stream<Arguments> provideProductOfferingUpdates() {
 		List<Arguments> testEntries = new ArrayList<>();
 
@@ -893,5 +893,3 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 	}
 
 }
-
-

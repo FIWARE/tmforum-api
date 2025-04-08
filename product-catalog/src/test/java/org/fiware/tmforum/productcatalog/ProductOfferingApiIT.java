@@ -1011,5 +1011,3 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		return ProductOffering.TYPE_PRODUCT_OFFERING;
 	}
 }
-
-

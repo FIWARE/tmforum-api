@@ -32,41 +32,37 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 @Slf4j
 @Controller("${general.basepath:/}")
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
-    private final TMForumMapper tmForumMapper;
-    private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-            entry(EVENT_GROUP_USAGE, Usage.TYPE_U),
-            entry(EVENT_GROUP_USAGE_SPECIFICATION, UsageSpecification.TYPE_USP)
-    );
-    private static final List<String> EVENT_GROUPS = List.of(
-            EVENT_GROUP_USAGE, EVENT_GROUP_USAGE_SPECIFICATION);
-    private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-            entry(Usage.TYPE_U, Usage.class),
-            entry(UsageSpecification.TYPE_USP, UsageSpecification.class)
-    );
+	private final TMForumMapper tmForumMapper;
+	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
+			entry(EVENT_GROUP_USAGE, Usage.TYPE_U),
+			entry(EVENT_GROUP_USAGE_SPECIFICATION, UsageSpecification.TYPE_USP)
+	);
+	private static final List<String> EVENT_GROUPS = List.of(
+			EVENT_GROUP_USAGE, EVENT_GROUP_USAGE_SPECIFICATION);
 
-    public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                          TmForumRepository repository, TMForumMapper tmForumMapper,
-                                          TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
-                                          GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
-                generalProperties, entityVOMapper, subscriptionMapper);
-        this.tmForumMapper = tmForumMapper;
-    }
+	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
+										  TmForumRepository repository, TMForumMapper tmForumMapper,
+										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
+										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+				generalProperties, entityVOMapper, subscriptionMapper);
+		this.tmForumMapper = tmForumMapper;
+	}
 
-    @Override
-    public Mono<HttpResponse<EventSubscriptionVO>> registerListener(
-            @NonNull EventSubscriptionInputVO eventSubscriptionInputVO) {
-        TMForumSubscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
-                eventSubscriptionInputVO.getQuery(), EVENT_GROUPS);
+	@Override
+	public Mono<HttpResponse<EventSubscriptionVO>> registerListener(
+			@NonNull EventSubscriptionInputVO eventSubscriptionInputVO) {
+		TMForumSubscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
+				eventSubscriptionInputVO.getQuery(), EVENT_GROUPS);
 
-        return create(subscription)
-                .map(tmForumMapper::map)
-                .map(HttpResponse::created);
-    }
+		return create(subscription)
+				.map(tmForumMapper::map)
+				.map(HttpResponse::created);
+	}
 
-    @Override
-    public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
-        return delete(id);
-    }
+	@Override
+	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
+		return delete(id);
+	}
+
 }

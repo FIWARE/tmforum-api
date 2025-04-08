@@ -29,8 +29,8 @@ public class PartyApiIT extends AbstractApiIT {
 	private final IndividualApiTestClient individualApiTestClient;
 
 	public PartyApiIT(OrganizationApiTestClient organizationApiTestClient,
-			IndividualApiTestClient individualApiTestClient, EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+					  IndividualApiTestClient individualApiTestClient, EntitiesApiClient entitiesApiClient,
+					  ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.organizationApiTestClient = organizationApiTestClient;
 		this.individualApiTestClient = individualApiTestClient;

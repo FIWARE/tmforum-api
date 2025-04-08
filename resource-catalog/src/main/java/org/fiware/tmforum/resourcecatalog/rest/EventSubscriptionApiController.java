@@ -33,46 +33,40 @@ import static org.fiware.tmforum.common.notification.EventConstants.*;
 @Slf4j
 @Controller("${general.basepath:/}")
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
-    private final TMForumMapper tmForumMapper;
-    private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-		entry(EVENT_GROUP_RESOURCE_CANDIDATE, ResourceCandidate.TYPE_RESOURCE_CANDIDATE),
-		entry(EVENT_GROUP_RESOURCE_CATALOG, ResourceCatalog.TYPE_RESOURCE_CATALOG),
-		entry(EVENT_GROUP_RESOURCE_CATEGORY, ResourceCategory.TYPE_RESOURCE_CATEGORY),
-		entry(EVENT_GROUP_RESOURCE_SPECIFICATION, ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)
+	private final TMForumMapper tmForumMapper;
+	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
+			entry(EVENT_GROUP_RESOURCE_CANDIDATE, ResourceCandidate.TYPE_RESOURCE_CANDIDATE),
+			entry(EVENT_GROUP_RESOURCE_CATALOG, ResourceCatalog.TYPE_RESOURCE_CATALOG),
+			entry(EVENT_GROUP_RESOURCE_CATEGORY, ResourceCategory.TYPE_RESOURCE_CATEGORY),
+			entry(EVENT_GROUP_RESOURCE_SPECIFICATION, ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)
 	);
-    private static final List<String> EVENT_GROUPS = List.of(
-            EVENT_GROUP_RESOURCE_CANDIDATE, EVENT_GROUP_RESOURCE_CATALOG,
-            EVENT_GROUP_RESOURCE_CATEGORY, EVENT_GROUP_RESOURCE_SPECIFICATION);
-    private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-        entry(ResourceCandidate.TYPE_RESOURCE_CANDIDATE, ResourceCandidate.class),
-        entry(ResourceCatalog.TYPE_RESOURCE_CATALOG, ResourceCatalog.class),
-        entry(ResourceCategory.TYPE_RESOURCE_CATEGORY, ResourceCategory.class),
-        entry(ResourceSpecification.TYPE_RESOURCE_SPECIFICATION, ResourceSpecification.class)
-    );
+	private static final List<String> EVENT_GROUPS = List.of(
+			EVENT_GROUP_RESOURCE_CANDIDATE, EVENT_GROUP_RESOURCE_CATALOG,
+			EVENT_GROUP_RESOURCE_CATEGORY, EVENT_GROUP_RESOURCE_SPECIFICATION);
 
-    public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
+	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-        super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-                ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
-                generalProperties, entityVOMapper, subscriptionMapper);
-        this.tmForumMapper = tmForumMapper;
-    }
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+				generalProperties, entityVOMapper, subscriptionMapper);
+		this.tmForumMapper = tmForumMapper;
+	}
 
-    @Override
-    public Mono<HttpResponse<EventSubscriptionVO>> registerListener(
-            @NonNull EventSubscriptionInputVO eventSubscriptionInputVO) {
-        TMForumSubscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
-                eventSubscriptionInputVO.getQuery(), EVENT_GROUPS);
+	@Override
+	public Mono<HttpResponse<EventSubscriptionVO>> registerListener(
+			@NonNull EventSubscriptionInputVO eventSubscriptionInputVO) {
+		TMForumSubscription subscription = buildSubscription(eventSubscriptionInputVO.getCallback(),
+				eventSubscriptionInputVO.getQuery(), EVENT_GROUPS);
 
-        return create(subscription)
-                .map(tmForumMapper::map)
-                .map(HttpResponse::created);
-    }
+		return create(subscription)
+				.map(tmForumMapper::map)
+				.map(HttpResponse::created);
+	}
 
-    @Override
-    public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
-        return delete(id);
-    }
+	@Override
+	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
+		return delete(id);
+	}
+
 }
