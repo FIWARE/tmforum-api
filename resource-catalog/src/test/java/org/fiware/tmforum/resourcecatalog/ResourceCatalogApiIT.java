@@ -278,7 +278,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
             ResourceCatalogCreateVO resourceCatalogCreateVO = ResourceCatalogCreateVOTestExample.build().atSchemaLocation(null);
             String id = resourceCatalogApiTestClient.createResourceCatalog(null, resourceCatalogCreateVO)
                     .body().getId();
-            ResourceCatalogVO resourceCatalogVO = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
+            ResourceCatalogVO resourceCatalogVO = ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                     .id(id)
                     .href(URI.create(id));
             expectedResourceCatalogs.add(resourceCatalogVO);
@@ -431,27 +431,27 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 
         ResourceCatalogUpdateVO lifecycleStatusUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .lifecycleStatus("dead");
-        ResourceCatalogVO expectedLifecycleStatus = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
+        ResourceCatalogVO expectedLifecycleStatus = ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .lifecycleStatus("dead");
         testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
                 expectedLifecycleStatus));
 
         ResourceCatalogUpdateVO descriptionUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .description("new-description");
-        ResourceCatalogVO expectedDescriptionUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
+        ResourceCatalogVO expectedDescriptionUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .description("new-description");
         testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
                 expectedDescriptionUpdate));
 
         ResourceCatalogUpdateVO nameUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .name("new-name");
-        ResourceCatalogVO expectedNameUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
+        ResourceCatalogVO expectedNameUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .name("new-name");
         testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
 
         ResourceCatalogUpdateVO versionUpdate = ResourceCatalogUpdateVOTestExample.build().atSchemaLocation(null)
                 .version("v0.0.2");
-        ResourceCatalogVO expectedVersionUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null)
+        ResourceCatalogVO expectedVersionUpdate = ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)
                 .version("v0.0.2");
         testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
@@ -589,9 +589,10 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
-                        ResourceCatalogVOTestExample.build().atSchemaLocation(null)),
+                        ResourceCatalogVOTestExample.build().atSchemaLocation(null).validFor(null)),
                 Arguments.of("Only version and the mandatory parameters should have been included.", "version",
                         ResourceCatalogVOTestExample.build().atSchemaLocation(null)
+                                .validFor(null)
                                 .relatedParty(null)
                                 .lastUpdate(null)
                                 .category(null)
@@ -610,11 +611,11 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
                                 .lastUpdate(null)
                                 .category(null)
                                 .relatedParty(null)
-                                .validFor(null)
                                 .description(null)
                                 .lifecycleStatus(null)
                                 .name(null)
                                 .version(null)
+                                .validFor(null)
                                 .atBaseType(null)
                                 .atSchemaLocation(null)
                                 .atType(null)),
