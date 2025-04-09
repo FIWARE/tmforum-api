@@ -28,7 +28,7 @@ public abstract class EventHandler {
 		event.setEventId(UUID.randomUUID().toString());
 
 		EventMapping eventMapping = eventMapper.getEntityClassMapping().get(eventDetails.entityType());
-		event.setEvent(Map.of(eventDetails.payloadName(), entityFilter.apply(eventMapper.mapPayload(entity, eventMapping.targetClass()))));
+		event.setEvent(Map.of(eventDetails.payloadName(), entityFilter.apply(eventMapper.mapPayload(entity, eventMapping.rawClass()))));
 		event.setEventTime(eventDetails.eventTime());
 
 		return event;
