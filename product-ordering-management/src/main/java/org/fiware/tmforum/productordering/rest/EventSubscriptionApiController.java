@@ -6,10 +6,15 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.productordering.api.EventsSubscriptionApi;
+import org.fiware.productordering.model.CancelProductOrderVO;
 import org.fiware.productordering.model.EventSubscriptionInputVO;
 import org.fiware.productordering.model.EventSubscriptionVO;
+import org.fiware.productordering.model.ProductOrderVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -17,6 +22,7 @@ import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
+import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.productordering.TMForumMapper;
 import org.fiware.tmforum.productordering.domain.CancelProductOrder;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
@@ -34,22 +40,17 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 	private final TMForumMapper tmForumMapper;
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-		entry(EVENT_GROUP_CANCEL_PRODUCT_ORDER, CancelProductOrder.TYPE_CANCEL_PRODUCT_ORDER),
-		entry(EVENT_GROUP_PRODUCT_ORDER, ProductOrder.TYPE_PRODUCT_ORDER)
+			entry(EVENT_GROUP_CANCEL_PRODUCT_ORDER, CancelProductOrder.TYPE_CANCEL_PRODUCT_ORDER),
+			entry(EVENT_GROUP_PRODUCT_ORDER, ProductOrder.TYPE_PRODUCT_ORDER)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(
 			EVENT_GROUP_CANCEL_PRODUCT_ORDER, EVENT_GROUP_PRODUCT_ORDER);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-		entry(CancelProductOrder.TYPE_CANCEL_PRODUCT_ORDER, CancelProductOrder.class),
-		entry(ProductOrder.TYPE_PRODUCT_ORDER, ProductOrder.class)
-	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
@@ -69,4 +70,5 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
 	}
+
 }

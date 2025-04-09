@@ -764,5 +764,3 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		return ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE;
 	}
 }
-
-

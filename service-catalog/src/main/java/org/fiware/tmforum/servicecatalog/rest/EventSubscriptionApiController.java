@@ -10,6 +10,7 @@ import org.fiware.servicecatalog.model.EventSubscriptionInputVO;
 import org.fiware.servicecatalog.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -35,26 +36,19 @@ import static org.fiware.tmforum.common.notification.EventConstants.*;
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 	private final TMForumMapper tmForumMapper;
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(
-		entry(EVENT_GROUP_SERVICE_CANDIDATE, ServiceCandidate.TYPE_SERVICE_CANDIDATE),
-		entry(EVENT_GROUP_SERVICE_CATALOG, ServiceCatalog.TYPE_SERVICE_CATALOG),
-		entry(EVENT_GROUP_SERVICE_CATEGORY, ServiceCategory.TYPE_SERVICE_CATEGORY),
-		entry(EVENT_GROUP_SERVICE_SPECIFICATION, ServiceSpecification.TYPE_SERVICE_SPECIFICATION)
+			entry(EVENT_GROUP_SERVICE_CANDIDATE, ServiceCandidate.TYPE_SERVICE_CANDIDATE),
+			entry(EVENT_GROUP_SERVICE_CATALOG, ServiceCatalog.TYPE_SERVICE_CATALOG),
+			entry(EVENT_GROUP_SERVICE_CATEGORY, ServiceCategory.TYPE_SERVICE_CATEGORY),
+			entry(EVENT_GROUP_SERVICE_SPECIFICATION, ServiceSpecification.TYPE_SERVICE_SPECIFICATION)
 	);
 	private static final List<String> EVENT_GROUPS = List.of(EVENT_GROUP_SERVICE_CANDIDATE,
 			EVENT_GROUP_SERVICE_CATALOG, EVENT_GROUP_SERVICE_CATEGORY, EVENT_GROUP_SERVICE_SPECIFICATION);
-	private static final Map<String, Class<?>> ENTITY_NAME_TO_ENTITY_CLASS_MAPPING = Map.ofEntries(
-		entry(ServiceCandidate.TYPE_SERVICE_CANDIDATE, ServiceCandidate.class),
-		entry(ServiceCatalog.TYPE_SERVICE_CATALOG, ServiceCatalog.class),
-		entry(ServiceCategory.TYPE_SERVICE_CATEGORY, ServiceCategory.class),
-		entry(ServiceSpecification.TYPE_SERVICE_SPECIFICATION, ServiceSpecification.class)
-	);
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  TmForumRepository repository, TMForumMapper tmForumMapper,
 										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
-		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING,
-				ENTITY_NAME_TO_ENTITY_CLASS_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
+		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);
 		this.tmForumMapper = tmForumMapper;
 	}
@@ -74,4 +68,5 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 	public Mono<HttpResponse<Object>> unregisterListener(@NonNull String id) {
 		return delete(id);
 	}
+
 }
