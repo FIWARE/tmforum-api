@@ -30,11 +30,11 @@ public class PartyCatalogEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Individual.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == Individual.class) {
 			return tmForumMapper.map((Individual) rawPayload);
 		}
-		if (targetClass == Organization.class) {
+		if (rawClass == Organization.class) {
 			return tmForumMapper.map((Organization) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

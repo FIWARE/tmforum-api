@@ -26,8 +26,8 @@ public class CustomerManagementEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Customer.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == Customer.class) {
 			return tmForumMapper.map((Customer) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

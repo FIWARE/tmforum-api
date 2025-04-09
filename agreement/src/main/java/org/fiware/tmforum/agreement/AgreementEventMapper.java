@@ -31,11 +31,11 @@ public class AgreementEventMapper implements EventMapper {
 
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == AgreementSpecification.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == AgreementSpecification.class) {
 			return tmForumMapper.map((AgreementSpecification) rawPayload);
 		}
-		if (targetClass == Agreement.class) {
+		if (rawClass == Agreement.class) {
 			return tmForumMapper.map((Agreement) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

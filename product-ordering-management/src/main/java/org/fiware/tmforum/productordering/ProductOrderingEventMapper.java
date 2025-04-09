@@ -30,11 +30,11 @@ public class ProductOrderingEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == CancelProductOrder.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == CancelProductOrder.class) {
 			return tmForumMapper.map((CancelProductOrder) rawPayload);
 		}
-		if (targetClass == ProductOrder.class) {
+		if (rawClass == ProductOrder.class) {
 			return tmForumMapper.map((ProductOrder) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

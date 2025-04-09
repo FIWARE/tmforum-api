@@ -27,8 +27,8 @@ public class ProductInventoryEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Product.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == Product.class) {
 			return tmForumMapper.map((Product) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

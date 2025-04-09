@@ -35,20 +35,20 @@ public class ProductCatalogEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Catalog.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == Catalog.class) {
 			return tmForumMapper.map((Catalog) rawPayload);
 		}
-		if (targetClass == Category.class) {
+		if (rawClass == Category.class) {
 			return tmForumMapper.map((Category) rawPayload);
 		}
-		if (targetClass == ProductOffering.class) {
+		if (rawClass == ProductOffering.class) {
 			return tmForumMapper.map((ProductOffering) rawPayload);
 		}
-		if (targetClass == ProductOfferingPrice.class) {
+		if (rawClass == ProductOfferingPrice.class) {
 			return tmForumMapper.map((ProductOfferingPrice) rawPayload);
 		}
-		if (targetClass == ProductSpecification.class) {
+		if (rawClass == ProductSpecification.class) {
 			return tmForumMapper.map((ProductSpecification) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
