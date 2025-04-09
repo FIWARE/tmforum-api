@@ -22,7 +22,6 @@ public class PartyRoleEventMapper implements EventMapper {
 
 	@Override
 	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
 	}
 }

@@ -30,11 +30,11 @@ public class UsageManagementEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Usage.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == Usage.class) {
 			return tmForumMapper.map((Usage) rawPayload);
 		}
-		if (targetClass == UsageSpecification.class) {
+		if (rawClass == UsageSpecification.class) {
 			return tmForumMapper.map((UsageSpecification) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

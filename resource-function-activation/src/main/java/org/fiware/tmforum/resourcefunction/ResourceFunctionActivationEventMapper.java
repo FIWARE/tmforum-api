@@ -31,20 +31,20 @@ public class ResourceFunctionActivationEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == Heal.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == Heal.class) {
 			return tmForumMapper.map((Heal) rawPayload);
 		}
-		if (targetClass == Migrate.class) {
+		if (rawClass == Migrate.class) {
 			return tmForumMapper.map((Migrate) rawPayload);
 		}
-		if (targetClass == Monitor.class) {
+		if (rawClass == Monitor.class) {
 			return tmForumMapper.map((Monitor) rawPayload);
 		}
-		if (targetClass == ResourceFunction.class) {
+		if (rawClass == ResourceFunction.class) {
 			return tmForumMapper.map((ResourceFunction) rawPayload);
 		}
-		if (targetClass == Scale.class) {
+		if (rawClass == Scale.class) {
 			return tmForumMapper.map((Scale) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

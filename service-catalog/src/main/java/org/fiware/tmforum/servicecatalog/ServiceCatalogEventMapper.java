@@ -36,17 +36,17 @@ public class ServiceCatalogEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == ServiceCandidate.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == ServiceCandidate.class) {
 			return tmForumMapper.map((ServiceCandidate) rawPayload);
 		}
-		if (targetClass == ServiceCatalog.class) {
+		if (rawClass == ServiceCatalog.class) {
 			return tmForumMapper.map((ServiceCatalog) rawPayload);
 		}
-		if (targetClass == ServiceCategory.class) {
+		if (rawClass == ServiceCategory.class) {
 			return tmForumMapper.map((ServiceCategory) rawPayload);
 		}
-		if (targetClass == ServiceSpecification.class) {
+		if (rawClass == ServiceSpecification.class) {
 			return tmForumMapper.map((ServiceSpecification) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
