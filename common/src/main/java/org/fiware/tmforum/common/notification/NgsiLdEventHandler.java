@@ -58,7 +58,7 @@ public class NgsiLdEventHandler extends EventHandler {
 		EventDetails eventDetails = makeEventDetails(payload.getType(), eventTypeSuffix, eventTime);
 		EventMapping eventMapping = entityNameToEntityClassMapping.get(eventDetails.entityType());
 		return entityVOMapper.fromEntityVO(payload, eventMapping.rawClass())
-				.map(o -> eventMapper.mapPayload(o, eventMapping.targetClass()))
+				.map(o -> eventMapper.mapPayload(o, eventMapping.rawClass()))
 				.map(entity -> new TMForumNotification(listenerCallback, createEvent(eventDetails, entity, (e) -> applyFieldsFilter(
 						e, selectedFields))));
 	}

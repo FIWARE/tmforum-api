@@ -33,26 +33,26 @@ public class AccountEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == BillFormat.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == BillFormat.class) {
 			return tmForumMapper.map((BillFormat) rawPayload);
 		}
-		if (targetClass == BillingAccount.class) {
+		if (rawClass == BillingAccount.class) {
 			return tmForumMapper.map((BillingAccount) rawPayload);
 		}
-		if (targetClass == BillingCycleSpecification.class) {
+		if (rawClass == BillingCycleSpecification.class) {
 			return tmForumMapper.map((BillingCycleSpecification) rawPayload);
 		}
-		if (targetClass == BillPresentationMedia.class) {
+		if (rawClass == BillPresentationMedia.class) {
 			return tmForumMapper.map((BillPresentationMedia) rawPayload);
 		}
-		if (targetClass == FinancialAccount.class) {
+		if (rawClass == FinancialAccount.class) {
 			return tmForumMapper.map((FinancialAccount) rawPayload);
 		}
-		if (targetClass == PartyAccount.class) {
+		if (rawClass == PartyAccount.class) {
 			return tmForumMapper.map((PartyAccount) rawPayload);
 		}
-		if (targetClass == SettlementAccount.class) {
+		if (rawClass == SettlementAccount.class) {
 			return tmForumMapper.map((SettlementAccount) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);

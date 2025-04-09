@@ -36,17 +36,17 @@ public class ResourceCatalogEventMapper implements EventMapper {
 	}
 
 	@Override
-	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
-		if (targetClass == ResourceCandidate.class) {
+	public Object mapPayload(Object rawPayload, Class<?> rawClass) {
+		if (rawClass == ResourceCandidate.class) {
 			return tmForumMapper.map((ResourceCandidate) rawPayload);
 		}
-		if (targetClass == ResourceCatalog.class) {
+		if (rawClass == ResourceCatalog.class) {
 			return tmForumMapper.map((ResourceCatalog) rawPayload);
 		}
-		if (targetClass == ResourceCategory.class) {
+		if (rawClass == ResourceCategory.class) {
 			return tmForumMapper.map((ResourceCategory) rawPayload);
 		}
-		if (targetClass == ResourceSpecification.class) {
+		if (rawClass == ResourceSpecification.class) {
 			return tmForumMapper.map((ResourceSpecification) rawPayload);
 		}
 		throw new TmForumException(String.format("Event-Payload %s is not supported.", rawPayload), TmForumExceptionReason.INVALID_DATA);
