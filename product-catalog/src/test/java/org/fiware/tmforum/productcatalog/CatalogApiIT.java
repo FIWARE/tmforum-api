@@ -155,6 +155,24 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 		return testEntries.stream();
 	}
 
+	@Test
+	public void createCatalogWithoutName400() throws Exception {
+		CatalogCreateVO catalogCreateVO = new CatalogCreateVO();
+		catalogCreateVO.setName(null);
+
+		HttpResponse<CatalogVO> creationResponse = callAndCatch(
+				() -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
+
+		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), "Expected HTTP status 400 for missing name.");
+
+		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
+		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
+
+		String expectedErrorMessage = "The request contained invalid data - Name field is required and must not be blank to create a catalog.";
+		assertEquals(expectedErrorMessage, optionalErrorDetails.get().message(), "Error message does not match.");
+	}
+
+
 	@Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
 	@Test
 	@Override
