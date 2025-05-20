@@ -40,8 +40,8 @@ jobs:
 
       - name: Ensure br_netfilter is enabled.
         run: |
-          lsmod | grep -q br_netfilter
-          
+          modprobe -n -v br_netfilter
+
       - name: Execute tests
         id: test
         continue-on-error: true
