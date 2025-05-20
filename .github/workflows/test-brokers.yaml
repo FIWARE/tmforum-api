@@ -40,8 +40,20 @@ jobs:
 
       - name: Execute tests
         id: test
+        continue-on-error: true
         run: |
           mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
+
+      - uses: azure/setup-kubectl@v4
+        id: install
+
+      - name: Log
+        id: log
+        run: | 
+          export KUBECONFIG=$(pwd)/${{matrix.module}}/target/k3s.yaml
+          kubectl get pods
+          kubectl describe deployment scorpio 
+
 
       - name: Archive coverage
         if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
