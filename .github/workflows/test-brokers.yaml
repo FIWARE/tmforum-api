@@ -40,12 +40,13 @@ jobs:
 
       - name: Ensure br_netfilter is enabled.
         run: |
-          modprobe -n -v br_netfilter
+          modprobe br_netfilter
 
       - name: Execute tests
         id: test
         continue-on-error: true
         run: |
+          modprobe br_netfilter
           mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
 
       - uses: azure/setup-kubectl@v4
