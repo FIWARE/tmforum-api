@@ -38,6 +38,11 @@ jobs:
           java-version: '17'
           java-package: jdk
 
+      - name: Ensure br_netfilter is enabled.
+        modprobe:
+          name: br_netfilter
+          state: present
+
       - name: Execute tests
         id: test
         continue-on-error: true
