@@ -46,18 +46,7 @@ jobs:
         id: test
         continue-on-error: true
         run: |
-          modprobe br_netfilter
           mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
-
-      - uses: azure/setup-kubectl@v4
-        id: install
-
-      - name: Log
-        id: log
-        run: | 
-          export KUBECONFIG=$(pwd)/${{matrix.module}}/target/k3s.yaml
-          kubectl logs -l app.kubernetes.io/name=scorpio
-
 
       - name: Archive coverage
         if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
