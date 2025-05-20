@@ -44,7 +44,6 @@ jobs:
 
       - name: Execute tests
         id: test
-        continue-on-error: true
         run: |
           mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
 
