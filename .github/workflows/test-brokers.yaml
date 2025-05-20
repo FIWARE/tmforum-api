@@ -51,8 +51,7 @@ jobs:
         id: log
         run: | 
           export KUBECONFIG=$(pwd)/${{matrix.module}}/target/k3s.yaml
-          kubectl get pods
-          kubectl describe pods 
+          kubectl logs -l app.kubernetes.io/name=scorpio
 
 
       - name: Archive coverage
