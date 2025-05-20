@@ -142,6 +142,7 @@
         <module.ctk.run-script>module-specific-run-script</module.ctk.run-script>
         <!-- base path to be used for the application when executing the conformance tests -->
         <module.ctk.base-path>/</module.ctk.base-path>
+
     </properties>
 
     <dependencyManagement>
@@ -389,6 +390,7 @@
                             <goal>merge</goal>
                         </goals>
                         <configuration>
+                            <skip>true</skip>
                             <fileSets>
                                 <fileSet>
                                     <directory>${jacoco.mergeDir}</directory>
@@ -946,6 +948,18 @@
                                 </fileSet>
                             </fileSets>
                         </configuration>
+                        <executions>
+                            <execution>
+                                <id>merge-reports</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>merge</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>false</skip>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>com.github.hazendaz.maven</groupId>
