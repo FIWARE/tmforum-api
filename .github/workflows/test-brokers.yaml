@@ -41,7 +41,7 @@ jobs:
       - name: Ensure br_netfilter is enabled.
         run: |
           sudo modprobe br_netfilter
-          
+
       - name: Execute tests
         id: test
         run: |
