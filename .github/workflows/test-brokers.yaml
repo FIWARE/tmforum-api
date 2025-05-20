@@ -39,10 +39,9 @@ jobs:
           java-package: jdk
 
       - name: Ensure br_netfilter is enabled.
-        modprobe:
-          name: br_netfilter
-          state: present
-
+        run: |
+          lsmod | grep -q br_netfilter
+          
       - name: Execute tests
         id: test
         continue-on-error: true
