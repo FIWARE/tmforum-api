@@ -91,7 +91,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		when(clock.instant()).thenReturn(now);
 
 		HttpResponse<ProductOrderVO> productVOHttpResponse = callAndCatch(
-				() -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
+				() -> productOrderApiTestClient.createProductOrder(null, productCreateVO));	
 		assertEquals(HttpStatus.CREATED, productVOHttpResponse.getStatus(), message);
 		String rfId = productVOHttpResponse.body().getId();
 		expectedProduct.setId(rfId);
@@ -234,6 +234,30 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						ProductOrderVOTestExample.build().atSchemaLocation(null)
 								.productOrderItem(List.of(productOrderItemVO))
 								.billingAccount(null)));
+
+		ProductOrderItemVO productOrderItemOfferingVO = ProductOrderItemVOTestExample.build().atSchemaLocation(null)
+				.action(OrderItemActionTypeVO.ADD)
+				.id("urn:order-item")
+				.appointment(null)
+				.billingAccount(null)
+				.product(null)
+				.productOffering(ProductOfferingRefValueVOTestExample.build().id("urn:product-offering"))
+				.productOfferingQualificationItem(null)
+				.quoteItem(null);
+
+	/**
+	 * 	TODO: this scenario needs a <product-offering> entity with id "urn:product-offering"
+	 * 	created in the testing context to pass
+	 * 
+	 *	testEntries.add(
+	 *			Arguments.of("A product order with an order item with product offering should have been created.",
+	 *					ProductOrderCreateVOTestExample.build().atSchemaLocation(null)
+	 *							.productOrderItem(List.of(productOrderItemOfferingVO))
+	 *							.billingAccount(null),
+	 *					ProductOrderVOTestExample.build().atSchemaLocation(null)
+	 *							.productOrderItem(List.of(productOrderItemOfferingVO))
+	 *							.billingAccount(null)));
+	 */
 
 		CharacteristicVO characteristicVO = CharacteristicVOTestExample.build().atSchemaLocation(null)
 				.name("Characteristic Name")
@@ -426,10 +450,10 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.appointment(null))));
 
 		invalidItems.add(new ArgumentPair<>("An order item with an invalid productOffering should not be accepted.",
-				List.of(ProductOrderItemVOTestExample.build().atSchemaLocation(null)
+				List.of(ProductOrderItemVOTestExample.build()
 						.billingAccount(null)
 						.product(null)
-						.productOffering(ProductOfferingRefVOTestExample.build().atSchemaLocation(null))
+						.productOffering(ProductOfferingRefValueVOTestExample.build())
 						.productOfferingQualificationItem(null)
 						.quoteItem(null)
 						.appointment(null))));
@@ -438,7 +462,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						.billingAccount(null)
 						.product(null)
 						.productOffering(
-								ProductOfferingRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:product-offering:non-existent"))
+								ProductOfferingRefValueVOTestExample.build().id("urn:ngsi-ld:product-offering:non-existent"))
 						.productOfferingQualificationItem(null)
 						.quoteItem(null)
 						.appointment(null))));
@@ -1550,4 +1574,3 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		return ProductOrder.TYPE_PRODUCT_ORDER;
 	}
 }
-

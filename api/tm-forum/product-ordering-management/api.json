@@ -2387,6 +2387,23 @@
                 "id"
             ]
         },
+        "ProductOfferingRefValue": {
+            "type": "object",
+            "description": "ProductOffering reference value. A product offering represents entities that are orderable from the provider of the catalog, this resource includes pricing information.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier of a related entity."
+                },
+                "href": {
+                    "type": "string",
+                    "description": "Reference of the related entity."
+                }
+            },
+            "required": [
+                "id"
+            ]
+        },
         "ProductOrder": {
             "type": "object",
             "description": "A Product Order is a type of order which  can  be used to place an order between a customer and a service provider or between a service provider and a partner and vice versa,",
@@ -2842,7 +2859,7 @@
                     "$ref": "#/definitions/ProductRefOrValue"
                 },
                 "productOffering": {
-                    "$ref": "#/definitions/ProductOfferingRef"
+                    "$ref": "#/definitions/ProductOfferingRefValue"
                 },
                 "productOfferingQualificationItem": {
                     "$ref": "#/definitions/ProductOfferingQualificationItemRef"
