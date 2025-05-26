@@ -18,6 +18,7 @@ import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -54,8 +55,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 	private ProductOrderCreateVO productCreateVO;
 	private ProductOrderUpdateVO productUpdateVO;
 	private ProductOrderVO expectedProduct;
-
-	private boolean isSetupDone = false;
+	private final TestSetupTracker setupTracker;
 
 	private Clock clock = mock(Clock.class);
 
@@ -78,12 +78,15 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 								EntitiesApiClient entitiesApiClient,
 								JavaObjectMapper javaObjectMapper,
 								TMForumMapper tmForumMapper,
-								ObjectMapper objectMapper, GeneralProperties generalProperties) {
+								ObjectMapper objectMapper,
+								GeneralProperties generalProperties,
+								TestSetupTracker setupTracker) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productOrderApiTestClient = productOrderApiTestClient;
 		this.entitiesApiClient = entitiesApiClient;
 		this.javaObjectMapper = javaObjectMapper;
 		this.tmForumMapper = tmForumMapper;
+		this.setupTracker = setupTracker;
 	}
 
 	public void createProductOffering(ProductOffering productOfferingVO) {
@@ -95,6 +98,14 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
         createProductOffering(tmForumMapper.map(ProductOfferingRefVOTestExample.build().atSchemaLocation(null).id("test")));
     }
 
+    @BeforeEach
+    public void conditionalSetup() {
+        if (!setupTracker.isSetupDone()) {
+            setup();
+            setupTracker.markSetupDone();
+        }
+    }
+
 	@ParameterizedTest
 	@MethodSource("provideValidProducts")
 	public void createProductOrder201(String message, ProductOrderCreateVO productCreateVO,
@@ -103,12 +114,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		this.message = message;
 		this.productCreateVO = productCreateVO;
 		this.expectedProduct = expectedProduct;
-
-       if (!isSetupDone) {
-            setup();
-            isSetupDone = true;
-        }
-
+	
 		createProductOrder201();
 	}
 
@@ -119,7 +125,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		when(clock.instant()).thenReturn(now);
 
 		HttpResponse<ProductOrderVO> productVOHttpResponse = callAndCatch(
-				() -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
+				() -> productOrderApiTestClient.createProductOrder(null, productCreateVO));	
 		assertEquals(HttpStatus.CREATED, productVOHttpResponse.getStatus(), message);
 		String rfId = productVOHttpResponse.body().getId();
 		expectedProduct.setId(rfId);

@@ -4,7 +4,7 @@ import lombok.Data;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.domain.ReferenceValue;
 import org.fiware.tmforum.product.ProductOfferingQualificationItemRef;
-import org.fiware.tmforum.product.ProductOfferingRefValue;
+import org.fiware.tmforum.product.ProductOfferingRef;
 import org.fiware.tmforum.product.ProductRefOrValue;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class ProductOrderItem extends Entity {
 	private List<OrderPrice> itemTotalPrice;
 	private List<ReferenceValue> payment;
 	private ProductRefOrValue product;
-	private ProductOfferingRefValue productOffering;
+	private ProductOfferingRef productOffering;
 	private ProductOfferingQualificationItemRef productOfferingQualificationItem;
 	private List<ProductOrderItem> productOrderItem;
 	private List<OrderItemRelationship> productOrderItemRelationship;
