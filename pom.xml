@@ -96,7 +96,7 @@
 
         <!-- mapping -->
         <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.4</version.io.github.wistefan.ngsi-ld-mapping-java>
-
+      
         <!-- caching -->
         <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>
 
