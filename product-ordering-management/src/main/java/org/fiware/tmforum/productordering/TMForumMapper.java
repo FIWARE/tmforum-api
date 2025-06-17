@@ -7,6 +7,7 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Characteristic;
+import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.productordering.domain.*;
 import org.fiware.tmforum.resource.Note;
 import org.mapstruct.Mapper;
@@ -95,6 +96,8 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "value", source = "charValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
 
+	public abstract ProductOffering map(ProductOfferingRefVO productOfferingRefVO);
+
 	public URL map(String value) {
 		if (value == null) {
 			return null;
@@ -127,5 +130,3 @@ public abstract class TMForumMapper extends BaseMapper {
 		return value.toString();
 	}
 }
-
-
