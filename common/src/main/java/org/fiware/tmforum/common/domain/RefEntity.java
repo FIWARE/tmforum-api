@@ -1,6 +1,6 @@
 package org.fiware.tmforum.common.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
@@ -46,7 +46,8 @@ public abstract class RefEntity extends Entity implements ReferencedEntity {
     }
 
     @Override
+    @JsonGetter("id")
     public URI getEntityId() {
-        return getId();
+        return this.id;
     }
 }
