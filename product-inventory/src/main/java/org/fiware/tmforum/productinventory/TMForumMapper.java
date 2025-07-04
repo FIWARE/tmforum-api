@@ -8,6 +8,7 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Characteristic;
 import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.product.RelatedProductOrderItemRef;
+import org.fiware.tmforum.service.CharacteristicValueSpecification;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

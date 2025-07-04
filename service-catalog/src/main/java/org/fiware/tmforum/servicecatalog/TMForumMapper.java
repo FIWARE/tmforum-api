@@ -91,6 +91,12 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "specId", source = "id")
 	public abstract CharacteristicSpecification map(CharacteristicSpecificationVO characteristicSpecificationVO);
 
+	@Mapping(target = "charValue", source = "value")
+	public abstract CharacteristicValueSpecification map(CharacteristicValueSpecificationVO characteristicVO);
+
+	@Mapping(target = "value", source = "charValue")
+	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
+
 	public URL map(String value) {
 		if (value == null) {
 			return null;

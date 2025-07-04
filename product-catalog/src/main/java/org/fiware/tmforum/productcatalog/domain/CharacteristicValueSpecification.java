@@ -17,5 +17,5 @@ public class CharacteristicValueSpecification extends Entity {
 	private Integer valueTo;
 	private TimePeriod validFor;
 	private String valueType;
-	private Object value;
+	private Object charValue;
 }

@@ -3,6 +3,8 @@ package org.fiware.tmforum.usagemanagement;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.product.Characteristic;
+import org.fiware.tmforum.service.CharacteristicValueSpecification;
+import org.fiware.tmforum.usagemanagement.domain.UsageCharacteristic;
 import org.fiware.usagemanagement.model.TimePeriodVO;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -54,6 +56,18 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "value", source = "charValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
+
+	@Mapping(target = "charValue", source = "value")
+	public abstract CharacteristicValueSpecification map(CharacteristicValueSpecificationVO characteristicVO);
+
+	@Mapping(target = "value", source = "charValue")
+	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
+
+	@Mapping(target = "charValue", source = "value")
+	public abstract UsageCharacteristic map(UsageCharacteristicVO characteristicVO);
+
+	@Mapping(target = "value", source = "charValue")
+	public abstract UsageCharacteristicVO map(UsageCharacteristic characteristic);
 
 	public abstract TimePeriod map(TimePeriodVO value);
 

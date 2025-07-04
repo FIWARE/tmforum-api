@@ -16,7 +16,7 @@ public class CharacteristicValueSpecification {
     private Integer valueTo;
     private String valueType;
     private TimePeriod validFor;
-    private Object value;
+    private Object charValue;
     private String atBaseType;
     private URI atSchemaLocation;
     private String atType;

@@ -9,6 +9,7 @@ import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.*;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
+import org.fiware.tmforum.service.CharacteristicValueSpecification;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -22,141 +23,147 @@ import java.net.URL;
 @Mapper(componentModel = "jsr330", uses = {IdHelper.class, MappingHelper.class})
 public abstract class TMForumMapper extends BaseMapper {
 
-    // catalog
+	// catalog
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract CatalogVO map(CatalogCreateVO catalogCreateVO, URI id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract CatalogVO map(CatalogCreateVO catalogCreateVO, URI id);
 
-    public abstract CatalogVO map(Catalog catalog);
+	public abstract CatalogVO map(Catalog catalog);
 
-    @Mapping(target = "href", source = "id")
-    public abstract Catalog map(CatalogVO catalogVO);
+	@Mapping(target = "href", source = "id")
+	public abstract Catalog map(CatalogVO catalogVO);
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract CatalogVO map(CatalogUpdateVO catalogUpdateVO, String id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract CatalogVO map(CatalogUpdateVO catalogUpdateVO, String id);
 
-    // category
+	// category
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract CategoryVO map(CategoryCreateVO categoryCreateVO, URI id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract CategoryVO map(CategoryCreateVO categoryCreateVO, URI id);
 
-    @Mapping(target = "parentId", qualifiedByName = "fromCategoryRef")
-    public abstract CategoryVO map(Category category);
+	@Mapping(target = "parentId", qualifiedByName = "fromCategoryRef")
+	public abstract CategoryVO map(Category category);
 
-    @Mapping(target = "href", source = "id")
-    @Mapping(target = "parentId", source = "categoryVO.parentId", qualifiedByName = "toCategoryRef")
-    public abstract Category map(CategoryVO categoryVO);
+	@Mapping(target = "href", source = "id")
+	@Mapping(target = "parentId", source = "categoryVO.parentId", qualifiedByName = "toCategoryRef")
+	public abstract Category map(CategoryVO categoryVO);
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract CategoryVO map(CategoryUpdateVO categoryUpdateVO, String id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract CategoryVO map(CategoryUpdateVO categoryUpdateVO, String id);
 
-    // product offering
+	// product offering
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract ProductOfferingVO map(ProductOfferingCreateVO productOfferingCreateVO, URI id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract ProductOfferingVO map(ProductOfferingCreateVO productOfferingCreateVO, URI id);
 
-    public abstract ProductOfferingVO map(ProductOffering productOfferingVO);
+	public abstract ProductOfferingVO map(ProductOffering productOfferingVO);
 
-    @Mapping(target = "href", source = "id")
-    public abstract ProductOffering map(ProductOfferingVO productOfferingVO);
+	@Mapping(target = "href", source = "id")
+	public abstract ProductOffering map(ProductOfferingVO productOfferingVO);
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract ProductOfferingVO map(ProductOfferingUpdateVO productOfferingUpdateVO, String id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract ProductOfferingVO map(ProductOfferingUpdateVO productOfferingUpdateVO, String id);
 
-    // product offering price
+	// product offering price
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract ProductOfferingPriceVO map(ProductOfferingPriceCreateVO productOfferingPriceCreateVO, URI id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract ProductOfferingPriceVO map(ProductOfferingPriceCreateVO productOfferingPriceCreateVO, URI id);
 
-    public abstract ProductOfferingPriceVO map(ProductOfferingPrice productOfferingPrice);
+	public abstract ProductOfferingPriceVO map(ProductOfferingPrice productOfferingPrice);
 
-    @Mapping(target = "href", source = "id")
-    public abstract ProductOfferingPrice map(ProductOfferingPriceVO productOfferingPriceVO);
+	@Mapping(target = "href", source = "id")
+	public abstract ProductOfferingPrice map(ProductOfferingPriceVO productOfferingPriceVO);
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract ProductOfferingPriceVO map(ProductOfferingPriceUpdateVO productOfferingPriceUpdateVO, String id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract ProductOfferingPriceVO map(ProductOfferingPriceUpdateVO productOfferingPriceUpdateVO, String id);
 
-    // product specification
+	// product specification
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract ProductSpecificationVO map(ProductSpecificationCreateVO productSpecificationCreateVO, URI id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract ProductSpecificationVO map(ProductSpecificationCreateVO productSpecificationCreateVO, URI id);
 
-    public abstract ProductSpecificationVO map(ProductSpecification productSpecification);
+	public abstract ProductSpecificationVO map(ProductSpecification productSpecification);
 
-    @Mapping(target = "href", source = "id")
-    public abstract ProductSpecification map(ProductSpecificationVO productSpecificationVO);
+	@Mapping(target = "href", source = "id")
+	public abstract ProductSpecification map(ProductSpecificationVO productSpecificationVO);
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "href", source = "id")
-    public abstract ProductSpecificationVO map(ProductSpecificationUpdateVO productSpecificationUpdateVO, String id);
+	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
+	public abstract ProductSpecificationVO map(ProductSpecificationUpdateVO productSpecificationUpdateVO, String id);
 
-    @Mapping(target = "query", source = "rawQuery")
-    public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+	@Mapping(target = "query", source = "rawQuery")
+	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-    @Mapping(target = "moneyValue", source = "value")
-    public abstract Money map(MoneyVO moneyVO);
+	@Mapping(target = "moneyValue", source = "value")
+	public abstract Money map(MoneyVO moneyVO);
 
-    @Mapping(target = "value", source = "moneyValue")
-    public abstract MoneyVO map(Money money);
+	@Mapping(target = "value", source = "moneyValue")
+	public abstract MoneyVO map(Money money);
 
-    @Mapping(target = "algorithmId", source = "id")
-    public abstract PricingLogicAlgorithm map(PricingLogicAlgorithmVO pricingLogicAlgorithmVO);
+	@Mapping(target = "algorithmId", source = "id")
+	public abstract PricingLogicAlgorithm map(PricingLogicAlgorithmVO pricingLogicAlgorithmVO);
 
-    @Mapping(target = "id", source = "algorithmId")
-    public abstract PricingLogicAlgorithmVO map(PricingLogicAlgorithm pricingLogicAlgorithm);
+	@Mapping(target = "id", source = "algorithmId")
+	public abstract PricingLogicAlgorithmVO map(PricingLogicAlgorithm pricingLogicAlgorithm);
 
-    @Mapping(target = "itemId", source = "id")
-    public abstract TaxItem map(TaxItemVO taxItemVO);
+	@Mapping(target = "itemId", source = "id")
+	public abstract TaxItem map(TaxItemVO taxItemVO);
 
-    @Mapping(target = "id", source = "itemId")
-    public abstract TaxItemVO map(TaxItem taxItem);
+	@Mapping(target = "id", source = "itemId")
+	public abstract TaxItemVO map(TaxItem taxItem);
 
-    @Mapping(target = "characteristicId", source = "id")
-    public abstract ProductSpecificationCharacteristic map(ProductSpecificationCharacteristicVO productSpecificationCharacteristicVO);
+	@Mapping(target = "characteristicId", source = "id")
+	public abstract ProductSpecificationCharacteristic map(ProductSpecificationCharacteristicVO productSpecificationCharacteristicVO);
 
-    @Mapping(target = "id", source = "characteristicId")
-    public abstract ProductSpecificationCharacteristicVO map(ProductSpecificationCharacteristic productSpecificationCharacteristic);
+	@Mapping(target = "id", source = "characteristicId")
+	public abstract ProductSpecificationCharacteristicVO map(ProductSpecificationCharacteristic productSpecificationCharacteristic);
 
-    public URL map(String value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return new URL(value);
-        } catch (MalformedURLException e) {
-            throw new MappingException(String.format("%s is not a URL.", value), e);
-        }
-    }
+	@Mapping(target = "charValue", source = "value")
+	public abstract CharacteristicValueSpecification map(CharacteristicValueSpecificationVO characteristicVO);
 
-    public String map(URL value) {
-        if (value == null) {
-            return null;
-        }
-        return value.toString();
-    }
+	@Mapping(target = "value", source = "charValue")
+	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
 
-    public URI mapToURI(String value) {
-        if (value == null) {
-            return null;
-        }
-        return URI.create(value);
-    }
+	public URL map(String value) {
+		if (value == null) {
+			return null;
+		}
+		try {
+			return new URL(value);
+		} catch (MalformedURLException e) {
+			throw new MappingException(String.format("%s is not a URL.", value), e);
+		}
+	}
 
-    public String mapFromURI(URI value) {
-        if (value == null) {
-            return null;
-        }
-        return value.toString();
-    }
+	public String map(URL value) {
+		if (value == null) {
+			return null;
+		}
+		return value.toString();
+	}
+
+	public URI mapToURI(String value) {
+		if (value == null) {
+			return null;
+		}
+		return URI.create(value);
+	}
+
+	public String mapFromURI(URI value) {
+		if (value == null) {
+			return null;
+		}
+		return value.toString();
+	}
 }
 
 

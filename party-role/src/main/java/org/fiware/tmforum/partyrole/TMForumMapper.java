@@ -11,11 +11,8 @@ import org.fiware.tmforum.partyrole.domain.PartyRole;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-
 import java.net.MalformedURLException;
 import java.net.URI;
-
-
 import java.net.URL;
 
 @Mapper(componentModel = "jsr330", uses = {IdHelper.class})
