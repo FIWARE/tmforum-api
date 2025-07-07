@@ -7,10 +7,11 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.micronaut.context.ApplicationContext;
+import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import lombok.RequiredArgsConstructor;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.GeoPropertyListVO;
 import org.fiware.ngsi.model.PropertyListVO;
 import org.fiware.ngsi.model.RelationshipListVO;
@@ -30,6 +31,7 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 		objectMapper.addMixIn(PropertyListVO.class, ListVOMixin.class);
 		objectMapper.addMixIn(RelationshipListVO.class, ListVOMixin.class);
 		objectMapper.addMixIn(GeoPropertyListVO.class, ListVOMixin.class);
+		objectMapper.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
 
 		SimpleModule deserializerModule = new SimpleModule();
 		// inject the schema validator for atSchemaLocation handling

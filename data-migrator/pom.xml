@@ -3,8 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.fiware.tmforum</groupId>
-    <artifactId>common</artifactId>
+    <artifactId>data-migrator</artifactId>
     <version>0.1</version>
+    <packaging>pom</packaging>
 
     <parent>
         <groupId>org.fiware</groupId>
@@ -12,14 +13,18 @@
         <version>0.1</version>
     </parent>
 
+    <modules>
+        <module>legacy-loader</module>
+        <module>update-writer</module>
+        <module>migrator</module>
+    </modules>
+
+    <properties>
+        <old.io.github.wistefan.ngsi-ld-mapping-java>1.2.11</old.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.projectreactor.reactor-core>3.6.10</version.io.projectreactor.reactor-core>
+    </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>io.github.wistefan</groupId>
-            <artifactId>ngsi-ld-java-mapping</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- lazy dev -->
         <dependency>
             <groupId>org.mapstruct</groupId>
@@ -29,54 +34,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-management</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-http-client</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-http-client-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-http-server</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.cache</groupId>
-            <artifactId>micronaut-cache-core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.redis</groupId>
-            <artifactId>micronaut-redis-lettuce</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.micronaut.micrometer</groupId>
-            <artifactId>micronaut-micrometer-registry-prometheus</artifactId>
             <scope>compile</scope>
         </dependency>
 
@@ -121,27 +78,6 @@
             <artifactId>micronaut-logging</artifactId>
             <version>${version.io.kokuwa.micronaut.logging}</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-retry</artifactId>
-            <version>${version.io.github.resilience4j.resilience4j-retry}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-reactor</artifactId>
-            <version>${version.io.github.resilience4j.resilience4j-reactor}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${version.com.google.guava}</version>
         </dependency>
     </dependencies>
 

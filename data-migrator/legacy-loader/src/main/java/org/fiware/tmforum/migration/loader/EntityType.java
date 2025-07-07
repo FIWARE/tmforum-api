@@ -1,4 +1,11 @@
 package org.fiware.tmforum.migration.loader;
 
-public record EntityType() {
+/**
+ * Holder for the implementing class and the concrete type
+ */
+public record EntityType(Class entityClass, String entityType) {
+
+	public String toString() {
+		return entityClass.toString() + " - " + entityType;
+	}
 }

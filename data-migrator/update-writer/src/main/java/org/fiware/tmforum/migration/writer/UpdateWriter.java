@@ -1,22 +1,39 @@
 package org.fiware.tmforum.migration.writer;
 
-import org.fiware.ngsi.model.EntityFragmentVO;
-import org.fiware.tmforum.common.domain.Entity;
-import org.fiware.tmforum.common.repository.TmForumRepository;
-import reactor.core.publisher.Mono;
+import io.github.wistefan.mapping.JavaObjectMapper;
+import io.micronaut.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
+import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import java.net.URI;
-import java.util.List;
+import java.util.Collections;
 
-@Singleton
+/**
+ * Tanslates the Pojos to Entities, using the new library version and stores them in a target broker.
+ */
+@Slf4j
 public class UpdateWriter {
 
-	@Inject
-	public TmForumRepository repository;
+	private volatile ApplicationContext applicationContext;
 
-	public <T> Mono<Void> writeUpdate(String entityId, T theObject) {
-		return repository.updateDomainEntity(entityId, theObject);
+	public <T> void writeUpdate(Object theObject) throws Exception {
+		if (applicationContext == null) {
+			applicationContext = ApplicationContext.builder()
+					.properties(Collections.singletonMap("micronaut.http.services.ngsi.url", "http://localhost:1026"))
+					.start();
+		} else {
+			if (!applicationContext.isRunning()) {
+				applicationContext = ApplicationContext.builder()
+						.properties(Collections.singletonMap("micronaut.http.services.ngsi.url", "http://localhost:1026"))
+						.start();
+			}
+		}
+		EntitiesApiClient entitiesApiClient = applicationContext.getBean(EntitiesApiClient.class);
+		GeneralProperties generalProperties = applicationContext.getBean(GeneralProperties.class);
+
+		JavaObjectMapper javaObjectMapper = applicationContext.getBean(JavaObjectMapper.class);
+		EntityVO e = javaObjectMapper.toEntityVO(theObject);
+		entitiesApiClient.createEntity(e, generalProperties.getTenant()).block();
 	}
 }

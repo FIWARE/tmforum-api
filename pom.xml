@@ -51,6 +51,7 @@
         <module>account</module>
         <module>service-inventory</module>
         <module>party-role</module>
+        <module>data-migrator</module>
     </modules>
 
     <properties>

@@ -1,12 +1,17 @@
 package org.fiware.tmforum.migration.migrator;
 
-import io.micronaut.runtime.Micronaut;
-import org.fiware.tmforum.party.Application;
+import java.net.MalformedURLException;
 
-public class Migrator {
+public class Application {
 
 	public static void main(String[] args) {
-		Micronaut.run(Application.class, args);
+		Migrator migrator = new Migrator();
+		try {
+			migrator.runUpdate();
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		System.exit(0);
 	}
 
 }
