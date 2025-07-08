@@ -1,5 +1,6 @@
 package org.fiware.tmforum.migration.loader;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.context.ApplicationContext;
@@ -19,10 +20,11 @@ import java.util.stream.Stream;
 /**
  * Load the objects from the broker and map them to JavaObjects, using the old version of the mapping library
  */
-@Slf4j
 public class LegacyLoader {
 
 	private volatile ApplicationContext applicationContext;
+
+	private String brokerAddress;
 
 	/**
 	 * Returns a list of all objects with the given entity type. Calls the broker synchronously and collects all results.
@@ -51,14 +53,22 @@ public class LegacyLoader {
 	}
 
 	private <T> Mono<List<T>> zipToList(EntityVOMapper entityVOMapper, Stream<EntityVO> entityVOStream, Class<T> targetClass) {
+		ObjectMapper objectMapper = applicationContext.getBean(ObjectMapper.class);
+		objectMapper.setPropertyNamingStrategy(new PropertyRenamingStrategy());
 		return Mono.zip(
 				entityVOStream.map(entityVO -> {
-
 					try {
-						return entityVOMapper.fromEntityVO(entityVO, targetClass)
+						String originalString = objectMapper.writeValueAsString(entityVO);
+						return objectMapper.readValue(originalString, EntityVO.class);
+					} catch (JsonProcessingException e) {
+						throw new RuntimeException(e);
+					}
+				}).map(renamendEntity -> {
+					try {
+						return entityVOMapper.fromEntityVO(renamendEntity, targetClass)
 								.map(Optional::of)
 								.onErrorResume(t -> {
-									System.out.println("Was not able to translate entity: " + entityVO);
+									System.out.println("Was not able to translate entity: " + renamendEntity);
 									return Mono.just(Optional.empty());
 								});
 					} catch (Exception e) {
@@ -69,19 +79,40 @@ public class LegacyLoader {
 		);
 	}
 
-	private EntityVO cleanEntity(EntityVO entityVO) {
-		Map<String, AdditionalPropertyVO> additionalPropertyVOMap = entityVO.getAdditionalProperties();
-		additionalPropertyVOMap.entrySet()
-				.forEach(entry -> {
-					if (entry.getValue() instanceof PropertyListVO eL && eL.size() == 0) {
-						PropertyVO propertyVO = new PropertyVO();
-						propertyVO.setValue(List.of());
-						entityVO.setAdditionalProperties(entry.getKey(), propertyVO);
-					} else {
-						entityVO.setAdditionalProperties(entry.getKey(), entry.getValue());
-					}
-				});
-		return entityVO;
+	private void fixEntityVo(EntityVO entityVO) {
+//		if (entityVO.getType().equals("usage")) {
+//			Optional.ofNullable((PropertyVO) entityVO.getAdditionalProperties()
+//							.get("usageCharacteristic"))
+//					.map(PropertyVO::getValue)
+//					.map(List.class::cast)
+//					.orElse(List.of())
+//					.stream()
+//					.forEach(entry -> {
+//						((Map) entry).put("charValue", ((Map) entry).get("value"));
+//						((Map) entry).put("charId", ((Map) entry).get("id"));
+//					});
+//
+//		}
+//		if (entityVO.getType().equals("usageSpecification")) {
+//			Optional.ofNullable((PropertyVO) entityVO.getAdditionalProperties()
+//							.get("attachment"))
+//					.map(PropertyVO::getValue)
+//					.map(List.class::cast)
+//					.orElse(List.of())
+//					.stream()
+//					.forEach(entry -> {
+//						((Map) entry).put("attachementId", ((Map) entry).get("id"));
+//					});
+//			Optional.ofNullable((PropertyVO) entityVO.getAdditionalProperties()
+//							.get("specCharacteristic"))
+//					.map(PropertyVO::getValue)
+//					.map(List.class::cast)
+//					.orElse(List.of())
+//					.stream()
+//					.forEach(entry -> {
+//						((Map) entry).put("specId", ((Map) entry).get("id"));
+//					});
+//		}
 
 	}
 
@@ -90,13 +121,21 @@ public class LegacyLoader {
 	}
 
 	private <T> Mono<List<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
-										  String query, String ids, String types) {
+										   String query, String ids, String types) {
 
 		if (applicationContext == null) {
-			applicationContext = ApplicationContext.run(Thread.currentThread().getContextClassLoader());
+			applicationContext = ApplicationContext.builder()
+					.classLoader(Thread.currentThread().getContextClassLoader())
+					.properties(Collections.singletonMap("micronaut.http.services.ngsi.url", brokerAddress))
+					.build()
+					.start();
 		} else {
 			if (!applicationContext.isRunning()) {
-				applicationContext = ApplicationContext.run(Thread.currentThread().getContextClassLoader());
+				applicationContext = ApplicationContext.builder()
+						.classLoader(Thread.currentThread().getContextClassLoader())
+						.properties(Collections.singletonMap("micronaut.http.services.ngsi.url", brokerAddress))
+						.build()
+						.start();
 			}
 		}
 
@@ -126,9 +165,12 @@ public class LegacyLoader {
 				.map(List::stream)
 				.flatMap(entityVOStream -> zipToList(entityVOMapper, entityVOStream, entityClass))
 				.onErrorResume(t -> {
-					log.warn("Was not able to list entities.", t);
 					throw new TmForumException("Was not able to list entities.", t, TmForumExceptionReason.UNKNOWN);
 				});
 
+	}
+
+	public void setBrokerAddress(String brokerAddress) {
+		this.brokerAddress = brokerAddress;
 	}
 }

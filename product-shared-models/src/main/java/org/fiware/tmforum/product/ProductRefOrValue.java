@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
-//@MappingEnabled(entityType = Product.TYPE_PRODUCT)
+@MappingEnabled(entityType = Product.TYPE_PRODUCT)
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class ProductRefOrValue extends Entity implements ReferencedEntity {

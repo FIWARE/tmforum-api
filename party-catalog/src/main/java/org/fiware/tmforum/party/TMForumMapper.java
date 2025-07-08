@@ -58,22 +58,22 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "characteristicValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "characteristicValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
 
-	@Mapping(target = "certificateId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract TaxExemptionCertificate map(TaxExemptionCertificateVO taxExemptionCertificateVO);
 
-	@Mapping(target = "id", source = "certificateId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract TaxExemptionCertificateVO map(TaxExemptionCertificate taxExemptionCertificate);
 
-	@Mapping(target = "attachementId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO attachmentRefOrValueVO);
 
-	@Mapping(target = "id", source = "attachementId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
 
 	public OrganizationParentRelationshipVO map(OrganizationParentRelationship organizationParentRelationship) {

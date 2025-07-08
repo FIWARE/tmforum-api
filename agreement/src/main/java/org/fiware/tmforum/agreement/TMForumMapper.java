@@ -48,16 +48,16 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract AgreementSpecCharacteristicValue map(AgreementSpecCharacteristicValueVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract AgreementSpecCharacteristicValueVO map(AgreementSpecCharacteristicValue characteristic);
 
 	public abstract TimePeriod map(TimePeriodVO value);

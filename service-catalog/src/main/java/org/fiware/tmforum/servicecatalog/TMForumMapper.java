@@ -6,6 +6,7 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.Feature;
+import org.fiware.tmforum.resource.FeatureSpecificationCharacteristicRelationship;
 import org.fiware.tmforum.resource.ResourceSpecificationRef;
 import org.fiware.tmforum.service.*;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCatalog;
@@ -79,22 +80,40 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "id", source = "specId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract FeatureSpecificationVO map(FeatureSpecification feature);
 
-	@Mapping(target = "specId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract FeatureSpecification map(FeatureSpecificationVO featureVO);
 
-	@Mapping(target = "id", source = "specId")
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureSpecificationCharacteristicVO map(FeatureSpecificationCharacteristic feature);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureSpecificationCharacteristic map(FeatureSpecificationCharacteristicVO featureVO);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureSpecificationRelationshipVO map(FeatureSpecificationRelationship feature);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureSpecificationRelationship map(FeatureSpecificationRelationshipVO featureVO);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureSpecificationCharacteristicRelationshipVO map(FeatureSpecificationCharacteristicRelationship feature);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureSpecificationCharacteristicRelationship map(FeatureSpecificationCharacteristicRelationshipVO featureVO);
+
+	@Mapping(target = "id", source = "tmfId")
 	public abstract CharacteristicSpecificationVO map(CharacteristicSpecification characteristicSpecification);
 
-	@Mapping(target = "specId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract CharacteristicSpecification map(CharacteristicSpecificationVO characteristicSpecificationVO);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract CharacteristicValueSpecification map(CharacteristicValueSpecificationVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
 
 	public URL map(String value) {

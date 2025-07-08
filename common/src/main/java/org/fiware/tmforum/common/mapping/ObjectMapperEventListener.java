@@ -11,10 +11,7 @@ import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import lombok.RequiredArgsConstructor;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
-import org.fiware.ngsi.model.GeoPropertyListVO;
-import org.fiware.ngsi.model.PropertyListVO;
-import org.fiware.ngsi.model.RelationshipListVO;
+import org.fiware.ngsi.model.*;
 
 import javax.inject.Singleton;
 

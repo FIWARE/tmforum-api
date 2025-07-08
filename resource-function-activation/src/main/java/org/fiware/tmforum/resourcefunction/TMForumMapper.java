@@ -75,54 +75,54 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "characteristicValue", source = "value")
-	@Mapping(target = "characteristicId", source = "id")
+	@Mapping(target = "tmfValue", source = "value")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "characteristicValue")
-	@Mapping(target = "id", source = "characteristicId")
+	@Mapping(target = "value", source = "tmfValue")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract CharacteristicVO map(Characteristic characteristic);
 
-	@Mapping(target = "characteristicRelationId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract CharacteristicRelationship map(CharacteristicRelationshipVO characteristicRelationshipVO);
 
-	@Mapping(target = "id", source = "characteristicRelationId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract CharacteristicRelationshipVO map(CharacteristicRelationship characteristicRelationship);
 
-	@Mapping(target = "graphId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract ResourceGraph map(ResourceGraphVO resourceGraphVO);
 
-	@Mapping(target = "id", source = "graphId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract ResourceGraphVO map(ResourceGraph resourceGraph);
 
-	@Mapping(target = "graphRelationId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract ResourceGraphRelationship map(ResourceGraphRelationshipVO resourceGraphRelationshipVO);
 
-	@Mapping(target = "id", source = "graphRelationId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract ResourceGraphRelationshipVO map(ResourceGraphRelationship resourceGraphRelationship);
 
-	@Mapping(target = "connectionId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Connection map(ConnectionVO connectionVO);
 
-	@Mapping(target = "id", source = "connectionId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract ConnectionVO map(Connection connection);
 
-	@Mapping(target = "attachementId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO attachmentRefOrValueVO);
 
-	@Mapping(target = "id", source = "attachementId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
 
-	@Mapping(target = "id", source = "noteId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract NoteVO map(Note note);
 
-	@Mapping(target = "noteId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Note map(NoteVO noteVO);
 
-	@Mapping(target = "id", source = "featureId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract FeatureVO map(Feature feature);
 
-	@Mapping(target = "featureId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Feature map(FeatureVO featureVO);
 
 	public URL map(String value) {

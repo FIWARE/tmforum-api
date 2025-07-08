@@ -8,7 +8,7 @@ import java.net.URI;
 @Data
 public class TaxItem {
 
-	private String itemId;
+	private String tmfId;
 	private URI href;
 	private String taxCategory;
 	private Float taxRate;

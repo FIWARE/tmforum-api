@@ -8,7 +8,7 @@ import java.net.URI;
 @Data
 public class FeatureRelationship {
 
-    private String id;
+    private String tmfId;
     private URI href;
     private String name;
     private TimePeriod validFor;

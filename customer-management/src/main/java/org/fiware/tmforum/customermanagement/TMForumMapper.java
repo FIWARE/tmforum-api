@@ -32,10 +32,10 @@ public abstract class TMForumMapper extends BaseMapper {
 
     public abstract Customer map(CustomerVO serviceCatalogVO);
 
-    @Mapping(target = "characteristicValue", source = "value")
+    @Mapping(target = "tmfValue", source = "value")
     public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-    @Mapping(target = "value", source = "characteristicValue")
+    @Mapping(target = "value", source = "tmfValue")
     public abstract CharacteristicVO map(Characteristic characteristic);
 
     @Mapping(target = "id", source = "id")

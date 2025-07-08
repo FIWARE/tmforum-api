@@ -12,17 +12,27 @@
         <version>0.1</version>
     </parent>
 
+    <properties>
+        <exec.mainClass>org.fiware.tmforum.migration.migrator.Application</exec.mainClass>
+    </properties>
     <dependencies>
 
         <!-- lazy dev -->
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <scope>compile</scope>
-        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>org.mapstruct</groupId>-->
+        <!--            <artifactId>mapstruct</artifactId>-->
+        <!--            <scope>compile</scope>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>${version.javax.inject}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -43,6 +53,12 @@
             <scope>test</scope>
         </dependency>
 
-    </dependencies>
+        <dependency>
+            <groupId>io.kokuwa.micronaut</groupId>
+            <artifactId>micronaut-logging</artifactId>
+            <version>${version.io.kokuwa.micronaut.logging}</version>
+            <scope>compile</scope>
+        </dependency>
 
+    </dependencies>
 </project>

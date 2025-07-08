@@ -16,7 +16,7 @@ import java.net.URI;
 @Data
 public class PricingLogicAlgorithm {
 
-	private String algorithmId;
+	private String tmfId;
 	private URI href;
 	private String description;
 	private String name;

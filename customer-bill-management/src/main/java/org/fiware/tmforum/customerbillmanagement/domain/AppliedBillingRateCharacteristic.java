@@ -10,5 +10,5 @@ public class AppliedBillingRateCharacteristic extends Entity {
 
 	private String name;
 	private String valueType;
-	private Object charValue;
+	private Object tmfValue;
 }

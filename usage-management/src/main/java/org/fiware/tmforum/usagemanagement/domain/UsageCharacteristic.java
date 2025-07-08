@@ -9,9 +9,9 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class UsageCharacteristic extends Entity {
-    private String id;
+    private String tmfId;
     private String name;
     private String valueType;
     private List<CharacteristicRelationship> characteristicRelationship;
-    private Object charValue;
+    private Object tmfValue;
 }

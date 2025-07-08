@@ -35,10 +35,10 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "id", source = "id")
 	public abstract Product map(ProductUpdateVO productUpdateVO, String id);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
 
 	public abstract RelatedProductOrderItemRef map(RelatedProductOrderItemVO relatedProductOrderItemVO);

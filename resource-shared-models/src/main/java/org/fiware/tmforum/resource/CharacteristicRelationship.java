@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 public class CharacteristicRelationship {
 
-    private String characteristicRelationId;
+    private String tmfId;
     private URI href;
     private String relationshipType;
     private String atBaseType;

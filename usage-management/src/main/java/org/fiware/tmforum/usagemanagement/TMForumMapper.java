@@ -1,9 +1,11 @@
 package org.fiware.tmforum.usagemanagement;
 
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.product.Characteristic;
 import org.fiware.tmforum.service.CharacteristicValueSpecification;
+import org.fiware.tmforum.usagemanagement.domain.CharacteristicRelationship;
 import org.fiware.tmforum.usagemanagement.domain.UsageCharacteristic;
 import org.fiware.usagemanagement.model.TimePeriodVO;
 import org.fiware.tmforum.common.domain.TimePeriod;
@@ -51,23 +53,37 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract CharacteristicValueSpecification map(CharacteristicValueSpecificationVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract UsageCharacteristic map(UsageCharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract UsageCharacteristicVO map(UsageCharacteristic characteristic);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract CharacteristicRelationshipVO map(CharacteristicRelationship characteristic);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract CharacteristicRelationship map(CharacteristicRelationshipVO characteristic);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO characteristic);
 
 	public abstract TimePeriod map(TimePeriodVO value);
 

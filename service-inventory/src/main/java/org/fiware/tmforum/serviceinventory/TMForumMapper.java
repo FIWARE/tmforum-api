@@ -43,24 +43,24 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "noteId", source = "id")
 	public abstract Note map(NoteVO noteVO);
 
-	@Mapping(target = "id", source = "featureId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract FeatureVO map(Feature feature);
 
-	@Mapping(target = "featureId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Feature map(FeatureVO featureVO);
 
-	@Mapping(target = "characteristicValue", source = "value")
-	@Mapping(target = "characteristicId", source = "id")
+	@Mapping(target = "tmfValue", source = "value")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "characteristicValue")
-	@Mapping(target = "id", source = "characteristicId")
+	@Mapping(target = "value", source = "tmfValue")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract CharacteristicVO map(Characteristic characteristic);
 
-	@Mapping(target = "characteristicRelationId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract CharacteristicRelationship map(CharacteristicRelationshipVO characteristicRelationshipVO);
 
-	@Mapping(target = "id", source = "characteristicRelationId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract CharacteristicRelationshipVO map(CharacteristicRelationship characteristicRelationship);
 
 	public URL map(String value) {

@@ -103,34 +103,34 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "moneyValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Money map(MoneyVO moneyVO);
 
-	@Mapping(target = "value", source = "moneyValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract MoneyVO map(Money money);
 
-	@Mapping(target = "algorithmId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract PricingLogicAlgorithm map(PricingLogicAlgorithmVO pricingLogicAlgorithmVO);
 
-	@Mapping(target = "id", source = "algorithmId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract PricingLogicAlgorithmVO map(PricingLogicAlgorithm pricingLogicAlgorithm);
 
-	@Mapping(target = "itemId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract TaxItem map(TaxItemVO taxItemVO);
 
-	@Mapping(target = "id", source = "itemId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract TaxItemVO map(TaxItem taxItem);
 
-	@Mapping(target = "characteristicId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract ProductSpecificationCharacteristic map(ProductSpecificationCharacteristicVO productSpecificationCharacteristicVO);
 
-	@Mapping(target = "id", source = "characteristicId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract ProductSpecificationCharacteristicVO map(ProductSpecificationCharacteristic productSpecificationCharacteristic);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract CharacteristicValueSpecification map(CharacteristicValueSpecificationVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
 
 	public URL map(String value) {

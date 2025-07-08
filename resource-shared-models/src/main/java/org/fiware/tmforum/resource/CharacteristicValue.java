@@ -15,7 +15,7 @@ public class CharacteristicValue {
     private Integer valueFrom;
     private Integer valueTo;
     private String valueType;
-    private Object charValue;
+    private Object tmfValue;
     private TimePeriod validFor;
     private String atBaseType;
     private URI atSchemaLocation;

@@ -151,7 +151,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		if (feature.getFeatureRelationship() != null) {
 			feature.getFeatureRelationship()
 					.stream()
-					.map(FeatureRelationship::getId)
+					.map(FeatureRelationship::getTmfId)
 					.filter(featureRef -> !featureIds.contains(featureRef))
 					.findFirst()
 					.ifPresent(missingId -> {

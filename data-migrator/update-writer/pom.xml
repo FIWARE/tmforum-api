@@ -14,15 +14,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy</artifactId>
-            <version>1.14.10</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy-agent</artifactId>
-            <version>1.14.10</version>
+            <groupId>io.github.wistefan</groupId>
+            <artifactId>ngsi-ld-java-mapping</artifactId>
             <scope>compile</scope>
         </dependency>
 
@@ -47,6 +40,11 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
             <scope>compile</scope>
@@ -59,6 +57,17 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.reactor</groupId>
+            <artifactId>micronaut-reactor</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -76,18 +85,6 @@
             <artifactId>micronaut-http-client-core</artifactId>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-core</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-
         <dependency>
             <groupId>io.github.wistefan</groupId>
             <artifactId>ngsi-ld-java-mapping</artifactId>
@@ -113,270 +110,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>customer-shared-models</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>resource-shared-models</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>product-shared-models</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>service-shared-models</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>quote</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>party-catalog</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>agreement</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>product-inventory</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>product-catalog</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>product-ordering-management</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>resource-function-activation</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>resource-catalog</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>resource-inventory</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>service-catalog</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>customer-management</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>customer-bill-management</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>usage-management</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>account</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>service-inventory</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>party-role</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.github.wistefan</groupId>
-                    <artifactId>ngsi-ld-java-mapping</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
         <!-- lazy dev -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/javassist/javassist -->
-        <dependency>
-            <groupId>javassist</groupId>
-            <artifactId>javassist</artifactId>
-            <version>3.12.1.GA</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>io.kokuwa.micronaut</groupId>
-            <artifactId>micronaut-logging</artifactId>
-            <version>${version.io.kokuwa.micronaut.logging}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy-agent</artifactId>
-            <version>1.17.6</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
