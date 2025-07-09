@@ -72,6 +72,10 @@ public abstract class TMForumMapper extends BaseMapper {
 		return value.getValue();
 	}
 
+	public QuoteItemState mapQuoteItemState(String value) {
+		return QuoteItemState.toEnum(value);
+	}
+
 	public URL map(String value) {
 		if (value == null) {
 			return null;
