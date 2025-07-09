@@ -37,10 +37,10 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "id", source = "id")
 	public abstract Service map(ServiceUpdateVO productUpdateVO, String id);
 
-	@Mapping(target = "id", source = "noteId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract NoteVO map(Note note);
 
-	@Mapping(target = "noteId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Note map(NoteVO noteVO);
 
 	@Mapping(target = "id", source = "tmfId")
