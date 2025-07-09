@@ -82,6 +82,24 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "id", source = "tmfId")
 	public abstract FeatureSpecificationVO map(FeatureSpecification featureSpecification);
 
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureSpecificationCharacteristic map(FeatureSpecificationCharacteristicVO featureSpecificationVO);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureSpecificationCharacteristicVO map(FeatureSpecificationCharacteristic featureSpecification);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureSpecificationCharacteristicRelationship map(FeatureSpecificationCharacteristicRelationshipVO featureSpecificationVO);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureSpecificationCharacteristicRelationshipVO map(FeatureSpecificationCharacteristicRelationship featureSpecification);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureSpecificationRelationship map(FeatureSpecificationRelationshipVO featureSpecificationVO);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureSpecificationRelationshipVO map(FeatureSpecificationRelationship featureSpecification);
+
 	@Mapping(target = "tmfValue", source = "value")
 	public abstract CharacteristicValue map(CharacteristicValueSpecificationVO characteristicVO);
 
