@@ -17,7 +17,14 @@ In order to have both library-versions as part of one application the following 
 
 ## Run
 
+The migration tool can either be run directly as a jar:
+
 ```shell
     java -jar ./migrator/target/migrator-0.1.jar  --help
     java --add-opens java.base/java.lang=ALL-UNNAMED -jar ./migrator/target/migrator-0.1.jar -rB http://localhost:8080 -wB http://localhost:1026 -ll ./legacy-loader/target/legacy-loader-0.1.jar -uw update-writer/target/update-writer-0.1.jar 
+```
+
+Or as a container:
+```shell
+    docker run --env READ_BROKER="http://my-read-broker.org" --env WRITE_BROKER="http://my-write-broker.org"  quay.io/fiware/tmforum-migrator
 ```
