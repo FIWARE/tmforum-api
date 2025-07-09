@@ -280,61 +280,6 @@
             <artifactId>classgraph</artifactId>
             <version>4.8.180</version>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>io.reactivex.rxjava2</groupId>-->
-        <!--            <artifactId>rxjava</artifactId>-->
-        <!--            <version>${version.io.reactivex.rxjava2.rxjava}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>javax.inject</groupId>-->
-        <!--            <artifactId>javax.inject</artifactId>-->
-        <!--            <version>${version.javax.inject}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>javax.annotation</groupId>-->
-        <!--            <artifactId>javax.annotation-api</artifactId>-->
-        <!--            <version>${version.javax.annotation-api}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.google.code.findbugs</groupId>-->
-        <!--            <artifactId>jsr305</artifactId>-->
-        <!--            <version>${version.com.google.code.findbugs.jsr305}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>jakarta.annotation</groupId>-->
-        <!--            <artifactId>jakarta.annotation-api</artifactId>-->
-        <!--            <version>${version.jakarta.annotation.jakarta.annotation-api}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.fasterxml.jackson.core</groupId>-->
-        <!--            <artifactId>jackson-databind</artifactId>-->
-        <!--            <version>${version.com.fasterxml.jackson.core.jackson-databind}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
-        <!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
-        <!--            <version>${version.com.fasterxml.jackson.datatype.jackson-datatype-jsr310}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-        <!--        <dependency>-->
-        <!--            <groupId>io.projectreactor</groupId>-->
-        <!--            <artifactId>reactor-core</artifactId>-->
-        <!--            <version>${version.io.projectreactor.reactor-core}</version>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
-
-        <!--        &lt;!&ndash; lazy dev &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.mapstruct</groupId>-->
-        <!--            <artifactId>mapstruct</artifactId>-->
-        <!--            <scope>compile</scope>-->
-        <!--        </dependency>-->
 
     </dependencies>
 </project>

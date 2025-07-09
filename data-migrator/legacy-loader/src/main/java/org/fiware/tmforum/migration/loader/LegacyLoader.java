@@ -1,10 +1,10 @@
 package org.fiware.tmforum.migration.loader;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.context.ApplicationContext;
-import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.*;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -13,6 +13,8 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.ListVOMixin;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.util.*;
 import java.util.stream.Stream;
@@ -54,13 +56,16 @@ public class LegacyLoader {
 
 	private <T> Mono<List<T>> zipToList(EntityVOMapper entityVOMapper, Stream<EntityVO> entityVOStream, Class<T> targetClass) {
 		ObjectMapper objectMapper = applicationContext.getBean(ObjectMapper.class);
-		objectMapper.setPropertyNamingStrategy(new PropertyRenamingStrategy());
 		return Mono.zip(
 				entityVOStream.map(entityVO -> {
 					try {
-						String originalString = objectMapper.writeValueAsString(entityVO);
+						StringWriter writer = new StringWriter();
+						JsonGenerator gen = new FieldRenamingGeneratorDelegate(objectMapper.getFactory().createGenerator(writer));
+						objectMapper.writeValue(gen, entityVO);
+						gen.close();
+						String originalString = writer.toString();
 						return objectMapper.readValue(originalString, EntityVO.class);
-					} catch (JsonProcessingException e) {
+					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
 				}).map(renamendEntity -> {
@@ -77,43 +82,6 @@ public class LegacyLoader {
 				}).toList(),
 				oList -> Arrays.stream(oList).map(Optional.class::cast).filter(Optional::isPresent).map(Optional::get).map(targetClass::cast).toList()
 		);
-	}
-
-	private void fixEntityVo(EntityVO entityVO) {
-//		if (entityVO.getType().equals("usage")) {
-//			Optional.ofNullable((PropertyVO) entityVO.getAdditionalProperties()
-//							.get("usageCharacteristic"))
-//					.map(PropertyVO::getValue)
-//					.map(List.class::cast)
-//					.orElse(List.of())
-//					.stream()
-//					.forEach(entry -> {
-//						((Map) entry).put("charValue", ((Map) entry).get("value"));
-//						((Map) entry).put("charId", ((Map) entry).get("id"));
-//					});
-//
-//		}
-//		if (entityVO.getType().equals("usageSpecification")) {
-//			Optional.ofNullable((PropertyVO) entityVO.getAdditionalProperties()
-//							.get("attachment"))
-//					.map(PropertyVO::getValue)
-//					.map(List.class::cast)
-//					.orElse(List.of())
-//					.stream()
-//					.forEach(entry -> {
-//						((Map) entry).put("attachementId", ((Map) entry).get("id"));
-//					});
-//			Optional.ofNullable((PropertyVO) entityVO.getAdditionalProperties()
-//							.get("specCharacteristic"))
-//					.map(PropertyVO::getValue)
-//					.map(List.class::cast)
-//					.orElse(List.of())
-//					.stream()
-//					.forEach(entry -> {
-//						((Map) entry).put("specId", ((Map) entry).get("id"));
-//					});
-//		}
-
 	}
 
 	private String getLinkHeader(GeneralProperties generalProperties) {

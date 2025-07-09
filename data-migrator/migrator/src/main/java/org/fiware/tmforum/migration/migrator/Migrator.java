@@ -9,7 +9,10 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Data Migration tool. Handles the classloaders and transfers the objects between them.
@@ -22,6 +25,8 @@ public class Migrator {
 	private final String writeBroker;
 	private final String legacyLoaderJar;
 	private final String updateWriterJar;
+
+	private static final Set<String> ERROR_TRACKER = new HashSet<>();
 
 	/**
 	 * List of classe to be shared between the child-classloaders. Will be provided from the old version of the lib through the parent classloader.
@@ -79,6 +84,7 @@ public class Migrator {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+		log.warn("Issues occurred for the following entities: {}", ERROR_TRACKER);
 	}
 
 	private void loadAnnotationsInShared(ClassLoader parentClassLoader, ClassLoader legacyClassLoader) throws Exception {
@@ -123,7 +129,9 @@ public class Migrator {
 				try {
 					entitySetter.invoke(writerObject, e);
 				} catch (Exception ex) {
-					log.warn("Was not able to transfer entity: {}", e, ex);
+					ERROR_TRACKER.add(e.getClass().getCanonicalName());
+					log.info("Was not able to transfer entity: {}", e);
+					log.debug("Reason:", ex);
 				}
 			}
 		} finally {

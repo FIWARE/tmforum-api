@@ -12,7 +12,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class ProductSpecificationCharacteristicValueUse extends Entity {
 
-	private String id;
+	private String tmfId;
 	private String description;
 	private Integer maxCardinality;
 	private Integer minCardinality;

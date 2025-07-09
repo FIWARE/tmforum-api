@@ -7,6 +7,7 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Characteristic;
+import org.fiware.tmforum.product.ProductSpecificationCharacteristicValueUse;
 import org.fiware.tmforum.productordering.domain.*;
 import org.fiware.tmforum.resource.Note;
 import org.mapstruct.Mapper;
