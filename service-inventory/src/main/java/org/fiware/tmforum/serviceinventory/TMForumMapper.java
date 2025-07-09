@@ -63,6 +63,12 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "id", source = "tmfId")
 	public abstract CharacteristicRelationshipVO map(CharacteristicRelationship characteristicRelationship);
 
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureRelationship map(FeatureRelationshipVO featureRelationshipVO);
+
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureRelationshipVO map(FeatureRelationship featureRelationship);
+	
 	public URL map(String value) {
 		if (value == null) {
 			return null;
