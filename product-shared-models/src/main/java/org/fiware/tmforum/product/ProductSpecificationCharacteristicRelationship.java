@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 public class ProductSpecificationCharacteristicRelationship {
 
-	private String id;
+	private String tmfId;
 	private URI href;
 	private Integer charSpecSeq;
 	private String name;
