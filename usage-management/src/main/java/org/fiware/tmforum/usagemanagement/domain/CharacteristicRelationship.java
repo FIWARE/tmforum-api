@@ -10,7 +10,7 @@ import org.fiware.tmforum.common.domain.Entity;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class CharacteristicRelationship extends Entity {
-    private String id;
+    private String tmfId;
     private URI href;
     private String relationshipType;
 }

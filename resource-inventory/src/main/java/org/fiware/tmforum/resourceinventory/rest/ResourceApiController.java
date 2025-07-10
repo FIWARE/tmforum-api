@@ -97,7 +97,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 
 	private void validateInternalRefs(Resource resource) {
 		if (resource.getNote() != null) {
-			List<URI> noteIds = resource.getNote().stream().map(Note::getNoteId).toList();
+			List<URI> noteIds = resource.getNote().stream().map(Note::getTmfId).toList();
 			if (noteIds.size() != new HashSet<>(noteIds).size()) {
 				throw new TmForumException(
 						String.format("Duplicate note ids are not allowed: %s", noteIds),
@@ -116,7 +116,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 			List<Characteristic> characteristics) {
 		List<String> charIds = characteristics
 				.stream()
-				.map(Characteristic::getCharacteristicId)
+				.map(Characteristic::getTmfId)
 				.toList();
 		if (charIds.size() != new HashSet<>(charIds).size()) {
 			throw new TmForumException(
@@ -127,7 +127,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		if (characteristic.getCharacteristicRelationship() != null) {
 			characteristic.getCharacteristicRelationship()
 					.stream()
-					.map(CharacteristicRelationship::getCharacteristicRelationId)
+					.map(CharacteristicRelationship::getTmfId)
 					.filter(charRef -> !charIds.contains(charRef))
 					.findFirst()
 					.ifPresent(missingId -> {
@@ -141,7 +141,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 	private void validateInternalFeatureRefs(Feature feature, Resource resource) {
 		List<String> featureIds = resource.getActivationFeature()
 				.stream()
-				.map(Feature::getFeatureId)
+				.map(Feature::getTmfId)
 				.toList();
 		// check for duplicate ids
 		if (featureIds.size() != new HashSet<>(featureIds).size()) {
@@ -151,7 +151,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		if (feature.getFeatureRelationship() != null) {
 			feature.getFeatureRelationship()
 					.stream()
-					.map(FeatureRelationship::getId)
+					.map(FeatureRelationship::getTmfId)
 					.filter(featureRef -> !featureIds.contains(featureRef))
 					.findFirst()
 					.ifPresent(missingId -> {

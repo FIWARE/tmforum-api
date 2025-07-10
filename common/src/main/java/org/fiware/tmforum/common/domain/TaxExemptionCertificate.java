@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class TaxExemptionCertificate {
 
-	private String certificateId;
+	private String tmfId;
 	private AttachmentRefOrValue attachment;
 	private List<TaxDefinition> taxDefinition;
 	private TimePeriod validFor;

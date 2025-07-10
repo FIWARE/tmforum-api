@@ -16,10 +16,10 @@ import java.util.List;
 @Data
 public class Characteristic {
 
-    private String characteristicId;
+    private String tmfId;
     private String name;
     private String valueType;
-    private Object characteristicValue;
+    private Object tmfValue;
     private List<CharacteristicRelationship> characteristicRelationship;
     private String atBaseType;
     private URI atSchemaLocation;

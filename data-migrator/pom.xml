@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.fiware.tmforum</groupId>
+    <artifactId>data-migrator</artifactId>
+    <version>0.1</version>
+    <packaging>pom</packaging>
+
+    <parent>
+        <groupId>org.fiware</groupId>
+        <artifactId>tmforum</artifactId>
+        <version>0.1</version>
+    </parent>
+
+    <modules>
+        <module>legacy-loader</module>
+        <module>update-writer</module>
+        <module>migrator</module>
+    </modules>
+
+    <properties>
+        <version.io.fabric8.docker-maven-plugin>0.46.0</version.io.fabric8.docker-maven-plugin>
+
+
+        <old.io.github.wistefan.ngsi-ld-mapping-java>1.2.11</old.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.projectreactor.reactor-core>3.6.10</version.io.projectreactor.reactor-core>
+    </properties>
+
+</project>

@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 public class FeatureSpecificationCharacteristic {
 
-    private String id;
+    private String tmfId;
     private String description;
     private Boolean configurable;
     private Boolean extensible;

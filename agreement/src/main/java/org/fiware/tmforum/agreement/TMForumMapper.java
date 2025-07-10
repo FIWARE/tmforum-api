@@ -2,6 +2,7 @@ package org.fiware.tmforum.agreement;
 
 import org.fiware.agreement.model.*;
 import org.fiware.tmforum.agreement.domain.Agreement;
+import org.fiware.tmforum.agreement.domain.AgreementSpecCharacteristicValue;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
@@ -15,7 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
-@Mapper(componentModel = "jsr330", uses = { IdHelper.class, MappingHelper.class })
+@Mapper(componentModel = "jsr330", uses = {IdHelper.class, MappingHelper.class})
 public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "id", source = "id")
@@ -47,11 +48,17 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
+
+	@Mapping(target = "tmfValue", source = "value")
+	public abstract AgreementSpecCharacteristicValue map(AgreementSpecCharacteristicValueVO characteristicVO);
+
+	@Mapping(target = "value", source = "tmfValue")
+	public abstract AgreementSpecCharacteristicValueVO map(AgreementSpecCharacteristicValue characteristic);
 
 	public abstract TimePeriod map(TimePeriodVO value);
 

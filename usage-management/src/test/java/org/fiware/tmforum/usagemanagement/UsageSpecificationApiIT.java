@@ -313,10 +313,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 					.targetEntitySchema(null);
 			usageSpecificationVO
 					.id(id)
-					.href(new URI(id))
-					.relatedParty(null)
-					.entitySpecRelationship(null)
-					.constraint(null);
+					.href(new URI(id));
 			editExpectedTimePeriod(usageSpecificationVO);
 			expectedUsageSpecifications.add(usageSpecificationVO);
 		}
@@ -467,10 +464,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		UsageSpecificationVO expectedNewName = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.validFor(null)
-				.targetEntitySchema(null)
-				.relatedParty(null)
-				.entitySpecRelationship(null)
-				.constraint(null);
+				.targetEntitySchema(null);
 		expectedNewName.setName("New-Name");
 		testEntries.add(Arguments.of("The type should have been updated.", newNameUsage, expectedNewName));
 
@@ -482,10 +476,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		UsageSpecificationVO expectedNewDesc = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.validFor(null)
-				.targetEntitySchema(null)
-				.relatedParty(null)
-				.entitySpecRelationship(null)
-				.constraint(null);
+				.targetEntitySchema(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
@@ -497,10 +488,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		UsageSpecificationVO expectedNewLife = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.validFor(null)
-				.targetEntitySchema(null)
-				.relatedParty(null)
-				.entitySpecRelationship(null)
-				.constraint(null);
+				.targetEntitySchema(null);
 		expectedNewLife.lifecycleStatus("New life");
 		testEntries.add(Arguments.of("The life cycle status should have been updated.", newLife, expectedNewLife));
 
@@ -513,10 +501,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 				.atSchemaLocation(null)
 				.validFor(null)
 				.targetEntitySchema(null)
-				.version("v0.0.2")
-				.relatedParty(null)
-				.entitySpecRelationship(null)
-				.constraint(null);
+				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
 
 
@@ -665,10 +650,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 				.id(id)
 				.href(new URI(id))
 				.validFor(null)
-				.targetEntitySchema(null)
-				.relatedParty(null)
-				.entitySpecRelationship(null)
-				.constraint(null);
+				.targetEntitySchema(null);
 		editExpectedTimePeriod(expectedUsageSpecification);
 
 		//then retrieve

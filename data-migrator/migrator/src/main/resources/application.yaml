@@ -1,0 +1,23 @@
+micronaut:
+  http:
+    services:
+      read-timeout: 30s
+      ngsi:
+        path: ngsi-ld/v1
+        url: http://localhost:8080
+        read-timeout: 30
+---
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+
+---
+loggers:
+  levels:
+    ROOT: TRACE
+---
+general:
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+  serverHost: http://localhost:8634
+mapping:
+  strictRelationships: false

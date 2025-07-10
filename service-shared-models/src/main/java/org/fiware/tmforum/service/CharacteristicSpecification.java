@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class CharacteristicSpecification {
 
-    private String specId;
+    private String tmfId;
     private Boolean configurable;
     private String description;
     private Boolean extensible;

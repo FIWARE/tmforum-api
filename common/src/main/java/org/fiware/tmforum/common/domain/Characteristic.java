@@ -10,7 +10,7 @@ public class Characteristic {
     private String name;
     private String valueType;
     // if its value, it clashes with the ngsi-ld property "value"
-    private Object characteristicValue;
+    private Object tmfValue;
     private String atBaseType;
     private URI atSchemaLocation;
     private String atType;

@@ -130,10 +130,10 @@ public abstract class TMForumMapper extends BaseMapper {
 
     public abstract TimePeriod map(TimePeriodVO value);
 
-    @Mapping(target = "moneyValue", source = "value")
+    @Mapping(target = "tmfValue", source = "value")
     public abstract Money map(MoneyVO moneyVO);
 
-    @Mapping(target = "value", source = "moneyValue")
+    @Mapping(target = "value", source = "tmfValue")
     public abstract MoneyVO map(Money money);
 
     public String map(URL value) {

@@ -51,6 +51,7 @@
         <module>account</module>
         <module>service-inventory</module>
         <module>party-role</module>
+        <module>data-migrator</module>
     </modules>
 
     <properties>
@@ -95,7 +96,7 @@
         <version.io.kokuwa.micronaut.codegen>4.4.1</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.4</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.6</version.io.github.wistefan.ngsi-ld-mapping-java>
       
         <!-- caching -->
         <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>

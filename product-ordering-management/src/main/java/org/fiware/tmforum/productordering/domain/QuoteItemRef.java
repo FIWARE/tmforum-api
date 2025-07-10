@@ -13,7 +13,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class QuoteItemRef extends Entity {
 
-	private String refId;
+	private String tmfId;
 	private URI href;
 	private String name;
 	private URI quoteHref;

@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class ResourceGraph {
 
-    private String graphId;
+    private String tmfId;
     private URI href;
     private String description;
     private String name;
