@@ -36,14 +36,15 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 	private final Clock clock;
 
 	public CustomerBillApiController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, TMForumEventHandler eventHandler) {
+									 TmForumRepository repository, TMForumMapper tmForumMapper, Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, repository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
 	}
 
-	@Override public Mono<HttpResponse<List<CustomerBillVO>>> listCustomerBill(@Nullable String fields,
-			@Nullable Integer offset, @Nullable Integer limit) {
+	@Override
+	public Mono<HttpResponse<List<CustomerBillVO>>> listCustomerBill(@Nullable String fields,
+																	 @Nullable Integer offset, @Nullable Integer limit) {
 		return list(offset, limit, CustomerBill.TYPE_CUSTOMER_BILL, CustomerBill.class)
 				.map(customerStream -> customerStream.map(tmForumMapper::map).toList())
 				.switchIfEmpty(Mono.just(List.of()))
@@ -69,7 +70,7 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 
 	protected void validateTaxItems(List<TaxItem> taxItems) {
 		List<String> taxItemIds = taxItems.stream()
-				.map(TaxItem::getItemId)
+				.map(TaxItem::getTmfId)
 				.toList();
 		if (taxItemIds.size() != new HashSet<>(taxItemIds).size()) {
 			throw new TmForumException(String.format("Duplicate taxItem ids are not allowed - ids: %s", taxItemIds),
@@ -79,7 +80,7 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 
 	@Override
 	public Mono<HttpResponse<CustomerBillVO>> patchCustomerBill(@NonNull String id,
-			@NonNull CustomerBillUpdateVO customerBillUpdateVO) {
+																@NonNull CustomerBillUpdateVO customerBillUpdateVO) {
 		// non-ngsi-ld ids cannot exist.
 		if (!IdHelper.isNgsiLdId(id)) {
 			throw new TmForumException("Did not receive a valid id, such customer cannot exist.",

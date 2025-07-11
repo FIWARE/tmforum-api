@@ -7,13 +7,12 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.micronaut.context.ApplicationContext;
+import io.github.wistefan.mapping.AdditionalPropertyMixin;
+import io.github.wistefan.mapping.CacheSerdeableObjectMapper;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import lombok.RequiredArgsConstructor;
-import org.fiware.ngsi.model.GeoPropertyListVO;
-import org.fiware.ngsi.model.PropertyListVO;
-import org.fiware.ngsi.model.RelationshipListVO;
+import org.fiware.ngsi.model.*;
 
 import javax.inject.Singleton;
 
@@ -30,6 +29,11 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 		objectMapper.addMixIn(PropertyListVO.class, ListVOMixin.class);
 		objectMapper.addMixIn(RelationshipListVO.class, ListVOMixin.class);
 		objectMapper.addMixIn(GeoPropertyListVO.class, ListVOMixin.class);
+		// when using caches, a specific mapper is required to serialize/desiralize the cache entries.
+		// we do not want and do not need to overwrite its already configured Mixin's
+		if (!(objectMapper instanceof CacheSerdeableObjectMapper)) {
+			objectMapper.addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
+		}
 
 		SimpleModule deserializerModule = new SimpleModule();
 		// inject the schema validator for atSchemaLocation handling

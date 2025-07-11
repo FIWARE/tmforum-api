@@ -74,7 +74,7 @@ public class ProductSpecificationApiController extends AbstractProductCatalogApi
 	private void validateProductSpecificationCharacteristic(
 			List<ProductSpecificationCharacteristic> productSpecificationCharacteristics) {
 		List<String> prodSpecCharIds = productSpecificationCharacteristics.stream()
-				.map(ProductSpecificationCharacteristic::getCharacteristicId)
+				.map(ProductSpecificationCharacteristic::getTmfId)
 				.toList();
 		if (prodSpecCharIds.size() != new HashSet<>(prodSpecCharIds).size()) {
 			throw new TmForumException(

@@ -61,16 +61,16 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "type", source = "rateType")
 	public abstract AppliedCustomerBillingRateVO map(AppliedCustomerBillingRate appliedCustomerBillingRate);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract AppliedBillingRateCharacteristic map(AppliedBillingRateCharacteristicVO appliedBillingRateCharacteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract AppliedBillingRateCharacteristicVO map(AppliedBillingRateCharacteristic appliedBillingRateCharacteristic);
 
-	@Mapping(target = "moneyValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Money map(MoneyVO moneyVO);
 
-	@Mapping(target = "value", source = "moneyValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract MoneyVO map(Money money);
 
 	public URL map(String value) {

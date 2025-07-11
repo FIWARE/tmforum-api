@@ -10,6 +10,6 @@ public class Characteristic extends Entity {
 
 	private String name;
 	private String valueType;
-	private Object characteristicValue;
+	private Object tmfValue;
 
 }

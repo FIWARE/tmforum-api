@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 public class QuoteItem extends Entity {
 
-	private String itemId;
+	private String tmfId;
 	private String action;
 	private Integer quantity;
 	private QuoteItemState state;

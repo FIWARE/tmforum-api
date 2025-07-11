@@ -14,6 +14,5 @@ public class AgreementSpecCharacteristicValue extends Entity {
     private String valueTo;
     private String valueType;
     private TimePeriod validFor;
-    private Object value;
-
+    private Object tmfValue;
 }
