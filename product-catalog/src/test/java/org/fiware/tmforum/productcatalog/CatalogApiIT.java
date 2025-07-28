@@ -81,8 +81,10 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 				() -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
 		assertEquals(HttpStatus.CREATED, catalogVOHttpResponse.getStatus(), message);
 		String catalogId = catalogVOHttpResponse.body().getId();
+		Instant lastUpdate = catalogVOHttpResponse.body().getLastUpdate();
 		expectedCatalog.setId(catalogId);
 		expectedCatalog.setHref(catalogId);
+		expectedCatalog.setLastUpdate(lastUpdate);
 
 		Map expectedAsMap = objectMapper.convertValue(expectedCatalog, new TypeReference<Map<String, Object>>() {
 		});
@@ -292,12 +294,15 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 		List<CatalogVO> expectedCatalogs = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			CatalogCreateVO catalogCreateVO = CatalogCreateVOTestExample.build().atSchemaLocation(null);
-			String id = catalogApiTestClient.createCatalog(null, catalogCreateVO).body().getId();
+			CatalogVO body = catalogApiTestClient.createCatalog(null, catalogCreateVO).body();
+			String id = body.getId();
+			Instant lastUpdate = body.getLastUpdate();
 			CatalogVO catalogVO = CatalogVOTestExample.build().atSchemaLocation(null);
 			catalogVO
 					.id(id)
 					.href(id)
 					.validFor(null)
+					.lastUpdate(lastUpdate)
 					.category(null)
 					.relatedParty(null);
 			expectedCatalogs.add(catalogVO);
@@ -424,6 +429,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 
 		String catalogId = createResponse.body().getId();
+		Instant lastUpdate = createResponse.body().getLastUpdate();
 
 		HttpResponse<CatalogVO> updateResponse = callAndCatch(
 				() -> catalogApiTestClient.patchCatalog(null, catalogId, catalogUpdateVO));
@@ -432,6 +438,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 		CatalogVO updatedCatalog = updateResponse.body();
 		expectedCatalog.setHref(catalogId);
 		expectedCatalog.setId(catalogId);
+		expectedCatalog.setLastUpdate(lastUpdate);
 
 		assertEquals(expectedCatalog, updatedCatalog, message);
 	}
@@ -599,12 +606,14 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 				() -> catalogApiTestClient.createCatalog(null, catalogCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The catalog should have been created first.");
 		String id = createResponse.body().getId();
+		Instant lastUpdate = createResponse.body().getLastUpdate();
 
 		CatalogVO expectedCatalog = CatalogVOTestExample.build()
 				.atSchemaLocation(null)
 				.validFor(null)
 				.id(id)
 				.href(id)
+				.lastUpdate(lastUpdate)
 				.atSchemaLocation(null)
 				.category(null)
 				.relatedParty(null);
