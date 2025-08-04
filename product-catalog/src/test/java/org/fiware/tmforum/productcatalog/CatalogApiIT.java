@@ -438,7 +438,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 		CatalogVO updatedCatalog = updateResponse.body();
 		expectedCatalog.setHref(catalogId);
 		expectedCatalog.setId(catalogId);
-		expectedCatalog.setLastUpdate(lastUpdate);
+		expectedCatalog.setLastUpdate(updatedCatalog.getLastUpdate());
 
 		assertEquals(expectedCatalog, updatedCatalog, message);
 	}

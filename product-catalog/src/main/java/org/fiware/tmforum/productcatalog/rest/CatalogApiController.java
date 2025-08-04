@@ -88,6 +88,7 @@ public class CatalogApiController extends AbstractApiController<Catalog> impleme
                     TmForumExceptionReason.NOT_FOUND);
         }
         Catalog updatedCatalog = tmForumMapper.map(tmForumMapper.map(catalogUpdateVO, id));
+        updatedCatalog.setLastUpdate(clock.instant());
 
         return patch(id, updatedCatalog, getCheckingMono(updatedCatalog), Catalog.class)
                 .map(tmForumMapper::map)
