@@ -865,7 +865,7 @@
                             <!-- disables the micronaut plugin extension, that breaks the exectuion individual config -->
                             <configuration combine.self="override">
                                 <from>
-                                    <image>registry.access.redhat.com/ubi8/openjdk-17:1.11-2</image>
+                                    <image>registry.access.redhat.com/ubi8/openjdk-17:1.23-3</image>
                                 </from>
                                 <to>
                                     <image>${image.registry}/${image.repository}/tmforum-${project.artifactId}</image>
