@@ -16,6 +16,8 @@ import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -69,6 +71,11 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		return Individual.TYPE_INDIVIDUAL;
 	}
 
+	@DisabledIfSystemProperty(
+			named = "micronaut.environments",
+			matches = "\".*orion-ld.*\"",
+			disabledReason = "Orion-LD does not properly support dataset-ids, thus is not able to handle the relationship lists."
+	)
 	@Test
 	public void createMultiRoleRelationship() throws Exception {
 		IndividualCreateVO referencedIndividual = IndividualCreateVOTestExample
