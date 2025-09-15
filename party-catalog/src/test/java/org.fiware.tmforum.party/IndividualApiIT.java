@@ -26,8 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -76,7 +75,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 				.build()
 				.atSchemaLocation(null);
 		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
-				() -> individualApiTestClient.createIndividual(null, individualCreateVO));
+				() -> individualApiTestClient.createIndividual(null, referencedIndividual));
 		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(),
 				"Was not able to create the initial individual.");
 		IndividualVO createdIndividualVO = individualCreateResponse.body();
@@ -106,6 +105,38 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 		assertEquals(2, theIndividualResponse.body().getRelatedParty().size(), "Both related parties should have been returned.");
 
+		IndividualUpdateVO cleanedIndividual = IndividualUpdateVOTestExample
+				.build()
+				.atSchemaLocation(null)
+				.relatedParty(List.of(
+						RelatedPartyVOTestExample.build()
+								.atSchemaLocation(null)
+								.role("CUSTOMER")
+								.id(createdIndividualVO.getId())
+				));
+
+		HttpResponse<IndividualVO> theIndividualUpdateResponse = callAndCatch(
+				() -> individualApiTestClient.patchIndividual(null, newCreateResponse.body().getId(), cleanedIndividual));
+		assertEquals(HttpStatus.OK, theIndividualUpdateResponse.getStatus(), "Individual should have been updated.");
+		theIndividualResponse = callAndCatch(
+				() -> individualApiTestClient.retrieveIndividual(null, newCreateResponse.body().getId(), null));
+		assertEquals(HttpStatus.OK, theIndividualResponse.getStatus(), "The individual should have been returned.");
+
+		assertEquals(1, theIndividualResponse.body().getRelatedParty().size(), "Only one related party should still be included.");
+
+		IndividualUpdateVO emptiedIndividual = IndividualUpdateVOTestExample
+				.build()
+				.atSchemaLocation(null)
+				.relatedParty(List.of());
+
+		theIndividualUpdateResponse = callAndCatch(
+				() -> individualApiTestClient.patchIndividual(null, newCreateResponse.body().getId(), emptiedIndividual));
+		assertEquals(HttpStatus.OK, theIndividualUpdateResponse.getStatus(), "Individual should have been updated.");
+		theIndividualResponse = callAndCatch(
+				() -> individualApiTestClient.retrieveIndividual(null, newCreateResponse.body().getId(), null));
+		assertEquals(HttpStatus.OK, theIndividualResponse.getStatus(), "The individual should have been returned.");
+
+		assertNull(theIndividualResponse.body().getRelatedParty(), "The related parties should have been emptied.");
 	}
 
 	@ParameterizedTest
