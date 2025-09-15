@@ -60,4 +60,4 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn test integration-test verify -B --projects ${{matrix.module}} -Dbroker=orion-ld -Dcache=in-memory
+          mvn test integration-test verify -B --projects ${{matrix.module}} -Dmicronaut.environments=in-memory,orion-ld
