@@ -38,6 +38,7 @@ public abstract class TMForumMapper extends BaseMapper {
 	public abstract Organization map(OrganizationVO organizationVO);
 
 	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
 	public abstract Organization map(OrganizationUpdateVO organizationUpdateVO, String id);
 
 	@Mapping(target = "id", source = "id")
@@ -45,6 +46,7 @@ public abstract class TMForumMapper extends BaseMapper {
 	public abstract IndividualVO map(IndividualCreateVO individualCreateVO, URI id);
 
 	@Mapping(target = "id", source = "id")
+	@Mapping(target = "href", source = "id")
 	public abstract Individual map(IndividualUpdateVO individualUpdateVO, String id);
 
 	public abstract IndividualVO map(Individual individual);
