@@ -73,11 +73,13 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 	@DisabledIfSystemProperty(
 			named = "micronaut.environments",
-			matches = "\".*orion-ld.*\"",
+			matches = "(^|.*,)?orion-ld(,.*|$)",
 			disabledReason = "Orion-LD does not properly support dataset-ids, thus is not able to handle the relationship lists."
 	)
 	@Test
 	public void createMultiRoleRelationship() throws Exception {
+		System.out.println("micronaut.environments=" + System.getProperty("micronaut.environments"));
+
 		IndividualCreateVO referencedIndividual = IndividualCreateVOTestExample
 				.build()
 				.atSchemaLocation(null);
