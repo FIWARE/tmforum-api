@@ -797,6 +797,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 					.atSchemaLocation(null)
 					.quoteDate(now)
 					.validFor(null)
+					.relatedParty(null)
 					.state(QuoteStateTypeVO.IN_PROGRESS)
 					.quoteTotalPrice(null)
 					.quoteItem(List.of(QuoteItemVOTestExample.build()
@@ -981,6 +982,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 										.state(QuoteItemState.REJECTED.getValue())
 										.atSchemaLocation(null)
 										.product(null)
+										.relatedParty(null)
 										.productOffering(null)
 										.productOfferingQualificationItem(null)))),
 				Arguments.of("The expectedFulfillmentStartDate should have been updated.",
@@ -1011,6 +1013,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
 										.product(null)
+										.relatedParty(null)
 										.productOffering(null)
 										.productOfferingQualificationItem(null)))),
 				Arguments.of("The requestedQuoteCompletionDate should have been updated.",
@@ -1041,6 +1044,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
 										.product(null)
+										.relatedParty(null)
 										.productOffering(null)
 										.productOfferingQualificationItem(null)))),
 				Arguments.of("The instant sync should have been updated.",
@@ -1067,6 +1071,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								.validFor(null)
 								.instantSyncQuote(false)
 								.state(QuoteStateTypeVO.IN_PROGRESS)
+								.relatedParty(null)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
@@ -1101,6 +1106,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 										.name("MyNewName")))
 								.state(QuoteStateTypeVO.IN_PROGRESS)
 								.validFor(null)
+								.relatedParty(null)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
@@ -1140,6 +1146,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 												.atSchemaLocation(null)
 												.city("Dresden"))))
 								.state(QuoteStateTypeVO.IN_PROGRESS)
+								.relatedParty(null)
 								.validFor(null)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
@@ -1175,6 +1182,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 										.text("My new text.")))
 								.state(QuoteStateTypeVO.IN_PROGRESS)
 								.validFor(null)
+								.relatedParty(null)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
@@ -1206,6 +1214,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								.atSchemaLocation(null)
 								.state(QuoteStateTypeVO.IN_PROGRESS)
 								.validFor(null)
+								.relatedParty(null)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
@@ -1527,6 +1536,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								.validFor(null)
 								.state(QuoteStateTypeVO.IN_PROGRESS)
 								.quoteTotalPrice(null)
+								.relatedParty(null)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)

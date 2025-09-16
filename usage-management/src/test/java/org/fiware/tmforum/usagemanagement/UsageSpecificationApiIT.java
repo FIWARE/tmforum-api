@@ -310,8 +310,8 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 			UsageSpecificationVO usageSpecificationVO = UsageSpecificationVOTestExample.build()
 					.atSchemaLocation(null)
 					.validFor(null)
-					.targetEntitySchema(null);
-			usageSpecificationVO
+					.relatedParty(null)
+					.targetEntitySchema(null)
 					.id(id)
 					.href(new URI(id));
 			editExpectedTimePeriod(usageSpecificationVO);
@@ -463,6 +463,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		newNameUsage.setName("New-Name");
 		UsageSpecificationVO expectedNewName = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.validFor(null)
 				.targetEntitySchema(null);
 		expectedNewName.setName("New-Name");
@@ -475,6 +476,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		newDesc.setDescription("New description");
 		UsageSpecificationVO expectedNewDesc = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.validFor(null)
 				.targetEntitySchema(null);
 		expectedNewDesc.setDescription("New description");
@@ -487,6 +489,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		newLife.lifecycleStatus("New life");
 		UsageSpecificationVO expectedNewLife = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.validFor(null)
 				.targetEntitySchema(null);
 		expectedNewLife.lifecycleStatus("New life");
@@ -499,6 +502,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 				.version("v0.0.2");
 		UsageSpecificationVO expectedVersionUpdate = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.validFor(null)
 				.targetEntitySchema(null)
 				.version("v0.0.2");
@@ -648,6 +652,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		UsageSpecificationVO expectedUsageSpecification = UsageSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.id(id)
+				.relatedParty(null)
 				.href(new URI(id))
 				.validFor(null)
 				.targetEntitySchema(null);

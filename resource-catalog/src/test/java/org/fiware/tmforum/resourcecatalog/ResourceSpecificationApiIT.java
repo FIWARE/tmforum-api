@@ -586,6 +586,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.lifecycleStatus("dead");
 		ResourceSpecificationVO expectedLifecycleStatus = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetResourceSchema(null)
 				.lifecycleStatus("dead");
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
@@ -597,6 +598,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.description("new-description");
 		ResourceSpecificationVO expectedDescriptionUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetResourceSchema(null)
 				.description("new-description");
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
@@ -608,6 +610,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.name("new-name");
 		ResourceSpecificationVO expectedNameUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetResourceSchema(null)
 				.name("new-name");
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
@@ -618,6 +621,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.version("v0.0.2");
 		ResourceSpecificationVO expectedVersionUpdate = ResourceSpecificationVOTestExample.build().validFor(null)
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetResourceSchema(null)
 				.version("v0.0.2");
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
@@ -630,6 +634,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				.validFor(timePeriodVO);
 		ResourceSpecificationVO expectedValidForUpdate = ResourceSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetResourceSchema(null)
 				.validFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
@@ -644,6 +649,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 										.featureSpecification(List.of(ap.value())),
 								ResourceSpecificationVOTestExample.build()
 										.atSchemaLocation(null)
+										.relatedParty(null)
 										.targetResourceSchema(null)
 										.lifecycleStatus("created")
 										.validFor(null)
@@ -803,6 +809,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 						ResourceSpecificationVOTestExample.build()
 								.atSchemaLocation(null)
 								.validFor(null)
+								.relatedParty(null)
 								.targetResourceSchema(null)
 								.resourceSpecRelationship(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
