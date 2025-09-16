@@ -301,6 +301,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 					.id(id)
 					.href(URI.create(id))
 					.parentId(null)
+					.relatedParty(null)
 					.validFor(null);
 			expectedResourceCategorys.add(resourceCategoryVO);
 		}
@@ -455,6 +456,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 				.lifecycleStatus("dead");
 		ResourceCategoryVO expectedLifecycleStatus = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
+				.relatedParty(null)
 				.lifecycleStatus("dead")
 				.validFor(null);
 		testEntries.add(Arguments.of("The lifecycle state should have been updated.", lifecycleStatusUpdate,
@@ -465,6 +467,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 				.description("new-description");
 		ResourceCategoryVO expectedDescriptionUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
+				.relatedParty(null)
 				.description("new-description")
 				.validFor(null);
 		testEntries.add(Arguments.of("The description should have been updated.", descriptionUpdate,
@@ -475,6 +478,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 				.name("new-name");
 		ResourceCategoryVO expectedNameUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
+				.relatedParty(null)
 				.name("new-name")
 				.validFor(null);
 		testEntries.add(Arguments.of("The name should have been updated.", nameUpdate, expectedNameUpdate));
@@ -485,6 +489,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		ResourceCategoryVO expectedIsRoot = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
 				.isRoot(true)
+				.relatedParty(null)
 				.validFor(null);
 		testEntries.add(Arguments.of("isRoot should have been updated.", isRootUpdate, expectedIsRoot));
 
@@ -493,6 +498,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 				.version("v0.0.2");
 		ResourceCategoryVO expectedVersionUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 				.parentId(null)
+				.relatedParty(null)
 				.version("v0.0.2")
 				.validFor(null);
 		testEntries.add(Arguments.of("The version should have been updated.", versionUpdate, expectedVersionUpdate));
@@ -502,6 +508,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		ResourceCategoryUpdateVO validForUpdate = ResourceCategoryUpdateVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 				.parentId(null);
 		ResourceCategoryVO expectedValidForUpdate = ResourceCategoryVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
+				.relatedParty(null)
 				.parentId(null);
 		testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
 
@@ -650,6 +657,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 				Arguments.of("Without a fields parameter everything should be returned.", null,
 						ResourceCategoryVOTestExample.build().atSchemaLocation(null)
 								.parentId(null)
+								.relatedParty(null)
 								.validFor(null)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",
 						ResourceCategoryVOTestExample.build().atSchemaLocation(null)

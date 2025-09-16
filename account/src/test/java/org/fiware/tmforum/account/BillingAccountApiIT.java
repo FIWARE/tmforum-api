@@ -350,6 +350,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 			billingAccountVO
 					.id(id)
 					.href(id)
+					.relatedParty(null)
 					.billStructure(billStructure)
 					.defaultPaymentMethod(null)
 					.financialAccount(null);
@@ -508,7 +509,8 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newTypeBillingAccount);
 		newTypeBillingAccount.setAccountType("New-Type");
-		BillingAccountVO expectedNewType = BillingAccountVOTestExample.build().atSchemaLocation(null);
+		BillingAccountVO expectedNewType = BillingAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewType.setAccountType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeBillingAccount, expectedNewType));
 
@@ -517,7 +519,8 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newDesc);
 		newDesc.setDescription("New description");
-		BillingAccountVO expectedNewDesc = BillingAccountVOTestExample.build().atSchemaLocation(null);
+		BillingAccountVO expectedNewDesc = BillingAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
@@ -526,7 +529,8 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newName);
 		newName.setName("New name");
-		BillingAccountVO expectedNewName = BillingAccountVOTestExample.build().atSchemaLocation(null);
+		BillingAccountVO expectedNewName = BillingAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
@@ -659,7 +663,8 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The billingAccount should have been created first.");
 		String id = createResponse.body().getId();
 
-		BillingAccountVO expectedBillingAccount = BillingAccountVOTestExample.build().atSchemaLocation(null);
+		BillingAccountVO expectedBillingAccount = BillingAccountVOTestExample.build()
+				.relatedParty(null).atSchemaLocation(null);
 		expectedBillingAccount.setId(id);
 		expectedBillingAccount.setHref(id);
 		expectedBillingAccount.financialAccount(null).defaultPaymentMethod(null);
