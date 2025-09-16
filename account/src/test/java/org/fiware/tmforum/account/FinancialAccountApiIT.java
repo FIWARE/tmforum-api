@@ -263,6 +263,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 			String id = financialAccountApiTestClient.createFinancialAccount(null, financialAccountCreateVO).body().getId();
 			FinancialAccountVO financialAccountVO = FinancialAccountVOTestExample.build().atSchemaLocation(null);
 			financialAccountVO
+					.relatedParty(null)
 					.id(id)
 					.href(id);
 			expectedFinancialAccounts.add(financialAccountVO);
@@ -406,25 +407,29 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 
 		FinancialAccountUpdateVO newTypeFinancialAccount = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newTypeFinancialAccount.setAccountType("New-Type");
-		FinancialAccountVO expectedNewType = FinancialAccountVOTestExample.build().atSchemaLocation(null);
+		FinancialAccountVO expectedNewType = FinancialAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewType.setAccountType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeFinancialAccount, expectedNewType));
 
 		FinancialAccountUpdateVO newDesc = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newDesc.setDescription("New description");
-		FinancialAccountVO expectedNewDesc = FinancialAccountVOTestExample.build().atSchemaLocation(null);
+		FinancialAccountVO expectedNewDesc = FinancialAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
 		FinancialAccountUpdateVO newName = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newName.setName("New name");
-		FinancialAccountVO expectedNewName = FinancialAccountVOTestExample.build().atSchemaLocation(null);
+		FinancialAccountVO expectedNewName = FinancialAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
 		FinancialAccountUpdateVO newState = FinancialAccountUpdateVOTestExample.build().atSchemaLocation(null);
 		newState.setState("New state");
-		FinancialAccountVO expectedNewState = FinancialAccountVOTestExample.build().atSchemaLocation(null);
+		FinancialAccountVO expectedNewState = FinancialAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewState.setState("New state");
 		testEntries.add(Arguments.of("The state should have been updated.", newState, expectedNewState));
 
@@ -534,7 +539,8 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The financialAccount should have been created first.");
 		String id = createResponse.body().getId();
 
-		FinancialAccountVO expectedFinancialAccount = FinancialAccountVOTestExample.build().atSchemaLocation(null);
+		FinancialAccountVO expectedFinancialAccount = FinancialAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedFinancialAccount.setId(id);
 		expectedFinancialAccount.setHref(id);
 

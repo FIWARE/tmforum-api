@@ -349,6 +349,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 					.cycleSpecification(billingCycleRV);
 			settlementAccountVO
 					.id(id)
+					.relatedParty(null)
 					.href(id)
 					.billStructure(billStructure)
 					.defaultPaymentMethod(null)
@@ -508,7 +509,8 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newTypeSettlementAccount);
 		newTypeSettlementAccount.setAccountType("New-Type");
-		SettlementAccountVO expectedNewType = SettlementAccountVOTestExample.build().atSchemaLocation(null);
+		SettlementAccountVO expectedNewType = SettlementAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewType.setAccountType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeSettlementAccount, expectedNewType));
 
@@ -517,7 +519,8 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newDesc);
 		newDesc.setDescription("New description");
-		SettlementAccountVO expectedNewDesc = SettlementAccountVOTestExample.build().atSchemaLocation(null);
+		SettlementAccountVO expectedNewDesc = SettlementAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
@@ -526,7 +529,8 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newName);
 		newName.setName("New name");
-		SettlementAccountVO expectedNewName = SettlementAccountVOTestExample.build().atSchemaLocation(null);
+		SettlementAccountVO expectedNewName = SettlementAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
@@ -659,7 +663,8 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The settlementAccount should have been created first.");
 		String id = createResponse.body().getId();
 
-		SettlementAccountVO expectedSettlementAccount = SettlementAccountVOTestExample.build().atSchemaLocation(null);
+		SettlementAccountVO expectedSettlementAccount = SettlementAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedSettlementAccount.setId(id);
 		expectedSettlementAccount.setHref(id);
 		expectedSettlementAccount.financialAccount(null)

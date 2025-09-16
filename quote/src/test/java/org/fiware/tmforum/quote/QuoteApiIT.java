@@ -978,11 +978,11 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								.atSchemaLocation(null)
 								.state(QuoteStateTypeVO.IN_PROGRESS)
 								.validFor(null)
+								.relatedParty(null)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.REJECTED.getValue())
 										.atSchemaLocation(null)
 										.product(null)
-										.relatedParty(null)
 										.productOffering(null)
 										.productOfferingQualificationItem(null)))),
 				Arguments.of("The expectedFulfillmentStartDate should have been updated.",
@@ -1008,12 +1008,12 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								.atSchemaLocation(null)
 								.expectedFulfillmentStartDate(next)
 								.validFor(null)
+								.relatedParty(null)
 								.state(QuoteStateTypeVO.IN_PROGRESS)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
 										.product(null)
-										.relatedParty(null)
 										.productOffering(null)
 										.productOfferingQualificationItem(null)))),
 				Arguments.of("The requestedQuoteCompletionDate should have been updated.",
@@ -1039,12 +1039,12 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								.atSchemaLocation(null)
 								.requestedQuoteCompletionDate(next)
 								.validFor(null)
+								.relatedParty(null)
 								.state(QuoteStateTypeVO.IN_PROGRESS)
 								.quoteItem(List.of(QuoteItemVOTestExample.build()
 										.state(QuoteItemState.IN_PROGRESS.getValue())
 										.atSchemaLocation(null)
 										.product(null)
-										.relatedParty(null)
 										.productOffering(null)
 										.productOfferingQualificationItem(null)))),
 				Arguments.of("The instant sync should have been updated.",
