@@ -349,6 +349,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 					.cycleSpecification(billingCycleRV);
 			partyAccountVO
 					.id(id)
+					.relatedParty(null)
 					.href(id)
 					.billStructure(billStructure)
 					.defaultPaymentMethod(null)
@@ -508,7 +509,8 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newTypePartyAccount);
 		newTypePartyAccount.setAccountType("New-Type");
-		PartyAccountVO expectedNewType = PartyAccountVOTestExample.build().atSchemaLocation(null);
+		PartyAccountVO expectedNewType = PartyAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewType.setAccountType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypePartyAccount, expectedNewType));
 
@@ -517,7 +519,8 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newDesc);
 		newDesc.setDescription("New description");
-		PartyAccountVO expectedNewDesc = PartyAccountVOTestExample.build().atSchemaLocation(null);
+		PartyAccountVO expectedNewDesc = PartyAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
@@ -526,7 +529,8 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 				.defaultPaymentMethod(null);
 		fixExampleUpdate(newName);
 		newName.setName("New name");
-		PartyAccountVO expectedNewName = PartyAccountVOTestExample.build().atSchemaLocation(null);
+		PartyAccountVO expectedNewName = PartyAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedNewName.setName("New name");
 		testEntries.add(Arguments.of("The name should have been updated.", newName, expectedNewName));
 
@@ -659,7 +663,8 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The partyAccount should have been created first.");
 		String id = createResponse.body().getId();
 
-		PartyAccountVO expectedPartyAccount = PartyAccountVOTestExample.build().atSchemaLocation(null);
+		PartyAccountVO expectedPartyAccount = PartyAccountVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null);
 		expectedPartyAccount.setId(id);
 		expectedPartyAccount.setHref(id);
 		expectedPartyAccount.financialAccount(null);

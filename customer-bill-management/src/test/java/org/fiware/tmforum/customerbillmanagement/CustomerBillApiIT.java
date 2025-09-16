@@ -91,6 +91,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 			CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null)
 					.id("urn:ngsi-ld:customer-bill:" + UUID.randomUUID().toString())
 					.billingAccount(null)
+					.relatedParty(null)
 					.financialAccount(null)
 					.paymentMethod(null)
 					.billingPeriod(null);
