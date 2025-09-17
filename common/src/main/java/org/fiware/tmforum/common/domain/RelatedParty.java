@@ -44,8 +44,7 @@ public class RelatedParty extends RefEntity {
 	@DatasetId
 	public URI getDatasetId() {
 		String role = Optional.ofNullable(getRole()).orElse("role");
-		String name = Optional.ofNullable(getName()).orElse("name");
 
-		return URI.create(String.format("%s:%s:%s", id.toString(), role, name));
+		return URI.create(String.format("%s:%s", id.toString(), role));
 	}
 }
