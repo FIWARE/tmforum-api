@@ -3,6 +3,7 @@ package org.fiware.tmforum.common.querying;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.github.wistefan.mapping.NgsiLdAttribute;
 import io.github.wistefan.mapping.QueryAttributeType;
+import io.github.wistefan.mapping.ReservedWordHandler;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
@@ -34,379 +35,388 @@ import static org.fiware.tmforum.common.querying.Operator.REGEX;
 @RequiredArgsConstructor
 public class QueryParser {
 
-	protected final GeneralProperties generalProperties;
+    private static final List<String> RESERVED_WORDS = List.of("id", "@id", "value", "@value", "type", "@type", "context", "@context");
 
-	// Keys for the "well-known" fields
-	public static final String OFFSET_KEY = "offset";
-	public static final String LIMIT_KEY = "limit";
-	public static final String FIELDS_KEY = "fields";
-	public static final String SORT_KEY = "sort";
+    protected final GeneralProperties generalProperties;
 
-	public static final String NGSI_LD_AND = ";";
+    // Keys for the "well-known" fields
+    public static final String OFFSET_KEY = "offset";
+    public static final String LIMIT_KEY = "limit";
+    public static final String FIELDS_KEY = "fields";
+    public static final String SORT_KEY = "sort";
 
-	// the "," in tm-forum values is an or
-	public static final String TMFORUM_OR_VALUE = ",";
+    public static final String NGSI_LD_AND = ";";
 
-	// the ";" in tm-forum parameters is an or
-	public static final String TMFORUM_OR_KEY = ";";
-	public static final String TMFORUM_AND = "&";
+    // the "," in tm-forum values is an or
+    public static final String TMFORUM_OR_VALUE = ",";
 
-	public static boolean hasFilter(Map<String, List<String>> values) {
-		//remove the "non-filtering" keys
-		values.remove(OFFSET_KEY);
-		values.remove(LIMIT_KEY);
-		values.remove(FIELDS_KEY);
-		values.remove(SORT_KEY);
-		// if something is left, we have filter
-		return !values.isEmpty();
-	}
+    // the ";" in tm-forum parameters is an or
+    public static final String TMFORUM_OR_KEY = ";";
+    public static final String TMFORUM_AND = "&";
 
-	private static String removeWellKnownParameters(String queryString) {
-		// Using linked list as the list returned by asList method is fixed-size
-		// so the remove method raises a non implemented exception
-		List<String> parameters = new LinkedList<>(Arrays.asList(queryString.split(TMFORUM_AND)));
-		List<String> wellKnownParams = parameters
-				.stream()
-				.filter(p -> p.startsWith(LIMIT_KEY)
-						|| p.startsWith(FIELDS_KEY)
-						|| p.startsWith(OFFSET_KEY)
-						|| p.startsWith(SORT_KEY)
-				)
-				.toList();
-		// not part of the query
-		parameters.removeAll(wellKnownParams);
-		return String.join(TMFORUM_AND, parameters);
-	}
+    public static boolean hasFilter(Map<String, List<String>> values) {
+        //remove the "non-filtering" keys
+        values.remove(OFFSET_KEY);
+        values.remove(LIMIT_KEY);
+        values.remove(FIELDS_KEY);
+        values.remove(SORT_KEY);
+        // if something is left, we have filter
+        return !values.isEmpty();
+    }
 
-	public QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {
-		queryString = removeWellKnownParameters(queryString);
+    private static String removeWellKnownParameters(String queryString) {
+        // Using linked list as the list returned by asList method is fixed-size
+        // so the remove method raises a non implemented exception
+        List<String> parameters = new LinkedList<>(Arrays.asList(queryString.split(TMFORUM_AND)));
+        List<String> wellKnownParams = parameters
+                .stream()
+                .filter(p -> p.startsWith(LIMIT_KEY)
+                        || p.startsWith(FIELDS_KEY)
+                        || p.startsWith(OFFSET_KEY)
+                        || p.startsWith(SORT_KEY)
+                )
+                .toList();
+        // not part of the query
+        parameters.removeAll(wellKnownParams);
+        return String.join(TMFORUM_AND, parameters);
+    }
 
-		List<String> parameters;
-		LogicalOperator logicalOperator = LogicalOperator.AND;
-		// tm-forum does not define queries combining AND and OR
-		if (queryString.contains(TMFORUM_AND) && queryString.contains(TMFORUM_OR_KEY)) {
-			throw new QueryException("Combining AND(&) and OR(;) on query level is not supported by the TMForum API.");
-		}
-		if (queryString.contains(TMFORUM_AND)) {
-			parameters = Arrays.asList(queryString.split(TMFORUM_AND));
-			logicalOperator = LogicalOperator.AND;
-		} else if (queryString.contains(TMFORUM_OR_KEY)) {
-			parameters = Arrays.asList(queryString.split(TMFORUM_OR_KEY));
-			logicalOperator = LogicalOperator.OR;
-		} else {
-			//query is just a single parameter query
-			parameters = List.of(queryString);
-		}
+    public QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {
+        queryString = removeWellKnownParameters(queryString);
 
-		Stream<QueryPart> queryPartsStream = parameters
-				.stream()
-				.map(this::parseParameter);
+        List<String> parameters;
+        LogicalOperator logicalOperator = LogicalOperator.AND;
+        // tm-forum does not define queries combining AND and OR
+        if (queryString.contains(TMFORUM_AND) && queryString.contains(TMFORUM_OR_KEY)) {
+            throw new QueryException("Combining AND(&) and OR(;) on query level is not supported by the TMForum API.");
+        }
+        if (queryString.contains(TMFORUM_AND)) {
+            parameters = Arrays.asList(queryString.split(TMFORUM_AND));
+            logicalOperator = LogicalOperator.AND;
+        } else if (queryString.contains(TMFORUM_OR_KEY)) {
+            parameters = Arrays.asList(queryString.split(TMFORUM_OR_KEY));
+            logicalOperator = LogicalOperator.OR;
+        } else {
+            //query is just a single parameter query
+            parameters = List.of(queryString);
+        }
 
-		// collect the or values to single entries if they use the same key
-		if (logicalOperator == LogicalOperator.OR) {
-			Map<String, List<QueryPart>> collectedParts = queryPartsStream.collect(
-					Collectors.toMap(QueryPart::attribute, qp -> new ArrayList<>(List.of(qp)),
-							(qp1, qp2) -> {
-								qp1.addAll(qp2);
-								return qp1;
-							}));
-			queryPartsStream = collectedParts.entrySet().stream()
-					.flatMap(entry -> combineParts(entry.getKey(), entry.getValue()).stream());
-		}
-		List<String> ids = new ArrayList<>();
-		List<String> types = new ArrayList<>();
-		// translate the attributes
-		Stream<String> queryStrings = queryPartsStream.map(qp -> {
-					NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
-							Arrays.asList(qp.attribute().split("\\.")),
-							queryClass);
-					if (attribute.path().isEmpty()) {
-						log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
-						attribute = getPathToAdditionalAttributes(qp);
-					}
-					if (attribute.path().size() == 1 && attribute.path().contains("id")) {
-						ids.add(qp.value());
-						return null;
-					}
-					if (attribute.path().size() == 1 && attribute.path().contains("type")) {
-						types.add(qp.value());
-						return null;
-					}
-					return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
-				})
-				.filter(Objects::nonNull);
+        Stream<QueryPart> queryPartsStream = parameters
+                .stream()
+                .map(this::parseParameter);
 
-		String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
-		String query = switch (logicalOperator) {
-			case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
-			case OR -> queryStrings.collect(Collectors.joining(ngsidOrKey));
-		};
+        // collect the or values to single entries if they use the same key
+        if (logicalOperator == LogicalOperator.OR) {
+            Map<String, List<QueryPart>> collectedParts = queryPartsStream.collect(
+                    Collectors.toMap(QueryPart::attribute, qp -> new ArrayList<>(List.of(qp)),
+                            (qp1, qp2) -> {
+                                qp1.addAll(qp2);
+                                return qp1;
+                            }));
+            queryPartsStream = collectedParts.entrySet().stream()
+                    .flatMap(entry -> combineParts(entry.getKey(), entry.getValue()).stream());
+        }
+        List<String> ids = new ArrayList<>();
+        List<String> types = new ArrayList<>();
+        // translate the attributes
+        Stream<String> queryStrings = queryPartsStream.map(qp -> {
+                    NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
+                            Arrays.asList(qp.attribute().split("\\.")),
+                            queryClass);
+                    if (attribute.path().isEmpty()) {
+                        log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
+                        attribute = getPathToAdditionalAttributes(qp);
+                    }
+                    if (attribute.path().size() == 1 && attribute.path().contains("id")) {
+                        ids.add(qp.value());
+                        return null;
+                    }
+                    if (attribute.path().size() == 1 && attribute.path().contains("type")) {
+                        types.add(qp.value());
+                        return null;
+                    }
 
-		String idList = null;
-		if (!ids.isEmpty()) {
-			idList = String.join(",", ids);
-		}
-		String typeList = null;
-		if (!types.isEmpty()) {
-			typeList = String.join(",", types);
-		}
-		if (query.isEmpty()) {
-			query = null;
-		}
-		return new QueryParams(idList, typeList, query);
-	}
+                    List<String> cleanedPath = attribute.path()
+                            .stream()
+                            .map(ReservedWordHandler::escapeReservedWords)
+                            .toList();
+                    attribute = new NgsiLdAttribute(new ArrayList<>(cleanedPath), attribute.type());
+                    return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
+                })
+                .filter(Objects::nonNull);
 
-	private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
-		List<String> path = new ArrayList<>(Arrays.asList(queryPart.attribute().split("\\.")));
-		if (isBoolean(queryPart.value())) {
-			return new NgsiLdAttribute(path, QueryAttributeType.BOOLEAN);
-		}
-		if (isNumber(queryPart.value())) {
-			return new NgsiLdAttribute(path, QueryAttributeType.NUMBER);
-		}
-		return new NgsiLdAttribute(path, QueryAttributeType.STRING);
 
-	}
+        String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
+        String query = switch (logicalOperator) {
+            case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
+            case OR -> queryStrings.collect(Collectors.joining(ngsidOrKey));
+        };
 
-	private static boolean isNumber(String theValue) {
-		try {
-			Double.parseDouble(theValue);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
+        String idList = null;
+        if (!ids.isEmpty()) {
+            idList = String.join(",", ids);
+        }
+        String typeList = null;
+        if (!types.isEmpty()) {
+            typeList = String.join(",", types);
+        }
+        if (query.isEmpty()) {
+            query = null;
+        }
+        return new QueryParams(idList, typeList, query);
+    }
 
-	private static boolean isBoolean(String theValue) {
-		if (theValue.equals("true") || theValue.equals("false")) {
-			return true;
-		}
-		return false;
-	}
+    private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
+        List<String> path = new ArrayList<>(Arrays.asList(queryPart.attribute().split("\\.")));
+        if (isBoolean(queryPart.value())) {
+            return new NgsiLdAttribute(path, QueryAttributeType.BOOLEAN);
+        }
+        if (isNumber(queryPart.value())) {
+            return new NgsiLdAttribute(path, QueryAttributeType.NUMBER);
+        }
+        return new NgsiLdAttribute(path, QueryAttributeType.STRING);
 
-	private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
-		log.warn("Is relationship? {}", attribute);
+    }
 
-		Optional<Annotation> relevantAnnotation = getGetterMethodByName(queryClass, attribute.path().get(0))
-				.flatMap(m -> Arrays.stream(m.getAnnotations()))
-				.filter(AttributeGetter.class::isInstance)
-				.filter(annotation -> (annotation instanceof AttributeGetter attributeGetter || annotation instanceof RelationshipObject))
-				.findFirst();
-		if (relevantAnnotation.isEmpty()) {
-			return false;
-		}
-		return relevantAnnotation.map(annotation -> {
-			if (annotation instanceof AttributeGetter attributeGetter) {
-				return attributeGetter.value().equals(AttributeType.RELATIONSHIP)
-						|| attributeGetter.value().equals(AttributeType.RELATIONSHIP_LIST);
-			}
-			if (annotation instanceof RelationshipObject) {
-				return true;
-			}
-			return false;
-		}).get();
-	}
+    private static boolean isNumber(String theValue) {
+        try {
+            Double.parseDouble(theValue);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
-	private QueryPart getQueryPart(NgsiLdAttribute attribute, QueryPart qp, boolean isRel) {
-		// The query part will depend on the type of query
-		// if the query is to a relationship subproperties will be joined with .
-		// if the query is to a property with structured values the path will be
-		// added between brackets
+    private static boolean isBoolean(String theValue) {
+        if (theValue.equals("true") || theValue.equals("false")) {
+            return true;
+        }
+        return false;
+    }
 
-		String attrPath;
-		if (isRel) {
-			attrPath = String.join(".", attribute.path());
-			// remove .id, since it will be added in case of referenced entities
-			if (attrPath.endsWith(".id")) {
-				attrPath = attrPath.substring(0, attrPath.length() - 3);
-			}
-		} else {
-			String first = attribute.path().remove(0);
-			attrPath = first + String.join("", attribute.path()
-					.stream()
-					.map(this::mapPathPart)
-					.toList());
-		}
+    private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
+        log.warn("Is relationship? {}", attribute);
 
-		return new QueryPart(
-				attrPath,
-				qp.operator(),
-				qp.value());
-	}
+        Optional<Annotation> relevantAnnotation = getGetterMethodByName(queryClass, attribute.path().get(0))
+                .flatMap(m -> Arrays.stream(m.getAnnotations()))
+                .filter(AttributeGetter.class::isInstance)
+                .filter(annotation -> (annotation instanceof AttributeGetter attributeGetter || annotation instanceof RelationshipObject))
+                .findFirst();
+        if (relevantAnnotation.isEmpty()) {
+            return false;
+        }
+        return relevantAnnotation.map(annotation -> {
+            if (annotation instanceof AttributeGetter attributeGetter) {
+                return attributeGetter.value().equals(AttributeType.RELATIONSHIP)
+                        || attributeGetter.value().equals(AttributeType.RELATIONSHIP_LIST);
+            }
+            if (annotation instanceof RelationshipObject) {
+                return true;
+            }
+            return false;
+        }).get();
+    }
 
-	private String mapPathPart(String part) {
-		if (generalProperties.getUseDotSeperator()) {
-			return "." + part;
-		} else {
-			return "[" + part + "]";
-		}
-	}
+    private QueryPart getQueryPart(NgsiLdAttribute attribute, QueryPart qp, boolean isRel) {
+        // The query part will depend on the type of query
+        // if the query is to a relationship subproperties will be joined with .
+        // if the query is to a property with structured values the path will be
+        // added between brackets
 
-	private String encodeValue(String value, QueryAttributeType type) {
-		value = switch (type) {
-			case STRING -> encodeStringValue(value);
-			case BOOLEAN -> value;
-			case NUMBER -> value;
-		};
-		return value;
-	}
+        String attrPath;
+        if (isRel) {
+            attrPath = String.join(".", attribute.path());
+            // remove .id, since it will be added in case of referenced entities
+            if (attrPath.endsWith(".id")) {
+                attrPath = attrPath.substring(0, attrPath.length() - 3);
+            }
+        } else {
+            String first = attribute.path().remove(0);
+            attrPath = first + String.join("", attribute.path()
+                    .stream()
+                    .map(this::mapPathPart)
+                    .toList());
+        }
 
-	private String encodeStringValue(String value) {
-		String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
-		if (value.contains(ngsildOrValue)) {
-			// remove the beginning ( and ending )
-			// String noBraces = value.substring(1, value.length() - 1);
-			String format = "(%s)";
+        return new QueryPart(
+                attrPath,
+                qp.operator(),
+                qp.value());
+    }
 
-			if (!generalProperties.getEncloseQuery()) {
-				format = "%s";
-			}
+    private String mapPathPart(String part) {
+        if (generalProperties.getUseDotSeperator()) {
+            return "." + part;
+        } else {
+            return "[" + part + "]";
+        }
+    }
 
-			return String.format(format, Arrays.stream(value.split(String.format("\\%s", ngsildOrValue)))
-					.map(v -> String.format("\"%s\"", v))
-					.collect(Collectors.joining(ngsildOrValue)));
+    private String encodeValue(String value, QueryAttributeType type) {
+        value = switch (type) {
+            case STRING -> encodeStringValue(value);
+            case BOOLEAN -> value;
+            case NUMBER -> value;
+        };
+        return value;
+    }
 
-		} else if (value.contains(NGSI_LD_AND)) {
-			// remove the beginning ( and ending )
-			//String noBraces = value.substring(1, value.length() - 1);
-			return String.format("(%s)", Arrays.stream(value.split(String.format("\\%s", NGSI_LD_AND)))
-					.map(v -> String.format("\"%s\"", v))
-					.collect(Collectors.joining(NGSI_LD_AND)));
-		} else {
-			return String.format("\"%s\"", value);
-		}
-	}
+    private String encodeStringValue(String value) {
+        String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
+        if (value.contains(ngsildOrValue)) {
+            // remove the beginning ( and ending )
+            // String noBraces = value.substring(1, value.length() - 1);
+            String format = "(%s)";
 
-	private List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
-		Map<String, List<QueryPart>> collectedParts = uncombinedParts.stream()
-				.collect(
-						Collectors.toMap(QueryPart::operator, qp -> new ArrayList<>(List.of(qp)),
-								(qp1, qp2) -> {
-									qp1.addAll(qp2);
-									return qp1;
-								}));
-		return collectedParts
-				.entrySet()
-				.stream()
-				.map(entry -> {
-					String value = entry.getValue()
-							.stream()
-							.map(QueryPart::value)
-							.collect(Collectors.joining(TMFORUM_OR_VALUE));
+            if (!generalProperties.getEncloseQuery()) {
+                format = "%s";
+            }
 
-					return new QueryPart(attribute, entry.getKey(), value);
-				})
-				.collect(Collectors.toList());
-	}
+            return String.format(format, Arrays.stream(value.split(String.format("\\%s", ngsildOrValue)))
+                    .map(v -> String.format("\"%s\"", v))
+                    .collect(Collectors.joining(ngsildOrValue)));
 
-	private String toQueryString(QueryPart queryPart, QueryAttributeType queryAttributeType) {
+        } else if (value.contains(NGSI_LD_AND)) {
+            // remove the beginning ( and ending )
+            //String noBraces = value.substring(1, value.length() - 1);
+            return String.format("(%s)", Arrays.stream(value.split(String.format("\\%s", NGSI_LD_AND)))
+                    .map(v -> String.format("\"%s\"", v))
+                    .collect(Collectors.joining(NGSI_LD_AND)));
+        } else {
+            return String.format("\"%s\"", value);
+        }
+    }
 
-		if (queryPart.value().contains(TMFORUM_OR_VALUE)) {
-			String theQuery = "";
-			List<String> encodedValues = new ArrayList<>(Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
-					.map(v -> encodeValue(v, queryAttributeType))
-					.toList());
+    private List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
+        Map<String, List<QueryPart>> collectedParts = uncombinedParts.stream()
+                .collect(
+                        Collectors.toMap(QueryPart::operator, qp -> new ArrayList<>(List.of(qp)),
+                                (qp1, qp2) -> {
+                                    qp1.addAll(qp2);
+                                    return qp1;
+                                }));
+        return collectedParts
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    String value = entry.getValue()
+                            .stream()
+                            .map(QueryPart::value)
+                            .collect(Collectors.joining(TMFORUM_OR_VALUE));
 
-			if (generalProperties.getIncludeAttributeInList()) {
-				theQuery = encodedValues
-						.stream()
-						.map(v -> String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), v))
-						.collect(Collectors.joining(generalProperties.getNgsildOrQueryValue()));
-				if (generalProperties.getEncloseQuery()) {
-					return "(" + theQuery + ")";
-				}
-			} else {
-				if (generalProperties.getEncloseQuery()) {
-					return String.format("%s%s(%s)", queryPart.attribute(), queryPart.operator(), encodedValues
-							.stream()
-							.collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
-				} else {
-					return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodedValues
-							.stream()
-							.collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
-				}
-			}
+                    return new QueryPart(attribute, entry.getKey(), value);
+                })
+                .collect(Collectors.toList());
+    }
 
-			return theQuery;
-		}
+    private String toQueryString(QueryPart queryPart, QueryAttributeType queryAttributeType) {
 
-		return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodeValue(queryPart.value(), queryAttributeType));
-	}
+        if (queryPart.value().contains(TMFORUM_OR_VALUE)) {
+            String theQuery = "";
+            List<String> encodedValues = new ArrayList<>(Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
+                    .map(v -> encodeValue(v, queryAttributeType))
+                    .toList());
 
-	private QueryPart paramsToQueryPart(String parameter, Operator operator) {
-		String[] parameterParts = parameter.split(operator.getTmForumOperator().operator());
-		if (parameterParts.length != 2) {
-			throw new QueryException(String.format("%s is not a valid %s parameter.",
-					parameter,
-					operator.getTmForumOperator().operator()));
-		}
-		return new QueryPart(
-				parameterParts[0],
-				operator.getNgsiLdOperator(),
-				parameterParts[1]);
-	}
+            if (generalProperties.getIncludeAttributeInList()) {
+                theQuery = encodedValues
+                        .stream()
+                        .map(v -> String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), v))
+                        .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue()));
+                if (generalProperties.getEncloseQuery()) {
+                    return "(" + theQuery + ")";
+                }
+            } else {
+                if (generalProperties.getEncloseQuery()) {
+                    return String.format("%s%s(%s)", queryPart.attribute(), queryPart.operator(), encodedValues
+                            .stream()
+                            .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
+                } else {
+                    return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodedValues
+                            .stream()
+                            .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
+                }
+            }
 
-	private QueryPart getQueryFromEquals(String parameter) {
+            return theQuery;
+        }
 
-		// equals could also contain a textual operator, f.e. key.gt=value -> key>value
-		Optional<Operator> containedOperator = getOperator(parameter);
-		if (containedOperator.isEmpty()) {
-			// its a plain equals
-			return paramsToQueryPart(parameter, Operator.EQUALS);
-		}
+        return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodeValue(queryPart.value(), queryAttributeType));
+    }
 
-		QueryPart uncleanedQueryPart = paramsToQueryPart(parameter, Operator.EQUALS);
-		String uncleanedAttribute = uncleanedQueryPart.attribute();
-		String cleanAttribute = uncleanedAttribute.substring(0,
-				uncleanedAttribute.length() - containedOperator.get().getTmForumOperator().textRepresentation()
-						.length());
-		return new QueryPart(cleanAttribute, containedOperator.get().getNgsiLdOperator(), uncleanedQueryPart.value());
+    private QueryPart paramsToQueryPart(String parameter, Operator operator) {
+        String[] parameterParts = parameter.split(operator.getTmForumOperator().operator());
+        if (parameterParts.length != 2) {
+            throw new QueryException(String.format("%s is not a valid %s parameter.",
+                    parameter,
+                    operator.getTmForumOperator().operator()));
+        }
+        return new QueryPart(
+                parameterParts[0],
+                operator.getNgsiLdOperator(),
+                parameterParts[1]);
+    }
 
-	}
+    private QueryPart getQueryFromEquals(String parameter) {
 
-	private QueryPart parseParameter(String parameter) {
+        // equals could also contain a textual operator, f.e. key.gt=value -> key>value
+        Optional<Operator> containedOperator = getOperator(parameter);
+        if (containedOperator.isEmpty()) {
+            // its a plain equals
+            return paramsToQueryPart(parameter, Operator.EQUALS);
+        }
 
-		Operator operator = getOperatorFromParam(parameter);
-		return switch (operator) {
-			case GREATER_THAN -> paramsToQueryPart(parameter, GREATER_THAN);
-			case GREATER_THAN_EQUALS -> paramsToQueryPart(parameter, GREATER_THAN_EQUALS);
-			case LESS_THAN_EQUALS -> paramsToQueryPart(parameter, LESS_THAN_EQUALS);
-			case LESS_THAN -> paramsToQueryPart(parameter, LESS_THAN);
-			case REGEX -> paramsToQueryPart(parameter, REGEX);
-			case EQUALS -> getQueryFromEquals(parameter);
-		};
+        QueryPart uncleanedQueryPart = paramsToQueryPart(parameter, Operator.EQUALS);
+        String uncleanedAttribute = uncleanedQueryPart.attribute();
+        String cleanAttribute = uncleanedAttribute.substring(0,
+                uncleanedAttribute.length() - containedOperator.get().getTmForumOperator().textRepresentation()
+                        .length());
+        return new QueryPart(cleanAttribute, containedOperator.get().getNgsiLdOperator(), uncleanedQueryPart.value());
 
-	}
+    }
 
-	private static Operator getOperatorFromParam(String parameter) {
-		if (parameter.contains(GREATER_THAN_EQUALS.getTmForumOperator().operator())) {
-			return GREATER_THAN_EQUALS;
-		}
-		if (parameter.contains(Operator.LESS_THAN_EQUALS.getTmForumOperator().operator())) {
-			return Operator.LESS_THAN_EQUALS;
-		}
-		if (parameter.contains(Operator.REGEX.getTmForumOperator().operator())) {
-			return Operator.REGEX;
-		}
-		if (parameter.contains(GREATER_THAN.getTmForumOperator().operator())) {
-			return GREATER_THAN;
-		}
-		if (parameter.contains(LESS_THAN.getTmForumOperator().operator())) {
-			return LESS_THAN;
-		}
-		return Operator.EQUALS;
-	}
+    private QueryPart parseParameter(String parameter) {
 
-	private static Optional<Operator> getOperator(String partToParse) {
-		String[] parts = partToParse.split(Operator.EQUALS.getTmForumOperator().operator());
-		return Arrays.stream(Operator.values())
-				.filter(operator -> {
-					TMForumOperator tmForumOperator = operator.getTmForumOperator();
-					if (parts[0].endsWith(tmForumOperator.textRepresentation())) {
-						return true;
-					}
-					return false;
-				})
-				.findAny();
-	}
+        Operator operator = getOperatorFromParam(parameter);
+        return switch (operator) {
+            case GREATER_THAN -> paramsToQueryPart(parameter, GREATER_THAN);
+            case GREATER_THAN_EQUALS -> paramsToQueryPart(parameter, GREATER_THAN_EQUALS);
+            case LESS_THAN_EQUALS -> paramsToQueryPart(parameter, LESS_THAN_EQUALS);
+            case LESS_THAN -> paramsToQueryPart(parameter, LESS_THAN);
+            case REGEX -> paramsToQueryPart(parameter, REGEX);
+            case EQUALS -> getQueryFromEquals(parameter);
+        };
+
+    }
+
+    private static Operator getOperatorFromParam(String parameter) {
+        if (parameter.contains(GREATER_THAN_EQUALS.getTmForumOperator().operator())) {
+            return GREATER_THAN_EQUALS;
+        }
+        if (parameter.contains(Operator.LESS_THAN_EQUALS.getTmForumOperator().operator())) {
+            return Operator.LESS_THAN_EQUALS;
+        }
+        if (parameter.contains(Operator.REGEX.getTmForumOperator().operator())) {
+            return Operator.REGEX;
+        }
+        if (parameter.contains(GREATER_THAN.getTmForumOperator().operator())) {
+            return GREATER_THAN;
+        }
+        if (parameter.contains(LESS_THAN.getTmForumOperator().operator())) {
+            return LESS_THAN;
+        }
+        return Operator.EQUALS;
+    }
+
+    private static Optional<Operator> getOperator(String partToParse) {
+        String[] parts = partToParse.split(Operator.EQUALS.getTmForumOperator().operator());
+        return Arrays.stream(Operator.values())
+                .filter(operator -> {
+                    TMForumOperator tmForumOperator = operator.getTmForumOperator();
+                    if (parts[0].endsWith(tmForumOperator.textRepresentation())) {
+                        return true;
+                    }
+                    return false;
+                })
+                .findAny();
+    }
 }
