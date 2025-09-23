@@ -525,6 +525,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 			ServiceSpecificationVO serviceSpecificationVO = ServiceSpecificationVOTestExample.build()
 					.atSchemaLocation(null)
 					.targetEntitySchema(null)
+					.relatedParty(null)
 					.id(id)
 					.href(URI.create(id))
 					.validFor(null)
@@ -699,6 +700,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedLifecycleStatus = ServiceSpecificationVOTestExample.build()
 				.validFor(null)
+				.relatedParty(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.lifecycleStatus("dead");
@@ -716,6 +718,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedDescriptionUpdate = ServiceSpecificationVOTestExample.build()
 				.validFor(null)
+				.relatedParty(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.description("new-description");
@@ -733,6 +736,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedNameUpdate = ServiceSpecificationVOTestExample.build()
 				.validFor(null)
+				.relatedParty(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.name("new-name");
@@ -749,6 +753,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedVersionUpdate = ServiceSpecificationVOTestExample.build()
 				.validFor(null)
+				.relatedParty(null)
 				.atSchemaLocation(null)
 				.targetEntitySchema(null)
 				.version("v0.0.2");
@@ -768,6 +773,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				.serviceSpecRelationship(null);
 		ServiceSpecificationVO expectedValidForUpdate = ServiceSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetEntitySchema(null)
 				.validFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", validForUpdate, expectedValidForUpdate));
@@ -788,6 +794,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
 										.validFor(null)
+										.relatedParty(null)
 										.atSchemaLocation(null)
 										.targetEntitySchema(null)
 										.lifecycleStatus("created")
@@ -809,6 +816,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 										.serviceSpecRelationship(null),
 								ServiceSpecificationVOTestExample.build()
 										.validFor(null)
+										.relatedParty(null)
 										.atSchemaLocation(null)
 										.targetEntitySchema(null)
 										.lifecycleStatus("updated")
@@ -960,6 +968,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
 				Arguments.of("Without a fields parameter everything should be returned.", null,
 						ServiceSpecificationVOTestExample.build().atSchemaLocation(null)
 								.validFor(null)
+								.relatedParty(null)
 								.targetEntitySchema(null)
 								.lastUpdate(Instant.MAX)),
 				Arguments.of("Only version and the mandatory parameters should have been included.", "version",

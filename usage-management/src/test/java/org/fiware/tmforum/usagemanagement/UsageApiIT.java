@@ -294,6 +294,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 			UsageVO usageVO = UsageVOTestExample.build().atSchemaLocation(null);
 			usageVO
 					.id(id)
+					.relatedParty(null)
 					.href(new URI(id))
 					.usageSpecification(null);
 			expectedUsages.add(usageVO);
@@ -443,13 +444,15 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 
 		UsageUpdateVO newTypeUsage = UsageUpdateVOTestExample.build().atSchemaLocation(null).usageSpecification(null);
 		newTypeUsage.setUsageType("New-Type");
-		UsageVO expectedNewType = UsageVOTestExample.build().atSchemaLocation(null).usageSpecification(null);
+		UsageVO expectedNewType = UsageVOTestExample.build()
+				.relatedParty(null).atSchemaLocation(null).usageSpecification(null);
 		expectedNewType.setUsageType("New-Type");
 		testEntries.add(Arguments.of("The type should have been updated.", newTypeUsage, expectedNewType));
 
 		UsageUpdateVO newDesc = UsageUpdateVOTestExample.build().atSchemaLocation(null).usageSpecification(null);
 		newDesc.setDescription("New description");
-		UsageVO expectedNewDesc = UsageVOTestExample.build().atSchemaLocation(null).usageSpecification(null);
+		UsageVO expectedNewDesc = UsageVOTestExample.build()
+				.relatedParty(null).atSchemaLocation(null).usageSpecification(null);
 		expectedNewDesc.setDescription("New description");
 		testEntries.add(Arguments.of("The description should have been updated.", newDesc, expectedNewDesc));
 
@@ -579,7 +582,8 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The usage should have been created first.");
 		String id = createResponse.body().getId();
 
-		UsageVO expectedUsage = UsageVOTestExample.build().atSchemaLocation(null);
+		UsageVO expectedUsage = UsageVOTestExample.build()
+				.relatedParty(null).atSchemaLocation(null);
 		expectedUsage.setId(id);
 		expectedUsage.setHref(new URI(id));
 		expectedUsage.usageSpecification(null);

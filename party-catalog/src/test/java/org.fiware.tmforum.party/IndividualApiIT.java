@@ -16,6 +16,8 @@ import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -26,13 +28,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.party" })
+@MicronautTest(packages = {"org.fiware.tmforum.party"})
 public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestSpec {
 
 	private final IndividualApiTestClient individualApiTestClient;
@@ -47,7 +48,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	private final GeneralProperties generalProperties;
 
 	public IndividualApiIT(IndividualApiTestClient individualApiTestClient, EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+						   ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.individualApiTestClient = individualApiTestClient;
 		this.entitiesApiClient = entitiesApiClient;
@@ -70,10 +71,87 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		return Individual.TYPE_INDIVIDUAL;
 	}
 
+	@DisabledIfSystemProperty(
+			named = "micronaut.environments",
+			matches = "(^|.*,)?orion-ld(,.*|$)",
+			disabledReason = "Orion-LD does not properly support dataset-ids, thus is not able to handle the relationship lists."
+	)
+	@Test
+	public void createMultiRoleRelationship() throws Exception {
+		System.out.println("micronaut.environments=" + System.getProperty("micronaut.environments"));
+
+		IndividualCreateVO referencedIndividual = IndividualCreateVOTestExample
+				.build()
+				.atSchemaLocation(null);
+		HttpResponse<IndividualVO> individualCreateResponse = callAndCatch(
+				() -> individualApiTestClient.createIndividual(null, referencedIndividual));
+		assertEquals(HttpStatus.CREATED, individualCreateResponse.getStatus(),
+				"Was not able to create the initial individual.");
+		IndividualVO createdIndividualVO = individualCreateResponse.body();
+
+		IndividualCreateVO newIndividual = IndividualCreateVOTestExample
+				.build()
+				.atSchemaLocation(null)
+				.relatedParty(List.of(
+						RelatedPartyVOTestExample.build()
+								.atSchemaLocation(null)
+								.role("OWNER")
+								.id(createdIndividualVO.getId()),
+						RelatedPartyVOTestExample.build()
+								.atSchemaLocation(null)
+								.role("CUSTOMER")
+								.id(createdIndividualVO.getId())
+				));
+
+		HttpResponse<IndividualVO> newCreateResponse = callAndCatch(
+				() -> individualApiTestClient.createIndividual(null, newIndividual));
+		assertEquals(HttpStatus.CREATED, newCreateResponse.getStatus(),
+				"Individual with multiple related parties could not be created.");
+
+		HttpResponse<IndividualVO> theIndividualResponse = callAndCatch(
+				() -> individualApiTestClient.retrieveIndividual(null, newCreateResponse.body().getId(), null));
+		assertEquals(HttpStatus.OK, theIndividualResponse.getStatus(), "Individual with multiple related parties could not have been returend.");
+
+		assertEquals(2, theIndividualResponse.body().getRelatedParty().size(), "Both related parties should have been returned.");
+
+		IndividualUpdateVO cleanedIndividual = IndividualUpdateVOTestExample
+				.build()
+				.atSchemaLocation(null)
+				.relatedParty(List.of(
+						RelatedPartyVOTestExample.build()
+								.atSchemaLocation(null)
+								.role("CUSTOMER")
+								.id(createdIndividualVO.getId())
+				));
+
+		HttpResponse<IndividualVO> theIndividualUpdateResponse = callAndCatch(
+				() -> individualApiTestClient.patchIndividual(null, newCreateResponse.body().getId(), cleanedIndividual));
+		assertEquals(HttpStatus.OK, theIndividualUpdateResponse.getStatus(), "Individual should have been updated.");
+		theIndividualResponse = callAndCatch(
+				() -> individualApiTestClient.retrieveIndividual(null, newCreateResponse.body().getId(), null));
+		assertEquals(HttpStatus.OK, theIndividualResponse.getStatus(), "The individual should have been returned.");
+
+		assertEquals(1, theIndividualResponse.body().getRelatedParty().size(), "Only one related party should still be included.");
+
+		IndividualUpdateVO emptiedIndividual = IndividualUpdateVOTestExample
+				.build()
+				.atSchemaLocation(null)
+				.relatedParty(List.of());
+
+		theIndividualUpdateResponse = callAndCatch(
+				() -> individualApiTestClient.patchIndividual(null, newCreateResponse.body().getId(), emptiedIndividual));
+		assertEquals(HttpStatus.OK, theIndividualUpdateResponse.getStatus(), "Individual should have been updated.");
+		theIndividualResponse = callAndCatch(
+				() -> individualApiTestClient.retrieveIndividual(null, newCreateResponse.body().getId(), null));
+		assertEquals(HttpStatus.OK, theIndividualResponse.getStatus(), "The individual should have been returned.");
+
+		assertNull(theIndividualResponse.body().getRelatedParty(), "The related parties should have been emptied.");
+	}
+
 	@ParameterizedTest
 	@MethodSource("provideValidIndividuals")
 	public void createIndividual201(String message, IndividualCreateVO individualCreateVO,
-			IndividualVO expectedIndividual) throws Exception {
+									IndividualVO expectedIndividual) throws Exception {
 		this.message = message;
 		this.individualCreateVO = individualCreateVO;
 		this.expectedIndividual = expectedIndividual;
@@ -446,7 +524,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 	@ParameterizedTest
 	@MethodSource("provideValidPatches")
 	public void patchIndividual200(String message, IndividualUpdateVO individualUpdateVO,
-			IndividualVO expectedIndividual) throws Exception {
+								   IndividualVO expectedIndividual) throws Exception {
 		this.message = message;
 		this.individualUpdateVO = individualUpdateVO;
 		this.expectedIndividual = expectedIndividual;

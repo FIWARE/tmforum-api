@@ -322,6 +322,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 			ProductSpecificationVO productSpecificationVO = ProductSpecificationVOTestExample.build()
 					.atSchemaLocation(null)
 					.targetProductSchema(null)
+					.relatedParty(null)
 					.validFor(null)
 					.id(id)
 					.href(id);
@@ -555,6 +556,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newDesc.setDescription("New description");
 		ProductSpecificationVO expectedNewDesc = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetProductSchema(null)
 				.validFor(null);
 		expectedNewDesc.setDescription("New description");
@@ -566,6 +568,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newLifeCycle.setLifecycleStatus("Dead");
 		ProductSpecificationVO expectedNewLifeCycle = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetProductSchema(null)
 				.validFor(null);
 		expectedNewLifeCycle.setLifecycleStatus("Dead");
@@ -578,6 +581,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newName.setName("New name");
 		ProductSpecificationVO expectedNewName = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetProductSchema(null)
 				.validFor(null);
 		expectedNewName.setName("New name");
@@ -589,6 +593,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newVersion.setVersion("1.23.1");
 		ProductSpecificationVO expectedNewVersion = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetProductSchema(null)
 				.validFor(null);
 		expectedNewVersion.setVersion("1.23.1");
@@ -603,6 +608,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		newValidFor.setValidFor(timePeriodVO);
 		ProductSpecificationVO expectedNewValidFor = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
+				.relatedParty(null)
 				.targetProductSchema(null);
 		expectedNewValidFor.setValidFor(timePeriodVO);
 		testEntries.add(Arguments.of("The validFor should have been updated.", newValidFor, expectedNewValidFor));
@@ -787,6 +793,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		ProductSpecificationVO expectedProductOfferingPrice = ProductSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.targetProductSchema(null)
+				.relatedParty(null)
 				.id(id)
 				.href(id)
 				.lastUpdate(currentTimeInstant)
