@@ -80,7 +80,7 @@ public class ProductSpecification extends EntityWithId {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productSpecificationRelationship") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productSpecificationRelationship", targetClass = ProductSpecificationRelationship.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productSpecificationRelationship", targetClass = ProductSpecificationRelationship.class, fromProperties = true) }))
 	private List<ProductSpecificationRelationship> productSpecificationRelationship;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))

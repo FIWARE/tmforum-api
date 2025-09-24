@@ -136,11 +136,6 @@ public class QueryParser {
                         return null;
                     }
 
-                    List<String> cleanedPath = attribute.path()
-                            .stream()
-                            .map(ReservedWordHandler::escapeReservedWords)
-                            .toList();
-                    attribute = new NgsiLdAttribute(new ArrayList<>(cleanedPath), attribute.type());
                     return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
                 })
                 .filter(Objects::nonNull);
@@ -167,7 +162,11 @@ public class QueryParser {
     }
 
     private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
-        List<String> path = new ArrayList<>(Arrays.asList(queryPart.attribute().split("\\.")));
+        List<String> path = new ArrayList<>(
+                Arrays.stream(queryPart.attribute().split("\\."))
+                        .map(ReservedWordHandler::escapeReservedWords)
+                        .toList());
+
         if (isBoolean(queryPart.value())) {
             return new NgsiLdAttribute(path, QueryAttributeType.BOOLEAN);
         }
