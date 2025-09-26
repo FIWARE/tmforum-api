@@ -41,6 +41,7 @@ public class RelatedParty extends RefEntity {
 		return id;
 	}
 
+	@JsonIgnore
 	@DatasetId
 	public URI getDatasetId() {
 		String role = Optional.ofNullable(getRole()).orElse("role");

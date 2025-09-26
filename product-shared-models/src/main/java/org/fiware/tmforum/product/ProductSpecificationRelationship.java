@@ -42,6 +42,7 @@ public class ProductSpecificationRelationship extends RefEntity {
         return super.getId();
     }
 
+    @JsonIgnore
     @DatasetId
     public URI getDatasetId() {
         String relType = Optional.ofNullable(getRelationshipType()).orElse("type");
