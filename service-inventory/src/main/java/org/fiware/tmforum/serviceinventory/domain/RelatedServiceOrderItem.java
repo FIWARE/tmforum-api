@@ -12,9 +12,8 @@ import org.fiware.tmforum.common.domain.Entity;
 import java.net.URI;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class RelatedServiceOrderItem extends Entity {
+public class RelatedServiceOrderItem {
 
     private String ItemId;
     private String name;
@@ -22,6 +21,5 @@ public class RelatedServiceOrderItem extends Entity {
     private String serviceOrderHref;
     private String serviceOrderId;
     private OrderItemActionType itemAction;
-    private String atReferredType;
 
 }
