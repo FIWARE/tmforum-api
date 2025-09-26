@@ -17,5 +17,7 @@ public class FeatureSpecificationCharacteristicRelationship {
     private String resourceSpecificationHref;
     private ResourceSpecificationRef resourceSpecificationId;
     private TimePeriod validFor;
+    private String atBaseType;
+    private String atType;
 
 }
