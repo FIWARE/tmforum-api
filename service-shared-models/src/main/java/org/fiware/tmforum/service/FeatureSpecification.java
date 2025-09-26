@@ -20,6 +20,5 @@ public class FeatureSpecification {
 	private List<FeatureSpecificationRelationship> featureSpecRelationship;
 	private TimePeriod validFor;
 	private String atBaseType;
-	private URI atSchemaLocation;
 	private String atType;
 }

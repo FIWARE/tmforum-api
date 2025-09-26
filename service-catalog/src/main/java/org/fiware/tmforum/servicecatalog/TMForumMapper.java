@@ -177,22 +177,6 @@ public abstract class TMForumMapper extends BaseMapper {
 		}
 		return resourceSpecificationRef.getEntityId().toString();
 	}
-
-	public <C> URI mapGeneric(C value) {
-		if (value == null) {
-			return null;
-		}
-		if (value instanceof URI uri) {
-			return uri;
-		} else if (value instanceof String string) {
-			try {
-				return new URI(string);
-			} catch (URISyntaxException e) {
-				throw new MappingException(String.format("String %s is not an URI.", string), e);
-			}
-		}
-		throw new MappingException("Value is not a URI.");
-	}
 }
 
 
