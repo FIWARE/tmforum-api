@@ -8,8 +8,7 @@ import org.fiware.tmforum.common.domain.Entity;
 import java.util.List;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class ServiceRelationship extends Entity {
+public class ServiceRelationship {
 
     private String relationshipType;
     private ServiceRefOrValue service;
