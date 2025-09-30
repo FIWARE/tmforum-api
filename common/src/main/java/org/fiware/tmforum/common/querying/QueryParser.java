@@ -194,7 +194,7 @@ public class QueryParser {
     }
 
     private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
-        log.warn("Is relationship? {}", attribute);
+        log.debug("Is relationship? {}", attribute);
 
         Optional<Annotation> relevantAnnotation = getGetterMethodByName(queryClass, attribute.path().get(0))
                 .flatMap(m -> Arrays.stream(m.getAnnotations()))
