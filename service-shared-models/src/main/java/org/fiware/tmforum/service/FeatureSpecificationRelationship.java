@@ -15,6 +15,5 @@ public class FeatureSpecificationRelationship {
     private String parentSpecificationId;
     private TimePeriod validFor;
     private String atBaseType;
-    private URI atSchemaLocation;
     private String atType;
 }
