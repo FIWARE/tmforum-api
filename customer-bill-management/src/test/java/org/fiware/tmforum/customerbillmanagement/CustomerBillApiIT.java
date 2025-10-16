@@ -485,7 +485,6 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 		//first create
 		String billId = "urn:ngsi-ld:customer-bill:" + UUID.randomUUID();
-		expectedCustomerBillVo.id(billId);
 
 		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null).id(billId)
 				.relatedParty(null)

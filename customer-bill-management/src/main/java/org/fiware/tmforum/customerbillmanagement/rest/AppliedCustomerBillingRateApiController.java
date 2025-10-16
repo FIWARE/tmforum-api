@@ -56,4 +56,11 @@ public class AppliedCustomerBillingRateApiController extends AbstractApiControll
 				.map(tmForumMapper::map)
 				.map(HttpResponse::ok);
 	}
+
+	@Override
+	public Mono<HttpResponse<Object>> deleteAppliedCustomerBill(String id) {
+		return delete(id);
+	}
+
+
 }
