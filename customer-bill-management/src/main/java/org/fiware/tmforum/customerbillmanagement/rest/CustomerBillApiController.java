@@ -104,4 +104,9 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 				.map(tmForumMapper::map)
 				.map(HttpResponse::ok);
 	}
+
+	@Override
+	public Mono<HttpResponse<Object>> deleteCustomerBill(String id) {
+		return delete(id);
+	}
 }
