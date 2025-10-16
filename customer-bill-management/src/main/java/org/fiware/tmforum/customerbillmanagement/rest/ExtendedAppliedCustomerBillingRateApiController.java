@@ -103,6 +103,11 @@ public class ExtendedAppliedCustomerBillingRateApiController extends AbstractApi
                 .map(HttpResponse::ok);
     }
 
+    @Override
+    public Mono<HttpResponse<Object>> deleteAppliedCustomerBill(String id) {
+        return delete(id);
+    }
+
     private boolean getNullSafeBoolean(Boolean booleanValue) {
         return Optional.ofNullable(booleanValue).orElse(false);
     }

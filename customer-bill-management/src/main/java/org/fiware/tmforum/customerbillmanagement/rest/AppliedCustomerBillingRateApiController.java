@@ -57,10 +57,5 @@ public class AppliedCustomerBillingRateApiController extends AbstractApiControll
 				.map(HttpResponse::ok);
 	}
 
-	@Override
-	public Mono<HttpResponse<Object>> deleteAppliedCustomerBill(String id) {
-		return delete(id);
-	}
-
 
 }

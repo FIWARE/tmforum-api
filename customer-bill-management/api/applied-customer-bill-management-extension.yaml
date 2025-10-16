@@ -115,6 +115,49 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/Error'
+    delete:
+      operationId: deleteAppliedCustomerBill
+      summary: Deletes an Applied Customer  Bill by ID
+      description: This operation deletes a Applied Customer Bill entity.
+      tags:
+        - appliedCustomerBillingRate
+      parameters:
+        - name: id
+          description: Identifier of the AppliedCustomerBillingRate
+          required: true
+          type: string
+          in: path
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          schema:
+            $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          schema:
+            $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          schema:
+            $ref: '#/components/schemas/Error'
+        '405':
+          description: Method Not allowed
+          schema:
+            $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict
+          schema:
+            $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/components/schemas/Error'
 definitions:
   Any: {}
   AppliedBillingRateCharacteristic:
