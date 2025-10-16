@@ -496,11 +496,11 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 
 		assertEquals(HttpStatus.NO_CONTENT,
 				callAndCatch(() -> customerBillApiTestClient.deleteCustomerBill(null, billId)).getStatus(),
-				"The catalog should have been deleted.");
+				"The customer bill should have been deleted.");
 
 		assertEquals(HttpStatus.NOT_FOUND,
 				callAndCatch(() -> customerBillApiTestClient.retrieveCustomerBill(null, billId, null)).status(),
-				"The catalog should not exist anymore.");
+				"The customer bill should not exist anymore.");
 
 	}
 
@@ -540,7 +540,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 		notFoundResponse = callAndCatch(() -> customerBillApiTestClient.deleteCustomerBill(null, "invalid-id"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
-				"No such catalog should exist.");
+				"No such bill should exist.");
 
 		optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
