@@ -1423,6 +1423,22 @@
                 "state": {
                     "$ref": "#/definitions/stateValue"
                 },
+                "amountDue": {
+                    "$ref": "#/definitions/Money"
+                },
+                "appliedPayment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AppliedPayment"
+                    }
+                },
+                "billNo": {
+                    "type": "string",
+                    "description": "Bill reference known by the customer or the party and displayed on the bill. Could be different from the id"
+                },
+                "remainingAmount": {
+                    "$ref": "#/definitions/Money"
+                },
                 "@baseType": {
                     "type": "string",
                     "description": "When sub-classing, this defines the super-class"
