@@ -531,6 +531,32 @@ components:
         '@type':
           type: string
           description: When sub-classing, this defines the sub-class entity name
+    CustomerBill_Update:
+      type: object
+      properties:
+        billNo:
+          type: string
+          description: Bill reference known by the customer or the party and displayed on the bill. Could be different from the id
+        amountDue:
+          $ref: '#/components/schemas/Money'
+        appliedPayment:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPayment'
+        remainingAmount:
+          $ref: '#/components/schemas/Money'
+        state:
+          $ref: '#/components/schemas/StateValue'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
     Error:
       description: Used when an API throws an Error, typically with a HTTP error response-code (3xx, 4xx, 5xx)
       type: object
