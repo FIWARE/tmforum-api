@@ -236,20 +236,6 @@ public class ExtendedCustomerBillApiIT extends AbstractApiIT implements Customer
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 	}
 
-	@Disabled("Prohibited by the framework.")
-	@Test
-	@Override
-	public void deleteCustomerBill405() throws Exception {
-
-	}
-
-	@Disabled("Impossible status.")
-	@Test
-	@Override
-	public void deleteCustomerBill409() throws Exception {
-
-	}
-
 	@Override
 	public void deleteCustomerBill500() throws Exception {
 
