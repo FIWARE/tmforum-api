@@ -567,10 +567,6 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 				"The applied customer billing rate should have been created first.");
 		String billId = createResponse.body().getId();
 
-		HttpResponse<AppliedCustomerBillingRateVO> response = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(null, billId,
-						null));
-
 		assertEquals(HttpStatus.NO_CONTENT,
 				callAndCatch(() -> appliedCustomerBillingRateExtensionApiTestClient.deleteAppliedCustomerBill(null, billId)).getStatus(),
 				"The customer bill should have been deleted.");
@@ -617,7 +613,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		notFoundResponse = callAndCatch(() -> appliedCustomerBillingRateExtensionApiTestClient.deleteAppliedCustomerBill(null, "invalid-id"));
 		assertEquals(HttpStatus.NOT_FOUND,
 				notFoundResponse.getStatus(),
-				"No such catalog should exist.");
+				"No such Customer bill should exist.");
 
 		optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
