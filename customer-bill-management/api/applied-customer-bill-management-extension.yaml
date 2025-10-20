@@ -146,14 +146,6 @@ paths:
           description: Not Found
           schema:
             $ref: '#/components/schemas/Error'
-        '405':
-          description: Method Not allowed
-          schema:
-            $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict
-          schema:
-            $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
           schema:
