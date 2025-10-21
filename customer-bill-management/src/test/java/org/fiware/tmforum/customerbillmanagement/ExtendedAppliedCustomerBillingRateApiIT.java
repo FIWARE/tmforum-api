@@ -619,20 +619,6 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
 	}
 
-	@Disabled("Prohibited by the framework.")
-	@Test
-	@Override
-	public void deleteAppliedCustomerBill405() throws Exception {
-
-	}
-
-	@Disabled("Impossible status.")
-	@Test
-	@Override
-	public void deleteAppliedCustomerBill409() throws Exception {
-
-	}
-
 	@Override
 	public void deleteAppliedCustomerBill500() throws Exception {
 
