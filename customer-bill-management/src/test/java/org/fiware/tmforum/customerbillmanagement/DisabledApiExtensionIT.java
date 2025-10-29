@@ -6,7 +6,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateApiTestClient;
+import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateExtensionApiTestClient;
+import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApiTestSpec;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateCreateVOTestExample;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateUpdateVO;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateUpdateVOTestExample;
@@ -25,19 +26,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
 public class DisabledApiExtensionIT extends AbstractApiIT {
 
-    private final AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient;
+    private final AppliedCustomerBillingRateExtensionApiTestClient appliedCustomerBillingRateExtensionApiTestClient;
     private final ApiExtensionProperties apiExtensionProperties;
 
-    protected DisabledApiExtensionIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties, AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient, ApiExtensionProperties apiExtensionProperties) {
+    protected DisabledApiExtensionIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties, AppliedCustomerBillingRateExtensionApiTestClient appliedCustomerBillingRateExtensionApiTestClient,
+                                     ApiExtensionProperties apiExtensionProperties) {
         super(entitiesApiClient, objectMapper, generalProperties);
-        this.appliedCustomerBillingRateApiTestClient = appliedCustomerBillingRateApiTestClient;
+        this.appliedCustomerBillingRateExtensionApiTestClient = appliedCustomerBillingRateExtensionApiTestClient;
         this.apiExtensionProperties = apiExtensionProperties;
     }
 
     @Test
     public void createAppliedCustomerBillingRate405() throws Exception {
         HttpResponse<AppliedCustomerBillingRateVO> appliedCustomerBillingRateVOHttpResponse = callAndCatch(
-                () -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(null, AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)));
+                () -> appliedCustomerBillingRateExtensionApiTestClient.createAppliedCustomerBillingRate(null, AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)));
         assertEquals(HttpStatus.METHOD_NOT_ALLOWED, appliedCustomerBillingRateVOHttpResponse.getStatus(), "When the extension API is not enabled, creation should not be supported.");
     }
 
@@ -47,7 +49,7 @@ public class DisabledApiExtensionIT extends AbstractApiIT {
 
         assertEquals(
                 HttpStatus.METHOD_NOT_ALLOWED,
-                callAndCatch(() -> appliedCustomerBillingRateApiTestClient.updateAppliedCustomerBillingRate(null,
+                callAndCatch(() -> appliedCustomerBillingRateExtensionApiTestClient.updateAppliedCustomerBillingRate(null,
                         "urn:ngsi-ld:applied-customer-billing-rate:some-id", updateVO)).getStatus(),
                 "When the extension API is not enabled, updates should not be supported.)");
 
