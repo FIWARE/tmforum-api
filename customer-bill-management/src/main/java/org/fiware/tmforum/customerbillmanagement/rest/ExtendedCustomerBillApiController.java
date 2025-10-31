@@ -49,4 +49,10 @@ public class ExtendedCustomerBillApiController extends AbstractApiController<Cus
 	}
 
 
+	@Override
+	public Mono<HttpResponse<Object>> deleteCustomerBill(String id) {
+		return delete(id);
+	}
+
+
 }

@@ -69,7 +69,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  /customerBill/{id}:
+    delete:
+      operationId: deleteCustomerBill
+      summary: Deletes a Customer  Bill by ID
+      description: This operation deletes a Customer Bill entity.
+      tags:
+        - customerBillExtension
+      parameters:
+        - name: id
+          description: Identifier of the Customer Bill
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Money:

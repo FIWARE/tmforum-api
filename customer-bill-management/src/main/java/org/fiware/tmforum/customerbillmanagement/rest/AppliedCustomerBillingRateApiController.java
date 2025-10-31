@@ -56,4 +56,6 @@ public class AppliedCustomerBillingRateApiController extends AbstractApiControll
 				.map(tmForumMapper::map)
 				.map(HttpResponse::ok);
 	}
+
+
 }

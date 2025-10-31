@@ -4,7 +4,8 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateApi;
+import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApi;
+import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateExtensionApi;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateCreateVO;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateUpdateVO;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
@@ -30,7 +31,7 @@ import java.util.UUID;
 @Slf4j
 @Controller("${general.basepath:/}")
 @Requires(property = "apiExtension.enabled", value = "true")
-public class ExtendedAppliedCustomerBillingRateApiController extends AbstractApiController<AppliedCustomerBillingRate> implements AppliedCustomerBillingRateApi {
+public class ExtendedAppliedCustomerBillingRateApiController extends AbstractApiController<AppliedCustomerBillingRate> implements AppliedCustomerBillingRateExtensionApi {
 
     private final TMForumMapper tmForumMapper;
     private final Clock clock;
@@ -101,6 +102,11 @@ public class ExtendedAppliedCustomerBillingRateApiController extends AbstractApi
                 .flatMap(acbr -> patch(id, updatedCustomerBillingRate, getCheckingMono(updatedCustomerBillingRate), AppliedCustomerBillingRate.class))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
+    }
+
+    @Override
+    public Mono<HttpResponse<Object>> deleteAppliedCustomerBill(String id) {
+        return delete(id);
     }
 
     private boolean getNullSafeBoolean(Boolean booleanValue) {

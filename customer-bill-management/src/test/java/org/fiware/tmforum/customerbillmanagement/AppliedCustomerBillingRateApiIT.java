@@ -372,6 +372,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	@Override public void retrieveAppliedCustomerBillingRate500() throws Exception {
 
 	}
+	
 
 	@Override protected String getEntityType() {
 		return AppliedCustomerBillingRate.TYPE_APPLIED_CUSTOMER_BILLING_RATE;

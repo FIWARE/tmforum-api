@@ -6,8 +6,9 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateApiTestClient;
-import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateApiTestSpec;
+import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApiTestClient;
+import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateExtensionApiTestClient;
+import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateExtensionApiTestSpec;
 import org.fiware.customerbillmanagement.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
@@ -40,12 +41,14 @@ import static org.mockito.Mockito.when;
 @MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
 @Property(name = "apiExtension.enabled", value = "true")
 public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT implements
-		AppliedCustomerBillingRateApiTestSpec {
+		AppliedCustomerBillingRateExtensionApiTestSpec {
 
 	private static final String BILL_ID = "urn:ngsi-ld:customer-bill:test-bill";
 	private static final String BILLING_ACCOUNT_ID = "urn:ngsi-ld:billing-account:test-billing-account";
 
+	private final AppliedCustomerBillingRateExtensionApiTestClient appliedCustomerBillingRateExtensionApiTestClient;
 	private final AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient;
+
 	private final EntitiesApiClient entitiesApiClient;
 
 	private String message;
@@ -57,8 +60,10 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
 	protected ExtendedAppliedCustomerBillingRateApiIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
 													  GeneralProperties generalProperties,
+													  AppliedCustomerBillingRateExtensionApiTestClient appliedCustomerBillingRateExtensionApiTestClient,
 													  AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient) {
 		super(entitiesApiClient, objectMapper, generalProperties);
+		this.appliedCustomerBillingRateExtensionApiTestClient = appliedCustomerBillingRateExtensionApiTestClient;
 		this.appliedCustomerBillingRateApiTestClient = appliedCustomerBillingRateApiTestClient;
 		this.entitiesApiClient = entitiesApiClient;
 	}
@@ -123,7 +128,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		when(clock.instant()).thenReturn(currentTimeInstant);
 
 		HttpResponse<AppliedCustomerBillingRateVO> appliedCustomerBillingRateVOHttpResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(null, appliedCustomerBillingRateCreateVO));
+				() -> appliedCustomerBillingRateExtensionApiTestClient.createAppliedCustomerBillingRate(null, appliedCustomerBillingRateCreateVO));
 		assertEquals(HttpStatus.CREATED, appliedCustomerBillingRateVOHttpResponse.getStatus(), message);
 		String acabId = appliedCustomerBillingRateVOHttpResponse.body().getId();
 		expectedAppliedCustomerBillingRateVo.setId(acabId);
@@ -245,7 +250,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 	public void createAppliedCustomerBillingRate400() throws Exception {
 
 		HttpResponse<AppliedCustomerBillingRateVO> creationResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(null, appliedCustomerBillingRateCreateVO));
+				() -> appliedCustomerBillingRateExtensionApiTestClient.createAppliedCustomerBillingRate(null, appliedCustomerBillingRateCreateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, creationResponse.getStatus(), message);
 		Optional<ErrorDetails> optionalErrorDetails = creationResponse.getBody(ErrorDetails.class);
 		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
@@ -346,14 +351,14 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
 		//first create
 		HttpResponse<AppliedCustomerBillingRateVO> createResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(null, appliedCustomerBillingRateCreateVO));
+				() -> appliedCustomerBillingRateExtensionApiTestClient.createAppliedCustomerBillingRate(null, appliedCustomerBillingRateCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The applied customer billing rate should have been created first.");
 
 		String id = createResponse.body().getId();
 
 		HttpResponse<AppliedCustomerBillingRateVO> updateResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.updateAppliedCustomerBillingRate(null, id, appliedCustomerBillingRateUpdateVO));
+				() -> appliedCustomerBillingRateExtensionApiTestClient.updateAppliedCustomerBillingRate(null, id, appliedCustomerBillingRateUpdateVO));
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		AppliedCustomerBillingRateVO updated = updateResponse.body();
@@ -448,14 +453,14 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 				.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID));
 
 		HttpResponse<AppliedCustomerBillingRateVO> createResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.createAppliedCustomerBillingRate(null, initialCreate));
+				() -> appliedCustomerBillingRateExtensionApiTestClient.createAppliedCustomerBillingRate(null, initialCreate));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
 				"The applied customer billing rate should have been created first.");
 
 		String id = createResponse.body().getId();
 
 		HttpResponse<AppliedCustomerBillingRateVO> updateResponse = callAndCatch(
-				() -> appliedCustomerBillingRateApiTestClient.updateAppliedCustomerBillingRate(null, id, appliedCustomerBillingRateUpdateVO));
+				() -> appliedCustomerBillingRateExtensionApiTestClient.updateAppliedCustomerBillingRate(null, id, appliedCustomerBillingRateUpdateVO));
 		assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 
 		Optional<ErrorDetails> optionalErrorDetails = updateResponse.getBody(ErrorDetails.class);
@@ -518,7 +523,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
 		assertEquals(
 				HttpStatus.NOT_FOUND,
-				callAndCatch(() -> appliedCustomerBillingRateApiTestClient.updateAppliedCustomerBillingRate(null,
+				callAndCatch(() -> appliedCustomerBillingRateExtensionApiTestClient.updateAppliedCustomerBillingRate(null,
 						"urn:ngsi-ld:applied-customer-billing-rate:not-existent", updateVO)).getStatus(),
 				"Non existent applied-customer-billing-rate should not be updated.");
 	}
@@ -537,6 +542,85 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
 	@Override
 	public void updateAppliedCustomerBillingRate500() throws Exception {
+
+	}
+
+	@Test
+	@Override
+	public void deleteAppliedCustomerBill204() throws Exception {
+
+		//First create
+
+		Instant currentTimeInstant = Instant.ofEpochSecond(10000);
+		when(clock.instant()).thenReturn(currentTimeInstant);
+
+		//first create
+		AppliedCustomerBillingRateCreateVO initialCreate = AppliedCustomerBillingRateCreateVOTestExample.build().atSchemaLocation(null)
+				.product(null)
+				.isBilled(true)
+				.billingAccount(null)
+				.bill(BillRefVOTestExample.build().atSchemaLocation(null).id(BILL_ID).href(BILL_ID));
+
+		HttpResponse<AppliedCustomerBillingRateVO> createResponse = callAndCatch(
+				() -> appliedCustomerBillingRateExtensionApiTestClient.createAppliedCustomerBillingRate(null, initialCreate));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+				"The applied customer billing rate should have been created first.");
+		String billId = createResponse.body().getId();
+
+		assertEquals(HttpStatus.NO_CONTENT,
+				callAndCatch(() -> appliedCustomerBillingRateExtensionApiTestClient.deleteAppliedCustomerBill(null, billId)).getStatus(),
+				"The customer bill should have been deleted.");
+
+		assertEquals(HttpStatus.NOT_FOUND,
+				callAndCatch(() -> appliedCustomerBillingRateApiTestClient.retrieveAppliedCustomerBillingRate(null, billId, null)).status(),
+				"The customer bill should not exist anymore.");
+
+	}
+
+	@Disabled("400 is impossible to happen on deletion with the current implementation.")
+	@Test
+	@Override
+	public void deleteAppliedCustomerBill400() throws Exception {
+
+	}
+
+	@Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+	@Test
+	@Override
+	public void deleteAppliedCustomerBill401() throws Exception {
+
+	}
+
+	@Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
+	@Test
+	@Override
+	public void deleteAppliedCustomerBill403() throws Exception {
+
+	}
+
+	@Test
+	@Override
+	public void deleteAppliedCustomerBill404() throws Exception {
+		HttpResponse<?> notFoundResponse = callAndCatch(
+				() -> appliedCustomerBillingRateExtensionApiTestClient.deleteAppliedCustomerBill(null, "urn:ngsi-ld:customer-bill:no-bill"));
+		assertEquals(HttpStatus.NOT_FOUND,
+				notFoundResponse.getStatus(),
+				"No such bill should exist.");
+
+		Optional<ErrorDetails> optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
+		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
+
+		notFoundResponse = callAndCatch(() -> appliedCustomerBillingRateExtensionApiTestClient.deleteAppliedCustomerBill(null, "invalid-id"));
+		assertEquals(HttpStatus.NOT_FOUND,
+				notFoundResponse.getStatus(),
+				"No such Customer bill should exist.");
+
+		optionalErrorDetails = notFoundResponse.getBody(ErrorDetails.class);
+		assertTrue(optionalErrorDetails.isPresent(), "Error details should be provided.");
+	}
+
+	@Override
+	public void deleteAppliedCustomerBill500() throws Exception {
 
 	}
 }
