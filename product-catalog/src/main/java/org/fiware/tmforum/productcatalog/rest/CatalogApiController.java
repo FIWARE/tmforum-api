@@ -20,6 +20,7 @@ import org.fiware.tmforum.productcatalog.TMForumMapper;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -28,11 +29,13 @@ import java.util.*;
 public class CatalogApiController extends AbstractApiController<Catalog> implements CatalogApi {
 
     private final TMForumMapper tmForumMapper;
+    private final Clock clock;
 
     public CatalogApiController(QueryParser queryParser, ReferenceValidationService validationService,
-                                TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
+                                TmForumRepository productCatalogRepository, TMForumMapper tmForumMapper, Clock clock, TMForumEventHandler eventHandler) {
         super(queryParser, validationService, productCatalogRepository, eventHandler);
         this.tmForumMapper = tmForumMapper;
+        this.clock = clock;
     }
 
     @Override
@@ -45,6 +48,8 @@ public class CatalogApiController extends AbstractApiController<Catalog> impleme
 
         Catalog catalog = tmForumMapper.map(
                 tmForumMapper.map(catalogVo, IdHelper.toNgsiLd(UUID.randomUUID().toString(), Catalog.TYPE_CATALOG)));
+
+        catalog.setLastUpdate(clock.instant());
 
         return create(getCheckingMono(catalog), Catalog.class)
                 .map(tmForumMapper::map)
@@ -83,6 +88,7 @@ public class CatalogApiController extends AbstractApiController<Catalog> impleme
                     TmForumExceptionReason.NOT_FOUND);
         }
         Catalog updatedCatalog = tmForumMapper.map(tmForumMapper.map(catalogUpdateVO, id));
+        updatedCatalog.setLastUpdate(clock.instant());
 
         return patch(id, updatedCatalog, getCheckingMono(updatedCatalog), Catalog.class)
                 .map(tmForumMapper::map)

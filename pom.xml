@@ -51,6 +51,7 @@
         <module>account</module>
         <module>service-inventory</module>
         <module>party-role</module>
+        <module>data-migrator</module>
     </modules>
 
     <properties>
@@ -95,8 +96,8 @@
         <version.io.kokuwa.micronaut.codegen>4.4.1</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.4</version.io.github.wistefan.ngsi-ld-mapping-java>
-      
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.13</version.io.github.wistefan.ngsi-ld-mapping-java>
+
         <!-- caching -->
         <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>
 
@@ -864,7 +865,7 @@
                             <!-- disables the micronaut plugin extension, that breaks the exectuion individual config -->
                             <configuration combine.self="override">
                                 <from>
-                                    <image>registry.access.redhat.com/ubi8/openjdk-17:1.11-2</image>
+                                    <image>registry.access.redhat.com/ubi8/openjdk-17:1.23-3</image>
                                 </from>
                                 <to>
                                     <image>${image.registry}/${image.repository}/tmforum-${project.artifactId}</image>

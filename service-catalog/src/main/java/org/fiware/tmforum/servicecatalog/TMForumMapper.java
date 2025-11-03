@@ -6,6 +6,7 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.Feature;
+import org.fiware.tmforum.resource.FeatureSpecificationCharacteristicRelationship;
 import org.fiware.tmforum.resource.ResourceSpecificationRef;
 import org.fiware.tmforum.service.*;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCatalog;
@@ -79,17 +80,29 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "id", source = "specId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract FeatureSpecificationVO map(FeatureSpecification feature);
 
-	@Mapping(target = "specId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract FeatureSpecification map(FeatureSpecificationVO featureVO);
 
-	@Mapping(target = "id", source = "specId")
+	@Mapping(target = "id", source = "tmfId")
+	public abstract FeatureSpecificationCharacteristicVO map(FeatureSpecificationCharacteristic feature);
+
+	@Mapping(target = "tmfId", source = "id")
+	public abstract FeatureSpecificationCharacteristic map(FeatureSpecificationCharacteristicVO featureVO);
+	
+	@Mapping(target = "id", source = "tmfId")
 	public abstract CharacteristicSpecificationVO map(CharacteristicSpecification characteristicSpecification);
 
-	@Mapping(target = "specId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract CharacteristicSpecification map(CharacteristicSpecificationVO characteristicSpecificationVO);
+
+	@Mapping(target = "tmfValue", source = "value")
+	public abstract CharacteristicValueSpecification map(CharacteristicValueSpecificationVO characteristicVO);
+
+	@Mapping(target = "value", source = "tmfValue")
+	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
 
 	public URL map(String value) {
 		if (value == null) {
@@ -163,22 +176,6 @@ public abstract class TMForumMapper extends BaseMapper {
 			return null;
 		}
 		return resourceSpecificationRef.getEntityId().toString();
-	}
-
-	public <C> URI mapGeneric(C value) {
-		if (value == null) {
-			return null;
-		}
-		if (value instanceof URI uri) {
-			return uri;
-		} else if (value instanceof String string) {
-			try {
-				return new URI(string);
-			} catch (URISyntaxException e) {
-				throw new MappingException(String.format("String %s is not an URI.", string), e);
-			}
-		}
-		throw new MappingException("Value is not a URI.");
 	}
 }
 

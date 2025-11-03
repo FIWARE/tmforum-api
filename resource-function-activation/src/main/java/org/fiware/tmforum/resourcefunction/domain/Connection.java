@@ -7,7 +7,7 @@ import java.net.URI;
 @Data
 public class Connection {
 
-    private String connectionId;
+    private String tmfId;
     private URI href;
     private String associationType;
     private String name;

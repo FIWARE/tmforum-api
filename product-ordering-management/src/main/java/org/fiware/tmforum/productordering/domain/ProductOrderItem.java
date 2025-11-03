@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 public class ProductOrderItem extends Entity {
 
-	private String itemId;
+	private String tmfId;
 	private Integer quantity;
 	private OrderItemAction action;
 	private ReferenceValue appointment;

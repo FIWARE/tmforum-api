@@ -6,7 +6,7 @@ import java.net.URI;
 
 @Data
 public class ResourceGraphRelationship {
-    private String graphRelationId;
+    private String tmfId;
     private URI href;
     private String relationshipType;
     private ResourceGraphRef resourceGraph;

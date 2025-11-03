@@ -109,7 +109,7 @@ After running this, the context broker is available at ```http://localhost:1026`
 See the logs via:
 
 ```
-  export KUBECONFIG=/tmp/k3s-maven-plugin/mount/kubeconfig.yaml && kubectl get all --all-namespaces
+  export KUBECONFIG=$(pwd)/target/k3s.yaml && kubectl get all --all-namespaces
   kubectl logs <BROKER_POD>
 ```
 

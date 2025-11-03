@@ -8,7 +8,7 @@ import java.net.URI;
 @Data
 public class FeatureSpecificationCharacteristicRelationship {
 
-    private String id;
+    private String tmfId;
     private URI href;
     private String characteristicId;
     private String featureId;
@@ -18,7 +18,6 @@ public class FeatureSpecificationCharacteristicRelationship {
     private ResourceSpecificationRef resourceSpecificationId;
     private TimePeriod validFor;
     private String atBaseType;
-    private URI atSchemaLocation;
     private String atType;
 
 }

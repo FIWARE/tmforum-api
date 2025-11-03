@@ -287,6 +287,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 			customerVO
 					.id(id)
 					.href(id)
+					.relatedParty(null)
 					.engagedParty(null)
 					.account(null)
 					.paymentMethod(null)
@@ -434,6 +435,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.name("Max Mustermann"),
 				CustomerVOTestExample.build().atSchemaLocation(null)
 						.engagedParty(null)
+						.relatedParty(null)
 						.account(null)
 						.paymentMethod(null)
 						.validFor(null)
@@ -445,6 +447,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.name("pending"),
 				CustomerVOTestExample.build().atSchemaLocation(null)
 						.engagedParty(null)
+						.relatedParty(null)
 						.account(null)
 						.paymentMethod(null)
 						.validFor(null)
@@ -456,6 +459,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.statusReason("not signed"),
 				CustomerVOTestExample.build().atSchemaLocation(null)
 						.engagedParty(null)
+						.relatedParty(null)
 						.account(null)
 						.paymentMethod(null)
 						.validFor(null)
@@ -467,6 +471,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.characteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null))),
 				CustomerVOTestExample.build().atSchemaLocation(null)
 						.engagedParty(null)
+						.relatedParty(null)
 						.account(null)
 						.paymentMethod(null)
 						.validFor(null)
@@ -480,6 +485,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 										.startDateTime(Instant.MIN)))),
 				CustomerVOTestExample.build().atSchemaLocation(null)
 						.engagedParty(null)
+						.relatedParty(null)
 						.account(null)
 						.paymentMethod(null)
 						.validFor(null)
@@ -495,6 +501,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 										.startDateTime(Instant.MIN)))),
 				CustomerVOTestExample.build().atSchemaLocation(null)
 						.engagedParty(null)
+						.relatedParty(null)
 						.account(null)
 						.paymentMethod(null)
 						.validFor(null)
@@ -509,6 +516,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						.engagedParty(null),
 				CustomerVOTestExample.build().atSchemaLocation(null).validFor(timePeriodVO)
 						.engagedParty(null)
+						.relatedParty(null)
 						.account(null)
 						.paymentMethod(null)));
 
@@ -665,6 +673,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						CustomerVOTestExample.build().atSchemaLocation(null)
 								// get nulled without values
 								.engagedParty(null)
+								.relatedParty(null)
 								.account(null)
 								.paymentMethod(null)
 								//empty objects are ignored

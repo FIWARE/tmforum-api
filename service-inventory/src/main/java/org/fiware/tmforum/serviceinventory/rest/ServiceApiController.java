@@ -97,7 +97,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
 
     private void validateInternalRefs(Service service) {
         if (service.getNote() != null) {
-            List<URI> noteIds = service.getNote().stream().map(Note::getNoteId).toList();
+            List<URI> noteIds = service.getNote().stream().map(Note::getTmfId).toList();
             if (noteIds.size() != new HashSet<>(noteIds).size()) {
                 throw new TmForumException(
                         String.format("Duplicate note ids are not allowed: %s", noteIds),
@@ -116,7 +116,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
                                                     List<Characteristic> characteristics) {
         List<String> charIds = characteristics
                 .stream()
-                .map(Characteristic::getCharacteristicId)
+                .map(Characteristic::getTmfId)
                 .toList();
         if (charIds.size() != new HashSet<>(charIds).size()) {
             throw new TmForumException(
@@ -127,7 +127,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
         if (characteristic.getCharacteristicRelationship() != null) {
             characteristic.getCharacteristicRelationship()
                     .stream()
-                    .map(CharacteristicRelationship::getCharacteristicRelationId)
+                    .map(CharacteristicRelationship::getTmfId)
                     .filter(charRef -> !charIds.contains(charRef))
                     .findFirst()
                     .ifPresent(missingId -> {
@@ -142,7 +142,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
     private void validateInternalFeatureRefs(Feature feature, Service service) {
         List<String> featureIds = service.getFeature()
                 .stream()
-                .map(Feature::getFeatureId)
+                .map(Feature::getTmfId)
                 .toList();
         // check for duplicate ids
         if (featureIds.size() != new HashSet<>(featureIds).size()) {
@@ -152,7 +152,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
         if (feature.getFeatureRelationship() != null) {
             feature.getFeatureRelationship()
                     .stream()
-                    .map(FeatureRelationship::getId)
+                    .map(FeatureRelationship::getTmfId)
                     .filter(featureRef -> !featureIds.contains(featureRef))
                     .findFirst()
                     .ifPresent(missingId -> {

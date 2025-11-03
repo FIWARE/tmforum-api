@@ -21,112 +21,106 @@ import java.net.URL;
 @Mapper(componentModel = "jsr330", uses = IdHelper.class)
 public abstract class TMForumMapper extends BaseMapper {
 
-	// resource catalog
+    // resource catalog
 
-	@Mapping(target = "id", source = "id")
-	@Mapping(target = "href", source = "id")
-	public abstract ResourceVO map(ResourceCreateVO resourceCreateVO, URI id);
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "href", source = "id")
+    public abstract ResourceVO map(ResourceCreateVO resourceCreateVO, URI id);
 
-	public abstract ResourceVO map(Resource resource);
+    public abstract ResourceVO map(Resource resource);
 
-	public abstract Resource map(ResourceVO resourceVO);
+    public abstract Resource map(ResourceVO resourceVO);
 
-	@Mapping(target = "id", source = "id")
-	public abstract Resource map(ResourceUpdateVO resourceUpdateVO, String id);
+    @Mapping(target = "id", source = "id")
+    public abstract Resource map(ResourceUpdateVO resourceUpdateVO, String id);
 
-	@Mapping(target = "query", source = "rawQuery")
-	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
+    @Mapping(target = "query", source = "rawQuery")
+    public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "id", source = "noteId")
-	public abstract NoteVO map(Note note);
+    @Mapping(target = "id", source = "tmfId")
+    public abstract NoteVO map(Note note);
 
-	@Mapping(target = "noteId", source = "id")
-	public abstract Note map(NoteVO noteVO);
+    @Mapping(target = "tmfId", source = "id")
+    public abstract Note map(NoteVO noteVO);
 
-	@Mapping(target = "id", source = "featureId")
-	public abstract FeatureVO map(Feature feature);
+    @Mapping(target = "id", source = "tmfId")
+    public abstract FeatureVO map(Feature feature);
 
-	@Mapping(target = "featureId", source = "id")
-	public abstract Feature map(FeatureVO featureVO);
+    @Mapping(target = "tmfId", source = "id")
+    // ignore them, since they are not present in the current api version
+    @Mapping(target = "atSchemaLocation", ignore = true)
+    @Mapping(target = "atBaseType", ignore = true)
+    @Mapping(target = "atType", ignore = true)
+    public abstract Feature map(FeatureVO featureVO);
 
-	@Mapping(target = "characteristicValue", source = "value")
-	@Mapping(target = "characteristicId", source = "id")
-	public abstract Characteristic map(CharacteristicVO characteristicVO);
+    @Mapping(target = "id", source = "tmfId")
+    public abstract FeatureRelationshipVO map(FeatureRelationship feature);
 
-	@Mapping(target = "value", source = "characteristicValue")
-	@Mapping(target = "id", source = "characteristicId")
-	public abstract CharacteristicVO map(Characteristic characteristic);
+    @Mapping(target = "tmfId", source = "id")
+    public abstract FeatureRelationship map(FeatureRelationshipVO featureVO);
 
-	@Mapping(target = "characteristicRelationId", source = "id")
-	public abstract CharacteristicRelationship map(CharacteristicRelationshipVO characteristicRelationshipVO);
+    @Mapping(target = "tmfValue", source = "value")
+    @Mapping(target = "tmfId", source = "id")
+    public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "id", source = "characteristicRelationId")
-	public abstract CharacteristicRelationshipVO map(CharacteristicRelationship characteristicRelationship);
+    @Mapping(target = "value", source = "tmfValue")
+    @Mapping(target = "id", source = "tmfId")
+    public abstract CharacteristicVO map(Characteristic characteristic);
 
-	@Mapping(target = "attachementId", source = "id")
-	public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO attachmentRefOrValueVO);
+    @Mapping(target = "tmfId", source = "id")
+    public abstract CharacteristicRelationship map(CharacteristicRelationshipVO characteristicRelationshipVO);
 
-	@Mapping(target = "id", source = "attachementId")
-	public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
+    @Mapping(target = "id", source = "tmfId")
+    public abstract CharacteristicRelationshipVO map(CharacteristicRelationship characteristicRelationship);
 
-	public URL map(String value) {
-		if (value == null) {
-			return null;
-		}
-		try {
-			return new URL(value);
-		} catch (MalformedURLException e) {
-			throw new MappingException(String.format("%s is not a URL.", value), e);
-		}
-	}
+    @Mapping(target = "tmfId", source = "id")
+    public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO attachmentRefOrValueVO);
 
-	public String map(URL value) {
-		if (value == null) {
-			return null;
-		}
-		return value.toString();
-	}
+    @Mapping(target = "id", source = "tmfId")
+    public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
 
-	public <C> URI mapGeneric(C value) {
-		if (value == null) {
-			return null;
-		}
-		if (value instanceof URI uri) {
-			return uri;
-		} else if (value instanceof String string) {
-			try {
-				return new URI(string);
-			} catch (URISyntaxException e) {
-				throw new MappingException(String.format("String %s is not an URI.", string), e);
-			}
-		}
-		throw new MappingException("Value is not a URI.");
-	}
+    public URL map(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new URL(value);
+        } catch (MalformedURLException e) {
+            throw new MappingException(String.format("%s is not a URL.", value), e);
+        }
+    }
 
-	public URI mapFromURL(URL value) {
-		if (value == null) {
-			return null;
-		}
-		try {
-			return value.toURI();
-		} catch (URISyntaxException e) {
-			throw new MappingException(String.format("Value %s is not an URI.", value), e);
-		}
-	}
+    public String map(URL value) {
+        if (value == null) {
+            return null;
+        }
+        return value.toString();
+    }
 
-	public URI mapToURI(String value) {
-		if (value == null) {
-			return null;
-		}
-		return URI.create(value);
-	}
+    public URI mapFromURL(URL value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return value.toURI();
+        } catch (URISyntaxException e) {
+            throw new MappingException(String.format("Value %s is not an URI.", value), e);
+        }
+    }
 
-	public String mapFromURI(URI value) {
-		if (value == null) {
-			return null;
-		}
-		return value.toString();
-	}
+    public URI mapToURI(String value) {
+        if (value == null) {
+            return null;
+        }
+        return URI.create(value);
+    }
+
+    public String mapFromURI(URI value) {
+        if (value == null) {
+            return null;
+        }
+        return value.toString();
+    }
 }
 
 

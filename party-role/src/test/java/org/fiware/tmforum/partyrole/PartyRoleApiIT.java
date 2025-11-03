@@ -328,12 +328,14 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 				PartyRoleUpdateVOTestExample.build().atSchemaLocation(null).engagedParty(null).name("Updated"),
 				PartyRoleVOTestExample.build().atSchemaLocation(null)
 						.name("Updated")
+						.relatedParty(null)
 						.engagedParty(null)
 						.validFor(null)));
 		result.add(Arguments.of("The status should have been updated",
 				PartyRoleUpdateVOTestExample.build().atSchemaLocation(null).engagedParty(null).status("canceled"),
 				PartyRoleVOTestExample.build().atSchemaLocation(null)
 						.engagedParty(null)
+						.relatedParty(null)
 						.validFor(null)
 						.status("canceled")));
 
@@ -343,6 +345,7 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 		result.add(Arguments.of("The validFor info should have been updated",
 				PartyRoleUpdateVOTestExample.build().atSchemaLocation(null).engagedParty(null).validFor(validFor),
 				PartyRoleVOTestExample.build().atSchemaLocation(null).validFor(validFor)
+						.relatedParty(null)
 						.engagedParty(null)));
 
 		return result.stream();
@@ -445,7 +448,8 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 	private static Stream<Arguments> provideFieldsRetrieve() {
 		List<Arguments> result = new ArrayList<>();
 		result.add(Arguments.of("If no fields are established, all attributes should be returned", null,
-				PartyRoleVOTestExample.build().atSchemaLocation(null).engagedParty(null).validFor(null)));
+				PartyRoleVOTestExample.build().atSchemaLocation(null)
+						.relatedParty(null).engagedParty(null).validFor(null)));
 		result.add(Arguments.of(
 				"It should only show up name,version,description with the default mandatory attributes",
 				"name,version,description",

@@ -38,42 +38,42 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "query", source = "rawQuery")
 	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
-	@Mapping(target = "moneyValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Money map(MoneyVO moneyVO);
 
-	@Mapping(target = "value", source = "moneyValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract MoneyVO map(Money money);
 
-	@Mapping(target = "noteId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract Note map(NoteVO noteVO);
 
-	@Mapping(target = "id", source = "noteId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract NoteVO map(Note note);
 
-	@Mapping(target = "itemId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract QuoteItem map(QuoteItemVO quoteItemVO);
 
-	@Mapping(target = "id", source = "itemId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract QuoteItemVO map(QuoteItem quoteItem);
 
-	@Mapping(target = "relationshipId", source = "id")
+	@Mapping(target = "tmfId", source = "id")
 	public abstract QuoteItemRelationship map(QuoteItemRelationshipVO quoteItemRelationshipVO);
 
-	@Mapping(target = "id", source = "relationshipId")
+	@Mapping(target = "id", source = "tmfId")
 	public abstract QuoteItemRelationshipVO map(QuoteItemRelationship quoteItemRelationship);
 
-	@Mapping(target = "charValue", source = "value")
+	@Mapping(target = "tmfValue", source = "value")
 	public abstract Characteristic map(CharacteristicVO characteristicVO);
 
-	@Mapping(target = "value", source = "charValue")
+	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicVO map(Characteristic characteristic);
-
-	public QuoteItemState mapQuoteItemState(String value) {
-		return QuoteItemState.toEnum(value);
-	}
 
 	public String mapQuoteItemState(QuoteItemState value) {
 		return value.getValue();
+	}
+
+	public QuoteItemState mapQuoteItemState(String value) {
+		return QuoteItemState.toEnum(value);
 	}
 
 	public URL map(String value) {

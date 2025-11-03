@@ -1,5 +1,7 @@
 package org.fiware.tmforum.common.validation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.net.URI;
 import java.util.List;
 
@@ -10,13 +12,16 @@ public interface ReferencedEntity {
 
 	/**
 	 * Type of entities that are allowed to be referenced.
+	 *
 	 * @return the types
 	 */
 	List<String> getReferencedTypes();
 
 	/**
 	 * Id of the entity itself
+	 *
 	 * @return the id
 	 */
+	@JsonIgnore
 	URI getEntityId();
 }

@@ -6,5 +6,5 @@ import lombok.Data;
 public class Money {
 
 	private String unit;
-	private Float moneyValue;
+	private Float tmfValue;
 }

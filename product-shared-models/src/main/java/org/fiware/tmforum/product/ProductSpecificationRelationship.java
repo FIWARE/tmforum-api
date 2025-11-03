@@ -2,18 +2,17 @@ package org.fiware.tmforum.product;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.wistefan.mapping.annotations.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.RefEntity;
-import io.github.wistefan.mapping.annotations.AttributeGetter;
-import io.github.wistefan.mapping.annotations.AttributeSetter;
-import io.github.wistefan.mapping.annotations.AttributeType;
-import io.github.wistefan.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.common.domain.TimePeriod;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.fiware.tmforum.product.ProductSpecification.TYPE_PRODUCT_SPECIFICATION;
 
@@ -35,6 +34,20 @@ public class ProductSpecificationRelationship extends RefEntity {
 
     public ProductSpecificationRelationship(@JsonProperty("id") String id) {
         super(id);
+    }
+
+    @RelationshipObject
+    @Override
+    public URI getId() {
+        return super.getId();
+    }
+
+    @JsonIgnore
+    @DatasetId
+    public URI getDatasetId() {
+        String relType = Optional.ofNullable(getRelationshipType()).orElse("type");
+
+        return URI.create(String.format("%s:%s", getId().toString(), relType));
     }
 
     @Override

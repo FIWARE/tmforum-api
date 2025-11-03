@@ -342,6 +342,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
             ServiceVO serviceVO = ServiceVOTestExample.build();
             serviceVO
                     .id(id)
+                    .relatedParty(null)
                     .href(id)
                     .serviceSpecification(null);
             expectedServices.add(serviceVO);
@@ -498,6 +499,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                         .serviceSpecification(null)
                         .description("new-description"),
                 ServiceVOTestExample.build()
+                        .relatedParty(null)
                         .serviceSpecification(null)
                         .description("new-description")));
 
@@ -506,6 +508,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                         .serviceSpecification(null)
                         .name("new-name"),
                 ServiceVOTestExample.build()
+                        .relatedParty(null)
                         .serviceSpecification(null)
                         .name("new-name")));
 
@@ -514,6 +517,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                         .serviceSpecification(null)
                         .isBundle(false),
                 ServiceVOTestExample.build()
+                        .relatedParty(null)
                         .serviceSpecification(null)
                         .isBundle(false)));
 
@@ -523,6 +527,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                         .serviceSpecification(null)
                         .startDate(date),
                 ServiceVOTestExample.build()
+                        .relatedParty(null)
                         .serviceSpecification(null)
                         .startDate(date)));
 
@@ -531,6 +536,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                         .serviceSpecification(null)
                         .endDate(date),
                 ServiceVOTestExample.build()
+                        .relatedParty(null)
                         .serviceSpecification(null)
                         .endDate(date)));
 
@@ -540,6 +546,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                         .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).name("new")
                                 .id(null))),
                 ServiceVOTestExample.build()
+                        .relatedParty(null)
                         .serviceSpecification(null)
                         .serviceCharacteristic(List.of(CharacteristicVOTestExample.build().atSchemaLocation(null).name("new")
                                 .id(null)))));
@@ -703,7 +710,8 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     private static Stream<Arguments> provideFieldParameters() {
         return Stream.of(
                 Arguments.of("Without a fields parameter everything should be returned.", null,
-                        ServiceVOTestExample.build().serviceSpecification(null)),
+                        ServiceVOTestExample.build()
+                                .relatedParty(null).serviceSpecification(null)),
                 Arguments.of("Only category and the mandatory parameters should have been included.", "category",
                         ServiceVOTestExample.build()
                                 .relatedParty(null)
