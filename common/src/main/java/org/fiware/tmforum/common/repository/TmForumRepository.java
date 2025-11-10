@@ -27,11 +27,17 @@ public class TmForumRepository extends NgsiLdBaseRepository {
 
     public <T> Mono<T> get(URI id, Class<T> entityClass) {
         return retrieveEntityById(id)
-                .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass))
-                .onErrorResume(throwable -> {
-                    log.debug("Failed to map entity {} to class {}: {}", id, entityClass.getSimpleName(),
-                            throwable.getMessage());
-                    return Mono.empty();
+                .flatMap(entityVO -> {
+                    String expectedType = entityClass.getTypeName();
+                    String actualType = entityVO.getType();
+
+                    if (actualType == null || !actualType.equals(expectedType)) {
+                        log.debug("Entity {} has type {} but requested type was {}",
+                                id, actualType, expectedType);
+                        return Mono.empty();
+                    }
+
+                    return entityVOMapper.fromEntityVO(entityVO, entityClass);
                 });
     }
 
