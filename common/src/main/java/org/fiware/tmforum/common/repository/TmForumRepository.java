@@ -26,19 +26,19 @@ public class TmForumRepository extends NgsiLdBaseRepository {
     }
 
     public <T> Mono<T> get(URI id, Class<T> entityClass) {
+
+        String requestedType = id.toString().toLowerCase().split(":")[2].replace("-", "");
+        String classType = entityClass.getTypeName().toLowerCase().substring(entityClass.getTypeName().lastIndexOf('.') + 1);
+
+        if (!requestedType.equals(classType)){
+            log.warn("Entity {} has type {} but requested type was {}",
+                    id, requestedType, classType);
+            return Mono.empty();
+        }
+
+
         return retrieveEntityById(id)
-                .flatMap(entityVO -> {
-                    String expectedType = entityClass.getTypeName();
-                    String actualType = entityVO.getType();
-
-                    if (actualType == null || !actualType.equals(expectedType)) {
-                        log.debug("Entity {} has type {} but requested type was {}",
-                                id, actualType, expectedType);
-                        return Mono.empty();
-                    }
-
-                    return entityVOMapper.fromEntityVO(entityVO, entityClass);
-                });
+                .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
     }
 
     public <T> Mono<List<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
