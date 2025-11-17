@@ -2,12 +2,14 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import reactor.core.publisher.Mono;
 
@@ -27,15 +29,34 @@ public class TmForumRepository extends NgsiLdBaseRepository {
 
     public <T> Mono<T> get(URI id, Class<T> entityClass) {
 
-        String requestedType = id.toString().toLowerCase().split(":")[2].replace("-", "");
-        String classType = entityClass.getTypeName().toLowerCase().substring(entityClass.getTypeName().lastIndexOf('.') + 1);
+        String idString = id.toString();
+        String[] parts = idString.split(":", 4);
 
-        if (!requestedType.equals(classType)){
-            log.warn("Entity {} has type {} but requested type was {}",
-                    id, requestedType, classType);
+
+        if (parts.length < 3) {
+            log.warn("Invalid NGSI-LD ID format, expected at least 3 parts: {}", idString);
             return Mono.empty();
         }
 
+        String requestedType = parts[2];
+
+        // Extract entity type from MappingEnabled
+        MappingEnabled mappingAnnotation = entityClass.getAnnotation(MappingEnabled.class);
+
+        // prevent NullPointerException
+        if (mappingAnnotation == null) {
+            log.warn("Class {} missing @MappingEnabled annotation", entityClass.getName());
+            return retrieveEntityById(id)
+                    .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
+        }
+
+        String classType = mappingAnnotation.entityType()[0];
+
+        if (!requestedType.equals(classType)) {
+            log.warn("Entity {} has type {} but expected type was {}",
+                    id, requestedType, classType);
+            return Mono.empty();
+        }
 
         return retrieveEntityById(id)
                 .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
