@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -43,16 +44,14 @@ public class TmForumRepository extends NgsiLdBaseRepository {
         // Extract entity type from MappingEnabled
         MappingEnabled mappingAnnotation = entityClass.getAnnotation(MappingEnabled.class);
 
-        // prevent NullPointerException
         if (mappingAnnotation == null) {
-            log.warn("Class {} missing @MappingEnabled annotation", entityClass.getName());
-            return retrieveEntityById(id)
-                    .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
+            throw new IllegalArgumentException(
+                    String.format("Class %s missing @MappingEnabled annotation", entityClass.getName()));
         }
 
-        String classType = mappingAnnotation.entityType()[0];
+        String[] classType = mappingAnnotation.entityType();
 
-        if (!requestedType.equals(classType)) {
+        if (!Arrays.asList(classType).contains(requestedType)) {
             log.warn("Entity {} has type {} but expected type was {}",
                     id, requestedType, classType);
             return Mono.empty();
