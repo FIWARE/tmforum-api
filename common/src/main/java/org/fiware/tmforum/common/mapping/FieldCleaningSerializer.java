@@ -48,6 +48,11 @@ public class FieldCleaningSerializer<T> extends JsonSerializer<T> {
                 fieldsToInclude.addAll(Arrays.asList(optionalFieldsParameter.get().split(FIELD_PARAMETER_SEPERATOR)));
                 fieldsToInclude.addAll(MANDATORY_FIELDS);
 
+                // If lastUpdate field exists and is not null, always include it
+                if (objectNode.has("lastUpdate") && !objectNode.get("lastUpdate").isNull()) {
+                    fieldsToInclude.add("lastUpdate");
+                }
+
                 Iterator<String> fieldNameIterator = jsonNode.fieldNames();
 
                 List<String> fieldsToRemove = new ArrayList<>();

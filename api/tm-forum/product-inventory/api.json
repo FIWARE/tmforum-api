@@ -1270,6 +1270,11 @@
                     "format": "date-time",
                     "description": "Is the date when the product was terminated"
                 },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update"
+                },
                 "agreement": {
                     "type": "array",
                     "items": {
@@ -1366,7 +1371,7 @@
         },
         "Product_Create": {
             "type": "object",
-            "description": "A product offering procured by a customer or other interested party playing a party role. A product is realized as one or more service(s) and / or resource(s).\nSkipped properties: id,href",
+            "description": "A product offering procured by a customer or other interested party playing a party role. A product is realized as one or more service(s) and / or resource(s).\nSkipped properties: id,href,lastUpdate",
             "required": [
                 "status"
             ],
@@ -1405,6 +1410,11 @@
                     "type": "string",
                     "format": "date-time",
                     "description": "Is the date when the product was terminated"
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update"
                 },
                 "agreement": {
                     "type": "array",
@@ -1502,7 +1512,7 @@
         },
         "Product_Update": {
             "type": "object",
-            "description": "A product offering procured by a customer or other interested party playing a party role. A product is realized as one or more service(s) and / or resource(s).\nSkipped properties: id,href",
+            "description": "A product offering procured by a customer or other interested party playing a party role. A product is realized as one or more service(s) and / or resource(s).\nSkipped properties: id,href,lastUpdate",
             "properties": {
                 "description": {
                     "type": "string",
@@ -1538,6 +1548,11 @@
                     "type": "string",
                     "format": "date-time",
                     "description": "Is the date when the product was terminated"
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update"
                 },
                 "agreement": {
                     "type": "array",
@@ -1850,6 +1865,11 @@
                     "type": "string",
                     "format": "date-time",
                     "description": "Is the date when the product was terminated"
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update"
                 },
                 "agreement": {
                     "type": "array",

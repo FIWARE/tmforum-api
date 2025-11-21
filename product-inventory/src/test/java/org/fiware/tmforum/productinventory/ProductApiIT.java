@@ -81,8 +81,10 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 				() -> productApiTestClient.createProduct(null, productCreateVO));
 		assertEquals(HttpStatus.CREATED, productVOHttpResponse.getStatus(), message);
 		String rfId = productVOHttpResponse.body().getId();
+		Instant lastUpdate = productVOHttpResponse.body().getLastUpdate();
 		expectedProduct.setId(rfId);
 		expectedProduct.setHref(rfId);
+		expectedProduct.setLastUpdate(lastUpdate);
 
 		assertEquals(expectedProduct, productVOHttpResponse.body(), message);
 	}
@@ -523,12 +525,14 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 					.productSpecification(null)
 					.billingAccount(null)
 					.productOffering(null);
-			String id = productApiTestClient.createProduct(null, productCreateVO)
-					.body().getId();
+			ProductVO body = productApiTestClient.createProduct(null, productCreateVO).body();
+			String id = body.getId();
+			Instant lastUpdate = body.getLastUpdate();
 			ProductVO productVO = ProductVOTestExample.build().atSchemaLocation(null);
 			productVO
 					.id(id)
 					.href(id)
+					.lastUpdate(lastUpdate)
 					.productSpecification(null)
 					.billingAccount(null)
 					.productOffering(null)
@@ -682,7 +686,8 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), message);
 
 		ProductVO updatedProduct = updateResponse.body();
-		expectedProduct.href(productId).id(productId);
+		Instant lastUpdate = updatedProduct.getLastUpdate();
+		expectedProduct.href(productId).id(productId).lastUpdate(lastUpdate);
 
 		assertEquals(expectedProduct, updatedProduct, message);
 	}
@@ -1211,6 +1216,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		this.fieldsParameter = fields;
 		this.message = message;
 		this.expectedProduct = expectedProduct;
+
 		retrieveProduct200();
 	}
 
@@ -1225,15 +1231,20 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 				() -> productApiTestClient.createProduct(null, productCreateVO));
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message);
 		String id = createResponse.body().getId();
+		Instant lastUpdate = createResponse.body().getLastUpdate();
 
 		expectedProduct
 				.id(id)
-				.href(id);
+				.href(id)
+				.lastUpdate(lastUpdate);
+
 
 		//then retrieve
 		HttpResponse<ProductVO> retrievedRF = callAndCatch(
 				() -> productApiTestClient.retrieveProduct(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
+
+		//retrievedRF.body().setLastUpdate(lastUpdate);
 		assertEquals(expectedProduct, retrievedRF.body(), message);
 	}
 
@@ -1250,6 +1261,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								.productOrderItem(null)
 								.realizingResource(null)
 								.realizingService(null)
+								//.lastUpdate(Instant.MAX)
 								.relatedParty(null)),
 				Arguments.of("Only description and the mandatory parameters should have been included.", "description",
 						ProductVOTestExample.build().atSchemaLocation(null)
@@ -1307,7 +1319,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								.atBaseType(null)
 								.atType(null)
 								.atSchemaLocation(null)),
-				Arguments.of("Only description, isBundle and the mandatory parameters should have been included.",
+				Arguments.of("Only description, lastUpdate, isBundle and the mandatory parameters should have been included.",
 						"description,isBundle", ProductVOTestExample.build().atSchemaLocation(null)
 								.isCustomerVisible(null)
 								.name(null)
@@ -1333,6 +1345,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								.atBaseType(null)
 								.atType(null)
 								.atSchemaLocation(null)));
+
 	}
 
 	@Disabled("400 cannot happen, only 404")
