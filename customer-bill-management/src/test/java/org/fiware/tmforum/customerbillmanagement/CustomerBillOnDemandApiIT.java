@@ -397,7 +397,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 				Arguments.of("Only name and the mandatory parameters should have been included.", "name",
 						CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.description(null)
-								.lastUpdate(null)
+								.lastUpdate(Instant.MAX.toString())
 								.state(null)
 								.relatedParty(null)
 								.customerBill(null)
@@ -409,7 +409,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 						"Only the mandatory parameters should have been included when a non-existent field was requested.",
 						"nothingToSeeHere", CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
 								.description(null)
-								.lastUpdate(null)
+								.lastUpdate(Instant.MAX.toString())
 								.state(null)
 								.name(null)
 								.relatedParty(null)
@@ -420,7 +420,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 								.atSchemaLocation(null)),
 				Arguments.of("Only name, state, description and the mandatory parameters should have been included.",
 						"name,state,description", CustomerBillOnDemandVOTestExample.build().atSchemaLocation(null)
-								.lastUpdate(null)
+								.lastUpdate(Instant.MAX.toString())
 								.relatedParty(null)
 								.customerBill(null)
 								.billingAccount(null)
