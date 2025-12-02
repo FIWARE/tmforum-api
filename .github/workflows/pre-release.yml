@@ -8,9 +8,11 @@ on:
       - reopened
       - labeled
       - unlabeled
+    branches:
+      - main-sbx
 env:
-  REGISTRY: quay.io
-  REPOSITORY: fiware
+  REGISTRY: ghcr.io
+  REPOSITORY: ${{ github.repository_owner }}
 
 concurrency:
   # Only cancel jobs for PR updates
@@ -68,8 +70,8 @@ jobs:
           java-version: '17'
           java-package: jdk
 
-      - name: Log into quay.io
-        run: docker login -u "${{ secrets.QUAY_USERNAME }}" -p "${{ secrets.QUAY_PASSWORD }}" ${{ env.REGISTRY }}
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build&Push image
         run: |
