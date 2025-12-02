@@ -9,6 +9,12 @@ env:
   REGISTRY: ghcr.io
   REPOSITORY_OWNER: ${{ github.repository_owner }}
 
+permissions:
+  contents: write
+  packages: write
+  attestations: write
+  id-token: write
+
 jobs:
   generate-version:
     runs-on: ubuntu-latest
