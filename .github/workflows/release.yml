@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  REPOSITORY: ${{ github.repository_owner }}
+  REPOSITORY_OWNER: ${{ github.repository_owner }}
 
 jobs:
   generate-version:
@@ -53,8 +53,9 @@ jobs:
 
       - name: Build&Push image
         run: |
+          REPO_LOWER=$(echo "${{ env.REPOSITORY_OWNER }}" | tr '[:upper:]' '[:lower:]')
           mvn versions:set -DnewVersion=${{ needs.generate-version.outputs.version }}
-          mvn clean install deploy -Poci -DskipTests -DskipITs -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${{ env.REPOSITORY }}"
+          mvn clean install deploy -Poci -DskipTests -DskipITs -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${REPO_LOWER}"
 
   git-release:
     needs: ["generate-version", "tmforum-apis"]
