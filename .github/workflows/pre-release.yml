@@ -9,7 +9,10 @@ on:
       - labeled
       - unlabeled
     branches:
+      - main
       - main-sbx
+      - main-dev2
+      - main-prd
 env:
   REGISTRY: ghcr.io
   REPOSITORY_OWNER: ${{ github.repository_owner }}
