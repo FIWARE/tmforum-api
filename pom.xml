@@ -77,8 +77,8 @@
 
         <!-- docker -->
         <exec.mainClass>org.fiware.tmforum.Application</exec.mainClass>
-        <image.registry>ghcr.io</image.registry>
-        <image.repository>dome-marketplace</image.repository>
+        <image.registry>quay.io</image.registry>
+        <image.repository>fiware</image.repository>
         <image.tag>latest</image.tag>
 
         <!-- lazy dev -->
@@ -130,7 +130,7 @@
         <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- broker to be used for testing, could be scropio or orion-ld -->
-        <broker>orion-ld</broker>
+        <broker>scorpio</broker>
         <!-- caching to be used for testing, could be in-memory or redis -->
         <cache>in-memory</cache>
 
