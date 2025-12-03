@@ -28,6 +28,28 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Determine branch prefix
+        id: branch
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          case "$BRANCH_NAME" in
+            main-sbx)
+              echo "::set-output name=prefix::sbx_"
+              ;;
+            main-dev2)
+              echo "::set-output name=prefix::dev2_"
+              ;;
+            main-prd)
+              echo "::set-output name=prefix::prd_"
+              ;;
+            main)
+              echo "::set-output name=prefix::"
+              ;;
+            *)
+              echo "::set-output name=prefix::${BRANCH_NAME}_"
+              ;;
+          esac
+
       - id: pr
         uses: actions-ecosystem/action-get-merged-pull-request@v1.0.1
         with:
@@ -38,10 +60,11 @@ jobs:
           dry_run: true
           bump: ${{ steps.pr.outputs.labels }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          prefix: ${{ steps.branch.outputs.prefix }}
 
       - name: Set version output
         id: out
-        run: echo "::set-output name=version::$(echo ${VERSION})"
+        run: echo "::set-output name=version::$(echo ${{ steps.branch.outputs.prefix }}${VERSION})"
 
   # image build&push
   tmforum-apis:
@@ -60,11 +83,11 @@ jobs:
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build&Push image
+      - name: Build&Push image (tests disabled)
         run: |
           REPO_LOWER=$(echo "${{ env.REPOSITORY_OWNER }}" | tr '[:upper:]' '[:lower:]')
           mvn versions:set -DnewVersion=${{ needs.generate-version.outputs.version }}
-          mvn clean install deploy -Poci -DskipTests -DskipITs -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${REPO_LOWER}"
+          mvn clean install deploy -DskipTests -DskipITs -Dmaven.test.skip=true -Poci -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${REPO_LOWER}"
 
   git-release:
     needs: ["generate-version", "tmforum-apis"]
