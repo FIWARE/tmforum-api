@@ -110,7 +110,7 @@ jobs:
         run: |
           REPO_LOWER=$(echo "${{ env.REPOSITORY_OWNER }}" | tr '[:upper:]' '[:lower:]')
           mvn versions:set -DnewVersion=${{ needs.generate-version.outputs.version }}
-          mvn clean install deploy -DskipTests -DskipITs -Dmaven.test.skip=true -Poci -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${REPO_LOWER}"
+          mvn clean install deploy -DskipITs -DskipTests -Poci -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${REPO_LOWER}"
 
   git-release:
     needs: ["generate-version","tmforum-apis"]
