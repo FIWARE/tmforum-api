@@ -46,19 +46,19 @@ jobs:
           BRANCH_NAME="${GITHUB_BASE_REF}"
           case "$BRANCH_NAME" in
             main-sbx)
-              echo "::set-output name=prefix::sbx_"
+              echo "prefix=sbx_" >> $GITHUB_OUTPUT
               ;;
             main-dev2)
-              echo "::set-output name=prefix::dev2_"
+              echo "prefix=dev2_" >> $GITHUB_OUTPUT
               ;;
             main-prd)
-              echo "::set-output name=prefix::prd_"
+              echo "prefix=prd_" >> $GITHUB_OUTPUT
               ;;
             main)
-              echo "::set-output name=prefix::"
+              echo "prefix=" >> $GITHUB_OUTPUT
               ;;
             *)
-              echo "::set-output name=prefix::${BRANCH_NAME}_"
+              echo "prefix=${BRANCH_NAME}_" >> $GITHUB_OUTPUT
               ;;
           esac
 
@@ -67,20 +67,60 @@ jobs:
         with:
           allowed: major,minor,patch
 
-      - uses: zwaldowski/semver-release-action@v2
-        with:
-          dry_run: true
-          bump: ${{ steps.bump.outputs.match }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prefix: ${{ steps.branch.outputs.prefix }}
+      - name: Find latest tag with prefix
+        id: latest_tag
+        run: |
+          PREFIX="${{ steps.branch.outputs.prefix }}"
+          git fetch --tags
+          if [ -z "$PREFIX" ]; then
+            # No prefix - find latest tag without prefix (exclude pre-release and prefixed tags)
+            LATEST_TAG=$(git tag -l --sort=-v:refname | grep -v "_" | grep -v "PRE" | head -n 1)
+          else
+            # Find latest tag with this prefix (exclude pre-release tags)
+            LATEST_TAG=$(git tag -l --sort=-v:refname "${PREFIX}*" | grep -v "PRE" | head -n 1)
+          fi
+
+          if [ -z "$LATEST_TAG" ]; then
+            # No existing tag, start with 0.0.0
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+          else
+            # Remove prefix to get version number
+            VERSION=${LATEST_TAG#"$PREFIX"}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+          echo "Latest tag found: $LATEST_TAG (version: ${VERSION:-0.0.0})"
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          VERSION="${{ steps.latest_tag.outputs.version }}"
+          BUMP="${{ steps.bump.outputs.match }}"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          if [[ "$BUMP" == "major" ]]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [[ "$BUMP" == "minor" ]]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            # Default to patch if no label or patch label
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Bumped version: $VERSION -> $NEW_VERSION"
 
       - name: Get PR Number
         id: pr_number
-        run: echo "::set-output name=nr::$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')"
+        run: echo "nr=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')" >> $GITHUB_OUTPUT
 
       - name: Set version output
         id: out
-        run: echo "::set-output name=version::$(echo ${{ steps.branch.outputs.prefix }}${VERSION}-PRE-${{ steps.pr_number.outputs.nr }})"
+        run: echo "version=${{ steps.branch.outputs.prefix }}${{ steps.bump_version.outputs.version }}-PRE-${{ steps.pr_number.outputs.nr }}" >> $GITHUB_OUTPUT
 
   # image build&push
   tmforum-apis:
