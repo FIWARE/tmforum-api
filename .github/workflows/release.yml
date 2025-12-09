@@ -61,11 +61,11 @@ jobs:
           PREFIX="${{ steps.branch.outputs.prefix }}"
           git fetch --tags
           if [ -z "$PREFIX" ]; then
-            # No prefix - find latest tag without prefix
-            LATEST_TAG=$(git tag -l --sort=-v:refname | grep -v "_" | head -n 1)
+            # No prefix - find latest tag without prefix (exclude pre-release and prefixed tags)
+            LATEST_TAG=$(git tag -l --sort=-v:refname | grep -v "_" | grep -v "PRE" | head -n 1)
           else
-            # Find latest tag with this prefix
-            LATEST_TAG=$(git tag -l --sort=-v:refname "${PREFIX}*" | head -n 1)
+            # Find latest tag with this prefix (exclude pre-release tags)
+            LATEST_TAG=$(git tag -l --sort=-v:refname "${PREFIX}*" | grep -v "PRE" | head -n 1)
           fi
 
           if [ -z "$LATEST_TAG" ]; then
