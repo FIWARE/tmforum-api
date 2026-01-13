@@ -41,7 +41,7 @@ public class CatalogApiController extends AbstractApiController<Catalog> impleme
     @Override
     public Mono<HttpResponse<CatalogVO>> createCatalog(CatalogCreateVO catalogVo) {
 
-        if(catalogVo.getName() == null || catalogVo.getName().isEmpty()){
+        if(catalogVo.getName() == null || catalogVo.getName().trim().isEmpty()){
             throw new TmForumException("Name field is required and must not be blank to create a catalog.",
                     TmForumExceptionReason.INVALID_DATA);
         }

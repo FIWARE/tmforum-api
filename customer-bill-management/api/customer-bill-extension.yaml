@@ -69,7 +69,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  /customerBill/{id}:
+    delete:
+      operationId: deleteCustomerBill
+      summary: Deletes a Customer  Bill by ID
+      description: This operation deletes a Customer Bill entity.
+      tags:
+        - customerBillExtension
+      parameters:
+        - name: id
+          description: Identifier of the Customer Bill
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Money:
@@ -521,6 +567,32 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TaxItem'
+        '@baseType':
+          type: string
+          description: When sub-classing, this defines the super-class
+        '@schemaLocation':
+          type: string
+          format: uri
+          description: A URI to a JSON-Schema file that defines additional attributes and relationships
+        '@type':
+          type: string
+          description: When sub-classing, this defines the sub-class entity name
+    CustomerBill_Update:
+      type: object
+      properties:
+        billNo:
+          type: string
+          description: Bill reference known by the customer or the party and displayed on the bill. Could be different from the id
+        amountDue:
+          $ref: '#/components/schemas/Money'
+        appliedPayment:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPayment'
+        remainingAmount:
+          $ref: '#/components/schemas/Money'
+        state:
+          $ref: '#/components/schemas/StateValue'
         '@baseType':
           type: string
           description: When sub-classing, this defines the super-class
