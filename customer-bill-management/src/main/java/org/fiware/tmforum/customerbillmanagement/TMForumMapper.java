@@ -2,6 +2,7 @@ package org.fiware.tmforum.customerbillmanagement;
 
 import org.fiware.customerbillmanagement.model.*;
 import org.fiware.tmforum.common.domain.Money;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedBillingRateCharacteristic;
@@ -72,6 +73,10 @@ public abstract class TMForumMapper extends BaseMapper {
 
 	@Mapping(target = "value", source = "tmfValue")
 	public abstract MoneyVO map(Money money);
+
+	// event subscription
+	@Mapping(target = "query", source = "rawQuery")
+	public abstract EventSubscriptionVO map(TMForumSubscription subscription);
 
 	public URL map(String value) {
 		if (value == null) {
