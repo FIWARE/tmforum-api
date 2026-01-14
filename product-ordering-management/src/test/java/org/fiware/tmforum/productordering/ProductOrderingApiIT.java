@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productordering;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -17,6 +18,7 @@ import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -32,6 +34,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.product.ProductOffering;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.any;
@@ -45,9 +49,13 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 
 	private String message;
 	private String fieldsParameter;
+	private final EntitiesApiClient entitiesApiClient;
+	private final JavaObjectMapper javaObjectMapper;
+	private final TMForumMapper tmForumMapper;
 	private ProductOrderCreateVO productCreateVO;
 	private ProductOrderUpdateVO productUpdateVO;
 	private ProductOrderVO expectedProduct;
+	private final TestSetupTracker setupTracker;
 
 	private Clock clock = mock(Clock.class);
 
@@ -68,10 +76,35 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 
 	public ProductOrderingApiIT(ProductOrderApiTestClient productOrderApiTestClient,
 								EntitiesApiClient entitiesApiClient,
-								ObjectMapper objectMapper, GeneralProperties generalProperties) {
+								JavaObjectMapper javaObjectMapper,
+								TMForumMapper tmForumMapper,
+								ObjectMapper objectMapper,
+								GeneralProperties generalProperties,
+								TestSetupTracker setupTracker) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productOrderApiTestClient = productOrderApiTestClient;
+		this.entitiesApiClient = entitiesApiClient;
+		this.javaObjectMapper = javaObjectMapper;
+		this.tmForumMapper = tmForumMapper;
+		this.setupTracker = setupTracker;
 	}
+
+	public void createProductOffering(ProductOffering productOfferingVO) {
+		EntityVO entityVO = javaObjectMapper.toEntityVO(productOfferingVO);
+		entitiesApiClient.createEntity(entityVO, null).block();
+	}
+
+    public void setup() {
+        createProductOffering(tmForumMapper.map(ProductOfferingRefVOTestExample.build().atSchemaLocation(null).id("test")));
+    }
+
+    @BeforeEach
+    public void conditionalSetup() {
+        if (!setupTracker.isSetupDone()) {
+            setup();
+            setupTracker.markSetupDone();
+        }
+    }
 
 	@ParameterizedTest
 	@MethodSource("provideValidProducts")
@@ -81,6 +114,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		this.message = message;
 		this.productCreateVO = productCreateVO;
 		this.expectedProduct = expectedProduct;
+	
 		createProductOrder201();
 	}
 
@@ -91,7 +125,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		when(clock.instant()).thenReturn(now);
 
 		HttpResponse<ProductOrderVO> productVOHttpResponse = callAndCatch(
-				() -> productOrderApiTestClient.createProductOrder(null, productCreateVO));
+				() -> productOrderApiTestClient.createProductOrder(null, productCreateVO));	
 		assertEquals(HttpStatus.CREATED, productVOHttpResponse.getStatus(), message);
 		String rfId = productVOHttpResponse.body().getId();
 		expectedProduct.setId(rfId);
@@ -234,6 +268,25 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 						ProductOrderVOTestExample.build().atSchemaLocation(null)
 								.productOrderItem(List.of(productOrderItemVO))
 								.billingAccount(null)));
+
+		ProductOrderItemVO productOrderItemOfferingVO = ProductOrderItemVOTestExample.build().atSchemaLocation(null)
+				.action(OrderItemActionTypeVO.ADD)
+				.id("urn:order-item")
+				.appointment(null)
+				.billingAccount(null)
+				.product(null)
+				.productOffering(ProductOfferingRefVOTestExample.build().atSchemaLocation(null).id("urn:ngsi-ld:product-offering:test"))
+				.productOfferingQualificationItem(null)
+				.quoteItem(null);
+
+	 	testEntries.add(
+	 			Arguments.of("A product order with an order item with product offering should have been created.",
+	 					ProductOrderCreateVOTestExample.build().atSchemaLocation(null)
+	 							.productOrderItem(List.of(productOrderItemOfferingVO))
+	 							.billingAccount(null),
+	 					ProductOrderVOTestExample.build().atSchemaLocation(null)
+	 							.productOrderItem(List.of(productOrderItemOfferingVO))
+	 							.billingAccount(null)));
 
 		CharacteristicVO characteristicVO = CharacteristicVOTestExample.build().atSchemaLocation(null)
 				.name("Characteristic Name")
@@ -1550,4 +1603,3 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		return ProductOrder.TYPE_PRODUCT_ORDER;
 	}
 }
-

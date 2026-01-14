@@ -6,11 +6,14 @@ import java.util.List;
 
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode
 public class ReferenceValue implements ReferencedEntity {
 
     private URI id;
@@ -22,6 +25,7 @@ public class ReferenceValue implements ReferencedEntity {
     }
 
     @Override
+    @JsonGetter("id")
     public URI getEntityId() {
         return this.id;
     }
