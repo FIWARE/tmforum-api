@@ -136,9 +136,44 @@ public class QuoteApiController extends AbstractApiController<Quote> implements 
 		return list(offset, limit, Quote.TYPE_QUOTE, Quote.class)
 				.map(quoteStream -> quoteStream
 						.map(tmForumMapper::map)
+						.map(this::truncateAttachmentContent)
 						.toList())
 				.switchIfEmpty(Mono.just(List.of()))
 				.map(HttpResponse::ok);
+	}
+
+	//Truncate only on listing attachment field to avoid error 500 on sizeLimit reached
+	private QuoteVO truncateAttachmentContent(QuoteVO quoteVO) {
+		if (quoteVO.getQuoteItem() != null) {
+			quoteVO.getQuoteItem().forEach(this::truncateQuoteItemAttachments);
+		}
+		return quoteVO;
+	}
+
+	private void truncateQuoteItemAttachments(org.fiware.quote.model.QuoteItemVO quoteItem) {
+		if (quoteItem == null) {
+			return;
+		}
+
+		if (quoteItem.getAttachment() != null) {
+			quoteItem.getAttachment().forEach(attachment -> {
+				if (attachment != null && attachment.getContent() != null && !attachment.getContent().isEmpty()) {
+					// Truncate to first 50 characters
+					String content = attachment.getContent();
+					if (content.length() > 50) {
+						attachment.setContent(content.substring(0, 50) + "... [truncated]");
+					}
+				}
+			});
+		}
+		// Handle nested quote items recursively
+		if (quoteItem.getQuoteItem() != null) {
+			quoteItem.getQuoteItem().forEach(nestedItem -> {
+				if (nestedItem != null) {
+					truncateQuoteItemAttachments(nestedItem);
+				}
+			});
+		}
 	}
 
 	@Override
