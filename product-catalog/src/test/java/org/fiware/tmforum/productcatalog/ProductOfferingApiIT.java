@@ -375,7 +375,11 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		ProductSpecificationRefVO productSpecReference = ProductSpecificationRefVOTestExample.build().atSchemaLocation(null)
 				.targetProductSchema(productSpecification.getTargetProductSchema())
 				.id(productSpecId)
-				.href(URI.create(productSpecId))
+				.href(null)
+				.name(null)
+				.atBaseType(null)
+				.version(null)
+				.atType(null)
 				.atSchemaLocation(null)
 				.atReferredType(null);
 

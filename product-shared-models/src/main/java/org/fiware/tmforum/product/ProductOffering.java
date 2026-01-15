@@ -106,7 +106,7 @@ public class ProductOffering extends EntityWithId {
 	private List<ProductOfferingTerm> productOfferingTerm;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "productSpecification")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "productSpecification", targetClass = ProductSpecificationRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "productSpecification", fromProperties = true, targetClass = ProductSpecificationRef.class)}))
 	private ProductSpecificationRef productSpecification;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceCandidate")}))
