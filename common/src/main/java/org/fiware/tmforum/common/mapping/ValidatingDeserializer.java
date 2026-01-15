@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class ValidatingDeserializer extends DelegatingDeserializer {
+	private static final String JSON_SCHEMA_PROPERTIES_KEY = "properties";
+
 	private final BeanDescription beanDescription;
 
 	public ValidatingDeserializer(JsonDeserializer<?> d, BeanDescription beanDescription) {
@@ -52,6 +54,9 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		TokenBuffer tokenBuffer = ctxt.bufferAsCopyOfValue(p);
 		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
 		if (targetObject instanceof UnknownPreservingBase upb) {
+			// Check if unknown properties contain fields from the base VO class, check if entity has id, href...
+			checkForBaseVoFieldsInUnknownProperties(upb);
+
 			if (upb.getAtSchemaLocation() != null) {
 				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString());
 			} else if (upb.getUnknownProperties() != null && !upb.getUnknownProperties().isEmpty()) {
@@ -59,6 +64,37 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 			}
 		}
 		return targetObject;
+	}
+
+	/**
+	 * Checks if unknown properties contain fields that exist in the base VO class detect when existing fields
+	 * are passed in the request and rejects them
+	 */
+	private void checkForBaseVoFieldsInUnknownProperties(UnknownPreservingBase upb) {
+		if (upb.getUnknownProperties() == null || upb.getUnknownProperties().isEmpty()) {
+			return;
+		}
+
+		Class<?> baseVoClass = findBaseVoClass(beanDescription.getBeanClass());
+		if (baseVoClass == null) {
+			return;
+		}
+
+		Set<String> baseVoFields = getAllFieldNames(baseVoClass);
+		List<String> forbiddenFields = upb.getUnknownProperties().keySet().stream()
+				.filter(baseVoFields::contains)
+				.toList();
+
+		if (!forbiddenFields.isEmpty()) {
+			String entityName = beanDescription.getBeanClass().getSimpleName();
+			String errorMessage = String.format(
+				"Invalid request for '%s': The following fields are server-generated and cannot be set: %s",
+				entityName,
+				String.join(", ", forbiddenFields)
+			);
+			log.error(errorMessage);
+			throw new SchemaValidationException(List.of(errorMessage), errorMessage);
+		}
 	}
 
 	private void validateWithSchema(Object theSchema, String jsonString) {
@@ -102,7 +138,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 
 	private void checkForExplicitFieldOverrides(JsonSchema schema) {
 		var schemaNode = schema.getSchemaNode();
-		var propertiesNode = schemaNode.get("definitions");
+		var propertiesNode = schemaNode.get(JSON_SCHEMA_PROPERTIES_KEY);
 
 		if (propertiesNode == null || !propertiesNode.isObject()) {
 			log.debug("Schema has no properties node, skipping override check");
@@ -118,12 +154,11 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		// Also get all field names from the class hierarchy
 		existingProperties.addAll(getAllFieldNames(beanDescription.getBeanClass()));
 
-		// Add standard TMForum properties that should never be overridden by schemas
-		existingProperties.add("id");
-		existingProperties.add("href");
-		existingProperties.add("@baseType");
-		existingProperties.add("@type");
-		existingProperties.add("@schemaLocation");
+		Class<?> baseVoClass = findBaseVoClass(beanDescription.getBeanClass());
+		if (baseVoClass != null) {
+			existingProperties.addAll(getAllFieldNames(baseVoClass));
+			log.debug("Added fields from base VO class {}: {}", baseVoClass.getSimpleName(), getAllFieldNames(baseVoClass));
+		}
 
 		log.debug("Final existing properties found in {}: {}", beanDescription.getBeanClass().getSimpleName(), existingProperties);
 
@@ -171,6 +206,32 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		}
 
 		return fieldNames;
+	}
+
+	/**
+	 * Finds the corresponding base VO class for VOs.
+	 */
+	private Class<?> findBaseVoClass(Class<?> voClass) {
+		String className = voClass.getName();
+		String baseClassName = null;
+
+		if (className.endsWith("CreateVO")) {
+			baseClassName = className.substring(0, className.length() - "CreateVO".length()) + "VO";
+		} else if (className.endsWith("UpdateVO")) {
+			baseClassName = className.substring(0, className.length() - "UpdateVO".length()) + "VO";
+		}
+
+		if (baseClassName != null) {
+			try {
+				Class<?> baseClass = Class.forName(baseClassName);
+				log.debug("Found base VO class {} for {}", baseClass.getSimpleName(), voClass.getSimpleName());
+				return baseClass;
+			} catch (ClassNotFoundException e) {
+				log.debug("No base VO class found for {} (tried {})", voClass.getSimpleName(), baseClassName);
+			}
+		}
+
+		return null;
 	}
 
 }
