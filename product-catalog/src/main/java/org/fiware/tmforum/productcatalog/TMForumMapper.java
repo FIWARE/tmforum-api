@@ -133,6 +133,26 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicValueSpecificationVO map(CharacteristicValueSpecification characteristic);
 
+	@org.mapstruct.AfterMapping
+	protected void afterMappingCharacteristic(ProductSpecificationCharacteristicVO source, @org.mapstruct.MappingTarget ProductSpecificationCharacteristic target) {
+		copyAdditionalPropertiesFromVO(source, target.getAdditionalProperties());
+	}
+
+	@org.mapstruct.AfterMapping
+	protected void afterMappingCharacteristic(ProductSpecificationCharacteristic source, @org.mapstruct.MappingTarget ProductSpecificationCharacteristicVO target) {
+		copyAdditionalPropertiesToVO(source.getAdditionalProperties(), target);
+	}
+
+	@org.mapstruct.AfterMapping
+	protected void afterMappingCharacteristicValue(CharacteristicValueSpecificationVO source, @org.mapstruct.MappingTarget CharacteristicValueSpecification target) {
+		copyAdditionalPropertiesFromVO(source, target.getAdditionalProperties());
+	}
+
+	@org.mapstruct.AfterMapping
+	protected void afterMappingCharacteristicValue(CharacteristicValueSpecification source, @org.mapstruct.MappingTarget CharacteristicValueSpecificationVO target) {
+		copyAdditionalPropertiesToVO(source.getAdditionalProperties(), target);
+	}
+
 	@Mapping(target = "tmfId", source = "id")
 	public abstract ProductSpecificationCharacteristicValueUse map(ProductSpecificationCharacteristicValueUseVO characteristicVO);
 

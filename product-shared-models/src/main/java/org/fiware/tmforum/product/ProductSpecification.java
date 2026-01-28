@@ -16,6 +16,7 @@ import org.fiware.tmforum.service.ServiceSpecificationRef;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -81,7 +82,7 @@ public class ProductSpecification extends EntityWithId {
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productSpecificationRelationship") }))
 	@Setter(onMethod = @__({
 			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productSpecificationRelationship", targetClass = ProductSpecificationRelationship.class, fromProperties = true) }))
-	private List<ProductSpecificationRelationship> productSpecificationRelationship;
+	private List<ProductSpecificationRelationship> productSpecificationRelationship = new ArrayList<>();
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
 	@Setter(onMethod = @__({

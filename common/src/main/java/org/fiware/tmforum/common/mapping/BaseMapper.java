@@ -70,6 +70,26 @@ public abstract class BaseMapper {
 		}
 	}
 
+	/**
+	 * Copy additional properties from VO to POJO with additionalProperties support.
+	 * This handles nested objects that are not Entity subclasses.
+	 */
+	protected void copyAdditionalPropertiesFromVO(UnknownPreservingBase source, java.util.Map<String, Object> targetMap) {
+		if (source.getAtSchemaLocation() != null && source.getUnknownProperties() != null && !source.getUnknownProperties().isEmpty()) {
+			targetMap.putAll(source.getUnknownProperties());
+		}
+	}
+
+	/**
+	 * Copy additional properties from POJO to VO.
+	 * This handles nested objects that are not Entity subclasses.
+	 */
+	protected void copyAdditionalPropertiesToVO(java.util.Map<String, Object> sourceMap, UnknownPreservingBase target) {
+		if (sourceMap != null && !sourceMap.isEmpty()) {
+			sourceMap.forEach(target::setUnknownProperties);
+		}
+	}
+
 	private static boolean isArray(String propertyName, JsonNode properties) {
 		return Optional.ofNullable(properties.get(propertyName))
 				.map(node -> node.get(TYPE_KEY))
