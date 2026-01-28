@@ -9,10 +9,20 @@ on:
       - labeled
       - unlabeled
     branches:
+      - main
       - main-sbx
+      - main-dev2
+      - main-prd
 env:
   REGISTRY: ghcr.io
-  REPOSITORY: ${{ github.repository_owner }}
+  REPOSITORY_OWNER: ${{ github.repository_owner }}
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  attestations: write
+  id-token: write
 
 concurrency:
   # Only cancel jobs for PR updates
@@ -30,6 +40,28 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Determine branch prefix
+        id: branch
+        run: |
+          BRANCH_NAME="${GITHUB_BASE_REF}"
+          case "$BRANCH_NAME" in
+            main-sbx)
+              echo "::set-output name=prefix::sbx_"
+              ;;
+            main-dev2)
+              echo "::set-output name=prefix::dev2_"
+              ;;
+            main-prd)
+              echo "::set-output name=prefix::prd_"
+              ;;
+            main)
+              echo "::set-output name=prefix::"
+              ;;
+            *)
+              echo "::set-output name=prefix::${BRANCH_NAME}_"
+              ;;
+          esac
+
       - id: bump
         uses: zwaldowski/match-label-action@v1
         with:
@@ -40,6 +72,7 @@ jobs:
           dry_run: true
           bump: ${{ steps.bump.outputs.match }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          prefix: ${{ steps.branch.outputs.prefix }}
 
       - name: Get PR Number
         id: pr_number
@@ -47,7 +80,7 @@ jobs:
 
       - name: Set version output
         id: out
-        run: echo "::set-output name=version::$(echo ${VERSION}-PRE-${{ steps.pr_number.outputs.nr }})"
+        run: echo "::set-output name=version::$(echo ${{ steps.branch.outputs.prefix }}${VERSION}-PRE-${{ steps.pr_number.outputs.nr }})"
 
   # image build&push
   tmforum-apis:
@@ -73,10 +106,11 @@ jobs:
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build&Push image
+      - name: Build&Push image (tests disabled)
         run: |
+          REPO_LOWER=$(echo "${{ env.REPOSITORY_OWNER }}" | tr '[:upper:]' '[:lower:]')
           mvn versions:set -DnewVersion=${{ needs.generate-version.outputs.version }}
-          mvn clean install deploy -DskipITs -DskipTests -Poci -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${{ env.REPOSITORY }}"
+          mvn clean install deploy -DskipITs -DskipTests -Poci -Dimage.tag=${{ needs.generate-version.outputs.version }} -Dimage.registry="${{ env.REGISTRY }}" -Dimage.repository="${REPO_LOWER}"
 
   git-release:
     needs: ["generate-version","tmforum-apis"]

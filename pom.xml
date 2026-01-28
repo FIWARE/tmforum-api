@@ -130,7 +130,7 @@
         <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- broker to be used for testing, could be scropio or orion-ld -->
-        <broker>orion-ld</broker>
+        <broker>scorpio</broker>
         <!-- caching to be used for testing, could be in-memory or redis -->
         <cache>in-memory</cache>
 

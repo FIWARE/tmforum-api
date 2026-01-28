@@ -9,7 +9,10 @@ on:
       - labeled
       - unlabeled
     branches:
+      - main
       - main-sbx
+      - main-dev2
+      - main-prd
 
 jobs:
   check:

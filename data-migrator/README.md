@@ -26,5 +26,5 @@ The migration tool can either be run directly as a jar:
 
 Or as a container:
 ```shell
-    docker run --env READ_BROKER="http://my-read-broker.org" --env WRITE_BROKER="http://my-write-broker.org"  quay.io/fiware/tmforum-migrator
+    docker run --env READ_BROKER="http://my-read-broker.org" --env WRITE_BROKER="http://my-write-broker.org"  ghcr.io/dome-tmforum/tmforum-migrator
 ```

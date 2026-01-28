@@ -1,7 +1,12 @@
 name: Parallel Tests
 
 on:
-  push
+  push:
+    branches:
+      - main
+      - main-sbx
+      - main-dev2
+      - main-prd
 
 jobs:
   build:
@@ -60,4 +65,4 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn test integration-test verify -B --projects ${{matrix.module}} -Dmicronaut.environments=in-memory,orion-ld
+          mvn generate-sources generate-test-sources test integration-test verify -B --projects ${{matrix.module}} --also-make -Dmicronaut.environments=in-memory,orion-ld

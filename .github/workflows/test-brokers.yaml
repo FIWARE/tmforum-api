@@ -9,10 +9,16 @@ on:
       - labeled
       - unlabeled
     branches:
+      - main
       - main-sbx
+      - main-dev2
+      - main-prd
   push:
     branches:
+      - main
       - main-sbx
+      - main-dev2
+      - main-prd
 
 concurrency:
   # Only cancel jobs for PR updates
@@ -46,7 +52,7 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
+          mvn clean generate-sources generate-test-sources test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
 
       - name: Archive coverage
         if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
