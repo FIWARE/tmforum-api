@@ -195,6 +195,10 @@ public abstract class TMForumMapper extends BaseMapper {
 					map.put("productSpecCharacteristicValue", map.remove(PRODUCT_SPEC_CHARACTERISTIC_EXT));
 				}
 
+				// Normalize productSpecCharacteristicValue to a list if it's a single object
+				// NGSI-LD may flatten single-element arrays to plain objects
+				normalizeToList(map, "productSpecCharacteristicValue");
+
 				// Use Jackson to convert Map to VO
 				return OBJECT_MAPPER.convertValue(map, ProductSpecificationCharacteristicVO.class);
 			} else if (item instanceof ProductSpecificationCharacteristicVO vo) {
@@ -206,6 +210,17 @@ public abstract class TMForumMapper extends BaseMapper {
 		} catch (Exception e) {
 			log.warn("Failed to convert characteristic: {}", e.getMessage());
 			return null;
+		}
+	}
+
+	/**
+	 * Normalize a map field to always be a list.
+	 * If the field value is a single object (not a list), wrap it in a list.
+	 */
+	private void normalizeToList(Map<String, Object> map, String fieldName) {
+		Object value = map.get(fieldName);
+		if (value != null && !(value instanceof List)) {
+			map.put(fieldName, List.of(value));
 		}
 	}
 
