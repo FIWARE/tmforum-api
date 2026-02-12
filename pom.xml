@@ -52,6 +52,7 @@
         <module>service-inventory</module>
         <module>party-role</module>
         <module>data-migrator</module>
+        <module>document-management</module>
     </modules>
 
     <properties>
@@ -129,7 +130,7 @@
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
-        <!-- broker to be used for testing, could be scropio or orion-ld -->
+        <!-- broker to be used for testing, could be scorpio or orion-ld -->
         <broker>scorpio</broker>
         <!-- caching to be used for testing, could be in-memory or redis -->
         <cache>in-memory</cache>
@@ -626,6 +627,8 @@
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
                                             <portBinding>3000:3000</portBinding>
+                                            <portBinding>9000:9000</portBinding>
+                                            <portBinding>9001:9001</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -637,6 +640,16 @@
                                     </goals>
                                     <configuration>
                                         <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-minio</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/minio</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -676,6 +689,8 @@
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
                                             <portBinding>3000:3000</portBinding>
+                                            <portBinding>9000:9000</portBinding>
+                                            <portBinding>9001:9001</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -687,6 +702,15 @@
                                     </goals>
                                     <configuration>
                                         <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-minio</id>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/minio</manifests>
                                     </configuration>
                                 </execution>
                             </executions>

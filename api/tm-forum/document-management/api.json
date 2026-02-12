@@ -1,0 +1,783 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Document Specification API",
+    "description": "TMF667 Document API - DocumentSpecification subset with S3 attachment offloading support. This API provides CRUD operations for DocumentSpecification entities with binary content (attachments) stored in S3-compatible object storage.",
+    "version": "4.0.0"
+  },
+  "host": "serverRoot",
+  "basePath": "/tmf-api/document/v4/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json;charset=utf-8"
+  ],
+  "produces": [
+    "application/json;charset=utf-8"
+  ],
+  "tags": [
+    {
+      "name": "documentSpecification",
+      "description": "Operations for DocumentSpecification resources"
+    }
+  ],
+  "paths": {
+    "/documentSpecification": {
+      "get": {
+        "operationId": "listDocumentSpecification",
+        "summary": "List or find DocumentSpecification objects",
+        "description": "This operation lists or finds DocumentSpecification entities. Note: Attachment content is NOT hydrated in list operations - only retrieval info is returned.",
+        "tags": [
+          "documentSpecification"
+        ],
+        "parameters": [
+          {
+            "name": "fields",
+            "description": "Comma-separated properties to be provided in response",
+            "required": false,
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "description": "Requested index for start of resources to be provided in response",
+            "required": false,
+            "in": "query",
+            "type": "integer"
+          },
+          {
+            "name": "limit",
+            "description": "Requested number of resources to be provided in response",
+            "required": false,
+            "in": "query",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-Result-Count": {
+                "description": "Actual number of items returned in the response body",
+                "type": "integer"
+              },
+              "X-Total-Count": {
+                "description": "Total number of items matching criteria",
+                "type": "integer"
+              }
+            },
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DocumentSpecification"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "405": {
+            "description": "Method Not allowed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDocumentSpecification",
+        "summary": "Creates a DocumentSpecification",
+        "description": "This operation creates a DocumentSpecification entity. Attachments with base64-encoded content in the 'content' field will be automatically offloaded to S3 storage.",
+        "tags": [
+          "documentSpecification"
+        ],
+        "parameters": [
+          {
+            "name": "documentSpecification",
+            "description": "The DocumentSpecification to be created",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DocumentSpecification_Create"
+            },
+            "in": "body"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/DocumentSpecification"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "405": {
+            "description": "Method Not allowed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/documentSpecification/{id}": {
+      "get": {
+        "operationId": "retrieveDocumentSpecification",
+        "summary": "Retrieves a DocumentSpecification by ID",
+        "description": "This operation retrieves a DocumentSpecification entity. Attachment content is hydrated from S3 storage and returned as base64-encoded data in the 'content' field.",
+        "tags": [
+          "documentSpecification"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Identifier of the DocumentSpecification",
+            "required": true,
+            "type": "string",
+            "in": "path"
+          },
+          {
+            "name": "fields",
+            "description": "Comma-separated properties to provide in response",
+            "required": false,
+            "type": "string",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/DocumentSpecification"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "405": {
+            "description": "Method Not allowed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchDocumentSpecification",
+        "summary": "Updates partially a DocumentSpecification (NOT SUPPORTED)",
+        "description": "This operation is NOT supported. Returns 400 Bad Request.",
+        "tags": [
+          "documentSpecification"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Identifier of the DocumentSpecification",
+            "required": true,
+            "type": "string",
+            "in": "path"
+          },
+          {
+            "name": "documentSpecification",
+            "description": "The DocumentSpecification to be updated",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DocumentSpecification_Update"
+            },
+            "in": "body"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/DocumentSpecification"
+            }
+          },
+          "400": {
+            "description": "Bad Request - PATCH method is not supported for document specifications",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "405": {
+            "description": "Method Not allowed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDocumentSpecification",
+        "summary": "Deletes a DocumentSpecification",
+        "description": "This operation deletes a DocumentSpecification entity. Associated S3 attachments are automatically cleaned up.",
+        "tags": [
+          "documentSpecification"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Identifier of the DocumentSpecification",
+            "required": true,
+            "type": "string",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "405": {
+            "description": "Method Not allowed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AttachmentRefOrValue": {
+      "type": "object",
+      "description": "An attachment by value or by reference. When creating, provide base64-encoded content in the 'content' field. On retrieval by ID, content is hydrated from S3.",
+      "properties": {
+        "id": {
+          "example": "4aafacbd-11ff-4dc8-b445-305f2215715f",
+          "type": "string",
+          "description": "Unique identifier for this particular attachment"
+        },
+        "href": {
+          "example": "http://host/Attachment/4aafacbd-11ff-4dc8-b445-305f2215715f",
+          "type": "string",
+          "format": "uri",
+          "description": "URI for this Attachment"
+        },
+        "attachmentType": {
+          "example": "video",
+          "type": "string",
+          "description": "Attachment type such as video, picture"
+        },
+        "content": {
+          "type": "string",
+          "format": "base64",
+          "description": "The actual contents of the attachment object, encoded as base64. On create, this content is offloaded to S3. On retrieve by ID, this is hydrated from S3."
+        },
+        "description": {
+          "example": "Photograph of the Product",
+          "type": "string",
+          "description": "A narrative text describing the content of the attachment"
+        },
+        "mimeType": {
+          "example": "image/png",
+          "type": "string",
+          "description": "Attachment mime type such as extension file for video, picture and document"
+        },
+        "name": {
+          "example": "sample.png",
+          "type": "string",
+          "description": "The name of the attachment"
+        },
+        "url": {
+          "example": "http://host/Content/4aafacbd-11ff-4dc8-b445-305f2215715f",
+          "type": "string",
+          "format": "uri",
+          "description": "Remote reference to the content if web-addressable"
+        },
+        "size": {
+          "$ref": "#/definitions/Quantity",
+          "description": "The size of the attachment"
+        },
+        "validFor": {
+          "$ref": "#/definitions/TimePeriod",
+          "description": "The period of time for which the attachment is valid"
+        },
+        "@baseType": {
+          "type": "string",
+          "description": "When sub-classing, this defines the super-class"
+        },
+        "@schemaLocation": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+        },
+        "@type": {
+          "type": "string",
+          "description": "When sub-classing, this defines the sub-class Extensible name"
+        },
+        "@referredType": {
+          "type": "string",
+          "description": "The actual type of the target instance when needed for disambiguation."
+        }
+      }
+    },
+    "DocumentSpecification": {
+      "type": "object",
+      "description": "A DocumentSpecification provides the characteristics and constraints that describe a particular type of Document, with S3-backed attachment storage.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "unique identifier"
+        },
+        "href": {
+          "type": "string",
+          "format": "uri",
+          "description": "Hyperlink reference"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the specification"
+        },
+        "isBundle": {
+          "type": "boolean",
+          "description": "isBundle determines whether specification represents a single specification (false), or a bundle of specifications (true)."
+        },
+        "lastUpdate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date and time of the last update of the specification"
+        },
+        "lifecycleStatus": {
+          "example": "active",
+          "type": "string",
+          "description": "The current lifecycle status of this DocumentSpecification"
+        },
+        "name": {
+          "example": "Image Specification",
+          "type": "string",
+          "description": "The name of the DocumentSpecification"
+        },
+        "version": {
+          "example": "1.0.0",
+          "type": "string",
+          "description": "The version of the DocumentSpecification"
+        },
+        "attachment": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttachmentRefOrValue"
+          },
+          "description": "Attachments with binary content stored in S3. Content is hydrated on retrieve by ID."
+        },
+        "relatedParty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RelatedParty"
+          },
+          "description": "Parties who manage or otherwise have an interest in this specification"
+        },
+        "validFor": {
+          "$ref": "#/definitions/TimePeriod",
+          "description": "The period for which this REST resource is valid"
+        },
+        "@baseType": {
+          "type": "string",
+          "description": "When sub-classing, this defines the super-class"
+        },
+        "@schemaLocation": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+        },
+        "@type": {
+          "type": "string",
+          "description": "When sub-classing, this defines the sub-class Extensible name"
+        }
+      }
+    },
+    "DocumentSpecification_Create": {
+      "type": "object",
+      "description": "DocumentSpecification creation payload. Include base64-encoded content in attachment.content for S3 offloading.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of the specification"
+        },
+        "isBundle": {
+          "type": "boolean",
+          "description": "isBundle determines whether specification represents a single specification (false), or a bundle of specifications (true)."
+        },
+        "lifecycleStatus": {
+          "example": "active",
+          "type": "string",
+          "description": "The current lifecycle status of this DocumentSpecification"
+        },
+        "name": {
+          "example": "Image Specification",
+          "type": "string",
+          "description": "The name of the DocumentSpecification (required)"
+        },
+        "version": {
+          "example": "1.0.0",
+          "type": "string",
+          "description": "The version of the DocumentSpecification"
+        },
+        "attachment": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttachmentRefOrValue"
+          },
+          "description": "Attachments with base64-encoded content to be offloaded to S3"
+        },
+        "relatedParty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RelatedParty"
+          },
+          "description": "Parties who manage or otherwise have an interest in this specification"
+        },
+        "validFor": {
+          "$ref": "#/definitions/TimePeriod",
+          "description": "The period for which this REST resource is valid"
+        },
+        "@baseType": {
+          "type": "string",
+          "description": "When sub-classing, this defines the super-class"
+        },
+        "@schemaLocation": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+        },
+        "@type": {
+          "type": "string",
+          "description": "When sub-classing, this defines the sub-class Extensible name"
+        }
+      }
+    },
+    "DocumentSpecification_Update": {
+      "type": "object",
+      "description": "DocumentSpecification update payload. NOTE: PATCH is not supported - this definition exists for interface compliance only.",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of the specification"
+        },
+        "isBundle": {
+          "type": "boolean",
+          "description": "isBundle determines whether specification represents a single specification (false), or a bundle of specifications (true)."
+        },
+        "lifecycleStatus": {
+          "example": "active",
+          "type": "string",
+          "description": "The current lifecycle status of this DocumentSpecification"
+        },
+        "name": {
+          "example": "Image Specification",
+          "type": "string",
+          "description": "The name of the DocumentSpecification"
+        },
+        "version": {
+          "example": "1.0.0",
+          "type": "string",
+          "description": "The version of the DocumentSpecification"
+        },
+        "attachment": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AttachmentRefOrValue"
+          },
+          "description": "Attachments"
+        },
+        "relatedParty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RelatedParty"
+          },
+          "description": "Parties who manage or otherwise have an interest in this specification"
+        },
+        "validFor": {
+          "$ref": "#/definitions/TimePeriod",
+          "description": "The period for which this REST resource is valid"
+        }
+      }
+    },
+    "Quantity": {
+      "type": "object",
+      "description": "An amount in a given unit",
+      "properties": {
+        "amount": {
+          "default": 1,
+          "type": "number",
+          "format": "float",
+          "description": "Numeric value in a given unit"
+        },
+        "units": {
+          "type": "string",
+          "description": "Unit"
+        }
+      }
+    },
+    "RelatedParty": {
+      "type": "object",
+      "description": "Related Entity reference. A related party defines party or party role linked to a specific entity.",
+      "required": [
+        "@referredType",
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "unique identifier"
+        },
+        "href": {
+          "type": "string",
+          "format": "uri",
+          "description": "Hyperlink reference"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the related entity."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role played by the related party"
+        },
+        "@baseType": {
+          "type": "string",
+          "description": "When sub-classing, this defines the super-class"
+        },
+        "@schemaLocation": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+        },
+        "@type": {
+          "type": "string",
+          "description": "When sub-classing, this defines the sub-class Extensible name"
+        },
+        "@referredType": {
+          "type": "string",
+          "description": "The actual type of the target instance when needed for disambiguation."
+        }
+      }
+    },
+    "TimePeriod": {
+      "type": "object",
+      "description": "A period of time, either as a deadline (endDateTime only) a startDateTime only, or both",
+      "properties": {
+        "endDateTime": {
+          "example": "1985-04-12T23:20:50.52Z",
+          "type": "string",
+          "format": "date-time",
+          "description": "End of the time period, using IETC-RFC-3339 format"
+        },
+        "startDateTime": {
+          "example": "1985-04-12T23:20:50.52Z",
+          "type": "string",
+          "format": "date-time",
+          "description": "Start of the time period, using IETC-RFC-3339 format"
+        }
+      }
+    },
+    "Error": {
+      "description": "Used when an API throws an Error, typically with a HTTP error response-code (3xx, 4xx, 5xx)",
+      "type": "object",
+      "required": [
+        "code",
+        "reason"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Application relevant detail, defined in the API or a common list."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Explanation of the reason for the error which can be shown to a client user."
+        },
+        "message": {
+          "type": "string",
+          "description": "More details and corrective actions related to the error which can be shown to a client user."
+        },
+        "status": {
+          "type": "string",
+          "description": "HTTP Error code extension"
+        },
+        "referenceError": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI of documentation describing the error."
+        },
+        "@baseType": {
+          "type": "string",
+          "description": "When sub-classing, this defines the super-class."
+        },
+        "@schemaLocation": {
+          "type": "string",
+          "format": "uri",
+          "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+        },
+        "@type": {
+          "type": "string",
+          "description": "When sub-classing, this defines the sub-class entity name."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,50 @@
+micronaut:
+
+  server:
+    port: 8667
+
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        step: PT2s
+        descriptions: false
+
+  http:
+    services:
+      read-timeout: 30s
+      ngsi:
+        path: ngsi-ld/v1
+        url: http://localhost:1026
+        read-timeout: 30
+---
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+---
+endpoints:
+  metrics:
+    enabled: true
+  health:
+    enabled: true
+
+---
+loggers:
+  levels:
+    ROOT: WARN
+
+---
+general:
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+  serverHost: http://localhost:8667
+
+mapping:
+  strictRelationships: false
+  api_extension_enabled: true
+
+s3:
+  endpoint: "http://localhost:9000"
+  accessKey: "minioadmin"
+  secretKey: "minioadmin"
+  bucket: "document-attachments"
+  maxContentSize: 10485760
