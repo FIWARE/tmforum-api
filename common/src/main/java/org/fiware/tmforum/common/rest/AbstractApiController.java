@@ -18,6 +18,7 @@ import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import reactor.core.publisher.Mono;
 
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -113,12 +114,21 @@ public abstract class AbstractApiController<T> {
 					TmForumExceptionReason.INVALID_DATA);
 		}
 
-		return repository
+		Map<String, String> booleanFilters = Optional.ofNullable(queryParams)
+				.map(QueryParams::booleanFilters)
+				.orElse(Map.of());
+
+		Mono<Stream<R>> result = repository
 				.findEntities(offset, limit, entityClass,
 						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type))
 				.map(List::stream);
+
+		if (!booleanFilters.isEmpty()) {
+			result = result.map(stream -> stream.filter(entity -> matchesBooleanFilters(entity, booleanFilters)));
+		}
+		return result;
 	}
 
 	protected <R> Mono<R> retrieve(String id, Class<R> entityClass) {
@@ -151,6 +161,36 @@ public abstract class AbstractApiController<T> {
 										.subscribe()
 						)
 				);
+	}
+
+	private <R> boolean matchesBooleanFilters(R entity, Map<String, String> booleanFilters) {
+		for (Map.Entry<String, String> entry : booleanFilters.entrySet()) {
+			String attribute = entry.getKey();
+			boolean expected = Boolean.parseBoolean(entry.getValue());
+
+			// Build getter name: "isBundle" -> "getIsBundle"
+			String getterName = "get" + Character.toUpperCase(attribute.charAt(0)) + attribute.substring(1);
+			try {
+				Method getter = entity.getClass().getMethod(getterName);
+				Object value = getter.invoke(entity);
+				if (value instanceof Boolean boolValue) {
+					if (boolValue != expected) {
+						return false;
+					}
+				} else if (value == null) {
+					// null does not match any boolean filter
+					return false;
+				}
+			} catch (NoSuchMethodException e) {
+				log.debug("No getter {} found on {}, skipping boolean filter for attribute {}.",
+						getterName, entity.getClass().getSimpleName(), attribute);
+				return false;
+			} catch (Exception e) {
+				log.warn("Error invoking getter {} on {}.", getterName, entity.getClass().getSimpleName(), e);
+				return false;
+			}
+		}
+		return true;
 	}
 
 	protected <R extends EntityWithId> Mono<T> relatedEntityHandlingMono(T entity, Mono<T> entityMono,

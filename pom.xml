@@ -134,6 +134,8 @@
         <broker>scorpio</broker>
         <!-- caching to be used for testing, could be in-memory or redis -->
         <cache>in-memory</cache>
+        <!-- set to true to skip minio deployment: -DskipMinio=true -->
+        <skipMinio>false</skipMinio>
 
         <!-- tm-forum api links. -->
         <tmforum.api.url>${project.parent.basedir}/api/tm-forum/${project.artifactId}/api.json</tmforum.api.url>
@@ -712,6 +714,31 @@
                                     <configuration>
                                         <manifests>${project.parent.basedir}/k3s/minio</manifests>
                                     </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>skip-minio</id>
+            <activation>
+                <property>
+                    <name>skipMinio</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>io.kokuwa.maven</groupId>
+                            <artifactId>k3s-maven-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>apply-minio</id>
+                                    <phase>none</phase>
                                 </execution>
                             </executions>
                         </plugin>

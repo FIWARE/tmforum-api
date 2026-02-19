@@ -91,6 +91,7 @@ public abstract class BaseMapper {
 	}
 
 	private static boolean isArray(String propertyName, JsonNode properties) {
+		if (properties == null) return false;
 		return Optional.ofNullable(properties.get(propertyName))
 				.map(node -> node.get(TYPE_KEY))
 				.filter(TextNode.class::isInstance)

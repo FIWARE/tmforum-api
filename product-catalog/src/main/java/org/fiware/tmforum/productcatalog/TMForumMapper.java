@@ -140,6 +140,11 @@ public abstract class TMForumMapper extends BaseMapper {
 								extCharacteristics.size());
 					}
 				});
+
+
+		if (target.getUnknownProperties() != null) {
+			target.getUnknownProperties().remove(PRODUCT_SPEC_CHARACTERISTIC_EXT);
+		}
 	}
 
 	/**

@@ -118,28 +118,58 @@ public class QueryParser {
         }
         List<String> ids = new ArrayList<>();
         List<String> types = new ArrayList<>();
-        // translate the attributes
-        Stream<String> queryStrings = queryPartsStream.map(qp -> {
-                    NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
-                            Arrays.asList(qp.attribute().split("\\.")),
-                            queryClass);
-                    if (attribute.path().isEmpty()) {
-                        log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
-                        attribute = getPathToAdditionalAttributes(qp);
-                    }
-                    if (attribute.path().size() == 1 && attribute.path().contains("id")) {
-                        ids.add(qp.value());
-                        return null;
-                    }
-                    if (attribute.path().size() == 1 && attribute.path().contains("type")) {
-                        types.add(qp.value());
-                        return null;
-                    }
 
-                    return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
-                })
-                .filter(Objects::nonNull);
+        // Phase 1: resolve all query parts, tracking known-boolean and unknown conditions
+        List<ResolvedCondition> resolvedConditions = new ArrayList<>();
+        queryPartsStream.forEach(qp -> {
+            NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
+                    Arrays.asList(qp.attribute().split("\\.")),
+                    queryClass);
+            boolean isKnown = !attribute.path().isEmpty();
+            if (!isKnown) {
+                log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
+                attribute = getPathToAdditionalAttributes(qp);
+            }
+            if (attribute.path().size() == 1 && attribute.path().contains("id")) {
+                ids.add(qp.value());
+                return;
+            }
+            if (attribute.path().size() == 1 && attribute.path().contains("type")) {
+                types.add(qp.value());
+                return;
+            }
+            resolvedConditions.add(new ResolvedCondition(qp, attribute, isKnown));
+        });
 
+        // Phase 2: detect if there's a mix of known-boolean + unknown conditions
+        boolean hasKnownBoolean = resolvedConditions.stream()
+                .anyMatch(rc -> rc.isKnown && rc.attribute.type() == QueryAttributeType.BOOLEAN);
+        boolean hasUnknown = resolvedConditions.stream()
+                .anyMatch(rc -> !rc.isKnown);
+
+        Map<String, String> booleanFilters = new LinkedHashMap<>();
+
+        Stream<String> queryStrings;
+        if (hasKnownBoolean && hasUnknown && logicalOperator == LogicalOperator.AND) {
+            // Workaround: separate known-boolean conditions for post-filtering
+            // to avoid Scorpio PostgreSQL ARRAY type mismatch bug
+            queryStrings = resolvedConditions.stream()
+                    .filter(rc -> {
+                        if (rc.isKnown && rc.attribute.type() == QueryAttributeType.BOOLEAN) {
+                            booleanFilters.put(rc.queryPart.attribute(), rc.queryPart.value());
+                            return false;
+                        }
+                        return true;
+                    })
+                    .map(rc -> toQueryString(
+                            getQueryPart(rc.attribute, rc.queryPart, isRelationship(queryClass, rc.attribute)),
+                            rc.attribute.type()));
+        } else {
+            queryStrings = resolvedConditions.stream()
+                    .map(rc -> toQueryString(
+                            getQueryPart(rc.attribute, rc.queryPart, isRelationship(queryClass, rc.attribute)),
+                            rc.attribute.type()));
+        }
 
         String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
         String query = switch (logicalOperator) {
@@ -158,7 +188,7 @@ public class QueryParser {
         if (query.isEmpty()) {
             query = null;
         }
-        return new QueryParams(idList, typeList, query);
+        return new QueryParams(idList, typeList, query, booleanFilters);
     }
 
     private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
@@ -404,6 +434,18 @@ public class QueryParser {
             return LESS_THAN;
         }
         return Operator.EQUALS;
+    }
+
+    private static class ResolvedCondition {
+        final QueryPart queryPart;
+        final NgsiLdAttribute attribute;
+        final boolean isKnown;
+
+        ResolvedCondition(QueryPart queryPart, NgsiLdAttribute attribute, boolean isKnown) {
+            this.queryPart = queryPart;
+            this.attribute = attribute;
+            this.isKnown = isKnown;
+        }
     }
 
     private static Optional<Operator> getOperator(String partToParse) {
