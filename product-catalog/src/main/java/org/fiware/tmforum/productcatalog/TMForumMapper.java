@@ -19,6 +19,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,6 +113,8 @@ public abstract class TMForumMapper extends BaseMapper {
 	/**
 	 * After mapping ProductSpecification to VO, merge productSpecCharacteristic_ext from
 	 * additionalProperties into the productSpecCharacteristic list.
+	 * Deduplication is done by id (preferred) then name. When a match is found, non-null
+	 * fields from the _ext entry overwrite the base entry. Unmatched _ext entries are appended.
 	 */
 	@org.mapstruct.AfterMapping
 	protected void mergeProductSpecCharacteristicExt(
@@ -122,28 +125,83 @@ public abstract class TMForumMapper extends BaseMapper {
 			return;
 		}
 
-		// Find productSpecCharacteristic_ext in additionalProperties
 		source.getAdditionalProperties().stream()
 				.filter(prop -> PRODUCT_SPEC_CHARACTERISTIC_EXT.equals(prop.getName()))
 				.findFirst()
 				.ifPresent(extProperty -> {
-					Object value = extProperty.getValue();
-					List<ProductSpecificationCharacteristicVO> extCharacteristics = convertToCharacteristicVOList(value);
+					List<ProductSpecificationCharacteristicVO> extCharacteristics =
+							convertToCharacteristicVOList(extProperty.getValue());
 
-					if (!extCharacteristics.isEmpty()) {
-						if (target.getProductSpecCharacteristic() == null) {
-							target.setProductSpecCharacteristic(new ArrayList<>(extCharacteristics));
-						} else {
-							target.getProductSpecCharacteristic().addAll(extCharacteristics);
-						}
-						log.debug("Merged {} characteristics from productSpecCharacteristic_ext",
-								extCharacteristics.size());
+					if (extCharacteristics.isEmpty()) {
+						return;
 					}
-				});
 
+					List<ProductSpecificationCharacteristicVO> baseList = target.getProductSpecCharacteristic();
+					if (baseList == null) {
+						target.setProductSpecCharacteristic(new ArrayList<>(extCharacteristics));
+						log.debug("Set {} characteristics from productSpecCharacteristic_ext (no base list)",
+								extCharacteristics.size());
+						return;
+					}
+
+					// Build lookup maps from the base list (id takes priority, name as fallback)
+					Map<String, ProductSpecificationCharacteristicVO> byId = new HashMap<>();
+					Map<String, ProductSpecificationCharacteristicVO> byName = new HashMap<>();
+					for (ProductSpecificationCharacteristicVO base : baseList) {
+						if (base.getId() != null) byId.put(base.getId(), base);
+						if (base.getName() != null) byName.put(base.getName(), base);
+					}
+
+					int merged = 0;
+					List<ProductSpecificationCharacteristicVO> toAdd = new ArrayList<>();
+					for (ProductSpecificationCharacteristicVO ext : extCharacteristics) {
+						ProductSpecificationCharacteristicVO match = null;
+						if (ext.getId() != null) match = byId.get(ext.getId());
+						if (match == null && ext.getName() != null) match = byName.get(ext.getName());
+
+						if (match != null) {
+							mergeCharacteristicInto(match, ext);
+							merged++;
+						} else {
+							toAdd.add(ext);
+						}
+					}
+					baseList.addAll(toAdd);
+					log.debug("productSpecCharacteristic_ext: {} merged into existing, {} appended as new",
+							merged, toAdd.size());
+				});
 
 		if (target.getUnknownProperties() != null) {
 			target.getUnknownProperties().remove(PRODUCT_SPEC_CHARACTERISTIC_EXT);
+		}
+	}
+
+	/**
+	 * Overlay non-null fields from ext onto base. ext wins on all field conflicts.
+	 * unknownProperties maps are merged with ext taking precedence.
+	 */
+	private void mergeCharacteristicInto(ProductSpecificationCharacteristicVO base,
+										 ProductSpecificationCharacteristicVO ext) {
+		if (ext.getConfigurable() != null) base.setConfigurable(ext.getConfigurable());
+		if (ext.getDescription() != null) base.setDescription(ext.getDescription());
+		if (ext.getExtensible() != null) base.setExtensible(ext.getExtensible());
+		if (ext.getIsUnique() != null) base.setIsUnique(ext.getIsUnique());
+		if (ext.getMaxCardinality() != null) base.setMaxCardinality(ext.getMaxCardinality());
+		if (ext.getMinCardinality() != null) base.setMinCardinality(ext.getMinCardinality());
+		if (ext.getName() != null) base.setName(ext.getName());
+		if (ext.getRegex() != null) base.setRegex(ext.getRegex());
+		if (ext.getValueType() != null) base.setValueType(ext.getValueType());
+		if (ext.getProductSpecCharRelationship() != null) base.setProductSpecCharRelationship(ext.getProductSpecCharRelationship());
+		if (ext.getProductSpecCharacteristicValue() != null) base.setProductSpecCharacteristicValue(ext.getProductSpecCharacteristicValue());
+		if (ext.getValidFor() != null) base.setValidFor(ext.getValidFor());
+		if (ext.getAtBaseType() != null) base.setAtBaseType(ext.getAtBaseType());
+		if (ext.getAtSchemaLocation() != null) base.setAtSchemaLocation(ext.getAtSchemaLocation());
+		if (ext.getAtType() != null) base.setAtType(ext.getAtType());
+		if (ext.getAtValueSchemaLocation() != null) base.setAtValueSchemaLocation(ext.getAtValueSchemaLocation());
+		// Merge additional/unknown properties — ext wins on key conflicts
+		Map<String, Object> extUnknown = ext.getUnknownProperties();
+		if (extUnknown != null && !extUnknown.isEmpty()) {
+			extUnknown.forEach(base::setUnknownProperties);
 		}
 	}
 
