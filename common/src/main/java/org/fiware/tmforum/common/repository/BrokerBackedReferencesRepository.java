@@ -6,7 +6,7 @@ import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import reactor.core.publisher.Mono;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.net.URI;
 import java.util.List;
 

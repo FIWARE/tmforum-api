@@ -10,7 +10,7 @@ import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.productordering.domain.CancelProductOrder;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

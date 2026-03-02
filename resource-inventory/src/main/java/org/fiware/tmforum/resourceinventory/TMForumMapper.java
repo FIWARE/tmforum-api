@@ -1,12 +1,26 @@
 package org.fiware.tmforum.resourceinventory;
 
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.resourceinventory.model.*;
+import org.fiware.resourceinventory.model.AttachmentRefOrValueVO;
+import org.fiware.resourceinventory.model.CharacteristicRelationshipVO;
+import org.fiware.resourceinventory.model.CharacteristicVO;
+import org.fiware.resourceinventory.model.EventSubscriptionVO;
+import org.fiware.resourceinventory.model.FeatureRelationshipVO;
+import org.fiware.resourceinventory.model.FeatureVO;
+import org.fiware.resourceinventory.model.NoteVO;
+import org.fiware.resourceinventory.model.ResourceCreateVO;
+import org.fiware.resourceinventory.model.ResourceUpdateVO;
+import org.fiware.resourceinventory.model.ResourceVO;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.resource.*;
+import org.fiware.tmforum.resource.Characteristic;
+import org.fiware.tmforum.resource.CharacteristicRelationship;
+import org.fiware.tmforum.resource.Feature;
+import org.fiware.tmforum.resource.FeatureRelationship;
+import org.fiware.tmforum.resource.Note;
+import org.fiware.tmforum.resource.Resource;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

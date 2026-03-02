@@ -10,7 +10,7 @@ import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
 import org.fiware.usagemanagement.model.UsageSpecificationVO;
 import org.fiware.usagemanagement.model.UsageVO;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

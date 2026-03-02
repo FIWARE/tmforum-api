@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import reactor.core.publisher.Mono;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.function.Function;

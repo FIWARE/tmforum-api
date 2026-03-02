@@ -11,10 +11,13 @@ import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import io.github.wistefan.mapping.CacheSerdeableObjectMapper;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
-import org.fiware.ngsi.model.*;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
+import org.fiware.ngsi.model.GeoPropertyListVO;
+import org.fiware.ngsi.model.PropertyListVO;
+import org.fiware.ngsi.model.RelationshipListVO;
 
-import javax.inject.Singleton;
 import java.util.List;
 
 /**

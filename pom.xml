@@ -109,7 +109,6 @@
 
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
-        <version.javax.inject>1</version.javax.inject>
         <version.io.projectreactor.reactor-core>3.5.5</version.io.projectreactor.reactor-core>
         <version.io.github.resilience4j.resilience4j-retry>2.0.0</version.io.github.resilience4j.resilience4j-retry>
         <version.io.github.resilience4j.resilience4j-reactor>2.0.0</version.io.github.resilience4j.resilience4j-reactor>
@@ -164,11 +163,6 @@
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
                 <version>${version.org.mapstruct}</version>
-            </dependency>
-            <dependency>
-                <groupId>javax.inject</groupId>
-                <artifactId>javax.inject</artifactId>
-                <version>${version.javax.inject}</version>
             </dependency>
             <!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
             <dependency>

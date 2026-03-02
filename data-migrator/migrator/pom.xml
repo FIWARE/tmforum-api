@@ -50,13 +50,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>${version.javax.inject}</version>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

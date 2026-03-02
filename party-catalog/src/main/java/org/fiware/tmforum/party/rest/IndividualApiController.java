@@ -21,7 +21,7 @@ import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.individual.IndividualIdentification;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

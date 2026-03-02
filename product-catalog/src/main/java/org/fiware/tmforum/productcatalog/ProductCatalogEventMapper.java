@@ -12,7 +12,7 @@ import org.fiware.tmforum.product.ProductOfferingPrice;
 import org.fiware.tmforum.product.ProductSpecification;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

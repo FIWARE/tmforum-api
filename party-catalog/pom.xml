@@ -100,21 +100,6 @@
             <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
 
-        <!-- javax -->
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-        </dependency>
-        <!-- required for javax.nullable -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- testing -->
         <dependency>
