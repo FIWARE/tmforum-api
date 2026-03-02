@@ -97,7 +97,7 @@
         </version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>
 
         <!-- code gen -->
-        <version.org.openapitools.generator-maven-plugin>7.10.0</version.org.openapitools.generator-maven-plugin>
+        <version.org.openapitools.generator-maven-plugin>7.20.0</version.org.openapitools.generator-maven-plugin>
         <version.io.kokuwa.micronaut.codegen>4.4.1</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
