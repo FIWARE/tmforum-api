@@ -8,15 +8,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyName;
 import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
+import com.networknt.schema.Error;
+import com.networknt.schema.ExecutionConfig;
 import com.networknt.schema.InputFormat;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaLocation;
-import com.networknt.schema.SchemaValidatorsConfig;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
-import com.networknt.schema.resource.ClasspathSchemaLoader;
-import com.networknt.schema.resource.UriSchemaLoader;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.SpecificationVersion;
+import com.networknt.schema.resource.ClasspathResourceLoader;
+import com.networknt.schema.resource.IriResourceLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.SchemaValidationException;
 
@@ -149,23 +149,21 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		}
 
 		try {
-			JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(
-					SpecVersion.VersionFlag.V202012,
-					builder -> builder.schemaLoaders(sb -> {
-						sb.add(new ClasspathSchemaLoader());
-						sb.add(new UriSchemaLoader());
-					})
-			);
-			SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
-			SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
-			JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(schemaAddress), schemaValidatorsConfig);
-			Set<ValidationMessage> assertions = schema.validate(jsonString, InputFormat.JSON, executionContext -> {
-				executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
+            SchemaRegistry jsonSchemaFactory = SchemaRegistry.withDefaultDialect(
+                    SpecificationVersion.DRAFT_2020_12,
+                    builder -> builder.resourceLoaders(sb -> {
+                        sb.add(new ClasspathResourceLoader());
+                        sb.add(new IriResourceLoader());
+                    })
+            );
+			Schema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(schemaAddress));
+			List<Error> assertions = schema.validate(jsonString, InputFormat.JSON, executionContext -> {
+				executionContext.setExecutionConfig(ExecutionConfig.builder(executionContext.getExecutionConfig()).formatAssertionsEnabled(true).build());
 			});
 
 			if (!assertions.isEmpty()) {
 				log.debug("Entity {} is not valid for schema {}. Assertions: {}.", jsonString, schemaAddress, assertions);
-				throw new SchemaValidationException(assertions.stream().map(ValidationMessage::getMessage).toList(), "Input is not valid for the given schema.");
+				throw new SchemaValidationException(assertions.stream().map(Error::getMessage).toList(), "Input is not valid for the given schema.");
 			}
 		} catch (Exception e) {
 			if (e instanceof SchemaValidationException) {
