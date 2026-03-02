@@ -744,7 +744,7 @@
                         </plugin>
                         <plugin>
                             <artifactId>maven-resources-plugin</artifactId>
-                            <version>2.6</version>
+                            <version>3.4.0</version>
                             <executions>
                                 <execution>
                                     <id>copy-resources</id>
