@@ -1,6 +1,5 @@
 package org.fiware.tmforum.common.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;

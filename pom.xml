@@ -8,9 +8,9 @@
     <packaging>pom</packaging>
 
     <parent>
-        <groupId>io.micronaut</groupId>
+        <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>3.9.1</version>
+        <version>4.10.6</version>
     </parent>
 
     <developers>
@@ -62,8 +62,8 @@
     <properties>
         <jdk.version>17</jdk.version>
         <release.version>17</release.version>
-        <micronaut.version>3.9.1</micronaut.version>
-
+        <micronaut.version>4.10.6</micronaut.version>
+        <micronaut.validation.version>4.12.0</micronaut.validation.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- project info -->
@@ -104,7 +104,7 @@
         <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.20</version.io.github.wistefan.ngsi-ld-mapping-java>
 
         <!-- caching -->
-        <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>
+        <version.io.micronaut.redis.micronaut-redis-lettuce>6.9.0</version.io.micronaut.redis.micronaut-redis-lettuce>
 
 
         <!-- rx -->
@@ -274,9 +274,9 @@
                             <version>${micronaut.version}</version>
                         </path>
                         <path>
-                            <groupId>io.micronaut</groupId>
+                            <groupId>io.micronaut.validation</groupId>
                             <artifactId>micronaut-validation</artifactId>
-                            <version>${micronaut.version}</version>
+                            <version>${micronaut.validation.version}</version>
                         </path>
                         <path>
                             <groupId>io.micronaut</groupId>
@@ -316,9 +316,9 @@
                                     <version>${micronaut.version}</version>
                                 </path>
                                 <path>
-                                    <groupId>io.micronaut</groupId>
+                                    <groupId>io.micronaut.validation</groupId>
                                     <artifactId>micronaut-validation</artifactId>
-                                    <version>${micronaut.version}</version>
+                                    <version>${micronaut.validation.version}</version>
                                 </path>
                                 <path>
                                     <groupId>io.micronaut</groupId>
