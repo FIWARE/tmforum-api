@@ -88,7 +88,7 @@
 
         <!-- lazy dev -->
         <version.org.mapstruct>1.6.3</version.org.mapstruct>
-        <version.org.projectlombok>1.18.30</version.org.projectlombok>
+        <version.org.projectlombok>1.18.42</version.org.projectlombok>
         <version.com.google.guava>31.1-jre</version.com.google.guava>
 
         <!-- logging -->
