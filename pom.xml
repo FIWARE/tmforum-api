@@ -92,7 +92,7 @@
         <version.com.google.guava>31.1-jre</version.com.google.guava>
 
         <!-- logging -->
-        <version.io.kokuwa.micronaut.logging>3.1.0</version.io.kokuwa.micronaut.logging>
+        <version.io.kokuwa.micronaut.logging>5.0.0</version.io.kokuwa.micronaut.logging>
         <version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>4.8.3
         </version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>
 
