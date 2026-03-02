@@ -93,7 +93,7 @@
 
         <!-- logging -->
         <version.io.kokuwa.micronaut.logging>5.0.0</version.io.kokuwa.micronaut.logging>
-        <version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>4.8.3
+        <version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>5.13.2
         </version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>
 
         <!-- code gen -->
