@@ -165,17 +165,6 @@
                 <artifactId>mapstruct</artifactId>
                 <version>${version.org.mapstruct}</version>
             </dependency>
-            <!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
-            <dependency>
-                <groupId>jakarta.validation</groupId>
-                <artifactId>jakarta.validation-api</artifactId>
-                <version>3.1.1</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.annotation</groupId>
-                <artifactId>jakarta.annotation-api</artifactId>
-                <version>3.0.0</version>
-            </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
