@@ -114,6 +114,7 @@
         <version.io.github.resilience4j.resilience4j-reactor>2.0.0</version.io.github.resilience4j.resilience4j-reactor>
 
         <!-- build -->
+        <version.io.fabric8.docker-maven-plugin>0.48.1</version.io.fabric8.docker-maven-plugin>
         <version.org.codehaus.mojo.build-helper-maven-plugin>3.6.1</version.org.codehaus.mojo.build-helper-maven-plugin>
 
         <!-- test -->
@@ -532,6 +533,12 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <!-- docker -->
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>${version.io.fabric8.docker-maven-plugin}</version>
+                </plugin>
                 <!-- run tests -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -819,7 +826,7 @@
                         <plugin>
                             <groupId>io.fabric8</groupId>
                             <artifactId>docker-maven-plugin</artifactId>
-                            <version>0.48.1</version>
+                            <version>${version.io.fabric8.docker-maven-plugin}</version>
                             <executions>
                                 <execution>
                                     <id>run-test</id>

@@ -49,13 +49,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>service-shared-models</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- lazy dev -->
         <dependency>
             <groupId>org.projectlombok</groupId>
