@@ -9,7 +9,13 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productordering.api.CancelProductOrderApiTestClient;
 import org.fiware.productordering.api.CancelProductOrderApiTestSpec;
 import org.fiware.productordering.api.ProductOrderApiTestClient;
-import org.fiware.productordering.model.*;
+import org.fiware.productordering.model.CancelProductOrderCreateVO;
+import org.fiware.productordering.model.CancelProductOrderCreateVOTestExample;
+import org.fiware.productordering.model.CancelProductOrderVO;
+import org.fiware.productordering.model.CancelProductOrderVOTestExample;
+import org.fiware.productordering.model.ProductOrderCreateVO;
+import org.fiware.productordering.model.ProductOrderCreateVOTestExample;
+import org.fiware.productordering.model.ProductOrderRefVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -35,7 +41,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

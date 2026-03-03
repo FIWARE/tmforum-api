@@ -7,7 +7,13 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.customerbillmanagement.api.CustomerBillOnDemandApiTestClient;
 import org.fiware.customerbillmanagement.api.CustomerBillOnDemandApiTestSpec;
-import org.fiware.customerbillmanagement.model.*;
+import org.fiware.customerbillmanagement.model.BillRefVOTestExample;
+import org.fiware.customerbillmanagement.model.BillingAccountRefVOTestExample;
+import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVO;
+import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVOTestExample;
+import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
+import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVOTestExample;
+import org.fiware.customerbillmanagement.model.RelatedPartyRefVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -31,7 +37,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

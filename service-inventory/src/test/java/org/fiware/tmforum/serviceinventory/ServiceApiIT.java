@@ -1,9 +1,5 @@
 package org.fiware.tmforum.serviceinventory;
 
-import org.fiware.serviceinventory.model.*;
-import org.fiware.tmforum.common.notification.TMForumEventHandler;
-import org.fiware.tmforum.common.test.AbstractApiIT;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -12,8 +8,26 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.serviceinventory.api.ServiceApiTestClient;
 import org.fiware.serviceinventory.api.ServiceApiTestSpec;
+import org.fiware.serviceinventory.model.CharacteristicRelationshipVOTestExample;
+import org.fiware.serviceinventory.model.CharacteristicVO;
+import org.fiware.serviceinventory.model.CharacteristicVOTestExample;
+import org.fiware.serviceinventory.model.FeatureRelationshipVOTestExample;
+import org.fiware.serviceinventory.model.FeatureVO;
+import org.fiware.serviceinventory.model.FeatureVOTestExample;
+import org.fiware.serviceinventory.model.NoteVO;
+import org.fiware.serviceinventory.model.NoteVOTestExample;
+import org.fiware.serviceinventory.model.RelatedPartyVOTestExample;
+import org.fiware.serviceinventory.model.ServiceCreateVO;
+import org.fiware.serviceinventory.model.ServiceCreateVOTestExample;
+import org.fiware.serviceinventory.model.ServiceSpecificationRefVOTestExample;
+import org.fiware.serviceinventory.model.ServiceUpdateVO;
+import org.fiware.serviceinventory.model.ServiceUpdateVOTestExample;
+import org.fiware.serviceinventory.model.ServiceVO;
+import org.fiware.serviceinventory.model.ServiceVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.serviceinventory.domain.Service;
 import org.junit.jupiter.api.Disabled;
@@ -23,8 +37,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
-
-import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +47,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

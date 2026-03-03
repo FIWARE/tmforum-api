@@ -8,7 +8,30 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.quote.api.QuoteApiTestClient;
 import org.fiware.quote.api.QuoteApiTestSpec;
-import org.fiware.quote.model.*;
+import org.fiware.quote.model.AgreementRefVOTestExample;
+import org.fiware.quote.model.AppointmentRefVOTestExample;
+import org.fiware.quote.model.AuthorizationVOTestExample;
+import org.fiware.quote.model.BillingAccountRefVOTestExample;
+import org.fiware.quote.model.ContactMediumVOTestExample;
+import org.fiware.quote.model.MediumCharacteristicVOTestExample;
+import org.fiware.quote.model.NoteVOTestExample;
+import org.fiware.quote.model.PriceAlterationVOTestExample;
+import org.fiware.quote.model.PriceVOTestExample;
+import org.fiware.quote.model.ProductOfferingPriceRefVOTestExample;
+import org.fiware.quote.model.ProductOfferingQualificationItemRefVOTestExample;
+import org.fiware.quote.model.ProductOfferingQualificationRefVOTestExample;
+import org.fiware.quote.model.ProductOfferingRefVOTestExample;
+import org.fiware.quote.model.ProductRefOrValueVOTestExample;
+import org.fiware.quote.model.QuoteCreateVO;
+import org.fiware.quote.model.QuoteCreateVOTestExample;
+import org.fiware.quote.model.QuoteItemVOTestExample;
+import org.fiware.quote.model.QuotePriceVOTestExample;
+import org.fiware.quote.model.QuoteStateTypeVO;
+import org.fiware.quote.model.QuoteUpdateVO;
+import org.fiware.quote.model.QuoteUpdateVOTestExample;
+import org.fiware.quote.model.QuoteVO;
+import org.fiware.quote.model.QuoteVOTestExample;
+import org.fiware.quote.model.RelatedPartyVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -35,7 +58,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -818,17 +841,17 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 		List<QuoteVO> retrievedQuotes = quoteResponse.getBody().get();
 
 		Map<String, QuoteVO> retrievedMap = retrievedQuotes.stream()
-				.collect(Collectors.toMap(quote -> quote.getId(),
+				.collect(Collectors.toMap(QuoteVO::getId,
 						quote -> quote));
 
-		expectedQuotes.stream()
+		expectedQuotes
 				.forEach(
 						expectedQuote -> assertTrue(
 								retrievedMap.containsKey(expectedQuote.getId()),
 								String.format("All created quote should be returned - Missing: %s.",
 										expectedQuote,
 										retrievedQuotes)));
-		expectedQuotes.stream().forEach(
+		expectedQuotes.forEach(
 				expectedQuote -> assertEquals(expectedQuote,
 						retrievedMap.get(expectedQuote.getId()),
 						"The correct quote should be retrieved."));
@@ -840,20 +863,20 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 		assertEquals(limit, firstPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 		HttpResponse<List<QuoteVO>> secondPartResponse = callAndCatch(
-				() -> quoteApiTestClient.listQuote(null, null, 0 + limit, limit));
+				() -> quoteApiTestClient.listQuote(null, null, limit, limit));
 		assertEquals(limit, secondPartResponse.body().size(),
 				"Only the requested number of entries should be returend.");
 
 		retrievedQuotes.clear();
 		retrievedQuotes.addAll(firstPartResponse.body());
 		retrievedQuotes.addAll(secondPartResponse.body());
-		expectedQuotes.stream()
+		expectedQuotes
 				.forEach(
 						expectedQuote -> assertTrue(
 								retrievedMap.containsKey(expectedQuote.getId()),
 								String.format("All created quote should be returned - Missing: %s.",
 										expectedQuote)));
-		expectedQuotes.stream().forEach(
+		expectedQuotes.forEach(
 				expectedQuote -> assertEquals(expectedQuote,
 						retrievedMap.get(expectedQuote.getId()),
 						"The correct quote should be retrieved."));
@@ -1517,7 +1540,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 				.id(id)
 				.href(id);
 
-		if (fieldsParameter == null || fieldsParameter == "quoteDate" || fieldsParameter.isEmpty()) {
+		if (fieldsParameter == null || fieldsParameter.equals("quoteDate") || fieldsParameter.isEmpty()) {
 			expectedQuote.quoteDate(now);
 		}
 

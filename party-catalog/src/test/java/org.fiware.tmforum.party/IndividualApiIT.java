@@ -8,7 +8,36 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.party.api.IndividualApiTestClient;
 import org.fiware.party.api.IndividualApiTestSpec;
-import org.fiware.party.model.*;
+import org.fiware.party.model.AttachmentRefOrValueVO;
+import org.fiware.party.model.AttachmentRefOrValueVOTestExample;
+import org.fiware.party.model.ContactMediumVOTestExample;
+import org.fiware.party.model.DisabilityVO;
+import org.fiware.party.model.DisabilityVOTestExample;
+import org.fiware.party.model.ExternalReferenceVOTestExample;
+import org.fiware.party.model.IndividualCreateVO;
+import org.fiware.party.model.IndividualCreateVOTestExample;
+import org.fiware.party.model.IndividualIdentificationVO;
+import org.fiware.party.model.IndividualIdentificationVOTestExample;
+import org.fiware.party.model.IndividualUpdateVO;
+import org.fiware.party.model.IndividualUpdateVOTestExample;
+import org.fiware.party.model.IndividualVO;
+import org.fiware.party.model.IndividualVOTestExample;
+import org.fiware.party.model.LanguageAbilityVO;
+import org.fiware.party.model.LanguageAbilityVOTestExample;
+import org.fiware.party.model.OtherNameIndividualVO;
+import org.fiware.party.model.OtherNameIndividualVOTestExample;
+import org.fiware.party.model.PartyCreditProfileVO;
+import org.fiware.party.model.PartyCreditProfileVOTestExample;
+import org.fiware.party.model.RelatedPartyVO;
+import org.fiware.party.model.RelatedPartyVOTestExample;
+import org.fiware.party.model.SkillVO;
+import org.fiware.party.model.SkillVOTestExample;
+import org.fiware.party.model.TaxDefinitionVO;
+import org.fiware.party.model.TaxDefinitionVOTestExample;
+import org.fiware.party.model.TaxExemptionCertificateVO;
+import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
+import org.fiware.party.model.TimePeriodVO;
+import org.fiware.party.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -16,7 +45,6 @@ import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -24,12 +52,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Matchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -429,13 +463,13 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		List<IndividualVO> retrievedIndividuals = individualResponse.getBody().get();
 
 		Map<String, IndividualVO> retrievedMap = retrievedIndividuals.stream()
-				.collect(Collectors.toMap(individual -> individual.getId(), individual -> individual));
+				.collect(Collectors.toMap(IndividualVO::getId, individual -> individual));
 
-		expectedIndividuals.stream()
+		expectedIndividuals
 				.forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
 						String.format("All created individuals should be returned - Missing: %s.", expectedBill,
 								retrievedIndividuals)));
-		expectedIndividuals.stream().forEach(
+		expectedIndividuals.forEach(
 				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct individuals should be retrieved."));
 
@@ -453,9 +487,9 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		retrievedIndividuals.clear();
 		retrievedIndividuals.addAll(firstPartResponse.body());
 		retrievedIndividuals.addAll(secondPartResponse.body());
-		expectedIndividuals.stream().forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
+		expectedIndividuals.forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
 				String.format("All created individuals should be returned - Missing: %s.", expectedBill)));
-		expectedIndividuals.stream().forEach(
+		expectedIndividuals.forEach(
 				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct individuals should be retrieved."));
 	}
