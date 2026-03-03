@@ -31,6 +31,7 @@ import java.util.Map;
 public abstract class TMForumMapper extends BaseMapper {
 
 	private static final String PRODUCT_SPEC_CHARACTERISTIC_EXT = "productSpecCharacteristic_ext";
+	private static final String NGSI_ESCAPE_PREFIX = "tmfEscaped-";
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	// catalog
@@ -169,6 +170,7 @@ public abstract class TMForumMapper extends BaseMapper {
 					baseList.addAll(toAdd);
 					log.debug("productSpecCharacteristic_ext: {} merged into existing, {} appended as new",
 							merged, toAdd.size());
+
 				});
 
 		if (target.getUnknownProperties() != null) {
@@ -177,28 +179,13 @@ public abstract class TMForumMapper extends BaseMapper {
 	}
 
 	/**
-	 * Overlay non-null fields from ext onto base. ext wins on all field conflicts.
-	 * unknownProperties maps are merged with ext taking precedence.
+	 * Merge only the unknown (vendor-specific) properties from ext into base.
+	 * Standard TMF fields are intentionally left untouched — they are already
+	 * correctly mapped from the base productSpecCharacteristic attribute and must
+	 * not be overwritten by the potentially incomplete ext data.
 	 */
 	private void mergeCharacteristicInto(ProductSpecificationCharacteristicVO base,
 										 ProductSpecificationCharacteristicVO ext) {
-		if (ext.getConfigurable() != null) base.setConfigurable(ext.getConfigurable());
-		if (ext.getDescription() != null) base.setDescription(ext.getDescription());
-		if (ext.getExtensible() != null) base.setExtensible(ext.getExtensible());
-		if (ext.getIsUnique() != null) base.setIsUnique(ext.getIsUnique());
-		if (ext.getMaxCardinality() != null) base.setMaxCardinality(ext.getMaxCardinality());
-		if (ext.getMinCardinality() != null) base.setMinCardinality(ext.getMinCardinality());
-		if (ext.getName() != null) base.setName(ext.getName());
-		if (ext.getRegex() != null) base.setRegex(ext.getRegex());
-		if (ext.getValueType() != null) base.setValueType(ext.getValueType());
-		if (ext.getProductSpecCharRelationship() != null) base.setProductSpecCharRelationship(ext.getProductSpecCharRelationship());
-		if (ext.getProductSpecCharacteristicValue() != null) base.setProductSpecCharacteristicValue(ext.getProductSpecCharacteristicValue());
-		if (ext.getValidFor() != null) base.setValidFor(ext.getValidFor());
-		if (ext.getAtBaseType() != null) base.setAtBaseType(ext.getAtBaseType());
-		if (ext.getAtSchemaLocation() != null) base.setAtSchemaLocation(ext.getAtSchemaLocation());
-		if (ext.getAtType() != null) base.setAtType(ext.getAtType());
-		if (ext.getAtValueSchemaLocation() != null) base.setAtValueSchemaLocation(ext.getAtValueSchemaLocation());
-		// Merge additional/unknown properties — ext wins on key conflicts
 		Map<String, Object> extUnknown = ext.getUnknownProperties();
 		if (extUnknown != null && !extUnknown.isEmpty()) {
 			extUnknown.forEach(base::setUnknownProperties);
@@ -253,14 +240,20 @@ public abstract class TMForumMapper extends BaseMapper {
 			if (item instanceof Map) {
 				Map<String, Object> map = new java.util.HashMap<>((Map<String, Object>) item);
 
+				unescapeReservedWordsDeep(map);
+				renameKey(map, "tmfId", "id");
+
 				// Rename nested productSpecCharacteristic_ext to standard TMF productSpecCharacteristicValue
 				if (map.containsKey(PRODUCT_SPEC_CHARACTERISTIC_EXT)) {
 					map.put("productSpecCharacteristicValue", map.remove(PRODUCT_SPEC_CHARACTERISTIC_EXT));
 				}
 
-				// Normalize productSpecCharacteristicValue to a list if it's a single object
-				// NGSI-LD may flatten single-element arrays to plain objects
 				normalizeToList(map, "productSpecCharacteristicValue");
+
+				renameKeyInNestedList(map, "productSpecCharacteristicValue", "tmfValue", "value");
+
+				normalizeToList(map, "productSpecCharRelationship");
+				renameKeyInNestedList(map, "productSpecCharRelationship", "tmfId", "id");
 
 				// Use Jackson to convert Map to VO
 				return OBJECT_MAPPER.convertValue(map, ProductSpecificationCharacteristicVO.class);
@@ -274,6 +267,70 @@ public abstract class TMForumMapper extends BaseMapper {
 			log.warn("Failed to convert characteristic: {}", e.getMessage());
 			return null;
 		}
+	}
+
+	/**
+	 * Recursively strip the ngsi-ld-java-mapping escape prefix ("tmfEscaped-") from all
+	 * map keys so that reserved words like "id", "value", "type" are restored before
+	 * Jackson converts the map to a VO.  The guard ensures an already-present plain key
+	 * is not overwritten.
+	 */
+	@SuppressWarnings("unchecked")
+	private void unescapeReservedWordsDeep(Map<String, Object> map) {
+		List<String> escapedKeys = new ArrayList<>();
+		for (String key : map.keySet()) {
+			if (key.startsWith(NGSI_ESCAPE_PREFIX)) {
+				escapedKeys.add(key);
+			}
+		}
+		for (String key : escapedKeys) {
+			String unescaped = key.substring(NGSI_ESCAPE_PREFIX.length());
+			if (!map.containsKey(unescaped)) {
+				map.put(unescaped, map.remove(key));
+			}
+		}
+		for (Object value : new ArrayList<>(map.values())) {
+			if (value instanceof Map) {
+				unescapeReservedWordsDeep((Map<String, Object>) value);
+			} else if (value instanceof List<?> list) {
+				for (Object element : list) {
+					if (element instanceof Map) {
+						unescapeReservedWordsDeep((Map<String, Object>) element);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Rename a key in a map if the old key exists and the new key does not.
+	 */
+	private void renameKey(Map<String, Object> map, String oldKey, String newKey) {
+		if (map.containsKey(oldKey) && !map.containsKey(newKey)) {
+			map.put(newKey, map.remove(oldKey));
+		}
+	}
+
+	/**
+	 * Rename a key inside every Map element of a nested list field.
+	 */
+	@SuppressWarnings("unchecked")
+	private void renameKeyInNestedList(Map<String, Object> map, String listField, String oldKey, String newKey) {
+		Object raw = map.get(listField);
+		if (!(raw instanceof List<?> list)) {
+			return;
+		}
+		List<Object> updated = new ArrayList<>();
+		for (Object element : list) {
+			if (element instanceof Map) {
+				Map<String, Object> entry = new java.util.HashMap<>((Map<String, Object>) element);
+				renameKey(entry, oldKey, newKey);
+				updated.add(entry);
+			} else {
+				updated.add(element);
+			}
+		}
+		map.put(listField, updated);
 	}
 
 	/**
@@ -384,5 +441,4 @@ public abstract class TMForumMapper extends BaseMapper {
 		return value.toString();
 	}
 }
-
 
