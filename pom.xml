@@ -109,7 +109,6 @@
 
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
-        <version.io.projectreactor.reactor-core>3.5.5</version.io.projectreactor.reactor-core>
         <version.io.github.resilience4j.resilience4j-retry>2.0.0</version.io.github.resilience4j.resilience4j-retry>
         <version.io.github.resilience4j.resilience4j-reactor>2.0.0</version.io.github.resilience4j.resilience4j-reactor>
 
@@ -192,11 +191,6 @@
                 <groupId>io.github.wistefan</groupId>
                 <artifactId>ngsi-ld-java-mapping</artifactId>
                 <version>${version.io.github.wistefan.ngsi-ld-mapping-java}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.projectreactor</groupId>
-                <artifactId>reactor-core</artifactId>
-                <version>${version.io.projectreactor.reactor-core}</version>
             </dependency>
             <dependency>
                 <groupId>io.micronaut.redis</groupId>
