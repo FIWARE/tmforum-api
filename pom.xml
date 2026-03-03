@@ -60,8 +60,8 @@
     </modules>
 
     <properties>
-        <jdk.version>17</jdk.version>
-        <release.version>17</release.version>
+        <jdk.version>21</jdk.version>
+        <release.version>21</release.version>
         <micronaut.version>4.10.6</micronaut.version>
         <micronaut.validation.version>4.12.0</micronaut.validation.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -788,7 +788,7 @@
                                     </goals>
                                     <configuration>
                                         <from>
-                                            <image>registry.access.redhat.com/ubi8/openjdk-17:1.11-2</image>
+                                            <image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24-2</image>
                                         </from>
                                         <to>
                                             <image>api</image>
@@ -900,7 +900,7 @@
                             <!-- disables the micronaut plugin extension, that breaks the exectuion individual config -->
                             <configuration combine.self="override">
                                 <from>
-                                    <image>registry.access.redhat.com/ubi8/openjdk-17:1.23-3</image>
+                                    <image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24-2</image>
                                     <platforms>
                                         <platform>
                                             <architecture>amd64</architecture>
