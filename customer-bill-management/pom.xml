@@ -197,7 +197,7 @@
                         <configuration>
                             <skip>false</skip>
                             <inputSpec>
-                                ${project.parent.basedir}/${artifactId}/api/applied-customer-bill-management-extension.yaml
+                                ${project.parent.basedir}/${project.artifactId}/api/applied-customer-bill-management-extension.yaml
                             </inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
@@ -212,7 +212,7 @@
                         <configuration>
                             <skip>false</skip>
                             <inputSpec>
-                                ${project.parent.basedir}/${artifactId}/api/customer-bill-extension.yaml
+                                ${project.parent.basedir}/${project.artifactId}/api/customer-bill-extension.yaml
                             </inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
