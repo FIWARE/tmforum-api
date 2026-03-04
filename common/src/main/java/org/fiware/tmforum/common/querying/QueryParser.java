@@ -141,41 +141,83 @@ public class QueryParser {
             resolvedConditions.add(new ResolvedCondition(qp, attribute, isKnown));
         });
 
-        // Phase 2: detect if there's a mix of known-boolean + unknown conditions
+        // Phase 2: extract known-boolean conditions for post-filtering
+        // (workaround for Scorpio PostgreSQL ARRAY type mismatch bug when mixing boolean + unknown)
         boolean hasKnownBoolean = resolvedConditions.stream()
                 .anyMatch(rc -> rc.isKnown && rc.attribute.type() == QueryAttributeType.BOOLEAN);
         boolean hasUnknown = resolvedConditions.stream()
                 .anyMatch(rc -> !rc.isKnown);
 
         Map<String, String> booleanFilters = new LinkedHashMap<>();
-
-        Stream<String> queryStrings;
+        List<ResolvedCondition> remainingConditions = new ArrayList<>(resolvedConditions);
         if (hasKnownBoolean && hasUnknown && logicalOperator == LogicalOperator.AND) {
-            // Workaround: separate known-boolean conditions for post-filtering
-            // to avoid Scorpio PostgreSQL ARRAY type mismatch bug
-            queryStrings = resolvedConditions.stream()
-                    .filter(rc -> {
-                        if (rc.isKnown && rc.attribute.type() == QueryAttributeType.BOOLEAN) {
-                            booleanFilters.put(rc.queryPart.attribute(), rc.queryPart.value());
-                            return false;
-                        }
-                        return true;
-                    })
-                    .map(rc -> toQueryString(
-                            getQueryPart(rc.attribute, rc.queryPart, isRelationship(queryClass, rc.attribute)),
-                            rc.attribute.type()));
-        } else {
-            queryStrings = resolvedConditions.stream()
-                    .map(rc -> toQueryString(
-                            getQueryPart(rc.attribute, rc.queryPart, isRelationship(queryClass, rc.attribute)),
-                            rc.attribute.type()));
+            remainingConditions.removeIf(rc -> {
+                if (rc.isKnown && rc.attribute.type() == QueryAttributeType.BOOLEAN) {
+                    booleanFilters.put(rc.queryPart.attribute(), rc.queryPart.value());
+                    return true;
+                }
+                return false;
+            });
         }
 
-        String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
-        String query = switch (logicalOperator) {
-            case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
-            case OR -> queryStrings.collect(Collectors.joining(ngsidOrKey));
-        };
+        // Phase 3: build NGSI-LD query string
+        // For AND queries with OR-value conditions (comma-separated values in a single param),
+        // Scorpio v5 does not support the valueList format attr==(v1,v2).
+        // Instead, distribute using top-level NGSI-LD OR (|):
+        //   base;attr=="v1"|base;attr=="v2"
+        // Since NGSI-LD ; binds tighter than |, this correctly means (base AND v1) OR (base AND v2).
+        String query;
+        if (logicalOperator == LogicalOperator.AND) {
+            List<ResolvedCondition> orValueConditions = remainingConditions.stream()
+                    .filter(rc -> rc.queryPart.value().contains(TMFORUM_OR_VALUE))
+                    .toList();
+
+            if (!orValueConditions.isEmpty()) {
+                List<ResolvedCondition> regularConditions = remainingConditions.stream()
+                        .filter(rc -> !rc.queryPart.value().contains(TMFORUM_OR_VALUE))
+                        .toList();
+
+                String baseQuery = regularConditions.stream()
+                        .map(rc -> toQueryString(
+                                getQueryPart(copyAttribute(rc.attribute), rc.queryPart, isRelationship(queryClass, rc.attribute)),
+                                rc.attribute.type()))
+                        .collect(Collectors.joining(NGSI_LD_AND));
+
+                // For each OR-value condition, produce one predicate string per individual value
+                List<List<String>> orGroups = orValueConditions.stream()
+                        .map(rc -> Arrays.stream(rc.queryPart.value().split(TMFORUM_OR_VALUE))
+                                .map(v -> toQueryString(
+                                        getQueryPart(copyAttribute(rc.attribute),
+                                                new QueryPart(rc.queryPart.attribute(), rc.queryPart.operator(), v),
+                                                isRelationship(queryClass, rc.attribute)),
+                                        rc.attribute.type()))
+                                .collect(Collectors.toList()))
+                        .collect(Collectors.toList());
+
+                // Cartesian product of OR groups, prepend base to each combination
+                query = cartesianProduct(orGroups).stream()
+                        .map(combo -> {
+                            List<String> parts = new ArrayList<>();
+                            if (!baseQuery.isEmpty()) parts.add(baseQuery);
+                            parts.addAll(combo);
+                            return String.join(NGSI_LD_AND, parts);
+                        })
+                        .collect(Collectors.joining("|"));
+            } else {
+                query = remainingConditions.stream()
+                        .map(rc -> toQueryString(
+                                getQueryPart(rc.attribute, rc.queryPart, isRelationship(queryClass, rc.attribute)),
+                                rc.attribute.type()))
+                        .collect(Collectors.joining(NGSI_LD_AND));
+            }
+        } else {
+            String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
+            query = remainingConditions.stream()
+                    .map(rc -> toQueryString(
+                            getQueryPart(rc.attribute, rc.queryPart, isRelationship(queryClass, rc.attribute)),
+                            rc.attribute.type()))
+                    .collect(Collectors.joining(ngsidOrKey));
+        }
 
         String idList = null;
         if (!ids.isEmpty()) {
@@ -434,6 +476,27 @@ public class QueryParser {
             return LESS_THAN;
         }
         return Operator.EQUALS;
+    }
+
+    private static NgsiLdAttribute copyAttribute(NgsiLdAttribute attr) {
+        return new NgsiLdAttribute(new ArrayList<>(attr.path()), attr.type());
+    }
+
+    private static List<List<String>> cartesianProduct(List<List<String>> groups) {
+        List<List<String>> result = new ArrayList<>();
+        result.add(new ArrayList<>());
+        for (List<String> group : groups) {
+            List<List<String>> newResult = new ArrayList<>();
+            for (List<String> existing : result) {
+                for (String item : group) {
+                    List<String> newList = new ArrayList<>(existing);
+                    newList.add(item);
+                    newResult.add(newList);
+                }
+            }
+            result = newResult;
+        }
+        return result;
     }
 
     private static class ResolvedCondition {

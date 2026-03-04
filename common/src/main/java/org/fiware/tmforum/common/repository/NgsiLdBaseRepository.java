@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
@@ -204,8 +205,17 @@ public abstract class NgsiLdBaseRepository {
 	 * @return a mono, emitting a list of mapped entities
 	 */
 	protected <T> Mono<List<T>> zipToList(Stream<EntityVO> entityVOStream, Class<T> targetClass) {
+		// Scorpio v5 has a bug where the `type` filter is not applied to all OR terms in a `|` query.
+		// Pre-filter entities by their type to avoid MappingException on unexpected entity types.
+		MappingEnabled mappingEnabled = targetClass.getAnnotation(MappingEnabled.class);
+		Stream<EntityVO> filtered = entityVOStream;
+		if (mappingEnabled != null) {
+			List<String> expectedTypes = Arrays.asList(mappingEnabled.entityType());
+			filtered = entityVOStream.filter(entityVO ->
+					entityVO.getType() != null && expectedTypes.contains(entityVO.getType()));
+		}
 		return Mono.zip(
-				entityVOStream.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
+				filtered.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
 				oList -> Arrays.stream(oList).map(targetClass::cast).toList()
 		);
 	}

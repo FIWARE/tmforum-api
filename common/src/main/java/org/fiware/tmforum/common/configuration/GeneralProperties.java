@@ -47,7 +47,7 @@ public class GeneralProperties {
 	/**
 	 * Whether to enclose queries using brackets or not
 	 */
-	private Boolean encloseQuery=false;
+	private Boolean encloseQuery=true;
 
 	/**
 	 * Whether to include the attribute name in each list object or not

@@ -61,7 +61,7 @@ class QueryParserTest {
 	private static Stream<Arguments> queriesAttributeIncluded() {
 		return Stream.of(
 				// Property attributes queries
-				Arguments.of("status=Active,Started&color=Red", new QueryParams(null, null, "(status==\"Active\"|status==\"Started\");color==\"Red\"", Map.of()), MyPojo.class),
+				Arguments.of("status=Active,Started&color=Red", new QueryParams(null, null, "color==\"Red\";status==\"Active\"|color==\"Red\";status==\"Started\"", Map.of()), MyPojo.class),
 				Arguments.of("status=Active,Started;color=Red", new QueryParams(null, null, "color==\"Red\"|(status==\"Active\"|status==\"Started\")", Map.of()), MyPojo.class),
 				Arguments.of("status=Active;status=Started", new QueryParams(null, null, "(status==\"Active\"|status==\"Started\")", Map.of()), MyPojo.class),
 				Arguments.of("status=Active;status=Started;color=Red", new QueryParams(null, null, "color==\"Red\"|(status==\"Active\"|status==\"Started\")", Map.of()),
@@ -73,7 +73,7 @@ class QueryParserTest {
 				Arguments.of("temperature<20&temperature>10", new QueryParams(null, null, "temperature<20;temperature>10", Map.of()), MyPojo.class),
 				Arguments.of("temperature<=20;temperature=30", new QueryParams(null, null, "temperature==30|temperature<=20", Map.of()), MyPojo.class),
 				Arguments.of("temperature>=20;temperature<3", new QueryParams(null, null, "temperature<3|temperature>=20", Map.of()), MyPojo.class),
-				Arguments.of("status.eq=Active,Started&color.eq=Red", new QueryParams(null, null, "(status==\"Active\"|status==\"Started\");color==\"Red\"", Map.of()),
+				Arguments.of("status.eq=Active,Started&color.eq=Red", new QueryParams(null, null, "color==\"Red\";status==\"Active\"|color==\"Red\";status==\"Started\"", Map.of()),
 						MyPojo.class),
 				Arguments.of("status.eq=Active,Started;color.eq=Red", new QueryParams(null, null, "color==\"Red\"|(status==\"Active\"|status==\"Started\")", Map.of()),
 						MyPojo.class),
@@ -100,7 +100,7 @@ class QueryParserTest {
 	private static Stream<Arguments> queriesAttributeNotIncluded() {
 		return Stream.of(
 				// Property attributes queries
-				Arguments.of("status=Active,Started&color=Red", new QueryParams(null, null, "status==(\"Active\"|\"Started\");color==\"Red\"", Map.of()), MyPojo.class),
+				Arguments.of("status=Active,Started&color=Red", new QueryParams(null, null, "color==\"Red\";status==\"Active\"|color==\"Red\";status==\"Started\"", Map.of()), MyPojo.class),
 				Arguments.of("status=Active,Started;color=Red", new QueryParams(null, null, "color==\"Red\"|status==(\"Active\"|\"Started\")", Map.of()), MyPojo.class),
 				Arguments.of("status=Active;status=Started", new QueryParams(null, null, "status==(\"Active\"|\"Started\")", Map.of()), MyPojo.class),
 				Arguments.of("status=Active;status=Started;color=Red", new QueryParams(null, null, "color==\"Red\"|status==(\"Active\"|\"Started\")", Map.of()),
@@ -112,7 +112,7 @@ class QueryParserTest {
 				Arguments.of("temperature<20&temperature>10", new QueryParams(null, null, "temperature<20;temperature>10", Map.of()), MyPojo.class),
 				Arguments.of("temperature<=20;temperature=30", new QueryParams(null, null, "temperature==30|temperature<=20", Map.of()), MyPojo.class),
 				Arguments.of("temperature>=20;temperature<3", new QueryParams(null, null, "temperature<3|temperature>=20", Map.of()), MyPojo.class),
-				Arguments.of("status.eq=Active,Started&color.eq=Red", new QueryParams(null, null, "status==(\"Active\"|\"Started\");color==\"Red\"", Map.of()),
+				Arguments.of("status.eq=Active,Started&color.eq=Red", new QueryParams(null, null, "color==\"Red\";status==\"Active\"|color==\"Red\";status==\"Started\"", Map.of()),
 						MyPojo.class),
 				Arguments.of("status.eq=Active,Started;color.eq=Red", new QueryParams(null, null, "color==\"Red\"|status==(\"Active\"|\"Started\")", Map.of()),
 						MyPojo.class),
@@ -141,7 +141,7 @@ class QueryParserTest {
 		GeneralProperties properties = new GeneralProperties();
 		properties.setNgsildOrQueryKey(",");
 		properties.setNgsildOrQueryValue(",");
-		properties.setEncloseQuery(false);
+		properties.setEncloseQuery(true);
 		properties.setIncludeAttributeInList(false);
 		properties.setUseDotSeperator(false);
 
@@ -152,12 +152,16 @@ class QueryParserTest {
 
 	private static Stream<Arguments> scorpioQueries() {
 		return Stream.of(
-				Arguments.of("status=Active,Started&color=Red", new QueryParams(null, null, "status==\"Active\",\"Started\";color==\"Red\"", Map.of()), MyPojo.class),
-				Arguments.of("status=Active;status=Started", new QueryParams(null, null, "status==\"Active\",\"Started\"", Map.of()), MyPojo.class),
+				// AND query with OR values: distributed as (base;attr==v1)|(base;attr==v2)
+				Arguments.of("status=Active,Started&color=Red", new QueryParams(null, null, "color==\"Red\";status==\"Active\"|color==\"Red\";status==\"Started\"", Map.of()), MyPojo.class),
+				// OR query (TMForum ;): combined via combineParts, still uses valueList format
+				Arguments.of("status=Active;status=Started", new QueryParams(null, null, "status==(\"Active\",\"Started\")", Map.of()), MyPojo.class),
+				// AND query without OR values: unchanged
 				Arguments.of("sub.status=Active&status=Started&color=Red", new QueryParams(null, null, "sub[status]==\"Active\";status==\"Started\";color==\"Red\"", Map.of()), MyPojo.class),
 				Arguments.of("temperature<20&temperature>10", new QueryParams(null, null, "temperature<20;temperature>10", Map.of()), MyPojo.class),
-				Arguments.of("status.eq=Active,Started&color.eq=Red", new QueryParams(null, null, "status==\"Active\",\"Started\";color==\"Red\"", Map.of()), MyPojo.class),
-				Arguments.of("status.eq=Active;status.eq=Started", new QueryParams(null, null, "status==\"Active\",\"Started\"", Map.of()), MyPojo.class)
+				// Same as first two but using .eq= syntax
+				Arguments.of("status.eq=Active,Started&color.eq=Red", new QueryParams(null, null, "color==\"Red\";status==\"Active\"|color==\"Red\";status==\"Started\"", Map.of()), MyPojo.class),
+				Arguments.of("status.eq=Active;status.eq=Started", new QueryParams(null, null, "status==(\"Active\",\"Started\")", Map.of()), MyPojo.class)
 		);
 	}
 }
