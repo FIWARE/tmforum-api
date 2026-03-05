@@ -1,20 +1,7 @@
 package org.fiware.tmforum.productcatalog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.event.BeanCreatedEvent;
-import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
-import lombok.RequiredArgsConstructor;
-import org.fiware.productcatalog.model.CatalogVO;
-import org.fiware.productcatalog.model.CategoryVO;
-import org.fiware.productcatalog.model.ProductOfferingPriceVO;
-import org.fiware.productcatalog.model.ProductOfferingVO;
-import org.fiware.productcatalog.model.ProductSpecificationVO;
-import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
-
-import javax.inject.Singleton;
 
 /**
  * Base application as starting point
@@ -26,23 +13,4 @@ public class Application {
         Micronaut.run(Application.class, args);
     }
 
-    @Singleton
-    @RequiredArgsConstructor
-    static class ObjectMapperBeanEventListener implements BeanCreatedEventListener<ObjectMapper> {
-
-        @Override
-        public ObjectMapper onCreated(BeanCreatedEvent<ObjectMapper> event) {
-
-            final ObjectMapper objectMapper = event.getBean();
-            SimpleModule fieldParamModule = new SimpleModule();
-            // we need to register per class, in order to use the generic serializer
-            fieldParamModule.addSerializer(ProductOfferingPriceVO.class, new FieldCleaningSerializer<>());
-            fieldParamModule.addSerializer(CategoryVO.class, new FieldCleaningSerializer<>());
-            fieldParamModule.addSerializer(CatalogVO.class, new FieldCleaningSerializer<>());
-            fieldParamModule.addSerializer(ProductSpecificationVO.class, new FieldCleaningSerializer<>());
-            fieldParamModule.addSerializer(ProductOfferingVO.class, new FieldCleaningSerializer<>());
-            objectMapper.registerModule(fieldParamModule);
-            return objectMapper;
-        }
-    }
 }
