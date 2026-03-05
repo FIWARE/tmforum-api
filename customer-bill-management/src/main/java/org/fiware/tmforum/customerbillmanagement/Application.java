@@ -2,7 +2,6 @@ package org.fiware.tmforum.customerbillmanagement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
@@ -12,10 +11,8 @@ import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
-import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 
 import javax.inject.Singleton;
-import java.time.Clock;
 
 /**
  * Base application as starting point
@@ -25,11 +22,6 @@ public class Application {
 
 	public static void main(String[] args) {
 		Micronaut.run(Application.class, args);
-	}
-
-	@Bean
-	public Clock clock() {
-		return Clock.systemUTC();
 	}
 
 	@Singleton

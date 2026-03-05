@@ -1,18 +1,23 @@
-package org.fiware.tmforum.account;
+ package org.fiware.tmforum.account;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
 import lombok.RequiredArgsConstructor;
-import org.fiware.account.model.*;
+import org.fiware.account.model.BillFormatVO;
+import org.fiware.account.model.BillPresentationMediaVO;
+import org.fiware.account.model.BillStructureVO;
+import org.fiware.account.model.BillingAccountVO;
+import org.fiware.account.model.BillingCycleSpecificationVO;
+import org.fiware.account.model.FinancialAccountVO;
+import org.fiware.account.model.PartyAccountVO;
+import org.fiware.account.model.SettlementAccountVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
 import javax.inject.Singleton;
-import java.time.Clock;
 
 /**
  * Base application as starting point
@@ -22,11 +27,6 @@ public class Application {
 
     public static void main(String[] args) {
         Micronaut.run(Application.class, args);
-    }
-
-    @Bean
-    public Clock clock() {
-        return Clock.systemUTC();
     }
 
     @Singleton
