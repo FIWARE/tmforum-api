@@ -52,6 +52,7 @@
         <module>service-inventory</module>
         <module>party-role</module>
         <module>data-migrator</module>
+        <module>all-in-one</module>
     </modules>
 
     <properties>

@@ -10,9 +10,6 @@ import io.micronaut.runtime.Micronaut;
 public class Application {
 
     public static void main(String[] args) {
-        Micronaut.build(args)
-                .packages("org.fiware")
-                .mainClass(Application.class)
-                .start();
+        Micronaut.run(Application.class, args);
     }
 }
