@@ -4,14 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 
 import javax.inject.Singleton;
 import java.util.Map;
 
 @RequiredArgsConstructor
 @Singleton
-public class PartyRoleEventMapper implements EventMapper {
+public class PartyRoleEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 
