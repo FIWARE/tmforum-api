@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.usage-management.basepath:/}")
 public class UsageController extends AbstractApiController<Usage> implements UsageApi {
 
         private final TMForumMapper tmForumMapper;

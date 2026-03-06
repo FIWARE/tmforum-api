@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.service-catalog.basepath:/}")
 public class ServiceCategoryApiController extends AbstractApiController<ServiceCategory> implements ServiceCategoryApi {
 
 	private final TMForumMapper tmForumMapper;

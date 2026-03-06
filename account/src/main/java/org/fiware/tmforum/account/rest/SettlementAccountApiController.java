@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.account.basepath:/}")
 public class SettlementAccountApiController extends AbstractApiController<SettlementAccount> implements SettlementAccountApi {
 
     private final TMForumMapper tmForumMapper;

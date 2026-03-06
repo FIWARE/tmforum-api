@@ -35,7 +35,7 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_AGREEMENT_SPECIFICATION;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.agreement.basepath:/}")
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 
 	private final TMForumMapper tmForumMapper;

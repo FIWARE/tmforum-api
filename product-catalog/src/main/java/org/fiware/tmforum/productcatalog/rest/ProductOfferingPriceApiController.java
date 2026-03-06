@@ -26,7 +26,7 @@ import java.time.Clock;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.product-catalog.basepath:/}")
 public class ProductOfferingPriceApiController extends AbstractProductCatalogApiController<ProductOfferingPrice>
 		implements ProductOfferingPriceApi {
 
