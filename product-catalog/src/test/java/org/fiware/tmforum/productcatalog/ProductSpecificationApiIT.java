@@ -870,6 +870,53 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		return ProductSpecification.TYPE_PRODUCT_SPECIFICATION;
 	}
 
+	@DisplayName("ProductSpecificationRelationship validFor should be persisted and retrieved correctly")
+	@Test
+	public void specRelationshipValidForSerialization() throws Exception {
+		// create a target spec to reference
+		ProductSpecificationCreateVO targetSpecCreate = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null);
+		HttpResponse<ProductSpecificationVO> targetCreateResponse = callAndCatch(
+				() -> productSpecificationApiTestClient.createProductSpecification(null, targetSpecCreate));
+		assertEquals(HttpStatus.CREATED, targetCreateResponse.getStatus(),
+				"The target productSpecification should have been created.");
+		String targetSpecId = targetCreateResponse.body().getId();
+
+		// build a relationship with a validFor period
+		TimePeriodVO validFor = new TimePeriodVO();
+		Instant start = Instant.ofEpochSecond(1000);
+		Instant end = Instant.ofEpochSecond(2000);
+		validFor.setStartDateTime(start);
+		validFor.setEndDateTime(end);
+
+		ProductSpecificationRelationshipVO specRel = ProductSpecificationRelationshipVOTestExample.build()
+				.atSchemaLocation(null)
+				.id(targetSpecId)
+				.href(URI.create(targetSpecId))
+				.validFor(validFor);
+
+		ProductSpecificationCreateVO specWithRelCreate = ProductSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.targetProductSchema(null)
+				.productSpecificationRelationship(List.of(specRel));
+		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
+				() -> productSpecificationApiTestClient.createProductSpecification(null, specWithRelCreate));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+				"The productSpecification with a relationship should have been created.");
+		String specId = createResponse.body().getId();
+
+		// retrieve and verify validFor is correctly deserialized (regression for targetClass = TimePeriod.class fix)
+		HttpResponse<ProductSpecificationVO> retrievalResponse = callAndCatch(
+				() -> productSpecificationApiTestClient.retrieveProductSpecification(null, specId, null));
+		assertEquals(HttpStatus.OK, retrievalResponse.getStatus(), "The spec should have been retrieved.");
+
+		List<ProductSpecificationRelationshipVO> relationships = retrievalResponse.body().getProductSpecificationRelationship();
+		assertEquals(1, relationships.size(), "One relationship should be present.");
+		assertEquals(validFor, relationships.get(0).getValidFor(),
+				"The validFor of the relationship should have been persisted and retrieved correctly.");
+	}
+
 	@DisplayName("Duplicate relationship issue - DOME#83519")
 	@Test
 	public void duplicateRelationshipIssue() throws Exception {
