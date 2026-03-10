@@ -30,6 +30,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ValidatingDeserializer extends DelegatingDeserializer {
 	private static final String JSON_SCHEMA_PROPERTIES_KEY = "properties";
+	private static final String JSON_SCHEMA_DEFINITIONS_KEY = "definitions";
+	private static final String JSON_SCHEMA_ALL_OF_KEY = "allOf";
+	private static final String JSON_SCHEMA_ANY_OF_KEY = "anyOf";
+	private static final String JSON_SCHEMA_ONE_OF_KEY = "oneOf";
+	private static final String JSON_SCHEMA_REF_KEY = "$ref";
 
 	private final BeanDescription beanDescription;
 
@@ -55,10 +60,10 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
 		if (targetObject instanceof UnknownPreservingBase upb) {
 			// Check if unknown properties contain fields from the base VO class, check if entity has id, href...
-			checkForBaseVoFieldsInUnknownProperties(upb);
+			checkForBaseVoFieldsInUnknownProperties(upb, ctxt);
 
 			if (upb.getAtSchemaLocation() != null) {
-				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString());
+				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString(), ctxt);
 			} else if (upb.getUnknownProperties() != null && !upb.getUnknownProperties().isEmpty()) {
 				throw new SchemaValidationException(List.of(), "If no schema is provided, no additional properties are allowed.");
 			}
@@ -70,7 +75,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	 * Checks if unknown properties contain fields that exist in the base VO class detect when existing fields
 	 * are passed in the request and rejects them
 	 */
-	private void checkForBaseVoFieldsInUnknownProperties(UnknownPreservingBase upb) {
+	private void checkForBaseVoFieldsInUnknownProperties(UnknownPreservingBase upb, DeserializationContext ctxt) {
 		if (upb.getUnknownProperties() == null || upb.getUnknownProperties().isEmpty()) {
 			return;
 		}
@@ -80,7 +85,11 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 			return;
 		}
 
-		Set<String> baseVoFields = getAllFieldNames(baseVoClass);
+		BeanDescription baseVoBeanDesc = ctxt.getConfig().introspect(ctxt.constructType(baseVoClass));
+		Set<String> baseVoFields = baseVoBeanDesc.findProperties().stream()
+				.map(BeanPropertyDefinition::getName)
+				.collect(Collectors.toSet());
+
 		List<String> forbiddenFields = upb.getUnknownProperties().keySet().stream()
 				.filter(baseVoFields::contains)
 				.toList();
@@ -97,7 +106,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		}
 	}
 
-	private void validateWithSchema(Object theSchema, String jsonString) {
+	private void validateWithSchema(Object theSchema, String jsonString, DeserializationContext ctxt) {
 		String schemaAddress = "";
 		if (theSchema instanceof URI schemaUri) {
 			schemaAddress = schemaUri.toString();
@@ -118,7 +127,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 			SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
 			SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
 			JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(schemaAddress), schemaValidatorsConfig);
-			checkForExplicitFieldOverrides(schema);
+			checkForExplicitFieldOverrides(schema, ctxt);
 			Set<ValidationMessage> assertions = schema.validate(jsonString, InputFormat.JSON, executionContext -> {
 				executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
 			});
@@ -136,39 +145,39 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 
 	}
 
-	private void checkForExplicitFieldOverrides(JsonSchema schema) {
+	private void checkForExplicitFieldOverrides(JsonSchema schema, DeserializationContext ctxt) {
 		var schemaNode = schema.getSchemaNode();
-		var propertiesNode = schemaNode.get(JSON_SCHEMA_PROPERTIES_KEY);
 
-		if (propertiesNode == null || !propertiesNode.isObject()) {
-			log.debug("Schema has no properties node, skipping override check");
-			return;
-		}
+		// Get all Jackson-visible property names for the current class (respects @JsonProperty annotations)
+		Set<String> existingProperties = beanDescription.findProperties().stream()
+				.map(BeanPropertyDefinition::getName)
+				.collect(Collectors.toCollection(HashSet::new));
 
-		// Get all properties from BeanDescription (includes Jackson-visible properties)
-		Set<String> existingProperties = new HashSet<>();
-		for (BeanPropertyDefinition prop : beanDescription.findProperties()) {
-			existingProperties.add(prop.getName());
-		}
-
-		// Also get all field names from the class hierarchy
-		existingProperties.addAll(getAllFieldNames(beanDescription.getBeanClass()));
-
+		// For CreateVO/UpdateVO, also include the base VO's Jackson property names
 		Class<?> baseVoClass = findBaseVoClass(beanDescription.getBeanClass());
 		if (baseVoClass != null) {
-			existingProperties.addAll(getAllFieldNames(baseVoClass));
-			log.debug("Added fields from base VO class {}: {}", baseVoClass.getSimpleName(), getAllFieldNames(baseVoClass));
+			BeanDescription baseVoBeanDesc = ctxt.getConfig().introspect(ctxt.constructType(baseVoClass));
+			Set<String> baseVoProperties = baseVoBeanDesc.findProperties().stream()
+					.map(BeanPropertyDefinition::getName)
+					.collect(Collectors.toSet());
+			existingProperties.addAll(baseVoProperties);
+			log.debug("Added Jackson properties from base VO class {}: {}", baseVoClass.getSimpleName(), baseVoProperties);
 		}
 
 		log.debug("Final existing properties found in {}: {}", beanDescription.getBeanClass().getSimpleName(), existingProperties);
 
+		// Collect all schema-defined properties from all possible locations (deep traversal)
+		Set<String> schemaProperties = new HashSet<>();
+		Set<JsonNode> visitedNodes = new HashSet<>();
+		collectAllSchemaProperties(schemaNode, schemaNode, schemaProperties, visitedNodes);
+
 		// Check for overlaps and collect all violations
 		List<String> overriddenFields = new ArrayList<>();
-		propertiesNode.fieldNames().forEachRemaining(schemaField -> {
+		for (String schemaField : schemaProperties) {
 			if (existingProperties.contains(schemaField)) {
 				overriddenFields.add(schemaField);
 			}
-		});
+		}
 
 		// If any fields are being overridden, throw an error
 		if (!overriddenFields.isEmpty()) {
@@ -184,28 +193,85 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		}
 	}
 
-	private Set<String> getAllFieldNames(Class<?> clazz) {
-		Set<String> fieldNames = new HashSet<>();
-		Class<?> current = clazz;
+	/**
+	 * Recursively collects all property names defined anywhere in the schema.
+	 * Checks: properties, definitions, allOf, anyOf, oneOf, and follows $ref.
+	 */
+	private void collectAllSchemaProperties(JsonNode rootNode, JsonNode currentNode, Set<String> properties, Set<JsonNode> visited) {
+		// Prevent infinite recursion
+		if (currentNode == null || !currentNode.isObject() || visited.contains(currentNode)) {
+			return;
+		}
+		visited.add(currentNode);
 
-		log.debug("Getting all fields for class: {}", clazz.getName());
-
-		// Traverse the class hierarchy
-		while (current != null && current != Object.class) {
-			log.debug("  Checking class: {}", current.getSimpleName());
-			java.lang.reflect.Field[] fields = current.getDeclaredFields();
-			log.debug("    Found {} fields", fields.length);
-			for (java.lang.reflect.Field field : fields) {
-				log.debug("      Field: {} (type: {})", field.getName(), field.getType().getSimpleName());
-				fieldNames.add(field.getName());
-			}
-			current = current.getSuperclass();
-			if (current != null && current != Object.class) {
-				log.debug("    Moving to superclass: {}", current.getSimpleName());
+		// 1. Check direct "properties" node
+		JsonNode propertiesNode = currentNode.get(JSON_SCHEMA_PROPERTIES_KEY);
+		if (propertiesNode != null && propertiesNode.isObject()) {
+			List<String> foundProperties = new ArrayList<>();
+			propertiesNode.fieldNames().forEachRemaining(foundProperties::add);
+			properties.addAll(foundProperties);
+			if (!foundProperties.isEmpty()) {
+				log.debug("Found properties in direct 'properties' node: {}", foundProperties);
 			}
 		}
 
-		return fieldNames;
+		// 2. Check "definitions" node (recursively check each definition)
+		JsonNode definitionsNode = currentNode.get(JSON_SCHEMA_DEFINITIONS_KEY);
+		if (definitionsNode != null && definitionsNode.isObject()) {
+			definitionsNode.fields().forEachRemaining(entry ->
+					collectAllSchemaProperties(rootNode, entry.getValue(), properties, visited));
+		}
+
+		// 3. Check "allOf" combinator
+		JsonNode allOfNode = currentNode.get(JSON_SCHEMA_ALL_OF_KEY);
+		if (allOfNode != null && allOfNode.isArray()) {
+			allOfNode.forEach(subSchema -> collectAllSchemaProperties(rootNode, subSchema, properties, visited));
+		}
+
+		// 4. Check "anyOf" combinator
+		JsonNode anyOfNode = currentNode.get(JSON_SCHEMA_ANY_OF_KEY);
+		if (anyOfNode != null && anyOfNode.isArray()) {
+			anyOfNode.forEach(subSchema -> collectAllSchemaProperties(rootNode, subSchema, properties, visited));
+		}
+
+		// 5. Check "oneOf" combinator
+		JsonNode oneOfNode = currentNode.get(JSON_SCHEMA_ONE_OF_KEY);
+		if (oneOfNode != null && oneOfNode.isArray()) {
+			oneOfNode.forEach(subSchema -> collectAllSchemaProperties(rootNode, subSchema, properties, visited));
+		}
+
+		// 6. Follow "$ref" references
+		JsonNode refNode = currentNode.get(JSON_SCHEMA_REF_KEY);
+		if (refNode != null && refNode.isTextual()) {
+			JsonNode resolvedNode = resolveRef(rootNode, refNode.asText());
+			if (resolvedNode != null) {
+				collectAllSchemaProperties(rootNode, resolvedNode, properties, visited);
+			}
+		}
+	}
+
+	/**
+	 * Resolves a JSON Schema $ref reference.
+	 * Currently supports JSON Pointer references within the same document (#/definitions/foo).
+	 */
+	private JsonNode resolveRef(JsonNode rootNode, String ref) {
+		if (ref == null || !ref.startsWith("#/") || ref.length() <= 2) {
+			log.debug("Skipping external or invalid reference: {}", ref);
+			return null;
+		}
+
+		String[] pathParts = ref.substring(2).split("/");
+		JsonNode current = rootNode;
+
+		for (String part : pathParts) {
+			if (current == null || part.isEmpty()) {
+				continue;
+			}
+			// Handle escaped characters in JSON Pointer (~ and /)
+			current = current.get(part.replace("~1", "/").replace("~0", "~"));
+		}
+
+		return current;
 	}
 
 	/**
