@@ -37,7 +37,7 @@ import static java.util.Map.entry;
 import static org.fiware.tmforum.common.notification.EventConstants.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.quote.basepath:/}")
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 
 	private final TMForumMapper tmForumMapper;

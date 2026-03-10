@@ -6,7 +6,7 @@ import org.fiware.tmforum.account.domain.*;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 
 import javax.inject.Singleton;
 import java.util.Map;
@@ -15,7 +15,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class AccountEventMapper implements EventMapper {
+public class AccountEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

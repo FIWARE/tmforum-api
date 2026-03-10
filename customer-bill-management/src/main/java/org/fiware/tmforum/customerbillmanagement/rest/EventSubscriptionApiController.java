@@ -30,7 +30,7 @@ import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_
 import static org.fiware.tmforum.common.notification.EventConstants.EVENT_GROUP_CUSTOMER_BILL_ON_DEMAND;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.customer-bill-management.basepath:/}")
 public class EventSubscriptionApiController extends AbstractSubscriptionApiController implements EventsSubscriptionApi {
 	private final TMForumMapper tmForumMapper;
 	private static final Map<String, String> EVENT_GROUP_TO_ENTITY_NAME_MAPPING = Map.ofEntries(

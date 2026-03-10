@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.account.basepath:/}")
 public class FinancialAccountApiController extends AbstractApiController<FinancialAccount> implements FinancialAccountApi {
 
     private final TMForumMapper tmForumMapper;

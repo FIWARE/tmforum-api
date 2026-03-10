@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.product-catalog.basepath:/}")
 public class CatalogApiController extends AbstractApiController<Catalog> implements CatalogApi {
 
     private final TMForumMapper tmForumMapper;

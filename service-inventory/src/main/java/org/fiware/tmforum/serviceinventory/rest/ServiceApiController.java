@@ -28,7 +28,7 @@ import java.net.URI;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.service-inventory.basepath:/}")
 public class ServiceApiController extends AbstractApiController<Service> implements ServiceApi {
 
     private final TMForumMapper tmForumMapper;

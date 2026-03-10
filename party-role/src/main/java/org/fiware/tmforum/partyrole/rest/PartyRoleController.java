@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.party-role.basepath:/}")
 public class PartyRoleController extends AbstractApiController<PartyRole> implements PartyRoleApi {
 	private final TMForumMapper tmForumMapper;
 

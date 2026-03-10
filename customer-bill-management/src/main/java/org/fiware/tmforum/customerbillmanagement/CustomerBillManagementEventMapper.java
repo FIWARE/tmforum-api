@@ -6,7 +6,7 @@ import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand;
 
@@ -17,7 +17,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class CustomerBillManagementEventMapper implements EventMapper {
+public class CustomerBillManagementEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

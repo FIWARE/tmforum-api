@@ -5,7 +5,7 @@ import org.fiware.serviceinventory.model.ServiceVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.serviceinventory.domain.Service;
 
 import javax.inject.Singleton;
@@ -15,7 +15,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class ServiceInventoryEventMapper implements EventMapper {
+public class ServiceInventoryEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

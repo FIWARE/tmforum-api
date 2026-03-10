@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.customer-bill-management.basepath:/}")
 public class CustomerBillOnDemandApiController extends AbstractApiController<CustomerBillOnDemand>
 		implements CustomerBillOnDemandApi {
 
