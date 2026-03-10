@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.usagemanagement.domain.Usage;
 import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
 import org.fiware.usagemanagement.model.UsageSpecificationVO;
@@ -17,7 +17,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class UsageManagementEventMapper implements EventMapper {
+public class UsageManagementEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

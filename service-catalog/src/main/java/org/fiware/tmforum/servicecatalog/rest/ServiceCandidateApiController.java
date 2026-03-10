@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.service-catalog.basepath:/}")
 public class ServiceCandidateApiController extends AbstractApiController<ServiceCandidate>
 		implements ServiceCandidateApi {
 

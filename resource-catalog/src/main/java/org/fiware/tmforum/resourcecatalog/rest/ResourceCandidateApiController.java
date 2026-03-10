@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.resource-catalog.basepath:/}")
 public class ResourceCandidateApiController extends AbstractApiController<ResourceCandidate>
 		implements ResourceCandidateApi {
 

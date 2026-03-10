@@ -30,7 +30,7 @@ import java.time.Clock;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.service-catalog.basepath:/}")
 public class ServiceSpecificationApiController extends AbstractApiController<ServiceSpecification>
 		implements ServiceSpecificationApi {
 

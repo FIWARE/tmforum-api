@@ -6,7 +6,7 @@ import org.fiware.productordering.model.ProductOrderVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.productordering.domain.CancelProductOrder;
 import org.fiware.tmforum.productordering.domain.ProductOrder;
 
@@ -17,7 +17,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class ProductOrderingEventMapper implements EventMapper {
+public class ProductOrderingEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.account.basepath:/}")
 public class BillFormatApiController extends AbstractApiController<BillFormat> implements BillFormatApi {
 
     private final TMForumMapper tmForumMapper;

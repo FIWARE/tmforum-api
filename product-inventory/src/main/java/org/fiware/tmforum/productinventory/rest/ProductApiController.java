@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.product-inventory.basepath:/}")
 public class ProductApiController extends AbstractApiController<Product> implements ProductApi {
 
 	private final TMForumMapper tmForumMapper;
