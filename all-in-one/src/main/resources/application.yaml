@@ -72,3 +72,14 @@ api:
     basepath: /tmf-api/serviceInventoryManagement/v4
   usage-management:
     basepath: /tmf-api/usageManagement/v4
+  document-management:
+    basepath: /tmf-api/documentManagement/v4
+
+---
+s3:
+  endpoint: "http://localhost:9000"
+  accessKey: "minioadmin"
+  secretKey: "minioadmin"
+  bucket: "document-attachments"
+  maxContentSize: 10485760
+  # region: ""   # Required for AWS S3; omit for MinIO, IONOS, and other providers
