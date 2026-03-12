@@ -38,6 +38,10 @@ general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8667
 
+api:
+  document-management:
+    basepath: ${general.basepath:/}
+
 mapping:
   strictRelationships: false
   api_extension_enabled: true

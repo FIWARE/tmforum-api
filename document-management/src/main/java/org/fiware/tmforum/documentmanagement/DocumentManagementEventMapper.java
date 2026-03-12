@@ -5,7 +5,7 @@ import org.fiware.document.model.DocumentSpecificationVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.documentmanagement.domain.DocumentSpecification;
 
 import javax.inject.Singleton;
@@ -15,7 +15,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class DocumentManagementEventMapper implements EventMapper {
+public class DocumentManagementEventMapper implements ModuleEventMapper {
 
     private final TMForumMapper tmForumMapper;
 

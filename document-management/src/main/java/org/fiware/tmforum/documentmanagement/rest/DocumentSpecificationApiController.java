@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.document-management.basepath:/}")
 public class DocumentSpecificationApiController extends AbstractApiController<DocumentSpecification>
         implements DocumentSpecificationApi {
 
