@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.product-ordering-management.basepath:/}")
 public class CancelProductOrderApiController extends AbstractApiController<CancelProductOrder>
 		implements CancelProductOrderApi {
 

@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 //TODO: This is currently untested. It needs to be clarified how such a resource can be created.
-@Controller("${general.basepath:/}")
+@Controller("${api.resource-function-activation.basepath:/}")
 public class MonitorApiController extends AbstractApiController<Monitor> implements MonitorApi {
 
 	private final TMForumMapper tmForumMapper;

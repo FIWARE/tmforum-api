@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.agreement.basepath:/}")
 public class AgreementSpecController extends AbstractApiController<AgreementSpecification>
                 implements AgreementSpecificationApi {
 

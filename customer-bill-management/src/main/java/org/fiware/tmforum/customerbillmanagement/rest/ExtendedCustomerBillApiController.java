@@ -21,7 +21,7 @@ import java.time.Clock;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.customer-bill-management.basepath:/}")
 @Requires(property = "apiExtension.enabled", value = "true")
 public class ExtendedCustomerBillApiController extends AbstractApiController<CustomerBill> implements CustomerBillExtensionApi {
 

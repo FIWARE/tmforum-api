@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.resource-catalog.basepath:/}")
 public class ResourceCatalogApiController extends AbstractApiController<ResourceCatalog> implements ResourceCatalogApi {
 
 	private final TMForumMapper tmForumMapper;

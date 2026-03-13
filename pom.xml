@@ -52,6 +52,7 @@
         <module>service-inventory</module>
         <module>party-role</module>
         <module>data-migrator</module>
+        <module>all-in-one</module>
     </modules>
 
     <properties>
@@ -246,7 +247,7 @@
                     <target>${jdk.version}</target>
                     <!-- Uncomment to enable incremental compilation -->
                     <!-- <useIncrementalCompilation>false</useIncrementalCompilation> -->
-                    <annotationProcessorPaths>
+                    <annotationProcessorPaths combine.self="override">
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
@@ -744,12 +745,12 @@
                         <plugin>
                             <groupId>com.google.cloud.tools</groupId>
                             <artifactId>jib-maven-plugin</artifactId>
-                            <version>3.2.1</version>
+                            <version>3.5.1</version>
                             <executions>
                                 <execution>
                                     <phase>package</phase>
                                     <goals>
-                                        <goal>dockerBuild</goal>
+                                        <goal>build</goal>
                                     </goals>
                                     <configuration>
                                         <from>
@@ -866,6 +867,16 @@
                             <configuration combine.self="override">
                                 <from>
                                     <image>registry.access.redhat.com/ubi8/openjdk-17:1.23-3</image>
+                                    <platforms>
+                                        <platform>
+                                            <architecture>amd64</architecture>
+                                            <os>linux</os>
+                                        </platform>
+                                        <platform>
+                                            <architecture>arm64</architecture>
+                                            <os>linux</os>
+                                        </platform>
+                                    </platforms>
                                 </from>
                                 <to>
                                     <image>${image.registry}/${image.repository}/tmforum-${project.artifactId}</image>
@@ -922,7 +933,7 @@
                                     <id>install</id>
                                     <phase>install</phase>
                                     <goals>
-                                        <goal>dockerBuild</goal>
+                                        <goal>build</goal>
                                     </goals>
                                 </execution>
                             </executions>

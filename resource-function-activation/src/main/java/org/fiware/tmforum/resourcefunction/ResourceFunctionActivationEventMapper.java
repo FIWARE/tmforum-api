@@ -5,7 +5,7 @@ import org.fiware.resourcefunction.model.*;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.resourcefunction.domain.*;
 
 import javax.inject.Singleton;
@@ -15,7 +15,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class ResourceFunctionActivationEventMapper implements EventMapper {
+public class ResourceFunctionActivationEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

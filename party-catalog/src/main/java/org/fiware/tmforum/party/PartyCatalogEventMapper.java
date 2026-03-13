@@ -6,7 +6,7 @@ import org.fiware.party.model.OrganizationVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.organization.Organization;
 
@@ -17,7 +17,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class PartyCatalogEventMapper implements EventMapper {
+public class PartyCatalogEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

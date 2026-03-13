@@ -5,7 +5,7 @@ import org.fiware.productcatalog.model.*;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.product.ProductOfferingPrice;
@@ -19,7 +19,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class ProductCatalogEventMapper implements EventMapper {
+public class ProductCatalogEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

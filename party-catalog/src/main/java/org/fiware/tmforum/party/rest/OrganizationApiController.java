@@ -28,7 +28,7 @@ import java.net.URI;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.party-catalog.basepath:/}")
 public class OrganizationApiController extends AbstractPartyApiController<Organization> implements OrganizationApi {
 
 	private final TMForumMapper tmForumMapper;

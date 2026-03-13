@@ -30,7 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.product-ordering-management.basepath:/}")
 public class ProductOrderingApiController extends AbstractApiController<ProductOrder> implements ProductOrderApi {
 
 	private final TMForumMapper tmForumMapper;
