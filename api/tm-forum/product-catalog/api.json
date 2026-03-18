@@ -5915,6 +5915,13 @@
                     "$ref": "#/definitions/SLARef",
                     "description": "A service level agreement (SLA) is a type of agreement that represents a formal negotiated agreement between two parties designed to create a common understanding about products, services, priorities, responsibilities, and so forth. The SLA is a set of appropriate procedures and targets formally or informally agreed between parties in order to achieve and maintain specified Quality of Service."
                 },
+                "pricingLogicAlgorithm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PricingLogicAlgorithm"
+                    },
+                    "description": "The PricingLogicAlgorithm entity represents an instantiation of an interface specification to external rating function (without a modeled behavior in SID). Some of the parameters of the interface definition may be already set (such as price per unit) and some may be gathered during the rating process from the event (such as call duration) or from ProductCharacteristicValues (such as assigned bandwidth)."
+                },
                 "validFor": {
                     "$ref": "#/definitions/TimePeriod",
                     "description": "The period for which the productOffering is valid"
@@ -6067,6 +6074,13 @@
                     "$ref": "#/definitions/SLARef",
                     "description": "A service level agreement (SLA) is a type of agreement that represents a formal negotiated agreement between two parties designed to create a common understanding about products, services, priorities, responsibilities, and so forth. The SLA is a set of appropriate procedures and targets formally or informally agreed between parties in order to achieve and maintain specified Quality of Service."
                 },
+                "pricingLogicAlgorithm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PricingLogicAlgorithm"
+                    },
+                    "description": "The PricingLogicAlgorithm entity represents an instantiation of an interface specification to external rating function (without a modeled behavior in SID). Some of the parameters of the interface definition may be already set (such as price per unit) and some may be gathered during the rating process from the event (such as call duration) or from ProductCharacteristicValues (such as assigned bandwidth)."
+                },
                 "validFor": {
                     "$ref": "#/definitions/TimePeriod",
                     "description": "The period for which the productOffering is valid"
@@ -6210,6 +6224,13 @@
                 "serviceLevelAgreement": {
                     "$ref": "#/definitions/SLARef",
                     "description": "A service level agreement (SLA) is a type of agreement that represents a formal negotiated agreement between two parties designed to create a common understanding about products, services, priorities, responsibilities, and so forth. The SLA is a set of appropriate procedures and targets formally or informally agreed between parties in order to achieve and maintain specified Quality of Service."
+                },
+                "pricingLogicAlgorithm": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PricingLogicAlgorithm"
+                    },
+                    "description": "The PricingLogicAlgorithm entity represents an instantiation of an interface specification to external rating function (without a modeled behavior in SID). Some of the parameters of the interface definition may be already set (such as price per unit) and some may be gathered during the rating process from the event (such as call duration) or from ProductCharacteristicValues (such as assigned bandwidth)."
                 },
                 "validFor": {
                     "$ref": "#/definitions/TimePeriod",

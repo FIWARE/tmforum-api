@@ -101,6 +101,10 @@ public class ProductOffering extends EntityWithId {
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingRelationship", targetClass = ProductOfferingRelationship.class)}))
 	private List<ProductOfferingRelationship> productOfferingRelationship;
 
+	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "pricingLogicAlgorithm")}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "pricingLogicAlgorithm", targetClass = PricingLogicAlgorithm.class)}))
+	private List<PricingLogicAlgorithm> pricingLogicAlgorithm;
+
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "productOfferingTerm")}))
 	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "productOfferingTerm", targetClass = ProductOfferingTerm.class)}))
 	private List<ProductOfferingTerm> productOfferingTerm;
