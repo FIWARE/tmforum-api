@@ -7,20 +7,15 @@ import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.networknt.schema.*;
 import com.networknt.schema.resource.ClasspathSchemaLoader;
-import com.networknt.schema.resource.SchemaMapper;
 import com.networknt.schema.resource.UriSchemaLoader;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.http.context.ServerRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.SchemaValidationException;
 
-import javax.validation.ValidationException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,15 +32,17 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	private static final String JSON_SCHEMA_REF_KEY = "$ref";
 
 	private final BeanDescription beanDescription;
+	private final boolean schemaValidationEnabled;
 
-	public ValidatingDeserializer(JsonDeserializer<?> d, BeanDescription beanDescription) {
+	public ValidatingDeserializer(JsonDeserializer<?> d, BeanDescription beanDescription, boolean schemaValidationEnabled) {
 		super(d);
 		this.beanDescription = beanDescription;
+		this.schemaValidationEnabled = schemaValidationEnabled;
 	}
 
 	@Override
 	protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> newDelegatee) {
-		return new ValidatingDeserializer(newDelegatee, beanDescription);
+		return new ValidatingDeserializer(newDelegatee, beanDescription, schemaValidationEnabled);
 
 	}
 
@@ -59,9 +56,6 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		TokenBuffer tokenBuffer = ctxt.bufferAsCopyOfValue(p);
 		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
 		if (targetObject instanceof UnknownPreservingBase upb) {
-			// Check if unknown properties contain fields from the base VO class, check if entity has id, href...
-			checkForBaseVoFieldsInUnknownProperties(upb, ctxt);
-
 			if (upb.getAtSchemaLocation() != null) {
 				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString(), ctxt);
 			} else if (upb.getUnknownProperties() != null && !upb.getUnknownProperties().isEmpty()) {
@@ -69,41 +63,6 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 			}
 		}
 		return targetObject;
-	}
-
-	/**
-	 * Checks if unknown properties contain fields that exist in the base VO class detect when existing fields
-	 * are passed in the request and rejects them
-	 */
-	private void checkForBaseVoFieldsInUnknownProperties(UnknownPreservingBase upb, DeserializationContext ctxt) {
-		if (upb.getUnknownProperties() == null || upb.getUnknownProperties().isEmpty()) {
-			return;
-		}
-
-		Class<?> baseVoClass = findBaseVoClass(beanDescription.getBeanClass());
-		if (baseVoClass == null) {
-			return;
-		}
-
-		BeanDescription baseVoBeanDesc = ctxt.getConfig().introspect(ctxt.constructType(baseVoClass));
-		Set<String> baseVoFields = baseVoBeanDesc.findProperties().stream()
-				.map(BeanPropertyDefinition::getName)
-				.collect(Collectors.toSet());
-
-		List<String> forbiddenFields = upb.getUnknownProperties().keySet().stream()
-				.filter(baseVoFields::contains)
-				.toList();
-
-		if (!forbiddenFields.isEmpty()) {
-			String entityName = beanDescription.getBeanClass().getSimpleName();
-			String errorMessage = String.format(
-				"Invalid request for '%s': The following fields are server-generated and cannot be set: %s",
-				entityName,
-				String.join(", ", forbiddenFields)
-			);
-			log.error(errorMessage);
-			throw new SchemaValidationException(List.of(errorMessage), errorMessage);
-		}
 	}
 
 	private void validateWithSchema(Object theSchema, String jsonString, DeserializationContext ctxt) {
@@ -127,7 +86,9 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 			SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
 			SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
 			JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(schemaAddress), schemaValidatorsConfig);
-			checkForExplicitFieldOverrides(schema, ctxt);
+			if (schemaValidationEnabled) {
+				checkForExplicitFieldOverrides(schema, ctxt);
+			}
 			Set<ValidationMessage> assertions = schema.validate(jsonString, InputFormat.JSON, executionContext -> {
 				executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
 			});
@@ -153,18 +114,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 				.map(BeanPropertyDefinition::getName)
 				.collect(Collectors.toCollection(HashSet::new));
 
-		// For CreateVO/UpdateVO, also include the base VO's Jackson property names
-		Class<?> baseVoClass = findBaseVoClass(beanDescription.getBeanClass());
-		if (baseVoClass != null) {
-			BeanDescription baseVoBeanDesc = ctxt.getConfig().introspect(ctxt.constructType(baseVoClass));
-			Set<String> baseVoProperties = baseVoBeanDesc.findProperties().stream()
-					.map(BeanPropertyDefinition::getName)
-					.collect(Collectors.toSet());
-			existingProperties.addAll(baseVoProperties);
-			log.debug("Added Jackson properties from base VO class {}: {}", baseVoClass.getSimpleName(), baseVoProperties);
-		}
-
-		log.debug("Final existing properties found in {}: {}", beanDescription.getBeanClass().getSimpleName(), existingProperties);
+		log.debug("Existing properties found in {}: {}", beanDescription.getBeanClass().getSimpleName(), existingProperties);
 
 		// Collect all schema-defined properties from all possible locations (deep traversal)
 		Set<String> schemaProperties = new HashSet<>();
@@ -272,32 +222,6 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		}
 
 		return current;
-	}
-
-	/**
-	 * Finds the corresponding base VO class for VOs.
-	 */
-	private Class<?> findBaseVoClass(Class<?> voClass) {
-		String className = voClass.getName();
-		String baseClassName = null;
-
-		if (className.endsWith("CreateVO")) {
-			baseClassName = className.substring(0, className.length() - "CreateVO".length()) + "VO";
-		} else if (className.endsWith("UpdateVO")) {
-			baseClassName = className.substring(0, className.length() - "UpdateVO".length()) + "VO";
-		}
-
-		if (baseClassName != null) {
-			try {
-				Class<?> baseClass = Class.forName(baseClassName);
-				log.debug("Found base VO class {} for {}", baseClass.getSimpleName(), voClass.getSimpleName());
-				return baseClass;
-			} catch (ClassNotFoundException e) {
-				log.debug("No base VO class found for {} (tried {})", voClass.getSimpleName(), baseClassName);
-			}
-		}
-
-		return null;
 	}
 
 }

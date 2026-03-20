@@ -49,24 +49,6 @@ class ValidatingDeserializerTest {
 		}
 	}
 
-	/**
-	 * Simulates a CreateVO whose base VO (TestVO) is resolved via findBaseVoClass().
-	 * It has @schemaLocation but not all the fields from TestVO (e.g. "name" is server-generated).
-	 */
-	static class TestCreateVO extends UnknownPreservingBase {
-		@JsonProperty("@schemaLocation")
-		private URI atSchemaLocation;
-
-		@Override
-		public URI getAtSchemaLocation() {
-			return atSchemaLocation;
-		}
-
-		public void setAtSchemaLocation(URI atSchemaLocation) {
-			this.atSchemaLocation = atSchemaLocation;
-		}
-	}
-
 	@BeforeEach
 	void setUp() {
 		objectMapper = new ObjectMapper();
@@ -76,7 +58,7 @@ class ValidatingDeserializerTest {
 			public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,
 														  BeanDescription beanDescription,
 														  JsonDeserializer<?> originalDeserializer) {
-				return new ValidatingDeserializer(originalDeserializer, beanDescription);
+				return new ValidatingDeserializer(originalDeserializer, beanDescription, true);
 			}
 		});
 		objectMapper.registerModule(module);
@@ -138,18 +120,4 @@ class ValidatingDeserializerTest {
 				"A schema overriding 'name' inside an 'allOf' block must be rejected via deep traversal");
 	}
 
-	/**
-	 * For a CreateVO, findBaseVoClass() resolves TestCreateVO -> TestVO.
-	 * A schema that defines "name" (which is a Jackson property of TestVO, not TestCreateVO)
-	 * must still be rejected because the base VO properties are included in the check.
-	 */
-	@Test
-	void schemaOverridingBaseVoPropertyFromCreateVoShouldBeRejected() {
-		String json = """
-				{"@schemaLocation":"classpath:schema/override-base-vo-property.json","customField":"value"}
-				""";
-		assertThrows(SchemaValidationException.class,
-				() -> objectMapper.readValue(json, TestCreateVO.class),
-				"A schema overriding 'name' (a Jackson property of the base TestVO) must be rejected when deserializing TestCreateVO");
-	}
 }
