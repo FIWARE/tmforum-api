@@ -31,7 +31,7 @@ public class CompositeEventMapper implements EventMapper {
 	public Object mapPayload(Object rawPayload, Class<?> targetClass) {
 		return moduleEventMappers.stream()
 				.filter(m -> m.getEntityClassMapping().values().stream()
-						.anyMatch(em -> em.targetClass().equals(targetClass)))
+						.anyMatch(em -> em.rawClass().equals(targetClass)))
 				.findFirst()
 				.orElseThrow(() -> new TmForumException(
 						String.format("No EventMapper found for class %s", targetClass.getName()),
