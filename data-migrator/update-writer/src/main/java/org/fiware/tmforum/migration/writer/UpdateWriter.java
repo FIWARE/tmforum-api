@@ -1,17 +1,13 @@
 package org.fiware.tmforum.migration.writer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.AdditionalPropertyListVO;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.mapping.ObjectMapperEventListener;
 
 import java.util.Collections;
 
