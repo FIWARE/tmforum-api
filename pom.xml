@@ -46,6 +46,7 @@
         <module>resource-inventory</module>
         <module>resource-order-management</module>
         <module>service-order-management</module>
+        <module>software-management</module>
         <module>service-catalog</module>
         <module>customer-management</module>
         <module>customer-bill-management</module>
