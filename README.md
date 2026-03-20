@@ -179,6 +179,6 @@ Notes:
 
 ## Release notes
 
-|Version| Notes link|
-|------|------|
-|
+|Version| Notes link                                                                                 |
+|------|--------------------------------------------------------------------------------------------|
+| 1.5.0 | [Add TMF652, TMF641, TMF730](./release-notes/RELEASE_NOTES_ADD_NEW_TMFORUM_API_MODULES.md) |
