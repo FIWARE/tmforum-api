@@ -49,7 +49,9 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
 		if (targetObject instanceof UnknownPreservingBase upb) {
 			if (upb.getAtSchemaLocation() != null) {
-				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString());
+				String unknownPropsJson = new com.fasterxml.jackson.databind.ObjectMapper()
+						.writeValueAsString(upb.getUnknownProperties());
+				validateWithSchema(upb.getAtSchemaLocation(), unknownPropsJson);
 			} else if (upb.getUnknownProperties() != null && !upb.getUnknownProperties().isEmpty()) {
 				throw new SchemaValidationException(List.of(), "If no schema is provided, no additional properties are allowed.");
 			}
