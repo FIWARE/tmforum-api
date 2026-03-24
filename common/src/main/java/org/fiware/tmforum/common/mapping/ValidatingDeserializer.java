@@ -25,6 +25,7 @@ import java.util.Set;
  */
 @Slf4j
 public class ValidatingDeserializer extends DelegatingDeserializer {
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	private final BeanDescription beanDescription;
 
 	public ValidatingDeserializer(JsonDeserializer<?> d, BeanDescription beanDescription) {
@@ -35,7 +36,6 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	@Override
 	protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> newDelegatee) {
 		return new ValidatingDeserializer(newDelegatee, beanDescription);
-
 	}
 
 	@Override
@@ -49,8 +49,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
 		if (targetObject instanceof UnknownPreservingBase upb) {
 			if (upb.getAtSchemaLocation() != null) {
-				String unknownPropsJson = new com.fasterxml.jackson.databind.ObjectMapper()
-						.writeValueAsString(upb.getUnknownProperties());
+				String unknownPropsJson = OBJECT_MAPPER.writeValueAsString(upb.getUnknownProperties());
 				validateWithSchema(upb.getAtSchemaLocation(), unknownPropsJson);
 			} else if (upb.getUnknownProperties() != null && !upb.getUnknownProperties().isEmpty()) {
 				throw new SchemaValidationException(List.of(), "If no schema is provided, no additional properties are allowed.");
