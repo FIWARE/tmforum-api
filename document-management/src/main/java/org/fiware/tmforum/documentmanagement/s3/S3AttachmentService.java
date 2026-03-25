@@ -14,6 +14,9 @@ import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Base64;
@@ -90,42 +93,46 @@ public class S3AttachmentService {
         }
     }
 
-    public List<AttachmentRefOrValue> offloadAttachments(List<AttachmentRefOrValue> attachments, String entityId) {
+    public Mono<List<AttachmentRefOrValue>> offloadAttachments(List<AttachmentRefOrValue> attachments, String entityId) {
         if (attachments == null || attachments.isEmpty()) {
-            return attachments;
+            return Mono.justOrEmpty(attachments);
         }
 
-        return attachments.stream()
-                .map(att -> processAttachmentForOffload(att, entityId))
-                .collect(Collectors.toList());
+        return Mono.fromCallable(() -> attachments.stream()
+                        .map(att -> processAttachmentForOffload(att, entityId))
+                        .collect(Collectors.toList()))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public List<AttachmentRefOrValue> hydrateAttachments(List<AttachmentRefOrValue> attachments) {
+    public Mono<List<AttachmentRefOrValue>> hydrateAttachments(List<AttachmentRefOrValue> attachments) {
         if (attachments == null || attachments.isEmpty()) {
-            return attachments;
+            return Mono.justOrEmpty(attachments);
         }
 
-        return attachments.stream()
-                .map(this::hydrateAttachment)
-                .collect(Collectors.toList());
+        return Mono.fromCallable(() -> attachments.stream()
+                        .map(this::hydrateAttachment)
+                        .collect(Collectors.toList()))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public void deleteAttachments(List<AttachmentRefOrValue> attachments) {
+    public Mono<Void> deleteAttachments(List<AttachmentRefOrValue> attachments) {
         if (attachments == null || attachments.isEmpty()) {
-            return;
+            return Mono.empty();
         }
 
-        attachments.stream()
-                .map(AttachmentRefOrValue::getContent)
-                .filter(S3RetrievalInfo::isS3RetrievalInfo)
-                .map(S3RetrievalInfo::fromBase64)
-                .forEach(info -> {
-                    try {
-                        deleteFromS3(info.getKey());
-                    } catch (Exception e) {
-                        log.warn("Failed to delete S3 object {}: {}", info.getKey(), e.getMessage());
-                    }
-                });
+        return Mono.fromRunnable(() -> attachments.stream()
+                        .map(AttachmentRefOrValue::getContent)
+                        .filter(S3RetrievalInfo::isS3RetrievalInfo)
+                        .map(S3RetrievalInfo::fromBase64)
+                        .forEach(info -> {
+                            try {
+                                deleteFromS3(info.getKey());
+                            } catch (Exception e) {
+                                log.warn("Failed to delete S3 object {}: {}", info.getKey(), e.getMessage());
+                            }
+                        }))
+                .subscribeOn(Schedulers.boundedElastic())
+                .then();
     }
 
     private AttachmentRefOrValue processAttachmentForOffload(AttachmentRefOrValue attachment, String entityId) {

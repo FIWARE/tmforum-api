@@ -68,24 +68,29 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
 
         docSpec.setLastUpdate(clock.instant());
 
-        if (s3AttachmentService != null) {
-            if (docSpec.getAttachment() != null) {
+        if (docSpec.getAttachment() != null) {
+            if (s3AttachmentService != null) {
                 docSpec.getAttachment().forEach(s3AttachmentService::validateAttachmentContent);
+            } else {
+                docSpec.getAttachment().stream()
+                        .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
+                        .findFirst()
+                        .ifPresent(att -> {
+                            throw new TmForumException(
+                                    "Attachments with inline content are not supported when no S3 storage is configured. Provide a URL reference instead.",
+                                    TmForumExceptionReason.INVALID_DATA);
+                        });
             }
-            docSpec.setAttachment(
-                    s3AttachmentService.offloadAttachments(docSpec.getAttachment(), docSpec.getId().toString()));
-        } else if (docSpec.getAttachment() != null) {
-            docSpec.getAttachment().stream()
-                    .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
-                    .findFirst()
-                    .ifPresent(att -> {
-                        throw new TmForumException(
-                                "Attachments with inline content are not supported when no S3 storage is configured. Provide a URL reference instead.",
-                                TmForumExceptionReason.INVALID_DATA);
-                    });
         }
 
-        return create(getCheckingMono(docSpec), DocumentSpecification.class)
+        Mono<DocumentSpecification> preparedSpec = s3AttachmentService != null
+                ? s3AttachmentService.offloadAttachments(docSpec.getAttachment(), docSpec.getId().toString())
+                        .doOnNext(docSpec::setAttachment)
+                        .thenReturn(docSpec)
+                : Mono.just(docSpec);
+
+        return preparedSpec
+                .flatMap(spec -> create(getCheckingMono(spec), DocumentSpecification.class))
                 .map(tmForumMapper::map)
                 .map(HttpResponse::created);
     }
@@ -100,12 +105,12 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
 
         // First retrieve to get attachment info for S3 cleanup
         return retrieve(id, DocumentSpecification.class)
-                .doOnNext(docSpec -> {
-                    if (s3AttachmentService != null) {
-                        s3AttachmentService.deleteAttachments(docSpec.getAttachment());
-                    }
+                .flatMap(docSpec -> {
+                    Mono<Void> deletionStep = s3AttachmentService != null
+                            ? s3AttachmentService.deleteAttachments(docSpec.getAttachment())
+                            : Mono.empty();
+                    return deletionStep.then(delete(id));
                 })
-                .flatMap(docSpec -> delete(id))
                 .switchIfEmpty(Mono.defer(() -> delete(id)));
     }
 
@@ -145,11 +150,13 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
                 .switchIfEmpty(Mono.error(new TmForumException(
                         "No such document specification exists.",
                         TmForumExceptionReason.NOT_FOUND)))
-                .map(docSpec -> {
+                .flatMap(docSpec -> {
                     if (s3AttachmentService != null) {
-                        docSpec.setAttachment(s3AttachmentService.hydrateAttachments(docSpec.getAttachment()));
+                        return s3AttachmentService.hydrateAttachments(docSpec.getAttachment())
+                                .doOnNext(docSpec::setAttachment)
+                                .thenReturn(docSpec);
                     }
-                    return docSpec;
+                    return Mono.just(docSpec);
                 })
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
