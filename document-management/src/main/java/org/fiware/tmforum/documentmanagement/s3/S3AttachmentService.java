@@ -43,6 +43,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class S3AttachmentService implements AttachmentService {
 
+    private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
+    private static final int PRESIGNED_URL_EXPIRY_SECONDS = 3600;
+
     private MinioClient minioClient;
     private final S3Configuration config;
 
@@ -208,7 +211,7 @@ public class S3AttachmentService implements AttachmentService {
                             .method(Method.GET)
                             .bucket(config.getBucket())
                             .object(key)
-                            .expiry(3600)
+                            .expiry(PRESIGNED_URL_EXPIRY_SECONDS)
                             .build());
             AttachmentRefOrValue resolved = copyAttachment(attachment);
             resolved.setUrl(new URL(presignedUrl));
@@ -246,7 +249,7 @@ public class S3AttachmentService implements AttachmentService {
         try {
             ensureBucketExists();
 
-            String contentType = mimeType != null ? mimeType : "application/octet-stream";
+            String contentType = mimeType != null ? mimeType : DEFAULT_CONTENT_TYPE;
 
             minioClient.putObject(
                     PutObjectArgs.builder()
