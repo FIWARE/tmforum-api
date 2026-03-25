@@ -39,14 +39,14 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 		}
 
 		SimpleModule deserializerModule = new SimpleModule();
-		boolean schemaValidationEnabled = Boolean.TRUE.equals(generalProperties.getValidateSchemaOverride());
+		boolean validateSchemaOverride = generalProperties.getValidateSchemaOverride();
 		// inject the schema validator for atSchemaLocation handling
 		deserializerModule.setDeserializerModifier(new BeanDeserializerModifier() {
 			@Override
 			public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,
 														  BeanDescription beanDescription,
 														  JsonDeserializer<?> originalDeserializer) {
-				return new ValidatingDeserializer(originalDeserializer, beanDescription, schemaValidationEnabled);
+				return new ValidatingDeserializer(originalDeserializer, beanDescription, validateSchemaOverride);
 			}
 		});
 		objectMapper.registerModule(deserializerModule);
