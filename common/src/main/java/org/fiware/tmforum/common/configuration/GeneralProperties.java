@@ -62,4 +62,10 @@ public class GeneralProperties {
 	 * false: entity[attribute][subAttribute]
 	 */
 	private Boolean useDotSeperator=true;
+
+	/**
+	 * Whether to validate that an @schemaLocation schema does not override existing entity properties.
+	 * Disabled by default due to the performance overhead of the check.
+	 */
+	private Boolean validateSchemaOverride = false;
 }

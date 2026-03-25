@@ -13,12 +13,15 @@ import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.model.*;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 
 import javax.inject.Singleton;
 
 @Singleton
 @RequiredArgsConstructor
 public class ObjectMapperEventListener implements BeanCreatedEventListener<ObjectMapper> {
+
+	private final GeneralProperties generalProperties;
 
 	@Override
 	public ObjectMapper onCreated(BeanCreatedEvent<ObjectMapper> event) {
@@ -36,17 +39,18 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 		}
 
 		SimpleModule deserializerModule = new SimpleModule();
+		boolean validateSchemaOverride = generalProperties.getValidateSchemaOverride();
 		// inject the schema validator for atSchemaLocation handling
 		deserializerModule.setDeserializerModifier(new BeanDeserializerModifier() {
 			@Override
 			public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,
 														  BeanDescription beanDescription,
 														  JsonDeserializer<?> originalDeserializer) {
-				return new ValidatingDeserializer(originalDeserializer, beanDescription);
+				return new ValidatingDeserializer(originalDeserializer, beanDescription, validateSchemaOverride);
 			}
 		});
-
 		objectMapper.registerModule(deserializerModule);
+
 		return objectMapper;
 	}
 }
