@@ -4,18 +4,32 @@ import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.documentmanagement.s3.S3AttachmentService;
 import org.fiware.tmforum.documentmanagement.s3.S3Configuration;
-import org.fiware.tmforum.documentmanagement.s3.S3RetrievalInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class S3AttachmentServiceTest {
 
+    /**
+     * Subclass that skips the MinIO @PostConstruct initialisation so the service
+     * can be unit-tested without a running S3 endpoint.
+     */
+    private static class TestableS3AttachmentService extends S3AttachmentService {
+        TestableS3AttachmentService(S3Configuration config) {
+            super(config);
+        }
+
+        @Override
+        public void init() {
+            // skip MinIO connection for unit tests
+        }
+    }
+
     private S3Configuration config;
+    private S3AttachmentService service;
 
     @BeforeEach
     void setUp() {
@@ -24,102 +38,54 @@ class S3AttachmentServiceTest {
         config.setAccessKey("minioadmin");
         config.setSecretKey("minioadmin");
         config.setBucket("test-bucket");
-        config.setMaxContentSize(1024 * 1024); // 1MB for tests
+        config.setMaxContentSize(1024 * 1024); // 1 MB for tests
+
+        service = new TestableS3AttachmentService(config);
     }
 
     @Test
-    void testS3RetrievalInfoSerialization() {
-        S3RetrievalInfo info = new S3RetrievalInfo(
-                "test-bucket",
-                "entity-123/uuid-file.txt",
-                1024,
-                "text/plain",
-                "file.txt"
-        );
-
-        String encoded = info.toBase64();
-        assertNotNull(encoded);
-        assertTrue(encoded.startsWith("s3ref:"));
-
-        S3RetrievalInfo decoded = S3RetrievalInfo.fromBase64(encoded);
-        assertEquals(info.getBucket(), decoded.getBucket());
-        assertEquals(info.getKey(), decoded.getKey());
-        assertEquals(info.getSize(), decoded.getSize());
-        assertEquals(info.getMimeType(), decoded.getMimeType());
-        assertEquals(info.getOriginalName(), decoded.getOriginalName());
-    }
-
-    @Test
-    void testIsS3RetrievalInfo() {
-        S3RetrievalInfo info = new S3RetrievalInfo(
-                "bucket",
-                "key",
-                100,
-                "text/plain",
-                "file.txt"
-        );
-
-        String encoded = info.toBase64();
-        assertTrue(S3RetrievalInfo.isS3RetrievalInfo(encoded));
-
-        // Regular base64 content should not be detected as S3 info
-        String regularBase64 = Base64.getEncoder().encodeToString("Hello World".getBytes());
-        assertFalse(S3RetrievalInfo.isS3RetrievalInfo(regularBase64));
-
-        // Null and empty should return false
-        assertFalse(S3RetrievalInfo.isS3RetrievalInfo(null));
-        assertFalse(S3RetrievalInfo.isS3RetrievalInfo(""));
-    }
-
-    @Test
-    void testAttachmentWithNullContent() {
-        // Create a mock service that doesn't actually connect to MinIO
-        // Just test the logic around null handling
+    void validateAttachmentContent_nullContent_doesNotThrow() {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
-        attachment.setName("test.txt");
-        attachment.setMimeType("text/plain");
         attachment.setContent(null);
-
-        List<AttachmentRefOrValue> attachments = List.of(attachment);
-
-        // The service will skip null content attachments
-        // This is a logic test, not an integration test
-        assertNotNull(attachments);
-        assertNull(attachments.get(0).getContent());
+        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment));
     }
 
     @Test
-    void testAttachmentWithEmptyContent() {
+    void validateAttachmentContent_emptyContent_doesNotThrow() {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
-        attachment.setName("test.txt");
-        attachment.setMimeType("text/plain");
         attachment.setContent("");
-
-        assertNotNull(attachment);
-        assertEquals("", attachment.getContent());
+        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment));
     }
 
     @Test
-    void testS3RetrievalInfoWithSpecialCharacters() {
-        S3RetrievalInfo info = new S3RetrievalInfo(
-                "test-bucket",
-                "entity/special chars!@#$%^&().txt",
-                2048,
-                "application/octet-stream",
-                "special chars!@#$%^&().txt"
-        );
+    void validateAttachmentContent_validBase64WithinLimit_doesNotThrow() {
+        String content = Base64.getEncoder().encodeToString("Hello World".getBytes());
+        AttachmentRefOrValue attachment = new AttachmentRefOrValue();
+        attachment.setContent(content);
+        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment));
+    }
 
-        String encoded = info.toBase64();
-        S3RetrievalInfo decoded = S3RetrievalInfo.fromBase64(encoded);
+    @Test
+    void validateAttachmentContent_invalidBase64_throwsTmForumException() {
+        AttachmentRefOrValue attachment = new AttachmentRefOrValue();
+        attachment.setContent("this is not valid base64!!!");
+        assertThrows(TmForumException.class, () -> service.validateAttachmentContent(attachment));
+    }
 
-        assertEquals(info.getOriginalName(), decoded.getOriginalName());
-        assertEquals(info.getKey(), decoded.getKey());
+    @Test
+    void validateAttachmentContent_contentExceedsMaxSize_throwsTmForumException() {
+        config.setMaxContentSize(4); // 4 bytes max
+        byte[] oversized = new byte[10];
+        String content = Base64.getEncoder().encodeToString(oversized);
+        AttachmentRefOrValue attachment = new AttachmentRefOrValue();
+        attachment.setContent(content);
+        assertThrows(TmForumException.class, () -> service.validateAttachmentContent(attachment));
     }
 
     @Test
     void testS3ConfigurationDefaults() {
         S3Configuration defaultConfig = new S3Configuration();
-
+        assertFalse(defaultConfig.isEnabled());
         assertEquals("http://localhost:9000", defaultConfig.getEndpoint());
         assertEquals("minioadmin", defaultConfig.getAccessKey());
         assertEquals("minioadmin", defaultConfig.getSecretKey());

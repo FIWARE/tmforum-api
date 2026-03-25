@@ -9,6 +9,7 @@ import org.fiware.document.api.DocumentSpecificationApiTestClient;
 import org.fiware.document.api.DocumentSpecificationApiTestSpec;
 import org.fiware.document.model.AttachmentRefOrValueVO;
 import org.fiware.document.model.DocumentSpecificationCreateVO;
+import org.fiware.document.model.DocumentSpecificationStatusTypeVO;
 import org.fiware.document.model.DocumentSpecificationVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -99,7 +100,7 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
 
         DocumentSpecificationCreateVO withLifecycleVO = new DocumentSpecificationCreateVO();
         withLifecycleVO.setName("Document with Lifecycle");
-        withLifecycleVO.setLifecycleStatus("approved");
+        withLifecycleVO.setLifecycleStatus(DocumentSpecificationStatusTypeVO.APPROVED);
         DocumentSpecificationVO lifecycleExpected = new DocumentSpecificationVO();
         lifecycleExpected.setName("Document with Lifecycle");
         testEntries.add(Arguments.of("A document specification with lifecycle status should be created.", withLifecycleVO, lifecycleExpected));

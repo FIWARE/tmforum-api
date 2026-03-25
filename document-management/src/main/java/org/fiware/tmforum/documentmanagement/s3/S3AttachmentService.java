@@ -13,6 +13,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+import org.fiware.tmforum.common.domain.Quantity;
+import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 
@@ -290,8 +292,18 @@ public class S3AttachmentService implements AttachmentService {
         copy.setDescription(source.getDescription());
         copy.setMimeType(source.getMimeType());
         copy.setUrl(source.getUrl());
-        copy.setSize(source.getSize());
-        copy.setValidFor(source.getValidFor());
+        if (source.getSize() != null) {
+            Quantity sizeCopy = new Quantity();
+            sizeCopy.setAmount(source.getSize().getAmount());
+            sizeCopy.setUnits(source.getSize().getUnits());
+            copy.setSize(sizeCopy);
+        }
+        if (source.getValidFor() != null) {
+            TimePeriod validForCopy = new TimePeriod();
+            validForCopy.setStartDateTime(source.getValidFor().getStartDateTime());
+            validForCopy.setEndDateTime(source.getValidFor().getEndDateTime());
+            copy.setValidFor(validForCopy);
+        }
         copy.setName(source.getName());
         copy.setAtReferredType(source.getAtReferredType());
         return copy;
