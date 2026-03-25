@@ -1,6 +1,7 @@
 package org.fiware.tmforum.documentmanagement.s3;
 
 import io.micronaut.context.annotation.Requires;
+import org.fiware.tmforum.documentmanagement.AttachmentService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
@@ -24,10 +25,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * {@link AttachmentService} implementation backed by an S3-compatible object store (e.g. MinIO,
+ * AWS S3, IONOS Object Storage).
+ *
+ * <p>Inline base64 attachment content is decoded, validated against the configured size limit,
+ * and uploaded to the configured bucket. The {@code content} field is then replaced with an
+ * opaque, base64-encoded {@link S3RetrievalInfo} token so that the raw bytes are never persisted
+ * in the context broker. On retrieval the token is resolved back to the original content by
+ * downloading from S3.
+ *
+ * <p>This bean is only instantiated when {@code s3.enabled=true} is set. When it is absent the
+ * API falls back to accepting pure URL/href references only.
+ */
 @Singleton
 @Requires(property = "s3.enabled", value = "true")
 @Slf4j
-public class S3AttachmentService {
+public class S3AttachmentService implements AttachmentService {
 
     private MinioClient minioClient;
     private final S3Configuration config;

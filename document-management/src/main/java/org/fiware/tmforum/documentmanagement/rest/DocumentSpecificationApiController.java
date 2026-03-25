@@ -16,9 +16,9 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.documentmanagement.AttachmentService;
 import org.fiware.tmforum.documentmanagement.TMForumMapper;
 import org.fiware.tmforum.documentmanagement.domain.DocumentSpecification;
-import org.fiware.tmforum.documentmanagement.s3.S3AttachmentService;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
@@ -35,7 +35,7 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
     private final TMForumMapper tmForumMapper;
     private final Clock clock;
     @Nullable
-    private final S3AttachmentService s3AttachmentService;
+    private final AttachmentService attachmentService;
 
     public DocumentSpecificationApiController(
             QueryParser queryParser,
@@ -44,11 +44,11 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
             TMForumMapper tmForumMapper,
             Clock clock,
             TMForumEventHandler eventHandler,
-            @Nullable S3AttachmentService s3AttachmentService) {
+            @Nullable AttachmentService attachmentService) {
         super(queryParser, validationService, repository, eventHandler);
         this.tmForumMapper = tmForumMapper;
         this.clock = clock;
-        this.s3AttachmentService = s3AttachmentService;
+        this.attachmentService = attachmentService;
     }
 
     @Override
@@ -69,8 +69,8 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
         docSpec.setLastUpdate(clock.instant());
 
         if (docSpec.getAttachment() != null) {
-            if (s3AttachmentService != null) {
-                docSpec.getAttachment().forEach(s3AttachmentService::validateAttachmentContent);
+            if (attachmentService != null) {
+                docSpec.getAttachment().forEach(attachmentService::validateAttachmentContent);
             } else {
                 docSpec.getAttachment().stream()
                         .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
@@ -83,8 +83,8 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
             }
         }
 
-        Mono<DocumentSpecification> preparedSpec = s3AttachmentService != null
-                ? s3AttachmentService.offloadAttachments(docSpec.getAttachment(), docSpec.getId().toString())
+        Mono<DocumentSpecification> preparedSpec = attachmentService != null
+                ? attachmentService.offloadAttachments(docSpec.getAttachment(), docSpec.getId().toString())
                         .doOnNext(docSpec::setAttachment)
                         .thenReturn(docSpec)
                 : Mono.just(docSpec);
@@ -106,8 +106,8 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
         // First retrieve to get attachment info for S3 cleanup
         return retrieve(id, DocumentSpecification.class)
                 .flatMap(docSpec -> {
-                    Mono<Void> deletionStep = s3AttachmentService != null
-                            ? s3AttachmentService.deleteAttachments(docSpec.getAttachment())
+                    Mono<Void> deletionStep = attachmentService != null
+                            ? attachmentService.deleteAttachments(docSpec.getAttachment())
                             : Mono.empty();
                     return deletionStep.then(delete(id));
                 })
@@ -151,8 +151,8 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
                         "No such document specification exists.",
                         TmForumExceptionReason.NOT_FOUND)))
                 .flatMap(docSpec -> {
-                    if (s3AttachmentService != null) {
-                        return s3AttachmentService.hydrateAttachments(docSpec.getAttachment())
+                    if (attachmentService != null) {
+                        return attachmentService.hydrateAttachments(docSpec.getAttachment())
                                 .doOnNext(docSpec::setAttachment)
                                 .thenReturn(docSpec);
                     }
