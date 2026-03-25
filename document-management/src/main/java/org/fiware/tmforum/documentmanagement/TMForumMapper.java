@@ -9,10 +9,8 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.documentmanagement.domain.DocumentSpecification;
 import org.fiware.tmforum.service.CharacteristicSpecification;
 import org.fiware.tmforum.service.CharacteristicValueSpecification;
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -25,48 +23,16 @@ public abstract class TMForumMapper extends BaseMapper {
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    @Mapping(target = "atSchemaLocation", ignore = true)
     public abstract DocumentSpecificationVO map(DocumentSpecificationCreateVO createVO, URI id);
 
-    @AfterMapping
-    protected void afterMapCreateVO(DocumentSpecificationCreateVO source, @MappingTarget DocumentSpecificationVO target) {
-        if (source != null) {
-            target.setAtSchemaLocation(source.getAtSchemaLocation());
-        }
-    }
-
-    @Mapping(target = "atSchemaLocation", ignore = true)
     public abstract DocumentSpecificationVO map(DocumentSpecification documentSpecification);
 
-    @AfterMapping
-    protected void afterMapEntity(DocumentSpecification source, @MappingTarget DocumentSpecificationVO target) {
-        if (source != null) {
-            target.setAtSchemaLocation(source.getAtSchemaLocation());
-        }
-    }
-
     @Mapping(target = "href", source = "id")
-    @Mapping(target = "atSchemaLocation", ignore = true)
     public abstract DocumentSpecification map(DocumentSpecificationVO documentSpecificationVO);
-
-    @AfterMapping
-    protected void afterMapVO(DocumentSpecificationVO source, @MappingTarget DocumentSpecification target) {
-        if (source != null) {
-            target.setAtSchemaLocation(source.getAtSchemaLocation());
-        }
-    }
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
-    @Mapping(target = "atSchemaLocation", ignore = true)
     public abstract DocumentSpecificationVO map(DocumentSpecificationUpdateVO updateVO, String id);
-
-    @AfterMapping
-    protected void afterMapUpdateVO(DocumentSpecificationUpdateVO source, @MappingTarget DocumentSpecificationVO target) {
-        if (source != null) {
-            target.setAtSchemaLocation(source.getAtSchemaLocation());
-        }
-    }
 
     // CharacteristicSpecification mappings
 
@@ -84,25 +50,9 @@ public abstract class TMForumMapper extends BaseMapper {
 
     // AttachmentRefOrValue mappings
 
-    @Mapping(target = "atSchemaLocation", ignore = true)
     public abstract AttachmentRefOrValue map(AttachmentRefOrValueVO attachmentVO);
 
-    @AfterMapping
-    protected void afterMapAttachmentVO(AttachmentRefOrValueVO source, @MappingTarget AttachmentRefOrValue target) {
-        if (source != null) {
-            target.setAtSchemaLocation(source.getAtSchemaLocation());
-        }
-    }
-
-    @Mapping(target = "atSchemaLocation", ignore = true)
     public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachment);
-
-    @AfterMapping
-    protected void afterMapAttachment(AttachmentRefOrValue source, @MappingTarget AttachmentRefOrValueVO target) {
-        if (source != null) {
-            target.setAtSchemaLocation(source.getAtSchemaLocation());
-        }
-    }
 
     // URL/URI helper methods
 
