@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 public class S3Configuration {
 
+    private boolean enabled = false;
     private String endpoint = "http://localhost:9000";
     private String accessKey = "minioadmin";
     private String secretKey = "minioadmin";

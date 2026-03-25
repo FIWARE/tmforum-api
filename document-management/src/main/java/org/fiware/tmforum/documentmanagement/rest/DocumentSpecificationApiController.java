@@ -34,6 +34,7 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
 
     private final TMForumMapper tmForumMapper;
     private final Clock clock;
+    @Nullable
     private final S3AttachmentService s3AttachmentService;
 
     public DocumentSpecificationApiController(
@@ -43,7 +44,7 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
             TMForumMapper tmForumMapper,
             Clock clock,
             TMForumEventHandler eventHandler,
-            S3AttachmentService s3AttachmentService) {
+            @Nullable S3AttachmentService s3AttachmentService) {
         super(queryParser, validationService, repository, eventHandler);
         this.tmForumMapper = tmForumMapper;
         this.clock = clock;
@@ -67,9 +68,22 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
 
         docSpec.setLastUpdate(clock.instant());
 
-        // Offload attachments to S3
-        docSpec.setAttachment(
-                s3AttachmentService.offloadAttachments(docSpec.getAttachment(), docSpec.getId().toString()));
+        if (s3AttachmentService != null) {
+            if (docSpec.getAttachment() != null) {
+                docSpec.getAttachment().forEach(s3AttachmentService::validateAttachmentContent);
+            }
+            docSpec.setAttachment(
+                    s3AttachmentService.offloadAttachments(docSpec.getAttachment(), docSpec.getId().toString()));
+        } else if (docSpec.getAttachment() != null) {
+            docSpec.getAttachment().stream()
+                    .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
+                    .findFirst()
+                    .ifPresent(att -> {
+                        throw new TmForumException(
+                                "Attachments with inline content are not supported when no S3 storage is configured. Provide a URL reference instead.",
+                                TmForumExceptionReason.INVALID_DATA);
+                    });
+        }
 
         return create(getCheckingMono(docSpec), DocumentSpecification.class)
                 .map(tmForumMapper::map)
@@ -86,7 +100,11 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
 
         // First retrieve to get attachment info for S3 cleanup
         return retrieve(id, DocumentSpecification.class)
-                .doOnNext(docSpec -> s3AttachmentService.deleteAttachments(docSpec.getAttachment()))
+                .doOnNext(docSpec -> {
+                    if (s3AttachmentService != null) {
+                        s3AttachmentService.deleteAttachments(docSpec.getAttachment());
+                    }
+                })
                 .flatMap(docSpec -> delete(id))
                 .switchIfEmpty(Mono.defer(() -> delete(id)));
     }
@@ -128,8 +146,9 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
                         "No such document specification exists.",
                         TmForumExceptionReason.NOT_FOUND)))
                 .map(docSpec -> {
-                    // Hydrate attachments from S3
-                    docSpec.setAttachment(s3AttachmentService.hydrateAttachments(docSpec.getAttachment()));
+                    if (s3AttachmentService != null) {
+                        docSpec.setAttachment(s3AttachmentService.hydrateAttachments(docSpec.getAttachment()));
+                    }
                     return docSpec;
                 })
                 .map(tmForumMapper::map)

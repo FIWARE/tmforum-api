@@ -1,5 +1,6 @@
 package org.fiware.tmforum.documentmanagement.s3;
 
+import io.micronaut.context.annotation.Requires;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Singleton
+@Requires(property = "s3.enabled", value = "true")
 @Slf4j
 public class S3AttachmentService {
 
@@ -66,6 +68,25 @@ public class S3AttachmentService {
             }
         } catch (Exception e) {
             log.warn("Could not ensure bucket exists: {}. Will retry on first upload.", e.getMessage());
+        }
+    }
+
+    public void validateAttachmentContent(AttachmentRefOrValue attachment) {
+        String content = attachment.getContent();
+        if (content == null || content.isEmpty() || S3RetrievalInfo.isS3RetrievalInfo(content)) {
+            return;
+        }
+        byte[] decoded;
+        try {
+            decoded = Base64.getDecoder().decode(content);
+        } catch (IllegalArgumentException e) {
+            throw new TmForumException("Attachment content is not valid base64.", TmForumExceptionReason.INVALID_DATA);
+        }
+        if (decoded.length > config.getMaxContentSize()) {
+            throw new TmForumException(
+                    String.format("Attachment content exceeds maximum size of %d bytes (got %d bytes)",
+                            config.getMaxContentSize(), decoded.length),
+                    TmForumExceptionReason.INVALID_DATA);
         }
     }
 
