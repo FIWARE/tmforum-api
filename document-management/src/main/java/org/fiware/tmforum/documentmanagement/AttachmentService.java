@@ -25,9 +25,10 @@ public interface AttachmentService {
     void validateAttachmentContent(AttachmentRefOrValue attachment);
 
     /**
-     * Offloads inline base64 content from the given attachments to the backing store and
-     * replaces the {@code content} field with an opaque retrieval reference. Attachments that
-     * already hold a reference or that have no content are returned unchanged.
+     * Offloads inline base64 content from the given attachments to the backing store. The
+     * {@code content} field is cleared and the {@code url} field is set to an implementation-
+     * specific internal reference that can later be resolved by {@link #resolveAttachments}.
+     * Attachments that already carry a managed URL or that have no content are returned unchanged.
      *
      * @param attachments list of attachments to process
      * @param entityId    the owning entity's ID, used to namespace stored objects
@@ -36,13 +37,14 @@ public interface AttachmentService {
     Mono<List<AttachmentRefOrValue>> offloadAttachments(List<AttachmentRefOrValue> attachments, String entityId);
 
     /**
-     * Resolves the opaque retrieval references stored in each attachment back to their original
-     * inline base64 content. Attachments without a retrieval reference are returned unchanged.
+     * Resolves the internal storage reference in the {@code url} field of each attachment to an
+     * accessible URL (e.g. a pre-signed download link) and returns a copy with {@code url} updated
+     * accordingly. Attachments whose {@code url} is not managed by this service are returned unchanged.
      *
-     * @param attachments list of attachments to hydrate
-     * @return a {@code Mono} emitting the hydrated list
+     * @param attachments list of attachments to resolve
+     * @return a {@code Mono} emitting the resolved list
      */
-    Mono<List<AttachmentRefOrValue>> hydrateAttachments(List<AttachmentRefOrValue> attachments);
+    Mono<List<AttachmentRefOrValue>> resolveAttachments(List<AttachmentRefOrValue> attachments);
 
     /**
      * Deletes any stored objects that are referenced by the given attachments. Attachments

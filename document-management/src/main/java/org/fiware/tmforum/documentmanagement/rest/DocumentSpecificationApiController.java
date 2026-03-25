@@ -152,7 +152,7 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
                         TmForumExceptionReason.NOT_FOUND)))
                 .flatMap(docSpec -> {
                     if (attachmentService != null) {
-                        return attachmentService.hydrateAttachments(docSpec.getAttachment())
+                        return attachmentService.resolveAttachments(docSpec.getAttachment())
                                 .doOnNext(docSpec::setAttachment)
                                 .thenReturn(docSpec);
                     }

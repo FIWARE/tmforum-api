@@ -3,11 +3,12 @@ package org.fiware.tmforum.documentmanagement.s3;
 import io.micronaut.context.annotation.Requires;
 import org.fiware.tmforum.documentmanagement.AttachmentService;
 import io.minio.BucketExistsArgs;
-import io.minio.GetObjectArgs;
+import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.net.URL;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -30,10 +31,9 @@ import java.util.stream.Collectors;
  * AWS S3, IONOS Object Storage).
  *
  * <p>Inline base64 attachment content is decoded, validated against the configured size limit,
- * and uploaded to the configured bucket. The {@code content} field is then replaced with an
- * opaque, base64-encoded {@link S3RetrievalInfo} token so that the raw bytes are never persisted
- * in the context broker. On retrieval the token is resolved back to the original content by
- * downloading from S3.
+ * and uploaded to the configured bucket. The {@code content} field is cleared and the {@code url}
+ * field is set to an internal S3 path ({@code endpoint/bucket/key}). On retrieval the internal path
+ * is resolved to a pre-signed download URL so the raw bytes are never persisted in the context broker.
  *
  * <p>This bean is only instantiated when {@code s3.enabled=true} is set. When it is absent the
  * API falls back to accepting pure URL/href references only.
@@ -50,6 +50,12 @@ public class S3AttachmentService implements AttachmentService {
         this.config = config;
     }
 
+    /**
+     * Initialises the MinIO client from configuration and ensures the target bucket exists.
+     * Called automatically by the Micronaut container after dependency injection.
+     *
+     * @throws RuntimeException if the MinIO client cannot be created
+     */
     @PostConstruct
     public void init() {
         log.info("Initializing S3AttachmentService:");
@@ -88,9 +94,11 @@ public class S3AttachmentService implements AttachmentService {
         }
     }
 
+    /** {@inheritDoc} */
+    @Override
     public void validateAttachmentContent(AttachmentRefOrValue attachment) {
         String content = attachment.getContent();
-        if (content == null || content.isEmpty() || S3RetrievalInfo.isS3RetrievalInfo(content)) {
+        if (content == null || content.isEmpty()) {
             return;
         }
         byte[] decoded;
@@ -107,6 +115,8 @@ public class S3AttachmentService implements AttachmentService {
         }
     }
 
+    /** {@inheritDoc} */
+    @Override
     public Mono<List<AttachmentRefOrValue>> offloadAttachments(List<AttachmentRefOrValue> attachments, String entityId) {
         if (attachments == null || attachments.isEmpty()) {
             return Mono.justOrEmpty(attachments);
@@ -118,31 +128,35 @@ public class S3AttachmentService implements AttachmentService {
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Mono<List<AttachmentRefOrValue>> hydrateAttachments(List<AttachmentRefOrValue> attachments) {
+    /** {@inheritDoc} */
+    @Override
+    public Mono<List<AttachmentRefOrValue>> resolveAttachments(List<AttachmentRefOrValue> attachments) {
         if (attachments == null || attachments.isEmpty()) {
             return Mono.justOrEmpty(attachments);
         }
 
         return Mono.fromCallable(() -> attachments.stream()
-                        .map(this::hydrateAttachment)
+                        .map(this::resolveAttachment)
                         .collect(Collectors.toList()))
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
+    /** {@inheritDoc} */
+    @Override
     public Mono<Void> deleteAttachments(List<AttachmentRefOrValue> attachments) {
         if (attachments == null || attachments.isEmpty()) {
             return Mono.empty();
         }
 
         return Mono.fromRunnable(() -> attachments.stream()
-                        .map(AttachmentRefOrValue::getContent)
-                        .filter(S3RetrievalInfo::isS3RetrievalInfo)
-                        .map(S3RetrievalInfo::fromBase64)
-                        .forEach(info -> {
+                        .map(AttachmentRefOrValue::getUrl)
+                        .filter(this::isManagedUrl)
+                        .map(this::extractKey)
+                        .forEach(key -> {
                             try {
-                                deleteFromS3(info.getKey());
+                                deleteFromS3(key);
                             } catch (Exception e) {
-                                log.warn("Failed to delete S3 object {}: {}", info.getKey(), e.getMessage());
+                                log.warn("Failed to delete S3 object {}: {}", key, e.getMessage());
                             }
                         }))
                 .subscribeOn(Schedulers.boundedElastic())
@@ -155,66 +169,67 @@ public class S3AttachmentService implements AttachmentService {
             return attachment;
         }
 
-        // Skip if already S3 reference
-        if (S3RetrievalInfo.isS3RetrievalInfo(content)) {
+        // Skip if this attachment already has a managed URL
+        if (isManagedUrl(attachment.getUrl())) {
             return attachment;
         }
 
-        // Decode base64 content
         byte[] decoded;
         try {
             decoded = Base64.getDecoder().decode(content);
         } catch (IllegalArgumentException e) {
-            log.warn("Content is not valid base64, storing as-is");
+            log.warn("Content is not valid base64, skipping offload");
             return attachment;
         }
 
-        // Check size limit
-        if (decoded.length > config.getMaxContentSize()) {
-            throw new TmForumException(
-                    String.format("Attachment content exceeds maximum size of %d bytes (got %d bytes)",
-                            config.getMaxContentSize(), decoded.length),
-                    TmForumExceptionReason.INVALID_DATA);
-        }
-
-        // Generate key
         String key = generateKey(entityId, attachment);
-
-        // Upload to S3
         uploadToS3(key, decoded, attachment.getMimeType());
 
-        // Create retrieval info
-        S3RetrievalInfo info = new S3RetrievalInfo(
-                config.getBucket(),
-                key,
-                decoded.length,
-                attachment.getMimeType(),
-                attachment.getName()
-        );
-
-        // Return modified attachment with retrieval info
         AttachmentRefOrValue modified = copyAttachment(attachment);
-        modified.setContent(info.toBase64());
+        modified.setContent(null);
+        try {
+            modified.setUrl(new URL(config.getEndpoint() + "/" + config.getBucket() + "/" + key));
+        } catch (Exception e) {
+            throw new TmForumException("Failed to construct S3 URL for attachment: " + e.getMessage(),
+                    TmForumExceptionReason.INVALID_DATA);
+        }
         return modified;
     }
 
-    private AttachmentRefOrValue hydrateAttachment(AttachmentRefOrValue attachment) {
-        String content = attachment.getContent();
-        if (content == null || !S3RetrievalInfo.isS3RetrievalInfo(content)) {
+    private AttachmentRefOrValue resolveAttachment(AttachmentRefOrValue attachment) {
+        if (!isManagedUrl(attachment.getUrl())) {
             return attachment;
         }
 
         try {
-            S3RetrievalInfo info = S3RetrievalInfo.fromBase64(content);
-            byte[] fileContent = downloadFromS3(info.getKey());
-
-            AttachmentRefOrValue hydrated = copyAttachment(attachment);
-            hydrated.setContent(Base64.getEncoder().encodeToString(fileContent));
-            return hydrated;
+            String key = extractKey(attachment.getUrl());
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(config.getBucket())
+                            .object(key)
+                            .expiry(3600)
+                            .build());
+            AttachmentRefOrValue resolved = copyAttachment(attachment);
+            resolved.setUrl(new URL(presignedUrl));
+            return resolved;
         } catch (Exception e) {
-            log.error("Failed to hydrate attachment from S3: {}", e.getMessage());
+            log.error("Failed to resolve attachment URL from S3: {}", e.getMessage());
             return attachment;
         }
+    }
+
+    private boolean isManagedUrl(URL url) {
+        if (url == null) {
+            return false;
+        }
+        String prefix = config.getEndpoint() + "/" + config.getBucket() + "/";
+        return url.toString().startsWith(prefix);
+    }
+
+    private String extractKey(URL url) {
+        String prefix = config.getEndpoint() + "/" + config.getBucket() + "/";
+        return url.toString().substring(prefix.length());
     }
 
     private String generateKey(String entityId, AttachmentRefOrValue attachment) {
@@ -246,20 +261,6 @@ public class S3AttachmentService implements AttachmentService {
             throw new TmForumException(
                     "Failed to upload attachment to S3: " + e.getMessage(),
                     TmForumExceptionReason.INVALID_DATA);
-        }
-    }
-
-    private byte[] downloadFromS3(String key) {
-        try (InputStream stream = minioClient.getObject(
-                GetObjectArgs.builder()
-                        .bucket(config.getBucket())
-                        .object(key)
-                        .build())) {
-            return stream.readAllBytes();
-        } catch (Exception e) {
-            throw new TmForumException(
-                    "Failed to download attachment from S3: " + e.getMessage(),
-                    TmForumExceptionReason.NOT_FOUND);
         }
     }
 
