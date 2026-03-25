@@ -159,7 +159,7 @@ public class S3AttachmentService implements AttachmentService {
                             try {
                                 deleteFromS3(key);
                             } catch (Exception e) {
-                                log.warn("Failed to delete S3 object {}: {}", key, e.getMessage());
+                                log.warn("Failed to delete S3 object {}", key, e);
                             }
                         }))
                 .subscribeOn(Schedulers.boundedElastic())
@@ -277,7 +277,7 @@ public class S3AttachmentService implements AttachmentService {
             );
             log.debug("Deleted from S3: {}/{}", config.getBucket(), key);
         } catch (Exception e) {
-            log.warn("Failed to delete S3 object {}: {}", key, e.getMessage());
+            log.warn("Failed to delete S3 object {}", key, e);
         }
     }
 
