@@ -173,6 +173,9 @@
                                 <source>${project.parent.basedir}/resource-catalog/src/main/java</source>
                                 <source>${project.parent.basedir}/resource-function-activation/src/main/java</source>
                                 <source>${project.parent.basedir}/resource-inventory/src/main/java</source>
+                                <source>${project.parent.basedir}/resource-order-management/src/main/java</source>
+                                <source>${project.parent.basedir}/service-order-management/src/main/java</source>
+                                <source>${project.parent.basedir}/software-management/src/main/java</source>
                                 <source>${project.parent.basedir}/service-catalog/src/main/java</source>
                                 <source>${project.parent.basedir}/service-inventory/src/main/java</source>
                                 <source>${project.parent.basedir}/usage-management/src/main/java</source>
@@ -333,6 +336,39 @@
                             <inputSpec>${project.parent.basedir}/api/tm-forum/resource-inventory/api.json</inputSpec>
                             <apiPackage>org.fiware.resourceinventory.api</apiPackage>
                             <modelPackage>org.fiware.resourceinventory.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resource-order-management</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/api/tm-forum/resource-order-management/api.json</inputSpec>
+                            <apiPackage>org.fiware.resourceordering.api</apiPackage>
+                            <modelPackage>org.fiware.resourceordering.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>service-order-management</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/api/tm-forum/service-order-management/api.json</inputSpec>
+                            <apiPackage>org.fiware.serviceordering.api</apiPackage>
+                            <modelPackage>org.fiware.serviceordering.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>software-management</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/api/tm-forum/software-management/api.json</inputSpec>
+                            <apiPackage>org.fiware.softwaremanagement.api</apiPackage>
+                            <modelPackage>org.fiware.softwaremanagement.model</modelPackage>
                         </configuration>
                     </execution>
                     <execution>

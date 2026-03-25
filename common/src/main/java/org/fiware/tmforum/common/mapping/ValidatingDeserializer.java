@@ -30,6 +30,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	private static final String JSON_SCHEMA_ANY_OF_KEY = "anyOf";
 	private static final String JSON_SCHEMA_ONE_OF_KEY = "oneOf";
 	private static final String JSON_SCHEMA_REF_KEY = "$ref";
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	private final BeanDescription beanDescription;
 	private final boolean schemaValidationEnabled;
@@ -43,7 +44,6 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	@Override
 	protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> newDelegatee) {
 		return new ValidatingDeserializer(newDelegatee, beanDescription, schemaValidationEnabled);
-
 	}
 
 	@Override
@@ -57,7 +57,8 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
 		if (targetObject instanceof UnknownPreservingBase upb) {
 			if (upb.getAtSchemaLocation() != null) {
-				validateWithSchema(upb.getAtSchemaLocation(), tokenBuffer.asParserOnFirstToken().readValueAsTree().toString(), ctxt);
+				String unknownPropsJson = OBJECT_MAPPER.writeValueAsString(upb.getUnknownProperties());
+				validateWithSchema(upb.getAtSchemaLocation(), unknownPropsJson, ctxt);
 			} else if (upb.getUnknownProperties() != null && !upb.getUnknownProperties().isEmpty()) {
 				throw new SchemaValidationException(List.of(), "If no schema is provided, no additional properties are allowed.");
 			}
