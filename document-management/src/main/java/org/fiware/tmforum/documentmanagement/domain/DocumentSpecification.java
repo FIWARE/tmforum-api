@@ -11,6 +11,9 @@ import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.service.CharacteristicSpecification;
+import org.fiware.tmforum.service.EntitySpecificationRelationship;
+import org.fiware.tmforum.service.TargetEntitySchema;
 
 import java.net.URI;
 import java.time.Instant;
@@ -57,6 +60,18 @@ public class DocumentSpecification extends EntityWithId {
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class, fromProperties = true)}))
     private List<RelatedParty> relatedParty;
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class)}))
+    private List<EntitySpecificationRelationship> entitySpecRelationship;
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic", targetClass = CharacteristicSpecification.class)}))
+    private List<CharacteristicSpecification> specCharacteristic;
+
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "targetEntitySchema")}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetEntitySchema")}))
+    private TargetEntitySchema targetEntitySchema;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
