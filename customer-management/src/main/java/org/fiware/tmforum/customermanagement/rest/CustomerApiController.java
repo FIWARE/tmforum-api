@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.customer-management.basepath:/}")
 public class CustomerApiController extends AbstractApiController<Customer> implements CustomerApi {
 
 	private final TMForumMapper tmForumMapper;

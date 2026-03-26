@@ -176,3 +176,9 @@ Notes:
 * It is possible to set ```additionalProperties: false``` for the object to be extended. However, in this case the
   schema needs to contain the full definition of the object, including the properties from the baseType. Else, they will
   be considered as additional properties and validation will fail.  
+
+## Release notes
+
+|Version| Notes link                                                                                 |
+|------|--------------------------------------------------------------------------------------------|
+| 1.5.0 | [Add TMF652, TMF641, TMF730](./release-notes/RELEASE_NOTES_ADD_NEW_TMFORUM_API_MODULES.md) |

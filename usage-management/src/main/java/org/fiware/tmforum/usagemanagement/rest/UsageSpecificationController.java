@@ -28,7 +28,7 @@ import java.util.UUID;
 
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.usage-management.basepath:/}")
 public class UsageSpecificationController extends AbstractApiController<UsageSpecification>
                 implements UsageSpecificationApi {
 

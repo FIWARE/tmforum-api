@@ -26,7 +26,7 @@ import javax.validation.Valid;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.party-catalog.basepath:/}")
 public class IndividualApiController extends AbstractPartyApiController<Individual> implements IndividualApi {
 
 	private final TMForumMapper tmForumMapper;

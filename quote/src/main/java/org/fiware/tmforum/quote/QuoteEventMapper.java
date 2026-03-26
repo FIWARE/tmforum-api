@@ -6,7 +6,7 @@ import org.fiware.quote.model.QuoteVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.product.Quote;
 
 import javax.inject.Singleton;
@@ -16,7 +16,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class QuoteEventMapper implements EventMapper {
+public class QuoteEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

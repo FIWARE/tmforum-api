@@ -26,7 +26,7 @@ import java.time.Clock;
 import java.util.*;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.quote.basepath:/}")
 public class QuoteApiController extends AbstractApiController<Quote> implements QuoteApi {
 
 	private final TMForumMapper tmForumMapper;

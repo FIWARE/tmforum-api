@@ -8,7 +8,7 @@ import org.fiware.servicecatalog.model.ServiceSpecificationVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.service.ServiceCandidate;
 import org.fiware.tmforum.service.ServiceCategory;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCatalog;
@@ -21,7 +21,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class ServiceCatalogEventMapper implements EventMapper {
+public class ServiceCatalogEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

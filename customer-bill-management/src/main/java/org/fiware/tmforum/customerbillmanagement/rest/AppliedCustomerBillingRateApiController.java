@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.customer-bill-management.basepath:/}")
 public class AppliedCustomerBillingRateApiController extends AbstractApiController<AppliedCustomerBillingRate>
 		implements
 		AppliedCustomerBillingRateApi {

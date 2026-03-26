@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.product-catalog.basepath:/}")
 public class ProductOfferingApiController extends AbstractProductCatalogApiController<ProductOffering>
 		implements ProductOfferingApi {
 

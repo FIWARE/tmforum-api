@@ -8,7 +8,7 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.notification.EventMapper;
+import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.resource.ResourceCandidate;
 import org.fiware.tmforum.resource.ResourceCategory;
 import org.fiware.tmforum.resource.ResourceSpecification;
@@ -21,7 +21,7 @@ import static java.util.Map.entry;
 
 @RequiredArgsConstructor
 @Singleton
-public class ResourceCatalogEventMapper implements EventMapper {
+public class ResourceCatalogEventMapper implements ModuleEventMapper {
 
 	private final TMForumMapper tmForumMapper;
 

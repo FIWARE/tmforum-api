@@ -1,0 +1,80 @@
+
+micronaut:
+  server:
+    port: 8632
+
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        step: PT2s
+        descriptions: false
+
+  http:
+    services:
+      read-timeout: 30s
+      ngsi:
+        path: ngsi-ld/v1
+        url: http://localhost:1026
+        read-timeout: 30
+---
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+---
+endpoints:
+  metrics:
+    enabled: true
+  health:
+    enabled: true
+
+---
+loggers:
+  levels:
+    ROOT: WARN
+
+---
+general:
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+  serverHost: http://localhost:8632
+
+---
+api:
+  account:
+    basepath: /tmf-api/accountManagement/v4
+  agreement:
+    basepath: /tmf-api/agreementManagement/v4
+  customer-bill-management:
+    basepath: /tmf-api/customerBillManagement/v4
+  customer-management:
+    basepath: /tmf-api/customerManagement/v4
+  party-catalog:
+    basepath: /tmf-api/party/v4
+  party-role:
+    basepath: /tmf-api/partyRole/v4
+  product-catalog:
+    basepath: /tmf-api/productCatalogManagement/v4
+  product-inventory:
+    basepath: /tmf-api/productInventory/v4
+  product-ordering-management:
+    basepath: /tmf-api/productOrderingManagement/v4
+  quote:
+    basepath: /tmf-api/quote/v4
+  resource-catalog:
+    basepath: /tmf-api/resourceCatalog/v4
+  resource-function-activation:
+    basepath: /tmf-api/resourceFunctionActivation/v4
+  resource-inventory:
+    basepath: /tmf-api/resourceInventoryManagement/v4
+  resource-order-management:
+    basepath: /tmf-api/resourceOrderingManagement/v4
+  service-catalog:
+    basepath: /tmf-api/serviceCatalogManagement/v4
+  service-inventory:
+    basepath: /tmf-api/serviceInventoryManagement/v4
+  service-order-management:
+    basepath: /tmf-api/serviceOrdering/v4
+  software-management:
+    basepath: /tmf-api/softwareCompute/v4
+  usage-management:
+    basepath: /tmf-api/usageManagement/v4

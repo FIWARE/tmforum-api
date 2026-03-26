@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Controller("${general.basepath:/}")
+@Controller("${api.resource-function-activation.basepath:/}")
 public class ScaleApiController extends AbstractApiController<Scale> implements ScaleApi {
 
 	private final TMForumMapper tmForumMapper;

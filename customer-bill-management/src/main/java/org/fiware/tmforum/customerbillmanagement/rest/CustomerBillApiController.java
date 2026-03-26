@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-@Controller("${general.basepath:/}")
+@Controller("${api.customer-bill-management.basepath:/}")
 public class CustomerBillApiController extends AbstractApiController<CustomerBill> implements CustomerBillApi {
 
 	private final TMForumMapper tmForumMapper;

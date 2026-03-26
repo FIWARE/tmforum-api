@@ -956,6 +956,33 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 				.serviceLevelAgreement(null)
 				.unknownProperties(Map.of("extensionObject", Map.of("a", "a")));
 		testEntries.add(Arguments.of(productOfferingCreateVO2, expectedProductOfferingVO2, "The extended offering should have been created."));
+
+		// Regression: base properties (name, description, etc.) should not be rejected when schema has additionalProperties: false.
+		// Only unknownProperties are validated against the schema, not the full payload.
+		ProductOfferingCreateVO productOfferingWithStrictSchema = (ProductOfferingCreateVO) ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
+				.description("string")
+				.name("string")
+				.atSchemaLocation(URI.create("http://localhost:3000/schemas/no-additional-extension-schema.json"))
+				.lifecycleStatus("string")
+				.productSpecification(null)
+				.resourceCandidate(null)
+				.serviceCandidate(null)
+				.serviceLevelAgreement(null)
+				.unknownProperties(Map.of("extensionString", "test"));
+		ProductOfferingVO expectedProductOfferingWithStrictSchema = (ProductOfferingVO) ProductOfferingVOTestExample.build().atSchemaLocation(null)
+				.description("string")
+				.name("string")
+				.validFor(null)
+				.atSchemaLocation(URI.create("http://localhost:3000/schemas/no-additional-extension-schema.json"))
+				.lifecycleStatus("string")
+				.productSpecification(null)
+				.resourceCandidate(null)
+				.serviceCandidate(null)
+				.serviceLevelAgreement(null)
+				.unknownProperties(Map.of("extensionString", "test"));
+		testEntries.add(Arguments.of(productOfferingWithStrictSchema, expectedProductOfferingWithStrictSchema,
+				"Base properties should not be rejected by a schema with additionalProperties: false."));
+
 		return testEntries.stream();
 	}
 
