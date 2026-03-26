@@ -78,8 +78,23 @@ public class ResourceSpecification extends EntityWithId {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor")}))
     private TimePeriod validFor;
 
+    /**
+     * Create a new ResourceSpecification with the default entity type.
+     *
+     * @param id the entity id
+     */
     public ResourceSpecification(String id) {
         super(TYPE_RESOURCE_SPECIFICATION, id);
+    }
+
+    /**
+     * Protected constructor for sub-types to specify their own NGSI-LD entity type.
+     *
+     * @param type the NGSI-LD entity type
+     * @param id   the entity id
+     */
+    protected ResourceSpecification(String type, String id) {
+        super(type, id);
     }
 
     @Override
