@@ -910,23 +910,34 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {
-		// NOTE: Field filtering via the 'fields' query parameter is not yet implemented.
-		// All test cases expect the full entity to be returned regardless of the fields parameter.
 		ResourceSpecificationVO fullExpected = ResourceSpecificationVOTestExample.build()
 				.atSchemaLocation(null)
 				.validFor(null)
 				.relatedParty(null)
 				.targetResourceSchema(null)
 				.resourceSpecRelationship(null);
+
+		// When a fields parameter is provided, only the requested fields plus the
+		// mandatory fields (id, href) are returned by the FieldCleaningSerializer.
+		ResourceSpecificationVO versionOnly = new ResourceSpecificationVO()
+				.version("string");
+
+		ResourceSpecificationVO mandatoryOnly = new ResourceSpecificationVO();
+
+		ResourceSpecificationVO multipleFields = new ResourceSpecificationVO()
+				.version("string")
+				.description("string")
+				.lifecycleStatus("string");
+
 		return Stream.of(
 				Arguments.of("Without a fields parameter everything should be returned.",
 						null, fullExpected),
-				Arguments.of("With a fields parameter, everything is still returned (filtering not implemented).",
-						"version", fullExpected),
-				Arguments.of("With a non-existent field, everything is still returned (filtering not implemented).",
-						"nothingToSeeHere", fullExpected),
-				Arguments.of("With multiple fields, everything is still returned (filtering not implemented).",
-						"version,lastUpdate,lifecycleStatus,description", fullExpected));
+				Arguments.of("With a single field, only that field plus id/href should be returned.",
+						"version", versionOnly),
+				Arguments.of("With a non-existent field, only mandatory id/href should be returned.",
+						"nothingToSeeHere", mandatoryOnly),
+				Arguments.of("With multiple fields, only those fields plus id/href should be returned.",
+						"version,lastUpdate,lifecycleStatus,description", multipleFields));
 	}
 
 	@Disabled("400 cannot happen, only 404")
@@ -984,18 +995,15 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	// --- Sub-type specific integration tests ---
 
 	/**
-	 * A permissive JSON Schema URI that allows any additional properties.
-	 * Required because the ValidatingDeserializer rejects unknown properties when no schema is provided.
-	 */
-	private static final java.net.URI PERMISSIVE_SCHEMA = java.net.URI.create("classpath:permissive-schema.json");
-
-	/**
 	 * Helper to build a ResourceSpecificationCreateVO that represents a sub-type.
+	 * Known sub-type properties are recognized by the
+	 * {@link org.fiware.tmforum.common.mapping.ValidatingDeserializer} via the registered
+	 * {@link org.fiware.tmforum.common.mapping.SubTypePropertyProvider}, so no explicit
+	 * {@code @schemaLocation} is needed.
 	 */
 	private static ResourceSpecificationCreateVO buildSubTypeSpecCreate(String atType,
 			Map<String, Object> extraFields) {
 		ResourceSpecificationCreateVO createVO = ResourceSpecificationCreateVOTestExample.build()
-				.atSchemaLocation(PERMISSIVE_SCHEMA)
 				.targetResourceSchema(null)
 				.lifecycleStatus("created")
 				.atType(atType);
