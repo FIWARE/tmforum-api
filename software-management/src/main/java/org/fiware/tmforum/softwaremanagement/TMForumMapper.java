@@ -5,9 +5,12 @@ import org.fiware.softwaremanagement.model.*;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.Quantity;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.*;
+import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -606,6 +609,13 @@ public abstract class TMForumMapper extends BaseMapper {
 		if (vo == null) {
 			return null;
 		}
+		if (!IdHelper.isNgsiLdId(vo.getId())) {
+			throw new TmForumException(
+					String.format("softwareSupportPackage.id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:software-support-package:%s",
+							vo.getId(), vo.getId()),
+					TmForumExceptionReason.INVALID_DATA);
+		}
 		return new SoftwareSupportPackageRef(vo.getId());
 	}
 
@@ -648,7 +658,38 @@ public abstract class TMForumMapper extends BaseMapper {
 	// --- ResourceSpecificationRef converters ---
 
 	/**
+	 * Validate that the id in a {@link ResourceSpecificationRefVO} is a proper NGSI-LD URI
+	 * before MapStruct maps it to a {@link ResourceSpecificationRef} RELATIONSHIP object.
+	 */
+	@BeforeMapping
+	protected void validateResourceSpecificationRefId(ResourceSpecificationRefVO vo) {
+		if (vo != null && !IdHelper.isNgsiLdId(vo.getId())) {
+			throw new TmForumException(
+					String.format("resourceSpecification.id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:resource-specification:%s",
+							vo.getId(), vo.getId()),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+	}
+
+	/**
+	 * Validate that the id in a {@link RelatedPlaceRefOrValueVO} is a proper NGSI-LD URI
+	 * before MapStruct maps it to a {@link PlaceRefInRole} RELATIONSHIP object.
+	 */
+	@BeforeMapping
+	protected void validatePlaceRefId(RelatedPlaceRefOrValueVO vo) {
+		if (vo != null && !IdHelper.isNgsiLdId(vo.getId())) {
+			throw new TmForumException(
+					String.format("place.id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:place:%s",
+							vo.getId(), vo.getId()),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+	}
+
+	/**
 	 * Convert a string id to a {@link ResourceSpecificationRef}.
+	 * Used for fields stored as PROPERTY (e.g. resourceSpecRelationship, featureSpec refs).
 	 *
 	 * @param id the resource specification id string
 	 * @return the constructed reference, or null if the input is null
@@ -656,6 +697,13 @@ public abstract class TMForumMapper extends BaseMapper {
 	public ResourceSpecificationRef mapFromResourceSpecId(String id) {
 		if (id == null) {
 			return null;
+		}
+		if (!IdHelper.isNgsiLdId(id)) {
+			throw new TmForumException(
+					String.format("resourceSpecification id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:resource-specification:%s",
+							id, id),
+					TmForumExceptionReason.INVALID_DATA);
 		}
 		return new ResourceSpecificationRef(id);
 	}
