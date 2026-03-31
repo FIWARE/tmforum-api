@@ -276,6 +276,20 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 														.build().atSchemaLocation(null)
 														.resourceSpecificationId(
 																"urn:ngsi-ld:resource-specification:non-existent")))))));
+		testEntries.add(Arguments.of(
+				"A resource specification with an invalid resourceSpecRelationship id should not be created.",
+				ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.targetResourceSchema(null)
+						.lifecycleStatus("created")
+						.resourceSpecRelationship(List.of(
+								ResourceSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
+										.id("de29d1fd-cbf8-4bd8-9e75-3f3905db4389")))));
+
+		testEntries.add(Arguments.of(
+				"A SoftwareSpecification with an invalid softwareSupportPackage id should not be created.",
+				buildSubTypeSpecCreate("SoftwareSpecification", Map.of(
+						"softwareSupportPackage", Map.of("id", "not-a-valid-uri")))));
+
 		testEntries
 				.addAll(provideInvalidFeatureSpecs()
 						.map(ap -> Arguments.of(ap.message(),
