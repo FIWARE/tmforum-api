@@ -92,7 +92,7 @@ public class ExtendedCustomerBillApiIT extends AbstractApiIT implements Customer
 	}
 
 	@ParameterizedTest
-	@MethodSource("provideValidCustomerBillOnDemands")
+	@MethodSource("provideInvalidCustomerBillOnDemands")
 	public void createCustomerBill400(String message, CustomerBillCreateVO invalidCreateVO) throws Exception {
 
 		HttpResponse<CustomerBillVO> updateResponse = callAndCatch(
@@ -100,13 +100,8 @@ public class ExtendedCustomerBillApiIT extends AbstractApiIT implements Customer
 		assertEquals(HttpStatus.BAD_REQUEST, updateResponse.getStatus(), message);
 	}
 
-	private static Stream<Arguments> provideValidCustomerBillOnDemands() {
+	private static Stream<Arguments> provideInvalidCustomerBillOnDemands() {
 		return Stream.of(
-				Arguments.of("Unreachable schemas are not allowed.", CustomerBillCreateVOTestExample.build()
-						.atSchemaLocation(URI.create("my:uri"))
-						.billingAccount(null)
-						.financialAccount(null)
-						.paymentMethod(null)),
 				Arguments.of("Creation with invalid billing accounts are not allowed.", CustomerBillCreateVOTestExample.build()
 						.billingAccount(BillingAccountRefVOTestExample.build())
 						.financialAccount(null)

@@ -109,8 +109,23 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "usageState") }))
 	private ResourceUsageType usageState;
 
+	/**
+	 * Create a new Resource with the default entity type.
+	 *
+	 * @param id the entity id
+	 */
 	public Resource(String id) {
 		super(TYPE_RESOURCE, id);
+	}
+
+	/**
+	 * Protected constructor for sub-types to specify their own NGSI-LD entity type.
+	 *
+	 * @param type the NGSI-LD entity type
+	 * @param id   the entity id
+	 */
+	protected Resource(String type, String id) {
+		super(type, id);
 	}
 
 	@Override public URI getEntityId() {

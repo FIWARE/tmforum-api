@@ -38,4 +38,9 @@ public class UnknownPreservingBase {
 	public <C> C getAtSchemaLocation() {
 		return null;
 	}
+
+	@JsonIgnore
+	public String getAtType() {
+		return null;
+	}
 }
