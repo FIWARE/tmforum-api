@@ -14,7 +14,8 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
-import org.fiware.tmforum.resource.Resource;
+import org.fiware.tmforum.resource.*;
+import org.fiware.tmforum.softwaremanagement.rest.ResourceTypeRegistry;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -102,7 +103,8 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 		HttpResponse<ResourceVO> resourceVOHttpResponse = callAndCatch(
 				() -> resourceApiTestClient.createResource(null, resourceCreateVO));
-		assertEquals(HttpStatus.CREATED, resourceVOHttpResponse.getStatus(), message);
+		assertEquals(HttpStatus.CREATED, resourceVOHttpResponse.getStatus(),
+				message + " - Error: " + resourceVOHttpResponse.getBody(ErrorDetails.class).orElse(null));
 		String rfId = resourceVOHttpResponse.body().getId();
 		expectedResource.setId(rfId);
 		expectedResource.setHref(rfId);
@@ -165,31 +167,35 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		return testEntries.stream();
 	}
 
+	/**
+	 * Build a clean FeatureVO with test-example defaults nulled for fields that are
+	 * either ignored by the mapper (atBaseType, atType, atSchemaLocation) or rejected
+	 * by the broker (href).
+	 */
+	private static FeatureVO cleanFeature(String id) {
+		return FeatureVOTestExample.build().id(id)
+				.href(null).atSchemaLocation(null).atBaseType(null).atType(null)
+				.constraint(null).featureRelationship(null).featureCharacteristic(null);
+	}
+
 	private static Stream<ArgumentPair<List<FeatureVO>>> provideValidFeatureLists() {
 		List<ArgumentPair<List<FeatureVO>>> featureArguments = new ArrayList<>();
 
 		featureArguments.add(new ArgumentPair<>("A single feature without references should be valid.",
-				List.of(FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
-						.featureCharacteristic(null))));
+				List.of(cleanFeature("urn:f-1"))));
 		featureArguments.add(new ArgumentPair<>("Multiple features without references should be valid.",
-				List.of(
-						FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
-								.featureCharacteristic(null),
-						FeatureVOTestExample.build().id("urn:f-2").constraint(null).featureRelationship(null)
-								.featureCharacteristic(null))));
+				List.of(cleanFeature("urn:f-1"), cleanFeature("urn:f-2"))));
 		featureArguments.add(new ArgumentPair<>("Features referencing should be valid.",
 				List.of(
-						FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
-								.featureCharacteristic(null),
-						FeatureVOTestExample.build().id("urn:f-2").constraint(null).featureCharacteristic(null)
-								.featureRelationship(
-										List.of(FeatureRelationshipVOTestExample.build().validFor(null)
-												.id("urn:f-1"))))));
+						cleanFeature("urn:f-1"),
+						cleanFeature("urn:f-2").featureRelationship(
+								List.of(FeatureRelationshipVOTestExample.build()
+										.href(null).atSchemaLocation(null).atBaseType(null).atType(null)
+										.validFor(null).id("urn:f-1"))))));
 
 		provideValidCharacteristicLists()
 				.map(ap -> new ArgumentPair<>(String.format("Features should be valid - %s", ap.message()),
-						List.of(FeatureVOTestExample.build().id("urn:f-1").constraint(null).featureRelationship(null)
-								.featureCharacteristic(ap.value()))))
+						List.of(cleanFeature("urn:f-1").featureCharacteristic(ap.value()))))
 				.forEach(featureArguments::add);
 
 		return featureArguments.stream();
@@ -964,62 +970,31 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {
+		ResourceVO fullExpected = ResourceVOTestExample.build().atSchemaLocation(null)
+				.relatedParty(null)
+				.place(null)
+				.resourceSpecification(null);
+
+		// When a fields parameter is provided, only the requested fields plus the
+		// mandatory fields (id, href) are returned by the FieldCleaningSerializer.
+		ResourceVO categoryOnly = new ResourceVO()
+				.category("string");
+
+		ResourceVO mandatoryOnly = new ResourceVO();
+
+		ResourceVO nameAndDescription = new ResourceVO()
+				.name("string")
+				.description("string");
+
 		return Stream.of(
-				Arguments.of("Without a fields parameter everything should be returned.", null,
-						ResourceVOTestExample.build().atSchemaLocation(null)
-								// get nulled without values
-								.relatedParty(null)
-								.place(null)
-								.resourceSpecification(null)),
-				Arguments.of("Only category and the mandatory parameters should have been included.", "category",
-						ResourceVOTestExample.build().atSchemaLocation(null)
-								.relatedParty(null)
-								.place(null)
-								.resourceVersion(null)
-								.resourceSpecification(null)
-								.resourceCharacteristic(null)
-								.activationFeature(null)
-								.resourceRelationship(null)
-								.description(null)
-								.attachment(null)
-								.note(null)
-								.name(null)
-								.atBaseType(null)
-								.atSchemaLocation(null)
-								.atType(null)),
-				Arguments.of(
-						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere", ResourceVOTestExample.build().atSchemaLocation(null)
-								.relatedParty(null)
-								.place(null)
-								.category(null)
-								.resourceVersion(null)
-								.resourceSpecification(null)
-								.resourceCharacteristic(null)
-								.activationFeature(null)
-								.description(null)
-								.resourceRelationship(null)
-								.attachment(null)
-								.note(null)
-								.name(null)
-								.atBaseType(null)
-								.atSchemaLocation(null)
-								.atType(null)),
-				Arguments.of("Only description, name and the mandatory parameters should have been included.",
-						"name,description", ResourceVOTestExample.build().atSchemaLocation(null)
-								.relatedParty(null)
-								.place(null)
-								.resourceVersion(null)
-								.resourceSpecification(null)
-								.resourceCharacteristic(null)
-								.activationFeature(null)
-								.category(null)
-								.resourceRelationship(null)
-								.attachment(null)
-								.note(null)
-								.atBaseType(null)
-								.atSchemaLocation(null)
-								.atType(null)));
+				Arguments.of("Without a fields parameter everything should be returned.",
+						null, fullExpected),
+				Arguments.of("With a single field, only that field plus id/href should be returned.",
+						"category", categoryOnly),
+				Arguments.of("With a non-existent field, only mandatory id/href should be returned.",
+						"nothingToSeeHere", mandatoryOnly),
+				Arguments.of("With multiple fields, only those fields plus id/href should be returned.",
+						"name,description", nameAndDescription));
 	}
 
 	@Disabled("400 cannot happen, only 404")
@@ -1070,6 +1045,300 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 	@Override
 	protected String getEntityType() {
-		return Resource.TYPE_RESOURCE;
+		return ResourceTypeRegistry.ALL_RESOURCE_TYPES;
+	}
+
+	// --- Sub-type specific integration tests ---
+
+	/**
+	 * A permissive JSON Schema URI that allows any additional properties.
+	 * Needed for update VOs that lack {@code @type} and thus cannot benefit from the
+	 * {@link org.fiware.tmforum.common.mapping.SubTypePropertyProvider} mechanism.
+	 */
+	private static final java.net.URI PERMISSIVE_SCHEMA = java.net.URI.create("classpath:permissive-schema.json");
+
+	/**
+	 * Helper to build a ResourceCreateVO that represents a sub-type by setting @type and
+	 * sub-type-specific fields via the unknownProperties map. Known sub-type properties
+	 * are recognized by the {@link org.fiware.tmforum.common.mapping.ValidatingDeserializer}
+	 * via the registered {@link org.fiware.tmforum.common.mapping.SubTypePropertyProvider},
+	 * so no explicit {@code @schemaLocation} is needed.
+	 *
+	 * @param atType       the TMForum @type value (e.g. "SoftwareResource")
+	 * @param extraFields  additional sub-type fields to set via unknownProperties
+	 * @return the configured ResourceCreateVO
+	 */
+	private static ResourceCreateVO buildSubTypeCreate(String atType, Map<String, Object> extraFields) {
+		ResourceCreateVO createVO = ResourceCreateVOTestExample.build()
+				.place(null)
+				.resourceSpecification(null)
+				.atType(atType);
+		extraFields.forEach(createVO::setUnknownProperties);
+		return createVO;
+	}
+
+	/**
+	 * Helper to build the expected ResourceVO for a sub-type. Base fields come from the test example;
+	 * sub-type fields are added to unknownProperties.
+	 *
+	 * @param atType       the TMForum @type value
+	 * @param extraFields  additional sub-type fields expected in unknownProperties
+	 * @return the expected ResourceVO
+	 */
+	private static ResourceVO buildSubTypeExpected(String atType, Map<String, Object> extraFields) {
+		ResourceVO expected = ResourceVOTestExample.build()
+				.place(null)
+				.resourceSpecification(null)
+				.atType(atType);
+		extraFields.forEach(expected::setUnknownProperties);
+		return expected;
+	}
+
+	/**
+	 * Parameterized test for creating sub-type Resource entities.
+	 *
+	 * @param message          the test case description
+	 * @param resourceCreateVO the sub-type resource creation VO
+	 * @param expectedResource the expected result
+	 * @throws Exception on test failure
+	 */
+	@ParameterizedTest
+	@MethodSource("provideSubTypeResources")
+	public void createSubTypeResource201(String message, ResourceCreateVO resourceCreateVO,
+			ResourceVO expectedResource) throws Exception {
+		this.message = message;
+		this.resourceCreateVO = resourceCreateVO;
+		this.expectedResource = expectedResource;
+		createResource201();
+	}
+
+	private static Stream<Arguments> provideSubTypeResources() {
+		List<Arguments> testEntries = new ArrayList<>();
+
+		// LogicalResource
+		testEntries.add(Arguments.of(
+				"A LogicalResource should have been created.",
+				buildSubTypeCreate("LogicalResource", Map.of("value", "my-logical-value")),
+				buildSubTypeExpected("LogicalResource", Map.of("value", "my-logical-value"))));
+
+		// SoftwareResource
+		testEntries.add(Arguments.of(
+				"A SoftwareResource should have been created.",
+				buildSubTypeCreate("SoftwareResource", Map.of(
+						"value", "sw-value",
+						"isDistributedCurrent", false,
+						"targetPlatform", "server")),
+				buildSubTypeExpected("SoftwareResource", Map.of(
+						"value", "sw-value",
+						"isDistributedCurrent", false,
+						"targetPlatform", "server"))));
+
+		// API
+		testEntries.add(Arguments.of(
+				"An API resource should have been created.",
+				buildSubTypeCreate("API", Map.of(
+						"value", "api-value",
+						"targetPlatform", "cloud")),
+				buildSubTypeExpected("API", Map.of(
+						"value", "api-value",
+						"targetPlatform", "cloud"))));
+
+		// InstalledSoftware
+		testEntries.add(Arguments.of(
+				"An InstalledSoftware resource should have been created.",
+				buildSubTypeCreate("InstalledSoftware", Map.of(
+						"value", "installed-sw-value",
+						"isDistributedCurrent", true,
+						"targetPlatform", "server",
+						"isUTCTime", true,
+						"numProcessesActiveCurrent", 8,
+						"numUsersCurrent", 3,
+						"serialNumber", "SN-12345")),
+				buildSubTypeExpected("InstalledSoftware", Map.of(
+						"value", "installed-sw-value",
+						"isDistributedCurrent", true,
+						"targetPlatform", "server",
+						"isUTCTime", true,
+						"numProcessesActiveCurrent", 8,
+						"numUsersCurrent", 3,
+						"serialNumber", "SN-12345"))));
+
+		// HostingPlatformRequirement
+		testEntries.add(Arguments.of(
+				"A HostingPlatformRequirement resource should have been created.",
+				buildSubTypeCreate("HostingPlatformRequirement",
+						Map.of("value", "hpr-value")),
+				buildSubTypeExpected("HostingPlatformRequirement",
+						Map.of("value", "hpr-value"))));
+
+		// PhysicalResource
+		testEntries.add(Arguments.of(
+				"A PhysicalResource should have been created.",
+				buildSubTypeCreate("PhysicalResource", Map.of(
+						"powerState", "Full Power Applied",
+						"serialNumber", "HW-SN-001",
+						"versionNumber", "v2.0")),
+				buildSubTypeExpected("PhysicalResource", Map.of(
+						"powerState", "Full Power Applied",
+						"serialNumber", "HW-SN-001",
+						"versionNumber", "v2.0"))));
+
+		// SoftwareSupportPackage
+		testEntries.add(Arguments.of(
+				"A SoftwareSupportPackage resource should have been created.",
+				buildSubTypeCreate("SoftwareSupportPackage", Map.of(
+						"powerState", "Unknown",
+						"serialNumber", "PKG-001")),
+				buildSubTypeExpected("SoftwareSupportPackage", Map.of(
+						"powerState", "Unknown",
+						"serialNumber", "PKG-001"))));
+
+		return testEntries.stream();
+	}
+
+	/**
+	 * Test retrieving a sub-type resource preserves all sub-type-specific fields.
+	 */
+	@ParameterizedTest
+	@MethodSource("provideSubTypeRetrievalCases")
+	public void retrieveSubTypeResource200(String message, String atType, Map<String, Object> extraFields)
+			throws Exception {
+		ResourceCreateVO createVO = buildSubTypeCreate(atType, extraFields);
+		HttpResponse<ResourceVO> createResponse = callAndCatch(
+				() -> resourceApiTestClient.createResource(null, createVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message + " - creation failed");
+		String id = createResponse.body().getId();
+
+		HttpResponse<ResourceVO> retrieveResponse = callAndCatch(
+				() -> resourceApiTestClient.retrieveResource(null, id, null));
+		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message + " - retrieve failed");
+
+		ResourceVO retrieved = retrieveResponse.body();
+		assertEquals(atType, retrieved.getAtType(), message + " - @type mismatch");
+		for (Map.Entry<String, Object> entry : extraFields.entrySet()) {
+			assertEquals(entry.getValue(), retrieved.getUnknownProperties().get(entry.getKey()),
+					String.format("%s - field '%s' mismatch", message, entry.getKey()));
+		}
+	}
+
+	private static Stream<Arguments> provideSubTypeRetrievalCases() {
+		return Stream.of(
+				Arguments.of("LogicalResource retrieve", "LogicalResource",
+						Map.of("value", "lr-val")),
+				Arguments.of("SoftwareResource retrieve", "SoftwareResource",
+						Map.of("value", "sr-val", "isDistributedCurrent", false, "targetPlatform", "edge")),
+				Arguments.of("API retrieve", "API",
+						Map.of("value", "api-val", "targetPlatform", "cloud")),
+				Arguments.of("InstalledSoftware retrieve", "InstalledSoftware",
+						Map.of("value", "is-val", "serialNumber", "SN-999", "numUsersCurrent", 5)),
+				Arguments.of("PhysicalResource retrieve", "PhysicalResource",
+						Map.of("serialNumber", "HW-999", "powerState", "Unknown")),
+				Arguments.of("SoftwareSupportPackage retrieve", "SoftwareSupportPackage",
+						Map.of("serialNumber", "PKG-999")),
+				Arguments.of("HostingPlatformRequirement retrieve", "HostingPlatformRequirement",
+						Map.of("value", "hpr-val"))
+		);
+	}
+
+	/**
+	 * Test that listing resources returns sub-type resources alongside base resources.
+	 */
+	@Test
+	public void listResourceIncludesSubTypes() throws Exception {
+		// Create a base resource
+		ResourceCreateVO baseCreate = ResourceCreateVOTestExample.build()
+				.atSchemaLocation(null).place(null).resourceSpecification(null);
+		HttpResponse<ResourceVO> baseResponse = callAndCatch(
+				() -> resourceApiTestClient.createResource(null, baseCreate));
+		assertEquals(HttpStatus.CREATED, baseResponse.getStatus());
+		String baseId = baseResponse.body().getId();
+
+		// Create a SoftwareResource sub-type
+		ResourceCreateVO swCreate = buildSubTypeCreate("SoftwareResource",
+				Map.of("value", "list-sw", "targetPlatform", "server"));
+		HttpResponse<ResourceVO> swResponse = callAndCatch(
+				() -> resourceApiTestClient.createResource(null, swCreate));
+		assertEquals(HttpStatus.CREATED, swResponse.getStatus());
+		String swId = swResponse.body().getId();
+
+		// Create a PhysicalResource sub-type
+		ResourceCreateVO prCreate = buildSubTypeCreate("PhysicalResource",
+				Map.of("serialNumber", "LIST-HW-001"));
+		HttpResponse<ResourceVO> prResponse = callAndCatch(
+				() -> resourceApiTestClient.createResource(null, prCreate));
+		assertEquals(HttpStatus.CREATED, prResponse.getStatus());
+		String prId = prResponse.body().getId();
+
+		// List all resources - should contain all three
+		HttpResponse<List<ResourceVO>> listResponse = callAndCatch(
+				() -> resourceApiTestClient.listResource(null, null, null, null));
+		assertEquals(HttpStatus.OK, listResponse.getStatus());
+
+		List<String> returnedIds = listResponse.body().stream()
+				.map(ResourceVO::getId)
+				.toList();
+		assertTrue(returnedIds.contains(baseId),
+				"Base resource should be in the list.");
+		assertTrue(returnedIds.contains(swId),
+				"SoftwareResource should be in the list.");
+		assertTrue(returnedIds.contains(prId),
+				"PhysicalResource should be in the list.");
+	}
+
+	/**
+	 * Test patching a sub-type resource preserves and updates sub-type-specific fields.
+	 */
+	@Test
+	public void patchSubTypeResource200() throws Exception {
+		// Create a SoftwareResource
+		ResourceCreateVO createVO = buildSubTypeCreate("SoftwareResource",
+				Map.of("value", "original", "targetPlatform", "server", "isDistributedCurrent", false));
+		HttpResponse<ResourceVO> createResponse = callAndCatch(
+				() -> resourceApiTestClient.createResource(null, createVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+				"SoftwareResource creation failed: "
+						+ createResponse.getBody(ErrorDetails.class).orElse(null));
+		String id = createResponse.body().getId();
+
+		// Patch with updated sub-type field
+		ResourceUpdateVO updateVO = ResourceUpdateVOTestExample.build()
+				.atSchemaLocation(PERMISSIVE_SCHEMA).place(null).resourceSpecification(null)
+				.name("updated-sw");
+		updateVO.setUnknownProperties("targetPlatform", "cloud");
+		updateVO.setUnknownProperties("isDistributedCurrent", true);
+
+		HttpResponse<ResourceVO> patchResponse = callAndCatch(
+				() -> resourceApiTestClient.patchResource(null, id, updateVO));
+		assertEquals(HttpStatus.OK, patchResponse.getStatus(),
+				"Patching a SoftwareResource should succeed.");
+
+		ResourceVO patched = patchResponse.body();
+		assertEquals("updated-sw", patched.getName(),
+				"Name should have been updated.");
+		assertEquals("cloud", patched.getUnknownProperties().get("targetPlatform"),
+				"targetPlatform should have been updated.");
+		assertEquals(true, patched.getUnknownProperties().get("isDistributedCurrent"),
+				"isDistributedCurrent should have been updated.");
+	}
+
+	/**
+	 * Test deleting a sub-type resource.
+	 */
+	@Test
+	public void deleteSubTypeResource204() throws Exception {
+		ResourceCreateVO createVO = buildSubTypeCreate("InstalledSoftware",
+				Map.of("value", "to-delete", "serialNumber", "DEL-001", "isDistributedCurrent", false));
+		HttpResponse<ResourceVO> createResponse = callAndCatch(
+				() -> resourceApiTestClient.createResource(null, createVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus());
+		String id = createResponse.body().getId();
+
+		assertEquals(HttpStatus.NO_CONTENT,
+				callAndCatch(() -> resourceApiTestClient.deleteResource(null, id)).getStatus(),
+				"The sub-type resource should have been deleted.");
+
+		assertEquals(HttpStatus.NOT_FOUND,
+				callAndCatch(() -> resourceApiTestClient.retrieveResource(null, id, null)).getStatus(),
+				"The sub-type resource should not exist anymore.");
 	}
 }
