@@ -66,10 +66,16 @@ api:
     basepath: /tmf-api/resourceFunctionActivation/v4
   resource-inventory:
     basepath: /tmf-api/resourceInventoryManagement/v4
+  resource-order-management:
+    basepath: /tmf-api/resourceOrderingManagement/v4
   service-catalog:
     basepath: /tmf-api/serviceCatalogManagement/v4
   service-inventory:
     basepath: /tmf-api/serviceInventoryManagement/v4
+  service-order-management:
+    basepath: /tmf-api/serviceOrdering/v4
+  software-management:
+    basepath: /tmf-api/softwareCompute/v4
   usage-management:
     basepath: /tmf-api/usageManagement/v4
   document-management:

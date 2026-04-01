@@ -15,10 +15,17 @@ import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.model.*;
 
 import javax.inject.Singleton;
+import java.util.List;
 
+/**
+ * Configures the application's {@link ObjectMapper} with custom serialization settings,
+ * mix-ins, and the {@link ValidatingDeserializer} for {@code @schemaLocation} validation.
+ */
 @Singleton
 @RequiredArgsConstructor
 public class ObjectMapperEventListener implements BeanCreatedEventListener<ObjectMapper> {
+
+	private final List<SubTypePropertyProvider> subTypePropertyProviders;
 
 	@Override
 	public ObjectMapper onCreated(BeanCreatedEvent<ObjectMapper> event) {
@@ -42,7 +49,8 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 			public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config,
 														  BeanDescription beanDescription,
 														  JsonDeserializer<?> originalDeserializer) {
-				return new ValidatingDeserializer(originalDeserializer, beanDescription);
+				return new ValidatingDeserializer(originalDeserializer, beanDescription,
+						subTypePropertyProviders);
 			}
 		});
 

@@ -3,10 +3,14 @@ package org.fiware.tmforum.softwaremanagement;
 import io.github.wistefan.mapping.MappingException;
 import org.fiware.softwaremanagement.model.*;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+import org.fiware.tmforum.common.domain.Quantity;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.resource.*;
+import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -339,10 +343,353 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicValueSpecificationVO map(CharacteristicValue characteristic);
 
+	// --- Resource sub-type VO <-> domain mappings ---
+
+	/**
+	 * Map a {@link LogicalResourceVO} to a {@link LogicalResource} domain entity.
+	 *
+	 * @param vo the logical resource value object
+	 * @return the mapped domain entity
+	 */
+	public abstract LogicalResource map(LogicalResourceVO vo);
+
+	/**
+	 * Map a {@link LogicalResource} domain entity to a {@link LogicalResourceVO}.
+	 *
+	 * @param entity the logical resource domain entity
+	 * @return the mapped value object
+	 */
+	public abstract LogicalResourceVO mapToLogicalResourceVO(LogicalResource entity);
+
+	/**
+	 * Map a {@link SoftwareResourceVO} to a {@link SoftwareResource} domain entity.
+	 *
+	 * @param vo the software resource value object
+	 * @return the mapped domain entity
+	 */
+	public abstract SoftwareResource map(SoftwareResourceVO vo);
+
+	/**
+	 * Map a {@link SoftwareResource} domain entity to a {@link SoftwareResourceVO}.
+	 *
+	 * @param entity the software resource domain entity
+	 * @return the mapped value object
+	 */
+	public abstract SoftwareResourceVO mapToSoftwareResourceVO(SoftwareResource entity);
+
+	/**
+	 * Map an {@link APIVO} to an {@link ApiResource} domain entity.
+	 *
+	 * @param vo the API value object
+	 * @return the mapped domain entity
+	 */
+	public abstract ApiResource map(APIVO vo);
+
+	/**
+	 * Map an {@link ApiResource} domain entity to an {@link APIVO}.
+	 *
+	 * @param entity the API resource domain entity
+	 * @return the mapped value object
+	 */
+	public abstract APIVO mapToApiVO(ApiResource entity);
+
+	/**
+	 * Map an {@link InstalledSoftwareVO} to an {@link InstalledSoftware} domain entity.
+	 *
+	 * @param vo the installed software value object
+	 * @return the mapped domain entity
+	 */
+	public abstract InstalledSoftware map(InstalledSoftwareVO vo);
+
+	/**
+	 * Map an {@link InstalledSoftware} domain entity to an {@link InstalledSoftwareVO}.
+	 *
+	 * @param entity the installed software domain entity
+	 * @return the mapped value object
+	 */
+	public abstract InstalledSoftwareVO mapToInstalledSoftwareVO(InstalledSoftware entity);
+
+	/**
+	 * Map a {@link HostingPlatformRequirementVO} to a {@link HostingPlatformRequirement} domain entity.
+	 *
+	 * @param vo the hosting platform requirement value object
+	 * @return the mapped domain entity
+	 */
+	public abstract HostingPlatformRequirement map(HostingPlatformRequirementVO vo);
+
+	/**
+	 * Map a {@link HostingPlatformRequirement} domain entity to a {@link HostingPlatformRequirementVO}.
+	 *
+	 * @param entity the hosting platform requirement domain entity
+	 * @return the mapped value object
+	 */
+	public abstract HostingPlatformRequirementVO mapToHostingPlatformRequirementVO(HostingPlatformRequirement entity);
+
+	/**
+	 * Map a {@link PhysicalResourceVO} to a {@link PhysicalResource} domain entity.
+	 *
+	 * @param vo the physical resource value object
+	 * @return the mapped domain entity
+	 */
+	public abstract PhysicalResource map(PhysicalResourceVO vo);
+
+	/**
+	 * Map a {@link PhysicalResource} domain entity to a {@link PhysicalResourceVO}.
+	 *
+	 * @param entity the physical resource domain entity
+	 * @return the mapped value object
+	 */
+	public abstract PhysicalResourceVO mapToPhysicalResourceVO(PhysicalResource entity);
+
+	/**
+	 * Map a {@link SoftwareSupportPackageVO} to a {@link SoftwareSupportPackage} domain entity.
+	 *
+	 * @param vo the software support package value object
+	 * @return the mapped domain entity
+	 */
+	public abstract SoftwareSupportPackage map(SoftwareSupportPackageVO vo);
+
+	/**
+	 * Map a {@link SoftwareSupportPackage} domain entity to a {@link SoftwareSupportPackageVO}.
+	 *
+	 * @param entity the software support package domain entity
+	 * @return the mapped value object
+	 */
+	public abstract SoftwareSupportPackageVO mapToSoftwareSupportPackageVO(SoftwareSupportPackage entity);
+
+	// --- ResourceSpecification sub-type VO <-> domain mappings ---
+
+	/**
+	 * Map a {@link LogicalResourceSpecificationVO} to a {@link LogicalResourceSpecification} domain entity.
+	 *
+	 * @param vo the logical resource specification value object
+	 * @return the mapped domain entity
+	 */
+	public abstract LogicalResourceSpecification map(LogicalResourceSpecificationVO vo);
+
+	/**
+	 * Map a {@link LogicalResourceSpecification} domain entity to a {@link LogicalResourceSpecificationVO}.
+	 *
+	 * @param entity the logical resource specification domain entity
+	 * @return the mapped value object
+	 */
+	public abstract LogicalResourceSpecificationVO mapToLogicalResourceSpecificationVO(
+			LogicalResourceSpecification entity);
+
+	/**
+	 * Map a {@link SoftwareResourceSpecificationVO} to a {@link SoftwareResourceSpecification} domain entity.
+	 *
+	 * @param vo the software resource specification value object
+	 * @return the mapped domain entity
+	 */
+	public abstract SoftwareResourceSpecification map(SoftwareResourceSpecificationVO vo);
+
+	/**
+	 * Map a {@link SoftwareResourceSpecification} domain entity to a {@link SoftwareResourceSpecificationVO}.
+	 *
+	 * @param entity the software resource specification domain entity
+	 * @return the mapped value object
+	 */
+	public abstract SoftwareResourceSpecificationVO mapToSoftwareResourceSpecificationVO(
+			SoftwareResourceSpecification entity);
+
+	/**
+	 * Map an {@link APISpecificationVO} to an {@link ApiSpecification} domain entity.
+	 *
+	 * @param vo the API specification value object
+	 * @return the mapped domain entity
+	 */
+	public abstract ApiSpecification map(APISpecificationVO vo);
+
+	/**
+	 * Map an {@link ApiSpecification} domain entity to an {@link APISpecificationVO}.
+	 *
+	 * @param entity the API specification domain entity
+	 * @return the mapped value object
+	 */
+	public abstract APISpecificationVO mapToApiSpecificationVO(ApiSpecification entity);
+
+	/**
+	 * Map a {@link SoftwareSpecificationVO} to a {@link SoftwareSpecification} domain entity.
+	 *
+	 * @param vo the software specification value object
+	 * @return the mapped domain entity
+	 */
+	public abstract SoftwareSpecification map(SoftwareSpecificationVO vo);
+
+	/**
+	 * Map a {@link SoftwareSpecification} domain entity to a {@link SoftwareSpecificationVO}.
+	 *
+	 * @param entity the software specification domain entity
+	 * @return the mapped value object
+	 */
+	public abstract SoftwareSpecificationVO mapToSoftwareSpecificationVO(SoftwareSpecification entity);
+
+	/**
+	 * Map a {@link HostingPlatformRequirementSpecificationVO} to a
+	 * {@link HostingPlatformRequirementSpecification} domain entity.
+	 *
+	 * @param vo the hosting platform requirement specification value object
+	 * @return the mapped domain entity
+	 */
+	public abstract HostingPlatformRequirementSpecification map(HostingPlatformRequirementSpecificationVO vo);
+
+	/**
+	 * Map a {@link HostingPlatformRequirementSpecification} domain entity to a
+	 * {@link HostingPlatformRequirementSpecificationVO}.
+	 *
+	 * @param entity the hosting platform requirement specification domain entity
+	 * @return the mapped value object
+	 */
+	public abstract HostingPlatformRequirementSpecificationVO mapToHostingPlatformRequirementSpecificationVO(
+			HostingPlatformRequirementSpecification entity);
+
+	/**
+	 * Map a {@link PhysicalResourceSpecificationVO} to a {@link PhysicalResourceSpecification} domain entity.
+	 *
+	 * @param vo the physical resource specification value object
+	 * @return the mapped domain entity
+	 */
+	public abstract PhysicalResourceSpecification map(PhysicalResourceSpecificationVO vo);
+
+	/**
+	 * Map a {@link PhysicalResourceSpecification} domain entity to a {@link PhysicalResourceSpecificationVO}.
+	 *
+	 * @param entity the physical resource specification domain entity
+	 * @return the mapped value object
+	 */
+	public abstract PhysicalResourceSpecificationVO mapToPhysicalResourceSpecificationVO(
+			PhysicalResourceSpecification entity);
+
+	/**
+	 * Map a {@link SoftwareSupportPackageSpecificationVO} to a {@link SoftwareSupportPackageSpecification} domain entity.
+	 *
+	 * @param vo the software support package specification value object
+	 * @return the mapped domain entity
+	 */
+	public abstract SoftwareSupportPackageSpecification map(SoftwareSupportPackageSpecificationVO vo);
+
+	/**
+	 * Map a {@link SoftwareSupportPackageSpecification} domain entity to a
+	 * {@link SoftwareSupportPackageSpecificationVO}.
+	 *
+	 * @param entity the software support package specification domain entity
+	 * @return the mapped value object
+	 */
+	public abstract SoftwareSupportPackageSpecificationVO mapToSoftwareSupportPackageSpecificationVO(
+			SoftwareSupportPackageSpecification entity);
+
+	// --- Quantity mapping ---
+
+	/**
+	 * Map a {@link QuantityVO} to a {@link Quantity} domain entity.
+	 *
+	 * @param quantityVO the quantity value object
+	 * @return the mapped quantity domain entity
+	 */
+	public abstract Quantity map(QuantityVO quantityVO);
+
+	/**
+	 * Map a {@link Quantity} domain entity to a {@link QuantityVO}.
+	 *
+	 * @param quantity the quantity domain entity
+	 * @return the mapped quantity value object
+	 */
+	public abstract QuantityVO map(Quantity quantity);
+
+	// --- SoftwareSupportPackageRef mapping ---
+
+	/**
+	 * Convert a {@link SoftwareSupportPackageRefVO} to a {@link SoftwareSupportPackageRef}.
+	 *
+	 * @param vo the software support package reference value object
+	 * @return the mapped reference, or null if the input is null
+	 */
+	public SoftwareSupportPackageRef map(SoftwareSupportPackageRefVO vo) {
+		if (vo == null) {
+			return null;
+		}
+		if (!IdHelper.isNgsiLdId(vo.getId())) {
+			throw new TmForumException(
+					String.format("softwareSupportPackage.id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:software-support-package:%s",
+							vo.getId(), vo.getId()),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+		return new SoftwareSupportPackageRef(vo.getId());
+	}
+
+	/**
+	 * Convert a {@link SoftwareSupportPackageRef} to a {@link SoftwareSupportPackageRefVO}.
+	 *
+	 * @param ref the software support package reference
+	 * @return the mapped value object, or null if the input is null
+	 */
+	public SoftwareSupportPackageRefVO map(SoftwareSupportPackageRef ref) {
+		if (ref == null) {
+			return null;
+		}
+		SoftwareSupportPackageRefVO vo = new SoftwareSupportPackageRefVO();
+		vo.setId(ref.getEntityId().toString());
+		vo.setHref(ref.getHref());
+		vo.setName(ref.getName());
+		return vo;
+	}
+
+	// --- ResourceSpecificationRelationship mapping ---
+
+	/**
+	 * Map a {@link ResourceSpecificationRelationshipVO} to a {@link ResourceSpecificationRelationship} domain entity.
+	 *
+	 * @param vo the resource specification relationship value object
+	 * @return the mapped domain entity
+	 */
+	public abstract ResourceSpecificationRelationship mapResSpecRel(ResourceSpecificationRelationshipVO vo);
+
+	/**
+	 * Map a {@link ResourceSpecificationRelationship} domain entity to a
+	 * {@link ResourceSpecificationRelationshipVO}.
+	 *
+	 * @param entity the resource specification relationship domain entity
+	 * @return the mapped value object
+	 */
+	public abstract ResourceSpecificationRelationshipVO mapResSpecRel(ResourceSpecificationRelationship entity);
+
 	// --- ResourceSpecificationRef converters ---
 
 	/**
+	 * Validate that the id in a {@link ResourceSpecificationRefVO} is a proper NGSI-LD URI
+	 * before MapStruct maps it to a {@link ResourceSpecificationRef} RELATIONSHIP object.
+	 */
+	@BeforeMapping
+	protected void validateResourceSpecificationRefId(ResourceSpecificationRefVO vo) {
+		if (vo != null && !IdHelper.isNgsiLdId(vo.getId())) {
+			throw new TmForumException(
+					String.format("resourceSpecification.id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:resource-specification:%s",
+							vo.getId(), vo.getId()),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+	}
+
+	/**
+	 * Validate that the id in a {@link RelatedPlaceRefOrValueVO} is a proper NGSI-LD URI
+	 * before MapStruct maps it to a {@link PlaceRefInRole} RELATIONSHIP object.
+	 */
+	@BeforeMapping
+	protected void validatePlaceRefId(RelatedPlaceRefOrValueVO vo) {
+		if (vo != null && !IdHelper.isNgsiLdId(vo.getId())) {
+			throw new TmForumException(
+					String.format("place.id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:place:%s",
+							vo.getId(), vo.getId()),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+	}
+
+	/**
 	 * Convert a string id to a {@link ResourceSpecificationRef}.
+	 * Used for fields stored as PROPERTY (e.g. resourceSpecRelationship, featureSpec refs).
 	 *
 	 * @param id the resource specification id string
 	 * @return the constructed reference, or null if the input is null
@@ -350,6 +697,13 @@ public abstract class TMForumMapper extends BaseMapper {
 	public ResourceSpecificationRef mapFromResourceSpecId(String id) {
 		if (id == null) {
 			return null;
+		}
+		if (!IdHelper.isNgsiLdId(id)) {
+			throw new TmForumException(
+					String.format("resourceSpecification id '%s' is not a valid NGSI-LD URI. " +
+							"Use the format urn:ngsi-ld:<type>:<id>, e.g. urn:ngsi-ld:resource-specification:%s",
+							id, id),
+					TmForumExceptionReason.INVALID_DATA);
 		}
 		return new ResourceSpecificationRef(id);
 	}

@@ -14,7 +14,8 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
-import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.resource.*;
+import org.fiware.tmforum.softwaremanagement.rest.ResourceTypeRegistry;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -275,6 +276,20 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 														.build().atSchemaLocation(null)
 														.resourceSpecificationId(
 																"urn:ngsi-ld:resource-specification:non-existent")))))));
+		testEntries.add(Arguments.of(
+				"A resource specification with an invalid resourceSpecRelationship id should not be created.",
+				ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+						.targetResourceSchema(null)
+						.lifecycleStatus("created")
+						.resourceSpecRelationship(List.of(
+								ResourceSpecificationRelationshipVOTestExample.build().atSchemaLocation(null)
+										.id("de29d1fd-cbf8-4bd8-9e75-3f3905db4389")))));
+
+		testEntries.add(Arguments.of(
+				"A SoftwareSpecification with an invalid softwareSupportPackage id should not be created.",
+				buildSubTypeSpecCreate("SoftwareSpecification", Map.of(
+						"softwareSupportPackage", Map.of("id", "not-a-valid-uri")))));
+
 		testEntries
 				.addAll(provideInvalidFeatureSpecs()
 						.map(ap -> Arguments.of(ap.message(),
@@ -909,71 +924,34 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {
+		ResourceSpecificationVO fullExpected = ResourceSpecificationVOTestExample.build()
+				.atSchemaLocation(null)
+				.validFor(null)
+				.relatedParty(null)
+				.targetResourceSchema(null)
+				.resourceSpecRelationship(null);
+
+		// When a fields parameter is provided, only the requested fields plus the
+		// mandatory fields (id, href) are returned by the FieldCleaningSerializer.
+		ResourceSpecificationVO versionOnly = new ResourceSpecificationVO()
+				.version("string");
+
+		ResourceSpecificationVO mandatoryOnly = new ResourceSpecificationVO();
+
+		ResourceSpecificationVO multipleFields = new ResourceSpecificationVO()
+				.version("string")
+				.description("string")
+				.lifecycleStatus("string");
+
 		return Stream.of(
-				Arguments.of("Without a fields parameter everything should be returned.", null,
-						ResourceSpecificationVOTestExample.build()
-								.atSchemaLocation(null)
-								.validFor(null)
-								.relatedParty(null)
-								.targetResourceSchema(null)
-								.resourceSpecRelationship(null)),
-				Arguments.of("Only version and the mandatory parameters should have been included.",
-						"version",
-						ResourceSpecificationVOTestExample.build().atSchemaLocation(null)
-								.relatedParty(null)
-								.lastUpdate(null)
-								.isBundle(null)
-								.resourceSpecRelationship(null)
-								.featureSpecification(null)
-								.category(null)
-								.description(null)
-								.lifecycleStatus(null)
-								.name(null)
-								.attachment(null)
-								.resourceSpecCharacteristic(null)
-								.targetResourceSchema(null)
-								.validFor(null)
-								.atBaseType(null)
-								.atSchemaLocation(null)
-								.atType(null)),
-				Arguments.of(
-						"Only the mandatory parameters should have been included when a non-existent field was requested.",
-						"nothingToSeeHere",
-						ResourceSpecificationVOTestExample.build().atSchemaLocation(null)
-								.relatedParty(null)
-								.lastUpdate(null)
-								.isBundle(null)
-								.resourceSpecRelationship(null)
-								.featureSpecification(null)
-								.category(null)
-								.description(null)
-								.lifecycleStatus(null)
-								.name(null)
-								.version(null)
-								.attachment(null)
-								.resourceSpecCharacteristic(null)
-								.targetResourceSchema(null)
-								.validFor(null)
-								.atBaseType(null)
-								.atSchemaLocation(null)
-								.atType(null)),
-				Arguments.of(
-						"Only version, lastUpdate, lifecycleStatus, description and the mandatory parameters should have been included.",
-						"version,lastUpdate,lifecycleStatus,description",
-						ResourceSpecificationVOTestExample.build().atSchemaLocation(null)
-								.relatedParty(null)
-								.isBundle(null)
-								.resourceSpecRelationship(null)
-								.featureSpecification(null)
-								.category(null)
-								.name(null)
-								.attachment(null)
-								.resourceSpecCharacteristic(null)
-								.targetResourceSchema(null)
-								.validFor(null)
-								.atBaseType(null)
-								.atSchemaLocation(null)
-								.atType(null)));
+				Arguments.of("Without a fields parameter everything should be returned.",
+						null, fullExpected),
+				Arguments.of("With a single field, only that field plus id/href should be returned.",
+						"version", versionOnly),
+				Arguments.of("With a non-existent field, only mandatory id/href should be returned.",
+						"nothingToSeeHere", mandatoryOnly),
+				Arguments.of("With multiple fields, only those fields plus id/href should be returned.",
+						"version,lastUpdate,lifecycleStatus,description", multipleFields));
 	}
 
 	@Disabled("400 cannot happen, only 404")
@@ -1025,6 +1003,189 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 	@Override
 	protected String getEntityType() {
-		return ResourceSpecification.TYPE_RESOURCE_SPECIFICATION;
+		return ResourceTypeRegistry.ALL_SPEC_TYPES;
+	}
+
+	// --- Sub-type specific integration tests ---
+
+	/**
+	 * Helper to build a ResourceSpecificationCreateVO that represents a sub-type.
+	 * Known sub-type properties are recognized by the
+	 * {@link org.fiware.tmforum.common.mapping.ValidatingDeserializer} via the registered
+	 * {@link org.fiware.tmforum.common.mapping.SubTypePropertyProvider}, so no explicit
+	 * {@code @schemaLocation} is needed.
+	 */
+	private static ResourceSpecificationCreateVO buildSubTypeSpecCreate(String atType,
+			Map<String, Object> extraFields) {
+		ResourceSpecificationCreateVO createVO = ResourceSpecificationCreateVOTestExample.build()
+				.targetResourceSchema(null)
+				.lifecycleStatus("created")
+				.atType(atType);
+		extraFields.forEach(createVO::setUnknownProperties);
+		return createVO;
+	}
+
+	/**
+	 * Parameterized test for creating sub-type ResourceSpecification entities.
+	 */
+	@ParameterizedTest
+	@MethodSource("provideSubTypeSpecs")
+	public void createSubTypeResourceSpecification201(String message,
+			ResourceSpecificationCreateVO createVO) throws Exception {
+		Instant currentTimeInstant = Instant.ofEpochSecond(10000);
+		when(clock.instant()).thenReturn(currentTimeInstant);
+
+		HttpResponse<ResourceSpecificationVO> response = callAndCatch(
+				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, createVO));
+		assertEquals(HttpStatus.CREATED, response.getStatus(),
+				message + " - Error: " + response.getBody(ErrorDetails.class).orElse(null));
+		assertEquals(message.contains("Logical") ? "LogicalResourceSpecification" :
+						message.contains("SoftwareResource") ? "SoftwareResourceSpecification" :
+						message.contains("APISpec") ? "APISpecification" :
+						message.contains("SoftwareSpec") ? "SoftwareSpecification" :
+						message.contains("Hosting") ? "HostingPlatformRequirementSpecification" :
+						message.contains("PhysicalResource") ? "PhysicalResourceSpecification" :
+						"SoftwareSupportPackageSpecification",
+				response.body().getAtType(), message + " - @type mismatch");
+	}
+
+	private static Stream<Arguments> provideSubTypeSpecs() {
+		return Stream.of(
+				Arguments.of("LogicalResourceSpecification should be created.",
+						buildSubTypeSpecCreate("LogicalResourceSpecification", Map.of())),
+				Arguments.of("SoftwareResourceSpecification should be created.",
+						buildSubTypeSpecCreate("SoftwareResourceSpecification", Map.of(
+								"buildNumber", "build-42",
+								"majorVersion", "1",
+								"minorVersion", "0",
+								"releaseStatus", "generalDeployment"))),
+				Arguments.of("APISpecification should be created.",
+						buildSubTypeSpecCreate("APISpecification", Map.of(
+								"apiProtocolType", "REST",
+								"authenticationType", "Basic",
+								"buildNumber", "api-1.0"))),
+				Arguments.of("SoftwareSpecification should be created.",
+						buildSubTypeSpecCreate("SoftwareSpecification", Map.of(
+								"buildNumber", "sw-1.0",
+								"numUsersMax", 10,
+								"numberProcessActiveTotal", 4))),
+				Arguments.of("HostingPlatformRequirementSpecification should be created.",
+						buildSubTypeSpecCreate("HostingPlatformRequirementSpecification", Map.of(
+								"isVirtualizable", true))),
+				Arguments.of("PhysicalResourceSpecification should be created.",
+						buildSubTypeSpecCreate("PhysicalResourceSpecification", Map.of())),
+				Arguments.of("SoftwareSupportPackageSpecification should be created.",
+						buildSubTypeSpecCreate("SoftwareSupportPackageSpecification", Map.of()))
+		);
+	}
+
+	/**
+	 * Test retrieving a sub-type specification preserves sub-type-specific fields.
+	 */
+	@ParameterizedTest
+	@MethodSource("provideSubTypeSpecRetrievalCases")
+	public void retrieveSubTypeResourceSpecification200(String message, String atType,
+			Map<String, Object> extraFields) throws Exception {
+		Instant currentTimeInstant = Instant.ofEpochSecond(10000);
+		when(clock.instant()).thenReturn(currentTimeInstant);
+
+		ResourceSpecificationCreateVO createVO = buildSubTypeSpecCreate(atType, extraFields);
+		HttpResponse<ResourceSpecificationVO> createResponse = callAndCatch(
+				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, createVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), message + " - creation failed");
+		String id = createResponse.body().getId();
+
+		HttpResponse<ResourceSpecificationVO> retrieveResponse = callAndCatch(
+				() -> resourceSpecificationApiTestClient.retrieveResourceSpecification(null, id, null));
+		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message + " - retrieve failed");
+
+		ResourceSpecificationVO retrieved = retrieveResponse.body();
+		assertEquals(atType, retrieved.getAtType(), message + " - @type mismatch");
+		for (Map.Entry<String, Object> entry : extraFields.entrySet()) {
+			assertEquals(entry.getValue(), retrieved.getUnknownProperties().get(entry.getKey()),
+					String.format("%s - field '%s' mismatch", message, entry.getKey()));
+		}
+	}
+
+	private static Stream<Arguments> provideSubTypeSpecRetrievalCases() {
+		return Stream.of(
+				Arguments.of("SoftwareResourceSpecification retrieve",
+						"SoftwareResourceSpecification",
+						Map.of("buildNumber", "build-99", "releaseStatus", "beta")),
+				Arguments.of("APISpecification retrieve",
+						"APISpecification",
+						Map.of("apiProtocolType", "gRPC", "authenticationType", "OAuth2")),
+				Arguments.of("SoftwareSpecification retrieve",
+						"SoftwareSpecification",
+						Map.of("numUsersMax", 50)),
+				Arguments.of("LogicalResourceSpecification retrieve",
+						"LogicalResourceSpecification",
+						Map.of()),
+				Arguments.of("PhysicalResourceSpecification retrieve",
+						"PhysicalResourceSpecification",
+						Map.of())
+		);
+	}
+
+	/**
+	 * Test listing specifications returns sub-type specs alongside base specs.
+	 */
+	@Test
+	public void listResourceSpecificationIncludesSubTypes() throws Exception {
+		Instant currentTimeInstant = Instant.ofEpochSecond(10000);
+		when(clock.instant()).thenReturn(currentTimeInstant);
+
+		// Create a base spec
+		ResourceSpecificationCreateVO baseCreate = ResourceSpecificationCreateVOTestExample.build()
+				.atSchemaLocation(null).targetResourceSchema(null).lifecycleStatus("created");
+		HttpResponse<ResourceSpecificationVO> baseResponse = callAndCatch(
+				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, baseCreate));
+		assertEquals(HttpStatus.CREATED, baseResponse.getStatus());
+		String baseId = baseResponse.body().getId();
+
+		// Create a SoftwareResourceSpecification sub-type
+		ResourceSpecificationCreateVO swCreate = buildSubTypeSpecCreate(
+				"SoftwareResourceSpecification", Map.of("buildNumber", "list-build"));
+		HttpResponse<ResourceSpecificationVO> swResponse = callAndCatch(
+				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, swCreate));
+		assertEquals(HttpStatus.CREATED, swResponse.getStatus());
+		String swId = swResponse.body().getId();
+
+		// List all specs
+		HttpResponse<List<ResourceSpecificationVO>> listResponse = callAndCatch(
+				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, null, null));
+		assertEquals(HttpStatus.OK, listResponse.getStatus());
+
+		List<String> returnedIds = listResponse.body().stream()
+				.map(ResourceSpecificationVO::getId)
+				.toList();
+		assertTrue(returnedIds.contains(baseId), "Base spec should be in the list.");
+		assertTrue(returnedIds.contains(swId), "SoftwareResourceSpecification should be in the list.");
+	}
+
+	/**
+	 * Test deleting a sub-type specification.
+	 */
+	@Test
+	public void deleteSubTypeResourceSpecification204() throws Exception {
+		Instant currentTimeInstant = Instant.ofEpochSecond(10000);
+		when(clock.instant()).thenReturn(currentTimeInstant);
+
+		ResourceSpecificationCreateVO createVO = buildSubTypeSpecCreate(
+				"APISpecification", Map.of("apiProtocolType", "REST"));
+		HttpResponse<ResourceSpecificationVO> createResponse = callAndCatch(
+				() -> resourceSpecificationApiTestClient.createResourceSpecification(null, createVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus());
+		String id = createResponse.body().getId();
+
+		assertEquals(HttpStatus.NO_CONTENT,
+				callAndCatch(() -> resourceSpecificationApiTestClient
+						.deleteResourceSpecification(null, id)).getStatus(),
+				"The sub-type spec should have been deleted.");
+
+		assertEquals(HttpStatus.NOT_FOUND,
+				callAndCatch(() -> resourceSpecificationApiTestClient
+						.retrieveResourceSpecification(null, id, null)).getStatus(),
+				"The sub-type spec should not exist anymore.");
 	}
 }
