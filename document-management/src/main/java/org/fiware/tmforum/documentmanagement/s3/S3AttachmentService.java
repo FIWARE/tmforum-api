@@ -306,6 +306,7 @@ public class S3AttachmentService implements AttachmentService {
         }
         copy.setName(source.getName());
         copy.setAtReferredType(source.getAtReferredType());
+        copy.setAtSchemaLocation(source.getAtSchemaLocation());
         return copy;
     }
 }
