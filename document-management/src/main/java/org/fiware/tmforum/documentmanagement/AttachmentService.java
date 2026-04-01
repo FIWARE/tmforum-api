@@ -54,4 +54,14 @@ public interface AttachmentService {
      * @return a {@code Mono} that completes when all deletions are done
      */
     Mono<Void> deleteAttachments(List<AttachmentRefOrValue> attachments);
+
+    /**
+     * Deletes stored objects for attachments that were present in {@code existing} but are no
+     * longer present in {@code updated}. Used during PATCH to clean up orphaned objects when
+     * the client replaces or removes attachments.
+     *
+     * @param existing attachments currently persisted for the entity
+     * @param updated  attachments supplied in the PATCH request
+     */
+    void deleteOrphanedAttachments(List<AttachmentRefOrValue> existing, List<AttachmentRefOrValue> updated);
 }

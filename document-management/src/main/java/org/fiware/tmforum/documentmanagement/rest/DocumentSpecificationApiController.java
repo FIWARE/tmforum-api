@@ -16,6 +16,7 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.documentmanagement.AttachmentService;
 import org.fiware.tmforum.documentmanagement.TMForumMapper;
 import org.fiware.tmforum.documentmanagement.domain.DocumentSpecification;
@@ -68,19 +69,20 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
 
         docSpec.setLastUpdate(clock.instant());
 
-        if (docSpec.getAttachment() != null) {
-            if (attachmentService != null) {
-                docSpec.getAttachment().forEach(attachmentService::validateAttachmentContent);
-            } else {
-                docSpec.getAttachment().stream()
-                        .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
-                        .findFirst()
-                        .ifPresent(att -> {
-                            throw new TmForumException(
-                                    "Attachments with inline content are not supported when no S3 storage is configured. Provide a URL reference instead.",
-                                    TmForumExceptionReason.INVALID_DATA);
-                        });
-            }
+        List<AttachmentRefOrValue> attachments = docSpec.getAttachment();
+        if (attachments == null || attachments.isEmpty()) {
+            // nothing to validate
+        } else if (attachmentService != null) {
+            attachments.forEach(attachmentService::validateAttachmentContent);
+        } else {
+            attachments.stream()
+                    .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
+                    .findFirst()
+                    .ifPresent(att -> {
+                        throw new TmForumException(
+                                "Attachments with inline content are not supported when no AttachmentService is configured. Provide a URL reference instead.",
+                                TmForumExceptionReason.INVALID_DATA);
+                    });
         }
 
         Mono<DocumentSpecification> preparedSpec = attachmentService != null
@@ -130,10 +132,35 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
     public Mono<HttpResponse<DocumentSpecificationVO>> patchDocumentSpecification(
             String id,
             DocumentSpecificationUpdateVO updateVO) {
-        // PATCH is not implemented per requirements (only GET/POST/DELETE)
-        throw new TmForumException(
-                "PATCH method is not supported for document specifications.",
-                TmForumExceptionReason.INVALID_DATA);
+        if (!IdHelper.isNgsiLdId(id)) {
+            throw new TmForumException(
+                    "Did not receive a valid id, such document specification cannot exist.",
+                    TmForumExceptionReason.NOT_FOUND);
+        }
+
+        DocumentSpecification updatedSpec = tmForumMapper.map(updateVO, id);
+
+        if (attachmentService == null) {
+            return patch(id, updatedSpec, getCheckingMono(updatedSpec), DocumentSpecification.class)
+                    .map(tmForumMapper::map)
+                    .map(HttpResponse::ok);
+        }
+
+        return retrieve(id, DocumentSpecification.class)
+                .flatMap(existing -> {
+                    List<AttachmentRefOrValue> newAttachments = updatedSpec.getAttachment();
+                    if (newAttachments == null || newAttachments.isEmpty()) {
+                        return Mono.just(updatedSpec);
+                    }
+                    attachmentService.deleteOrphanedAttachments(existing.getAttachment(), newAttachments);
+                    return attachmentService.offloadAttachments(newAttachments, id)
+                            .doOnNext(updatedSpec::setAttachment)
+                            .thenReturn(updatedSpec);
+                })
+                .switchIfEmpty(Mono.just(updatedSpec))
+                .flatMap(spec -> patch(id, spec, getCheckingMono(spec), DocumentSpecification.class))
+                .map(tmForumMapper::map)
+                .map(HttpResponse::ok);
     }
 
     @Override

@@ -168,6 +168,30 @@ public class S3AttachmentService implements AttachmentService {
                 .then();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public void deleteOrphanedAttachments(List<AttachmentRefOrValue> existing, List<AttachmentRefOrValue> updated) {
+        if (existing == null || existing.isEmpty()) {
+            return;
+        }
+        List<String> updatedUrls = updated == null ? List.of() : updated.stream()
+                .filter(a -> a.getUrl() != null)
+                .map(a -> a.getUrl().toString())
+                .toList();
+
+        existing.stream()
+                .filter(a -> isManagedUrl(a.getUrl()))
+                .filter(a -> !updatedUrls.contains(a.getUrl().toString()))
+                .map(a -> extractKey(a.getUrl()))
+                .forEach(key -> {
+                    try {
+                        deleteFromS3(key);
+                    } catch (Exception e) {
+                        log.warn("Failed to delete orphaned S3 object {}", key, e);
+                    }
+                });
+    }
+
     private AttachmentRefOrValue processAttachmentForOffload(AttachmentRefOrValue attachment, String entityId) {
         String content = attachment.getContent();
         if (content == null || content.isEmpty()) {
