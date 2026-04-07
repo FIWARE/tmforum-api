@@ -16,7 +16,7 @@ import static org.fiware.tmforum.common.CommonConstants.ID_TEMPLATE;
 public class IdHelper {
 
 	private final static Pattern NGSI_LD_URN_PATTERN = Pattern.compile(
-			"^urn:ngsi-ld:[a-z0-9-]{0,31}:([a-z0-9()+,\\-.:=@;$_!*']|%[0-9a-f]{2})+$",
+			"^urn:ngsi-ld:[a-z0-9-]{1,63}:([a-z0-9()+,\\-.:=@;$_!*']|%[0-9a-f]{2})+$",
 			Pattern.CASE_INSENSITIVE);
 
 	/**
