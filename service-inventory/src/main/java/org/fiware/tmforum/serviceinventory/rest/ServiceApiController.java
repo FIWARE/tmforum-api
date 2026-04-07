@@ -97,7 +97,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
 
     private void validateInternalRefs(Service service) {
         if (service.getNote() != null) {
-            List<URI> noteIds = service.getNote().stream().map(Note::getTmfId).toList();
+            List<URI> noteIds = service.getNote().stream().map(Note::getTmfId).filter(Objects::nonNull).toList();
             if (noteIds.size() != new HashSet<>(noteIds).size()) {
                 throw new TmForumException(
                         String.format("Duplicate note ids are not allowed: %s", noteIds),
@@ -144,6 +144,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
         List<String> featureIds = service.getFeature()
                 .stream()
                 .map(Feature::getTmfId)
+                .filter(Objects::nonNull)
                 .toList();
         // check for duplicate ids
         if (featureIds.size() != new HashSet<>(featureIds).size()) {
