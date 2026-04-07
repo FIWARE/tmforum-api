@@ -117,6 +117,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		List<String> charIds = characteristics
 				.stream()
 				.map(Characteristic::getTmfId)
+				.filter(Objects::nonNull)
 				.toList();
 		if (charIds.size() != new HashSet<>(charIds).size()) {
 			throw new TmForumException(
