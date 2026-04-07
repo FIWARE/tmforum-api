@@ -117,6 +117,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
         List<String> charIds = characteristics
                 .stream()
                 .map(Characteristic::getTmfId)
+                .filter(Objects::nonNull)
                 .toList();
         if (charIds.size() != new HashSet<>(charIds).size()) {
             throw new TmForumException(
