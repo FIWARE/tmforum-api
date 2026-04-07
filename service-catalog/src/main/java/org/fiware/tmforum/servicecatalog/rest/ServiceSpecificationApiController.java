@@ -152,6 +152,7 @@ public class ServiceSpecificationApiController extends AbstractApiController<Ser
 				.getFeatureSpecification()
 				.stream()
 				.map(FeatureSpecification::getTmfId)
+				.filter(Objects::nonNull)
 				.toList();
 		if (featureSpecIds.size() != new HashSet<>(featureSpecIds).size()) {
 			throw new TmForumException("Duplicate featureSpec ids are not allowed.",
@@ -177,7 +178,7 @@ public class ServiceSpecificationApiController extends AbstractApiController<Ser
 				.toList();
 
 		List<String> featureSpecCharIds = featureSpecCharList.stream().map(FeatureSpecificationCharacteristic::getTmfId)
-				.toList();
+				.filter(Objects::nonNull).toList();
 		if (featureSpecCharIds.size() != new HashSet<>(featureSpecCharIds).size()) {
 			throw new TmForumException("Duplicate featureSpecChar ids are not allowed.",
 					TmForumExceptionReason.INVALID_DATA);

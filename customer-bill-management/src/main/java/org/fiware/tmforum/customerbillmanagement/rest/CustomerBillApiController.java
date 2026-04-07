@@ -26,6 +26,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -71,6 +72,7 @@ public class CustomerBillApiController extends AbstractApiController<CustomerBil
 	protected void validateTaxItems(List<TaxItem> taxItems) {
 		List<String> taxItemIds = taxItems.stream()
 				.map(TaxItem::getTmfId)
+				.filter(Objects::nonNull)
 				.toList();
 		if (taxItemIds.size() != new HashSet<>(taxItemIds).size()) {
 			throw new TmForumException(String.format("Duplicate taxItem ids are not allowed - ids: %s", taxItemIds),
