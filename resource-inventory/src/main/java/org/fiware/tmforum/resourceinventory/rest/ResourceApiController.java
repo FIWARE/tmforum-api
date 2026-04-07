@@ -97,7 +97,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 
 	private void validateInternalRefs(Resource resource) {
 		if (resource.getNote() != null) {
-			List<URI> noteIds = resource.getNote().stream().map(Note::getTmfId).toList();
+			List<URI> noteIds = resource.getNote().stream().map(Note::getTmfId).filter(Objects::nonNull).toList();
 			if (noteIds.size() != new HashSet<>(noteIds).size()) {
 				throw new TmForumException(
 						String.format("Duplicate note ids are not allowed: %s", noteIds),

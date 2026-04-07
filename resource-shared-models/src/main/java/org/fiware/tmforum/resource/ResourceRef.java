@@ -18,6 +18,15 @@ public class ResourceRef extends RefEntity {
     @Override
     @JsonIgnore
     public List<String> getReferencedTypes() {
-        return new ArrayList<>(List.of(Resource.TYPE_RESOURCE));
+        return new ArrayList<>(List.of(
+                Resource.TYPE_RESOURCE,
+                PhysicalResource.TYPE_PHYSICAL_RESOURCE,
+                LogicalResource.TYPE_LOGICAL_RESOURCE,
+                SoftwareResource.TYPE_SOFTWARE_RESOURCE,
+                InstalledSoftware.TYPE_INSTALLED_SOFTWARE,
+                SoftwareSupportPackage.TYPE_SOFTWARE_SUPPORT_PACKAGE,
+                ApiResource.TYPE_API_RESOURCE,
+                HostingPlatformRequirement.TYPE_HOSTING_PLATFORM_REQUIREMENT
+        ));
     }
 }
