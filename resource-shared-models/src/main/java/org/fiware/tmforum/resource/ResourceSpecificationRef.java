@@ -20,6 +20,15 @@ public class ResourceSpecificationRef extends RefEntity {
     @Override
     @JsonIgnore
     public List<String> getReferencedTypes() {
-        return new ArrayList<>(List.of("resource-specification"));
+        return new ArrayList<>(List.of(
+                ResourceSpecification.TYPE_RESOURCE_SPECIFICATION,
+                PhysicalResourceSpecification.TYPE_PHYSICAL_RESOURCE_SPECIFICATION,
+                LogicalResourceSpecification.TYPE_LOGICAL_RESOURCE_SPECIFICATION,
+                SoftwareResourceSpecification.TYPE_SOFTWARE_RESOURCE_SPECIFICATION,
+                SoftwareSupportPackageSpecification.TYPE_SOFTWARE_SUPPORT_PACKAGE_SPECIFICATION,
+                ApiSpecification.TYPE_API_SPECIFICATION,
+                SoftwareSpecification.TYPE_SOFTWARE_SPECIFICATION,
+                HostingPlatformRequirementSpecification.TYPE_HOSTING_PLATFORM_REQUIREMENT_SPECIFICATION
+        ));
     }
 }
