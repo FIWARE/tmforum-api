@@ -22,7 +22,16 @@ import org.fiware.tmforum.resource.SoftwareSupportPackageSpecification;
 import java.util.ArrayList;
 import java.util.List;
 
-@MappingEnabled(entityType = ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)
+@MappingEnabled(entityType = {
+        ResourceSpecification.TYPE_RESOURCE_SPECIFICATION,
+        PhysicalResourceSpecification.TYPE_PHYSICAL_RESOURCE_SPECIFICATION,
+        LogicalResourceSpecification.TYPE_LOGICAL_RESOURCE_SPECIFICATION,
+        SoftwareResourceSpecification.TYPE_SOFTWARE_RESOURCE_SPECIFICATION,
+        SoftwareSupportPackageSpecification.TYPE_SOFTWARE_SUPPORT_PACKAGE_SPECIFICATION,
+        ApiSpecification.TYPE_API_SPECIFICATION,
+        SoftwareSpecification.TYPE_SOFTWARE_SPECIFICATION,
+        HostingPlatformRequirementSpecification.TYPE_HOSTING_PLATFORM_REQUIREMENT_SPECIFICATION
+})
 @EqualsAndHashCode(callSuper = true)
 public class ResourceSpecificationRef extends RefEntity {
 
