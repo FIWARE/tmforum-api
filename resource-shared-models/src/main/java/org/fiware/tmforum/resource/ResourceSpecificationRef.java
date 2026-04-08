@@ -9,7 +9,23 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import java.util.ArrayList;
 import java.util.List;
 
-@MappingEnabled(entityType = "resource-specification")
+/**
+ * Reference to a ResourceSpecification entity that can be any of the sub-types:
+ * resource-specification, physical-resource-specification, logical-resource-specification,
+ * software-resource-specification, software-support-package-specification, api-specification,
+ * software-specification, hosting-platform-requirement-specification.
+ * The @MappingEnabled annotation registers all allowed types for NGSI-LD entity matching.
+ */
+@MappingEnabled(entityType = {
+        "resource-specification",
+        "physical-resource-specification",
+        "logical-resource-specification",
+        "software-resource-specification",
+        "software-support-package-specification",
+        "api-specification",
+        "software-specification",
+        "hosting-platform-requirement-specification"
+})
 @EqualsAndHashCode(callSuper = true)
 public class ResourceSpecificationRef extends RefEntity {
 

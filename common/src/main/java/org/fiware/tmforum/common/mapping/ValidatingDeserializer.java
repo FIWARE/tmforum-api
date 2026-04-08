@@ -62,8 +62,17 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		if (targetObject instanceof UnknownPreservingBase upb) {
 			Map<String, Object> unknownProperties = upb.getUnknownProperties();
 			if (unknownProperties != null && !unknownProperties.isEmpty()) {
+				// Resolve @type: prefer the dedicated getter, fall back to unknownProperties
+				// (some generated UpdateVOs lack an explicit @type field, so it ends up here)
+				String atType = upb.getAtType();
+				if (atType == null && unknownProperties.get("@type") instanceof String s) {
+					atType = s;
+				}
+
 				Map<String, Object> trulyUnknown = filterKnownSubTypeProperties(
-						unknownProperties, upb.getAtType());
+						unknownProperties, atType);
+				// @type is a standard TMForum polymorphism discriminator, not a custom extension
+				trulyUnknown.remove("@type");
 
 				if (upb.getAtSchemaLocation() != null) {
 					// validate only truly unknown properties against the schema
