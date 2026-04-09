@@ -71,7 +71,7 @@ api:
   service-catalog:
     basepath: /tmf-api/serviceCatalogManagement/v4
   service-inventory:
-    basepath: /tmf-api/serviceInventoryManagement/v4
+    basepath: /tmf-api/serviceInventory/v4
   service-order-management:
     basepath: /tmf-api/serviceOrdering/v4
   software-management:
