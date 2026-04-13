@@ -129,6 +129,7 @@
         <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0
         </version.org.apache.maven.plugins.maven-javadoc-plugin>
         <version.com.google.code.findbugs.annotations>3.0.1u2</version.com.google.code.findbugs.annotations>
+        <version.io.minio.minio>8.5.7</version.io.minio.minio>
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
@@ -222,6 +223,11 @@
                 <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
                 <version>1.5.4</version>
+            </dependency>
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${version.io.minio.minio}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
