@@ -84,9 +84,19 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
                 () -> documentSpecificationApiTestClient.createDocumentSpecification(null, documentSpecificationCreateVO));
 
         assertEquals(HttpStatus.CREATED, response.getStatus(), message);
-        assertNotNull(response.body(), message);
-        assertNotNull(response.body().getId(), message);
-        assertEquals(expectedDocSpec.getName(), response.body().getName(), message);
+        DocumentSpecificationVO body = response.body();
+        assertNotNull(body, message);
+        assertNotNull(body.getId(), message);
+        assertEquals(expectedDocSpec.getName(), body.getName(), message);
+        if (expectedDocSpec.getDescription() != null) {
+            assertEquals(expectedDocSpec.getDescription(), body.getDescription(), message);
+        }
+        if (expectedDocSpec.getVersion() != null) {
+            assertEquals(expectedDocSpec.getVersion(), body.getVersion(), message);
+        }
+        if (expectedDocSpec.getLifecycleStatus() != null) {
+            assertEquals(expectedDocSpec.getLifecycleStatus(), body.getLifecycleStatus(), message);
+        }
     }
 
     private static Stream<Arguments> provideValidDocumentSpecifications() {
@@ -98,6 +108,8 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
         simpleCreateVO.setVersion("1.0.0");
         DocumentSpecificationVO simpleExpected = new DocumentSpecificationVO();
         simpleExpected.setName("Test Document Specification");
+        simpleExpected.setDescription("A test document specification");
+        simpleExpected.setVersion("1.0.0");
         testEntries.add(Arguments.of("A simple document specification should be created.", simpleCreateVO, simpleExpected));
 
         DocumentSpecificationCreateVO withLifecycleVO = new DocumentSpecificationCreateVO();
@@ -105,6 +117,7 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
         withLifecycleVO.setLifecycleStatus(DocumentSpecificationStatusTypeVO.APPROVED);
         DocumentSpecificationVO lifecycleExpected = new DocumentSpecificationVO();
         lifecycleExpected.setName("Document with Lifecycle");
+        lifecycleExpected.setLifecycleStatus(DocumentSpecificationStatusTypeVO.APPROVED);
         testEntries.add(Arguments.of("A document specification with lifecycle status should be created.", withLifecycleVO, lifecycleExpected));
 
         return testEntries.stream();

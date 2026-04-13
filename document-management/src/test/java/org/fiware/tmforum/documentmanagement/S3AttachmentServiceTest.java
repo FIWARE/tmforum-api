@@ -76,28 +76,32 @@ class S3AttachmentServiceTest {
     void validateAttachmentContent_nullContent_doesNotThrow() {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
         attachment.setContent(null);
-        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment));
+        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment),
+                "null content should be accepted without validation");
     }
 
     @Test
     void validateAttachmentContent_emptyContent_doesNotThrow() {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
         attachment.setContent("");
-        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment));
+        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment),
+                "empty content should be accepted without validation");
     }
 
     @Test
     void validateAttachmentContent_validBase64WithinLimit_doesNotThrow() {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
         attachment.setContent(Base64.getEncoder().encodeToString("Hello World".getBytes()));
-        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment));
+        assertDoesNotThrow(() -> service.validateAttachmentContent(attachment),
+                "valid base64 content within size limit should pass validation");
     }
 
     @Test
     void validateAttachmentContent_invalidBase64_throwsTmForumException() {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
         attachment.setContent("not-valid-base64!!!");
-        assertThrows(TmForumException.class, () -> service.validateAttachmentContent(attachment));
+        assertThrows(TmForumException.class, () -> service.validateAttachmentContent(attachment),
+                "invalid base64 content should throw TmForumException");
     }
 
     @Test
@@ -105,21 +109,23 @@ class S3AttachmentServiceTest {
         config.setMaxContentSize(4);
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
         attachment.setContent(Base64.getEncoder().encodeToString(new byte[10]));
-        assertThrows(TmForumException.class, () -> service.validateAttachmentContent(attachment));
+        assertThrows(TmForumException.class, () -> service.validateAttachmentContent(attachment),
+                "content exceeding max size should throw TmForumException");
     }
 
     // --- offloadAttachments ---
 
     @Test
     void offloadAttachments_nullList_returnsNull() {
-        assertNull(service.offloadAttachments(null, "entity-1").block());
+        assertNull(service.offloadAttachments(null, "entity-1").block(),
+                "null attachment list should return null Mono");
     }
 
     @Test
     void offloadAttachments_emptyList_returnsEmptyList() {
         List<AttachmentRefOrValue> result = service.offloadAttachments(List.of(), "entity-1").block();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        assertNotNull(result, "empty list should return an empty list, not null");
+        assertTrue(result.isEmpty(), "result should be empty");
     }
 
     @Test
@@ -129,9 +135,9 @@ class S3AttachmentServiceTest {
 
         List<AttachmentRefOrValue> result = service.offloadAttachments(List.of(attachment), "entity-1").block();
 
-        assertNotNull(result);
-        assertNull(result.get(0).getContent());
-        assertNull(result.get(0).getUrl());
+        assertNotNull(result, "result should not be null");
+        assertNull(result.get(0).getContent(), "content should remain null");
+        assertNull(result.get(0).getUrl(), "url should remain null when no content to offload");
         verifyNoInteractions(s3Client);
     }
 
@@ -144,7 +150,7 @@ class S3AttachmentServiceTest {
 
         List<AttachmentRefOrValue> result = service.offloadAttachments(List.of(attachment), "entity-1").block();
 
-        assertNotNull(result);
+        assertNotNull(result, "result should not be null");
         AttachmentRefOrValue processed = result.get(0);
         assertNull(processed.getContent(), "inline content should be cleared after offload");
         assertNotNull(processed.getUrl(), "url should be set to the internal S3 path");
@@ -162,7 +168,7 @@ class S3AttachmentServiceTest {
 
         List<AttachmentRefOrValue> result = service.offloadAttachments(List.of(attachment), "entity-1").block();
 
-        assertNotNull(result);
+        assertNotNull(result, "result should not be null");
         assertEquals(managedUrl, result.get(0).getUrl(), "managed url should remain unchanged");
         verifyNoInteractions(s3Client);
     }
@@ -171,7 +177,8 @@ class S3AttachmentServiceTest {
 
     @Test
     void resolveAttachments_nullList_returnsNull() {
-        assertNull(service.resolveAttachments(null).block());
+        assertNull(service.resolveAttachments(null).block(),
+                "null attachment list should return null Mono");
     }
 
     @Test
@@ -181,8 +188,8 @@ class S3AttachmentServiceTest {
 
         List<AttachmentRefOrValue> result = service.resolveAttachments(List.of(attachment)).block();
 
-        assertNotNull(result);
-        assertNull(result.get(0).getUrl());
+        assertNotNull(result, "result should not be null");
+        assertNull(result.get(0).getUrl(), "url should remain null when not managed");
         verifyNoInteractions(s3Client);
     }
 
@@ -194,8 +201,8 @@ class S3AttachmentServiceTest {
 
         List<AttachmentRefOrValue> result = service.resolveAttachments(List.of(attachment)).block();
 
-        assertNotNull(result);
-        assertEquals(externalUrl, result.get(0).getUrl());
+        assertNotNull(result, "result should not be null");
+        assertEquals(externalUrl, result.get(0).getUrl(), "non-managed url should be returned unchanged");
         verifyNoInteractions(s3Client);
     }
 
@@ -205,13 +212,13 @@ class S3AttachmentServiceTest {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
         attachment.setUrl(managedUrl);
 
-        when(minioClient.getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class)))
+        when(s3Client.getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class)))
                 .thenReturn(PRESIGNED_URL);
 
         List<AttachmentRefOrValue> result = service.resolveAttachments(List.of(attachment)).block();
 
-        assertNotNull(result);
-        assertEquals(new URL(PRESIGNED_URL), result.get(0).getUrl());
+        assertNotNull(result, "result should not be null");
+        assertEquals(new URL(PRESIGNED_URL), result.get(0).getUrl(), "managed url should be replaced with presigned url");
         verify(s3Client).getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class));
     }
 
@@ -250,7 +257,8 @@ class S3AttachmentServiceTest {
 
         doThrow(new RuntimeException("S3 unavailable")).when(s3Client).removeObject(any(RemoveObjectArgs.class));
 
-        assertDoesNotThrow(() -> service.deleteAttachments(List.of(attachment)).block());
+        assertDoesNotThrow(() -> service.deleteAttachments(List.of(attachment)).block(),
+                "S3 delete failure should be swallowed and not propagate to the caller");
     }
 
     // --- deleteOrphanedAttachments ---
@@ -319,15 +327,15 @@ class S3AttachmentServiceTest {
 
         List<AttachmentRefOrValue> result = service.offloadAttachments(List.of(attachment), "entity-1").block();
 
-        assertNotNull(result);
+        assertNotNull(result, "result should not be null");
         AttachmentRefOrValue copy = result.get(0);
 
         assertNotSame(validFor, copy.getValidFor(), "validFor should be a new instance, not the same reference");
-        assertEquals(validFor.getStartDateTime(), copy.getValidFor().getStartDateTime());
-        assertEquals(validFor.getEndDateTime(), copy.getValidFor().getEndDateTime());
+        assertEquals(validFor.getStartDateTime(), copy.getValidFor().getStartDateTime(), "validFor startDateTime should be preserved");
+        assertEquals(validFor.getEndDateTime(), copy.getValidFor().getEndDateTime(), "validFor endDateTime should be preserved");
 
         assertNotSame(size, copy.getSize(), "size should be a new instance, not the same reference");
-        assertEquals(size.getAmount(), copy.getSize().getAmount());
-        assertEquals(size.getUnits(), copy.getSize().getUnits());
+        assertEquals(size.getAmount(), copy.getSize().getAmount(), "size amount should be preserved");
+        assertEquals(size.getUnits(), copy.getSize().getUnits(), "size units should be preserved");
     }
 }
