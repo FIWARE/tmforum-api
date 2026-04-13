@@ -70,23 +70,14 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
         docSpec.setLastUpdate(clock.instant());
 
         List<AttachmentRefOrValue> attachments = docSpec.getAttachment();
-        if (attachments == null || attachments.isEmpty()) {
-            // nothing to validate
-        } else if (attachmentService != null) {
+        if (attachmentService == null) {
+            rejectInlineContent(attachments);
+        } else if (attachments != null) {
             attachments.forEach(attachmentService::validateAttachmentContent);
-        } else {
-            attachments.stream()
-                    .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
-                    .findFirst()
-                    .ifPresent(att -> {
-                        throw new TmForumException(
-                                "Attachments with inline content are not supported when no AttachmentService is configured. Provide a URL reference instead.",
-                                TmForumExceptionReason.INVALID_DATA);
-                    });
         }
 
         Mono<DocumentSpecification> preparedSpec = attachmentService != null
-                ? attachmentService.offloadAttachments(docSpec.getAttachment(), docSpec.getId().toString())
+                ? attachmentService.offloadAttachments(attachments, docSpec.getId().toString())
                         .doOnNext(docSpec::setAttachment)
                         .thenReturn(docSpec)
                 : Mono.just(docSpec);
@@ -139,16 +130,21 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
         }
 
         DocumentSpecification updatedSpec = tmForumMapper.map(updateVO, id);
+        List<AttachmentRefOrValue> newAttachments = updatedSpec.getAttachment();
 
         if (attachmentService == null) {
+            rejectInlineContent(newAttachments);
             return patch(id, updatedSpec, getCheckingMono(updatedSpec), DocumentSpecification.class)
                     .map(tmForumMapper::map)
                     .map(HttpResponse::ok);
         }
 
+        if (newAttachments != null) {
+            newAttachments.forEach(attachmentService::validateAttachmentContent);
+        }
+
         return retrieve(id, DocumentSpecification.class)
                 .flatMap(existing -> {
-                    List<AttachmentRefOrValue> newAttachments = updatedSpec.getAttachment();
                     if (newAttachments == null || newAttachments.isEmpty()) {
                         return Mono.just(updatedSpec);
                     }
@@ -187,6 +183,20 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
                 })
                 .map(tmForumMapper::map)
                 .map(HttpResponse::ok);
+    }
+
+    private void rejectInlineContent(List<AttachmentRefOrValue> attachments) {
+        if (attachments == null) {
+            return;
+        }
+        attachments.stream()
+                .filter(att -> att.getContent() != null && !att.getContent().isEmpty())
+                .findFirst()
+                .ifPresent(att -> {
+                    throw new TmForumException(
+                            "Attachments with inline content are not supported when no AttachmentService is configured. Provide a URL reference instead.",
+                            TmForumExceptionReason.INVALID_DATA);
+                });
     }
 
     private Mono<DocumentSpecification> getCheckingMono(DocumentSpecification docSpec) {

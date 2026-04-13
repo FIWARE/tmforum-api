@@ -52,10 +52,10 @@ public abstract class TMForumMapper extends BaseMapper {
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
     @Mapping(target = "atSchemaLocation", ignore = true)
-    public abstract DocumentSpecificationVO map(DocumentSpecificationUpdateVO updateVO, String id);
+    public abstract DocumentSpecification map(DocumentSpecificationUpdateVO updateVO, String id);
 
     @AfterMapping
-    protected void afterMapUpdateVO(DocumentSpecificationUpdateVO source, @MappingTarget DocumentSpecificationVO target) {
+    protected void afterMapUpdateVO(DocumentSpecificationUpdateVO source, @MappingTarget DocumentSpecification target) {
         if (source != null) {
             target.setAtSchemaLocation(source.getAtSchemaLocation());
         }
