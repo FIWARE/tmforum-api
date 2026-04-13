@@ -48,7 +48,7 @@ public class S3AttachmentService implements AttachmentService {
     private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
     private static final int PRESIGNED_URL_EXPIRY_SECONDS = 3600;
 
-    private MinioClient minioClient;
+    private MinioClient s3Client;
     private final S3Configuration config;
 
     public S3AttachmentService(S3Configuration config) {
@@ -73,26 +73,26 @@ public class S3AttachmentService implements AttachmentService {
             if (config.getRegion() != null && !config.getRegion().isBlank()) {
                 builder.region(config.getRegion());
             }
-            this.minioClient = builder.build();
+            this.s3Client = builder.build();
             log.info("S3 client created successfully");
         } catch (Exception e) {
             log.error("Failed to create S3 client: {}", e.getMessage(), e);
             throw new TmForumException("Failed to initialize S3 client", e, TmForumExceptionReason.UNKNOWN);
         }
-        ensureBucketExists();
+        try {
+            ensureBucketExists();
+        } catch (Exception e) {
+            log.warn("Could not ensure bucket exists on startup: {}. Will retry on first upload.", e.getMessage());
+        }
     }
 
-    private void ensureBucketExists() {
-        try {
-            boolean exists = minioClient.bucketExists(
-                    BucketExistsArgs.builder().bucket(config.getBucket()).build());
-            if (!exists) {
-                minioClient.makeBucket(
-                        MakeBucketArgs.builder().bucket(config.getBucket()).build());
-                log.info("Created S3 bucket: {}", config.getBucket());
-            }
-        } catch (Exception e) {
-            log.warn("Could not ensure bucket exists: {}. Will retry on first upload.", e.getMessage());
+    private void ensureBucketExists() throws Exception {
+        boolean exists = s3Client.bucketExists(
+                BucketExistsArgs.builder().bucket(config.getBucket()).build());
+        if (!exists) {
+            s3Client.makeBucket(
+                    MakeBucketArgs.builder().bucket(config.getBucket()).build());
+            log.info("Created S3 bucket: {}", config.getBucket());
         }
     }
 
@@ -231,7 +231,7 @@ public class S3AttachmentService implements AttachmentService {
 
         try {
             String key = extractKey(attachment.getUrl());
-            String presignedUrl = minioClient.getPresignedObjectUrl(
+            String presignedUrl = s3Client.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(config.getBucket())
@@ -276,7 +276,7 @@ public class S3AttachmentService implements AttachmentService {
 
             String contentType = mimeType != null ? mimeType : DEFAULT_CONTENT_TYPE;
 
-            minioClient.putObject(
+            s3Client.putObject(
                     PutObjectArgs.builder()
                             .bucket(config.getBucket())
                             .object(key)
@@ -294,7 +294,7 @@ public class S3AttachmentService implements AttachmentService {
 
     private void deleteFromS3(String key) {
         try {
-            minioClient.removeObject(
+            s3Client.removeObject(
                     RemoveObjectArgs.builder()
                             .bucket(config.getBucket())
                             .object(key)

@@ -63,8 +63,8 @@ public class S3Configuration {
     private long maxContentSize = 10 * 1024 * 1024;
 
     /**
-     * AWS region identifier (e.g. {@code us-east-1}). Required when connecting to AWS S3;
-     * leave unset for MinIO, IONOS Object Storage, or other region-agnostic providers.
+     * S3 region identifier (e.g. {@code us-east-1} for AWS, {@code eu-central-3} for IONOS).
+     * Required for AWS S3 and IONOS Object Storage. Leave unset for local MinIO instances.
      */
     private String region;
 }

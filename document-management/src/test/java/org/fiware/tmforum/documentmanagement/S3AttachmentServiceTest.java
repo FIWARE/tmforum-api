@@ -49,7 +49,7 @@ class S3AttachmentServiceTest {
     }
 
     @Mock
-    private MinioClient minioClient;
+    private MinioClient s3Client;
 
     private S3Configuration config;
     private S3AttachmentService service;
@@ -65,9 +65,9 @@ class S3AttachmentServiceTest {
 
         service = new TestableS3AttachmentService(config);
 
-        Field minioClientField = S3AttachmentService.class.getDeclaredField("minioClient");
+        Field minioClientField = S3AttachmentService.class.getDeclaredField("s3Client");
         minioClientField.setAccessible(true);
-        minioClientField.set(service, minioClient);
+        minioClientField.set(service, s3Client);
     }
 
     // --- validateAttachmentContent ---
@@ -132,7 +132,7 @@ class S3AttachmentServiceTest {
         assertNotNull(result);
         assertNull(result.get(0).getContent());
         assertNull(result.get(0).getUrl());
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
@@ -150,7 +150,7 @@ class S3AttachmentServiceTest {
         assertNotNull(processed.getUrl(), "url should be set to the internal S3 path");
         assertTrue(processed.getUrl().toString().startsWith(ENDPOINT + "/" + BUCKET + "/"),
                 "url should be prefixed with endpoint/bucket/");
-        verify(minioClient).putObject(any(PutObjectArgs.class));
+        verify(s3Client).putObject(any(PutObjectArgs.class));
     }
 
     @Test
@@ -164,7 +164,7 @@ class S3AttachmentServiceTest {
 
         assertNotNull(result);
         assertEquals(managedUrl, result.get(0).getUrl(), "managed url should remain unchanged");
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     // --- resolveAttachments ---
@@ -183,7 +183,7 @@ class S3AttachmentServiceTest {
 
         assertNotNull(result);
         assertNull(result.get(0).getUrl());
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
@@ -196,7 +196,7 @@ class S3AttachmentServiceTest {
 
         assertNotNull(result);
         assertEquals(externalUrl, result.get(0).getUrl());
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
@@ -212,7 +212,7 @@ class S3AttachmentServiceTest {
 
         assertNotNull(result);
         assertEquals(new URL(PRESIGNED_URL), result.get(0).getUrl());
-        verify(minioClient).getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class));
+        verify(s3Client).getPresignedObjectUrl(any(GetPresignedObjectUrlArgs.class));
     }
 
     // --- deleteAttachments ---
@@ -220,7 +220,7 @@ class S3AttachmentServiceTest {
     @Test
     void deleteAttachments_nullList_noS3Calls() {
         service.deleteAttachments(null).block();
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
@@ -230,7 +230,7 @@ class S3AttachmentServiceTest {
 
         service.deleteAttachments(List.of(attachment)).block();
 
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
@@ -240,7 +240,7 @@ class S3AttachmentServiceTest {
 
         service.deleteAttachments(List.of(attachment)).block();
 
-        verify(minioClient).removeObject(any(RemoveObjectArgs.class));
+        verify(s3Client).removeObject(any(RemoveObjectArgs.class));
     }
 
     @Test
@@ -248,7 +248,7 @@ class S3AttachmentServiceTest {
         AttachmentRefOrValue attachment = new AttachmentRefOrValue();
         attachment.setUrl(new URL(ENDPOINT + "/" + BUCKET + "/entity-1/uuid-file.txt"));
 
-        doThrow(new RuntimeException("S3 unavailable")).when(minioClient).removeObject(any(RemoveObjectArgs.class));
+        doThrow(new RuntimeException("S3 unavailable")).when(s3Client).removeObject(any(RemoveObjectArgs.class));
 
         assertDoesNotThrow(() -> service.deleteAttachments(List.of(attachment)).block());
     }
@@ -258,13 +258,13 @@ class S3AttachmentServiceTest {
     @Test
     void deleteOrphanedAttachments_nullExisting_noS3Calls() {
         service.deleteOrphanedAttachments(null, List.of()).block();
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
     void deleteOrphanedAttachments_emptyExisting_noS3Calls() {
         service.deleteOrphanedAttachments(List.of(), List.of()).block();
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
@@ -274,7 +274,7 @@ class S3AttachmentServiceTest {
 
         service.deleteOrphanedAttachments(List.of(existing), List.of()).block();
 
-        verify(minioClient).removeObject(any(RemoveObjectArgs.class));
+        verify(s3Client).removeObject(any(RemoveObjectArgs.class));
     }
 
     @Test
@@ -287,7 +287,7 @@ class S3AttachmentServiceTest {
 
         service.deleteOrphanedAttachments(List.of(existing), List.of(updated)).block();
 
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     @Test
@@ -297,7 +297,7 @@ class S3AttachmentServiceTest {
 
         service.deleteOrphanedAttachments(List.of(existing), List.of()).block();
 
-        verifyNoInteractions(minioClient);
+        verifyNoInteractions(s3Client);
     }
 
     // --- deep copy ---
