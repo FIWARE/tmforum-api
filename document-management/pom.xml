@@ -34,6 +34,7 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
+            <version>${version.io.minio.minio}</version>
         </dependency>
 
         <!-- lazy dev -->
