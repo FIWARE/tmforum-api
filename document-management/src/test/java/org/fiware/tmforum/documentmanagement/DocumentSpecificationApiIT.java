@@ -25,7 +25,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -132,7 +132,7 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
         AttachmentRefOrValueVO attachment = new AttachmentRefOrValueVO();
         attachment.setName("test-file.txt");
         attachment.setMimeType("text/plain");
-        attachment.setUrl(new URL("https://example.com/test-file.txt"));
+        attachment.setUrl(URI.create("https://example.com/test-file.txt"));
         createVO.setAttachment(List.of(attachment));
 
         HttpResponse<DocumentSpecificationVO> response = callAndCatch(
@@ -491,7 +491,7 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
         AttachmentRefOrValueVO attachment = new AttachmentRefOrValueVO();
         attachment.setName("test-file.txt");
         attachment.setMimeType("text/plain");
-        attachment.setUrl(new URL("https://example.com/test-file.txt"));
+        attachment.setUrl(URI.create("https://example.com/test-file.txt"));
         createVO.setAttachment(List.of(attachment));
 
         HttpResponse<DocumentSpecificationVO> createResponse = callAndCatch(
