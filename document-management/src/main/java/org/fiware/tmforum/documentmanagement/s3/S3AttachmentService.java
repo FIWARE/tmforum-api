@@ -63,11 +63,8 @@ public class S3AttachmentService implements AttachmentService {
      */
     @PostConstruct
     public void init() {
-        log.info("Initializing S3AttachmentService:");
-        log.info("  endpoint: {}", config.getEndpoint());
-        log.info("  accessKey: {}", config.getAccessKey());
-        log.info("  bucket: {}", config.getBucket());
-        log.info("  maxContentSize: {}", config.getMaxContentSize());
+        log.info("Initializing S3AttachmentService: endpoint={}, bucket={}, maxContentSize={}",
+                config.getEndpoint(), config.getBucket(), config.getMaxContentSize());
 
         try {
             MinioClient.Builder builder = MinioClient.builder()
@@ -80,7 +77,7 @@ public class S3AttachmentService implements AttachmentService {
             log.info("S3 client created successfully");
         } catch (Exception e) {
             log.error("Failed to create S3 client: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to initialize S3 client", e);
+            throw new TmForumException("Failed to initialize S3 client", e, TmForumExceptionReason.UNKNOWN);
         }
         ensureBucketExists();
     }
