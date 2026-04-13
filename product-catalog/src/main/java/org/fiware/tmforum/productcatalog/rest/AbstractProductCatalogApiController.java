@@ -27,6 +27,7 @@ public class AbstractProductCatalogApiController<T> extends AbstractApiControlle
 			List<ProductSpecificationCharacteristicValueUse> productSpecificationCharacteristicValueUses) {
 		List<String> ids = productSpecificationCharacteristicValueUses.stream()
 				.map(ProductSpecificationCharacteristicValueUse::getTmfId)
+				.filter(Objects::nonNull)
 				.toList();
 		if (ids.size() != new HashSet<>(ids).size()) {
 			throw new TmForumException(String.format("Duplicate ids are not allowed - ids: %s", ids),

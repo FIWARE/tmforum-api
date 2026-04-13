@@ -245,7 +245,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 	 */
 	private void validateInternalRefs(Resource resource) {
 		if (resource.getNote() != null) {
-			List<URI> noteIds = resource.getNote().stream().map(Note::getTmfId).toList();
+			List<URI> noteIds = resource.getNote().stream().map(Note::getTmfId).filter(Objects::nonNull).toList();
 			if (noteIds.size() != new HashSet<>(noteIds).size()) {
 				throw new TmForumException(
 						String.format("Duplicate note ids are not allowed: %s", noteIds),
@@ -270,6 +270,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		List<String> charIds = characteristics
 				.stream()
 				.map(Characteristic::getTmfId)
+				.filter(Objects::nonNull)
 				.toList();
 		if (charIds.size() != new HashSet<>(charIds).size()) {
 			throw new TmForumException(
@@ -301,6 +302,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		List<String> featureIds = resource.getActivationFeature()
 				.stream()
 				.map(Feature::getTmfId)
+				.filter(Objects::nonNull)
 				.toList();
 		if (featureIds.size() != new HashSet<>(featureIds).size()) {
 			throw new TmForumException(String.format("Duplicate feature ids are not allowed: %s", featureIds),
