@@ -253,6 +253,53 @@ class S3AttachmentServiceTest {
         assertDoesNotThrow(() -> service.deleteAttachments(List.of(attachment)).block());
     }
 
+    // --- deleteOrphanedAttachments ---
+
+    @Test
+    void deleteOrphanedAttachments_nullExisting_noS3Calls() {
+        service.deleteOrphanedAttachments(null, List.of()).block();
+        verifyNoInteractions(minioClient);
+    }
+
+    @Test
+    void deleteOrphanedAttachments_emptyExisting_noS3Calls() {
+        service.deleteOrphanedAttachments(List.of(), List.of()).block();
+        verifyNoInteractions(minioClient);
+    }
+
+    @Test
+    void deleteOrphanedAttachments_managedUrlNotInUpdated_deletesFromS3() throws Exception {
+        AttachmentRefOrValue existing = new AttachmentRefOrValue();
+        existing.setUrl(new URL(ENDPOINT + "/" + BUCKET + "/entity-1/old-file.txt"));
+
+        service.deleteOrphanedAttachments(List.of(existing), List.of()).block();
+
+        verify(minioClient).removeObject(any(RemoveObjectArgs.class));
+    }
+
+    @Test
+    void deleteOrphanedAttachments_managedUrlStillInUpdated_doesNotDelete() throws Exception {
+        URL managedUrl = new URL(ENDPOINT + "/" + BUCKET + "/entity-1/kept-file.txt");
+        AttachmentRefOrValue existing = new AttachmentRefOrValue();
+        existing.setUrl(managedUrl);
+        AttachmentRefOrValue updated = new AttachmentRefOrValue();
+        updated.setUrl(managedUrl);
+
+        service.deleteOrphanedAttachments(List.of(existing), List.of(updated)).block();
+
+        verifyNoInteractions(minioClient);
+    }
+
+    @Test
+    void deleteOrphanedAttachments_nonManagedUrl_doesNotDelete() throws Exception {
+        AttachmentRefOrValue existing = new AttachmentRefOrValue();
+        existing.setUrl(new URL("https://example.com/file.pdf"));
+
+        service.deleteOrphanedAttachments(List.of(existing), List.of()).block();
+
+        verifyNoInteractions(minioClient);
+    }
+
     // --- deep copy ---
 
     @Test

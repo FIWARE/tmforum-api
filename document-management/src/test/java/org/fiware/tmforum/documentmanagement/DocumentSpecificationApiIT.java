@@ -10,6 +10,7 @@ import org.fiware.document.api.DocumentSpecificationApiTestSpec;
 import org.fiware.document.model.AttachmentRefOrValueVO;
 import org.fiware.document.model.DocumentSpecificationCreateVO;
 import org.fiware.document.model.DocumentSpecificationStatusTypeVO;
+import org.fiware.document.model.DocumentSpecificationUpdateVO;
 import org.fiware.document.model.DocumentSpecificationVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -24,6 +25,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -109,7 +111,7 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
     }
 
     @Test
-    public void createDocumentSpecificationWithAttachment201() throws Exception {
+    public void createDocumentSpecificationWithUrlAttachment201() throws Exception {
         DocumentSpecificationCreateVO createVO = new DocumentSpecificationCreateVO();
         createVO.setName("Document with Attachment");
         createVO.setVersion("1.0.0");
@@ -117,19 +119,36 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
         AttachmentRefOrValueVO attachment = new AttachmentRefOrValueVO();
         attachment.setName("test-file.txt");
         attachment.setMimeType("text/plain");
+        attachment.setUrl(new URL("https://example.com/test-file.txt"));
+        createVO.setAttachment(List.of(attachment));
+
+        HttpResponse<DocumentSpecificationVO> response = callAndCatch(
+                () -> documentSpecificationApiTestClient.createDocumentSpecification(null, createVO));
+
+        assertEquals(HttpStatus.CREATED, response.getStatus(), "Document specification with URL attachment should be created.");
+        assertNotNull(response.body());
+        assertNotNull(response.body().getAttachment());
+        assertFalse(response.body().getAttachment().isEmpty());
+        assertEquals("https://example.com/test-file.txt",
+                response.body().getAttachment().get(0).getUrl().toString(),
+                "URL attachment should be preserved as-is.");
+    }
+
+    @Test
+    public void createDocumentSpecificationWithInlineContent400() throws Exception {
+        DocumentSpecificationCreateVO createVO = new DocumentSpecificationCreateVO();
+        createVO.setName("Document with Inline Content");
+
+        AttachmentRefOrValueVO attachment = new AttachmentRefOrValueVO();
+        attachment.setName("test-file.txt");
         attachment.setContent(Base64.getEncoder().encodeToString("Hello World".getBytes()));
         createVO.setAttachment(List.of(attachment));
 
         HttpResponse<DocumentSpecificationVO> response = callAndCatch(
                 () -> documentSpecificationApiTestClient.createDocumentSpecification(null, createVO));
 
-        assertEquals(HttpStatus.CREATED, response.getStatus(), "Document specification with attachment should be created.");
-        assertNotNull(response.body());
-        assertNotNull(response.body().getAttachment());
-        assertFalse(response.body().getAttachment().isEmpty());
-        // The attachment content should be S3 retrieval info, not the original content
-        String content = response.body().getAttachment().get(0).getContent();
-        assertTrue(content.startsWith("s3ref:"), "Content should be S3 retrieval info");
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatus(),
+                "Inline content should be rejected when no AttachmentService is configured.");
     }
 
     @Test
@@ -344,50 +363,84 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
     public void listDocumentSpecification500() throws Exception {
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
     @Test
     @Override
     public void patchDocumentSpecification200() throws Exception {
+        DocumentSpecificationCreateVO createVO = new DocumentSpecificationCreateVO();
+        createVO.setName("Original Name");
+        createVO.setVersion("1.0.0");
+        HttpResponse<DocumentSpecificationVO> createResponse = callAndCatch(
+                () -> documentSpecificationApiTestClient.createDocumentSpecification(null, createVO));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus());
+        String id = createResponse.body().getId();
+
+        DocumentSpecificationUpdateVO updateVO = new DocumentSpecificationUpdateVO();
+        updateVO.setDescription("Updated description");
+        HttpResponse<DocumentSpecificationVO> patchResponse = callAndCatch(
+                () -> documentSpecificationApiTestClient.patchDocumentSpecification(null, id, updateVO));
+
+        assertEquals(HttpStatus.OK, patchResponse.getStatus(), "Patch should succeed.");
+        assertNotNull(patchResponse.body());
+        assertEquals("Updated description", patchResponse.body().getDescription());
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
     @Test
     @Override
     public void patchDocumentSpecification400() throws Exception {
+        DocumentSpecificationCreateVO createVO = new DocumentSpecificationCreateVO();
+        createVO.setName("Document for Patch 400");
+        HttpResponse<DocumentSpecificationVO> createResponse = callAndCatch(
+                () -> documentSpecificationApiTestClient.createDocumentSpecification(null, createVO));
+        assertEquals(HttpStatus.CREATED, createResponse.getStatus());
+        String id = createResponse.body().getId();
+
+        AttachmentRefOrValueVO attachment = new AttachmentRefOrValueVO();
+        attachment.setContent(Base64.getEncoder().encodeToString("data".getBytes()));
+        DocumentSpecificationUpdateVO updateVO = new DocumentSpecificationUpdateVO();
+        updateVO.setAttachment(List.of(attachment));
+        HttpResponse<DocumentSpecificationVO> response = callAndCatch(
+                () -> documentSpecificationApiTestClient.patchDocumentSpecification(null, id, updateVO));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatus(),
+                "Inline content in patch should be rejected when no AttachmentService is configured.");
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
     @Test
     @Override
     public void patchDocumentSpecification401() throws Exception {
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
+    @Disabled("Security is handled externally, thus 401 and 403 cannot happen.")
     @Test
     @Override
     public void patchDocumentSpecification403() throws Exception {
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
     @Test
     @Override
     public void patchDocumentSpecification404() throws Exception {
+        DocumentSpecificationUpdateVO updateVO = new DocumentSpecificationUpdateVO();
+        updateVO.setDescription("Updated description");
+        HttpResponse<DocumentSpecificationVO> response = callAndCatch(
+                () -> documentSpecificationApiTestClient.patchDocumentSpecification(null,
+                        "urn:ngsi-ld:document-specification:non-existent", updateVO));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatus(), "No such document specification should exist.");
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
+    @Disabled("Prohibited by the framework.")
     @Test
     @Override
     public void patchDocumentSpecification405() throws Exception {
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
+    @Disabled("DocumentSpecification doesn't have 'implicit' entities and id is generated, no conflict possible.")
     @Test
     @Override
     public void patchDocumentSpecification409() throws Exception {
     }
 
-    @Disabled("PATCH is not supported for DocumentSpecification per design requirements.")
-    @Test
     @Override
     public void patchDocumentSpecification500() throws Exception {
     }
@@ -417,37 +470,31 @@ public class DocumentSpecificationApiIT extends AbstractApiIT implements Documen
     }
 
     @Test
-    public void retrieveDocumentSpecificationWithHydratedAttachment() throws Exception {
-        // Create a document specification with attachment
+    public void retrieveDocumentSpecificationWithUrlAttachment() throws Exception {
         DocumentSpecificationCreateVO createVO = new DocumentSpecificationCreateVO();
-        createVO.setName("Document with Hydrated Attachment");
+        createVO.setName("Document with URL Attachment");
         createVO.setVersion("1.0.0");
 
-        String originalContent = "Hello World from S3!";
         AttachmentRefOrValueVO attachment = new AttachmentRefOrValueVO();
         attachment.setName("test-file.txt");
         attachment.setMimeType("text/plain");
-        attachment.setContent(Base64.getEncoder().encodeToString(originalContent.getBytes()));
+        attachment.setUrl(new URL("https://example.com/test-file.txt"));
         createVO.setAttachment(List.of(attachment));
 
         HttpResponse<DocumentSpecificationVO> createResponse = callAndCatch(
                 () -> documentSpecificationApiTestClient.createDocumentSpecification(null, createVO));
-
         assertEquals(HttpStatus.CREATED, createResponse.getStatus());
         String id = createResponse.body().getId();
 
-        // Retrieve it - the attachment should be hydrated
         HttpResponse<DocumentSpecificationVO> retrieveResponse = callAndCatch(
                 () -> documentSpecificationApiTestClient.retrieveDocumentSpecification(null, id, null));
 
         assertEquals(HttpStatus.OK, retrieveResponse.getStatus());
         assertNotNull(retrieveResponse.body().getAttachment());
         assertFalse(retrieveResponse.body().getAttachment().isEmpty());
-
-        // The content should be the original content (hydrated from S3)
-        String retrievedContent = retrieveResponse.body().getAttachment().get(0).getContent();
-        String decodedContent = new String(Base64.getDecoder().decode(retrievedContent));
-        assertEquals(originalContent, decodedContent);
+        assertEquals("https://example.com/test-file.txt",
+                retrieveResponse.body().getAttachment().get(0).getUrl().toString(),
+                "URL attachment should be returned unchanged when no AttachmentService is configured.");
     }
 
     @Disabled("400 cannot happen, only 404")

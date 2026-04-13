@@ -148,8 +148,8 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
                     if (newAttachments == null || newAttachments.isEmpty()) {
                         return Mono.just(updatedSpec);
                     }
-                    attachmentService.deleteOrphanedAttachments(existing.getAttachment(), newAttachments);
-                    return attachmentService.offloadAttachments(newAttachments, id)
+                    return attachmentService.deleteOrphanedAttachments(existing.getAttachment(), newAttachments)
+                            .then(attachmentService.offloadAttachments(newAttachments, id))
                             .doOnNext(updatedSpec::setAttachment)
                             .thenReturn(updatedSpec);
                 })

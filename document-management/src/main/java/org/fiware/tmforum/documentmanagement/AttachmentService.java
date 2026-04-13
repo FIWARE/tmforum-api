@@ -62,6 +62,7 @@ public interface AttachmentService {
      *
      * @param existing attachments currently persisted for the entity
      * @param updated  attachments supplied in the PATCH request
+     * @return a {@code Mono} that completes when all orphaned deletions are done
      */
-    void deleteOrphanedAttachments(List<AttachmentRefOrValue> existing, List<AttachmentRefOrValue> updated);
+    Mono<Void> deleteOrphanedAttachments(List<AttachmentRefOrValue> existing, List<AttachmentRefOrValue> updated);
 }
