@@ -198,6 +198,68 @@
                     <apiPackage>org.fiware.resourcefunction.api</apiPackage>
                     <modelPackage>org.fiware.resourcefunction.model</modelPackage>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>openapi-scale-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/scale-extension.yaml
+                            </inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>openapi-heal-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/heal-extension.yaml
+                            </inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>openapi-migrate-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/migrate-extension.yaml
+                            </inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>openapi-monitor-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/monitor-extension.yaml
+                            </inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!-- add generated sources -->
             <plugin>

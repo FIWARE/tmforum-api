@@ -218,6 +218,23 @@
                     <apiPackage>org.fiware.productordering.api</apiPackage>
                     <modelPackage>org.fiware.productordering.model</modelPackage>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>openapi-cancel-product-order-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/cancel-product-order-extension.yaml
+                            </inputSpec>
+                            <apiPackage>org.fiware.productordering.api.ext</apiPackage>
+                            <modelPackage>org.fiware.productordering.model</modelPackage>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!-- add generated sources -->
             <plugin>

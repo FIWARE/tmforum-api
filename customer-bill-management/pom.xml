@@ -237,6 +237,21 @@
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>openapi-customer-bill-on-demand-api-extension</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>
+                                ${project.parent.basedir}/${artifactId}/api/customer-bill-on-demand-extension.yaml
+                            </inputSpec>
+                            <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
+                            <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <!-- add generated sources -->
