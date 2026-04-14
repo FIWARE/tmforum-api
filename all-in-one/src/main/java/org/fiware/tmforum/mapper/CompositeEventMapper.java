@@ -24,7 +24,15 @@ public class CompositeEventMapper implements EventMapper {
 	public Map<String, EventMapping> getEntityClassMapping() {
 		return moduleEventMappers.stream()
 				.flatMap(m -> m.getEntityClassMapping().entrySet().stream())
-				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+						(existing, duplicate) -> {
+							if (existing.rawClass().equals(duplicate.rawClass())) {
+								return existing;
+							}
+							throw new IllegalStateException(String.format(
+									"Conflicting EventMapping: existing maps to %s, duplicate maps to %s",
+									existing.rawClass().getName(), duplicate.rawClass().getName()));
+						}));
 	}
 
 	@Override
