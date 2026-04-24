@@ -4,16 +4,20 @@ import lombok.Data;
 
 import java.net.URI;
 
-/**
- * External reference of the individual or reference in another system.
- */
 @Data
 public class ExternalReference {
 
-	private URI href;
 	private String id;
+
+	// TMF652 ExternalId fields (current public API shape).
+	private String entityType;
+	private String owner;
+
+	// Legacy ExternalReference fields retained so entities persisted before the TMF652 ExternalId migration remain readable.
+	private URI href;
 	private String externalReferenceType;
 	private String name;
+
 	private String atBaseType;
 	private URI atSchemaLocation;
 	private String atType;
