@@ -423,10 +423,75 @@
                         <goals><goal>generate</goal></goals>
                         <configuration>
                             <skip>false</skip>
-
                             <inputSpec>${project.parent.basedir}/customer-bill-management/api/customer-bill-extension.yaml</inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>customer-bill-management-ext-on-demand</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/customer-bill-management/api/customer-bill-on-demand-extension.yaml</inputSpec>
+                            <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
+                            <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>product-ordering-management-ext-cancel</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/product-ordering-management/api/cancel-product-order-extension.yaml</inputSpec>
+                            <apiPackage>org.fiware.productordering.api.ext</apiPackage>
+                            <modelPackage>org.fiware.productordering.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resource-function-activation-ext-scale</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/resource-function-activation/api/scale-extension.yaml</inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resource-function-activation-ext-heal</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/resource-function-activation/api/heal-extension.yaml</inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resource-function-activation-ext-migrate</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/resource-function-activation/api/migrate-extension.yaml</inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>resource-function-activation-ext-monitor</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/resource-function-activation/api/monitor-extension.yaml</inputSpec>
+                            <apiPackage>org.fiware.resourcefunction.api.ext</apiPackage>
+                            <modelPackage>org.fiware.resourcefunction.model</modelPackage>
                         </configuration>
                     </execution>
                 </executions>

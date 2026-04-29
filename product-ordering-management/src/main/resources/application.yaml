@@ -37,6 +37,10 @@ loggers:
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
+
+apiExtension:
+  enabled: ${API_EXTENSION_ENABLED}
+
 api:
   product-ordering-management:
     basepath: ${general.basepath:/}
