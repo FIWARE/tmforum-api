@@ -33,6 +33,7 @@ public abstract class TMForumMapper extends BaseMapper {
 
     @Mapping(target = "id", source = "id")
     @Mapping(target = "href", source = "id")
+    @Mapping(target = "atSchemaLocation", ignore = true)
     public abstract DocumentSpecification map(DocumentSpecificationUpdateVO updateVO, String id);
 
     // ConstraintRef mappings
