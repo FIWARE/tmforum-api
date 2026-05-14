@@ -4,6 +4,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.context.ServerRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApi;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
@@ -18,6 +19,8 @@ import org.fiware.tmforum.customerbillmanagement.TMForumMapper;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -40,11 +43,30 @@ public class AppliedCustomerBillingRateApiController extends AbstractApiControll
 	public Mono<HttpResponse<List<AppliedCustomerBillingRateVO>>> listAppliedCustomerBillingRate(
 			@Nullable String fields,
 			@Nullable Integer offset, @Nullable Integer limit) {
+		Comparator<AppliedCustomerBillingRate> dateComparator = resolveDateComparator();
 		return list(offset, limit, AppliedCustomerBillingRate.TYPE_APPLIED_CUSTOMER_BILLING_RATE,
 				AppliedCustomerBillingRate.class)
-				.map(customerBillOnDemandStream -> customerBillOnDemandStream.map(tmForumMapper::map).toList())
+				.map(stream -> {
+					if (dateComparator != null) {
+						stream = stream.sorted(dateComparator);
+					}
+					return stream.map(tmForumMapper::map).toList();
+				})
 				.switchIfEmpty(Mono.just(List.of()))
 				.map(HttpResponse::ok);
+	}
+
+	private Comparator<AppliedCustomerBillingRate> resolveDateComparator() {
+		return ServerRequestContext.currentRequest()
+				.flatMap(req -> req.getParameters().getFirst(QueryParser.SORT_KEY))
+				.map(sortParam -> switch (sortParam) {
+					case "date" -> Comparator.comparing(AppliedCustomerBillingRate::getDate,
+							Comparator.nullsLast(Comparator.naturalOrder()));
+					case "-date" -> Comparator.comparing(AppliedCustomerBillingRate::getDate,
+							Comparator.nullsLast(Comparator.reverseOrder()));
+					default -> null;
+				})
+				.orElse(null);
 	}
 
 	@Override

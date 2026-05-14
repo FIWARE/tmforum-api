@@ -2,10 +2,15 @@ package org.fiware.tmforum.customerbillmanagement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApiTestClient;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApiTestSpec;
 import org.fiware.customerbillmanagement.model.*;
@@ -25,6 +30,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,6 +49,10 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	private final EntitiesApiClient entitiesApiClient;
 	private final JavaObjectMapper javaObjectMapper;
 	private final TMForumMapper tmForumMapper;
+
+	@Inject
+	@Client("/")
+	private HttpClient httpClient;
 
 	private String message;
 	private String fieldsParameter;
@@ -87,6 +97,62 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	private void createBill(AppliedCustomerBillingRate appliedCustomerBillingRateVO) {
 		EntityVO entityVO = javaObjectMapper.toEntityVO(appliedCustomerBillingRateVO);
 		entitiesApiClient.createEntity(entityVO, null).block();
+	}
+
+	@Test
+	public void listAppliedCustomerBillingRateSortByDateAsc() throws Exception {
+		Instant t1 = Instant.parse("2024-01-01T00:00:00Z");
+		Instant t2 = Instant.parse("2024-06-01T00:00:00Z");
+		Instant t3 = Instant.parse("2024-12-01T00:00:00Z");
+
+		for (Instant date : List.of(t3, t1, t2)) {
+			AppliedCustomerBillingRateVO vo = AppliedCustomerBillingRateVOTestExample.build()
+					.atSchemaLocation(null)
+					.id("urn:ngsi-ld:applied-customer-billing-rate:" + UUID.randomUUID())
+					.date(date)
+					.bill(null)
+					.billingAccount(null)
+					.product(null)
+					.periodCoverage(null);
+			createBill(tmForumMapper.map(vo));
+		}
+
+		HttpResponse<List<AppliedCustomerBillingRateVO>> response = callAndCatch(
+				() -> httpClient.toBlocking().exchange(
+						HttpRequest.GET("/appliedCustomerBillingRate?sort=date"),
+						Argument.listOf(AppliedCustomerBillingRateVO.class)));
+
+		assertEquals(HttpStatus.OK, response.getStatus());
+		List<Instant> dates = response.body().stream().map(AppliedCustomerBillingRateVO::getDate).toList();
+		assertEquals(List.of(t1, t2, t3), dates, "Results should be sorted ascending by date.");
+	}
+
+	@Test
+	public void listAppliedCustomerBillingRateSortByDateDesc() throws Exception {
+		Instant t1 = Instant.parse("2024-01-01T00:00:00Z");
+		Instant t2 = Instant.parse("2024-06-01T00:00:00Z");
+		Instant t3 = Instant.parse("2024-12-01T00:00:00Z");
+
+		for (Instant date : List.of(t3, t1, t2)) {
+			AppliedCustomerBillingRateVO vo = AppliedCustomerBillingRateVOTestExample.build()
+					.atSchemaLocation(null)
+					.id("urn:ngsi-ld:applied-customer-billing-rate:" + UUID.randomUUID())
+					.date(date)
+					.bill(null)
+					.billingAccount(null)
+					.product(null)
+					.periodCoverage(null);
+			createBill(tmForumMapper.map(vo));
+		}
+
+		HttpResponse<List<AppliedCustomerBillingRateVO>> response = callAndCatch(
+				() -> httpClient.toBlocking().exchange(
+						HttpRequest.GET("/appliedCustomerBillingRate?sort=-date"),
+						Argument.listOf(AppliedCustomerBillingRateVO.class)));
+
+		assertEquals(HttpStatus.OK, response.getStatus());
+		List<Instant> dates = response.body().stream().map(AppliedCustomerBillingRateVO::getDate).toList();
+		assertEquals(List.of(t3, t2, t1), dates, "Results should be sorted descending by date.");
 	}
 
 	@Test
