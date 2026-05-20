@@ -63,7 +63,7 @@ spec:
       containers:
         - name: mongo-db
           imagePullPolicy: IfNotPresent
-          image: "quay.io/opencloudio/ibm-mongodb:4.0.24"
+          image: "mongo:4.0"
           securityContext:
             runAsUser: 999
           ports:
