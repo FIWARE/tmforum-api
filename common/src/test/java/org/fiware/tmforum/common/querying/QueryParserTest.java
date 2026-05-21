@@ -159,4 +159,55 @@ class QueryParserTest {
 				Arguments.of("status.eq=Active;status.eq=Started", new QueryParams(null, null, "status==\"Active\",\"Started\""), MyPojo.class)
 		);
 	}
+
+	/**
+	 * Verifies that JSON-LD reserved keywords carried in TMF payloads
+	 * ({@code @type}, {@code @baseType}, {@code @schemaLocation}, {@code @id})
+	 * are rewritten to the persisted internal field names on
+	 * {@link org.fiware.tmforum.common.domain.Entity} so they become
+	 * filterable from the outside under their natural TMF JSON name.
+	 */
+	@ParameterizedTest
+	@MethodSource("jsonLdReservedTokenQueries")
+	public void testJsonLdReservedTokenTranslation(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setEncloseQuery(true);
+		properties.setNgsildOrQueryKey("|");
+		properties.setNgsildOrQueryValue("|");
+		properties.setIncludeAttributeInList(true);
+		properties.setUseDotSeperator(false);
+
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
+				"JSON-LD reserved token query should translate to the persisted attribute name.");
+	}
+
+	private static Stream<Arguments> jsonLdReservedTokenQueries() {
+		return Stream.of(
+				// @type → atType (q= filter; not the types collector — line 134 checks contains("type") on the resolved path, which becomes ["atType"]).
+				Arguments.of("@type=BlueprintProductSpecification",
+						new QueryParams(null, null, "atType==\"BlueprintProductSpecification\""),
+						MyEntityPojo.class),
+				// @baseType → atBaseType
+				Arguments.of("@baseType=ProductSpecification",
+						new QueryParams(null, null, "atBaseType==\"ProductSpecification\""),
+						MyEntityPojo.class),
+				// @id → id, routed via the line-130 shortcut to the ids collector.
+				Arguments.of("@id=urn:ngsi-ld:product-specification:1",
+						new QueryParams("urn:ngsi-ld:product-specification:1", null, null),
+						MyEntityPojo.class),
+				// OR grouping survives the translation (combineParts runs on the raw token before translation).
+				Arguments.of("@type=A;@type=B",
+						new QueryParams(null, null, "(atType==\"A\"|atType==\"B\")"),
+						MyEntityPojo.class),
+				// AND combination with a regular domain attribute.
+				Arguments.of("@type=A&status=Active",
+						new QueryParams(null, null, "atType==\"A\";status==\"Active\""),
+						MyEntityPojo.class),
+				// Mixed routing: @id goes to the ids collector, @type goes to the q= filter.
+				Arguments.of("@id=urn:x&@type=A",
+						new QueryParams("urn:x", null, "atType==\"A\""),
+						MyEntityPojo.class)
+		);
+	}
 }
