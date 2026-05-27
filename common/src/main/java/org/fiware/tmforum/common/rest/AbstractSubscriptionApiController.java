@@ -3,24 +3,24 @@ package org.fiware.tmforum.common.rest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
-import io.micronaut.context.annotation.Bean;
-import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Consumes;
-import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.domain.subscription.*;
+import org.fiware.tmforum.common.domain.subscription.Endpoint;
+import org.fiware.tmforum.common.domain.subscription.EntityInfo;
+import org.fiware.tmforum.common.domain.subscription.KeyValuePair;
+import org.fiware.tmforum.common.domain.subscription.NotificationParams;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
-import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
@@ -160,8 +160,11 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	}
 
 	private URI getCallbackURI() {
-		return URI.create(generalProperties.getServerHost() + generalProperties.getBasepath() +
-				EventConstants.SUBSCRIPTION_CALLBACK_PATH);
+		String basepath = generalProperties.getBasepath() != null ? generalProperties.getBasepath() : "";
+		if (basepath.endsWith("/")) {
+			basepath = basepath.substring(0, basepath.length() - 1);
+		}
+		return URI.create(generalProperties.getServerHost() + basepath + EventConstants.SUBSCRIPTION_CALLBACK_PATH);
 	}
 
 	@Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)
