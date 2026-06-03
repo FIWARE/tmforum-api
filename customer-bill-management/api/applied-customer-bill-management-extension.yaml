@@ -331,6 +331,9 @@ definitions:
       name:
         type: string
         description: Name of the customer applied billing rate
+      periodCoverage:
+        $ref: '#/definitions/TimePeriod'
+        description: periodCoverage for RecurringCharge (RC) indicating the RC coverage period dates for different purposes, such as RC proration, display on bill, GL reporting, etc. periodCoverage for OC start and end date will be the same
       '@baseType':
         type: string
         description: When sub-classing, this defines the super-class
