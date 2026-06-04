@@ -2,8 +2,10 @@ package org.fiware.tmforum.resourcecatalog.rest;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.context.ServerRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApi;
 import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
@@ -13,6 +15,7 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
@@ -25,11 +28,17 @@ import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
+import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
 
 @Slf4j
 @Controller("${api.resource-catalog.basepath:/}")
@@ -190,15 +199,81 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 		return delete(id);
 	}
 
+	/**
+	 * Polymorphic listing per the TMF spec: returns the union of entities natively stored with
+	 * NGSI-LD type {@code resource-specification} and entities declaring
+	 * {@code "@baseType": "ResourceSpecification"} regardless of which module owns their
+	 * concrete {@code @type} (e.g. {@code SoftwareSupportPackageSpecification},
+	 * {@code SoftwareSpecification}, {@code LogicalResourceSpecification}). Same shape as
+	 * {@link org.fiware.tmforum.resourceinventory.rest.ResourceApiController#listResource}.
+	 */
 	@Override
 	public Mono<HttpResponse<List<ResourceSpecificationVO>>> listResourceSpecification(@Nullable String fields,
 			@Nullable Integer offset, @Nullable Integer limit) {
-		return list(offset, limit, ResourceSpecification.TYPE_RESOURCE_SPECIFICATION, ResourceSpecification.class)
-				.map(resourceFunctionStream -> resourceFunctionStream
-						.map(tmForumMapper::map)
-						.toList())
-				.switchIfEmpty(Mono.just(List.of()))
+		int effectiveOffset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
+		int effectiveLimit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+
+		if (effectiveOffset < 0 || effectiveLimit < 1) {
+			throw new TmForumException(
+					String.format("Invalid offset %s or limit %s.", effectiveOffset, effectiveLimit),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+
+		QueryParams clientParams = parseClientQuery();
+		String clientQ = clientParams != null ? clientParams.query() : null;
+		String clientIds = clientParams != null ? clientParams.id() : null;
+		String clientType = clientParams != null && clientParams.type() != null
+				? clientParams.type() : ResourceSpecification.TYPE_RESOURCE_SPECIFICATION;
+
+		int fetchUpTo = effectiveOffset + effectiveLimit;
+
+		// Branch A: entities natively stored under NGSI-LD type "resource-specification".
+		Mono<List<ResourceSpecification>> byType =
+				repository.findEntities(0, fetchUpTo, ResourceSpecification.class, clientQ, clientIds, clientType)
+						.switchIfEmpty(Mono.just(List.of()));
+
+		// Branch B: entities declaring @baseType matching this controller's base class.
+		String baseTypeFilter = String.format("atBaseType==\"%s\"", ResourceSpecification.class.getSimpleName());
+		String combinedQ = (clientQ == null || clientQ.isEmpty())
+				? baseTypeFilter
+				: "(" + clientQ + ");" + baseTypeFilter;
+		Mono<List<ResourceSpecification>> byBaseType =
+				repository.findEntities(0, fetchUpTo, ResourceSpecification.class, combinedQ, clientIds, null)
+						.switchIfEmpty(Mono.just(List.of()));
+
+		return Mono.zip(byType, byBaseType)
+				.map(tuple -> mergeAndPage(tuple.getT1(), tuple.getT2(), effectiveOffset, effectiveLimit))
 				.map(HttpResponse::ok);
+	}
+
+	private QueryParams parseClientQuery() {
+		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
+		if (optionalHttpRequest.isEmpty()) {
+			log.warn("The original request is not available, no filters will be applied.");
+			return null;
+		}
+		HttpRequest<Object> request = optionalHttpRequest.get();
+		Map<String, List<String>> parameters = request.getParameters().asMap();
+		if (!QueryParser.hasFilter(parameters)) {
+			return null;
+		}
+		return queryParser.toNgsiLdQuery(ResourceSpecification.class, request.getUri().getQuery());
+	}
+
+	private List<ResourceSpecificationVO> mergeAndPage(List<ResourceSpecification> byType,
+			List<ResourceSpecification> byBaseType, int offset, int limit) {
+		Map<URI, ResourceSpecification> dedup = new LinkedHashMap<>();
+		for (ResourceSpecification rs : byType) {
+			dedup.putIfAbsent(rs.getId(), rs);
+		}
+		for (ResourceSpecification rs : byBaseType) {
+			dedup.putIfAbsent(rs.getId(), rs);
+		}
+		return dedup.values().stream()
+				.skip(offset)
+				.limit(limit)
+				.map(tmForumMapper::map)
+				.toList();
 	}
 
 	@Override

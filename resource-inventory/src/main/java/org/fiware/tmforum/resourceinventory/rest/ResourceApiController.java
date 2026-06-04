@@ -220,8 +220,11 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 				repository.findEntities(0, fetchUpTo, Resource.class, clientQ, clientIds, clientType)
 						.switchIfEmpty(Mono.just(List.of()));
 
-		// Branch B: entities declaring @baseType "Resource". NGSI-LD AND is ";".
-		String baseTypeFilter = "atBaseType==\"Resource\"";
+		// Branch B: entities declaring @baseType matching this controller's base class.
+		// atBaseType stores the TMF PascalCase form (e.g. "Resource"), which by convention
+		// matches the Java class's simple name — so we derive the filter value from the class
+		// rather than hardcoding the string. NGSI-LD AND is ";".
+		String baseTypeFilter = String.format("atBaseType==\"%s\"", Resource.class.getSimpleName());
 		String combinedQ = (clientQ == null || clientQ.isEmpty())
 				? baseTypeFilter
 				: "(" + clientQ + ");" + baseTypeFilter;

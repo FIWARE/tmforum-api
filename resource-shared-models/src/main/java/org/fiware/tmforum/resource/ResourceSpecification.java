@@ -17,7 +17,23 @@ import java.time.Instant;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
-@MappingEnabled(entityType = ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)
+// Listing every subtype's NGSI-LD entity type here is required by the wistefan mapping library:
+// EntityVOMapper.fromEntityVO performs a strict allowlist check (entity NGSI-LD type must be
+// in the target class's @MappingEnabled.entityType). Without this list, polymorphic listing
+// against the resource-catalog base endpoint cannot deserialize subtype entities into
+// the ResourceSpecification base. Subtype-specific fields not declared on this class are
+// preserved via the framework's additionalProperties mechanism (see Entity#additionalProperties).
+// All subtype classes co-locate in this module, so no cross-module coupling is introduced.
+@MappingEnabled(entityType = {
+        ResourceSpecification.TYPE_RESOURCE_SPECIFICATION,
+        LogicalResourceSpecification.TYPE_LOGICAL_RESOURCE_SPECIFICATION,
+        PhysicalResourceSpecification.TYPE_PHYSICAL_RESOURCE_SPECIFICATION,
+        SoftwareResourceSpecification.TYPE_SOFTWARE_RESOURCE_SPECIFICATION,
+        ApiSpecification.TYPE_API_SPECIFICATION,
+        SoftwareSpecification.TYPE_SOFTWARE_SPECIFICATION,
+        SoftwareSupportPackageSpecification.TYPE_SOFTWARE_SUPPORT_PACKAGE_SPECIFICATION,
+        HostingPlatformRequirementSpecification.TYPE_HOSTING_PLATFORM_REQUIREMENT_SPECIFICATION
+})
 public class ResourceSpecification extends EntityWithId {
 
     public static final String TYPE_RESOURCE_SPECIFICATION = "resource-specification";
