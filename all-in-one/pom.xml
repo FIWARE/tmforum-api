@@ -40,6 +40,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- MinIO SDK for S3 operations (document-management) -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.7</version>
+        </dependency>
+
         <!-- lazy dev -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -179,6 +186,7 @@
                                 <source>${project.parent.basedir}/service-catalog/src/main/java</source>
                                 <source>${project.parent.basedir}/service-inventory/src/main/java</source>
                                 <source>${project.parent.basedir}/usage-management/src/main/java</source>
+                                <source>${project.parent.basedir}/document-management/src/main/java</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -402,6 +410,17 @@
                             <inputSpec>${project.parent.basedir}/api/tm-forum/usage-management/api.json</inputSpec>
                             <apiPackage>org.fiware.usagemanagement.api</apiPackage>
                             <modelPackage>org.fiware.usagemanagement.model</modelPackage>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>document-management</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>generate</goal></goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <inputSpec>${project.parent.basedir}/api/tm-forum/document-management/api.json</inputSpec>
+                            <apiPackage>org.fiware.document.api</apiPackage>
+                            <modelPackage>org.fiware.document.model</modelPackage>
                         </configuration>
                     </execution>
                     <!-- customer-bill-management extension APIs (models already generated above) -->
