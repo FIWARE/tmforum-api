@@ -2,8 +2,10 @@ package org.fiware.tmforum.resourceinventory.rest;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.context.ServerRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.resourceinventory.api.ResourceApi;
 import org.fiware.resourceinventory.model.ResourceCreateVO;
@@ -13,6 +15,7 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
@@ -24,6 +27,9 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.*;
+
+import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
+import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
 
 @Slf4j
 @Controller("${api.resource-inventory.basepath:/}")
@@ -173,15 +179,92 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		return delete(id);
 	}
 
+	/**
+	 * Polymorphic listing per the TMF spec: returns the union of entities natively stored with
+	 * NGSI-LD type {@code resource} (pure Resources and entities created before {@code @baseType}
+	 * was persisted) and entities declaring {@code "@baseType": "Resource"} regardless of which
+	 * module owns their concrete {@code @type} (e.g. {@code SoftwareSupportPackage},
+	 * {@code InstalledSoftware}, {@code LogicalResource}). The hierarchy lives in the broker
+	 * data, not in shared code, so this works in both all-in-one and split deployments —
+	 * subtypes not known to this module are returned as base {@link Resource} with the
+	 * subtype-specific fields preserved via the framework's {@code additionalProperties}
+	 * mechanism.
+	 */
 	@Override
 	public Mono<HttpResponse<List<ResourceVO>>> listResource(@Nullable String fields, @Nullable Integer offset,
 			@Nullable Integer limit) {
-		return list(offset, limit, Resource.TYPE_RESOURCE, Resource.class)
-				.map(resourceStream -> resourceStream
-						.map(tmForumMapper::map)
-						.toList())
-				.switchIfEmpty(Mono.just(List.of()))
+		int effectiveOffset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
+		int effectiveLimit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+
+		if (effectiveOffset < 0 || effectiveLimit < 1) {
+			throw new TmForumException(
+					String.format("Invalid offset %s or limit %s.", effectiveOffset, effectiveLimit),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+
+		QueryParams clientParams = parseClientQuery();
+		String clientQ = clientParams != null ? clientParams.query() : null;
+		String clientIds = clientParams != null ? clientParams.id() : null;
+		String clientType = clientParams != null && clientParams.type() != null
+				? clientParams.type() : Resource.TYPE_RESOURCE;
+
+		// Each branch fetches up to (offset + limit) so that after dedup-and-skip we still have
+		// enough to fill the requested page in the worst case where the two result sets are disjoint.
+		int fetchUpTo = effectiveOffset + effectiveLimit;
+
+		// Branch A: entities natively stored under NGSI-LD type "resource".
+		// switchIfEmpty is mandatory: TmForumRepository.findEntities returns Mono.empty() (not
+		// Mono.just([])) when the broker returns no entities, which would propagate through
+		// Mono.zip and surface as a 404 from Micronaut.
+		Mono<List<Resource>> byType =
+				repository.findEntities(0, fetchUpTo, Resource.class, clientQ, clientIds, clientType)
+						.switchIfEmpty(Mono.just(List.of()));
+
+		// Branch B: entities declaring @baseType matching this controller's base class.
+		// atBaseType stores the TMF PascalCase form (e.g. "Resource"), which by convention
+		// matches the Java class's simple name — so we derive the filter value from the class
+		// rather than hardcoding the string. NGSI-LD AND is ";".
+		String baseTypeFilter = String.format("atBaseType==\"%s\"", Resource.class.getSimpleName());
+		String combinedQ = (clientQ == null || clientQ.isEmpty())
+				? baseTypeFilter
+				: "(" + clientQ + ");" + baseTypeFilter;
+		Mono<List<Resource>> byBaseType =
+				repository.findEntities(0, fetchUpTo, Resource.class, combinedQ, clientIds, null)
+						.switchIfEmpty(Mono.just(List.of()));
+
+		return Mono.zip(byType, byBaseType)
+				.map(tuple -> mergeAndPage(tuple.getT1(), tuple.getT2(), effectiveOffset, effectiveLimit))
 				.map(HttpResponse::ok);
+	}
+
+	private QueryParams parseClientQuery() {
+		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
+		if (optionalHttpRequest.isEmpty()) {
+			log.warn("The original request is not available, no filters will be applied.");
+			return null;
+		}
+		HttpRequest<Object> request = optionalHttpRequest.get();
+		Map<String, List<String>> parameters = request.getParameters().asMap();
+		if (!QueryParser.hasFilter(parameters)) {
+			return null;
+		}
+		return queryParser.toNgsiLdQuery(Resource.class, request.getUri().getQuery());
+	}
+
+	private List<ResourceVO> mergeAndPage(List<Resource> byType, List<Resource> byBaseType,
+			int offset, int limit) {
+		Map<URI, Resource> dedup = new LinkedHashMap<>();
+		for (Resource r : byType) {
+			dedup.putIfAbsent(r.getId(), r);
+		}
+		for (Resource r : byBaseType) {
+			dedup.putIfAbsent(r.getId(), r);
+		}
+		return dedup.values().stream()
+				.skip(offset)
+				.limit(limit)
+				.map(tmForumMapper::map)
+				.toList();
 	}
 
 	@Override
