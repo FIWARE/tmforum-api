@@ -7279,6 +7279,754 @@
                     "description": "When sub-classing, this defines the sub-class entity name."
                 }
             }
+        },
+        "SoftwareResourceSpecification": {
+            "type": "object",
+            "description": "An abstract base class used to define the invariant characteristics and behavior (attributes, constraints, and relationships) of a SoftwareResource.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "buildNumber": {
+                    "example": "encabulator-1.0.42",
+                    "type": "string",
+                    "description": "Defines the internal identifier for the compilation of this unit of a SoftwareResourceSpecification."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the target resource like NetworkConnectivity, PhysicalLinks, Generic, L2Network and so on."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of this REST resource"
+                },
+                "isBundle": {
+                    "type": "boolean",
+                    "description": "A flag indicates that if this resource specification is a bundled specification (true) or single (false)."
+                },
+                "isDistributable": {
+                    "type": "boolean",
+                    "description": "Designates the SoftwareResource as being able to be distributed across multiple physically distinct Resources."
+                },
+                "isExperimental": {
+                    "type": "boolean",
+                    "description": "True represents a special build (perhaps as a trial to suit specific customer needs)."
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update of this REST resource"
+                },
+                "lifecycleStatus": {
+                    "type": "string",
+                    "description": "Used to indicate the current lifecycle status of the resource specification"
+                },
+                "maintenanceVersion": {
+                    "example": "42",
+                    "type": "string",
+                    "description": "Defines the maintenance number component of the version of SoftwareResourceSpecification."
+                },
+                "majorVersion": {
+                    "example": "1",
+                    "type": "string",
+                    "description": "Defines the major number component of the version of SoftwareResourceSpecification."
+                },
+                "minorVersion": {
+                    "example": "0",
+                    "type": "string",
+                    "description": "Defines the minor number component of the version of SoftwareResourceSpecification."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name given to this REST resource"
+                },
+                "otherDesignator": {
+                    "type": "string",
+                    "description": "Enables the manufacturer to label this software as having some set of special restrictions."
+                },
+                "releaseStatus": {
+                    "example": "generalDeployment",
+                    "type": "string",
+                    "description": "Defines the particualr release status of this SoftwareResourceSpecification."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Resource Specification version"
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    },
+                    "description": "Complements the description of an element (for instance a resource) through video, pictures ..."
+                },
+                "featureSpecification": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FeatureSpecification"
+                    },
+                    "description": "A list of Features for this specification."
+                },
+                "installSize": {
+                    "example": {
+                        "amount": 800,
+                        "units": "MiB"
+                    },
+                    "$ref": "#/definitions/Quantity",
+                    "description": "The amount and units (e.g. 800MB) required to install the SoftwareResource."
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    },
+                    "description": "A related party defines party or party role linked to a specific entity."
+                },
+                "resourceSpecCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationCharacteristic"
+                    },
+                    "description": "A characteristic quality or distinctive feature of a ResourceSpecification.  The characteristic can be take on a discrete value, such as color, can take on a range of values, (for example, sensitivity of 100-240 mV), or can be derived from a formula (for example, usage time (hrs) = 30 - talk time *3). Certain characteristics, such as color, may be configured during the ordering or some other process."
+                },
+                "resourceSpecRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationRelationship"
+                    },
+                    "description": "A migration, substitution, dependency or exclusivity relationship between/among resource specifications."
+                },
+                "targetResourceSchema": {
+                    "$ref": "#/definitions/TargetResourceSchema",
+                    "description": "A target resource schema reference. The reference object to the schema and type of target resource which is described by resource specification."
+                },
+                "validFor": {
+                    "$ref": "#/definitions/TimePeriod",
+                    "description": "The period for which this REST resource is valid"
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "APISpecification": {
+            "type": "object",
+            "description": "A base class used to define the invariant characteristics and behavior (attributes, constraints, and relationships) of an API.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "apiProtocolType": {
+                    "example": "REST",
+                    "type": "string",
+                    "description": "API protocol type like REST, SOAP and so on."
+                },
+                "authenticationType": {
+                    "example": "Basic",
+                    "type": "string",
+                    "description": "The authentication scheme used for this API."
+                },
+                "buildNumber": {
+                    "example": "encabulator-1.0.42",
+                    "type": "string",
+                    "description": "Defines the internal identifier for the compilation of this unit of a SoftwareResourceSpecification."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the target resource like NetworkConnectivity, PhysicalLinks, Generic, L2Network and so on."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of this REST resource"
+                },
+                "externalSchema": {
+                    "example": "https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF639-ResourceInventory-v4.0.0.swagger.json",
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The external API schema of the (external) URL offered to the client of this API."
+                },
+                "externalUrl": {
+                    "example": "https://example.net/tmf-api/resourceInventoryManagement/v4",
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The URL of an API offered to the user. This is seen as external url for an API brokerage."
+                },
+                "internalSchema": {
+                    "example": "/tmf-api/resourceInventoryManagement/v4/schema/TMF639-ResourceInventory-v4.0.0.swagger.json",
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The internal API schema of the (internal) URL which an API broker uses."
+                },
+                "internalUrl": {
+                    "example": "/tmf-api/resourceInventoryManagement/v4",
+                    "type": "string",
+                    "format": "uri",
+                    "description": "The URL of an API offered to an API brokerage."
+                },
+                "isBundle": {
+                    "type": "boolean",
+                    "description": "A flag indicates that if this resource specification is a bundled specification (true) or single (false)."
+                },
+                "isDistributable": {
+                    "type": "boolean",
+                    "description": "Designates the SoftwareResource as being able to be distributed across multiple physically distinct Resources."
+                },
+                "isExperimental": {
+                    "type": "boolean",
+                    "description": "True represents a special build (perhaps as a trial to suit specific customer needs)."
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update of this REST resource"
+                },
+                "lifecycleStatus": {
+                    "type": "string",
+                    "description": "Used to indicate the current lifecycle status of the resource specification"
+                },
+                "maintenanceVersion": {
+                    "example": "42",
+                    "type": "string",
+                    "description": "Defines the maintenance number component of the version of SoftwareResourceSpecification."
+                },
+                "majorVersion": {
+                    "example": "1",
+                    "type": "string",
+                    "description": "Defines the major number component of the version of SoftwareResourceSpecification."
+                },
+                "minorVersion": {
+                    "example": "0",
+                    "type": "string",
+                    "description": "Defines the minor number component of the version of SoftwareResourceSpecification."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name given to this REST resource"
+                },
+                "otherDesignator": {
+                    "type": "string",
+                    "description": "Enables the manufacturer to label this software as having some set of special restrictions."
+                },
+                "releaseStatus": {
+                    "example": "generalDeployment",
+                    "type": "string",
+                    "description": "Defines the particualr release status of this SoftwareResourceSpecification."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Resource Specification version"
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    },
+                    "description": "Complements the description of an element (for instance a resource) through video, pictures ..."
+                },
+                "featureSpecification": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FeatureSpecification"
+                    },
+                    "description": "A list of Features for this specification."
+                },
+                "installSize": {
+                    "example": {
+                        "amount": 800,
+                        "units": "MiB"
+                    },
+                    "$ref": "#/definitions/Quantity",
+                    "description": "The amount and units (e.g. 800MB) required to install the SoftwareResource."
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    },
+                    "description": "A related party defines party or party role linked to a specific entity."
+                },
+                "resourceSpecCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationCharacteristic"
+                    },
+                    "description": "A characteristic quality or distinctive feature of a ResourceSpecification.  The characteristic can be take on a discrete value, such as color, can take on a range of values, (for example, sensitivity of 100-240 mV), or can be derived from a formula (for example, usage time (hrs) = 30 - talk time *3). Certain characteristics, such as color, may be configured during the ordering or some other process."
+                },
+                "resourceSpecRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationRelationship"
+                    },
+                    "description": "A migration, substitution, dependency or exclusivity relationship between/among resource specifications."
+                },
+                "targetResourceSchema": {
+                    "$ref": "#/definitions/TargetResourceSchema",
+                    "description": "A target resource schema reference. The reference object to the schema and type of target resource which is described by resource specification."
+                },
+                "validFor": {
+                    "$ref": "#/definitions/TimePeriod",
+                    "description": "The period for which this REST resource is valid"
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "SoftwareSpecification": {
+            "type": "object",
+            "description": "A base class used to define the invariant characteristics and behavior (attributes, constraints, and relationships) of an InstalledSoftware",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "buildNumber": {
+                    "example": "encabulator-1.0.42",
+                    "type": "string",
+                    "description": "Defines the internal identifier for the compilation of this unit of a SoftwareResourceSpecification."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the target resource like NetworkConnectivity, PhysicalLinks, Generic, L2Network and so on."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of this REST resource"
+                },
+                "isBundle": {
+                    "type": "boolean",
+                    "description": "A flag indicates that if this resource specification is a bundled specification (true) or single (false)."
+                },
+                "isDistributable": {
+                    "type": "boolean",
+                    "description": "Designates the SoftwareResource as being able to be distributed across multiple physically distinct Resources."
+                },
+                "isExperimental": {
+                    "type": "boolean",
+                    "description": "True represents a special build (perhaps as a trial to suit specific customer needs)."
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update of this REST resource"
+                },
+                "lifecycleStatus": {
+                    "type": "string",
+                    "description": "Used to indicate the current lifecycle status of the resource specification"
+                },
+                "maintenanceVersion": {
+                    "example": "42",
+                    "type": "string",
+                    "description": "Defines the maintenance number component of the version of SoftwareResourceSpecification."
+                },
+                "majorVersion": {
+                    "example": "1",
+                    "type": "string",
+                    "description": "Defines the major number component of the version of SoftwareResourceSpecification."
+                },
+                "minorVersion": {
+                    "example": "0",
+                    "type": "string",
+                    "description": "Defines the minor number component of the version of SoftwareResourceSpecification."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name given to this REST resource"
+                },
+                "numUsersMax": {
+                    "example": 10,
+                    "type": "integer",
+                    "description": "Defines the maximum number of users for a SoftwareSpecifciation."
+                },
+                "numberProcessActiveTotal": {
+                    "example": 4,
+                    "type": "integer",
+                    "description": "Defines the maximum number of total processes that a SoftwareSpecifciation can support at any given time."
+                },
+                "otherDesignator": {
+                    "type": "string",
+                    "description": "Enables the manufacturer to label this software as having some set of special restrictions."
+                },
+                "releaseStatus": {
+                    "example": "generalDeployment",
+                    "type": "string",
+                    "description": "Defines the particualr release status of this SoftwareResourceSpecification."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Resource Specification version"
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    },
+                    "description": "Complements the description of an element (for instance a resource) through video, pictures ..."
+                },
+                "featureSpecification": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FeatureSpecification"
+                    },
+                    "description": "A list of Features for this specification."
+                },
+                "installSize": {
+                    "example": {
+                        "amount": 800,
+                        "units": "MiB"
+                    },
+                    "$ref": "#/definitions/Quantity",
+                    "description": "The amount and units (e.g. 800MB) required to install the SoftwareResource."
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    },
+                    "description": "A related party defines party or party role linked to a specific entity."
+                },
+                "resourceSpecCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationCharacteristic"
+                    },
+                    "description": "A characteristic quality or distinctive feature of a ResourceSpecification.  The characteristic can be take on a discrete value, such as color, can take on a range of values, (for example, sensitivity of 100-240 mV), or can be derived from a formula (for example, usage time (hrs) = 30 - talk time *3). Certain characteristics, such as color, may be configured during the ordering or some other process."
+                },
+                "resourceSpecRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationRelationship"
+                    },
+                    "description": "A migration, substitution, dependency or exclusivity relationship between/among resource specifications."
+                },
+                "softwareSupportPackage": {
+                    "example": {
+                        "id": "0dc5e7b8",
+                        "href": "/resourceInventoryManagement/v4/resource/0dc5e7b8",
+                        "name": "Encabulator Software Package",
+                        "@type": "SoftwareSupportPackageRef",
+                        "@referredType": "SoftwareSupportPackage"
+                    },
+                    "$ref": "#/definitions/SoftwareSupportPackageRef"
+                },
+                "targetResourceSchema": {
+                    "$ref": "#/definitions/TargetResourceSchema",
+                    "description": "A target resource schema reference. The reference object to the schema and type of target resource which is described by resource specification."
+                },
+                "validFor": {
+                    "$ref": "#/definitions/TimePeriod",
+                    "description": "The period for which this REST resource is valid"
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "SoftwareSupportPackageSpecification": {
+            "type": "object",
+            "description": "A base class used to define the invariant characteristics and behavior (attributes, constraints, and relationships) of a SoftwareSupportPackage",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the target resource like NetworkConnectivity, PhysicalLinks, Generic, L2Network and so on."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of this REST resource"
+                },
+                "isBundle": {
+                    "type": "boolean",
+                    "description": "A flag indicates that if this resource specification is a bundled specification (true) or single (false)."
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update of this REST resource"
+                },
+                "lifecycleStatus": {
+                    "type": "string",
+                    "description": "Used to indicate the current lifecycle status of the resource specification"
+                },
+                "model": {
+                    "type": "string",
+                    "description": "This is a string that represents a manufacturer-allocated number used to identify the general type and/or category of the hardware item. This, in combination with the Part and the Vendor, identify different types of hardware items. The SerialNumber can then be used to differentiate between different instances of the same type of hardware item. This is an optional attribute."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name given to this REST resource"
+                },
+                "part": {
+                    "type": "string",
+                    "description": "This is a string that defines a manufacturer-allocated part number assigned by the organization that manufactures the hardware item. This, in combination with the Model and the Vendor, identify different types of hardware items. The SerialNumber can then be used to differentiate between different instances of the same type of hardware item. This is a REQUIRED attribute."
+                },
+                "sku": {
+                    "type": "string",
+                    "description": "This is a string that defines the manufacturer-allocated Stock Keeping Unit (SKU) number of the hardware item. This is an optional attribute."
+                },
+                "vendor": {
+                    "type": "string",
+                    "description": "This is a string that defines the name of the manufacturer. This, in combination with the Model and the Part, identify different types of hardware items. The SerialNumber can then be used to differentiate between different instances of the same type of hardware item. This is a REQUIRED attribute for a physical resource."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Resource Specification version"
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    },
+                    "description": "Complements the description of an element (for instance a resource) through video, pictures ..."
+                },
+                "featureSpecification": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FeatureSpecification"
+                    },
+                    "description": "A list of Features for this specification."
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    },
+                    "description": "A related party defines party or party role linked to a specific entity."
+                },
+                "resourceSpecCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationCharacteristic"
+                    },
+                    "description": "A characteristic quality or distinctive feature of a ResourceSpecification.  The characteristic can be take on a discrete value, such as color, can take on a range of values, (for example, sensitivity of 100-240 mV), or can be derived from a formula (for example, usage time (hrs) = 30 - talk time *3). Certain characteristics, such as color, may be configured during the ordering or some other process."
+                },
+                "resourceSpecRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationRelationship"
+                    },
+                    "description": "A migration, substitution, dependency or exclusivity relationship between/among resource specifications."
+                },
+                "targetResourceSchema": {
+                    "$ref": "#/definitions/TargetResourceSchema",
+                    "description": "A target resource schema reference. The reference object to the schema and type of target resource which is described by resource specification."
+                },
+                "validFor": {
+                    "$ref": "#/definitions/TimePeriod",
+                    "description": "The period for which this REST resource is valid"
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "HostingPlatformRequirementSpecification": {
+            "type": "object",
+            "description": "This is a base class that is used to define the invariant characteristics and behavior (attributes, constraints, and relationships) of a HostingPlatformRequirement Resource.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the target resource like NetworkConnectivity, PhysicalLinks, Generic, L2Network and so on."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of this REST resource"
+                },
+                "isBundle": {
+                    "type": "boolean",
+                    "description": "A flag indicates that if this resource specification is a bundled specification (true) or single (false)."
+                },
+                "isVirtualizable": {
+                    "type": "boolean",
+                    "description": "True if the Capacity required can be virtualized."
+                },
+                "lastUpdate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Date and time of the last update of this REST resource"
+                },
+                "lifecycleStatus": {
+                    "type": "string",
+                    "description": "Used to indicate the current lifecycle status of the resource specification"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name given to this REST resource"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Resource Specification version"
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    },
+                    "description": "Complements the description of an element (for instance a resource) through video, pictures ..."
+                },
+                "featureSpecification": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FeatureSpecification"
+                    },
+                    "description": "A list of Features for this specification."
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    },
+                    "description": "A related party defines party or party role linked to a specific entity."
+                },
+                "resourceSpecCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationCharacteristic"
+                    },
+                    "description": "A characteristic quality or distinctive feature of a ResourceSpecification.  The characteristic can be take on a discrete value, such as color, can take on a range of values, (for example, sensitivity of 100-240 mV), or can be derived from a formula (for example, usage time (hrs) = 30 - talk time *3). Certain characteristics, such as color, may be configured during the ordering or some other process."
+                },
+                "resourceSpecRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceSpecificationRelationship"
+                    },
+                    "description": "A migration, substitution, dependency or exclusivity relationship between/among resource specifications."
+                },
+                "targetResourceSchema": {
+                    "$ref": "#/definitions/TargetResourceSchema",
+                    "description": "A target resource schema reference. The reference object to the schema and type of target resource which is described by resource specification."
+                },
+                "validFor": {
+                    "$ref": "#/definitions/TimePeriod",
+                    "description": "The period for which this REST resource is valid"
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "SoftwareSupportPackageRef": {
+            "type": "object",
+            "description": "Reference to a SoftwareSupportPackage",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the related entity."
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                },
+                "@referredType": {
+                    "type": "string",
+                    "description": "The actual type of the target instance when needed for disambiguation."
+                }
+            },
+            "required": [
+                "id"
+            ]
         }
     }
 }

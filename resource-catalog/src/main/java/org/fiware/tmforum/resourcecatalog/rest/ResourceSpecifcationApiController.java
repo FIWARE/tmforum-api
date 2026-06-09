@@ -1,45 +1,43 @@
 package org.fiware.tmforum.resourcecatalog.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.context.ServerRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApi;
-import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
-import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
+import org.fiware.resourcecatalog.model.*;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
-import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.resource.FeatureSpecification;
-import org.fiware.tmforum.resource.FeatureSpecificationCharacteristicRelationship;
-import org.fiware.tmforum.resource.ResourceSpecification;
-import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
+import org.fiware.tmforum.resource.*;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
-import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
-import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
-
+/**
+ * REST controller for the ResourceSpecification API within the Resource Catalog module (TMF634).
+ * Provides CRUD operations for ResourceSpecification entities and all sub-types
+ * (LogicalResourceSpecification, SoftwareResourceSpecification, APISpecification,
+ * SoftwareSpecification, HostingPlatformRequirementSpecification,
+ * PhysicalResourceSpecification, SoftwareSupportPackageSpecification).
+ *
+ * <p>Polymorphic dispatch based on the {@code @type} field in request payloads and the NGSI-LD
+ * entity type embedded in entity IDs. Mirrors the pattern in the software-management module so
+ * that {@code /resourceCatalog/v4/resourceSpecification} and
+ * {@code /softwareCompute/v4/resourceSpecification} produce identical responses for the same
+ * entity.</p>
+ */
 @Slf4j
 @Controller("${api.resource-catalog.basepath:/}")
 public class ResourceSpecifcationApiController extends AbstractApiController<ResourceSpecification>
@@ -47,13 +45,16 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 
 	private final TMForumMapper tmForumMapper;
 	private final Clock clock;
+	private final ObjectMapper objectMapper;
 
 	public ResourceSpecifcationApiController(QueryParser queryParser, ReferenceValidationService validationService,
 			TmForumRepository resourceCatalogRepository, TMForumMapper tmForumMapper,
-			Clock clock, TMForumEventHandler eventHandler) {
+			Clock clock, TMForumEventHandler eventHandler,
+			ObjectMapper objectMapper) {
 		super(queryParser, validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;
 		this.clock = clock;
+		this.objectMapper = objectMapper;
 	}
 
 	@Override
@@ -65,33 +66,128 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 							resourceSpecificationCreateVO), TmForumExceptionReason.INVALID_DATA);
 		}
 		if (resourceSpecificationCreateVO.getIsBundle() == null) {
-			// set default required by the conformance
 			resourceSpecificationCreateVO.isBundle(false);
 		}
 		if (resourceSpecificationCreateVO.getLifecycleStatus() == null) {
-			// set default required by the conformance
 			resourceSpecificationCreateVO.lifecycleStatus("created");
 		}
 
+		String atType = resourceSpecificationCreateVO.getAtType();
+		String entityType = ResourceTypeRegistry.getSpecEntityType(atType);
+
+		if (ResourceTypeRegistry.SPEC_TYPES.containsKey(atType)) {
+			return createSubTypeSpec(resourceSpecificationCreateVO, entityType, atType);
+		}
+
+		// Default: create base ResourceSpecification
 		ResourceSpecification resourceSpecification = tmForumMapper.map(
 				tmForumMapper.map(resourceSpecificationCreateVO, IdHelper.toNgsiLd(UUID.randomUUID().toString(),
 						ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)));
 		resourceSpecification.setLastUpdate(clock.instant());
 
 		Mono<ResourceSpecification> checkingMono = getCheckingMono(resourceSpecification);
-		checkingMono = Mono.zip(checkingMono, validateSpec(resourceSpecification), (p1, p2) -> resourceSpecification);
+		checkingMono = Mono.zip(checkingMono, validateSpec(resourceSpecification),
+				(p1, p2) -> resourceSpecification);
 
 		return create(checkingMono, ResourceSpecification.class)
 				.map(tmForumMapper::map)
 				.map(HttpResponse::created);
 	}
 
+	@SuppressWarnings("unchecked")
+	private Mono<HttpResponse<ResourceSpecificationVO>> createSubTypeSpec(
+			ResourceSpecificationCreateVO createVO, String entityType, String atType) {
+		URI id = IdHelper.toNgsiLd(UUID.randomUUID().toString(), entityType);
+		Class<? extends ResourceSpecification> domainClass = ResourceTypeRegistry.SPEC_TYPES.get(atType);
+
+		Map<String, Object> map = objectMapper.convertValue(createVO, Map.class);
+		map.put("id", id.toString());
+		map.put("href", id.toString());
+
+		Object subTypeVO = objectMapper.convertValue(map, getSpecVOClass(domainClass));
+		ResourceSpecification spec = mapSpecVOToDomain(subTypeVO, domainClass);
+		spec.setLastUpdate(clock.instant());
+
+		Mono<ResourceSpecification> checkingMono = getCheckingMono(spec);
+		checkingMono = Mono.zip(checkingMono, validateSpec(spec), (p1, p2) -> spec);
+
+		return create(checkingMono, ResourceSpecification.class)
+				.map(this::mapSpecToVO)
+				.map(HttpResponse::created);
+	}
+
+	private ResourceSpecificationVO mapSpecToVO(ResourceSpecification spec) {
+		// Order matters: check leaf types before parent types
+		if (spec instanceof ApiSpecification as) {
+			return objectMapper.convertValue(tmForumMapper.mapToApiSpecificationVO(as),
+					ResourceSpecificationVO.class);
+		} else if (spec instanceof SoftwareSpecification ss) {
+			return objectMapper.convertValue(tmForumMapper.mapToSoftwareSpecificationVO(ss),
+					ResourceSpecificationVO.class);
+		} else if (spec instanceof SoftwareResourceSpecification srs) {
+			return objectMapper.convertValue(tmForumMapper.mapToSoftwareResourceSpecificationVO(srs),
+					ResourceSpecificationVO.class);
+		} else if (spec instanceof HostingPlatformRequirementSpecification hprs) {
+			return objectMapper.convertValue(
+					tmForumMapper.mapToHostingPlatformRequirementSpecificationVO(hprs),
+					ResourceSpecificationVO.class);
+		} else if (spec instanceof LogicalResourceSpecification lrs) {
+			return objectMapper.convertValue(tmForumMapper.mapToLogicalResourceSpecificationVO(lrs),
+					ResourceSpecificationVO.class);
+		} else if (spec instanceof SoftwareSupportPackageSpecification ssps) {
+			return objectMapper.convertValue(
+					tmForumMapper.mapToSoftwareSupportPackageSpecificationVO(ssps),
+					ResourceSpecificationVO.class);
+		} else if (spec instanceof PhysicalResourceSpecification prs) {
+			return objectMapper.convertValue(tmForumMapper.mapToPhysicalResourceSpecificationVO(prs),
+					ResourceSpecificationVO.class);
+		}
+		return tmForumMapper.map(spec);
+	}
+
+	private Class<?> getSpecVOClass(Class<? extends ResourceSpecification> domainClass) {
+		if (domainClass == LogicalResourceSpecification.class) return LogicalResourceSpecificationVO.class;
+		if (domainClass == SoftwareResourceSpecification.class) return SoftwareResourceSpecificationVO.class;
+		if (domainClass == ApiSpecification.class) return APISpecificationVO.class;
+		if (domainClass == SoftwareSpecification.class) return SoftwareSpecificationVO.class;
+		if (domainClass == HostingPlatformRequirementSpecification.class) {
+			return HostingPlatformRequirementSpecificationVO.class;
+		}
+		if (domainClass == PhysicalResourceSpecification.class) return PhysicalResourceSpecificationVO.class;
+		if (domainClass == SoftwareSupportPackageSpecification.class) {
+			return SoftwareSupportPackageSpecificationVO.class;
+		}
+		return ResourceSpecificationVO.class;
+	}
+
+	private ResourceSpecification mapSpecVOToDomain(Object vo,
+			Class<? extends ResourceSpecification> domainClass) {
+		if (domainClass == LogicalResourceSpecification.class) {
+			return tmForumMapper.map((LogicalResourceSpecificationVO) vo);
+		}
+		if (domainClass == SoftwareResourceSpecification.class) {
+			return tmForumMapper.map((SoftwareResourceSpecificationVO) vo);
+		}
+		if (domainClass == ApiSpecification.class) return tmForumMapper.map((APISpecificationVO) vo);
+		if (domainClass == SoftwareSpecification.class) return tmForumMapper.map((SoftwareSpecificationVO) vo);
+		if (domainClass == HostingPlatformRequirementSpecification.class) {
+			return tmForumMapper.map((HostingPlatformRequirementSpecificationVO) vo);
+		}
+		if (domainClass == PhysicalResourceSpecification.class) {
+			return tmForumMapper.map((PhysicalResourceSpecificationVO) vo);
+		}
+		if (domainClass == SoftwareSupportPackageSpecification.class) {
+			return tmForumMapper.map((SoftwareSupportPackageSpecificationVO) vo);
+		}
+		throw new TmForumException("Unknown spec sub-type: " + domainClass.getSimpleName(),
+				TmForumExceptionReason.INVALID_DATA);
+	}
+
 	private Mono<ResourceSpecification> validateSpec(ResourceSpecification resourceSpecification) {
 		Mono<ResourceSpecification> validatingMono = Mono.just(resourceSpecification);
 
-		if (resourceSpecification.getFeatureSpecification() != null && !resourceSpecification.getFeatureSpecification()
-				.isEmpty()) {
-
+		if (resourceSpecification.getFeatureSpecification() != null
+				&& !resourceSpecification.getFeatureSpecification().isEmpty()) {
 			List<Mono<ResourceSpecification>> fsCheckingMonos = resourceSpecification.getFeatureSpecification()
 					.stream()
 					.map(featureSpecification -> validateFeatureSpecification(resourceSpecification,
@@ -103,18 +199,15 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 			}
 		}
 
-		if (resourceSpecification.getResourceSpecCharacteristic() != null && !resourceSpecification.getResourceSpecCharacteristic()
-				.isEmpty()) {
-
+		if (resourceSpecification.getResourceSpecCharacteristic() != null
+				&& !resourceSpecification.getResourceSpecCharacteristic().isEmpty()) {
 			List<Mono<ResourceSpecification>> rscCheckingMonos = resourceSpecification.getResourceSpecCharacteristic()
 					.stream()
-					.map(resourceSpecificationCharacteristic -> validateResourceSpecChar(resourceSpecification,
-							resourceSpecificationCharacteristic))
+					.map(rsc -> validateResourceSpecChar(resourceSpecification, rsc))
 					.toList();
 			if (!rscCheckingMonos.isEmpty()) {
 				Mono<ResourceSpecification> rscCheckingMono = Mono.zip(rscCheckingMonos, p1 -> resourceSpecification);
 				validatingMono = Mono.zip(validatingMono, rscCheckingMono, (p1, p2) -> resourceSpecification);
-
 			}
 		}
 
@@ -179,7 +272,6 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 	}
 
 	private Mono<ResourceSpecification> getCheckingMono(ResourceSpecification resourceSpecification) {
-
 		if (resourceSpecification.getRelatedParty() != null && !resourceSpecification.getRelatedParty().isEmpty()) {
 			return getCheckingMono(resourceSpecification, List.of(resourceSpecification.getRelatedParty()))
 					.onErrorMap(throwable ->
@@ -191,7 +283,6 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 		} else {
 			return Mono.just(resourceSpecification);
 		}
-
 	}
 
 	@Override
@@ -199,111 +290,102 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 		return delete(id);
 	}
 
-	/**
-	 * Polymorphic listing per the TMF spec: returns the union of entities natively stored with
-	 * NGSI-LD type {@code resource-specification} and entities declaring
-	 * {@code "@baseType": "ResourceSpecification"} regardless of which module owns their
-	 * concrete {@code @type} (e.g. {@code SoftwareSupportPackageSpecification},
-	 * {@code SoftwareSpecification}, {@code LogicalResourceSpecification}). Same shape as
-	 * {@link org.fiware.tmforum.resourceinventory.rest.ResourceApiController#listResource}.
-	 */
 	@Override
 	public Mono<HttpResponse<List<ResourceSpecificationVO>>> listResourceSpecification(@Nullable String fields,
 			@Nullable Integer offset, @Nullable Integer limit) {
-		int effectiveOffset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
-		int effectiveLimit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+		// Polymorphic listing: query each registered NGSI-LD entity type in parallel and merge.
+		// Each branch uses its concrete domain class so sub-type fields round-trip with full fidelity.
+		List<Mono<List<ResourceSpecificationVO>>> typeQueries = new ArrayList<>();
 
-		if (effectiveOffset < 0 || effectiveLimit < 1) {
-			throw new TmForumException(
-					String.format("Invalid offset %s or limit %s.", effectiveOffset, effectiveLimit),
-					TmForumExceptionReason.INVALID_DATA);
+		for (Map.Entry<String, Class<? extends ResourceSpecification>> entry :
+				ResourceTypeRegistry.SPEC_ENTITY_TYPES.entrySet()) {
+			String entityType = entry.getKey();
+			Class<? extends ResourceSpecification> entityClass = entry.getValue();
+			Mono<List<ResourceSpecificationVO>> query = list(offset, limit, entityType, entityClass)
+					.map(stream -> stream.map(this::mapSpecToVO).toList())
+					.switchIfEmpty(Mono.just(List.of()));
+			typeQueries.add(query);
 		}
 
-		QueryParams clientParams = parseClientQuery();
-		String clientQ = clientParams != null ? clientParams.query() : null;
-		String clientIds = clientParams != null ? clientParams.id() : null;
-		String clientType = clientParams != null && clientParams.type() != null
-				? clientParams.type() : ResourceSpecification.TYPE_RESOURCE_SPECIFICATION;
-
-		int fetchUpTo = effectiveOffset + effectiveLimit;
-
-		// Branch A: entities natively stored under NGSI-LD type "resource-specification".
-		Mono<List<ResourceSpecification>> byType =
-				repository.findEntities(0, fetchUpTo, ResourceSpecification.class, clientQ, clientIds, clientType)
-						.switchIfEmpty(Mono.just(List.of()));
-
-		// Branch B: entities declaring @baseType matching this controller's base class.
-		String baseTypeFilter = String.format("atBaseType==\"%s\"", ResourceSpecification.class.getSimpleName());
-		String combinedQ = (clientQ == null || clientQ.isEmpty())
-				? baseTypeFilter
-				: "(" + clientQ + ");" + baseTypeFilter;
-		Mono<List<ResourceSpecification>> byBaseType =
-				repository.findEntities(0, fetchUpTo, ResourceSpecification.class, combinedQ, clientIds, null)
-						.switchIfEmpty(Mono.just(List.of()));
-
-		return Mono.zip(byType, byBaseType)
-				.map(tuple -> mergeAndPage(tuple.getT1(), tuple.getT2(), effectiveOffset, effectiveLimit))
-				.map(HttpResponse::ok);
-	}
-
-	private QueryParams parseClientQuery() {
-		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
-		if (optionalHttpRequest.isEmpty()) {
-			log.warn("The original request is not available, no filters will be applied.");
-			return null;
-		}
-		HttpRequest<Object> request = optionalHttpRequest.get();
-		Map<String, List<String>> parameters = request.getParameters().asMap();
-		if (!QueryParser.hasFilter(parameters)) {
-			return null;
-		}
-		return queryParser.toNgsiLdQuery(ResourceSpecification.class, request.getUri().getQuery());
-	}
-
-	private List<ResourceSpecificationVO> mergeAndPage(List<ResourceSpecification> byType,
-			List<ResourceSpecification> byBaseType, int offset, int limit) {
-		Map<URI, ResourceSpecification> dedup = new LinkedHashMap<>();
-		for (ResourceSpecification rs : byType) {
-			dedup.putIfAbsent(rs.getId(), rs);
-		}
-		for (ResourceSpecification rs : byBaseType) {
-			dedup.putIfAbsent(rs.getId(), rs);
-		}
-		return dedup.values().stream()
-				.skip(offset)
-				.limit(limit)
-				.map(tmForumMapper::map)
-				.toList();
+		return Mono.zip(typeQueries, results -> {
+			List<ResourceSpecificationVO> combined = new ArrayList<>();
+			for (Object result : results) {
+				@SuppressWarnings("unchecked")
+				List<ResourceSpecificationVO> typed = (List<ResourceSpecificationVO>) result;
+				combined.addAll(typed);
+			}
+			return combined;
+		}).map(HttpResponse::ok);
 	}
 
 	@Override
 	public Mono<HttpResponse<ResourceSpecificationVO>> patchResourceSpecification(@NonNull String id,
 			@NonNull ResourceSpecificationUpdateVO resourceSpecificationUpdateVO) {
-		// non-ngsi-ld ids cannot exist.
 		if (!IdHelper.isNgsiLdId(id)) {
 			throw new TmForumException("Did not receive a valid id, such resource spec cannot exist.",
 					TmForumExceptionReason.NOT_FOUND);
+		}
+
+		String entityType = ResourceTypeRegistry.extractTypeFromId(id);
+		Class<? extends ResourceSpecification> entityClass = ResourceTypeRegistry.getSpecClass(entityType);
+
+		if (entityClass != ResourceSpecification.class) {
+			return patchSubTypeSpec(id, resourceSpecificationUpdateVO, entityClass);
 		}
 
 		ResourceSpecification resourceSpecification = tmForumMapper.map(resourceSpecificationUpdateVO, id);
 		resourceSpecification.setLastUpdate(clock.instant());
 
 		Mono<ResourceSpecification> checkingMono = getCheckingMono(resourceSpecification);
-		checkingMono = Mono.zip(checkingMono, validateSpec(resourceSpecification), (p1, p2) -> resourceSpecification);
+		checkingMono = Mono.zip(checkingMono, validateSpec(resourceSpecification),
+				(p1, p2) -> resourceSpecification);
 
 		return patch(id, resourceSpecification, checkingMono, ResourceSpecification.class)
 				.map(tmForumMapper::map)
 				.map(HttpResponse::ok);
 	}
 
-	@Override
-	public Mono<HttpResponse<ResourceSpecificationVO>> retrieveResourceSpecification(@NonNull String id,
-			@Nullable String fields) {
-		return retrieve(id, ResourceSpecification.class)
-				.switchIfEmpty(Mono.error(new TmForumException("No such resources specification exists.",
+	@SuppressWarnings("unchecked")
+	private Mono<HttpResponse<ResourceSpecificationVO>> patchSubTypeSpec(String id,
+			ResourceSpecificationUpdateVO updateVO,
+			Class<? extends ResourceSpecification> entityClass) {
+		Map<String, Object> map = objectMapper.convertValue(updateVO, Map.class);
+		map.put("id", id);
+		map.put("href", id);
+
+		Object subTypeVO = objectMapper.convertValue(map, getSpecVOClass(entityClass));
+		ResourceSpecification spec = mapSpecVOToDomain(subTypeVO, entityClass);
+		spec.setLastUpdate(clock.instant());
+
+		URI idUri = URI.create(id);
+		Mono<ResourceSpecification> validatedMono = Mono.zip(
+				getCheckingMono(spec), validateSpec(spec), (p1, p2) -> spec);
+
+		return repository.get(idUri, entityClass)
+				.switchIfEmpty(Mono.error(new TmForumException("No such resource specification exists.",
 						TmForumExceptionReason.NOT_FOUND)))
-				.map(tmForumMapper::map)
+				.flatMap(existing -> validatedMono)
+				.flatMap(checked -> repository.updateDomainEntity(id, spec)
+						.then(repository.get(idUri, entityClass)))
+				.map(this::mapSpecToVO)
 				.map(HttpResponse::ok);
 	}
 
+	@Override
+	public Mono<HttpResponse<ResourceSpecificationVO>> retrieveResourceSpecification(@NonNull String id,
+			@Nullable String fields) {
+		if (!IdHelper.isNgsiLdId(id)) {
+			throw new TmForumException("Did not receive a valid id, such resource spec cannot exist.",
+					TmForumExceptionReason.NOT_FOUND);
+		}
+
+		String entityType = ResourceTypeRegistry.extractTypeFromId(id);
+		Class<? extends ResourceSpecification> entityClass = ResourceTypeRegistry.getSpecClass(entityType);
+
+		return retrieve(id, entityClass)
+				.switchIfEmpty(Mono.error(new TmForumException("No such resource specification exists.",
+						TmForumExceptionReason.NOT_FOUND)))
+				.map(this::mapSpecToVO)
+				.map(HttpResponse::ok);
+	}
 }

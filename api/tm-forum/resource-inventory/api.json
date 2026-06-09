@@ -2716,6 +2716,757 @@
                     "description": "When sub-classing, this defines the sub-class entity name."
                 }
             }
+        },
+        "SoftwareResource": {
+            "type": "object",
+            "description": "Abstract class describing the common set of attributes shared by all concrete software resources (e.g. API, InstalledSoftware)",
+            "required": [
+                "href",
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the concrete resource. e.g Gold, Silver for MSISDN concrete resource"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "free-text description of the resource"
+                },
+                "endOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date till the resource is operating"
+                },
+                "isDistributedCurrent": {
+                    "type": "boolean",
+                    "description": "True defines this SoftwareResource as being currently distributed across several Resource nodes."
+                },
+                "lastUpdate": {
+                    "example": "2022-11-27T19:41:29.811Z",
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The time of the last update of this resource."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "A string used to give a name to the resource"
+                },
+                "resourceVersion": {
+                    "type": "string",
+                    "description": "A field that identifies the specific version of an instance of a resource."
+                },
+                "startOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date from which the resource is operating"
+                },
+                "targetPlatform": {
+                    "example": "server",
+                    "type": "string",
+                    "description": "Defines the target platform that the SoftwareResource will be deployed on."
+                },
+                "value": {
+                    "type": "string",
+                    "description": "the value of the logical resource. E.g '0746712345' for  MSISDN's"
+                },
+                "activationFeature": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Feature"
+                    },
+                    "description": "Configuration features"
+                },
+                "administrativeState": {
+                    "$ref": "#/definitions/ResourceAdministrativeStateType",
+                    "description": "Tracks the administrative state of the resource, such as locked, unlocked, shutdown and so on."
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    }
+                },
+                "note": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Note"
+                    }
+                },
+                "operationalState": {
+                    "$ref": "#/definitions/ResourceOperationalStateType",
+                    "description": "Tracks the operational state of the resource, such as enable, disable and so on."
+                },
+                "place": {
+                    "$ref": "#/definitions/RelatedPlaceRefOrValue"
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    }
+                },
+                "resourceCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Characteristic"
+                    }
+                },
+                "resourceRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceRelationship"
+                    }
+                },
+                "resourceSpecification": {
+                    "$ref": "#/definitions/ResourceSpecificationRef"
+                },
+                "resourceStatus": {
+                    "$ref": "#/definitions/ResourceStatusType",
+                    "description": "Tracks the resource status of the resource, such as standby, alarm, available, reserved, suspended and so on."
+                },
+                "usageState": {
+                    "$ref": "#/definitions/ResourceUsageStateType",
+                    "description": "Tracks the usage state of the resource, such as idle, active, busy and so on."
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "API": {
+            "type": "object",
+            "description": "An Application Program Interface (API) is a set of routines, protocols, and tools for building software applications.",
+            "required": [
+                "href",
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the concrete resource. e.g Gold, Silver for MSISDN concrete resource"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "free-text description of the resource"
+                },
+                "endOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date till the resource is operating"
+                },
+                "isDistributedCurrent": {
+                    "type": "boolean",
+                    "description": "True defines this SoftwareResource as being currently distributed across several Resource nodes."
+                },
+                "lastUpdate": {
+                    "example": "2022-11-27T19:41:29.811Z",
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The time of the last update of this resource."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "A string used to give a name to the resource"
+                },
+                "resourceVersion": {
+                    "type": "string",
+                    "description": "A field that identifies the specific version of an instance of a resource."
+                },
+                "startOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date from which the resource is operating"
+                },
+                "targetPlatform": {
+                    "example": "server",
+                    "type": "string",
+                    "description": "Defines the target platform that the SoftwareResource will be deployed on."
+                },
+                "value": {
+                    "type": "string",
+                    "description": "the value of the logical resource. E.g '0746712345' for  MSISDN's"
+                },
+                "activationFeature": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Feature"
+                    },
+                    "description": "Configuration features"
+                },
+                "administrativeState": {
+                    "$ref": "#/definitions/ResourceAdministrativeStateType",
+                    "description": "Tracks the administrative state of the resource, such as locked, unlocked, shutdown and so on."
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    }
+                },
+                "note": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Note"
+                    }
+                },
+                "operationalState": {
+                    "$ref": "#/definitions/ResourceOperationalStateType",
+                    "description": "Tracks the operational state of the resource, such as enable, disable and so on."
+                },
+                "place": {
+                    "$ref": "#/definitions/RelatedPlaceRefOrValue"
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    }
+                },
+                "resourceCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Characteristic"
+                    }
+                },
+                "resourceRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceRelationship"
+                    }
+                },
+                "resourceSpecification": {
+                    "$ref": "#/definitions/ResourceSpecificationRef"
+                },
+                "resourceStatus": {
+                    "$ref": "#/definitions/ResourceStatusType",
+                    "description": "Tracks the resource status of the resource, such as standby, alarm, available, reserved, suspended and so on."
+                },
+                "usageState": {
+                    "$ref": "#/definitions/ResourceUsageStateType",
+                    "description": "Tracks the usage state of the resource, such as idle, active, busy and so on."
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "InstalledSoftware": {
+            "type": "object",
+            "description": "A SoftwareSpecification deployed using the SoftwareSupportPackage on platform which meets the HostingPlatformRequirements",
+            "required": [
+                "href",
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the concrete resource. e.g Gold, Silver for MSISDN concrete resource"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "free-text description of the resource"
+                },
+                "endOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date till the resource is operating"
+                },
+                "isDistributedCurrent": {
+                    "type": "boolean",
+                    "description": "True defines this SoftwareResource as being currently distributed across several Resource nodes."
+                },
+                "isUTCTime": {
+                    "type": "boolean",
+                    "description": "Indicates whether this software uses absolute (UTC) time."
+                },
+                "lastStartTime": {
+                    "example": "2022-08-10T08:12:42.304Z",
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The time of the last start of this software."
+                },
+                "lastUpdate": {
+                    "example": "2022-11-27T19:41:29.811Z",
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The time of the last update of this resource."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "A string used to give a name to the resource"
+                },
+                "numProcessesActiveCurrent": {
+                    "example": 8,
+                    "type": "integer",
+                    "description": "The current number of total processes that the Software can support at any given time."
+                },
+                "numUsersCurrent": {
+                    "example": 1,
+                    "type": "integer",
+                    "description": "The ccurrent number of users of the Sofware."
+                },
+                "resourceVersion": {
+                    "type": "string",
+                    "description": "A field that identifies the specific version of an instance of a resource."
+                },
+                "serialNumber": {
+                    "example": "EAX0000861972",
+                    "type": "string",
+                    "description": "A set of identifying characters and/or numbers assigned to, and usually marked on, each of a series of identical Software instances"
+                },
+                "startOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date from which the resource is operating"
+                },
+                "targetPlatform": {
+                    "example": "server",
+                    "type": "string",
+                    "description": "Defines the target platform that the SoftwareResource will be deployed on."
+                },
+                "value": {
+                    "type": "string",
+                    "description": "the value of the logical resource. E.g '0746712345' for  MSISDN's"
+                },
+                "activationFeature": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Feature"
+                    },
+                    "description": "Configuration features"
+                },
+                "administrativeState": {
+                    "$ref": "#/definitions/ResourceAdministrativeStateType",
+                    "description": "Tracks the administrative state of the resource, such as locked, unlocked, shutdown and so on."
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    }
+                },
+                "note": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Note"
+                    }
+                },
+                "operationalState": {
+                    "$ref": "#/definitions/ResourceOperationalStateType",
+                    "description": "Tracks the operational state of the resource, such as enable, disable and so on."
+                },
+                "pagingFileSizeCurrent": {
+                    "example": {
+                        "amount": 49152,
+                        "units": "4 KiB"
+                    },
+                    "$ref": "#/definitions/Quantity",
+                    "description": "Defines the current number, and size of, stored paging files for the software. If this instance doesn't support paging files, then the value of this attribute should be 0."
+                },
+                "place": {
+                    "$ref": "#/definitions/RelatedPlaceRefOrValue"
+                },
+                "processMemorySizeCurrent": {
+                    "example": {
+                        "amount": 987,
+                        "units": "MiB"
+                    },
+                    "$ref": "#/definitions/Quantity",
+                    "description": "The amount of memory currently allocated to a process."
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    }
+                },
+                "resourceCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Characteristic"
+                    }
+                },
+                "resourceRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceRelationship"
+                    }
+                },
+                "resourceSpecification": {
+                    "$ref": "#/definitions/ResourceSpecificationRef"
+                },
+                "resourceStatus": {
+                    "$ref": "#/definitions/ResourceStatusType",
+                    "description": "Tracks the resource status of the resource, such as standby, alarm, available, reserved, suspended and so on."
+                },
+                "swapSpaceUsedCurrent": {
+                    "example": {
+                        "amount": 987,
+                        "units": "MiB"
+                    },
+                    "$ref": "#/definitions/Quantity",
+                    "description": "The amount of swap space currently in use. If the Software doesn't distinguish swap space from space used for paging files, then the value of this attribute should be 0."
+                },
+                "usageState": {
+                    "$ref": "#/definitions/ResourceUsageStateType",
+                    "description": "Tracks the usage state of the resource, such as idle, active, busy and so on."
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "SoftwareSupportPackage": {
+            "type": "object",
+            "description": "A SofwareSupportPackage represents the package acquired by a consumer from a software vendor. It can be materialized as one or several files (data) downloaded online or copied on a physical support. It contains all files required for deployment and installation such as installation manager and at minimum, one of the files constitutes the set of machine readable instructions that will be executed automatically after it is installed.",
+            "required": [
+                "href",
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the concrete resource. e.g Gold, Silver for MSISDN concrete resource"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "free-text description of the resource"
+                },
+                "endOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date till the resource is operating"
+                },
+                "manufactureDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "This is a string attribute that defines the date of manufacture of this item in the fixed format \"dd/mm/yyyy\". This is an optional attribute."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "A string used to give a name to the resource"
+                },
+                "powerState": {
+                    "type": "string",
+                    "description": "This defines the current power status of the hardware item. Values include:\n\n  0:  Unknown\n  1:  Not Applicable\n  2:  No Power Applied\n  3: Full Power Applied\n  4:  Power Save - Normal\n  5:  Power Save - Degraded\n  6:  Power Save - Standby\n  7:  Power Save - Critical\n  8:  Power Save - Low Power Mode\n  9:  Power Save - Unknown\n 10: Power Cycle\n 11: Power Warning\n 12: Power Off"
+                },
+                "resourceVersion": {
+                    "type": "string",
+                    "description": "A field that identifies the specific version of an instance of a resource."
+                },
+                "serialNumber": {
+                    "type": "string",
+                    "description": "This is a string that represents a manufacturer-allocated number used to identify different instances of the same hardware item. The ModelNumber and PartNumber attributes are used to identify different types of hardware items. This is a REQUIRED attribute."
+                },
+                "startOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date from which the resource is operating"
+                },
+                "versionNumber": {
+                    "type": "string",
+                    "description": "This is a string that identifies the version of this physical resource. This is an optional attribute."
+                },
+                "activationFeature": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Feature"
+                    },
+                    "description": "Configuration features"
+                },
+                "administrativeState": {
+                    "$ref": "#/definitions/ResourceAdministrativeStateType",
+                    "description": "Tracks the administrative state of the resource, such as locked, unlocked, shutdown and so on."
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    }
+                },
+                "note": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Note"
+                    }
+                },
+                "operationalState": {
+                    "$ref": "#/definitions/ResourceOperationalStateType",
+                    "description": "Tracks the operational state of the resource, such as enable, disable and so on."
+                },
+                "place": {
+                    "$ref": "#/definitions/RelatedPlaceRefOrValue"
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    }
+                },
+                "resourceCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Characteristic"
+                    }
+                },
+                "resourceRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceRelationship"
+                    }
+                },
+                "resourceSpecification": {
+                    "$ref": "#/definitions/ResourceSpecificationRef"
+                },
+                "resourceStatus": {
+                    "$ref": "#/definitions/ResourceStatusType",
+                    "description": "Tracks the resource status of the resource, such as standby, alarm, available, reserved, suspended and so on."
+                },
+                "usageState": {
+                    "$ref": "#/definitions/ResourceUsageStateType",
+                    "description": "Tracks the usage state of the resource, such as idle, active, busy and so on."
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "HostingPlatformRequirement": {
+            "type": "object",
+            "description": "A HostingPlatformRequirement implements a HostingPlatformRequirementSpecification for a specific InstalledSoftware.",
+            "required": [
+                "href",
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Category of the concrete resource. e.g Gold, Silver for MSISDN concrete resource"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "free-text description of the resource"
+                },
+                "endOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date till the resource is operating"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "A string used to give a name to the resource"
+                },
+                "resourceVersion": {
+                    "type": "string",
+                    "description": "A field that identifies the specific version of an instance of a resource."
+                },
+                "startOperatingDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "A date time( DateTime). The date from which the resource is operating"
+                },
+                "value": {
+                    "type": "string",
+                    "description": "the value of the logical resource. E.g '0746712345' for  MSISDN's"
+                },
+                "activationFeature": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Feature"
+                    },
+                    "description": "Configuration features"
+                },
+                "administrativeState": {
+                    "$ref": "#/definitions/ResourceAdministrativeStateType",
+                    "description": "Tracks the administrative state of the resource, such as locked, unlocked, shutdown and so on."
+                },
+                "attachment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/AttachmentRefOrValue"
+                    }
+                },
+                "note": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Note"
+                    }
+                },
+                "operationalState": {
+                    "$ref": "#/definitions/ResourceOperationalStateType",
+                    "description": "Tracks the operational state of the resource, such as enable, disable and so on."
+                },
+                "place": {
+                    "$ref": "#/definitions/RelatedPlaceRefOrValue"
+                },
+                "relatedParty": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RelatedParty"
+                    }
+                },
+                "resourceCharacteristic": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Characteristic"
+                    }
+                },
+                "resourceRelationship": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResourceRelationship"
+                    }
+                },
+                "resourceSpecification": {
+                    "$ref": "#/definitions/ResourceSpecificationRef"
+                },
+                "resourceStatus": {
+                    "$ref": "#/definitions/ResourceStatusType",
+                    "description": "Tracks the resource status of the resource, such as standby, alarm, available, reserved, suspended and so on."
+                },
+                "usageState": {
+                    "$ref": "#/definitions/ResourceUsageStateType",
+                    "description": "Tracks the usage state of the resource, such as idle, active, busy and so on."
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                }
+            }
+        },
+        "SoftwareSupportPackageRef": {
+            "type": "object",
+            "description": "Reference to a SoftwareSupportPackage",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "unique identifier"
+                },
+                "href": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Hyperlink reference"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name of the related entity."
+                },
+                "@baseType": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the super-class"
+                },
+                "@schemaLocation": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URI to a JSON-Schema file that defines additional attributes and relationships"
+                },
+                "@type": {
+                    "type": "string",
+                    "description": "When sub-classing, this defines the sub-class Extensible name"
+                },
+                "@referredType": {
+                    "type": "string",
+                    "description": "The actual type of the target instance when needed for disambiguation."
+                }
+            },
+            "required": [
+                "id"
+            ]
         }
     }
 }

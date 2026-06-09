@@ -79,6 +79,36 @@ public abstract class TMForumMapper extends BaseMapper {
     @Mapping(target = "id", source = "tmfId")
     public abstract AttachmentRefOrValueVO map(AttachmentRefOrValue attachmentRefOrValue);
 
+    // --- Resource sub-type VO <-> domain mappings (for polymorphic dispatch) ---
+
+    public abstract LogicalResource map(LogicalResourceVO vo);
+
+    public abstract LogicalResourceVO mapToLogicalResourceVO(LogicalResource entity);
+
+    public abstract SoftwareResource map(SoftwareResourceVO vo);
+
+    public abstract SoftwareResourceVO mapToSoftwareResourceVO(SoftwareResource entity);
+
+    public abstract ApiResource map(APIVO vo);
+
+    public abstract APIVO mapToApiVO(ApiResource entity);
+
+    public abstract InstalledSoftware map(InstalledSoftwareVO vo);
+
+    public abstract InstalledSoftwareVO mapToInstalledSoftwareVO(InstalledSoftware entity);
+
+    public abstract HostingPlatformRequirement map(HostingPlatformRequirementVO vo);
+
+    public abstract HostingPlatformRequirementVO mapToHostingPlatformRequirementVO(HostingPlatformRequirement entity);
+
+    public abstract PhysicalResource map(PhysicalResourceVO vo);
+
+    public abstract PhysicalResourceVO mapToPhysicalResourceVO(PhysicalResource entity);
+
+    public abstract SoftwareSupportPackage map(SoftwareSupportPackageVO vo);
+
+    public abstract SoftwareSupportPackageVO mapToSoftwareSupportPackageVO(SoftwareSupportPackage entity);
+
     public URL map(String value) {
         if (value == null) {
             return null;
