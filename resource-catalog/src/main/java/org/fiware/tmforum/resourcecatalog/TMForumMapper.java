@@ -106,6 +106,41 @@ public abstract class TMForumMapper extends BaseMapper {
 	@Mapping(target = "value", source = "tmfValue")
 	public abstract CharacteristicValueSpecificationVO map(CharacteristicValue characteristic);
 
+	// --- ResourceSpecification sub-type VO <-> domain mappings (for polymorphic dispatch) ---
+
+	public abstract LogicalResourceSpecification map(LogicalResourceSpecificationVO vo);
+
+	public abstract LogicalResourceSpecificationVO mapToLogicalResourceSpecificationVO(
+			LogicalResourceSpecification entity);
+
+	public abstract SoftwareResourceSpecification map(SoftwareResourceSpecificationVO vo);
+
+	public abstract SoftwareResourceSpecificationVO mapToSoftwareResourceSpecificationVO(
+			SoftwareResourceSpecification entity);
+
+	public abstract ApiSpecification map(APISpecificationVO vo);
+
+	public abstract APISpecificationVO mapToApiSpecificationVO(ApiSpecification entity);
+
+	public abstract SoftwareSpecification map(SoftwareSpecificationVO vo);
+
+	public abstract SoftwareSpecificationVO mapToSoftwareSpecificationVO(SoftwareSpecification entity);
+
+	public abstract HostingPlatformRequirementSpecification map(HostingPlatformRequirementSpecificationVO vo);
+
+	public abstract HostingPlatformRequirementSpecificationVO mapToHostingPlatformRequirementSpecificationVO(
+			HostingPlatformRequirementSpecification entity);
+
+	public abstract PhysicalResourceSpecification map(PhysicalResourceSpecificationVO vo);
+
+	public abstract PhysicalResourceSpecificationVO mapToPhysicalResourceSpecificationVO(
+			PhysicalResourceSpecification entity);
+
+	public abstract SoftwareSupportPackageSpecification map(SoftwareSupportPackageSpecificationVO vo);
+
+	public abstract SoftwareSupportPackageSpecificationVO mapToSoftwareSupportPackageSpecificationVO(
+			SoftwareSupportPackageSpecification entity);
+
 	public URL map(String value) {
 		if (value == null) {
 			return null;

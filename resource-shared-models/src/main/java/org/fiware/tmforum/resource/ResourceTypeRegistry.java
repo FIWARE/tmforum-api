@@ -1,13 +1,16 @@
-package org.fiware.tmforum.softwaremanagement.rest;
-
-import org.fiware.tmforum.resource.*;
+package org.fiware.tmforum.resource;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Registry mapping @type values (from the TMForum spec) to NGSI-LD entity types
  * and domain classes for Resource and ResourceSpecification sub-types.
+ *
+ * <p>Lives in {@code resource-shared-models} so that every module that needs
+ * polymorphic dispatch over the Resource / ResourceSpecification hierarchies
+ * ({@code software-management}, {@code resource-inventory},
+ * {@code resource-catalog}) can consume it without cross-module coupling —
+ * all the subtype classes referenced here co-locate in this module.
  */
 public final class ResourceTypeRegistry {
 
