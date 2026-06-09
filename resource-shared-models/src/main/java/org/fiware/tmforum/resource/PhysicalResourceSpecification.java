@@ -26,6 +26,22 @@ public class PhysicalResourceSpecification extends ResourceSpecification {
 			@AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceSpecRelationship", targetClass = ResourceSpecificationRelationship.class) }))
 	private List<ResourceSpecificationRelationship> resourceSpecRelationship;
 
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "model") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "model") }))
+	private String model;
+
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "part") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "part") }))
+	private String part;
+
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "sku") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "sku") }))
+	private String sku;
+
+	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "vendor") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.PROPERTY, targetName = "vendor") }))
+	private String vendor;
+
 	/**
 	 * Create a new PhysicalResourceSpecification with the default entity type.
 	 *
