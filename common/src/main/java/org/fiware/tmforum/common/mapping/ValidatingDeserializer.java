@@ -1,10 +1,20 @@
 package org.fiware.tmforum.common.mapping;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyName;
 import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
-import com.networknt.schema.*;
+import com.networknt.schema.InputFormat;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SchemaLocation;
+import com.networknt.schema.SchemaValidatorsConfig;
+import com.networknt.schema.SpecVersion;
+import com.networknt.schema.ValidationMessage;
 import com.networknt.schema.resource.ClasspathSchemaLoader;
 import com.networknt.schema.resource.UriSchemaLoader;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +22,11 @@ import org.fiware.tmforum.common.exception.SchemaValidationException;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -81,8 +95,9 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 						validateWithSchema(upb.getAtSchemaLocation(), unknownPropsJson);
 					}
 				} else if (!trulyUnknown.isEmpty()) {
-					throw new SchemaValidationException(List.of(),
-							"If no schema is provided, no additional properties are allowed.");
+					throw new SchemaValidationException(
+							List.of("Additional properties not allowed: " + trulyUnknown.keySet()),
+							"No additional properties are allowed without a @schemaLocation.");
 				}
 			}
 		}
