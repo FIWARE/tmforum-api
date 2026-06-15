@@ -113,6 +113,26 @@ See the logs via:
   kubectl logs <BROKER_POD>
 ```
 
+## Broker compatibility
+
+### Array attribute updates (`replaceOnUpdate`)
+
+The `general.replaceOnUpdate` property controls how PATCH operations handle array attributes (e.g. `productOrderItem`, `notes`, `characteristics`).
+
+The global default is `false`. Each module's `application-scorpio.yaml` already sets it to `true`, so when running with the `scorpio` profile no extra configuration is needed.
+
+| Broker | Recommended value | Behaviour |
+|--------|-------------------|-----------|
+| **Orion-LD** (any version) | `false` (default) | Uses `PATCH /entities/{id}/attrs`, which replaces array attributes in place. Simple and efficient. |
+| **Scorpio < 6.0.0** | `false` or `true` | Both work. With `false`: uses `PATCH /attrs` directly (simpler, no extra broker read). With `true`: reads the existing entity, merges the update on top, then replaces the full entity via `POST /entityOperations/upsert?options=replace` (one extra GET per update). |
+| **Scorpio >= 6.0.0** | `true` | Required. Scorpio 6.x appends to existing array attributes on `PATCH /attrs` instead of replacing them. The read-merge-write strategy via `POST /entityOperations/upsert?options=replace` is the only correct option. |
+
+```yaml
+# application-scorpio.yaml (already included in each module)
+general:
+  replaceOnUpdate: true
+```
+
 ## Extension with @schemaLocation
 
 TMForum supports the extension of API entities through the ```@schemaLocation``` property. In order to extend an entity,

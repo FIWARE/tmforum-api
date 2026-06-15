@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
 import io.micronaut.cache.annotation.Cacheable;
@@ -24,8 +25,6 @@ import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import reactor.core.publisher.Mono;
-
-import io.github.wistefan.mapping.annotations.MappingEnabled;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -158,10 +157,12 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	/**
-	 * Update a domain entity using a read-merge-write pattern:
-	 * reads the current entity, merges the incoming attributes on top, then replaces entirely
-	 * via upsert/replace. This ensures array attributes are replaced (not appended) in all
-	 * broker versions, while preserving attributes not present in the update payload.
+	 * Update a domain entity. Routes to different strategies depending on {@code replaceOnUpdate}:
+	 * <ul>
+	 *   <li>{@code false} (default, Orion-LD): PATCH /attrs - correctly replaces array attributes.</li>
+	 *   <li>{@code true} (Scorpio 6.x): read-merge-write via batchEntityUpsert replace - prevents
+	 *       array-append behaviour introduced in Scorpio 6.0.0.</li>
+	 * </ul>
 	 *
 	 * @param id           id of the entity to be updated
 	 * @param domainEntity the (possibly partial) domain object carrying the updates
@@ -171,11 +172,14 @@ public abstract class NgsiLdBaseRepository {
 	public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
 		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity);
 		URI entityId = URI.create(id);
-		return retrieveEntityById(entityId)
-				.switchIfEmpty(Mono.error(new NgsiLdRepositoryException(
-						String.format("Entity %s does not exist.", id), Optional.empty())))
-				.map(existingEntityVO -> mergeForUpdate(existingEntityVO, updateEntityVO))
-				.flatMap(mergedEntityVO -> replaceEntity(entityId, mergedEntityVO));
+		if (generalProperties.isReplaceOnUpdate()) {
+			return retrieveEntityById(entityId)
+					.switchIfEmpty(Mono.error(new NgsiLdRepositoryException(
+							String.format("Entity %s does not exist.", id), Optional.empty())))
+					.map(existingEntityVO -> mergeForUpdate(existingEntityVO, updateEntityVO))
+					.flatMap(mergedEntityVO -> replaceEntity(entityId, mergedEntityVO));
+		}
+		return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(domainEntity)));
 	}
 
 	private EntityVO mergeForUpdate(EntityVO existing, EntityVO update) {
