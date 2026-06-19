@@ -7,7 +7,16 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApi;
-import org.fiware.resourcecatalog.model.*;
+import org.fiware.resourcecatalog.model.APISpecificationVO;
+import org.fiware.resourcecatalog.model.HostingPlatformRequirementSpecificationVO;
+import org.fiware.resourcecatalog.model.LogicalResourceSpecificationVO;
+import org.fiware.resourcecatalog.model.PhysicalResourceSpecificationVO;
+import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
+import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
+import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
+import org.fiware.resourcecatalog.model.SoftwareResourceSpecificationVO;
+import org.fiware.resourcecatalog.model.SoftwareSpecificationVO;
+import org.fiware.resourcecatalog.model.SoftwareSupportPackageSpecificationVO;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -17,13 +26,28 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.resource.*;
+import org.fiware.tmforum.resource.ApiSpecification;
+import org.fiware.tmforum.resource.FeatureSpecification;
+import org.fiware.tmforum.resource.FeatureSpecificationCharacteristicRelationship;
+import org.fiware.tmforum.resource.HostingPlatformRequirementSpecification;
+import org.fiware.tmforum.resource.LogicalResourceSpecification;
+import org.fiware.tmforum.resource.PhysicalResourceSpecification;
+import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.resource.ResourceSpecificationCharacteristic;
+import org.fiware.tmforum.resource.ResourceTypeRegistry;
+import org.fiware.tmforum.resource.SoftwareResourceSpecification;
+import org.fiware.tmforum.resource.SoftwareSpecification;
+import org.fiware.tmforum.resource.SoftwareSupportPackageSpecification;
 import org.fiware.tmforum.resourcecatalog.TMForumMapper;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Clock;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * REST controller for the ResourceSpecification API within the Resource Catalog module (TMF634).
@@ -73,9 +97,8 @@ public class ResourceSpecifcationApiController extends AbstractApiController<Res
 		}
 
 		String atType = resourceSpecificationCreateVO.getAtType();
-		String entityType = ResourceTypeRegistry.getSpecEntityType(atType);
-
-		if (ResourceTypeRegistry.SPEC_TYPES.containsKey(atType)) {
+		if (atType != null && ResourceTypeRegistry.SPEC_TYPES.containsKey(atType)) {
+			String entityType = ResourceTypeRegistry.getSpecEntityType(atType);
 			return createSubTypeSpec(resourceSpecificationCreateVO, entityType, atType);
 		}
 
