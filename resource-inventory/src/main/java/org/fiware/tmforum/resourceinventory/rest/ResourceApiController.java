@@ -70,9 +70,8 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 	@Override
 	public Mono<HttpResponse<ResourceVO>> createResource(@NonNull ResourceCreateVO resourceCreateVO) {
 		String atType = resourceCreateVO.getAtType();
-		String entityType = ResourceTypeRegistry.getResourceEntityType(atType);
-
-		if (ResourceTypeRegistry.RESOURCE_TYPES.containsKey(atType)) {
+		if (atType != null && ResourceTypeRegistry.RESOURCE_TYPES.containsKey(atType)) {
+			String entityType = ResourceTypeRegistry.getResourceEntityType(atType);
 			return createSubTypeResource(resourceCreateVO, entityType, atType);
 		}
 
