@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.filter.PaginationFilter;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParams;
@@ -115,11 +116,17 @@ public abstract class AbstractApiController<T> {
 					TmForumExceptionReason.INVALID_DATA);
 		}
 
+		int resolvedOffset = offset;
+		int resolvedLimit = limit;
 		return repository
 				.findEntities(offset, limit, entityClass,
 						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type))
+				.doOnNext(entities -> optionalHttpRequest.ifPresent(theRequest ->
+						theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, resolvedOffset)
+								.setAttribute(PaginationFilter.LIMIT_ATTR, resolvedLimit)
+								.setAttribute(PaginationFilter.RETURNED_COUNT_ATTR, entities.size())))
 				.map(List::stream);
 	}
 
