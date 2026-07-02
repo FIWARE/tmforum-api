@@ -137,6 +137,74 @@ class QueryParserTest {
 		);
 	}
 
+	/**
+	 * Mixed AND/OR is safe without any grouping/parenthesization logic on our side: NGSI-LD's q=
+	 * already defines AND-before-OR precedence for an un-parenthesized term chain (ETSI GS CIM
+	 * 009 §4.9), confirmed against a real broker's SQL translation (see conversation notes).
+	 * {@code !attribute} mirrors NGSI-LD's own not-exists syntax directly (no TMForum-side
+	 * translation layer).
+	 */
+	@ParameterizedTest
+	@MethodSource("mixedAndOrAndNotExistsQueries")
+	public void testMixedAndOrAndNotExists(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setEncloseQuery(true);
+		properties.setNgsildOrQueryKey("|");
+		properties.setNgsildOrQueryValue("|");
+		properties.setIncludeAttributeInList(true);
+		properties.setUseDotSeperator(false);
+
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
+				"Mixed AND/OR and !attribute queries should have been properly translated.");
+	}
+
+	private static Stream<Arguments> mixedAndOrAndNotExistsQueries() {
+		return Stream.of(
+				// Mixed AND+OR: AND between "status" and the "color" OR-run - no guard, no parens needed.
+				Arguments.of("status=Active&color=Red;color=Blue",
+						new QueryParams(null, null, "status==\"Active\";(color==\"Red\"|color==\"Blue\")"), MyPojo.class),
+				// Shaped like the motivating relatedParty example: an exact-datasetId-match OR'd
+				// against an AND-chained fallback (role match + not-exists on datasetId).
+				Arguments.of("relatedParty.datasetId=X;relatedParty.role=Owner&!relatedParty.datasetId",
+						new QueryParams(null, null, "relatedParty[role]==\"Owner\"|relatedParty[datasetId]==\"X\";!relatedParty[datasetId]"), MyPojo.class),
+				// !attribute alone.
+				Arguments.of("!status", new QueryParams(null, null, "!status"), MyPojo.class),
+				// !attribute combined with AND.
+				Arguments.of("!status&color=Red", new QueryParams(null, null, "!status;color==\"Red\""), MyPojo.class),
+				// !attribute combined with OR - must not be merged into color's value list by combineOrRun.
+				Arguments.of("!status;color=Red", new QueryParams(null, null, "color==\"Red\"|!status"), MyPojo.class),
+				// !attribute on a mapped relationship (rel is @AttributeGetter(RELATIONSHIP)) - isRelationship/getQueryPart unaffected.
+				Arguments.of("!rel.name", new QueryParams(null, null, "!rel.name"), MyPojo.class),
+				// !attribute on an unmapped ("additional attributes" fallback) path whose last segment is
+				// a reserved word - ReservedWordHandler escaping still applies with the ! prefix stripped.
+				Arguments.of("!relatedParty.id", new QueryParams(null, null, "!relatedParty[tmfEscaped-id]"), MyPojo.class)
+		);
+	}
+
+	/**
+	 * {@code !type} is rejected by the exact same check as {@code !id} in
+	 * {@code translateQueryPart} - not covered by its own case here because none of this test
+	 * class's fixtures resolve a bare {@code type} path to NGSI-LD's native type shortcut (the
+	 * existing "type=" TMForum shortcut is not exercised by any fixture in this file even before
+	 * this change; only the {@code @type} → {@code atType} JSON-LD-reserved-token route is).
+	 */
+	@Test
+	public void testNotExistsOnIdIsRejected() {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setEncloseQuery(true);
+		properties.setNgsildOrQueryKey("|");
+		properties.setNgsildOrQueryValue("|");
+		properties.setIncludeAttributeInList(true);
+		properties.setUseDotSeperator(false);
+
+		QueryParser qp = new QueryParser(properties);
+		org.junit.jupiter.api.Assertions.assertThrows(
+				org.fiware.tmforum.common.exception.QueryException.class,
+				() -> qp.toNgsiLdQuery(MyPojo.class, "!id"),
+				"!id must be rejected, id always exists.");
+	}
+
 	@ParameterizedTest
 	@MethodSource("scorpioQueries")
 	public void testScorpioQueryParsing(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {

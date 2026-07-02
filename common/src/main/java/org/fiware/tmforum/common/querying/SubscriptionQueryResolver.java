@@ -9,58 +9,45 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.querying.Operator.*;
 
 @Bean
 public class SubscriptionQueryResolver {
-    // the ";" in tm-forum parameters is an or
-    private static final String TMFORUM_OR_KEY = ";";
-    private static final String TMFORUM_AND = "&";
 
-    private LogicalOperator logicalOperator;
-    private Stream<QueryPart> queryPartsStream;
+    private List<ConnectedQueryPart> connectedTokens;
+    private List<QueryPart> queryParts;
     private String payloadName;
 
     private void init(String queryString, String payloadName) {
-        // tmforum does not define queries combining AND and OR
-        if (queryString.contains(TMFORUM_AND) && queryString.contains(TMFORUM_OR_KEY)) {
-            throw new QueryException("Combining AND(&) and OR(;) on query level is not supported by the TMForum API.");
-        }
-
         this.payloadName = payloadName;
-        logicalOperator = LogicalOperator.AND;
+        // NGSI-LD's own AND-before-OR precedence (see QueryParser/SubscriptionQueryParser) makes
+        // mixing & and ; safe to evaluate without any grouping logic - evaluateResult folds the
+        // per-token results left-to-right, respecting each token's own recorded connector.
+        connectedTokens = QueryTokenizer.tokenize(queryString);
+        queryParts = connectedTokens.stream()
+                .map(cqp -> parseParameter(cqp.rawParameter()))
+                .toList();
+    }
 
-        List<String> parameters;
-        if (queryString.contains(TMFORUM_AND)) {
-            parameters = Arrays.asList(queryString.split(TMFORUM_AND));
-        } else if (queryString.contains(TMFORUM_OR_KEY)) {
-            logicalOperator = LogicalOperator.OR;
-            parameters = Arrays.asList(queryString.split(TMFORUM_OR_KEY));
-        } else {
-            parameters = List.of(queryString);
+    private QueryPart parseParameter(String parameter) {
+        if (parameter.startsWith(QueryParser.NOT_EXISTS_PREFIX)) {
+            return new QueryPart(parameter.substring(QueryParser.NOT_EXISTS_PREFIX.length()),
+                    QueryParser.NOT_EXISTS_PREFIX, null);
         }
-
-        queryPartsStream = parameters
-                .stream()
-                .map(parameter -> {
-                    QueryPart queryPart;
-                    if (parameter.contains(GREATER_THAN_EQUALS.getTmForumOperator().operator())) {
-                        queryPart = paramsToQueryPart(parameter, GREATER_THAN_EQUALS);
-                    } else if (parameter.contains(Operator.LESS_THAN_EQUALS.getTmForumOperator().operator())) {
-                        queryPart = paramsToQueryPart(parameter, LESS_THAN_EQUALS);
-                    } else if (parameter.contains(Operator.REGEX.getTmForumOperator().operator())) {
-                        queryPart = paramsToQueryPart(parameter, REGEX);
-                    } else if (parameter.contains(GREATER_THAN.getTmForumOperator().operator())) {
-                        queryPart = paramsToQueryPart(parameter, GREATER_THAN);
-                    } else if (parameter.contains(LESS_THAN.getTmForumOperator().operator())) {
-                        queryPart = paramsToQueryPart(parameter, LESS_THAN);
-                    } else {
-                        queryPart = getQueryFromEquals(parameter);
-                    }
-                    return queryPart;
-                });
+        if (parameter.contains(GREATER_THAN_EQUALS.getTmForumOperator().operator())) {
+            return paramsToQueryPart(parameter, GREATER_THAN_EQUALS);
+        } else if (parameter.contains(Operator.LESS_THAN_EQUALS.getTmForumOperator().operator())) {
+            return paramsToQueryPart(parameter, LESS_THAN_EQUALS);
+        } else if (parameter.contains(Operator.REGEX.getTmForumOperator().operator())) {
+            return paramsToQueryPart(parameter, REGEX);
+        } else if (parameter.contains(GREATER_THAN.getTmForumOperator().operator())) {
+            return paramsToQueryPart(parameter, GREATER_THAN);
+        } else if (parameter.contains(LESS_THAN.getTmForumOperator().operator())) {
+            return paramsToQueryPart(parameter, LESS_THAN);
+        } else {
+            return getQueryFromEquals(parameter);
+        }
     }
 
     public <T> boolean doesQueryMatchCreateEvent(String queryString, T entity, String payloadName) {
@@ -70,16 +57,11 @@ public class SubscriptionQueryResolver {
 
         init(queryString, payloadName);
 
-        Stream<Boolean> results = queryPartsStream.map(qp -> {
-            FieldData fieldData = getFieldData(entity, qp);
-            if (!fieldData.exists()) {
-                return false;
-            }
+        List<Boolean> results = queryParts.stream()
+                .map(qp -> resolveCreateMatch(qp, entity))
+                .toList();
 
-            return matches(qp, fieldData);
-        });
-
-        return evaluateResult(results);
+        return evaluateResult(connectedTokens, results);
     }
 
     public <T> boolean doesQueryMatchUpdateEvent(String queryString, T entity, T oldState, String payloadName) {
@@ -89,27 +71,58 @@ public class SubscriptionQueryResolver {
 
         init(queryString, payloadName);
 
-        Stream<Boolean> results = queryPartsStream.map(qp -> {
-            FieldData updatedFieldData = getFieldData(entity, qp);
-            FieldData oldFieldData = getFieldData(oldState, qp);
+        List<Boolean> results = queryParts.stream()
+                .map(qp -> resolveUpdateMatch(qp, entity, oldState))
+                .toList();
 
-            if (updatedFieldData.fieldValue != null && !updatedFieldData.fieldValue.equals(oldFieldData.fieldValue) ||
-                    oldFieldData.fieldValue != null && !oldFieldData.fieldValue.equals(updatedFieldData.fieldValue)) {
-                return matches(qp, updatedFieldData);
-            } else {
-                return false;
-            }
-
-        });
-
-        return evaluateResult(results);
+        return evaluateResult(connectedTokens, results);
     }
 
-    private boolean evaluateResult(Stream<Boolean> results) {
-        return switch (logicalOperator) {
-            case AND -> results.allMatch(r -> r);
-            case OR -> results.anyMatch(r -> r);
-        };
+    private <T> boolean resolveCreateMatch(QueryPart qp, T entity) {
+        FieldData fieldData = getFieldData(entity, qp);
+        if (qp.operator().equals(QueryParser.NOT_EXISTS_PREFIX)) {
+            return !fieldData.exists();
+        }
+        if (!fieldData.exists()) {
+            return false;
+        }
+        return matches(qp, fieldData);
+    }
+
+    private <T> boolean resolveUpdateMatch(QueryPart qp, T entity, T oldState) {
+        FieldData updatedFieldData = getFieldData(entity, qp);
+        if (qp.operator().equals(QueryParser.NOT_EXISTS_PREFIX)) {
+            // Evaluated as a pure state predicate against the new state only - a field's
+            // existence is not expected to flip off in practice, so no old/new transition
+            // tracking is needed here, unlike the value-comparison branch below.
+            return !updatedFieldData.exists();
+        }
+        FieldData oldFieldData = getFieldData(oldState, qp);
+        if (updatedFieldData.fieldValue != null && !updatedFieldData.fieldValue.equals(oldFieldData.fieldValue) ||
+                oldFieldData.fieldValue != null && !oldFieldData.fieldValue.equals(updatedFieldData.fieldValue)) {
+            return matches(qp, updatedFieldData);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Folds the per-token results left-to-right respecting AND-before-OR precedence: accumulate
+     * an AND-run, then OR the accumulated run-results together. Degenerates to today's allMatch
+     * for a pure-AND query and anyMatch for a pure-OR query.
+     */
+    private boolean evaluateResult(List<ConnectedQueryPart> tokens, List<Boolean> results) {
+        boolean orAccumulator = false;
+        boolean andAccumulator = results.get(0);
+        for (int i = 1; i < tokens.size(); i++) {
+            if (tokens.get(i).connectorToPrevious() == LogicalOperator.AND) {
+                andAccumulator = andAccumulator && results.get(i);
+            } else {
+                orAccumulator = orAccumulator || andAccumulator;
+                andAccumulator = results.get(i);
+            }
+        }
+        return orAccumulator || andAccumulator;
     }
 
     private <T> FieldData getFieldData(T entity, QueryPart qp) {

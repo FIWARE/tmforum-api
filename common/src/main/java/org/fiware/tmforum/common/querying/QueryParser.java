@@ -9,21 +9,21 @@ import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
 import io.micronaut.context.annotation.Bean;
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.exception.QueryException;
 
-import javax.smartcardio.ATR;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.github.wistefan.mapping.JavaObjectMapper.getGetterMethodByName;
-
 import static org.fiware.tmforum.common.querying.Operator.GREATER_THAN;
 import static org.fiware.tmforum.common.querying.Operator.GREATER_THAN_EQUALS;
 import static org.fiware.tmforum.common.querying.Operator.LESS_THAN;
@@ -70,6 +70,11 @@ public class QueryParser {
     public static final String SORT_KEY = "sort";
 
     public static final String NGSI_LD_AND = ";";
+
+    // NGSI-LD's own not-exists prefix operator (e.g. `!relatedParty.datasetId`), reused verbatim
+    // as the sentinel QueryPart#operator() value for a "not exists" term (QueryPart#value() is
+    // null in that case).
+    public static final String NOT_EXISTS_PREFIX = "!";
 
     // the "," in tm-forum values is an or
     public static final String TMFORUM_OR_VALUE = ",";
@@ -153,70 +158,30 @@ public class QueryParser {
     public QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {
         queryString = removeWellKnownParameters(queryString);
 
-        List<String> parameters;
-        LogicalOperator logicalOperator = LogicalOperator.AND;
-        // tm-forum does not define queries combining AND and OR
-        if (queryString.contains(TMFORUM_AND) && queryString.contains(TMFORUM_OR_KEY)) {
-            throw new QueryException("Combining AND(&) and OR(;) on query level is not supported by the TMForum API.");
-        }
-        if (queryString.contains(TMFORUM_AND)) {
-            parameters = Arrays.asList(queryString.split(TMFORUM_AND));
-            logicalOperator = LogicalOperator.AND;
-        } else if (queryString.contains(TMFORUM_OR_KEY)) {
-            parameters = Arrays.asList(queryString.split(TMFORUM_OR_KEY));
-            logicalOperator = LogicalOperator.OR;
-        } else {
-            //query is just a single parameter query
-            parameters = List.of(queryString);
-        }
+        // NGSI-LD's q= already defines AND-before-OR precedence for an un-parenthesized term
+        // chain (ETSI GS CIM 009 §4.9), so mixing & and ; here does not need any grouping/
+        // parenthesization logic on our side - we only need to preserve, for each pair of
+        // adjacent parameters, which separator connected them, and translate them in the same
+        // left-to-right order. A "run" is a maximal sequence of OR-connected parameters; runs
+        // themselves are always AND-connected to each other by construction.
+        List<ConnectedQueryPart> tokens = QueryTokenizer.tokenize(queryString);
+        List<List<ConnectedQueryPart>> orRuns = splitIntoOrRuns(tokens);
 
-        Stream<QueryPart> queryPartsStream = parameters
-                .stream()
-                .map(this::parseParameter);
-
-        // collect the or values to single entries if they use the same key
-        if (logicalOperator == LogicalOperator.OR) {
-            Map<String, List<QueryPart>> collectedParts = queryPartsStream.collect(
-                    Collectors.toMap(QueryPart::attribute, qp -> new ArrayList<>(List.of(qp)),
-                            (qp1, qp2) -> {
-                                qp1.addAll(qp2);
-                                return qp1;
-                            }));
-            queryPartsStream = collectedParts.entrySet().stream()
-                    .flatMap(entry -> combineParts(entry.getKey(), entry.getValue()).stream());
-        }
         List<String> ids = new ArrayList<>();
         List<String> types = new ArrayList<>();
-        // translate the attributes
-        Stream<String> queryStrings = queryPartsStream.map(qp -> {
-                    List<String> path = translateJsonLdReservedTokens(
-                            Arrays.asList(qp.attribute().split("\\.")));
-                    NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
-                            path,
-                            queryClass);
-                    if (attribute.path().isEmpty()) {
-                        log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
-                        attribute = getPathToAdditionalAttributes(qp);
-                    }
-                    if (attribute.path().size() == 1 && attribute.path().contains("id")) {
-                        ids.add(qp.value());
-                        return null;
-                    }
-                    if (attribute.path().size() == 1 && attribute.path().contains("type")) {
-                        types.add(qp.value());
-                        return null;
-                    }
 
-                    return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
+        List<String> runFragments = orRuns.stream()
+                .map(run -> {
+                    List<QueryPart> runParts = run.stream()
+                            .map(cqp -> parseParameter(cqp.rawParameter()))
+                            .toList();
+                    List<QueryPart> combinedParts = runParts.size() > 1 ? combineOrRun(runParts) : runParts;
+                    return translateRun(combinedParts, queryClass, ids, types);
                 })
-                .filter(Objects::nonNull);
+                .filter(fragment -> !fragment.isEmpty())
+                .toList();
 
-
-        String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
-        String query = switch (logicalOperator) {
-            case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
-            case OR -> queryStrings.collect(Collectors.joining(ngsidOrKey));
-        };
+        String query = String.join(NGSI_LD_AND, runFragments);
 
         String idList = null;
         if (!ids.isEmpty()) {
@@ -232,12 +197,108 @@ public class QueryParser {
         return new QueryParams(idList, typeList, query);
     }
 
+    /**
+     * Splits parameters into maximal contiguous runs of OR-connected parameters. A new run
+     * starts every time an AND-connector is encountered; runs are therefore always AND-connected
+     * to each other, and every parameter within a run is OR-connected to its neighbours.
+     */
+    private static List<List<ConnectedQueryPart>> splitIntoOrRuns(List<ConnectedQueryPart> tokens) {
+        List<List<ConnectedQueryPart>> runs = new ArrayList<>();
+        List<ConnectedQueryPart> currentRun = new ArrayList<>();
+        for (ConnectedQueryPart token : tokens) {
+            if (!currentRun.isEmpty() && token.connectorToPrevious() == LogicalOperator.AND) {
+                runs.add(currentRun);
+                currentRun = new ArrayList<>();
+            }
+            currentRun.add(token);
+        }
+        if (!currentRun.isEmpty()) {
+            runs.add(currentRun);
+        }
+        return runs;
+    }
+
+    /**
+     * Translates every QueryPart in an OR-run to its query-string fragment (resolving the
+     * attribute path, routing id=/type= to the accumulators instead of the returned string) and
+     * joins them with the configured OR key.
+     */
+    private String translateRun(List<QueryPart> runParts, Class<?> queryClass, List<String> ids, List<String> types) {
+        String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
+        return runParts.stream()
+                .map(qp -> translateQueryPart(qp, queryClass, ids, types))
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(ngsidOrKey));
+    }
+
+    private String translateQueryPart(QueryPart qp, Class<?> queryClass, List<String> ids, List<String> types) {
+        List<String> path = translateJsonLdReservedTokens(
+                Arrays.asList(qp.attribute().split("\\.")));
+        NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
+                path,
+                queryClass);
+        if (attribute.path().isEmpty()) {
+            log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
+            attribute = getPathToAdditionalAttributes(qp);
+        }
+        boolean isNotExists = qp.operator().equals(NOT_EXISTS_PREFIX);
+        if (attribute.path().size() == 1 && attribute.path().contains("id")) {
+            if (isNotExists) {
+                throw new QueryException("!id is not supported, id always exists.");
+            }
+            ids.add(qp.value());
+            return null;
+        }
+        if (attribute.path().size() == 1 && attribute.path().contains("type")) {
+            if (isNotExists) {
+                throw new QueryException("!type is not supported, type always exists.");
+            }
+            types.add(qp.value());
+            return null;
+        }
+
+        return toQueryString(getQueryPart(attribute, qp, isRelationship(queryClass, attribute)), attribute.type());
+    }
+
+    /**
+     * Groups the QueryParts of a single OR-run by attribute, the same way the whole query used
+     * to be grouped when it was entirely OR-connected (see {@link #combineParts}), but scoped to
+     * one run. Not-exists parts are excluded from grouping (combineParts joins .value() strings,
+     * which would NPE/produce garbage since a not-exists part's value is null) and are appended
+     * to the result untouched.
+     */
+    private List<QueryPart> combineOrRun(List<QueryPart> orRunParts) {
+        List<QueryPart> notExists = orRunParts.stream()
+                .filter(qp -> qp.operator().equals(NOT_EXISTS_PREFIX))
+                .toList();
+        List<QueryPart> combinable = orRunParts.stream()
+                .filter(qp -> !qp.operator().equals(NOT_EXISTS_PREFIX))
+                .toList();
+        Map<String, List<QueryPart>> collectedParts = combinable.stream()
+                .collect(Collectors.toMap(QueryPart::attribute, qp -> new ArrayList<>(List.of(qp)),
+                        (qp1, qp2) -> {
+                            qp1.addAll(qp2);
+                            return qp1;
+                        }));
+        List<QueryPart> combined = new ArrayList<>(collectedParts.entrySet().stream()
+                .flatMap(entry -> combineParts(entry.getKey(), entry.getValue()).stream())
+                .toList());
+        combined.addAll(notExists);
+        return combined;
+    }
+
     private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
         List<String> path = new ArrayList<>(
                 Arrays.stream(queryPart.attribute().split("\\."))
                         .map(ReservedWordHandler::escapeReservedWords)
                         .toList());
 
+        if (queryPart.operator().equals(NOT_EXISTS_PREFIX)) {
+            // no value to type-sniff; NGSI-LD's not-exists check is type-agnostic. The returned
+            // type is unused downstream for this case (toQueryString's not-exists branch never
+            // calls encodeValue).
+            return new NgsiLdAttribute(path, QueryAttributeType.STRING);
+        }
         if (isBoolean(queryPart.value())) {
             return new NgsiLdAttribute(path, QueryAttributeType.BOOLEAN);
         }
@@ -381,6 +442,10 @@ public class QueryParser {
 
     private String toQueryString(QueryPart queryPart, QueryAttributeType queryAttributeType) {
 
+        if (queryPart.operator().equals(NOT_EXISTS_PREFIX)) {
+            return NOT_EXISTS_PREFIX + queryPart.attribute();
+        }
+
         if (queryPart.value().contains(TMFORUM_OR_VALUE)) {
             String theQuery = "";
             List<String> encodedValues = new ArrayList<>(Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
@@ -445,6 +510,10 @@ public class QueryParser {
     }
 
     private QueryPart parseParameter(String parameter) {
+
+        if (parameter.startsWith(NOT_EXISTS_PREFIX)) {
+            return new QueryPart(parameter.substring(NOT_EXISTS_PREFIX.length()), NOT_EXISTS_PREFIX, null);
+        }
 
         Operator operator = getOperatorFromParam(parameter);
         return switch (operator) {
