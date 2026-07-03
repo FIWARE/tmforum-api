@@ -3,6 +3,7 @@ package org.fiware.tmforum.common.repository;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
+import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
@@ -78,6 +79,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                         offset,
                         null,
                         getLinkHeader())
+                .map(HttpResponse::body)
                 .map(List::stream)
                 .flatMap(entityVOStream -> zipToList(entityVOStream, entityClass))
                 .onErrorResume(t -> {

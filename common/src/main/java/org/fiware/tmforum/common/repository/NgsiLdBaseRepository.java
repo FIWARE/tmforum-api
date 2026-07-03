@@ -6,6 +6,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
 import io.micronaut.cache.annotation.Cacheable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +61,7 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	@CachePut(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<Void> createEntity(EntityVO entityVO, String ngsiLDTenant) {
-		return entitiesApi.createEntity(entityVO, ngsiLDTenant);
+		return entitiesApi.createEntity(entityVO, ngsiLDTenant).then();
 	}
 
 	/**
@@ -71,7 +72,7 @@ public abstract class NgsiLdBaseRepository {
 	 * @return completable with the result
 	 */
 	public Mono<Void> createSubscription(SubscriptionVO subscriptionVO, String ngsiLDTenant) {
-		return subscriptionsApi.createSubscription(subscriptionVO, ngsiLDTenant);
+		return subscriptionsApi.createSubscription(subscriptionVO, ngsiLDTenant).then();
 	}
 
 	/**
@@ -89,6 +90,7 @@ public abstract class NgsiLdBaseRepository {
 	public Mono<SubscriptionVO> retrieveSubscriptionById(URI subscriptionId) {
 		return subscriptionsApi
 				.retrieveSubscriptionById(subscriptionId)
+				.map(HttpResponse::body)
 				.onErrorResume(this::handleClientSubscriptionException);
 	}
 
@@ -101,7 +103,7 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<Void> patchEntity(URI entityId, EntityFragmentVO entityFragmentVO) {
-		return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null);
+		return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null).then();
 	}
 
 	/**
@@ -210,7 +212,8 @@ public abstract class NgsiLdBaseRepository {
 					throw new DeletionException(String.format("Was not able to delete %s.", id),
 							t,
 							DeletionExceptionReason.UNKNOWN);
-				});
+				})
+				.then();
 	}
 
 	/**
@@ -242,7 +245,8 @@ public abstract class NgsiLdBaseRepository {
 					}
 					throw new DeletionException(String.format("Was not able to delete %s.", subscriptionId),
 							t, DeletionExceptionReason.UNKNOWN);
-				});
+				})
+				.then();
 	}
 
 	/**
@@ -272,6 +276,7 @@ public abstract class NgsiLdBaseRepository {
 	private Mono<EntityVO> asyncRetrieveEntityById(URI entityId, String ngSILDTenant, String attrs, String type, String options, String link) {
 		return entitiesApi
 				.retrieveEntityById(entityId, ngSILDTenant, attrs, type, options, link)
+				.map(HttpResponse::body)
 				.onErrorResume(this::handleClientEntityException);
 	}
 

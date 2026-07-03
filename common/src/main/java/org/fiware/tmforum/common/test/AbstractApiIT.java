@@ -58,7 +58,9 @@ public abstract class AbstractApiIT {
                 1000,
                 0,
                 null,
-                getLinkHeader(generalProperties.getContextUrl())).block();
+                getLinkHeader(generalProperties.getContextUrl()))
+                .map(HttpResponse::body)
+                .block();
         entityVOS.stream()
                 .filter(Objects::nonNull)
                 .map(EntityVO::getId)
