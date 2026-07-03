@@ -10,14 +10,12 @@ import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
-import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.List;
 
 @Slf4j
 @Singleton
@@ -62,7 +60,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                 .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
     }
 
-    public <T> Mono<List<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
+    public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           String query, String ids, String types) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         ids,
@@ -79,9 +77,8 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                         offset,
                         null,
                         getLinkHeader())
-                .map(HttpResponse::body)
-                .map(List::stream)
-                .flatMap(entityVOStream -> zipToList(entityVOStream, entityClass))
+                .flatMap(response -> zipToList(response.body().stream(), entityClass)
+                        .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
                 .onErrorResume(t -> {
                     log.warn("Was not able to list entities.", t);
                     throw new TmForumException("Was not able to list entities.", t, TmForumExceptionReason.UNKNOWN);
@@ -89,9 +86,26 @@ public class TmForumRepository extends NgsiLdBaseRepository {
     }
 
 
-    public <T> Mono<List<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass,
+    public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass,
                                           String query) {
         return findEntities(offset, limit, entityClass, query, null, entityType);
+    }
+
+    Integer extractTotalCount(HttpResponse<?> response) {
+        String headerName = generalProperties.getCountHeader();
+        if (headerName == null) {
+            return null;
+        }
+        String headerValue = response.header(headerName);
+        if (headerValue == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(headerValue);
+        } catch (NumberFormatException e) {
+            log.warn("Total count header {} did not contain a valid integer: {}", headerName, headerValue);
+            return null;
+        }
     }
 
 }

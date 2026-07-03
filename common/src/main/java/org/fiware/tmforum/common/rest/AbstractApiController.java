@@ -14,6 +14,7 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
+import org.fiware.tmforum.common.repository.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -116,17 +117,20 @@ public abstract class AbstractApiController<T> {
 					TmForumExceptionReason.INVALID_DATA);
 		}
 
-		int resolvedOffset = offset;
-		int resolvedLimit = limit;
 		return repository
 				.findEntities(offset, limit, entityClass,
 						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type))
-				.doOnNext(entities -> optionalHttpRequest.ifPresent(theRequest ->
-						theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, resolvedOffset)
-								.setAttribute(PaginationFilter.LIMIT_ATTR, resolvedLimit)
-								.setAttribute(PaginationFilter.RETURNED_COUNT_ATTR, entities.size())))
+				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {
+					theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, pagedResult.offset())
+							.setAttribute(PaginationFilter.LIMIT_ATTR, pagedResult.limit())
+							.setAttribute(PaginationFilter.RETURNED_COUNT_ATTR, pagedResult.items().size());
+					if (pagedResult.totalCount() != null) {
+						theRequest.setAttribute(PaginationFilter.TOTAL_COUNT_ATTR, pagedResult.totalCount());
+					}
+				}))
+				.map(PagedResult::items)
 				.map(List::stream);
 	}
 
