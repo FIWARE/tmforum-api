@@ -1,6 +1,5 @@
 package org.fiware.tmforum.common.test;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import io.micronaut.http.HttpResponse;
@@ -57,6 +56,7 @@ public abstract class AbstractApiIT {
                 null,
                 1000,
                 0,
+                false,
                 null,
                 getLinkHeader(generalProperties.getContextUrl()))
                 .map(HttpResponse::body)

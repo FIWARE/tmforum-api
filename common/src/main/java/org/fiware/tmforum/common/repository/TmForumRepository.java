@@ -75,6 +75,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                         null,
                         limit,
                         offset,
+                        true,
                         null,
                         getLinkHeader())
                 .flatMap(response -> zipToList(response.body().stream(), entityClass)
