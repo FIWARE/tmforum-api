@@ -15,6 +15,7 @@ import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.resource.ResourceTypeRegistry;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -476,6 +477,59 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 	}
 
 	@Test
+	public void listResourceSpecificationCombinesAllSubTypesInPaginationAndCount() throws Exception {
+		int baseTypeCount = 3;
+		int subTypeCount = 2;
+
+		for (int i = 0; i < baseTypeCount; i++) {
+			ResourceSpecificationCreateVO createVO =
+					ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null);
+			HttpResponse<ResourceSpecificationVO> response =
+					callAndCatch(() -> resourceSpecificationApiTestClient.createResourceSpecification(null, createVO));
+			assertEquals(HttpStatus.CREATED, response.getStatus(), "The base type resourceSpecification should have been created.");
+		}
+		for (int i = 0; i < subTypeCount; i++) {
+			ResourceSpecificationCreateVO createVO =
+					ResourceSpecificationCreateVOTestExample.build().atSchemaLocation(null);
+			createVO.atType("LogicalResourceSpecification");
+			HttpResponse<ResourceSpecificationVO> response =
+					callAndCatch(() -> resourceSpecificationApiTestClient.createResourceSpecification(null, createVO));
+			assertEquals(HttpStatus.CREATED, response.getStatus(), "The sub-type resourceSpecification should have been created.");
+		}
+
+		int totalCount = baseTypeCount + subTypeCount;
+
+		HttpResponse<List<ResourceSpecificationVO>> fullResponse = callAndCatch(
+				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, null, null));
+		assertEquals(HttpStatus.OK, fullResponse.getStatus(), "The list should be accessible.");
+		assertEquals(totalCount, fullResponse.getBody().get().size(),
+				"Base type and sub-type resourceSpecifications must all be returned by the same listing call.");
+		assertEquals(String.valueOf(totalCount), fullResponse.getHeaders().get("X-Total-Count"),
+				"X-Total-Count must reflect the combined total across all sub-types, not just the base type.");
+
+		int limit = 2;
+		HttpResponse<List<ResourceSpecificationVO>> firstPage = callAndCatch(
+				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, 0, limit));
+		assertEquals(HttpStatus.OK, firstPage.getStatus(), "The first page should be accessible.");
+		assertEquals(limit, firstPage.getBody().get().size(),
+				"A page must never contain more than the requested limit, regardless of how many sub-types exist.");
+		assertEquals(String.valueOf(totalCount), firstPage.getHeaders().get("X-Total-Count"),
+				"X-Total-Count on a partial page must still reflect the full combined total.");
+
+		HttpResponse<List<ResourceSpecificationVO>> secondPage = callAndCatch(
+				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, limit, limit));
+		assertEquals(HttpStatus.OK, secondPage.getStatus(), "The second page should be accessible.");
+		assertEquals(totalCount - limit, secondPage.getBody().get().size(),
+				"The remaining page must contain exactly the remaining items across all sub-types.");
+
+		List<String> pagedIds = new ArrayList<>();
+		firstPage.getBody().get().forEach(vo -> pagedIds.add(vo.getId()));
+		secondPage.getBody().get().forEach(vo -> pagedIds.add(vo.getId()));
+		assertEquals(totalCount, pagedIds.stream().distinct().count(),
+				"Pages must not overlap or duplicate items across sub-types.");
+	}
+
+	@Test
 	@Override
 	public void listResourceSpecification400() throws Exception {
 		HttpResponse<List<ResourceSpecificationVO>> badRequestResponse = callAndCatch(
@@ -922,6 +976,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 	@Override
 	protected String getEntityType() {
-		return ResourceSpecification.TYPE_RESOURCE_SPECIFICATION;
+		// Cover every registered sub-type too, so entities created via subtype @type (e.g. through the
+		// polymorphic listing tests) are cleaned up between tests, not just plain ResourceSpecification.
+		return ResourceTypeRegistry.ALL_SPEC_TYPES;
 	}
 }

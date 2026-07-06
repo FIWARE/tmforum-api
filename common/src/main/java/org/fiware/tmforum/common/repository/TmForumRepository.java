@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import javax.inject.Singleton;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.function.Function;
 
 @Slf4j
 @Singleton
@@ -90,6 +91,41 @@ public class TmForumRepository extends NgsiLdBaseRepository {
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass,
                                           String query) {
         return findEntities(offset, limit, entityClass, query, null, entityType);
+    }
+
+    /**
+     * Query several NGSI-LD entity types in a single broker call (NGSI-LD's {@code type} parameter
+     * accepts a comma-separated list with OR semantics), instead of one call per type. This lets the
+     * broker apply {@code offset}/{@code limit} and report the count against the combined result set,
+     * rather than callers fanning out per-type queries and merging paginated slices themselves.
+     * <p>
+     * Since the result is a mix of entity types, each entity is mapped to its own domain class via
+     * {@code typeToClass} instead of a single fixed class.
+     */
+    public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
+                                          String query, Function<String, Class<? extends T>> typeToClass) {
+        return entitiesApi.queryEntities(generalProperties.getTenant(),
+                        null,
+                        null,
+                        types,
+                        null,
+                        query,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        limit,
+                        offset,
+                        true,
+                        null,
+                        getLinkHeader())
+                .flatMap(response -> zipToPolymorphicList(response.body().stream(), typeToClass)
+                        .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
+                .onErrorResume(t -> {
+                    log.warn("Was not able to list entities.", t);
+                    throw new TmForumException("Was not able to list entities.", t, TmForumExceptionReason.UNKNOWN);
+                });
     }
 
     Integer extractTotalCount(HttpResponse<?> response) {

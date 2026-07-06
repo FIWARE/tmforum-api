@@ -31,6 +31,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -268,6 +269,34 @@ public abstract class NgsiLdBaseRepository {
 				filtered.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
 				oList -> Arrays.stream(oList).map(targetClass::cast).toList()
 		);
+	}
+
+	/**
+	 * Helper method for combining a stream of entities of potentially different NGSI-LD types to a
+	 * single mono, mapping each entity to its own target class instead of one fixed class for the
+	 * whole batch. Used for polymorphic list endpoints that query several NGSI-LD types at once
+	 * (see {@link TmForumRepository#findEntitiesPolymorphic}).
+	 *
+	 * @param entityVOStream stream of entities, potentially of different NGSI-LD types
+	 * @param typeToClass    resolves the target class to map an entity to, based on its NGSI-LD type
+	 * @param <T>            common super-type of all resolved target classes
+	 * @return a mono, emitting a list of mapped entities
+	 */
+	protected <T> Mono<List<T>> zipToPolymorphicList(Stream<EntityVO> entityVOStream,
+			Function<String, Class<? extends T>> typeToClass) {
+		List<Mono<T>> mappingMonos = entityVOStream
+				.map(entityVO -> mapPolymorphicEntity(entityVO, typeToClass))
+				.toList();
+		if (mappingMonos.isEmpty()) {
+			return Mono.just(List.of());
+		}
+		return Mono.zip(mappingMonos, oList -> Arrays.stream(oList).map(o -> (T) o).toList());
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> Mono<T> mapPolymorphicEntity(EntityVO entityVO, Function<String, Class<? extends T>> typeToClass) {
+		Class<? extends T> targetClass = typeToClass.apply(entityVO.getType());
+		return (Mono<T>) entityVOMapper.fromEntityVO(entityVO, targetClass);
 	}
 
 	/**
