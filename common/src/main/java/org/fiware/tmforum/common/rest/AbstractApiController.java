@@ -99,11 +99,14 @@ public abstract class AbstractApiController<T> {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
 		QueryParams queryParams = null;
+		String orderBy = null;
 		if (optionalHttpRequest.isEmpty()) {
 			log.warn("The original request is not available, no filters will be applied.");
 		} else {
 			HttpRequest<Object> theRequest = optionalHttpRequest.get();
 			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
+			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
+			orderBy = queryParser.toOrderBy(entityClass, parameters);
 			if (QueryParser.hasFilter(parameters)) {
 				log.debug("A filter is included in the request.");
 				String queryString = theRequest.getUri().getQuery();
@@ -122,7 +125,8 @@ public abstract class AbstractApiController<T> {
 				.findEntities(offset, limit, entityClass,
 						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
-						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type))
+						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type),
+						orderBy)
 				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {
 					theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, pagedResult.offset())
 							.setAttribute(PaginationFilter.LIMIT_ATTR, pagedResult.limit())
@@ -152,11 +156,14 @@ public abstract class AbstractApiController<T> {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
 		QueryParams queryParams = null;
+		String orderBy = null;
 		if (optionalHttpRequest.isEmpty()) {
 			log.warn("The original request is not available, no filters will be applied.");
 		} else {
 			HttpRequest<Object> theRequest = optionalHttpRequest.get();
 			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
+			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
+			orderBy = queryParser.toOrderBy(queryClass, parameters);
 			if (QueryParser.hasFilter(parameters)) {
 				log.debug("A filter is included in the request.");
 				String queryString = theRequest.getUri().getQuery();
@@ -175,6 +182,7 @@ public abstract class AbstractApiController<T> {
 				.findEntitiesPolymorphic(offset, limit,
 						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(types),
 						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
+						orderBy,
 						typeToClass)
 				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {
 					theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, pagedResult.offset())

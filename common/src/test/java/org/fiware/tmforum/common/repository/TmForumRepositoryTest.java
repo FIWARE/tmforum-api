@@ -29,6 +29,7 @@ class TmForumRepositoryTest {
 
 	@Test
 	public void returnsNullWhenNoHeaderIsConfigured() {
+		properties.setCountHeader(null);
 		HttpResponse<Object> response = HttpResponse.ok().header("NGSILD-Results-Count", "42");
 
 		assertNull(repository.extractTotalCount(response),

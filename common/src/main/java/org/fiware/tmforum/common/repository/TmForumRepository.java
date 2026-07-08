@@ -62,13 +62,14 @@ public class TmForumRepository extends NgsiLdBaseRepository {
     }
 
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
-                                          String query, String ids, String types) {
+                                          String query, String ids, String types, String orderBy) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         ids,
                         null,
                         types,
                         null,
                         query,
+                        orderBy,
                         null,
                         null,
                         null,
@@ -90,7 +91,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
 
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass,
                                           String query) {
-        return findEntities(offset, limit, entityClass, query, null, entityType);
+        return findEntities(offset, limit, entityClass, query, null, entityType, null);
     }
 
     /**
@@ -103,13 +104,14 @@ public class TmForumRepository extends NgsiLdBaseRepository {
      * {@code typeToClass} instead of a single fixed class.
      */
     public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
-                                          String query, Function<String, Class<? extends T>> typeToClass) {
+                                          String query, String orderBy, Function<String, Class<? extends T>> typeToClass) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         null,
                         null,
                         types,
                         null,
                         query,
+                        orderBy,
                         null,
                         null,
                         null,

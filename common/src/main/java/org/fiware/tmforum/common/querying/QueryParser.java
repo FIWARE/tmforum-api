@@ -78,6 +78,51 @@ public class QueryParser {
     public static final String TMFORUM_OR_KEY = ";";
     public static final String TMFORUM_AND = "&";
 
+    // TMForum marks a sort field as descending by prefixing it with "-", e.g. sort=name,-billDate
+    private static final String SORT_DESCENDING_PREFIX = "-";
+
+    // NGSI-LD's orderBy suffixes a field with ";desc" to sort descending; omitting it means ascending
+    private static final String ORDER_BY_DESCENDING_SUFFIX = ";desc";
+
+    /**
+     * Translates the TMForum {@code sort} query parameter (comma-separated list of properties,
+     * optionally prefixed with "-" for descending, e.g. {@code sort=name,-billDate}) into the
+     * NGSI-LD {@code orderBy} syntax (comma-separated list of "property;direction" pairs, direction
+     * defaulting to ascending when omitted, e.g. {@code orderBy=name,billDate;desc}).
+     *
+     * @param queryClass class used to resolve the sorted attributes to their NGSI-LD path
+     * @param parameters the request's query parameters
+     * @return the NGSI-LD {@code orderBy} value, or {@code null} if no {@code sort} was requested
+     */
+    public String toOrderBy(Class<?> queryClass, Map<String, List<String>> parameters) {
+        List<String> sortValues = parameters.get(SORT_KEY);
+        if (sortValues == null || sortValues.isEmpty()) {
+            return null;
+        }
+        String orderBy = sortValues.stream()
+                .flatMap(value -> Arrays.stream(value.split(TMFORUM_OR_VALUE)))
+                .filter(sortField -> !sortField.isBlank())
+                .map(sortField -> toOrderByPart(queryClass, sortField))
+                .collect(Collectors.joining(TMFORUM_OR_VALUE));
+        return orderBy.isBlank() ? null : orderBy;
+    }
+
+    private String toOrderByPart(Class<?> queryClass, String sortField) {
+        boolean descending = sortField.startsWith(SORT_DESCENDING_PREFIX);
+        String attributeName = descending ? sortField.substring(1) : sortField;
+
+        List<String> path = translateJsonLdReservedTokens(Arrays.asList(attributeName.split("\\.")));
+        NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(path, queryClass);
+        List<String> resolvedPath = new ArrayList<>(attribute.path().isEmpty()
+                ? path.stream().map(ReservedWordHandler::escapeReservedWords).toList()
+                : attribute.path());
+
+        String first = resolvedPath.remove(0);
+        String attrPath = first + String.join("", resolvedPath.stream().map(this::mapPathPart).toList());
+
+        return descending ? attrPath + ORDER_BY_DESCENDING_SUFFIX : attrPath;
+    }
+
     public static boolean hasFilter(Map<String, List<String>> values) {
         //remove the "non-filtering" keys
         values.remove(OFFSET_KEY);
