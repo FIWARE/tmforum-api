@@ -62,15 +62,17 @@ public abstract class AbstractApiController<T> {
 								.then(Mono.just(checkedResult)))
 				.onErrorMap(t -> {
 					if (t instanceof HttpClientResponseException e) {
+						String responseBody = e.getResponse().getBody(String.class).orElse(e.getMessage());
+						log.warn("Broker rejected the entity creation with status {}: {}", e.getStatus(), responseBody);
 						return switch (e.getStatus()) {
 							case CONFLICT -> new TmForumException(
-									String.format("Conflict on creating the entity: %s", e.getMessage()),
+									String.format("Conflict on creating the entity: %s", responseBody),
 									TmForumExceptionReason.CONFLICT);
 							case BAD_REQUEST -> new TmForumException(
-									String.format("Did not receive a valid entity: %s.", e.getMessage()),
+									String.format("Did not receive a valid entity: %s.", responseBody),
 									TmForumExceptionReason.INVALID_DATA);
 							default -> new TmForumException(
-									String.format("Unspecified downstream error: %s", e.getMessage()),
+									String.format("Unspecified downstream error: %s", responseBody),
 									TmForumExceptionReason.UNKNOWN);
 						};
 					} else {
@@ -150,7 +152,26 @@ public abstract class AbstractApiController<T> {
 										.doOnError(e -> log.warn("Was not able to handle the create event.", e))
 										.subscribe()
 						)
-				);
+				)
+				.onErrorMap(t -> {
+					if (t instanceof HttpClientResponseException e) {
+						String responseBody = e.getResponse().getBody(String.class).orElse(e.getMessage());
+						log.warn("Broker rejected the entity update with status {}: {}", e.getStatus(), responseBody);
+						return switch (e.getStatus()) {
+							case CONFLICT -> new TmForumException(
+									String.format("Conflict on updating the entity: %s", responseBody),
+									TmForumExceptionReason.CONFLICT);
+							case BAD_REQUEST -> new TmForumException(
+									String.format("Did not receive a valid entity: %s.", responseBody),
+									TmForumExceptionReason.INVALID_DATA);
+							default -> new TmForumException(
+									String.format("Unspecified downstream error: %s", responseBody),
+									TmForumExceptionReason.UNKNOWN);
+						};
+					} else {
+						return t;
+					}
+				});
 	}
 
 	protected <R extends EntityWithId> Mono<T> relatedEntityHandlingMono(T entity, Mono<T> entityMono,
