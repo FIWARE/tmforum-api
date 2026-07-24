@@ -2,3 +2,5 @@ general:
   ngsildOrQueryValue: ","
   ngsildOrQueryKey: ","
   encloseQuery: false
+
+  replaceOnUpdate: true
