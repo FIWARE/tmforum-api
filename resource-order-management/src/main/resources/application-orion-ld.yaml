@@ -2,4 +2,4 @@ general:
   ngsildOrQueryValue: ";"
   ngsildOrQueryKey: ";"
   encloseQuery: true
-  countHeader: Fiware-Total-Count
+  countHeader: NGSILD-Results-Count

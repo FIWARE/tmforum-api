@@ -510,7 +510,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		int limit = 2;
 		HttpResponse<List<ResourceSpecificationVO>> firstPage = callAndCatch(
 				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, 0, limit));
-		assertEquals(HttpStatus.OK, firstPage.getStatus(), "The first page should be accessible.");
+		assertEquals(HttpStatus.PARTIAL_CONTENT, firstPage.getStatus(),
+				"A page that doesn't contain the full result set must be reported as 206, per TMF630.");
 		assertEquals(limit, firstPage.getBody().get().size(),
 				"A page must never contain more than the requested limit, regardless of how many sub-types exist.");
 		assertEquals(String.valueOf(totalCount), firstPage.getHeaders().get("X-Total-Count"),
@@ -518,13 +519,22 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 
 		HttpResponse<List<ResourceSpecificationVO>> secondPage = callAndCatch(
 				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, limit, limit));
-		assertEquals(HttpStatus.OK, secondPage.getStatus(), "The second page should be accessible.");
-		assertEquals(totalCount - limit, secondPage.getBody().get().size(),
-				"The remaining page must contain exactly the remaining items across all sub-types.");
+		assertEquals(HttpStatus.PARTIAL_CONTENT, secondPage.getStatus(),
+				"A page that doesn't contain the full result set must be reported as 206, per TMF630.");
+		assertEquals(limit, secondPage.getBody().get().size(),
+				"The second page must contain exactly `limit` items across all sub-types.");
+
+		HttpResponse<List<ResourceSpecificationVO>> thirdPage = callAndCatch(
+				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, 2 * limit, limit));
+		assertEquals(HttpStatus.PARTIAL_CONTENT, thirdPage.getStatus(),
+				"A page that doesn't contain the full result set must be reported as 206, per TMF630.");
+		assertEquals(totalCount - 2 * limit, thirdPage.getBody().get().size(),
+				"The final page must contain exactly the remaining items across all sub-types.");
 
 		List<String> pagedIds = new ArrayList<>();
 		firstPage.getBody().get().forEach(vo -> pagedIds.add(vo.getId()));
 		secondPage.getBody().get().forEach(vo -> pagedIds.add(vo.getId()));
+		thirdPage.getBody().get().forEach(vo -> pagedIds.add(vo.getId()));
 		assertEquals(totalCount, pagedIds.stream().distinct().count(),
 				"Pages must not overlap or duplicate items across sub-types.");
 	}
