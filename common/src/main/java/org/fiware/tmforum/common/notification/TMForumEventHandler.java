@@ -15,6 +15,7 @@ import org.fiware.tmforum.common.notification.checkers.tmforum.TmForumEventCheck
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
+import org.fiware.tmforum.common.repository.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import reactor.core.publisher.Mono;
@@ -51,7 +52,7 @@ public class TMForumEventHandler extends EventHandler {
 				TMForumSubscription.class,
 				queryParser.toNgsiLdQuery(TMForumSubscription.class,
 						String.format("entities=%s&eventTypes=%s", eventDetails.entityType(), eventDetails.eventType())).query()
-		);
+		).map(PagedResult::items);
 	}
 
 	private <T> Mono<Void> handle(T entity, EventDetails eventDetails, TmForumEventChecker eventChecker) {

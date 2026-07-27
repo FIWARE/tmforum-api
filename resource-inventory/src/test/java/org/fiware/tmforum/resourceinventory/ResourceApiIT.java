@@ -15,6 +15,7 @@ import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.ArgumentPair;
 import org.fiware.tmforum.resource.Resource;
+import org.fiware.tmforum.resource.ResourceTypeRegistry;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -993,6 +994,8 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 
 	@Override
 	protected String getEntityType() {
-		return Resource.TYPE_RESOURCE;
+		// Cover every registered sub-type too, so entities created via subtype @type (e.g. through the
+		// polymorphic listing tests) are cleaned up between tests, not just plain Resource.
+		return ResourceTypeRegistry.ALL_RESOURCE_TYPES;
 	}
 }

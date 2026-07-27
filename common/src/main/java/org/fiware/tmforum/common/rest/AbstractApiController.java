@@ -9,10 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.filter.PaginationFilter;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
+import org.fiware.tmforum.common.repository.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -25,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
@@ -96,11 +99,14 @@ public abstract class AbstractApiController<T> {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
 		QueryParams queryParams = null;
+		String orderBy = null;
 		if (optionalHttpRequest.isEmpty()) {
 			log.warn("The original request is not available, no filters will be applied.");
 		} else {
 			HttpRequest<Object> theRequest = optionalHttpRequest.get();
 			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
+			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
+			orderBy = queryParser.toOrderBy(entityClass, parameters);
 			if (QueryParser.hasFilter(parameters)) {
 				log.debug("A filter is included in the request.");
 				String queryString = theRequest.getUri().getQuery();
@@ -119,7 +125,74 @@ public abstract class AbstractApiController<T> {
 				.findEntities(offset, limit, entityClass,
 						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
 						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
-						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type))
+						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type),
+						orderBy)
+				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {
+					theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, pagedResult.offset())
+							.setAttribute(PaginationFilter.LIMIT_ATTR, pagedResult.limit())
+							.setAttribute(PaginationFilter.RETURNED_COUNT_ATTR, pagedResult.items().size());
+					if (pagedResult.totalCount() != null) {
+						theRequest.setAttribute(PaginationFilter.TOTAL_COUNT_ATTR, pagedResult.totalCount());
+					}
+				}))
+				.map(PagedResult::items)
+				.map(List::stream);
+	}
+
+	/**
+	 * List entities of several NGSI-LD types at once (e.g. a base type and all its registered
+	 * sub-types), in a single broker call, so that offset/limit/count are correct against the
+	 * combined result set instead of being computed by fanning out one query per type and merging
+	 * paginated slices client-side.
+	 *
+	 * @param offset      requested offset
+	 * @param limit       requested limit
+	 * @param types       comma-separated list of NGSI-LD types to query (OR semantics)
+	 * @param queryClass  class used to resolve/validate filter attributes from the request's query string
+	 * @param typeToClass resolves the domain class to map an entity to, based on its NGSI-LD type
+	 */
+	protected <R> Mono<Stream<R>> listPolymorphic(Integer offset, Integer limit, String types,
+			Class<R> queryClass, Function<String, Class<? extends R>> typeToClass) {
+
+		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
+		QueryParams queryParams = null;
+		String orderBy = null;
+		if (optionalHttpRequest.isEmpty()) {
+			log.warn("The original request is not available, no filters will be applied.");
+		} else {
+			HttpRequest<Object> theRequest = optionalHttpRequest.get();
+			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
+			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
+			orderBy = queryParser.toOrderBy(queryClass, parameters);
+			if (QueryParser.hasFilter(parameters)) {
+				log.debug("A filter is included in the request.");
+				String queryString = theRequest.getUri().getQuery();
+				queryParams = queryParser.toNgsiLdQuery(queryClass, queryString);
+			}
+		}
+		offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
+		limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+
+		if (offset < 0 || limit < 1) {
+			throw new TmForumException(String.format("Invalid offset %s or limit %s.", offset, limit),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+
+		return repository
+				.findEntitiesPolymorphic(offset, limit,
+						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(types),
+						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
+						orderBy,
+						typeToClass)
+				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {
+					theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, pagedResult.offset())
+							.setAttribute(PaginationFilter.LIMIT_ATTR, pagedResult.limit())
+							.setAttribute(PaginationFilter.RETURNED_COUNT_ATTR, pagedResult.items().size());
+					if (pagedResult.totalCount() != null) {
+						theRequest.setAttribute(PaginationFilter.TOTAL_COUNT_ATTR, pagedResult.totalCount());
+					}
+				}))
+				.map(PagedResult::items)
 				.map(List::stream);
 	}
 

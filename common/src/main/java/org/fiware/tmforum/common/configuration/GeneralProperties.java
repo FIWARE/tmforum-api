@@ -68,4 +68,13 @@ public class GeneralProperties {
 	 * Required for Scorpio 6.x which appends to array attributes on PATCH. Default false (Orion-LD).
 	 */
 	private boolean replaceOnUpdate = false;
+
+	/**
+	 * Name of the response header the target NGSI-LD broker uses to report the total number of
+	 * entities matching a query. Defaults to the header name defined by the NGSI-LD standard; brokers
+	 * that deviate from the standard can override this property per profile. Set to null/empty to
+	 * disable count reporting - in that case, pagination degrades gracefully (no X-Total-Count, no
+	 * exact next/last, status always 200).
+	 */
+	private String countHeader = "NGSILD-Results-Count";
 }

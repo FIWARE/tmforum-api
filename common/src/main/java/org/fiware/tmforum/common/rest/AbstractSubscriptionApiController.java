@@ -28,6 +28,7 @@ import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
+import org.fiware.tmforum.common.repository.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import reactor.core.publisher.Mono;
@@ -100,6 +101,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
 		return repository.findEntities(CommonConstants.DEFAULT_OFFSET, 1, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 						TMForumSubscription.class, query)
+				.map(PagedResult::items)
 				.flatMap(list -> list.isEmpty() ? Mono.empty() :
 						Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
 	}
