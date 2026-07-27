@@ -62,4 +62,10 @@ public class GeneralProperties {
 	 * false: entity[attribute][subAttribute]
 	 */
 	private Boolean useDotSeperator=true;
+
+	/**
+	 * When true, updateDomainEntity uses batchEntityUpsert replace (read-merge-write) instead of PATCH /attrs.
+	 * Required for Scorpio 6.x which appends to array attributes on PATCH. Default false (Orion-LD).
+	 */
+	private boolean replaceOnUpdate = false;
 }
