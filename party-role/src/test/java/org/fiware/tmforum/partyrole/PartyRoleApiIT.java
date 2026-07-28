@@ -270,8 +270,8 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 		Integer limit = 5;
 		listResponse = callAndCatch(
 				() -> prApiTestClient.listPartyRole(null, null, null, limit));
-		assertEquals(HttpStatus.OK, listResponse.getStatus(),
-				"PartyRole list should be accessible");
+		assertEquals(HttpStatus.PARTIAL_CONTENT, listResponse.getStatus(),
+				"A page that doesn't contain the full result set must be reported as 206, per TMF630.");
 		assertEquals(limit, listResponse.body().size(),
 				"The number of party roles should be the same");
 	}

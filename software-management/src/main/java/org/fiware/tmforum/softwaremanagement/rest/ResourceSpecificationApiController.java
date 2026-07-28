@@ -325,27 +325,13 @@ public class ResourceSpecificationApiController extends AbstractApiController<Re
 	@Override
 	public Mono<HttpResponse<List<ResourceSpecificationVO>>> listResourceSpecification(@Nullable String fields,
 			@Nullable Integer offset, @Nullable Integer limit) {
-		List<Mono<List<ResourceSpecificationVO>>> typeQueries = new ArrayList<>();
-
-		for (Map.Entry<String, Class<? extends ResourceSpecification>> entry :
-				ResourceTypeRegistry.SPEC_ENTITY_TYPES.entrySet()) {
-			String entityType = entry.getKey();
-			Class<? extends ResourceSpecification> entityClass = entry.getValue();
-			Mono<List<ResourceSpecificationVO>> query = list(offset, limit, entityType, entityClass)
-					.map(stream -> stream.map(this::mapSpecToVO).toList())
-					.switchIfEmpty(Mono.just(List.of()));
-			typeQueries.add(query);
-		}
-
-		return Mono.zip(typeQueries, results -> {
-			List<ResourceSpecificationVO> combined = new ArrayList<>();
-			for (Object result : results) {
-				@SuppressWarnings("unchecked")
-				List<ResourceSpecificationVO> typed = (List<ResourceSpecificationVO>) result;
-				combined.addAll(typed);
-			}
-			return combined;
-		}).map(HttpResponse::ok);
+		// Polymorphic listing: query all registered NGSI-LD entity types in a single broker call so
+		// offset/limit/count are correct against the combined result set, then dispatch each returned
+		// entity to its own concrete domain class so sub-type fields round-trip with full fidelity.
+		return listPolymorphic(offset, limit, ResourceTypeRegistry.ALL_SPEC_TYPES,
+				ResourceSpecification.class, ResourceTypeRegistry::getSpecClass)
+				.map(stream -> stream.map(this::mapSpecToVO).toList())
+				.map(HttpResponse::ok);
 	}
 
 	/**

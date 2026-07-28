@@ -6,6 +6,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
 import io.micronaut.cache.annotation.Cacheable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -60,7 +62,7 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	@CachePut(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<Void> createEntity(EntityVO entityVO, String ngsiLDTenant) {
-		return entitiesApi.createEntity(entityVO, ngsiLDTenant);
+		return entitiesApi.createEntity(entityVO, ngsiLDTenant).then();
 	}
 
 	/**
@@ -71,7 +73,7 @@ public abstract class NgsiLdBaseRepository {
 	 * @return completable with the result
 	 */
 	public Mono<Void> createSubscription(SubscriptionVO subscriptionVO, String ngsiLDTenant) {
-		return subscriptionsApi.createSubscription(subscriptionVO, ngsiLDTenant);
+		return subscriptionsApi.createSubscription(subscriptionVO, ngsiLDTenant).then();
 	}
 
 	/**
@@ -89,6 +91,7 @@ public abstract class NgsiLdBaseRepository {
 	public Mono<SubscriptionVO> retrieveSubscriptionById(URI subscriptionId) {
 		return subscriptionsApi
 				.retrieveSubscriptionById(subscriptionId)
+				.map(HttpResponse::body)
 				.onErrorResume(this::handleClientSubscriptionException);
 	}
 
@@ -101,7 +104,7 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<Void> patchEntity(URI entityId, EntityFragmentVO entityFragmentVO) {
-		return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null);
+		return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null).then();
 	}
 
 	/**
@@ -210,7 +213,8 @@ public abstract class NgsiLdBaseRepository {
 					throw new DeletionException(String.format("Was not able to delete %s.", id),
 							t,
 							DeletionExceptionReason.UNKNOWN);
-				});
+				})
+				.then();
 	}
 
 	/**
@@ -242,7 +246,8 @@ public abstract class NgsiLdBaseRepository {
 					}
 					throw new DeletionException(String.format("Was not able to delete %s.", subscriptionId),
 							t, DeletionExceptionReason.UNKNOWN);
-				});
+				})
+				.then();
 	}
 
 	/**
@@ -267,11 +272,40 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	/**
+	 * Helper method for combining a stream of entities of potentially different NGSI-LD types to a
+	 * single mono, mapping each entity to its own target class instead of one fixed class for the
+	 * whole batch. Used for polymorphic list endpoints that query several NGSI-LD types at once
+	 * (see {@link TmForumRepository#findEntitiesPolymorphic}).
+	 *
+	 * @param entityVOStream stream of entities, potentially of different NGSI-LD types
+	 * @param typeToClass    resolves the target class to map an entity to, based on its NGSI-LD type
+	 * @param <T>            common super-type of all resolved target classes
+	 * @return a mono, emitting a list of mapped entities
+	 */
+	protected <T> Mono<List<T>> zipToPolymorphicList(Stream<EntityVO> entityVOStream,
+			Function<String, Class<? extends T>> typeToClass) {
+		List<Mono<T>> mappingMonos = entityVOStream
+				.map(entityVO -> mapPolymorphicEntity(entityVO, typeToClass))
+				.toList();
+		if (mappingMonos.isEmpty()) {
+			return Mono.just(List.of());
+		}
+		return Mono.zip(mappingMonos, oList -> Arrays.stream(oList).map(o -> (T) o).toList());
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> Mono<T> mapPolymorphicEntity(EntityVO entityVO, Function<String, Class<? extends T>> typeToClass) {
+		Class<? extends T> targetClass = typeToClass.apply(entityVO.getType());
+		return (Mono<T>) entityVOMapper.fromEntityVO(entityVO, targetClass);
+	}
+
+	/**
 	 * Uncached call to the broker
 	 */
 	private Mono<EntityVO> asyncRetrieveEntityById(URI entityId, String ngSILDTenant, String attrs, String type, String options, String link) {
 		return entitiesApi
 				.retrieveEntityById(entityId, ngSILDTenant, attrs, type, options, link)
+				.map(HttpResponse::body)
 				.onErrorResume(this::handleClientEntityException);
 	}
 

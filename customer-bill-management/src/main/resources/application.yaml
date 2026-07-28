@@ -37,6 +37,7 @@ loggers:
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
+  countHeader: NGSILD-Results-Count
 
 apiExtension:
   # we reference the env var here directly, since property resolution from env vars happens AFTER evaluation of @Requires

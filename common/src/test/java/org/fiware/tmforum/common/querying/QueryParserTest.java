@@ -6,9 +6,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class QueryParserTest {
 
@@ -209,5 +212,48 @@ class QueryParserTest {
 						new QueryParams("urn:x", null, "atType==\"A\""),
 						MyEntityPojo.class)
 		);
+	}
+
+	/**
+	 * Verifies the translation of the TMForum {@code sort} query parameter (comma-separated
+	 * properties, "-" prefix for descending) into NGSI-LD's {@code orderBy} syntax
+	 * (comma-separated "property;direction" pairs, direction omitted meaning ascending).
+	 */
+	@ParameterizedTest
+	@MethodSource("sortToOrderByQueries")
+	public void testSortToOrderByTranslation(Map<String, List<String>> parameters, String expectedOrderBy,
+			Class<?> targetClass) {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setUseDotSeperator(true);
+
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(expectedOrderBy, qp.toOrderBy(targetClass, parameters),
+				"The sort parameter should have been properly translated to orderBy.");
+	}
+
+	private static Stream<Arguments> sortToOrderByQueries() {
+		return Stream.of(
+				// no sort requested at all
+				Arguments.of(Map.of(), null, MyPojo.class),
+				// single ascending field, no direction suffix needed
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("color")), "color", MyPojo.class),
+				// single descending field
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-color")), "color;desc", MyPojo.class),
+				// mixed ascending/descending, comma-separated
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("color,-temperature")), "color,temperature;desc", MyPojo.class),
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-color,-temperature")), "color;desc,temperature;desc", MyPojo.class),
+				// nested attribute path
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-sub.status")), "sub.status;desc", MyPojo.class),
+				// JSON-LD reserved token translation, same as filtering
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-@type")), "atType;desc", MyEntityPojo.class)
+		);
+	}
+
+	@Test
+	public void testSortToOrderByReturnsNullWhenSortValueIsBlank() {
+		GeneralProperties properties = new GeneralProperties();
+		QueryParser qp = new QueryParser(properties);
+		assertNull(qp.toOrderBy(MyPojo.class, Map.of(QueryParser.SORT_KEY, List.of(""))),
+				"A blank sort value should not produce an orderBy.");
 	}
 }
