@@ -104,9 +104,9 @@ public class TmForumRepository extends NgsiLdBaseRepository {
      * {@code typeToClass} instead of a single fixed class.
      */
     public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
-                                          String query, String orderBy, Function<String, Class<? extends T>> typeToClass) {
+                                          String query, String ids, String orderBy, Function<String, Class<? extends T>> typeToClass) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
-                        null,
+                        ids,
                         null,
                         types,
                         null,
