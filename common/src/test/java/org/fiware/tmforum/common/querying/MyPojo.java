@@ -126,6 +126,11 @@ public class MyPojo {
 		return this;
 	}
 
+	public MyPojo status(String status) {
+		this.status = status;
+		return this;
+	}
+
 	public MyPojo temperature(Integer temperature) {
 		this.temperature = temperature;
 		return this;

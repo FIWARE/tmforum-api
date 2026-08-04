@@ -57,6 +57,63 @@ public class SubscriptionQueryResolverTest {
         );
     }
 
+    /**
+     * (color=Red AND temperature>10) OR status=Active - confirms the left-to-right AND-before-OR
+     * fold in evaluateResult, not a plain allMatch/anyMatch over the whole query.
+     */
+    @ParameterizedTest
+    @MethodSource("precedenceQueries")
+    public void testAndBeforeOrPrecedence(MyPojo myPojo, boolean expectedResult) {
+        String query = "myPojo.color=Red&myPojo.temperature>10;myPojo.status=Active";
+        assertEquals(expectedResult, subscriptionQueryResolver.doesQueryMatchCreateEvent(query, myPojo, "myPojo"),
+                "AND must bind tighter than OR when evaluating a mixed query.");
+    }
+
+    private static Stream<Arguments> precedenceQueries() {
+        return Stream.of(
+                // AND-branch satisfied (color=Red, temperature>10) -> true regardless of OR-branch.
+                Arguments.of(MyPojoBuilder.build().color("Red").temperature(15).status("Inactive"), true),
+                // AND-branch fails (temperature not >10) but OR-branch (status=Active) is satisfied.
+                Arguments.of(MyPojoBuilder.build().color("Red").temperature(5).status("Active"), true),
+                // Neither branch satisfied.
+                Arguments.of(MyPojoBuilder.build().color("Blue").temperature(5).status("Inactive"), false)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("notExistsCreateQueries")
+    public void testNotExistsOnCreateEvent(MyPojo myPojo, boolean expectedResult) {
+        assertEquals(expectedResult, subscriptionQueryResolver.doesQueryMatchCreateEvent("!myPojo.color", myPojo, "myPojo"),
+                "!attribute should match iff the field is absent.");
+    }
+
+    private static Stream<Arguments> notExistsCreateQueries() {
+        return Stream.of(
+                Arguments.of(MyPojoBuilder.build(), true),
+                Arguments.of(MyPojoBuilder.build().color("Red"), false)
+        );
+    }
+
+    /**
+     * !attribute in an update event is evaluated as a pure state predicate against the new state
+     * only - unlike a normal value-comparing QueryPart, it does NOT require the field to have
+     * actually changed (see the old=null/new=null "no change" case below).
+     */
+    @ParameterizedTest
+    @MethodSource("notExistsUpdateQueries")
+    public void testNotExistsOnUpdateEvent(MyPojo oldState, MyPojo newState, boolean expectedResult) {
+        assertEquals(expectedResult, subscriptionQueryResolver.doesQueryMatchUpdateEvent("!myPojo.color", newState, oldState, "myPojo"),
+                "!attribute on update should match iff the field is absent in the new state.");
+    }
+
+    private static Stream<Arguments> notExistsUpdateQueries() {
+        return Stream.of(
+                Arguments.of(MyPojoBuilder.build().color("Red"), MyPojoBuilder.build(), true),
+                Arguments.of(MyPojoBuilder.build(), MyPojoBuilder.build(), true),
+                Arguments.of(MyPojoBuilder.build(), MyPojoBuilder.build().color("Red"), false)
+        );
+    }
+
     private static class MyPojoBuilder {
         public static MyPojo build() {
             return new MyPojo("id");

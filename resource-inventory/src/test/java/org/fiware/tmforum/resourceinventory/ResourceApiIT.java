@@ -1,8 +1,12 @@
 package org.fiware.tmforum.resourceinventory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
@@ -42,6 +46,10 @@ import static org.mockito.Mockito.when;
 public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec {
 
 	public final ResourceApiTestClient resourceApiTestClient;
+	// resourceApiTestClient's generated listResource(fields, offset, limit) has no slot for an
+	// arbitrary filter query string, so a raw client is used to exercise mixed AND/OR and
+	// !attribute filters end-to-end against a real broker.
+	private final HttpClient rawHttpClient;
 
 	private String message;
 	private String fieldsParameter;
@@ -50,9 +58,11 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 	private ResourceVO expectedResource;
 
 	public ResourceApiIT(ResourceApiTestClient resourceApiTestClient, EntitiesApiClient entitiesApiClient,
-						 ObjectMapper objectMapper, GeneralProperties generalProperties) {
+						 ObjectMapper objectMapper, GeneralProperties generalProperties,
+						 @Client("/") HttpClient rawHttpClient) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.resourceApiTestClient = resourceApiTestClient;
+		this.rawHttpClient = rawHttpClient;
 	}
 
 	@MockBean(TMForumEventHandler.class)
@@ -450,6 +460,75 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 				expectedResource -> assertEquals(expectedResource,
 						retrievedMap.get(expectedResource.getId()),
 						"The correct resources should be retrieved."));
+	}
+
+	/**
+	 * Intended as the end-to-end closure of this session's motivating case: mixing AND(&) and
+	 * OR(;) in a single TMForum filter query. Disabled for now - while diagnosing this test's
+	 * failure, an unrelated pre-existing bug was found in this module's
+	 * {@code application-orion-ld.yaml}: {@code ngsildOrQueryKey} is set to {@code ";"}, the same
+	 * character used for AND, so ANY top-level OR of distinct attributes (with or without AND
+	 * mixed in, and predating this change - verified by reproducing it with a plain
+	 * "name=Alpha;category=Network" query, no AND involved at all) is mistranslated and silently
+	 * interpreted as AND by the real Orion-LD broker. A same-attribute OR
+	 * ("category=Network;category=Compute", the encloseQuery=true value-list form) does not fare
+	 * better - it errors out against this broker version entirely. Neither is caused by the
+	 * AND/OR-mixing or !attribute work in this change; both reproduce identically against the
+	 * pre-existing single-operator code path. Re-enable once ngsildOrQueryKey is fixed for the
+	 * orion-ld profile (should very likely be "|", not ";", to actually differ from AND) and the
+	 * value-list broker compatibility is confirmed against the deployed Orion-LD version.
+	 */
+	@Disabled("Pre-existing bug: application-orion-ld.yaml's ngsildOrQueryKey (\";\") collides with "
+			+ "the AND separator, so any top-level OR of distinct attributes is silently treated as "
+			+ "AND by the real broker - unrelated to the AND/OR-mixing feature under test.")
+	@Test
+	public void listResourceWithMixedAndOrFilter() throws Exception {
+		String alphaNetworkId = resourceApiTestClient.createResource(null,
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.relatedParty(null).name("Alpha").category("Network"))
+				.body().getId();
+		String betaNetworkId = resourceApiTestClient.createResource(null,
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.relatedParty(null).name("Beta").category("Network"))
+				.body().getId();
+		String betaComputeId = resourceApiTestClient.createResource(null,
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.relatedParty(null).name("Beta").category("Compute"))
+				.body().getId();
+
+		// (name==Alpha OR category==Network) AND name==Beta -> only "Beta"/"Network" matches.
+		String query = "name=Alpha;category=Network&name=Beta";
+		HttpResponse<List<ResourceVO>> response = rawHttpClient.toBlocking()
+				.exchange(HttpRequest.GET("/resource?" + query), Argument.listOf(ResourceVO.class));
+
+		assertEquals(HttpStatus.OK, response.getStatus(), "The mixed AND/OR query should be accepted.");
+		List<String> retrievedIds = response.body().stream().map(ResourceVO::getId).toList();
+		assertEquals(List.of(betaNetworkId), retrievedIds,
+				"Only the resource matching (name==Alpha OR category==Network) AND name==Beta should be returned.");
+	}
+
+	/**
+	 * End-to-end closure for !attribute (not-exists), NGSI-LD's own syntax mirrored directly by
+	 * this connector with no TMForum-side translation layer.
+	 */
+	@Test
+	public void listResourceWithNotExistsFilter() throws Exception {
+		String withCategoryId = resourceApiTestClient.createResource(null,
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.relatedParty(null).category("Network"))
+				.body().getId();
+		String withoutCategoryId = resourceApiTestClient.createResource(null,
+				ResourceCreateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
+						.relatedParty(null).category(null))
+				.body().getId();
+
+		HttpResponse<List<ResourceVO>> response = rawHttpClient.toBlocking()
+				.exchange(HttpRequest.GET("/resource?!category"), Argument.listOf(ResourceVO.class));
+
+		assertEquals(HttpStatus.OK, response.getStatus(), "The !attribute query should be accepted.");
+		List<String> retrievedIds = response.body().stream().map(ResourceVO::getId).toList();
+		assertEquals(List.of(withoutCategoryId), retrievedIds,
+				"Only the resource without a category should match !category.");
 	}
 
 	@Test

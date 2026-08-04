@@ -182,6 +182,7 @@ public abstract class AbstractApiController<T> {
 				.findEntitiesPolymorphic(offset, limit,
 						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(types),
 						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
+						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
 						orderBy,
 						typeToClass)
 				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {

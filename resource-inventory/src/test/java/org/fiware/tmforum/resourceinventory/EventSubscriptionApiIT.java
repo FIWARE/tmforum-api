@@ -273,6 +273,30 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 								.callback(ANY_CALLBACK)
 				)
 		);
+		// AND/OR mixing is now supported: eventType is OR-combined with itself (still allowed,
+		// unrelated to the eventType/query rule) and AND-linked to a content query - only OR
+		// directly between eventType and query is still rejected (see provideInvalidEventSubscriptionInputs).
+		testEntries.add(
+				Arguments.of("A listener with a mixed AND/OR query (ORed event types, AND-linked to a content query) should have been created.",
+						EventSubscriptionInputVOTestExample.build()
+								.query("eventType=ResourceCreateEvent;eventType=ResourceDeleteEvent&event.Resource.name=Some")
+								.callback(ANY_CALLBACK),
+						EventSubscriptionVOTestExample.build()
+								.query("eventType=ResourceCreateEvent;eventType=ResourceDeleteEvent&event.Resource.name=Some")
+								.callback(ANY_CALLBACK)
+				)
+		);
+		// !attribute (not-exists) mirrors NGSI-LD's own syntax directly.
+		testEntries.add(
+				Arguments.of("A listener with a !attribute (not-exists) query should have been created.",
+						EventSubscriptionInputVOTestExample.build()
+								.query("eventType=ResourceCreateEvent&!event.Resource.category")
+								.callback(ANY_CALLBACK),
+						EventSubscriptionVOTestExample.build()
+								.query("eventType=ResourceCreateEvent&!event.Resource.category")
+								.callback(ANY_CALLBACK)
+				)
+		);
 
 		return testEntries.stream();
 	}
@@ -291,13 +315,6 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 				Arguments.of("A query with different ORed section conditions should not be created.",
 						EventSubscriptionInputVOTestExample.build()
 								.query("eventType=ResourceCreateEvent;event.Resource.name=Some")
-								.callback(ANY_CALLBACK)
-				)
-		);
-		testEntries.add(
-				Arguments.of("A query with both logical operators AND and OR should not be created.",
-						EventSubscriptionInputVOTestExample.build()
-								.query("eventType=ResourceCreateEvent;eventType=ResourceDeleteEvent&event.Resource.name=Some")
 								.callback(ANY_CALLBACK)
 				)
 		);
