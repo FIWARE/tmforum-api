@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.ReservedWordHandler;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
@@ -12,9 +13,13 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.RequiredArgsConstructor;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.ngsi.model.GeoPropertyVO;
+import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.ngsi.model.SubscriptionVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
@@ -29,8 +34,11 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -186,13 +194,97 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	private EntityVO mergeForUpdate(EntityVO existing, EntityVO update) {
-		update.getAdditionalProperties().forEach(existing::setAdditionalProperties);
+		// `existing` was parsed by EscapeCleaningParser, which strips the tmfEscaped- prefix
+		// from reserved words it can safely unescape (everything except VO_FIELD_COLLISIONS).
+		// Writing that back verbatim would put raw JSON-LD keywords (@id/@type/@value/@context)
+		// on the wire; brokers are free to drop them (Scorpio >= 6.0.0 does), which silently
+		// destroys nested free-form values such as an expanded ODRL policy. Re-apply the escape
+		// before the entity goes out again. Only relevant on the replaceOnUpdate path, since
+		// PATCH /attrs sends the freshly mapped `update` only, which JavaObjectMapper escapes.
+		reEscapeReservedWords(existing);
+		if (update.getAdditionalProperties() != null) {
+			update.getAdditionalProperties().forEach(existing::setAdditionalProperties);
+		}
 		if (update.getLocation() != null) existing.setLocation(update.getLocation());
 		if (update.getObservationSpace() != null) existing.setObservationSpace(update.getObservationSpace());
 		if (update.getOperationSpace() != null) existing.setOperationSpace(update.getOperationSpace());
 		if (update.getModifiedAt() != null) existing.setModifiedAt(update.getModifiedAt());
 		if (update.getAtContext() != null) existing.setAtContext(update.getAtContext());
 		return existing;
+	}
+
+	/**
+	 * Re-apply the reserved-word escape to the additional properties of an entity that was read
+	 * back from the broker, recursively. Counterpart of the {@code EscapeCleaningParser} of the
+	 * mapping library, which removes the prefix while parsing. {@code escapeReservedWords} is
+	 * idempotent, so keys that kept their prefix during parsing (the VO field collisions
+	 * {@code id}/{@code type}/{@code value}) are left untouched.
+	 *
+	 * @param entityVO the entity to fix up in place
+	 */
+	private void reEscapeReservedWords(EntityVO entityVO) {
+		reEscapeProperties(entityVO.getAdditionalProperties(), entityVO::setAdditionalProperties);
+	}
+
+	/**
+	 * Rewrite the keys of an additional-properties map in place and recurse into its values.
+	 *
+	 * @param properties the (potentially null) map to rewrite
+	 * @param setter     the {@code setAdditionalProperties} of the owning VO, used to re-insert
+	 */
+	private void reEscapeProperties(Map<String, AdditionalPropertyVO> properties,
+			BiConsumer<String, AdditionalPropertyVO> setter) {
+		if (properties == null || properties.isEmpty()) {
+			return;
+		}
+		Map<String, AdditionalPropertyVO> reEscaped = new LinkedHashMap<>();
+		properties.forEach((key, value) -> reEscaped.put(ReservedWordHandler.escapeReservedWords(key),
+				reEscapeAdditionalProperty(value)));
+		properties.clear();
+		reEscaped.forEach(setter);
+	}
+
+	private AdditionalPropertyVO reEscapeAdditionalProperty(AdditionalPropertyVO additionalPropertyVO) {
+		// the generated VOs do not share an accessor for the additional properties, so every
+		// concrete type has to be handled explicitly.
+		if (additionalPropertyVO instanceof PropertyVO propertyVO) {
+			propertyVO.setValue(reEscapeValue(propertyVO.getValue()));
+			reEscapeProperties(propertyVO.getAdditionalProperties(), propertyVO::setAdditionalProperties);
+		} else if (additionalPropertyVO instanceof RelationshipVO relationshipVO) {
+			reEscapeProperties(relationshipVO.getAdditionalProperties(), relationshipVO::setAdditionalProperties);
+		} else if (additionalPropertyVO instanceof GeoPropertyVO geoPropertyVO) {
+			reEscapeProperties(geoPropertyVO.getAdditionalProperties(), geoPropertyVO::setAdditionalProperties);
+		} else if (additionalPropertyVO instanceof List<?> multiAttribute) {
+			// multi-attributes: PropertyListVO, RelationshipListVO and GeoPropertyListVO are lists
+			// of the types handled above.
+			multiAttribute.stream()
+					.filter(AdditionalPropertyVO.class::isInstance)
+					.map(AdditionalPropertyVO.class::cast)
+					.forEach(this::reEscapeAdditionalProperty);
+		}
+		return additionalPropertyVO;
+	}
+
+	/**
+	 * Free-form property values are parsed into plain maps and lists, with their keys cleaned by
+	 * the same parser, so they need the escape re-applied too. This is what carries e.g. the
+	 * expanded ODRL policy of a product-offering-price and the reason the entity has to be fixed
+	 * up at all.
+	 *
+	 * @param value the value to fix up
+	 * @return the value with all reserved keys escaped again
+	 */
+	private Object reEscapeValue(Object value) {
+		if (value instanceof Map<?, ?> valueMap) {
+			Map<String, Object> reEscaped = new LinkedHashMap<>();
+			valueMap.forEach((key, nestedValue) -> reEscaped
+					.put(ReservedWordHandler.escapeReservedWords(String.valueOf(key)), reEscapeValue(nestedValue)));
+			return reEscaped;
+		}
+		if (value instanceof List<?> valueList) {
+			return valueList.stream().map(this::reEscapeValue).toList();
+		}
+		return value;
 	}
 
 	/**
