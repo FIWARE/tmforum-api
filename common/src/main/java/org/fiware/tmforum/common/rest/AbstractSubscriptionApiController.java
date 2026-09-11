@@ -21,6 +21,7 @@ import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
+import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
@@ -96,8 +97,10 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	}
 
 	private Mono<Void> assureNotExistingTMForumSubscription(TMForumSubscription subscription) {
+		// rawQuery is stored escaped (see TMForumSubscription.getEscapedRawQuery), so the value
+		// compared against here must be escaped the same way to actually match.
 		String query = String.format(queryParser.toNgsiLdQuery(TMForumSubscription.class, "callback=%s&rawQuery=%s").query(),
-				subscription.getCallback(), subscription.getRawQuery());
+				subscription.getCallback(), ForbiddenCharacterEscaper.escape(subscription.getRawQuery()));
 
 		return repository.findEntities(CommonConstants.DEFAULT_OFFSET, 1, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 						TMForumSubscription.class, query)
