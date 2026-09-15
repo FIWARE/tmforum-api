@@ -21,7 +21,7 @@
 
     <properties>
         <version.io.fabric8.docker-maven-plugin>0.48.1</version.io.fabric8.docker-maven-plugin>
-        <old.io.github.wistefan.ngsi-ld-mapping-java>1.2.11</old.io.github.wistefan.ngsi-ld-mapping-java>
+        <old.io.github.wistefan.ngsi-ld-mapping-java>1.6.27</old.io.github.wistefan.ngsi-ld-mapping-java>
     </properties>
 
 </project>
