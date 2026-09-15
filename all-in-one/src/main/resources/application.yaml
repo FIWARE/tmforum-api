@@ -17,23 +17,17 @@ micronaut:
         path: ngsi-ld/v1
         url: http://localhost:1026
         read-timeout: 30
----
 jackson:
   serialization:
     writeDatesAsTimestamps: false
----
 endpoints:
   metrics:
     enabled: true
   health:
     enabled: true
-
----
 loggers:
   levels:
     ROOT: WARN
-
----
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
@@ -41,8 +35,6 @@ general:
   basepath: /
 apiExtension:
   enabled: ${API_EXTENSION_ENABLED}
-
----
 api:
   account:
     basepath: /tmf-api/accountManagement/v4
@@ -84,8 +76,6 @@ api:
     basepath: /tmf-api/usageManagement/v4
   document-management:
     basepath: /tmf-api/documentManagement/v4
-
----
 s3:
   endpoint: "http://localhost:9000"
   accessKey: "minioadmin"
