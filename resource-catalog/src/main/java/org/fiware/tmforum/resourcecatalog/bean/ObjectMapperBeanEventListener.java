@@ -12,7 +12,7 @@ import org.fiware.resourcecatalog.model.ResourceCategoryVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @RequiredArgsConstructor

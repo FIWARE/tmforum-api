@@ -1,9 +1,22 @@
 package org.fiware.tmforum.softwaremanagement.bean;
 
-import org.fiware.softwaremanagement.model.*;
+import jakarta.inject.Singleton;
+import org.fiware.softwaremanagement.model.APISpecificationVO;
+import org.fiware.softwaremanagement.model.APIVO;
+import org.fiware.softwaremanagement.model.HostingPlatformRequirementSpecificationVO;
+import org.fiware.softwaremanagement.model.HostingPlatformRequirementVO;
+import org.fiware.softwaremanagement.model.InstalledSoftwareVO;
+import org.fiware.softwaremanagement.model.LogicalResourceSpecificationVO;
+import org.fiware.softwaremanagement.model.LogicalResourceVO;
+import org.fiware.softwaremanagement.model.PhysicalResourceSpecificationVO;
+import org.fiware.softwaremanagement.model.PhysicalResourceVO;
+import org.fiware.softwaremanagement.model.SoftwareResourceSpecificationVO;
+import org.fiware.softwaremanagement.model.SoftwareResourceVO;
+import org.fiware.softwaremanagement.model.SoftwareSpecificationVO;
+import org.fiware.softwaremanagement.model.SoftwareSupportPackageSpecificationVO;
+import org.fiware.softwaremanagement.model.SoftwareSupportPackageVO;
 import org.fiware.tmforum.common.mapping.SubTypePropertyProvider;
 
-import javax.inject.Singleton;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;

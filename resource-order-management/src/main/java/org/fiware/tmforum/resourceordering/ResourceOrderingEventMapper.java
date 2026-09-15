@@ -1,5 +1,6 @@
 package org.fiware.tmforum.resourceordering;
 
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.fiware.resourceordering.model.CancelResourceOrderVO;
 import org.fiware.resourceordering.model.ResourceOrderVO;
@@ -10,7 +11,6 @@ import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.resourceordering.domain.CancelResourceOrder;
 import org.fiware.tmforum.resourceordering.domain.ResourceOrder;
 
-import javax.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;
