@@ -29,7 +29,7 @@ endpoints:
     enabled: false
 
 
-loggers:
+logger:
   levels:
     ROOT: WARN
 

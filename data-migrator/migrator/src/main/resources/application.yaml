@@ -12,7 +12,7 @@ jackson:
     writeDatesAsTimestamps: false
 
 
-loggers:
+logger:
   levels:
     ROOT: TRACE
 

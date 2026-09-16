@@ -25,7 +25,7 @@ endpoints:
     enabled: true
   health:
     enabled: true
-loggers:
+logger:
   levels:
     ROOT: WARN
 general:
