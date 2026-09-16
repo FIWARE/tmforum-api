@@ -6,11 +6,10 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.runtime.Micronaut;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.fiware.document.model.DocumentSpecificationVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
-
-import javax.inject.Singleton;
 
 @Factory
 public class Application {

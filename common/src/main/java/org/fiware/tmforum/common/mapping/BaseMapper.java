@@ -1,17 +1,17 @@
 package org.fiware.tmforum.common.mapping;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.networknt.schema.*;
-import com.networknt.schema.resource.ClasspathSchemaLoader;
-import com.networknt.schema.resource.UriSchemaLoader;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaLocation;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.SpecificationVersion;
+import com.networknt.schema.resource.ClasspathResourceLoader;
+import com.networknt.schema.resource.IriResourceLoader;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.Entity;
-import org.fiware.tmforum.common.domain.Money;
 import org.mapstruct.AfterMapping;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.StringNode;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -44,19 +44,16 @@ public abstract class BaseMapper {
 		if (source.getAtSchemaLocation() != null && source.getAdditionalProperties() != null) {
 			try {
 
-				JsonSchemaFactory jsonSchemaFactory = JsonSchemaFactory.getInstance(
-						SpecVersion.VersionFlag.V202012,
-						builder -> builder.schemaLoaders(sb -> {
-							sb.add(new ClasspathSchemaLoader());
-							sb.add(new UriSchemaLoader());
+                SchemaRegistry jsonSchemaFactory = SchemaRegistry.withDefaultDialect(
+						SpecificationVersion.DRAFT_2020_12,
+						builder -> builder.resourceLoaders(sb -> {
+							sb.add(new ClasspathResourceLoader());
+							sb.add(new IriResourceLoader());
 						})
 				);
 
-				SchemaValidatorsConfig.Builder validatorConfigBuilder = SchemaValidatorsConfig.builder();
-				SchemaValidatorsConfig schemaValidatorsConfig = validatorConfigBuilder.build();
-				JsonSchema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(source.getAtSchemaLocation().toString()), schemaValidatorsConfig);
-				JsonNode rootSchemaNode = schema.getSchemaNode();
-				var propertiesNode = rootSchemaNode.get(PROPERTIES_KEY);
+				Schema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(source.getAtSchemaLocation().toString()));
+				var propertiesNode = schema.getSchemaNode().get(PROPERTIES_KEY);
 
 				source.getAdditionalProperties()
 						.forEach(additionalProperty -> {
@@ -88,9 +85,9 @@ public abstract class BaseMapper {
 			return value;
 		}
 		String typeText = Optional.ofNullable(schemaNode.get(TYPE_KEY))
-				.filter(TextNode.class::isInstance)
-				.map(TextNode.class::cast)
-				.map(TextNode::textValue)
+				.filter(StringNode.class::isInstance)
+				.map(StringNode.class::cast)
+				.map(StringNode::asString)
 				.orElse(null);
 
 		if (ARRAY_TYPE.equals(typeText)) {

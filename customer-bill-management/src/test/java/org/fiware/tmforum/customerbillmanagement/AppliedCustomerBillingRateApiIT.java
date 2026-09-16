@@ -8,7 +8,11 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApiTestClient;
 import org.fiware.customerbillmanagement.api.AppliedCustomerBillingRateApiTestSpec;
-import org.fiware.customerbillmanagement.model.*;
+import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
+import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVOTestExample;
+import org.fiware.customerbillmanagement.model.BillRefVOTestExample;
+import org.fiware.customerbillmanagement.model.BillingAccountRefVOTestExample;
+import org.fiware.customerbillmanagement.model.ProductRefVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -25,13 +29,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.time.Clock;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

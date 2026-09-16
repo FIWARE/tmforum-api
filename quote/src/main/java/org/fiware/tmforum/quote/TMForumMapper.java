@@ -1,12 +1,24 @@
 package org.fiware.tmforum.quote;
 
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.quote.model.*;
+import org.fiware.quote.model.CharacteristicVO;
+import org.fiware.quote.model.EventSubscriptionVO;
+import org.fiware.quote.model.MoneyVO;
+import org.fiware.quote.model.NoteVO;
+import org.fiware.quote.model.QuoteCreateVO;
+import org.fiware.quote.model.QuoteItemRelationshipVO;
+import org.fiware.quote.model.QuoteItemVO;
+import org.fiware.quote.model.QuoteUpdateVO;
+import org.fiware.quote.model.QuoteVO;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.product.*;
+import org.fiware.tmforum.product.Characteristic;
+import org.fiware.tmforum.product.Quote;
+import org.fiware.tmforum.product.QuoteItem;
+import org.fiware.tmforum.product.QuoteItemRelationship;
+import org.fiware.tmforum.product.QuoteItemState;
 import org.fiware.tmforum.resource.Note;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

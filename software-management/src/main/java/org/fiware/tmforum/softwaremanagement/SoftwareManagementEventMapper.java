@@ -1,5 +1,6 @@
 package org.fiware.tmforum.softwaremanagement;
 
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.fiware.softwaremanagement.model.ResourceSpecificationVO;
 import org.fiware.softwaremanagement.model.ResourceVO;
@@ -7,9 +8,23 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.notification.ModuleEventMapper;
-import org.fiware.tmforum.resource.*;
+import org.fiware.tmforum.resource.ApiResource;
+import org.fiware.tmforum.resource.ApiSpecification;
+import org.fiware.tmforum.resource.HostingPlatformRequirement;
+import org.fiware.tmforum.resource.HostingPlatformRequirementSpecification;
+import org.fiware.tmforum.resource.InstalledSoftware;
+import org.fiware.tmforum.resource.LogicalResource;
+import org.fiware.tmforum.resource.LogicalResourceSpecification;
+import org.fiware.tmforum.resource.PhysicalResource;
+import org.fiware.tmforum.resource.PhysicalResourceSpecification;
+import org.fiware.tmforum.resource.Resource;
+import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.resource.SoftwareResource;
+import org.fiware.tmforum.resource.SoftwareResourceSpecification;
+import org.fiware.tmforum.resource.SoftwareSpecification;
+import org.fiware.tmforum.resource.SoftwareSupportPackage;
+import org.fiware.tmforum.resource.SoftwareSupportPackageSpecification;
 
-import javax.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

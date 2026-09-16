@@ -14,7 +14,7 @@ import org.fiware.tmforum.resource.ResourceCategory;
 import org.fiware.tmforum.resource.ResourceSpecification;
 import org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

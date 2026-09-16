@@ -7,7 +7,14 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.account.api.FinancialAccountApiTestClient;
 import org.fiware.account.api.FinancialAccountApiTestSpec;
-import org.fiware.account.model.*;
+import org.fiware.account.model.FinancialAccountCreateVO;
+import org.fiware.account.model.FinancialAccountCreateVOTestExample;
+import org.fiware.account.model.FinancialAccountUpdateVO;
+import org.fiware.account.model.FinancialAccountUpdateVOTestExample;
+import org.fiware.account.model.FinancialAccountVO;
+import org.fiware.account.model.FinancialAccountVOTestExample;
+import org.fiware.account.model.RelatedPartyVO;
+import org.fiware.account.model.RelatedPartyVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.FinancialAccount;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -30,7 +37,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

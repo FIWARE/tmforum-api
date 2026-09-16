@@ -6,7 +6,7 @@ import org.fiware.tmforum.common.exception.NonExistentReferenceException;
 import org.fiware.tmforum.common.repository.ReferencesRepository;
 import reactor.core.publisher.Mono;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;

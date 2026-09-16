@@ -16,7 +16,7 @@ public interface NGSIMapper {
         if (entityFragmentVO.getAdditionalProperties() != null) {
             entityVO.getAdditionalProperties().clear();
         }
-        entityVO.getAdditionalProperties().entrySet().forEach(entry -> entityFragmentVO.setAdditionalProperties(entry.getKey(), entry.getValue()));
+        entityVO.getAdditionalProperties().forEach(entityFragmentVO::setAdditionalProperties);
 
         entityFragmentVO.setAtContext(entityVO.getAtContext());
         entityFragmentVO.setLocation(entityVO.getLocation());

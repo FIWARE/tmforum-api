@@ -13,7 +13,7 @@ import org.fiware.usagemanagement.model.UsageSpecificationVO;
 import org.fiware.usagemanagement.model.UsageStatusTypeVO;
 import org.fiware.usagemanagement.model.UsageVO;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @RequiredArgsConstructor

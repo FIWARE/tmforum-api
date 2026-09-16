@@ -22,7 +22,7 @@ import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
 import org.fiware.tmforum.resourcefunction.domain.ResourceGraphRelationship;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,15 @@
 package org.fiware.tmforum.agreement;
 
-import org.fiware.agreement.model.*;
+import org.fiware.agreement.model.AgreementCreateVO;
+import org.fiware.agreement.model.AgreementSpecCharacteristicValueVO;
+import org.fiware.agreement.model.AgreementSpecificationCreateVO;
+import org.fiware.agreement.model.AgreementSpecificationUpdateVO;
+import org.fiware.agreement.model.AgreementSpecificationVO;
+import org.fiware.agreement.model.AgreementUpdateVO;
+import org.fiware.agreement.model.AgreementVO;
+import org.fiware.agreement.model.CharacteristicVO;
+import org.fiware.agreement.model.EventSubscriptionVO;
+import org.fiware.agreement.model.TimePeriodVO;
 import org.fiware.tmforum.agreement.domain.Agreement;
 import org.fiware.tmforum.agreement.domain.AgreementSpecCharacteristicValue;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;

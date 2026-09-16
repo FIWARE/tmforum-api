@@ -13,7 +13,7 @@ import org.fiware.productcatalog.model.ProductOfferingVO;
 import org.fiware.productcatalog.model.ProductSpecificationVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @RequiredArgsConstructor

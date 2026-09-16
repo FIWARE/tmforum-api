@@ -24,7 +24,7 @@ import org.fiware.tmforum.common.CommonConstants;
 public class ClientTrackingRedisCache extends RedisCache {
     public ClientTrackingRedisCache(DefaultRedisCacheConfiguration defaultRedisCacheConfiguration,
                                     RedisCacheConfiguration redisCacheConfiguration,
-                                    ConversionService<?> conversionService, BeanLocator beanLocator) {
+                                    ConversionService conversionService, BeanLocator beanLocator) {
         super(defaultRedisCacheConfiguration, redisCacheConfiguration, conversionService, beanLocator);
     }
 

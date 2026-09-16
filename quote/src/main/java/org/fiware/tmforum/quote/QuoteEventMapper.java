@@ -9,7 +9,7 @@ import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.notification.ModuleEventMapper;
 import org.fiware.tmforum.product.Quote;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

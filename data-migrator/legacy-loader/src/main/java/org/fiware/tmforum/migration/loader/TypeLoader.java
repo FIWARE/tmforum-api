@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.product.ProductSpecification;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
