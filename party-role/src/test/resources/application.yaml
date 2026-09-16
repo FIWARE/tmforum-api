@@ -6,7 +6,7 @@ micronaut:
         - application/ld+json
 
   server:
-    port: 8632
+    port: -1
 
   metrics:
     enabled: false
