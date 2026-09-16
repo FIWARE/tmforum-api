@@ -95,6 +95,35 @@ public abstract class AbstractApiController<T> {
 				.then(Mono.just(HttpResponse.noContent()));
 	}
 
+	/**
+	 * Rejects {@code offset}/{@code limit} values that are not integers.
+	 * <p>
+	 * Both are declared as {@code @Nullable Integer} on the generated api interfaces, so Micronaut
+	 * binds {@code null} when the received value cannot be converted to one. By the time the request
+	 * reaches the controller, an invalid value is therefore indistinguishable from an absent one and
+	 * would be answered with the default page instead of being reported - hence the raw values are
+	 * taken from the request itself.
+	 * </p>
+	 *
+	 * @param request the request to validate the pagination parameters of
+	 * @throws TmForumException if one of the parameters was provided with a non-integer value
+	 */
+	private void validatePaginationParameters(HttpRequest<Object> request) {
+		Stream.of(QueryParser.OFFSET_KEY, QueryParser.LIMIT_KEY)
+				.forEach(parameterName -> request.getParameters()
+						.getAll(parameterName)
+						.forEach(value -> validateIntegerParameter(parameterName, value)));
+	}
+
+	private static void validateIntegerParameter(String parameterName, String value) {
+		try {
+			Integer.parseInt(value.trim());
+		} catch (NumberFormatException e) {
+			throw new TmForumException(String.format("%s is not a valid value for %s.", value, parameterName),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+	}
+
 	protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
@@ -104,6 +133,7 @@ public abstract class AbstractApiController<T> {
 			log.warn("The original request is not available, no filters will be applied.");
 		} else {
 			HttpRequest<Object> theRequest = optionalHttpRequest.get();
+			validatePaginationParameters(theRequest);
 			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
 			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
 			orderBy = queryParser.toOrderBy(entityClass, parameters);
@@ -161,6 +191,7 @@ public abstract class AbstractApiController<T> {
 			log.warn("The original request is not available, no filters will be applied.");
 		} else {
 			HttpRequest<Object> theRequest = optionalHttpRequest.get();
+			validatePaginationParameters(theRequest);
 			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
 			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
 			orderBy = queryParser.toOrderBy(queryClass, parameters);
