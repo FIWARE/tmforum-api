@@ -506,6 +506,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				"Base type and sub-type resourceSpecifications must all be returned by the same listing call.");
 		assertEquals(String.valueOf(totalCount), fullResponse.getHeaders().get("X-Total-Count"),
 				"X-Total-Count must reflect the combined total across all sub-types, not just the base type.");
+		assertEquals(String.valueOf(totalCount), fullResponse.getHeaders().get("X-Result-Count"),
+				"X-Result-Count must reflect the number of entities in the payload, which is the full set here.");
 
 		int limit = 2;
 		HttpResponse<List<ResourceSpecificationVO>> firstPage = callAndCatch(
@@ -516,6 +518,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				"A page must never contain more than the requested limit, regardless of how many sub-types exist.");
 		assertEquals(String.valueOf(totalCount), firstPage.getHeaders().get("X-Total-Count"),
 				"X-Total-Count on a partial page must still reflect the full combined total.");
+		assertEquals(String.valueOf(limit), firstPage.getHeaders().get("X-Result-Count"),
+				"X-Result-Count on a partial page must reflect the page's size, not the full total.");
 
 		HttpResponse<List<ResourceSpecificationVO>> secondPage = callAndCatch(
 				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, limit, limit));
@@ -530,6 +534,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				"A page that doesn't contain the full result set must be reported as 206, per TMF630.");
 		assertEquals(totalCount - 2 * limit, thirdPage.getBody().get().size(),
 				"The final page must contain exactly the remaining items across all sub-types.");
+		assertEquals(String.valueOf(totalCount - 2 * limit), thirdPage.getHeaders().get("X-Result-Count"),
+				"X-Result-Count on the final page must reflect the remaining items, not the requested limit.");
 
 		List<String> pagedIds = new ArrayList<>();
 		firstPage.getBody().get().forEach(vo -> pagedIds.add(vo.getId()));
