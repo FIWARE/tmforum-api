@@ -18,6 +18,13 @@
         <module>update-writer</module>
         <module>migrator</module>
     </modules>
+    <dependencies>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
 
     <properties>
         <version.io.fabric8.docker-maven-plugin>0.48.1</version.io.fabric8.docker-maven-plugin>
