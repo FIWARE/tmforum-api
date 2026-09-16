@@ -1,5 +1,10 @@
 micronaut:
 
+  codec:
+    json:
+      additional-types:
+        - application/ld+json
+
   server:
     port: 8641
 

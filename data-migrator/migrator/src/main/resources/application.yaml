@@ -1,4 +1,9 @@
 micronaut:
+
+  codec:
+    json:
+      additional-types:
+        - application/ld+json
   http:
     services:
       read-timeout: 30s
