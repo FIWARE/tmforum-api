@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,10 +74,11 @@ class AbstractApiControllerTest {
 	public void listRejectsNonIntegerPaginationParameters(String message, String queryString) {
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(TmForumRepository.class));
-		ServerRequestContext.set(HttpRequest.GET("/resource" + queryString));
+		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
-		TmForumException exception = assertThrows(TmForumException.class,
+		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
 				() -> controller.list(null, null, null, MyPojo.class), message);
+		TmForumException exception = ServerRequestContext.with(request, assertion);
 
 		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason(), message);
 	}
@@ -86,10 +88,11 @@ class AbstractApiControllerTest {
 	public void listPolymorphicRejectsNonIntegerPaginationParameters(String message, String queryString) {
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(TmForumRepository.class));
-		ServerRequestContext.set(HttpRequest.GET("/resource" + queryString));
+		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
-		TmForumException exception = assertThrows(TmForumException.class,
+		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
 				() -> controller.listPolymorphic(null, null, null, MyPojo.class, type -> MyPojo.class), message);
+		TmForumException exception = ServerRequestContext.with(request, assertion);
 
 		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason(), message);
 	}
@@ -114,11 +117,13 @@ class AbstractApiControllerTest {
 	public void listAcceptsIntegerPaginationParameters() {
 		TmForumRepository repository = mock(TmForumRepository.class);
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
-		ServerRequestContext.set(HttpRequest.GET("/resource?offset=10&limit=5"));
+		HttpRequest<?> request = HttpRequest.GET("/resource?offset=10&limit=5");
 		when(repository.findEntities(any(), any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 10, 5, null)));
 
-		controller.list(10, 5, null, MyPojo.class).block();
+		ServerRequestContext.with(request, () -> {
+			controller.list(10, 5, null, MyPojo.class).block();
+		});
 
 		verify(repository).findEntities(eq(10), eq(5), any(), any(), any(), any(), any());
 	}
