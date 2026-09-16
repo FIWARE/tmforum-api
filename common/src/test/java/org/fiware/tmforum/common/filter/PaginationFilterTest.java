@@ -5,9 +5,13 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,6 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PaginationFilterTest {
 
 	private static final URI BASE_URI = URI.create("https://example.com");
+
+	/** Number of entities matching the query, only known if the broker reports it. */
+	private static final String TOTAL_COUNT_HEADER = "X-Total-Count";
+
+	/** Number of entities contained in the response's payload. */
+	private static final String RESULT_COUNT_HEADER = "X-Result-Count";
+
 	private final PaginationFilter filter = new PaginationFilter();
 
 	@Test
@@ -130,7 +141,7 @@ class PaginationFilterTest {
 
 		filter.addPaginationLink(request, response);
 
-		assertEquals("25", response.getHeaders().get("X-Total-Count"));
+		assertEquals("25", response.getHeaders().get(TOTAL_COUNT_HEADER));
 		assertEquals(HttpStatus.PARTIAL_CONTENT, response.getStatus());
 	}
 
@@ -158,7 +169,55 @@ class PaginationFilterTest {
 
 		filter.addPaginationLink(request, response);
 
-		assertNull(response.getHeaders().get("X-Total-Count"));
+		assertNull(response.getHeaders().get(TOTAL_COUNT_HEADER));
 		assertEquals(HttpStatus.OK, response.getStatus());
+	}
+
+	/**
+	 * The returned count is always known once a list endpoint ran, so - unlike the total - the header
+	 * has to be set no matter whether the broker reported a total and no matter how full the page is.
+	 *
+	 * @param message       description of the concrete case
+	 * @param returnedCount number of entities in the payload
+	 * @param totalCount    number of matching entities, {@code null} if the broker didn't report one
+	 */
+	@ParameterizedTest
+	@MethodSource("providePageSizes")
+	public void addPaginationLinkSetsResultCountHeader(String message, int returnedCount, Integer totalCount) {
+		HttpRequest<?> request = HttpRequest.GET("/resource?offset=0&limit=10")
+				.setAttribute(PaginationFilter.OFFSET_ATTR, 0)
+				.setAttribute(PaginationFilter.LIMIT_ATTR, 10)
+				.setAttribute(PaginationFilter.RETURNED_COUNT_ATTR, returnedCount);
+		if (totalCount != null) {
+			request.setAttribute(PaginationFilter.TOTAL_COUNT_ATTR, totalCount);
+		}
+		MutableHttpResponse<Object> response = HttpResponse.ok();
+
+		filter.addPaginationLink(request, response);
+
+		assertEquals(String.valueOf(returnedCount), response.getHeaders().get(RESULT_COUNT_HEADER), message);
+	}
+
+	private static Stream<Arguments> providePageSizes() {
+		return Stream.of(
+				Arguments.of("A full page without a total should report its own size.", 10, null),
+				Arguments.of("A partial page without a total should report its own size.", 4, null),
+				Arguments.of("An empty page without a total should report zero.", 0, null),
+				Arguments.of("A page of a larger result set should report the page's size, not the total.", 10, 25),
+				Arguments.of("A complete result set should report its size.", 10, 10),
+				Arguments.of("An empty result set should report zero.", 0, 0));
+	}
+
+	@Test
+	public void addPaginationLinkSetsNoHeadersOnNonListEndpoints() {
+		// create/patch/delete/get-by-id never set the pagination attributes - the filter must not
+		// claim a result count for a response that isn't a list.
+		HttpRequest<?> request = HttpRequest.GET("/resource/urn:ngsi-ld:resource:my-resource");
+		MutableHttpResponse<Object> response = HttpResponse.ok();
+
+		filter.addPaginationLink(request, response);
+
+		assertNull(response.getHeaders().get(RESULT_COUNT_HEADER));
+		assertNull(response.getHeaders().get(TOTAL_COUNT_HEADER));
 	}
 }

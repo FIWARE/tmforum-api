@@ -33,6 +33,11 @@ import java.util.Optional;
  * </p>
  *
  * <p>
+ * {@code X-Result-Count} (the number of entities in this response's payload, per TMF630) is added to
+ * every paginated response, since the returned count is always known once the list endpoint ran.
+ * </p>
+ *
+ * <p>
  * {@code X-Total-Count} and the {@code last} link are only added when
  * {@link org.fiware.tmforum.common.configuration.GeneralProperties#getCountHeader()} is configured
  * for the active broker profile and the broker actually sent that header (see
@@ -54,6 +59,7 @@ public class PaginationFilter implements HttpServerFilter, Ordered {
 	private static final String OFFSET_PARAM = "offset";
 	private static final String LIMIT_PARAM = "limit";
 	private static final String TOTAL_COUNT_HEADER = "X-Total-Count";
+	private static final String RESULT_COUNT_HEADER = "X-Result-Count";
 
 	@Override
 	public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
@@ -77,6 +83,7 @@ public class PaginationFilter implements HttpServerFilter, Ordered {
 		URI baseUri = (URI) request.getAttribute(ForwardedForFilter.REQ_ATTR).orElse(URI.create(""));
 		List<String> linkEntries = buildLinkEntries(request, baseUri, offset, limit, returnedCount, totalCount);
 		response.header(HttpHeaders.LINK, String.join(", ", linkEntries));
+		response.header(RESULT_COUNT_HEADER, String.valueOf(returnedCount));
 
 		if (totalCount != null) {
 			response.header(TOTAL_COUNT_HEADER, String.valueOf(totalCount));
