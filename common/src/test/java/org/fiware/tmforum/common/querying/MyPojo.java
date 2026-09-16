@@ -22,6 +22,7 @@ public class MyPojo {
 	private SubObject sub;
 	private SubObject otherNamedSub;
 	private Integer temperature;
+	private Boolean active;
 	private RelObject rel;
 	private List<RelObject> relList;
 	private Instant createdAt;
@@ -69,6 +70,16 @@ public class MyPojo {
 	@AttributeSetter(value = AttributeType.PROPERTY, targetName = "temperature", targetClass = Integer.class)
 	public void setTemperature(Integer temperature) {
 		this.temperature = temperature;
+	}
+
+	@AttributeGetter(value = AttributeType.PROPERTY, targetName = "active")
+	public Boolean getActive() {
+		return active;
+	}
+
+	@AttributeSetter(value = AttributeType.PROPERTY, targetName = "active", targetClass = Boolean.class)
+	public void setActive(Boolean active) {
+		this.active = active;
 	}
 
 	@AttributeGetter(value = AttributeType.PROPERTY, targetName = "sub")
@@ -128,6 +139,11 @@ public class MyPojo {
 
 	public MyPojo temperature(Integer temperature) {
 		this.temperature = temperature;
+		return this;
+	}
+
+	public MyPojo active(Boolean active) {
+		this.active = active;
 		return this;
 	}
 
