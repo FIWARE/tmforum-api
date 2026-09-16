@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.querying;
 
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class QueryParserTest {
 
@@ -255,5 +257,132 @@ class QueryParserTest {
 		QueryParser qp = new QueryParser(properties);
 		assertNull(qp.toOrderBy(MyPojo.class, Map.of(QueryParser.SORT_KEY, List.of(""))),
 				"A blank sort value should not produce an orderBy.");
+	}
+
+	/**
+	 * Boolean and number values are literals in the NGSI-LD query language and are therefore not
+	 * quoted. A value that is not a valid literal of the attribute's type would produce a query that
+	 * the broker rejects, so it has to be rejected as an invalid query instead.
+	 *
+	 * @param message      description of the concrete case
+	 * @param tmForumQuery the query to translate
+	 */
+	@ParameterizedTest
+	@MethodSource("invalidTypedValueQueries")
+	public void testInvalidTypedValuesAreRejected(String message, String tmForumQuery) {
+		QueryParser qp = new QueryParser(new GeneralProperties());
+		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
+	}
+
+	private static Stream<Arguments> invalidTypedValueQueries() {
+		return Stream.of(
+				Arguments.of("A non-numeric value for a number attribute should be rejected.", "temperature=my-non-int"),
+				Arguments.of("An empty value for a number attribute should be rejected.", "temperature="),
+				// Double.parseDouble accepts all of those, the query language does not
+				Arguments.of("NaN should be rejected for a number attribute.", "temperature=NaN"),
+				Arguments.of("Infinity should be rejected for a number attribute.", "temperature=Infinity"),
+				Arguments.of("A java type suffix should be rejected for a number attribute.", "temperature=1d"),
+				Arguments.of("A hexadecimal float should be rejected for a number attribute.", "temperature=0x1p1"),
+				Arguments.of("A non-boolean value for a boolean attribute should be rejected.", "active=my-non-bool"),
+				Arguments.of("An upper-case boolean should be rejected, the brokers only accept lower-case.",
+						"active=True"),
+				Arguments.of("An empty value for a boolean attribute should be rejected.", "active="),
+				// the value list is split before the values are encoded, so every entry is checked
+				Arguments.of("An invalid value inside a list should be rejected.", "temperature=1,my-non-int"),
+				Arguments.of("An invalid value inside a boolean list should be rejected.", "active=true,my-non-bool"),
+				// the same check applies to the relational operators
+				Arguments.of("An invalid value should also be rejected for a range query.",
+						"temperature.gt=my-non-int"));
+	}
+
+	/**
+	 * Booleans have no order to compare them by, so the ordering operators cannot be applied to them.
+	 * Forwarding such a query is not an option - Orion-LD 1.9.0 terminates on it.
+	 *
+	 * @param message      description of the concrete case
+	 * @param tmForumQuery the query to translate
+	 */
+	@ParameterizedTest
+	@MethodSource("orderedBooleanQueries")
+	public void testOrderingOperatorsAreRejectedForBooleans(String message, String tmForumQuery) {
+		QueryParser qp = new QueryParser(new GeneralProperties());
+		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
+	}
+
+	private static Stream<Arguments> orderedBooleanQueries() {
+		return Stream.of(
+				Arguments.of("A boolean cannot be greater than another one.", "active.gt=true"),
+				Arguments.of("A boolean cannot be greater than or equal to another one.", "active.gte=true"),
+				Arguments.of("A boolean cannot be less than another one.", "active.lt=true"),
+				Arguments.of("A boolean cannot be less than or equal to another one.", "active.lte=true"),
+				// the textual operators have symbolic counterparts, both end up as the same query part
+				Arguments.of("The symbolic operators should be rejected as well.", "active>true"),
+				Arguments.of("The symbolic operators should be rejected as well.", "active<=true"));
+	}
+
+	/**
+	 * The rejection has to stay limited to the booleans - ordering numbers and strings is well defined
+	 * and supported by the brokers.
+	 *
+	 * @param message      description of the concrete case
+	 * @param tmForumQuery the query to translate
+	 * @param ngsiLdQuery  the expected translation
+	 */
+	@ParameterizedTest
+	@MethodSource("orderedNonBooleanQueries")
+	public void testOrderingOperatorsAreKeptForOrderedTypes(String message, String tmForumQuery,
+			QueryParams ngsiLdQuery) {
+		QueryParser qp = new QueryParser(new GeneralProperties());
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
+	}
+
+	private static Stream<Arguments> orderedNonBooleanQueries() {
+		return Stream.of(
+				Arguments.of("Numbers should stay comparable by order.", "temperature.gt=20",
+						new QueryParams(null, null, "temperature>20")),
+				Arguments.of("Numbers should stay comparable by order.", "temperature.lte=20",
+						new QueryParams(null, null, "temperature<=20")),
+				Arguments.of("Strings should stay comparable by order.", "color.gt=blue",
+						new QueryParams(null, null, "color>\"blue\"")),
+				Arguments.of("Booleans should stay comparable by equality.", "active=true",
+						new QueryParams(null, null, "active==true")));
+	}
+
+	/**
+	 * The rejection has to stay limited to the invalid values - everything the query language accepts
+	 * as a literal still has to be translated.
+	 *
+	 * @param message      description of the concrete case
+	 * @param tmForumQuery the query to translate
+	 * @param ngsiLdQuery  the expected translation
+	 */
+	@ParameterizedTest
+	@MethodSource("validTypedValueQueries")
+	public void testValidTypedValuesAreTranslated(String message, String tmForumQuery, QueryParams ngsiLdQuery) {
+		QueryParser qp = new QueryParser(new GeneralProperties());
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
+	}
+
+	private static Stream<Arguments> validTypedValueQueries() {
+		return Stream.of(
+				Arguments.of("An integer should be accepted.", "temperature=20",
+						new QueryParams(null, null, "temperature==20")),
+				Arguments.of("A negative number should be accepted.", "temperature=-20",
+						new QueryParams(null, null, "temperature==-20")),
+				Arguments.of("A decimal number should be accepted.", "temperature=20.5",
+						new QueryParams(null, null, "temperature==20.5")),
+				Arguments.of("A number in exponential notation should be accepted.", "temperature=2e3",
+						new QueryParams(null, null, "temperature==2e3")),
+				Arguments.of("Both boolean literals should be accepted.", "active=true",
+						new QueryParams(null, null, "active==true")),
+				Arguments.of("Both boolean literals should be accepted.", "active=false",
+						new QueryParams(null, null, "active==false")),
+				// the brokers ignore it anyway, so it is cleaned up instead of being rejected
+				Arguments.of("Surrounding whitespace should be tolerated.", "temperature= 20 ",
+						new QueryParams(null, null, "temperature==20")),
+				// attributes that are unknown to the queried class are typed by their value, so they
+				// can never conflict with the declared type and stay a plain string
+				Arguments.of("An unknown attribute should not be type-checked.", "unknownAttribute=my-non-int",
+						new QueryParams(null, null, "unknownAttribute==\"my-non-int\"")));
 	}
 }

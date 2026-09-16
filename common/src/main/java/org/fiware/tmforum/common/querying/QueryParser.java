@@ -19,6 +19,7 @@ import javax.smartcardio.ATR;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,6 +81,30 @@ public class QueryParser {
 
     // TMForum marks a sort field as descending by prefixing it with "-", e.g. sort=name,-billDate
     private static final String SORT_DESCENDING_PREFIX = "-";
+
+    /**
+     * Boolean literals of the NGSI-LD query language. The brokers only accept them lower-case,
+     * e.g. "True" is not a boolean but an unquoted string and breaks the query.
+     */
+    private static final Pattern BOOLEAN_LITERAL_PATTERN = Pattern.compile("true|false");
+
+    /**
+     * The operators comparing by order, as opposed to the ones comparing by equality. They require
+     * the compared values to have an order, which booleans do not.
+     */
+    private static final Set<String> ORDERING_OPERATORS = Set.of(
+            GREATER_THAN.getNgsiLdOperator(),
+            GREATER_THAN_EQUALS.getNgsiLdOperator(),
+            LESS_THAN.getNgsiLdOperator(),
+            LESS_THAN_EQUALS.getNgsiLdOperator());
+
+    /**
+     * Number literals of the NGSI-LD query language, which follow the JSON number syntax. Java's
+     * {@link Double#parseDouble} is deliberately not used for the check: it also accepts "NaN",
+     * "Infinity", "1d" and hex floats like "0x1p1", none of which are valid in a query.
+     */
+    private static final Pattern NUMBER_LITERAL_PATTERN =
+            Pattern.compile("-?(0|[1-9]\\d*)(\\.\\d+)?([eE][-+]?\\d+)?");
 
     // NGSI-LD's orderBy suffixes a field with ";desc" to sort descending; omitting it means ascending
     private static final String ORDER_BY_DESCENDING_SUFFIX = ";desc";
@@ -322,13 +347,59 @@ public class QueryParser {
         }
     }
 
-    private String encodeValue(String value, QueryAttributeType type) {
-        value = switch (type) {
+    /**
+     * Rejects the ordering operators ({@code .gt}, {@code .gte}, {@code .lt}, {@code .lte}) for
+     * boolean attributes, since there is no order to compare two booleans by. Brokers do not handle
+     * such a query gracefully - Orion-LD 1.9.0 terminates on it - so it must not be forwarded.
+     *
+     * @param queryPart          the query part to check
+     * @param queryAttributeType type of the queried attribute on the queried class
+     * @throws QueryException if the operator cannot be applied to the attribute's type
+     */
+    private static void validateOperator(QueryPart queryPart, QueryAttributeType queryAttributeType) {
+        if (queryAttributeType == QueryAttributeType.BOOLEAN
+                && ORDERING_OPERATORS.contains(queryPart.operator())) {
+            throw new QueryException(String.format("%s cannot be compared with %s, it is a boolean attribute.",
+                    queryPart.attribute(), queryPart.operator()));
+        }
+    }
+
+    /**
+     * Encodes a single filter value for the NGSI-LD query language, according to the type the
+     * attribute has on the queried class. Only string values are quoted - boolean and number values
+     * are literals in the query language and therefore have to be passed through unquoted, which
+     * makes them part of the query's grammar: a value that is not a valid literal produces a query
+     * the broker rejects. Such values are rejected here instead, so the caller gets a 400 explaining
+     * the invalid parameter, rather than a 500 from the failed broker call.
+     *
+     * @param attribute name of the queried attribute, only used for the error message
+     * @param value     the value to encode
+     * @param type      type of the attribute on the queried class
+     * @return the encoded value, ready to be concatenated into the NGSI-LD query
+     */
+    private String encodeValue(String attribute, String value, QueryAttributeType type) {
+        return switch (type) {
             case STRING -> encodeStringValue(value);
-            case BOOLEAN -> value;
-            case NUMBER -> value;
+            case BOOLEAN -> validateLiteral(attribute, value, BOOLEAN_LITERAL_PATTERN, "boolean");
+            case NUMBER -> validateLiteral(attribute, value, NUMBER_LITERAL_PATTERN, "number");
         };
-        return value;
+    }
+
+    /**
+     * @param attribute name of the queried attribute, only used for the error message
+     * @param value     the value to check
+     * @param pattern   literal syntax the value has to comply with
+     * @param typeName  name of the expected type, only used for the error message
+     * @return the value, trimmed of the surrounding whitespace the brokers ignore anyway
+     * @throws QueryException if the value is not a valid literal of the expected type
+     */
+    private static String validateLiteral(String attribute, String value, Pattern pattern, String typeName) {
+        String trimmedValue = value.trim();
+        if (!pattern.matcher(trimmedValue).matches()) {
+            throw new QueryException(
+                    String.format("%s is not a valid %s value for attribute %s.", value, typeName, attribute));
+        }
+        return trimmedValue;
     }
 
     private String encodeStringValue(String value) {
@@ -381,10 +452,12 @@ public class QueryParser {
 
     private String toQueryString(QueryPart queryPart, QueryAttributeType queryAttributeType) {
 
+        validateOperator(queryPart, queryAttributeType);
+
         if (queryPart.value().contains(TMFORUM_OR_VALUE)) {
             String theQuery = "";
             List<String> encodedValues = new ArrayList<>(Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
-                    .map(v -> encodeValue(v, queryAttributeType))
+                    .map(v -> encodeValue(queryPart.attribute(), v, queryAttributeType))
                     .toList());
 
             if (generalProperties.getIncludeAttributeInList()) {
@@ -410,7 +483,8 @@ public class QueryParser {
             return theQuery;
         }
 
-        return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodeValue(queryPart.value(), queryAttributeType));
+        return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(),
+                encodeValue(queryPart.attribute(), queryPart.value(), queryAttributeType));
     }
 
     private QueryPart paramsToQueryPart(String parameter, Operator operator) {
