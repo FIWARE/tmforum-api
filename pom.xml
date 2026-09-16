@@ -946,13 +946,6 @@
                                         <goal>build</goal>
                                     </goals>
                                 </execution>
-                                <execution>
-                                    <id>install</id>
-                                    <phase>install</phase>
-                                    <goals>
-                                        <goal>build</goal>
-                                    </goals>
-                                </execution>
                             </executions>
                         </plugin>
                     </plugins>
