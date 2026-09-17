@@ -1,14 +1,18 @@
 package org.fiware.tmforum.productinventory;
 
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.productinventory.model.*;
+import org.fiware.productinventory.model.CharacteristicVO;
+import org.fiware.productinventory.model.EventSubscriptionVO;
+import org.fiware.productinventory.model.ProductCreateVO;
+import org.fiware.productinventory.model.ProductUpdateVO;
+import org.fiware.productinventory.model.ProductVO;
+import org.fiware.productinventory.model.RelatedProductOrderItemVO;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Characteristic;
 import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.product.RelatedProductOrderItemRef;
-import org.fiware.tmforum.service.CharacteristicValueSpecification;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

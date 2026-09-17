@@ -1,18 +1,18 @@
 package org.fiware.tmforum.common.mapping;
 
-import io.github.wistefan.mapping.UnmappedProperty;
-import org.fiware.tmforum.common.domain.Entity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.Method;
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 /**
  * Unit tests for the schema-driven array rebuild applied in
@@ -91,15 +91,15 @@ class BaseMapperTest {
 	}
 
 	private static Object invokeCoerce(String valueJson, String schemaJson) throws Exception {
-		com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+		ObjectMapper om = JsonMapper.builder().build();
 		Object value = om.readValue(valueJson, Object.class);
 		return invokeCoerceWithRawValue(value, schemaJson);
 	}
 
 	private static Object invokeCoerceWithRawValue(Object value, String schemaJson) throws Exception {
-		com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-		com.fasterxml.jackson.databind.JsonNode schemaNode = om.readTree(schemaJson);
-		Method m = BaseMapper.class.getDeclaredMethod("coerceToSchema", Object.class, com.fasterxml.jackson.databind.JsonNode.class);
+		ObjectMapper om = JsonMapper.builder().build();
+		JsonNode schemaNode = om.readTree(schemaJson);
+		Method m = BaseMapper.class.getDeclaredMethod("coerceToSchema", Object.class, tools.jackson.databind.JsonNode.class);
 		m.setAccessible(true);
 		return m.invoke(null, value, schemaNode);
 	}

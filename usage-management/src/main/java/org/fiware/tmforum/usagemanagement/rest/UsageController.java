@@ -21,7 +21,7 @@ import org.fiware.usagemanagement.model.UsageUpdateVO;
 import org.fiware.usagemanagement.model.UsageVO;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

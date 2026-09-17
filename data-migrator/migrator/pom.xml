@@ -40,20 +40,8 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>${version.javax.inject}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -74,12 +62,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.kokuwa.micronaut</groupId>
-            <artifactId>micronaut-logging</artifactId>
-            <version>${version.io.kokuwa.micronaut.logging}</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>

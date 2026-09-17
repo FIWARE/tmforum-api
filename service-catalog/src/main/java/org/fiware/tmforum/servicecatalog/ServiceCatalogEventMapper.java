@@ -14,7 +14,7 @@ import org.fiware.tmforum.service.ServiceCategory;
 import org.fiware.tmforum.servicecatalog.domain.ServiceCatalog;
 import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

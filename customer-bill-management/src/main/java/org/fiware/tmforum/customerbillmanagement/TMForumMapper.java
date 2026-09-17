@@ -1,6 +1,17 @@
 package org.fiware.tmforum.customerbillmanagement;
 
-import org.fiware.customerbillmanagement.model.*;
+import io.github.wistefan.mapping.MappingException;
+import org.fiware.customerbillmanagement.model.AppliedBillingRateCharacteristicVO;
+import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateCreateVO;
+import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateUpdateVO;
+import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
+import org.fiware.customerbillmanagement.model.CustomerBillCreateVO;
+import org.fiware.customerbillmanagement.model.CustomerBillOnDemandCreateVO;
+import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
+import org.fiware.customerbillmanagement.model.CustomerBillUpdateVO;
+import org.fiware.customerbillmanagement.model.CustomerBillVO;
+import org.fiware.customerbillmanagement.model.EventSubscriptionVO;
+import org.fiware.customerbillmanagement.model.MoneyVO;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
@@ -9,7 +20,6 @@ import org.fiware.tmforum.customerbillmanagement.domain.AppliedBillingRateCharac
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand;
-import io.github.wistefan.mapping.MappingException;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

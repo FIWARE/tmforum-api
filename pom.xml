@@ -8,9 +8,9 @@
     <packaging>pom</packaging>
 
     <parent>
-        <groupId>io.micronaut</groupId>
+        <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>3.9.1</version>
+        <version>4.10.18</version>
     </parent>
 
     <developers>
@@ -60,10 +60,9 @@
     </modules>
 
     <properties>
-        <jdk.version>17</jdk.version>
-        <release.version>17</release.version>
-        <micronaut.version>3.9.1</micronaut.version>
-
+        <jdk.version>21</jdk.version>
+        <release.version>21</release.version>
+        <micronaut.version>4.10.18</micronaut.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- project info -->
@@ -87,40 +86,36 @@
         <image.tag>latest</image.tag>
 
         <!-- lazy dev -->
-        <version.org.mapstruct>1.4.2.Final</version.org.mapstruct>
-        <version.org.projectlombok>1.18.30</version.org.projectlombok>
+        <version.org.mapstruct>1.6.3</version.org.mapstruct>
+        <version.org.projectlombok>1.18.42</version.org.projectlombok>
         <version.com.google.guava>31.1-jre</version.com.google.guava>
 
         <!-- logging -->
-        <version.io.kokuwa.micronaut.logging>3.1.0</version.io.kokuwa.micronaut.logging>
-        <version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>4.8.3
+        <version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>5.13.2
         </version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>
 
         <!-- code gen -->
-        <version.org.openapitools.generator-maven-plugin>7.10.0</version.org.openapitools.generator-maven-plugin>
-        <version.io.kokuwa.micronaut.codegen>4.4.1</version.io.kokuwa.micronaut.codegen>
+        <version.org.openapitools.generator-maven-plugin>7.20.0</version.org.openapitools.generator-maven-plugin>
+        <version.io.kokuwa.micronaut.codegen>4.5.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.27</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.28</version.io.github.wistefan.ngsi-ld-mapping-java>
 
-        <!-- caching -->
-        <version.io.micronaut.redis.micronaut-redis-lettuce>5.4.0</version.io.micronaut.redis.micronaut-redis-lettuce>
 
 
         <!-- rx -->
         <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
-        <version.javax.inject>1</version.javax.inject>
-        <version.io.projectreactor.reactor-core>3.5.5</version.io.projectreactor.reactor-core>
         <version.io.github.resilience4j.resilience4j-retry>2.0.0</version.io.github.resilience4j.resilience4j-retry>
         <version.io.github.resilience4j.resilience4j-reactor>2.0.0</version.io.github.resilience4j.resilience4j-reactor>
 
         <!-- build -->
-        <version.org.codehaus.mojo.build-helper-maven-plugin>3.3.0</version.org.codehaus.mojo.build-helper-maven-plugin>
+        <version.io.fabric8.docker-maven-plugin>0.48.1</version.io.fabric8.docker-maven-plugin>
+        <version.org.codehaus.mojo.build-helper-maven-plugin>3.6.1</version.org.codehaus.mojo.build-helper-maven-plugin>
 
         <!-- test -->
         <version.io.kokuwa.maven.k3s-plugin>1.2.4</version.io.kokuwa.maven.k3s-plugin>
-        <version.org.mockito.mockito-all>1.10.19</version.org.mockito.mockito-all>
-        <version.org.mockito.mockito-junit-jupiter>4.8.1</version.org.mockito.mockito-junit-jupiter>
+        <version.org.mockito.mockito-core>5.22.0</version.org.mockito.mockito-core>
+        <version.org.mockito.mockito-junit-jupiter>5.22.0</version.org.mockito.mockito-junit-jupiter>
         <version.org.awaitility>4.0.3</version.org.awaitility>
         <version.org.jacoco.maven-plugin>0.8.12</version.org.jacoco.maven-plugin>
         <version.org.eluder.coveralls.maven-plugin>4.3.0</version.org.eluder.coveralls.maven-plugin>
@@ -131,7 +126,7 @@
         <version.com.google.code.findbugs.annotations>3.0.1u2</version.com.google.code.findbugs.annotations>
         <version.io.minio.minio>8.5.7</version.io.minio.minio>
         <coveralls.token>myToken</coveralls.token>
-        <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${artifactId}</jacoco.reportFolder>
+        <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${project.artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
@@ -156,35 +151,14 @@
         <dependencies>
             <!-- lazy dev -->
             <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${version.org.projectlombok}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
                 <version>${version.org.mapstruct}</version>
             </dependency>
             <dependency>
-                <groupId>javax.inject</groupId>
-                <artifactId>javax.inject</artifactId>
-                <version>${version.javax.inject}</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
-            <dependency>
-                <groupId>jakarta.validation</groupId>
-                <artifactId>jakarta.validation-api</artifactId>
-                <version>3.1.0</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.annotation</groupId>
-                <artifactId>jakarta.annotation-api</artifactId>
-                <version>3.0.0</version>
-            </dependency>
-            <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
-                <version>${version.org.mockito.mockito-all}</version>
+                <artifactId>mockito-core</artifactId>
+                <version>${version.org.mockito.mockito-core}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -210,19 +184,9 @@
                 <version>${version.io.github.wistefan.ngsi-ld-mapping-java}</version>
             </dependency>
             <dependency>
-                <groupId>io.projectreactor</groupId>
-                <artifactId>reactor-core</artifactId>
-                <version>${version.io.projectreactor.reactor-core}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.micronaut.redis</groupId>
-                <artifactId>micronaut-redis-lettuce</artifactId>
-                <version>${version.io.micronaut.redis.micronaut-redis-lettuce}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.networknt</groupId>
                 <artifactId>json-schema-validator</artifactId>
-                <version>1.5.4</version>
+                <version>3.0.0</version>
             </dependency>
             <dependency>
                 <groupId>io.minio</groupId>
@@ -246,7 +210,7 @@
                 <version>${version.org.codehaus.mojo.build-helper-maven-plugin}</version>
             </plugin>
             <plugin>
-                <groupId>io.micronaut.build</groupId>
+                <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
             </plugin>
             <plugin>
@@ -255,8 +219,7 @@
                 <configuration>
                     <source>${jdk.version}</source>
                     <target>${jdk.version}</target>
-                    <!-- Uncomment to enable incremental compilation -->
-                    <!-- <useIncrementalCompilation>false</useIncrementalCompilation> -->
+                    <useIncrementalCompilation>false</useIncrementalCompilation>
                     <annotationProcessorPaths combine.self="override">
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -274,9 +237,8 @@
                             <version>${micronaut.version}</version>
                         </path>
                         <path>
-                            <groupId>io.micronaut</groupId>
+                            <groupId>io.micronaut.validation</groupId>
                             <artifactId>micronaut-validation</artifactId>
-                            <version>${micronaut.version}</version>
                         </path>
                         <path>
                             <groupId>io.micronaut</groupId>
@@ -316,9 +278,8 @@
                                     <version>${micronaut.version}</version>
                                 </path>
                                 <path>
-                                    <groupId>io.micronaut</groupId>
+                                    <groupId>io.micronaut.validation</groupId>
                                     <artifactId>micronaut-validation</artifactId>
-                                    <version>${micronaut.version}</version>
                                 </path>
                                 <path>
                                     <groupId>io.micronaut</groupId>
@@ -538,6 +499,12 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <!-- docker -->
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>${version.io.fabric8.docker-maven-plugin}</version>
+                </plugin>
                 <!-- run tests -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -750,7 +717,7 @@
                         </plugin>
                         <plugin>
                             <artifactId>maven-resources-plugin</artifactId>
-                            <version>2.6</version>
+                            <version>3.4.0</version>
                             <executions>
                                 <execution>
                                     <id>copy-resources</id>
@@ -787,7 +754,7 @@
                                     </goals>
                                     <configuration>
                                         <from>
-                                            <image>registry.access.redhat.com/ubi8/openjdk-17:1.11-2</image>
+                                            <image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24-2</image>
                                         </from>
                                         <to>
                                             <image>api</image>
@@ -825,7 +792,7 @@
                         <plugin>
                             <groupId>io.fabric8</groupId>
                             <artifactId>docker-maven-plugin</artifactId>
-                            <version>0.42.1</version>
+                            <version>${version.io.fabric8.docker-maven-plugin}</version>
                             <executions>
                                 <execution>
                                     <id>run-test</id>
@@ -899,7 +866,7 @@
                             <!-- disables the micronaut plugin extension, that breaks the exectuion individual config -->
                             <configuration combine.self="override">
                                 <from>
-                                    <image>registry.access.redhat.com/ubi8/openjdk-17:1.23-3</image>
+                                    <image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24-2</image>
                                     <platforms>
                                         <platform>
                                             <architecture>amd64</architecture>
@@ -958,13 +925,6 @@
                                 <execution>
                                     <id>deploy</id>
                                     <phase>deploy</phase>
-                                    <goals>
-                                        <goal>build</goal>
-                                    </goals>
-                                </execution>
-                                <execution>
-                                    <id>install</id>
-                                    <phase>install</phase>
                                     <goals>
                                         <goal>build</goal>
                                     </goals>

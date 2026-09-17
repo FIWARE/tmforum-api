@@ -23,9 +23,13 @@ import org.fiware.tmforum.party.domain.organization.Organization;
 import org.fiware.tmforum.party.domain.organization.OrganizationIdentification;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Controller("${api.party-catalog.basepath:/}")

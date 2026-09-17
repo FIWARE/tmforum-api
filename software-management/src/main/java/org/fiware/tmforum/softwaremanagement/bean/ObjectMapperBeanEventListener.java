@@ -4,12 +4,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.softwaremanagement.model.*;
+import org.fiware.softwaremanagement.model.APISpecificationVO;
+import org.fiware.softwaremanagement.model.APIVO;
+import org.fiware.softwaremanagement.model.ConnectionSpecificationVO;
+import org.fiware.softwaremanagement.model.ConnectionVO;
+import org.fiware.softwaremanagement.model.HostingPlatformRequirementSpecificationVO;
+import org.fiware.softwaremanagement.model.HostingPlatformRequirementVO;
+import org.fiware.softwaremanagement.model.InstalledSoftwareVO;
+import org.fiware.softwaremanagement.model.LogicalResourceSpecificationVO;
+import org.fiware.softwaremanagement.model.LogicalResourceVO;
+import org.fiware.softwaremanagement.model.PhysicalResourceSpecificationVO;
+import org.fiware.softwaremanagement.model.PhysicalResourceVO;
+import org.fiware.softwaremanagement.model.ResourceGraphSpecificationVO;
+import org.fiware.softwaremanagement.model.ResourceGraphVO;
+import org.fiware.softwaremanagement.model.ResourceSpecificationVO;
+import org.fiware.softwaremanagement.model.ResourceVO;
+import org.fiware.softwaremanagement.model.SoftwareResourceSpecificationVO;
+import org.fiware.softwaremanagement.model.SoftwareResourceVO;
+import org.fiware.softwaremanagement.model.SoftwareSpecificationVO;
+import org.fiware.softwaremanagement.model.SoftwareSupportPackageSpecificationVO;
+import org.fiware.softwaremanagement.model.SoftwareSupportPackageVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
-
-import javax.inject.Singleton;
 
 @Singleton
 @RequiredArgsConstructor

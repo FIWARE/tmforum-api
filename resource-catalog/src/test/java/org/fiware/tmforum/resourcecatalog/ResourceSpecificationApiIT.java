@@ -8,7 +8,23 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApiTestClient;
 import org.fiware.resourcecatalog.api.ResourceSpecificationApiTestSpec;
-import org.fiware.resourcecatalog.model.*;
+import org.fiware.resourcecatalog.model.ConstraintRefVOTestExample;
+import org.fiware.resourcecatalog.model.FeatureSpecificationCharacteristicRelationshipVOTestExample;
+import org.fiware.resourcecatalog.model.FeatureSpecificationCharacteristicVOTestExample;
+import org.fiware.resourcecatalog.model.FeatureSpecificationRelationshipVOTestExample;
+import org.fiware.resourcecatalog.model.FeatureSpecificationVO;
+import org.fiware.resourcecatalog.model.FeatureSpecificationVOTestExample;
+import org.fiware.resourcecatalog.model.RelatedPartyVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceSpecificationCharacteristicRelationshipVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceSpecificationCharacteristicVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVO;
+import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVO;
+import org.fiware.resourcecatalog.model.ResourceSpecificationUpdateVOTestExample;
+import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
+import org.fiware.resourcecatalog.model.ResourceSpecificationVOTestExample;
+import org.fiware.resourcecatalog.model.TimePeriodVO;
+import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -35,7 +51,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -506,6 +522,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				"Base type and sub-type resourceSpecifications must all be returned by the same listing call.");
 		assertEquals(String.valueOf(totalCount), fullResponse.getHeaders().get("X-Total-Count"),
 				"X-Total-Count must reflect the combined total across all sub-types, not just the base type.");
+		assertEquals(String.valueOf(totalCount), fullResponse.getHeaders().get("X-Result-Count"),
+				"X-Result-Count must reflect the number of entities in the payload, which is the full set here.");
 
 		int limit = 2;
 		HttpResponse<List<ResourceSpecificationVO>> firstPage = callAndCatch(
@@ -516,6 +534,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				"A page must never contain more than the requested limit, regardless of how many sub-types exist.");
 		assertEquals(String.valueOf(totalCount), firstPage.getHeaders().get("X-Total-Count"),
 				"X-Total-Count on a partial page must still reflect the full combined total.");
+		assertEquals(String.valueOf(limit), firstPage.getHeaders().get("X-Result-Count"),
+				"X-Result-Count on a partial page must reflect the page's size, not the full total.");
 
 		HttpResponse<List<ResourceSpecificationVO>> secondPage = callAndCatch(
 				() -> resourceSpecificationApiTestClient.listResourceSpecification(null, null, limit, limit));
@@ -530,6 +550,8 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				"A page that doesn't contain the full result set must be reported as 206, per TMF630.");
 		assertEquals(totalCount - 2 * limit, thirdPage.getBody().get().size(),
 				"The final page must contain exactly the remaining items across all sub-types.");
+		assertEquals(String.valueOf(totalCount - 2 * limit), thirdPage.getHeaders().get("X-Result-Count"),
+				"X-Result-Count on the final page must reflect the remaining items, not the requested limit.");
 
 		List<String> pagedIds = new ArrayList<>();
 		firstPage.getBody().get().forEach(vo -> pagedIds.add(vo.getId()));

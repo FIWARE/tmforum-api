@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
           java-package: jdk
 
       - name: Ensure br_netfilter is enabled.
@@ -67,7 +67,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
           java-package: jdk
 
       - name: Execute tests
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
           java-package: jdk
 
       - name: Download all workflow run artifacts

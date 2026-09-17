@@ -9,7 +9,7 @@ import io.micronaut.http.client.exceptions.HttpClientException;
 import io.micronaut.http.server.exceptions.ExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * General handler for all un-catched {@link  QueryException}. Translates them into a proper 503.

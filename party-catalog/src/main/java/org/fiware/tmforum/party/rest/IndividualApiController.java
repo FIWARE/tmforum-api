@@ -21,9 +21,12 @@ import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.party.domain.individual.IndividualIdentification;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
-import javax.validation.Valid;
-import java.util.*;
+import jakarta.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Controller("${api.party-catalog.basepath:/}")

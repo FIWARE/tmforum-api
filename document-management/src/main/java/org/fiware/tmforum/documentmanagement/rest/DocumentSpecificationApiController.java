@@ -2,11 +2,13 @@ package org.fiware.tmforum.documentmanagement.rest;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.document.api.DocumentSpecificationApi;
 import org.fiware.document.model.DocumentSpecificationCreateVO;
 import org.fiware.document.model.DocumentSpecificationUpdateVO;
 import org.fiware.document.model.DocumentSpecificationVO;
+import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -16,13 +18,11 @@ import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
-import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.documentmanagement.AttachmentService;
 import org.fiware.tmforum.documentmanagement.TMForumMapper;
 import org.fiware.tmforum.documentmanagement.domain.DocumentSpecification;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.Nullable;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;

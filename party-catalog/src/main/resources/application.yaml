@@ -1,5 +1,10 @@
 micronaut:
 
+  codec:
+    json:
+      additional-types:
+        - application/ld+json
+
   server:
     port: 8633
 
@@ -17,23 +22,23 @@ micronaut:
         path: ngsi-ld/v1
         url: http://localhost:1026
         read-timeout: 30
----
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false
----
+
 endpoints:
   metrics:
     enabled: true
   health:
     enabled: true
 
----
-loggers:
+
+logger:
   levels:
     ROOT: WARN
 
----
+
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632

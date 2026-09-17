@@ -1,7 +1,21 @@
 package org.fiware.tmforum.party;
 
 import io.github.wistefan.mapping.MappingException;
-import org.fiware.party.model.*;
+import org.fiware.party.model.AttachmentRefOrValueVO;
+import org.fiware.party.model.CharacteristicVO;
+import org.fiware.party.model.EventSubscriptionVO;
+import org.fiware.party.model.IndividualCreateVO;
+import org.fiware.party.model.IndividualUpdateVO;
+import org.fiware.party.model.IndividualVO;
+import org.fiware.party.model.LanguageAbilityVO;
+import org.fiware.party.model.OrganizationChildRelationshipVO;
+import org.fiware.party.model.OrganizationCreateVO;
+import org.fiware.party.model.OrganizationParentRelationshipVO;
+import org.fiware.party.model.OrganizationRefVO;
+import org.fiware.party.model.OrganizationUpdateVO;
+import org.fiware.party.model.OrganizationVO;
+import org.fiware.party.model.TaxExemptionCertificateVO;
+import org.fiware.party.model.TimePeriodVO;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.TaxExemptionCertificate;
 import org.fiware.tmforum.common.domain.TimePeriod;

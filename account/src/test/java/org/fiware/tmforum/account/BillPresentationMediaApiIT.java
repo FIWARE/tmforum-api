@@ -8,7 +8,12 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.account.api.BillPresentationMediaApiTestClient;
 import org.fiware.account.api.BillPresentationMediaApiTestSpec;
-import org.fiware.account.model.*;
+import org.fiware.account.model.BillPresentationMediaCreateVO;
+import org.fiware.account.model.BillPresentationMediaCreateVOTestExample;
+import org.fiware.account.model.BillPresentationMediaUpdateVO;
+import org.fiware.account.model.BillPresentationMediaUpdateVOTestExample;
+import org.fiware.account.model.BillPresentationMediaVO;
+import org.fiware.account.model.BillPresentationMediaVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillPresentationMedia;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -31,7 +36,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

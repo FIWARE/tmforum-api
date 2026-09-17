@@ -10,7 +10,7 @@ import org.fiware.party.model.IndividualVO;
 import org.fiware.party.model.OrganizationVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @RequiredArgsConstructor

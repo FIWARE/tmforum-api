@@ -8,7 +8,16 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.servicecatalog.api.ServiceCatalogApiTestClient;
 import org.fiware.servicecatalog.api.ServiceCatalogApiTestSpec;
-import org.fiware.servicecatalog.model.*;
+import org.fiware.servicecatalog.model.RelatedPartyVOTestExample;
+import org.fiware.servicecatalog.model.ServiceCatalogCreateVO;
+import org.fiware.servicecatalog.model.ServiceCatalogCreateVOTestExample;
+import org.fiware.servicecatalog.model.ServiceCatalogUpdateVO;
+import org.fiware.servicecatalog.model.ServiceCatalogUpdateVOTestExample;
+import org.fiware.servicecatalog.model.ServiceCatalogVO;
+import org.fiware.servicecatalog.model.ServiceCatalogVOTestExample;
+import org.fiware.servicecatalog.model.ServiceCategoryRefVOTestExample;
+import org.fiware.servicecatalog.model.TimePeriodVO;
+import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -33,7 +42,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

@@ -1,14 +1,16 @@
 package org.fiware.tmforum.customermanagement;
 
 import io.github.wistefan.mapping.MappingException;
-import org.checkerframework.checker.units.qual.C;
-import org.fiware.customermanagement.model.*;
+import org.fiware.customermanagement.model.CharacteristicVO;
+import org.fiware.customermanagement.model.CustomerCreateVO;
+import org.fiware.customermanagement.model.CustomerUpdateVO;
+import org.fiware.customermanagement.model.CustomerVO;
+import org.fiware.customermanagement.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.domain.Characteristic;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.customermanagement.domain.Customer;
-import org.mapstruct.MapMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
