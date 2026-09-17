@@ -151,9 +151,11 @@ public abstract class TMForumMapper extends BaseMapper {
 	public abstract TaxItemVO map(TaxItem taxItem);
 
 	@Mapping(target = "tmfId", source = "id")
+	@Mapping(target = "atValueType", source = "valueType")
 	public abstract ProductSpecificationCharacteristic map(ProductSpecificationCharacteristicVO productSpecificationCharacteristicVO);
 
 	@Mapping(target = "id", source = "tmfId")
+	@Mapping(target = "valueType", source = "atValueType")
 	public abstract ProductSpecificationCharacteristicVO map(ProductSpecificationCharacteristic productSpecificationCharacteristic);
 
 	@Mapping(target = "tmfValue", source = "value")

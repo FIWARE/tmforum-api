@@ -261,7 +261,6 @@ public abstract class AbstractApiController<T> {
 				.onErrorMap(t -> {
 					if (t instanceof HttpClientResponseException e) {
 						String responseBody = e.getResponse().getBody(String.class).orElse(e.getMessage());
-						log.warn("Broker rejected the entity update with status {}: {}", e.getStatus(), responseBody);
 						return switch (e.getStatus()) {
 							case CONFLICT -> new TmForumException(
 									String.format("Conflict on updating the entity: %s", responseBody),

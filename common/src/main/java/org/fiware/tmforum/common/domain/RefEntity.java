@@ -31,9 +31,10 @@ public abstract class RefEntity extends Entity implements ReferencedEntity {
     private String name;
 
     @Getter(onMethod = @__({
-            @AttributeGetter(value = AttributeType.PROPERTY, targetName = "@referredType", embedProperty = true)}))
+            @AttributeGetter(value = AttributeType.PROPERTY, targetName = "atReferredType", embedProperty = true)}))
     @Setter(onMethod = @__({
-            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "@referredType", fromProperties = true)}))
+            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "atReferredType", fromProperties = true,
+                    legacyNames = {"@referredType"})}))
     private String atReferredType;
 
     protected RefEntity(String id) {
