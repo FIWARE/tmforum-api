@@ -190,7 +190,7 @@ public abstract class NgsiLdBaseRepository {
 					.map(existingEntityVO -> mergeForUpdate(existingEntityVO, updateEntityVO))
 					.flatMap(mergedEntityVO -> replaceEntity(entityId, mergedEntityVO));
 		}
-		return patchEntity(URI.create(id), ngsiMapper.map(javaObjectMapper.toEntityVO(domainEntity)));
+		return patchEntity(URI.create(id), ngsiMapper.map(updateEntityVO));
 	}
 
 	private EntityVO mergeForUpdate(EntityVO existing, EntityVO update) {

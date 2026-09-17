@@ -49,9 +49,10 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 	private String role;
 
 	@Getter(onMethod = @__({
-			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "@referredType", embedProperty = true) }))
+			@AttributeGetter(value = AttributeType.PROPERTY, targetName = "atReferredType", embedProperty = true) }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "@referredType", fromProperties = true) }))
+			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "atReferredType", fromProperties = true,
+					legacyNames = { "@referredType" }) }))
 	private String atReferredType;
 
 	@Override public List<String> getReferencedTypes() {

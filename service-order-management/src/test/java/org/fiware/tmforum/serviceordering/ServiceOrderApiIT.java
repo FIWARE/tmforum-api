@@ -123,30 +123,42 @@ public class ServiceOrderApiIT extends AbstractApiIT implements ServiceOrderApiT
 		testEntries.add(
 				Arguments.of("An empty service order should have been created.",
 						ServiceOrderCreateVOTestExample.build().atSchemaLocation(null),
-						ServiceOrderVOTestExample.build().atSchemaLocation(null)));
+						expectedServiceOrder()));
 
 		testEntries.add(
 				Arguments.of("A service order with a category should have been created.",
 						ServiceOrderCreateVOTestExample.build().atSchemaLocation(null)
 								.category("Premium"),
-						ServiceOrderVOTestExample.build().atSchemaLocation(null)
+						expectedServiceOrder()
 								.category("Premium")));
 
 		testEntries.add(
 				Arguments.of("A service order with a description should have been created.",
 						ServiceOrderCreateVOTestExample.build().atSchemaLocation(null)
 								.description("Test order"),
-						ServiceOrderVOTestExample.build().atSchemaLocation(null)
+						expectedServiceOrder()
 								.description("Test order")));
 
 		testEntries.add(
 				Arguments.of("A service order with a name should have been created.",
 						ServiceOrderCreateVOTestExample.build().atSchemaLocation(null)
 								.description("My Order"),
-						ServiceOrderVOTestExample.build().atSchemaLocation(null)
+						expectedServiceOrder()
 								.description("My Order")));
 
 		return testEntries.stream();
+	}
+
+	/**
+	 * {@code errorMessage}, {@code jeopardyAlert} and {@code milestone} are read-only, process-managed
+	 * attributes: {@code ServiceOrderCreateVO} does not expose them, so a freshly created order never
+	 * has them set, unlike the other list attributes which the create payload does send (as {@code []}).
+	 */
+	private static ServiceOrderVO expectedServiceOrder() {
+		return ServiceOrderVOTestExample.build().atSchemaLocation(null)
+				.errorMessage(null)
+				.jeopardyAlert(null)
+				.milestone(null);
 	}
 
 	@ParameterizedTest
