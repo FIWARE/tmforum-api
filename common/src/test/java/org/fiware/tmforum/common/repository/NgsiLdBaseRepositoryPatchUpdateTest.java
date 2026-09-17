@@ -43,7 +43,7 @@ class NgsiLdBaseRepositoryPatchUpdateTest {
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
 		repository = new TmForumRepository(properties, entitiesApi, null, null, ngsiMapper, javaObjectMapper);
-		when(entitiesApi.patchEntity(any(), any(), any(), any()))
+		when(entitiesApi.updateEntity(any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.noContent()));
 	}
 
@@ -68,7 +68,7 @@ class NgsiLdBaseRepositoryPatchUpdateTest {
 		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
 
 		ArgumentCaptor<EntityFragmentVO> captor = ArgumentCaptor.forClass(EntityFragmentVO.class);
-		verify(entitiesApi).patchEntity(eq(URI.create(ENTITY_ID)), captor.capture(), any(), any());
+		verify(entitiesApi).updateEntity(eq(URI.create(ENTITY_ID)), captor.capture(), any(), any());
 		assertEquals(mapped.getType(), captor.getValue().getType());
 	}
 

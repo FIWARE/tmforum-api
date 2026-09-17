@@ -1,0 +1,48 @@
+micronaut:
+
+  codec:
+    json:
+      additional-types:
+        - application/ld+json
+
+  server:
+    port: -1
+
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        step: PT2s
+        descriptions: false
+
+  http:
+    services:
+      read-timeout: 30s
+      ngsi:
+        path: ngsi-ld/v1
+        url: http://localhost:1026
+        read-timeout: 30
+
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+
+endpoints:
+  metrics:
+    enabled: true
+  health:
+    enabled: true
+
+
+logger:
+  levels:
+    ROOT: WARN
+
+
+general:
+  contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
+  serverHost: http://localhost:8641
+  countHeader: NGSILD-Results-Count
+api:
+  service-order-management:
+    basepath: ${general.basepath:/}

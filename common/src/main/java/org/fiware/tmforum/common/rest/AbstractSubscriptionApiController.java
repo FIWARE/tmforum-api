@@ -66,11 +66,11 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	@CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
 	protected Mono<TMForumSubscription> create(TMForumSubscription tmForumSubscription) {
 		return assureNotExistingTMForumSubscription(tmForumSubscription)
-				.then(repository.createSubscription(
+				.then(Mono.defer(() -> repository.createSubscription(
 						subscriptionMapper
 								.map(tmForumSubscription.getSubscription())
 								.atContext(generalProperties.getContextUrl()),
-						generalProperties.getTenant()))
+						generalProperties.getTenant())))
 				.then(create(Mono.just(tmForumSubscription), TMForumSubscription.class));
 	}
 
