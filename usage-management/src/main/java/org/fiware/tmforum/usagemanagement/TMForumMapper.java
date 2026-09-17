@@ -1,20 +1,31 @@
 package org.fiware.tmforum.usagemanagement;
 
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
+import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.product.Characteristic;
 import org.fiware.tmforum.service.CharacteristicValueSpecification;
 import org.fiware.tmforum.usagemanagement.domain.CharacteristicRelationship;
+import org.fiware.tmforum.usagemanagement.domain.Usage;
 import org.fiware.tmforum.usagemanagement.domain.UsageCharacteristic;
+import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
+import org.fiware.usagemanagement.model.AttachmentRefOrValueVO;
+import org.fiware.usagemanagement.model.CharacteristicRelationshipVO;
+import org.fiware.usagemanagement.model.CharacteristicVO;
+import org.fiware.usagemanagement.model.CharacteristicValueSpecificationVO;
+import org.fiware.usagemanagement.model.EventSubscriptionVO;
 import org.fiware.usagemanagement.model.TimePeriodVO;
-import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.usagemanagement.model.UsageCharacteristicVO;
+import org.fiware.usagemanagement.model.UsageCreateVO;
+import org.fiware.usagemanagement.model.UsageSpecificationCreateVO;
+import org.fiware.usagemanagement.model.UsageSpecificationUpdateVO;
+import org.fiware.usagemanagement.model.UsageSpecificationVO;
+import org.fiware.usagemanagement.model.UsageUpdateVO;
+import org.fiware.usagemanagement.model.UsageVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.fiware.usagemanagement.model.*;
-import org.fiware.tmforum.usagemanagement.domain.Usage;
-import org.fiware.tmforum.usagemanagement.domain.UsageSpecification;
 
 import java.net.MalformedURLException;
 import java.net.URI;

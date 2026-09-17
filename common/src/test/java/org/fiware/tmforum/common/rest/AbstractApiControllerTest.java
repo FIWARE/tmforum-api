@@ -9,7 +9,6 @@ import org.fiware.tmforum.common.querying.MyPojo;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -17,6 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,11 +35,6 @@ class AbstractApiControllerTest {
 		}
 	}
 
-	@AfterEach
-	public void clearRequestContext() {
-		ServerRequestContext.set(null);
-	}
-
 	@Test
 	public void listPolymorphicForwardsTheIdFilterToTheRepository() {
 		// Regression test: listPolymorphic used to only forward "type" and "query" from the
@@ -52,14 +47,15 @@ class AbstractApiControllerTest {
 		TestController controller = new TestController(queryParser, repository);
 
 		String requestedId = "urn:ngsi-ld:software-specification:0e2d5c4a-cf51-43cf-a510-dff06f62f4a3";
-		ServerRequestContext.set(
-				HttpRequest.GET("/resourceSpecification?id=" + requestedId + "&fields=lifecycleStatus"));
+		HttpRequest<?> request = HttpRequest.GET("/resourceSpecification?id=" + requestedId + "&fields=lifecycleStatus");
 
 		when(repository.findEntitiesPolymorphic(any(), any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, 10, null)));
 
-		controller.listPolymorphic(0, 10, "software-specification,resource-specification", MyPojo.class,
-				type -> MyPojo.class).block();
+		ServerRequestContext.with(request, () -> {
+			controller.listPolymorphic(0, 10, "software-specification,resource-specification", MyPojo.class,
+					type -> MyPojo.class).block();
+		});
 
 		verify(repository).findEntitiesPolymorphic(any(), any(), any(), any(), eq(requestedId), any(), any());
 	}
@@ -78,10 +74,11 @@ class AbstractApiControllerTest {
 	public void listRejectsNonIntegerPaginationParameters(String message, String queryString) {
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(TmForumRepository.class));
-		ServerRequestContext.set(HttpRequest.GET("/resource" + queryString));
+		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
-		TmForumException exception = assertThrows(TmForumException.class,
+		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
 				() -> controller.list(null, null, null, MyPojo.class), message);
+		TmForumException exception = ServerRequestContext.with(request, assertion);
 
 		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason(), message);
 	}
@@ -91,10 +88,11 @@ class AbstractApiControllerTest {
 	public void listPolymorphicRejectsNonIntegerPaginationParameters(String message, String queryString) {
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(TmForumRepository.class));
-		ServerRequestContext.set(HttpRequest.GET("/resource" + queryString));
+		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
-		TmForumException exception = assertThrows(TmForumException.class,
+		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
 				() -> controller.listPolymorphic(null, null, null, MyPojo.class, type -> MyPojo.class), message);
+		TmForumException exception = ServerRequestContext.with(request, assertion);
 
 		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason(), message);
 	}
@@ -119,11 +117,13 @@ class AbstractApiControllerTest {
 	public void listAcceptsIntegerPaginationParameters() {
 		TmForumRepository repository = mock(TmForumRepository.class);
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
-		ServerRequestContext.set(HttpRequest.GET("/resource?offset=10&limit=5"));
+		HttpRequest<?> request = HttpRequest.GET("/resource?offset=10&limit=5");
 		when(repository.findEntities(any(), any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 10, 5, null)));
 
-		controller.list(10, 5, null, MyPojo.class).block();
+		ServerRequestContext.with(request, () -> {
+			controller.list(10, 5, null, MyPojo.class).block();
+		});
 
 		verify(repository).findEntities(eq(10), eq(5), any(), any(), any(), any(), any());
 	}

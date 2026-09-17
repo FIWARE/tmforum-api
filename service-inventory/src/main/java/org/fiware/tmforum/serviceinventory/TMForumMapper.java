@@ -1,21 +1,31 @@
 package org.fiware.tmforum.serviceinventory;
 
-import org.fiware.ngsi.model.SubscriptionVO;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
+import io.github.wistefan.mapping.MappingException;
+import org.fiware.serviceinventory.model.CharacteristicRelationshipVO;
+import org.fiware.serviceinventory.model.CharacteristicVO;
+import org.fiware.serviceinventory.model.EventSubscriptionVO;
+import org.fiware.serviceinventory.model.FeatureRelationshipVO;
+import org.fiware.serviceinventory.model.FeatureVO;
+import org.fiware.serviceinventory.model.NoteVO;
+import org.fiware.serviceinventory.model.ResourceRefVO;
+import org.fiware.serviceinventory.model.ServiceCreateVO;
+import org.fiware.serviceinventory.model.ServiceUpdateVO;
+import org.fiware.serviceinventory.model.ServiceVO;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.BaseMapper;
-import org.fiware.tmforum.resource.*;
-import io.github.wistefan.mapping.MappingException;
-import org.fiware.serviceinventory.model.*;
-import org.fiware.tmforum.serviceinventory.domain.*;
 import org.fiware.tmforum.common.mapping.IdHelper;
-import org.fiware.tmforum.resource.ResourceSpecificationRef;
+import org.fiware.tmforum.resource.Characteristic;
+import org.fiware.tmforum.resource.CharacteristicRelationship;
+import org.fiware.tmforum.resource.Feature;
+import org.fiware.tmforum.resource.FeatureRelationship;
+import org.fiware.tmforum.resource.Note;
+import org.fiware.tmforum.resource.ResourceRef;
+import org.fiware.tmforum.serviceinventory.domain.Service;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 /**

@@ -13,10 +13,11 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import reactor.core.publisher.Mono;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
@@ -80,7 +81,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                         true,
                         null,
                         getLinkHeader())
-                .flatMap(response -> zipToList(response.body().stream(), entityClass)
+                .flatMap(response -> zipToList(response.body() != null ? response.body().stream() : Stream.empty(), entityClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
                 .onErrorResume(t -> {
                     log.warn("Was not able to list entities.", t);
@@ -122,7 +123,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                         true,
                         null,
                         getLinkHeader())
-                .flatMap(response -> zipToPolymorphicList(response.body().stream(), typeToClass)
+                .flatMap(response -> zipToPolymorphicList(response.body() != null ? response.body().stream() : Stream.empty(), typeToClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
                 .onErrorResume(t -> {
                     log.warn("Was not able to list entities.", t);

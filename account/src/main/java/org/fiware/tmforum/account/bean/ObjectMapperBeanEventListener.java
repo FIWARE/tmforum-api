@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.micronaut.context.event.BeanCreatedEvent;
 import io.micronaut.context.event.BeanCreatedEventListener;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.account.model.BillFormatVO;
@@ -15,8 +16,6 @@ import org.fiware.account.model.FinancialAccountVO;
 import org.fiware.account.model.PartyAccountVO;
 import org.fiware.account.model.SettlementAccountVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningSerializer;
-
-import javax.inject.Singleton;
 
 @Singleton
 @RequiredArgsConstructor

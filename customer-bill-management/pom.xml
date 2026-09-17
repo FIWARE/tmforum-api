@@ -63,7 +63,7 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.micronaut</groupId>
+            <groupId>io.micronaut.validation</groupId>
             <artifactId>micronaut-validation</artifactId>
             <scope>compile</scope>
         </dependency>
@@ -108,25 +108,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- javax -->
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
-        <!-- required for javax.nullable -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- jakarta -->
         <dependency>
@@ -167,7 +148,7 @@
 
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -216,7 +197,7 @@
                         <configuration>
                             <skip>false</skip>
                             <inputSpec>
-                                ${project.parent.basedir}/${artifactId}/api/applied-customer-bill-management-extension.yaml
+                                ${project.parent.basedir}/${project.artifactId}/api/applied-customer-bill-management-extension.yaml
                             </inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>
@@ -231,7 +212,7 @@
                         <configuration>
                             <skip>false</skip>
                             <inputSpec>
-                                ${project.parent.basedir}/${artifactId}/api/customer-bill-extension.yaml
+                                ${project.parent.basedir}/${project.artifactId}/api/customer-bill-extension.yaml
                             </inputSpec>
                             <apiPackage>org.fiware.customerbillmanagement.api.ext</apiPackage>
                             <modelPackage>org.fiware.customerbillmanagement.model</modelPackage>

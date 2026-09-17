@@ -13,7 +13,16 @@ import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.usagemanagement.domain.Usage;
 import org.fiware.usagemanagement.api.UsageApiTestClient;
 import org.fiware.usagemanagement.api.UsageApiTestSpec;
-import org.fiware.usagemanagement.model.*;
+import org.fiware.usagemanagement.model.RelatedPartyVO;
+import org.fiware.usagemanagement.model.RelatedPartyVOTestExample;
+import org.fiware.usagemanagement.model.UsageCharacteristicVO;
+import org.fiware.usagemanagement.model.UsageCharacteristicVOTestExample;
+import org.fiware.usagemanagement.model.UsageCreateVO;
+import org.fiware.usagemanagement.model.UsageCreateVOTestExample;
+import org.fiware.usagemanagement.model.UsageUpdateVO;
+import org.fiware.usagemanagement.model.UsageUpdateVOTestExample;
+import org.fiware.usagemanagement.model.UsageVO;
+import org.fiware.usagemanagement.model.UsageVOTestExample;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,7 +40,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

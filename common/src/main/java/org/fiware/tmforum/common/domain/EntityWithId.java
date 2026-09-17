@@ -1,11 +1,5 @@
 package org.fiware.tmforum.common.domain;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.github.wistefan.mapping.annotations.AttributeGetter;
-import io.github.wistefan.mapping.annotations.AttributeSetter;
-import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.DatasetId;
 import io.github.wistefan.mapping.annotations.EntityId;
 import io.github.wistefan.mapping.annotations.EntityType;
@@ -13,13 +7,9 @@ import io.github.wistefan.mapping.annotations.Ignore;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.tmforum.common.mapping.IdHelper;
 
-import javax.annotation.Nullable;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Abstract superclass for all entities with an id

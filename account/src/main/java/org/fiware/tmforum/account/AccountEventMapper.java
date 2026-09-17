@@ -1,14 +1,26 @@
 package org.fiware.tmforum.account;
 
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
-import org.fiware.account.model.*;
-import org.fiware.tmforum.account.domain.*;
+import org.fiware.account.model.BillFormatVO;
+import org.fiware.account.model.BillPresentationMediaVO;
+import org.fiware.account.model.BillingAccountVO;
+import org.fiware.account.model.BillingCycleSpecificationVO;
+import org.fiware.account.model.FinancialAccountVO;
+import org.fiware.account.model.PartyAccountVO;
+import org.fiware.account.model.SettlementAccountVO;
+import org.fiware.tmforum.account.domain.BillFormat;
+import org.fiware.tmforum.account.domain.BillPresentationMedia;
+import org.fiware.tmforum.account.domain.BillingAccount;
+import org.fiware.tmforum.account.domain.BillingCycleSpecification;
+import org.fiware.tmforum.account.domain.FinancialAccount;
+import org.fiware.tmforum.account.domain.PartyAccount;
+import org.fiware.tmforum.account.domain.SettlementAccount;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.notification.ModuleEventMapper;
 
-import javax.inject.Singleton;
 import java.util.Map;
 
 import static java.util.Map.entry;

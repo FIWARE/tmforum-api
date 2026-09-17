@@ -8,7 +8,14 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.resourcefunction.api.HealApiTestClient;
 import org.fiware.resourcefunction.api.HealApiTestSpec;
-import org.fiware.resourcefunction.model.*;
+import org.fiware.resourcefunction.model.CharacteristicVOTestExample;
+import org.fiware.resourcefunction.model.HealCreateVO;
+import org.fiware.resourcefunction.model.HealCreateVOTestExample;
+import org.fiware.resourcefunction.model.HealPolicyRefVOTestExample;
+import org.fiware.resourcefunction.model.HealVO;
+import org.fiware.resourcefunction.model.HealVOTestExample;
+import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
+import org.fiware.resourcefunction.model.TaskStateTypeVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -31,7 +38,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

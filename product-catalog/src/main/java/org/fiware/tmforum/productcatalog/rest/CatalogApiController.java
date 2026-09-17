@@ -20,9 +20,11 @@ import org.fiware.tmforum.productcatalog.TMForumMapper;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import reactor.core.publisher.Mono;
 
+import jakarta.annotation.Nullable;
 import java.time.Clock;
-import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Controller("${api.product-catalog.basepath:/}")

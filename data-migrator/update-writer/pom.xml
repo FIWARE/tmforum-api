@@ -14,24 +14,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.github.wistefan</groupId>
-            <artifactId>ngsi-ld-java-mapping</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
             <artifactId>rxjava</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
