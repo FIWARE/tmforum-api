@@ -525,12 +525,19 @@ public class QueryParser {
             return theQuery;
         }
 
+        // a regex pattern is opaque - it must not go through encodeStringValue's own OR/AND splitting
+        if (isRegex) {
+            return String.format("%s%s\"%s\"", queryPart.attribute(), queryPart.operator(), queryPart.value());
+        }
+
         return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(),
                 encodeValue(queryPart.attribute(), queryPart.value(), queryAttributeType));
     }
 
     private QueryPart paramsToQueryPart(String parameter, Operator operator) {
-        String[] parameterParts = parameter.split(operator.getTmForumOperator().operator());
+        // the operator symbol is split on literally - some symbols (e.g. REGEX's "*=") are not
+        // valid regexes on their own and would otherwise throw a PatternSyntaxException
+        String[] parameterParts = parameter.split(Pattern.quote(operator.getTmForumOperator().operator()));
         if (parameterParts.length != 2) {
             throw new QueryException(String.format("%s is not a valid %s parameter.",
                     parameter,

@@ -386,7 +386,10 @@ class QueryParserTest {
 						"relatedParty.role.regex=^(?!seller$).*$",
 						new QueryParams(null, null, "relatedParty.role!=\"seller\"")),
 				Arguments.of("A comma inside a regex pattern must not be split into OR'd values.",
-						"color.regex=a,b", new QueryParams(null, null, "color~=\"a,b\"")));
+						"color.regex=a,b", new QueryParams(null, null, "color~=\"a,b\"")),
+				// the symbolic form ("*=") must not crash - it is not a valid regex on its own
+				Arguments.of("The symbolic operator form should work as well.", "color*=bl.e",
+						new QueryParams(null, null, "color~=\"bl.e\"")));
 	}
 
 	/**
