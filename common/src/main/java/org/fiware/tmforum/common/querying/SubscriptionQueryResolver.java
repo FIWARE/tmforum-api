@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.querying.Operator.*;
@@ -201,6 +202,10 @@ public class SubscriptionQueryResolver {
             } else {
                 result = fieldData.fieldValue.equals(qp.value());
             }
+        } else if (Objects.equals(qp.operator(), REGEX.getTmForumOperator().operator())) {
+            // evaluated in-process with java.util.regex, which supports lookahead natively -
+            // no broker regex-engine limitation applies here.
+            result = fieldData.fieldValue != null && Pattern.matches(qp.value(), fieldData.fieldValue.toString());
         }
         return result;
     }

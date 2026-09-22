@@ -38,7 +38,12 @@ public class SubscriptionQueryResolverTest {
                 Arguments.of(MyPojoBuilder.build().createdAt(Instant.parse("2023-05-01T00:00:00.000Z")),
                         "myPojo.createdAt<=2023-06-01T00:00:00.000Z", "myPojo", true),
                 Arguments.of(MyPojoBuilder.build().createdAt(Instant.parse("2023-05-01T00:00:00.000Z")),
-                        "myPojo.createdAt=2023-05-01T00:00:00.000Z", "myPojo", true)
+                        "myPojo.createdAt=2023-05-01T00:00:00.000Z", "myPojo", true),
+                // regex is evaluated in-process with java.util.regex, which supports lookahead natively
+                Arguments.of(MyPojoBuilder.build().color("Red"), "myPojo.color.regex=R.d", "myPojo", true),
+                Arguments.of(MyPojoBuilder.build().color("Red"), "myPojo.color.regex=Bl.e", "myPojo", false),
+                Arguments.of(MyPojoBuilder.build().color("Red"), "myPojo.color.regex=^(?!seller$).*$", "myPojo", true),
+                Arguments.of(MyPojoBuilder.build().color("seller"), "myPojo.color.regex=^(?!seller$).*$", "myPojo", false)
         );
     }
 

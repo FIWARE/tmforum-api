@@ -86,4 +86,14 @@ public class GeneralProperties {
 	 * (or existing data) that expects the plain, unescaped value.
 	 */
 	private boolean escapeForbiddenCharacters = true;
+
+	/**
+	 * When a {@code .regex} filter's value matches the "not equal" idiom
+	 * {@code ^(?!X$).*$}, translate it into NGSI-LD's native {@code !=} comparison
+	 * instead of forwarding {@code ~=} (pattern match) to the broker. Not every
+	 * broker's regex engine supports negative lookahead (e.g. Scorpio's
+	 * PostgreSQL-backed POSIX regex doesn't), so this optimization keeps the
+	 * common "not equal" case portable. Default true.
+	 */
+	private boolean optimizeRegexNotEquals = true;
 }

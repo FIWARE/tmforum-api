@@ -363,6 +363,66 @@ class QueryParserTest {
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
+	/**
+	 * NGSI-LD's native pattern-match operator is {@code ~=} (ETSI GS CIM 009, Simple Query Language).
+	 * A comma inside the pattern is not a TMForum OR-list separator, so it must survive unsplit.
+	 *
+	 * @param message      description of the concrete case
+	 * @param tmForumQuery the query to translate
+	 * @param ngsiLdQuery  the expected translation
+	 */
+	@ParameterizedTest
+	@MethodSource("regexQueries")
+	public void testRegexQueries(String message, String tmForumQuery, QueryParams ngsiLdQuery) {
+		QueryParser qp = new QueryParser(new GeneralProperties());
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
+	}
+
+	private static Stream<Arguments> regexQueries() {
+		return Stream.of(
+				Arguments.of("A plain regex is forwarded as a broker-side pattern match.", "color.regex=bl.e",
+						new QueryParams(null, null, "color~=\"bl.e\"")),
+				Arguments.of("The not-equal idiom is optimized into a native != comparison.",
+						"relatedParty.role.regex=^(?!seller$).*$",
+						new QueryParams(null, null, "relatedParty.role!=\"seller\"")),
+				Arguments.of("A comma inside a regex pattern must not be split into OR'd values.",
+						"color.regex=a,b", new QueryParams(null, null, "color~=\"a,b\"")));
+	}
+
+	/**
+	 * The not-equal idiom optimization can be disabled, in which case the idiom is forwarded as a
+	 * genuine pattern match - which relies on the broker's regex engine supporting lookahead.
+	 */
+	@Test
+	public void testRegexNotEqualsOptimizationCanBeDisabled() {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setOptimizeRegexNotEquals(false);
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(new QueryParams(null, null, "relatedParty.role~=\"^(?!seller$).*$\""),
+				qp.toNgsiLdQuery(MyPojo.class, "relatedParty.role.regex=^(?!seller$).*$"),
+				"With the optimization disabled, the idiom must be forwarded as a pattern match.");
+	}
+
+	/**
+	 * Regex only makes sense for string attributes - the pattern-match operator does not apply to
+	 * booleans or numbers, whose NGSI-LD literals are unquoted.
+	 *
+	 * @param message      description of the concrete case
+	 * @param tmForumQuery the query to translate
+	 */
+	@ParameterizedTest
+	@MethodSource("regexOnNonStringQueries")
+	public void testRegexIsRejectedForNonStringTypes(String message, String tmForumQuery) {
+		QueryParser qp = new QueryParser(new GeneralProperties());
+		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
+	}
+
+	private static Stream<Arguments> regexOnNonStringQueries() {
+		return Stream.of(
+				Arguments.of("Regex cannot be applied to a boolean attribute.", "active.regex=true"),
+				Arguments.of("Regex cannot be applied to a number attribute.", "temperature.regex=5"));
+	}
+
 	private static Stream<Arguments> validTypedValueQueries() {
 		return Stream.of(
 				Arguments.of("An integer should be accepted.", "temperature=20",
