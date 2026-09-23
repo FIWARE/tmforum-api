@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.querying.Operator.*;
@@ -133,7 +134,9 @@ public class SubscriptionQueryResolver {
     }
 
     private QueryPart paramsToQueryPart(String parameter, Operator operator) {
-        String[] parameterParts = parameter.split(operator.getTmForumOperator().operator());
+        // the operator symbol is split on literally - some symbols (e.g. REGEX's "*=") are not
+        // valid regexes on their own and would otherwise throw a PatternSyntaxException
+        String[] parameterParts = parameter.split(Pattern.quote(operator.getTmForumOperator().operator()));
         if (parameterParts.length != 2) {
             throw new QueryException(String.format("%s is not a valid %s parameter.",
                     parameter,
@@ -201,6 +204,10 @@ public class SubscriptionQueryResolver {
             } else {
                 result = fieldData.fieldValue.equals(qp.value());
             }
+        } else if (Objects.equals(qp.operator(), REGEX.getTmForumOperator().operator())) {
+            // evaluated in-process with java.util.regex, which supports lookahead natively -
+            // no broker regex-engine limitation applies here.
+            result = fieldData.fieldValue != null && Pattern.matches(qp.value(), fieldData.fieldValue.toString());
         }
         return result;
     }
