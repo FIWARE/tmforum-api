@@ -8,8 +8,8 @@ public enum Operator {
 	LESS_THAN(new TMForumOperator(".lt", "<"), "<"),
 	LESS_THAN_EQUALS(new TMForumOperator(".lte", "<="), "<="),
 	EQUALS(new TMForumOperator(".eq", "="), "=="),
-	// NGSI-LD allows regex for every string, so no specific operator exists, it's just an equals
-	REGEX(new TMForumOperator(".regex", "*="), "==");
+	// NGSI-LD's native pattern-match operator (ETSI GS CIM 009, Simple Query Language)
+	REGEX(new TMForumOperator(".regex", "*="), "~=");
 
 	@Getter
 	private final TMForumOperator tmForumOperator;
