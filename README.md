@@ -14,8 +14,8 @@ the [parent-pom](pom.xml). Since some models are used in multiple apis, there ar
 should only include models that are used by other modules, too.
 
 The [ui-module](ui) is a read-only browser for the APIs of the all-in-one deployment: it lists the entities and
-follows the references between them as hyperlinks. It is static files only and the all-in-one serves it at `/ui/`
-when started with `TMF_UI_ENABLED=true` (off by default). See [ui/README.md](ui/README.md).
+follows the references between them as hyperlinks. It is an image of its own (`tmforum-ui`), not part of the
+all-in-one: run it next to it as a sidecar, or on its own to debug. See [ui/README.md](ui/README.md).
 
 The project also contains 3 non-module folders:
 

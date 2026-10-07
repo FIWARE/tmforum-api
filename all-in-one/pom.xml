@@ -13,12 +13,6 @@
     </parent>
 
     <dependencies>
-        <!-- the read-only browser served at /ui/, see micronaut.router.static-resources.ui -->
-        <dependency>
-            <groupId>org.fiware.tmforum</groupId>
-            <artifactId>ui</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <!-- shared infrastructure -->
         <dependency>
             <groupId>org.fiware.tmforum</groupId>

@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TMF UI</title>
 <script>
-  // The all-in-one answers /ui as well as /ui/, and at /ui every relative URL below would
-  // resolve against the root. Before anything loads, move to the directory form.
+  // Behind an ingress with a path prefix, /prefix and /prefix/ may both reach this page, and
+  // at /prefix every relative URL below would resolve against the root. Before anything
+  // loads, move to the directory form.
   if (!location.pathname.endsWith('/') && !/\.html?$/i.test(location.pathname)) {
     location.replace(`${location.pathname}/${location.search}${location.hash}`);
   }

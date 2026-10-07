@@ -1,10 +1,8 @@
 // tmf-ui — read-only SPA over the TMForum APIs of tmforum-api (all-in-one).
 //
-// It runs in one of two modes, and config.json (next to this file) says which:
-//  - served by the all-in-one itself, under /ui/ (config.json is the static one in the jar,
-//    `sameOrigin: true`): the API is this page's own origin, so requests go straight to it.
-//  - served by dev/server.mjs (which answers config.json itself): everything goes through
-//    its /api/proxy, because neither the API nor its ingresses set CORS.
+// It is served by server/server.mjs - the tmforum-ui image, or `npm start` - which answers
+// config.json and sends every request through its api/proxy, because neither the API nor its
+// ingresses set CORS.
 
 import { APIS, GROUPS } from './catalog.js';
 import {
@@ -26,7 +24,7 @@ const state = {
   probeCache: new Map(), // urn -> location
   renderSeq: 0, // a render whose fetch comes back late must not paint over a newer one
   filterCaret: null, // where the caret was when a keystroke triggered the re-render
-  cfg: {}, // what config.json said: sameOrigin, mock, endpoint, locked, container
+  cfg: {}, // what config.json said: mock, endpoint, locked, container
 };
 
 const LOCAL_HOST_RE = /^(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/i;
@@ -124,18 +122,15 @@ function parseLink(header) {
   return rels;
 }
 
-/** GET against the TMForum API, directly or through the dev proxy. Never throws: the error comes back inside. */
+/** GET against the TMForum API, through the server's proxy. Never throws: the error comes back inside. */
 async function tmfGet(path, params) {
   const url = upstreamUrl(path, params);
   let res;
   try {
-    res = state.cfg.sameOrigin
-      ? await fetch(url, { headers: { accept: 'application/json' } })
-      : await fetch(`/api/proxy?url=${encodeURIComponent(url)}`);
+    // Relative, like config.json: the page may sit under a path prefix.
+    res = await fetch(`api/proxy?url=${encodeURIComponent(url)}`);
   } catch (err) {
-    const who = state.cfg.sameOrigin ? 'The TMForum API' : 'The local server';
-    const hint = state.cfg.sameOrigin ? '' : ' Is "npm start" still running?';
-    return { ok: false, status: 0, url, error: `${who} is not answering (${err.message}).${hint}` };
+    return { ok: false, status: 0, url, error: `The tmf-ui server is not answering (${err.message}).` };
   }
   const text = await res.text();
   let data = null;
@@ -497,14 +492,6 @@ function renderOverview() {
     // In a container this is nearly always the same misunderstanding, so offer the answer
     // rather than describe it.
     const rewritten = state.cfg.container && !state.cfg.locked ? hostRewrite(state.base) : null;
-    if (state.cfg.sameOrigin) {
-      main.append(el('div', { class: 'msg error' },
-        el('h3', { text: 'No TMForum API answered' }),
-        el('p', { text: 'This page is served by the all-in-one itself, yet none of its APIs answered. Check that it has finished starting and that it can reach its context broker.' }),
-        rows[0]?.st ? el('p', { class: 'hint mono', text: `example: ${rows[0].st.error ?? ''}` }) : null,
-      ));
-      return;
-    }
     main.append(el('div', { class: 'msg error' },
       el('h3', { text: 'No TMForum API answered' }),
       el('p', { text: 'This endpoint does not look like an all-in-one tmforum-api, or it is not reachable from this machine.' }),
@@ -897,20 +884,13 @@ fillRecent();
 (async () => {
   let cfg = {};
   try {
-    // Relative on purpose: under the all-in-one this page lives at /ui/, not at the root.
+    // Relative on purpose: behind an ingress this page may live under a path prefix.
     cfg = await (await fetch('config.json')).json();
   } catch { /* never mind */ }
   state.cfg = cfg;
   renderConnHint();
 
-  // Served by the all-in-one: the API is this very origin, and there is nothing to choose.
-  if (cfg.sameOrigin) {
-    lockEndpoint('Served by the all-in-one itself: the API is this origin');
-    await connect(location.origin, { remember: false });
-    return;
-  }
-
-  // The dev server was started with TMF_ENDPOINT: connect on load and let nobody change
+  // The server was started with TMF_ENDPOINT: connect on load and let nobody change
   // it — not even through ?endpoint=, which the proxy would reject anyway.
   if (cfg.locked && cfg.endpoint) {
     lockEndpoint(`Fixed by the server (TMF_ENDPOINT=${cfg.endpoint})`);

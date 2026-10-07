@@ -6,40 +6,60 @@ entities of all 20 APIs, open one, and **jump from entity to entity through hype
 
 It only ever issues `GET`. It creates nothing, changes nothing and deletes nothing.
 
-The module holds static files only — no Java, and no Node in the Maven build. The all-in-one
-depends on its jar and serves it when asked to.
+It is an image of its own, `quay.io/fiware/tmforum-ui`, not part of the all-in-one: deploy it
+next to the all-in-one when you want it (a sidecar), run it on its own to debug an environment,
+or leave it out. The module holds the page (`src/main/resources/tmf-ui/`) and the small Node
+server that serves it (`server/server.mjs`, no dependencies). There is no Java in it and no Node
+in the Maven build: in the `oci` profile, jib copies both onto a Node.js base image.
 
-## Serving it from the all-in-one
+The server does three things: it serves the page, answers `config.json` (how it was started),
+and proxies the page's `GET`s to the TMForum endpoint. The proxy exists because neither
+`tmforum-api` nor the `tm-forum-api` chart nor the usual ingresses enable **CORS**: a page served
+from any other origin could send a request and never read the answer. It accepts nothing but
+`GET` over `http`/`https`, and forwards `X-Total-Count` and `Link` along with the body.
 
-Off by default. Turn it on with one environment variable:
+## Running the image
 
-```bash
-TMF_UI_ENABLED=true
+**As a sidecar** of the all-in-one, the API is on the pod's loopback. Fix the endpoint so
+the page connects on load and the proxy goes nowhere else:
+
+```yaml
+- name: tmf-ui
+  image: quay.io/fiware/tmforum-ui:<version>
+  env:
+    - name: TMF_ENDPOINT
+      value: http://localhost:8632
+  ports:
+    - containerPort: 8080
+  readinessProbe:
+    httpGet: { path: /healthz, port: 8080 }
 ```
 
-and open `http://<all-in-one>:8632/ui/` (the trailing slash matters: the page loads its
-scripts relative to it).
+and expose port 8080 through the service, or reach it with a port-forward:
 
-It is served on the API's own port and origin, so there is no CORS to work around, no proxy,
-and nothing to configure: the page connects to the origin it was loaded from and the endpoint
-box is read-only. The mapping lives in `all-in-one/src/main/resources/application.yaml`
-under `micronaut.router.static-resources.ui`.
+```bash
+kubectl -n <namespace> port-forward <all-in-one-pod> 8080:8080
+# http://localhost:8080/
+```
 
-It inherits whatever stands in front of the API. Behind a gateway that demands a token (the
-FIWARE Data Space Connector's `mp-tmf-api.*` hosts want a JWT from the VCVerifier) the page is
-not reachable either, and behind an ingress that publishes the API under a sub-path the
-request URLs will not match. Both are out of scope: this is for direct access, a
-port-forward or an ingress with no PEP.
+**On its own, to debug**, against a port-forward of the all-in-one on your machine:
 
 ```bash
 kubectl -n <namespace> port-forward svc/tm-forum-api-svc 8632:8080
-# http://localhost:8632/ui/
+docker run --rm -p 8080:8080 -e TMF_ENDPOINT=http://host.docker.internal:8632 quay.io/fiware/tmforum-ui
+# on Linux, add --add-host=host.docker.internal:host-gateway
 ```
+
+or with sample data and no cluster: `docker run --rm -p 8080:8080 -e TMF_MOCK=1 quay.io/fiware/tmforum-ui`.
+
+It talks to the API directly, so it does not get through a gateway that demands a token (the
+FIWARE Data Space Connector's `mp-tmf-api.*` hosts want a JWT from the VCVerifier): point it at
+the all-in-one itself, a port-forward or an ingress with no PEP. It has no authentication of its
+own either — whoever reaches its port reads the API.
 
 ## Running it locally against any endpoint
 
-For a browser on a laptop pointed at *any* TMForum endpoint — a port-forward, a remote
-ingress, sample data — there is a small development server, Node ≥ 18 and no dependencies:
+The same server without the image, Node ≥ 18 and no dependencies:
 
 ```
 cd ui
@@ -48,16 +68,9 @@ npm run mock         # the same, with sample data (no cluster needed)
 npm run gen-catalog  # regenerate the catalogue from this repository
 ```
 
-Enter the base endpoint of the all-in-one — **the root, with no `/tmf-api/...`** — and press
-*Connect*. A link can also carry the environment with it:
+Without `TMF_ENDPOINT`, enter the base endpoint of the all-in-one — **the root, with no
+`/tmf-api/...`** — and press *Connect*. A link can also carry the environment with it:
 `http://localhost:8080/?endpoint=http://localhost:8632#/product-catalog/productOffering`
-
-It serves the very same files the jar ships (`src/main/resources/tmf-ui/`) and answers
-`config.json` itself, which is how the page knows to go through the server's proxy rather than
-straight to its own origin. The proxy exists because neither `tmforum-api` nor the
-`tm-forum-api` chart nor the usual ingresses enable **CORS**: a page served from any other
-origin could send a request and never read the answer. It accepts nothing but `GET` over
-`http`/`https`, and forwards `X-Total-Count` and `Link` along with the body.
 
 Against a local demo with `*.nip.io` hosts, a self-signed certificate and a forward proxy:
 
@@ -66,18 +79,22 @@ TMF_INSECURE=1 NODE_USE_ENV_PROXY=1 HTTPS_PROXY=http://localhost:8888 npm start
 # endpoint:  https://tm-forum-api.127.0.0.1.nip.io
 ```
 
+## Configuration
+
 | Variable | Effect |
 |---|---|
-| `PORT` | Local port (8080 by default) |
+| `PORT` | Port to listen on (8080 by default) |
 | `TMF_ENDPOINT` | Fix the endpoint: the page connects to it on load, the box goes read-only and the proxy accepts that origin only |
 | `TMF_INSECURE=1` | Accept self-signed certificates |
-| `TMF_MOCK=1` | Expose a fake TMForum at `/mock` (`dev/fixtures/data.json`) |
+| `TMF_MOCK=1` | Expose a fake TMForum at `/mock` (`server/fixtures/data.json`) |
 | `TMF_TIMEOUT_MS` | Per-request timeout (20000 by default) |
+| `TMF_UI_STATIC_DIR` | Where the page's files are (set by the image; `src/main/resources/tmf-ui` otherwise) |
 | `NODE_USE_ENV_PROXY=1` | Honour `HTTPS_PROXY` / `HTTP_PROXY` |
 
-The proxy accepts any URL unless `TMF_ENDPOINT` is set. That is a convenience on a laptop and
-an SSRF anywhere somebody else can reach the port, which is one more reason the deployed path
-is the all-in-one and not this server.
+`GET /healthz` answers 200 for probes.
+
+**Set `TMF_ENDPOINT` wherever somebody else can reach the port.** Without it the proxy accepts
+any URL: a convenience on a laptop and an SSRF anywhere else.
 
 ## What it can do
 
@@ -173,7 +190,7 @@ differs from what is committed, so a stale catalogue cannot be merged.
 
 - **All-in-one only.** A deployment with one pod per module serves each API at `/`, which
   this UI does not handle.
-- No authentication: see *Serving it from the all-in-one*.
+- No authentication: see *Running the image*.
 - `X-Total-Count` only arrives when the broker returns `NGSILD-Results-Count`; otherwise the
   counter says "total unknown" and pagination is driven by the `Link` header.
 - Task operations (`heal`, `migrate`, `cancelProductOrder`, …) and the `hub`/`listener`
