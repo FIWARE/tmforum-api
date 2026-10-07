@@ -50,13 +50,11 @@ spec:
       serviceAccountName: default
       containers:
         - name: minio
-          image: "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
+          # MinIO no longer publishes community images (quay.io/minio/minio and docker.io/minio/minio
+          # are gone); Bitnami's frozen copy is used instead, as for redis. Its entrypoint starts
+          # the server itself, on 9000 and the console on 9001, with the data in /bitnami/minio/data.
+          image: "bitnamilegacy/minio:2025.7.23-debian-12-r5"
           imagePullPolicy: IfNotPresent
-          args:
-            - server
-            - /data
-            - --console-address
-            - ":9001"
           ports:
             - name: api
               containerPort: 9000
@@ -69,6 +67,8 @@ spec:
               value: "minioadmin"
             - name: MINIO_ROOT_PASSWORD
               value: "minioadmin"
+            - name: MINIO_CONSOLE_PORT_NUMBER
+              value: "9001"
           livenessProbe:
             httpGet:
               path: /minio/health/live
@@ -85,7 +85,7 @@ spec:
             failureThreshold: 3
           volumeMounts:
             - name: data
-              mountPath: /data
+              mountPath: /bitnami/minio/data
       volumes:
         - name: data
           emptyDir: {}
