@@ -5,8 +5,8 @@
   "description": "Read-only web browser for the TMForum APIs of tmforum-api (all-in-one)",
   "type": "module",
   "scripts": {
-    "start": "node dev/server.mjs",
-    "mock": "TMF_MOCK=1 node dev/server.mjs",
+    "start": "node server/server.mjs",
+    "mock": "TMF_MOCK=1 node server/server.mjs",
     "gen-catalog": "node scripts/gen-catalog.mjs"
   },
   "engines": {

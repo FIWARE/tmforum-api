@@ -24,7 +24,7 @@ jobs:
 
       - name: Syntax
         run: |
-          for f in ui/src/main/resources/tmf-ui/*.js ui/dev/server.mjs ui/scripts/gen-catalog.mjs; do
+          for f in ui/src/main/resources/tmf-ui/*.js ui/server/server.mjs ui/scripts/gen-catalog.mjs; do
             node --check "$f"
           done
 

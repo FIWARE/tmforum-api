@@ -1,19 +1,22 @@
 #!/usr/bin/env node
-// tmf-ui — local development server (no dependencies).
+// tmf-ui — the server behind the page (no dependencies). It is what the tmforum-ui image
+// runs, and what `npm start` runs on a laptop:
 //
 //   npm start                      -> http://localhost:8080
 //
-// The all-in-one serves the UI itself under /ui/ (TMF_UI_ENABLED=true), and needs none of
-// this. This server is for the other case: a browser on a laptop pointed at *any* TMForum
-// endpoint - a port-forward, a remote ingress, the mock. It does three things:
-//   1. serves the SPA from src/main/resources/tmf-ui/, the same files the jar ships
-//   2. answers config.json, overriding the static one, so the page uses the proxy
-//   3. acts as a GET proxy towards the TMForum endpoint entered in the UI
+// The all-in-one does not serve the UI: this server does, next to it (a sidecar with
+// TMF_ENDPOINT=http://localhost:8632) or anywhere else (a laptop, a debug pod). It does
+// three things:
+//   1. serves the SPA from src/main/resources/tmf-ui/ (TMF_UI_STATIC_DIR in the image)
+//   2. answers config.json, which tells the page how this server was started
+//   3. acts as a GET proxy towards the TMForum endpoint
 //      (required: neither tmforum-api nor its ingresses enable CORS)
 //
 // Environment variables:
-//   PORT=8080               local port
+//   PORT=8080               port to listen on
 //   TMF_ENDPOINT=<url>      fix the TMForum endpoint instead of typing it in the page
+//                           (always set it where somebody else can reach the port)
+//   TMF_UI_STATIC_DIR=<dir> where the page's files are (set by the image)
 //   TMF_INSECURE=1          accept self-signed certificates (*.nip.io hosts of the local demo)
 //   TMF_MOCK=1              expose a fake TMForum at /mock (fixtures/data.json)
 //   NODE_USE_ENV_PROXY=1    honour HTTPS_PROXY/HTTP_PROXY (the local demo's squid on :8888)
@@ -21,11 +24,11 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
-import { extname, join, normalize, dirname } from 'node:path';
+import { extname, join, normalize, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const PUBLIC_DIR = join(HERE, '..', 'src', 'main', 'resources', 'tmf-ui');
+const PUBLIC_DIR = resolve(process.env.TMF_UI_STATIC_DIR ?? join(HERE, '..', 'src', 'main', 'resources', 'tmf-ui'));
 const PORT = Number(process.env.PORT ?? 8080);
 const MOCK = process.env.TMF_MOCK === '1';
 const TIMEOUT_MS = Number(process.env.TMF_TIMEOUT_MS ?? 20000);
@@ -224,11 +227,11 @@ async function handleStatic(req, res, url) {
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   try {
+    if (url.pathname === '/healthz') return sendJson(res, 200, { status: 'UP' });
     if (url.pathname === '/api/proxy') return await handleProxy(req, res, url);
     if (MOCK && url.pathname.startsWith('/mock')) return handleMock(req, res, url);
     if (url.pathname === '/config.json') {
       return sendJson(res, 200, {
-        sameOrigin: false,
         mock: MOCK,
         mockBase: MOCK ? `http://localhost:${PORT}/mock` : null,
         endpoint: ENDPOINT ? ENDPOINT.href.replace(/\/$/, '') : null,
