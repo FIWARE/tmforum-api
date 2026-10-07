@@ -9,6 +9,15 @@ micronaut:
   server:
     port: 8632
 
+  # tmf-ui: a read-only browser for these APIs (module `ui`). Off by default; when on, it is
+  # served at /ui/ on this same port, so it needs neither CORS nor a proxy.
+  router:
+    static-resources:
+      ui:
+        enabled: ${TMF_UI_ENABLED:false}
+        paths: classpath:tmf-ui
+        mapping: /ui/**
+
   metrics:
     enabled: true
     export:

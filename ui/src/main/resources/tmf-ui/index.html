@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMF UI</title>
+<script>
+  // The all-in-one answers /ui as well as /ui/, and at /ui every relative URL below would
+  // resolve against the root. Before anything loads, move to the directory form.
+  if (!location.pathname.endsWith('/') && !/\.html?$/i.test(location.pathname)) {
+    location.replace(`${location.pathname}/${location.search}${location.hash}`);
+  }
+</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128269;</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">TMF<span>UI</span></div>
+  <form id="conn" autocomplete="off">
+    <input id="endpoint" name="endpoint" list="recent" spellcheck="false"
+           placeholder="http://localhost:8632   (base endpoint of the all-in-one)">
+    <datalist id="recent"></datalist>
+    <button type="submit" id="connect-btn">Connect</button>
+  </form>
+  <div id="status" class="status" hidden></div>
+  <div id="conn-hint" class="hint" hidden></div>
+</header>
+
+<div class="layout">
+  <aside id="sidebar" class="sidebar">
+    <p class="hint">Enter the endpoint of the all-in-one TMForum and press <b>Connect</b>.</p>
+  </aside>
+  <main id="main" class="main">
+    <section class="welcome">
+      <h1>TMForum entity browser</h1>
+      <p>A <b>read-only</b> viewer over the APIs of <code>tmforum-api</code> (all-in-one deployment).
+         Every request is a <code>GET</code>.</p>
+      <ul>
+        <li><code>kubectl -n &lt;ns&gt; port-forward svc/tm-forum-api-svc 8632:8080</code>, then use
+            <code>http://localhost:8632</code>.</li>
+        <li>No cluster at hand: start with <code>npm run mock</code> and use
+            <code id="mock-hint">http://localhost:8080/mock</code>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

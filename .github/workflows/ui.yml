@@ -1,0 +1,50 @@
+name: UI
+
+# The tmf-ui (module `ui`) is static files generated in part from the API modules, so it
+# has to be rechecked whenever one of them changes, not only when ui/ does.
+on:
+  pull_request:
+    paths:
+      - 'ui/**'
+      - 'all-in-one/**'
+      - 'api/**'
+      # the domain classes: URN types and reference fields, in more packages than domain/
+      - '*/src/main/java/**'
+      - '.github/workflows/ui.yml'
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Syntax
+        run: |
+          for f in ui/src/main/resources/tmf-ui/*.js ui/dev/server.mjs ui/scripts/gen-catalog.mjs; do
+            node --check "$f"
+          done
+
+      # catalog.js is committed so that neither the build nor the page needs Node. This is
+      # what keeps it from drifting: regenerate, and fail on any difference.
+      - name: Catalogue is up to date
+        run: |
+          node ui/scripts/gen-catalog.mjs
+          git diff --exit-code -- ui/src/main/resources/tmf-ui/catalog.js \
+            || { echo "::error::catalog.js is stale - run 'npm run gen-catalog' in ui/ and commit the result"; exit 1; }
+
+  served:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: The all-in-one serves it at /ui/, and only when enabled
+        run: mvn -B test -pl all-in-one -am -Dtest=StaticUiTest -Dsurefire.failIfNoSpecifiedTests=false
