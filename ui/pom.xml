@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.fiware.tmforum</groupId>
+    <artifactId>ui</artifactId>
+    <version>0.1</version>
+
+    <parent>
+        <groupId>org.fiware</groupId>
+        <artifactId>tmforum</artifactId>
+        <version>0.1</version>
+    </parent>
+
+    <!--
+        A read-only browser for the TMForum APIs of the all-in-one, as an image of its own
+        (tmforum-ui): the page under src/main/resources/tmf-ui, served by server/server.mjs,
+        which proxies GETs to TMF_ENDPOINT. There is no Java here and no Node in the build -
+        jib only copies files onto a Node.js base image. It runs alone for debugging, or next to
+        the all-in-one as a sidecar. See ui/README.md.
+    -->
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <!-- merged over the oci profile's configuration: same platforms, target and labels -->
+                <configuration>
+                    <from>
+                        <image>registry.access.redhat.com/ubi9/nodejs-22-minimal:9.8-1791305330</image>
+                    </from>
+                    <extraDirectories>
+                        <paths>
+                            <path>
+                                <from>${project.basedir}/server</from>
+                                <into>/app/server</into>
+                            </path>
+                        </paths>
+                    </extraDirectories>
+                    <container>
+                        <entrypoint>
+                            <arg>node</arg>
+                            <arg>/app/server/server.mjs</arg>
+                        </entrypoint>
+                        <!-- jib puts the module's resources here -->
+                        <environment>
+                            <TMF_UI_STATIC_DIR>/app/resources/tmf-ui</TMF_UI_STATIC_DIR>
+                            <PORT>8080</PORT>
+                        </environment>
+                        <ports>
+                            <port>8080</port>
+                        </ports>
+                        <user>1001</user>
+                    </container>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
