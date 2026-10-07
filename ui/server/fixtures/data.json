@@ -1,0 +1,2359 @@
+{
+ "/tmf-api/productCatalogManagement/v4/productSpecification": [
+  {
+   "id": "urn:ngsi-ld:product-specification:0001-demo",
+   "href": "urn:ngsi-ld:product-specification:0001-demo",
+   "name": "Traffic data #1",
+   "description": "Product specification for the traffic dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-02-02T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0002-demo",
+   "href": "urn:ngsi-ld:product-specification:0002-demo",
+   "name": "Air quality data #2",
+   "description": "Product specification for the air quality dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-03-03T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0003-demo",
+   "href": "urn:ngsi-ld:product-specification:0003-demo",
+   "name": "Irrigation data #3",
+   "description": "Product specification for the irrigation dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-04-04T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0004-demo",
+   "href": "urn:ngsi-ld:product-specification:0004-demo",
+   "name": "Weather data #4",
+   "description": "Product specification for the weather dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Retired",
+   "isBundle": false,
+   "lastUpdate": "2026-05-05T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0005-demo",
+   "href": "urn:ngsi-ld:product-specification:0005-demo",
+   "name": "Parking data #5",
+   "description": "Product specification for the parking dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-06-06T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0006-demo",
+   "href": "urn:ngsi-ld:product-specification:0006-demo",
+   "name": "Waste data #6",
+   "description": "Product specification for the waste dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-07-07T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0007-demo",
+   "href": "urn:ngsi-ld:product-specification:0007-demo",
+   "name": "Energy data #7",
+   "description": "Product specification for the energy dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-08-08T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0008-demo",
+   "href": "urn:ngsi-ld:product-specification:0008-demo",
+   "name": "Street lighting data #8",
+   "description": "Product specification for the street lighting dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Retired",
+   "isBundle": false,
+   "lastUpdate": "2026-09-09T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0009-demo",
+   "href": "urn:ngsi-ld:product-specification:0009-demo",
+   "name": "Water data #9",
+   "description": "Product specification for the water dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-10-10T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0010-demo",
+   "href": "urn:ngsi-ld:product-specification:0010-demo",
+   "name": "Noise data #10",
+   "description": "Product specification for the noise dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-11-11T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0011-demo",
+   "href": "urn:ngsi-ld:product-specification:0011-demo",
+   "name": "Mobility data #11",
+   "description": "Product specification for the mobility dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-12-12T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0012-demo",
+   "href": "urn:ngsi-ld:product-specification:0012-demo",
+   "name": "Tourism data #12",
+   "description": "Product specification for the tourism dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Retired",
+   "isBundle": false,
+   "lastUpdate": "2026-01-13T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0013-demo",
+   "href": "urn:ngsi-ld:product-specification:0013-demo",
+   "name": "Traffic data #13",
+   "description": "Product specification for the traffic dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-02-14T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0014-demo",
+   "href": "urn:ngsi-ld:product-specification:0014-demo",
+   "name": "Air quality data #14",
+   "description": "Product specification for the air quality dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-03-15T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0015-demo",
+   "href": "urn:ngsi-ld:product-specification:0015-demo",
+   "name": "Irrigation data #15",
+   "description": "Product specification for the irrigation dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-04-16T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0016-demo",
+   "href": "urn:ngsi-ld:product-specification:0016-demo",
+   "name": "Weather data #16",
+   "description": "Product specification for the weather dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Retired",
+   "isBundle": false,
+   "lastUpdate": "2026-05-17T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0017-demo",
+   "href": "urn:ngsi-ld:product-specification:0017-demo",
+   "name": "Parking data #17",
+   "description": "Product specification for the parking dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-06-18T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0018-demo",
+   "href": "urn:ngsi-ld:product-specification:0018-demo",
+   "name": "Waste data #18",
+   "description": "Product specification for the waste dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-07-19T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0019-demo",
+   "href": "urn:ngsi-ld:product-specification:0019-demo",
+   "name": "Energy data #19",
+   "description": "Product specification for the energy dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-08-20T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0020-demo",
+   "href": "urn:ngsi-ld:product-specification:0020-demo",
+   "name": "Street lighting data #20",
+   "description": "Product specification for the street lighting dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Retired",
+   "isBundle": false,
+   "lastUpdate": "2026-09-21T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0021-demo",
+   "href": "urn:ngsi-ld:product-specification:0021-demo",
+   "name": "Water data #21",
+   "description": "Product specification for the water dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-10-22T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0022-demo",
+   "href": "urn:ngsi-ld:product-specification:0022-demo",
+   "name": "Noise data #22",
+   "description": "Product specification for the noise dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-11-23T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0023-demo",
+   "href": "urn:ngsi-ld:product-specification:0023-demo",
+   "name": "Mobility data #23",
+   "description": "Product specification for the mobility dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "lastUpdate": "2026-12-24T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  },
+  {
+   "id": "urn:ngsi-ld:product-specification:0024-demo",
+   "href": "urn:ngsi-ld:product-specification:0024-demo",
+   "name": "Tourism data #24",
+   "description": "Product specification for the tourism dataset.",
+   "version": "1.0.0",
+   "lifecycleStatus": "Retired",
+   "isBundle": false,
+   "lastUpdate": "2026-01-25T09:00:00.000Z",
+   "validFor": {
+    "startDateTime": "2026-01-01T00:00:00Z",
+    "endDateTime": "2027-01-01T00:00:00Z"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "productSpecCharacteristic": [
+    {
+     "name": "format",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "NGSI-LD"
+      }
+     ]
+    },
+    {
+     "name": "frequency",
+     "valueType": "string",
+     "productSpecCharacteristicValue": [
+      {
+       "isDefault": true,
+       "value": "5 min"
+      }
+     ]
+    }
+   ],
+   "@type": "ProductSpecification"
+  }
+ ],
+ "/tmf-api/productCatalogManagement/v4/productOffering": [
+  {
+   "id": "urn:ngsi-ld:product-offering:0001-demo",
+   "href": "urn:ngsi-ld:product-offering:0001-demo",
+   "name": "Traffic offering 1",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-02-03T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0001-demo",
+    "href": "urn:ngsi-ld:product-specification:0001-demo",
+    "name": "Traffic data #1",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0002-demo",
+     "href": "urn:ngsi-ld:category:0002-demo",
+     "name": "Agri",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "name": "Monthly subscription",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0002-demo",
+   "href": "urn:ngsi-ld:product-offering:0002-demo",
+   "name": "Air quality offering 2",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-03-04T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0002-demo",
+    "href": "urn:ngsi-ld:product-specification:0002-demo",
+    "name": "Air quality data #2",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0003-demo",
+     "href": "urn:ngsi-ld:category:0003-demo",
+     "name": "Industry",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "name": "Pay per use",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0003-demo",
+   "href": "urn:ngsi-ld:product-offering:0003-demo",
+   "name": "Irrigation offering 3",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-04-05T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0003-demo",
+    "href": "urn:ngsi-ld:product-specification:0003-demo",
+    "name": "Irrigation data #3",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0001-demo",
+     "href": "urn:ngsi-ld:category:0001-demo",
+     "name": "City",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "name": "Annual",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0004-demo",
+   "href": "urn:ngsi-ld:product-offering:0004-demo",
+   "name": "Weather offering 4",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-05-06T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0004-demo",
+    "href": "urn:ngsi-ld:product-specification:0004-demo",
+    "name": "Weather data #4",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0002-demo",
+     "href": "urn:ngsi-ld:category:0002-demo",
+     "name": "Agri",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "name": "Free",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0005-demo",
+   "href": "urn:ngsi-ld:product-offering:0005-demo",
+   "name": "Parking offering 5",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Launched",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-06-07T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0005-demo",
+    "href": "urn:ngsi-ld:product-specification:0005-demo",
+    "name": "Parking data #5",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0003-demo",
+     "href": "urn:ngsi-ld:category:0003-demo",
+     "name": "Industry",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "name": "Monthly subscription",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0006-demo",
+   "href": "urn:ngsi-ld:product-offering:0006-demo",
+   "name": "Waste offering 6",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-07-08T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0006-demo",
+    "href": "urn:ngsi-ld:product-specification:0006-demo",
+    "name": "Waste data #6",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0001-demo",
+     "href": "urn:ngsi-ld:category:0001-demo",
+     "name": "City",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "name": "Pay per use",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0007-demo",
+   "href": "urn:ngsi-ld:product-offering:0007-demo",
+   "name": "Energy offering 7",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-08-09T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0007-demo",
+    "href": "urn:ngsi-ld:product-specification:0007-demo",
+    "name": "Energy data #7",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0002-demo",
+     "href": "urn:ngsi-ld:category:0002-demo",
+     "name": "Agri",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "name": "Annual",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0008-demo",
+   "href": "urn:ngsi-ld:product-offering:0008-demo",
+   "name": "Street lighting offering 8",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-09-10T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0008-demo",
+    "href": "urn:ngsi-ld:product-specification:0008-demo",
+    "name": "Street lighting data #8",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0003-demo",
+     "href": "urn:ngsi-ld:category:0003-demo",
+     "name": "Industry",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "name": "Free",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0009-demo",
+   "href": "urn:ngsi-ld:product-offering:0009-demo",
+   "name": "Water offering 9",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-10-11T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0009-demo",
+    "href": "urn:ngsi-ld:product-specification:0009-demo",
+    "name": "Water data #9",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0001-demo",
+     "href": "urn:ngsi-ld:category:0001-demo",
+     "name": "City",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "name": "Monthly subscription",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0010-demo",
+   "href": "urn:ngsi-ld:product-offering:0010-demo",
+   "name": "Noise offering 10",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Launched",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-11-12T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0010-demo",
+    "href": "urn:ngsi-ld:product-specification:0010-demo",
+    "name": "Noise data #10",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0002-demo",
+     "href": "urn:ngsi-ld:category:0002-demo",
+     "name": "Agri",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "name": "Pay per use",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0011-demo",
+   "href": "urn:ngsi-ld:product-offering:0011-demo",
+   "name": "Mobility offering 11",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-12-13T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0011-demo",
+    "href": "urn:ngsi-ld:product-specification:0011-demo",
+    "name": "Mobility data #11",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0003-demo",
+     "href": "urn:ngsi-ld:category:0003-demo",
+     "name": "Industry",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "name": "Annual",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0012-demo",
+   "href": "urn:ngsi-ld:product-offering:0012-demo",
+   "name": "Tourism offering 12",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-01-14T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0012-demo",
+    "href": "urn:ngsi-ld:product-specification:0012-demo",
+    "name": "Tourism data #12",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0001-demo",
+     "href": "urn:ngsi-ld:category:0001-demo",
+     "name": "City",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "name": "Free",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0013-demo",
+   "href": "urn:ngsi-ld:product-offering:0013-demo",
+   "name": "Traffic offering 13",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-02-15T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0013-demo",
+    "href": "urn:ngsi-ld:product-specification:0013-demo",
+    "name": "Traffic data #13",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0002-demo",
+     "href": "urn:ngsi-ld:category:0002-demo",
+     "name": "Agri",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "name": "Monthly subscription",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0014-demo",
+   "href": "urn:ngsi-ld:product-offering:0014-demo",
+   "name": "Air quality offering 14",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-03-16T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0014-demo",
+    "href": "urn:ngsi-ld:product-specification:0014-demo",
+    "name": "Air quality data #14",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0003-demo",
+     "href": "urn:ngsi-ld:category:0003-demo",
+     "name": "Industry",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "name": "Pay per use",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0015-demo",
+   "href": "urn:ngsi-ld:product-offering:0015-demo",
+   "name": "Irrigation offering 15",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Launched",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-04-17T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0015-demo",
+    "href": "urn:ngsi-ld:product-specification:0015-demo",
+    "name": "Irrigation data #15",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0001-demo",
+     "href": "urn:ngsi-ld:category:0001-demo",
+     "name": "City",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0004-demo",
+     "name": "Annual",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0016-demo",
+   "href": "urn:ngsi-ld:product-offering:0016-demo",
+   "name": "Weather offering 16",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-05-18T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0016-demo",
+    "href": "urn:ngsi-ld:product-specification:0016-demo",
+    "name": "Weather data #16",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0002-demo",
+     "href": "urn:ngsi-ld:category:0002-demo",
+     "name": "Agri",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0001-demo",
+     "name": "Free",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0017-demo",
+   "href": "urn:ngsi-ld:product-offering:0017-demo",
+   "name": "Parking offering 17",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-06-19T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0017-demo",
+    "href": "urn:ngsi-ld:product-specification:0017-demo",
+    "name": "Parking data #17",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0003-demo",
+     "href": "urn:ngsi-ld:category:0003-demo",
+     "name": "Industry",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0002-demo",
+     "name": "Monthly subscription",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering:0018-demo",
+   "href": "urn:ngsi-ld:product-offering:0018-demo",
+   "name": "Waste offering 18",
+   "description": "Commercial offering over the associated product specification.",
+   "lifecycleStatus": "Active",
+   "isBundle": false,
+   "isSellable": true,
+   "lastUpdate": "2026-07-20T11:30:00.000Z",
+   "productSpecification": {
+    "id": "urn:ngsi-ld:product-specification:0018-demo",
+    "href": "urn:ngsi-ld:product-specification:0018-demo",
+    "name": "Waste data #18",
+    "@referredType": "ProductSpecification",
+    "@type": "ProductSpecificationRef"
+   },
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0001-demo",
+     "href": "urn:ngsi-ld:category:0001-demo",
+     "name": "City",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "productOfferingPrice": [
+    {
+     "id": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "href": "urn:ngsi-ld:product-offering-price:0003-demo",
+     "name": "Pay per use",
+     "@referredType": "ProductOfferingPrice",
+     "@type": "ProductOfferingPriceRef"
+    }
+   ],
+   "@type": "ProductOffering"
+  }
+ ],
+ "/tmf-api/productCatalogManagement/v4/productOfferingPrice": [
+  {
+   "id": "urn:ngsi-ld:product-offering-price:0001-demo",
+   "href": "urn:ngsi-ld:product-offering-price:0001-demo",
+   "name": "Free",
+   "description": "Price model: Free.",
+   "priceType": "oneTime",
+   "price": {
+    "taxIncludedAmount": {
+     "unit": "EUR",
+     "value": 0
+    }
+   },
+   "lifecycleStatus": "Active",
+   "@type": "ProductOfferingPrice"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering-price:0002-demo",
+   "href": "urn:ngsi-ld:product-offering-price:0002-demo",
+   "name": "Monthly subscription",
+   "description": "Price model: Monthly subscription.",
+   "priceType": "recurring",
+   "recurringChargePeriodType": "month",
+   "price": {
+    "taxIncludedAmount": {
+     "unit": "EUR",
+     "value": 49.9
+    }
+   },
+   "lifecycleStatus": "Active",
+   "@type": "ProductOfferingPrice"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering-price:0003-demo",
+   "href": "urn:ngsi-ld:product-offering-price:0003-demo",
+   "name": "Pay per use",
+   "description": "Price model: Pay per use.",
+   "priceType": "recurring",
+   "recurringChargePeriodType": "month",
+   "price": {
+    "taxIncludedAmount": {
+     "unit": "EUR",
+     "value": 0.02
+    }
+   },
+   "lifecycleStatus": "Active",
+   "@type": "ProductOfferingPrice"
+  },
+  {
+   "id": "urn:ngsi-ld:product-offering-price:0004-demo",
+   "href": "urn:ngsi-ld:product-offering-price:0004-demo",
+   "name": "Annual",
+   "description": "Price model: Annual.",
+   "priceType": "recurring",
+   "recurringChargePeriodType": "month",
+   "price": {
+    "taxIncludedAmount": {
+     "unit": "EUR",
+     "value": 499
+    }
+   },
+   "lifecycleStatus": "Active",
+   "@type": "ProductOfferingPrice"
+  }
+ ],
+ "/tmf-api/productCatalogManagement/v4/category": [
+  {
+   "id": "urn:ngsi-ld:category:0001-demo",
+   "href": "urn:ngsi-ld:category:0001-demo",
+   "name": "City",
+   "description": "City category.",
+   "lifecycleStatus": "Active",
+   "isRoot": true,
+   "@type": "Category"
+  },
+  {
+   "id": "urn:ngsi-ld:category:0002-demo",
+   "href": "urn:ngsi-ld:category:0002-demo",
+   "name": "Agri",
+   "description": "Agri category.",
+   "lifecycleStatus": "Active",
+   "isRoot": true,
+   "@type": "Category"
+  },
+  {
+   "id": "urn:ngsi-ld:category:0003-demo",
+   "href": "urn:ngsi-ld:category:0003-demo",
+   "name": "Industry",
+   "description": "Industry category.",
+   "lifecycleStatus": "Active",
+   "isRoot": true,
+   "@type": "Category"
+  }
+ ],
+ "/tmf-api/productCatalogManagement/v4/catalog": [
+  {
+   "id": "urn:ngsi-ld:catalog:0001-demo",
+   "href": "urn:ngsi-ld:catalog:0001-demo",
+   "name": "Northwind Data catalogue",
+   "description": "Main catalogue of the data space.",
+   "lifecycleStatus": "Active",
+   "version": "1.0",
+   "category": [
+    {
+     "id": "urn:ngsi-ld:category:0001-demo",
+     "href": "urn:ngsi-ld:category:0001-demo",
+     "name": "City",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    },
+    {
+     "id": "urn:ngsi-ld:category:0002-demo",
+     "href": "urn:ngsi-ld:category:0002-demo",
+     "name": "Agri",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    },
+    {
+     "id": "urn:ngsi-ld:category:0003-demo",
+     "href": "urn:ngsi-ld:category:0003-demo",
+     "name": "Industry",
+     "@referredType": "Category",
+     "@type": "CategoryRef"
+    }
+   ],
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "@type": "Catalog"
+  }
+ ],
+ "/tmf-api/party/v4/organization": [
+  {
+   "id": "urn:ngsi-ld:organization:0001-demo",
+   "href": "urn:ngsi-ld:organization:0001-demo",
+   "name": "Northwind Data",
+   "tradingName": "Northwind Data",
+   "isLegalEntity": true,
+   "status": "validated",
+   "organizationType": "company",
+   "contactMedium": [
+    {
+     "mediumType": "email",
+     "preferred": true,
+     "characteristic": {
+      "emailAddress": "info@northwind.example"
+     }
+    }
+   ],
+   "@type": "Organization"
+  },
+  {
+   "id": "urn:ngsi-ld:organization:0002-demo",
+   "href": "urn:ngsi-ld:organization:0002-demo",
+   "name": "Riverside City Council",
+   "tradingName": "Riverside City Council",
+   "isLegalEntity": true,
+   "status": "validated",
+   "organizationType": "public",
+   "contactMedium": [
+    {
+     "mediumType": "email",
+     "preferred": true,
+     "characteristic": {
+      "emailAddress": "info@riverside-council.example"
+     }
+    }
+   ],
+   "@type": "Organization"
+  },
+  {
+   "id": "urn:ngsi-ld:organization:0003-demo",
+   "href": "urn:ngsi-ld:organization:0003-demo",
+   "name": "Acme Sensors",
+   "tradingName": "Acme Sensors",
+   "isLegalEntity": true,
+   "status": "validated",
+   "organizationType": "company",
+   "contactMedium": [
+    {
+     "mediumType": "email",
+     "preferred": true,
+     "characteristic": {
+      "emailAddress": "info@acme-sensors.example"
+     }
+    }
+   ],
+   "@type": "Organization"
+  }
+ ],
+ "/tmf-api/party/v4/individual": [
+  {
+   "id": "urn:ngsi-ld:individual:0001-demo",
+   "href": "urn:ngsi-ld:individual:0001-demo",
+   "givenName": "Ana",
+   "familyName": "Ruiz",
+   "fullName": "Ana Ruiz",
+   "status": "validated",
+   "contactMedium": [
+    {
+     "mediumType": "email",
+     "preferred": true,
+     "characteristic": {
+      "emailAddress": "ana@example.org"
+     }
+    }
+   ],
+   "@type": "Individual"
+  },
+  {
+   "id": "urn:ngsi-ld:individual:0002-demo",
+   "href": "urn:ngsi-ld:individual:0002-demo",
+   "givenName": "Marc",
+   "familyName": "Oliver",
+   "fullName": "Marc Oliver",
+   "status": "validated",
+   "contactMedium": [
+    {
+     "mediumType": "email",
+     "preferred": true,
+     "characteristic": {
+      "emailAddress": "marc@example.org"
+     }
+    }
+   ],
+   "@type": "Individual"
+  },
+  {
+   "id": "urn:ngsi-ld:individual:0003-demo",
+   "href": "urn:ngsi-ld:individual:0003-demo",
+   "givenName": "Lucia",
+   "familyName": "Ferrer",
+   "fullName": "Lucia Ferrer",
+   "status": "validated",
+   "contactMedium": [
+    {
+     "mediumType": "email",
+     "preferred": true,
+     "characteristic": {
+      "emailAddress": "lucia@example.org"
+     }
+    }
+   ],
+   "@type": "Individual"
+  }
+ ],
+ "/tmf-api/productInventory/v4/product": [
+  {
+   "id": "urn:ngsi-ld:product:0001-demo",
+   "href": "urn:ngsi-ld:product:0001-demo",
+   "name": "Subscription 1",
+   "status": "active",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0002-demo",
+    "href": "urn:ngsi-ld:product-offering:0002-demo",
+    "name": "Air quality offering 2",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0002-demo",
+     "href": "urn:ngsi-ld:individual:0002-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0002-demo",
+   "href": "urn:ngsi-ld:product:0002-demo",
+   "name": "Subscription 2",
+   "status": "active",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0003-demo",
+    "href": "urn:ngsi-ld:product-offering:0003-demo",
+    "name": "Irrigation offering 3",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0003-demo",
+     "href": "urn:ngsi-ld:individual:0003-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0003-demo",
+   "href": "urn:ngsi-ld:product:0003-demo",
+   "name": "Subscription 3",
+   "status": "suspended",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0004-demo",
+    "href": "urn:ngsi-ld:product-offering:0004-demo",
+    "name": "Weather offering 4",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0001-demo",
+     "href": "urn:ngsi-ld:individual:0001-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0004-demo",
+   "href": "urn:ngsi-ld:product:0004-demo",
+   "name": "Subscription 4",
+   "status": "active",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0005-demo",
+    "href": "urn:ngsi-ld:product-offering:0005-demo",
+    "name": "Parking offering 5",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0002-demo",
+     "href": "urn:ngsi-ld:individual:0002-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0005-demo",
+   "href": "urn:ngsi-ld:product:0005-demo",
+   "name": "Subscription 5",
+   "status": "active",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0006-demo",
+    "href": "urn:ngsi-ld:product-offering:0006-demo",
+    "name": "Waste offering 6",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0003-demo",
+     "href": "urn:ngsi-ld:individual:0003-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0006-demo",
+   "href": "urn:ngsi-ld:product:0006-demo",
+   "name": "Subscription 6",
+   "status": "suspended",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0007-demo",
+    "href": "urn:ngsi-ld:product-offering:0007-demo",
+    "name": "Energy offering 7",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0001-demo",
+     "href": "urn:ngsi-ld:individual:0001-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0007-demo",
+   "href": "urn:ngsi-ld:product:0007-demo",
+   "name": "Subscription 7",
+   "status": "active",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0008-demo",
+    "href": "urn:ngsi-ld:product-offering:0008-demo",
+    "name": "Street lighting offering 8",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0002-demo",
+     "href": "urn:ngsi-ld:individual:0002-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0008-demo",
+   "href": "urn:ngsi-ld:product:0008-demo",
+   "name": "Subscription 8",
+   "status": "active",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0009-demo",
+    "href": "urn:ngsi-ld:product-offering:0009-demo",
+    "name": "Water offering 9",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0003-demo",
+     "href": "urn:ngsi-ld:individual:0003-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  },
+  {
+   "id": "urn:ngsi-ld:product:0009-demo",
+   "href": "urn:ngsi-ld:product:0009-demo",
+   "name": "Subscription 9",
+   "status": "suspended",
+   "isBundle": false,
+   "startDate": "2026-03-01T00:00:00Z",
+   "productOffering": {
+    "id": "urn:ngsi-ld:product-offering:0010-demo",
+    "href": "urn:ngsi-ld:product-offering:0010-demo",
+    "name": "Noise offering 10",
+    "@referredType": "ProductOffering",
+    "@type": "ProductOfferingRef"
+   },
+   "relatedParty": [
+    {
+     "id": "urn:ngsi-ld:individual:0001-demo",
+     "href": "urn:ngsi-ld:individual:0001-demo",
+     "role": "Customer",
+     "@referredType": "Individual",
+     "@type": "RelatedParty"
+    }
+   ],
+   "@type": "Product"
+  }
+ ],
+ "/tmf-api/agreementManagement/v4/agreement": [
+  {
+   "id": "urn:ngsi-ld:agreement:0001-demo",
+   "href": "urn:ngsi-ld:agreement:0001-demo",
+   "name": "Framework agreement 1",
+   "agreementType": "DataSharing",
+   "status": "approved",
+   "engagedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "agreementItem": [
+    {
+     "productOffering": [
+      {
+       "id": "urn:ngsi-ld:product-offering:0001-demo",
+       "href": "urn:ngsi-ld:product-offering:0001-demo",
+       "name": "Traffic offering 1",
+       "@referredType": "ProductOffering",
+       "@type": "ProductOfferingRef"
+      }
+     ]
+    }
+   ],
+   "@type": "Agreement"
+  },
+  {
+   "id": "urn:ngsi-ld:agreement:0002-demo",
+   "href": "urn:ngsi-ld:agreement:0002-demo",
+   "name": "Framework agreement 2",
+   "agreementType": "DataSharing",
+   "status": "approved",
+   "engagedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0003-demo",
+     "href": "urn:ngsi-ld:organization:0003-demo",
+     "name": "Acme Sensors",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "agreementItem": [
+    {
+     "productOffering": [
+      {
+       "id": "urn:ngsi-ld:product-offering:0002-demo",
+       "href": "urn:ngsi-ld:product-offering:0002-demo",
+       "name": "Air quality offering 2",
+       "@referredType": "ProductOffering",
+       "@type": "ProductOfferingRef"
+      }
+     ]
+    }
+   ],
+   "@type": "Agreement"
+  },
+  {
+   "id": "urn:ngsi-ld:agreement:0003-demo",
+   "href": "urn:ngsi-ld:agreement:0003-demo",
+   "name": "Framework agreement 3",
+   "agreementType": "DataSharing",
+   "status": "approved",
+   "engagedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0001-demo",
+     "href": "urn:ngsi-ld:organization:0001-demo",
+     "name": "Northwind Data",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "agreementItem": [
+    {
+     "productOffering": [
+      {
+       "id": "urn:ngsi-ld:product-offering:0003-demo",
+       "href": "urn:ngsi-ld:product-offering:0003-demo",
+       "name": "Irrigation offering 3",
+       "@referredType": "ProductOffering",
+       "@type": "ProductOfferingRef"
+      }
+     ]
+    }
+   ],
+   "@type": "Agreement"
+  },
+  {
+   "id": "urn:ngsi-ld:agreement:0004-demo",
+   "href": "urn:ngsi-ld:agreement:0004-demo",
+   "name": "Framework agreement 4",
+   "agreementType": "DataSharing",
+   "status": "approved",
+   "engagedParty": [
+    {
+     "id": "urn:ngsi-ld:organization:0002-demo",
+     "href": "urn:ngsi-ld:organization:0002-demo",
+     "name": "Riverside City Council",
+     "@referredType": "Organization",
+     "@type": "OrganizationRef"
+    }
+   ],
+   "agreementItem": [
+    {
+     "productOffering": [
+      {
+       "id": "urn:ngsi-ld:product-offering:0004-demo",
+       "href": "urn:ngsi-ld:product-offering:0004-demo",
+       "name": "Weather offering 4",
+       "@referredType": "ProductOffering",
+       "@type": "ProductOfferingRef"
+      }
+     ]
+    }
+   ],
+   "@type": "Agreement"
+  }
+ ]
+}

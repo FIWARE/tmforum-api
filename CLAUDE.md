@@ -50,6 +50,7 @@ mvn spotbugs:spotbugs
 - **\*-shared-models** (customer, resource, product, service): Domain objects shared across multiple API modules.
 - **API modules** (18 total): Each implements one TMForum API (e.g., `product-catalog`, `party-catalog`, `customer-management`). Each produces a standalone JAR/container.
 - **all-in-one**: Single uber-JAR combining all API modules.
+- **ui**: Read-only web browser for the all-in-one's APIs, shipped as its own image (`tmforum-ui`), not inside the all-in-one: the page (`src/main/resources/tmf-ui/`) plus a dependency-free Node server (`server/server.mjs`) that serves it and proxies GETs to `TMF_ENDPOINT`. No Java, no Node in the Maven build — jib (`oci` profile) copies both onto a UBI Node.js image. Meant to run as a sidecar of the all-in-one or standalone for debugging. `ui/src/main/resources/tmf-ui/catalog.js` is generated from the API modules by `ui/scripts/gen-catalog.mjs` — rerun it (`npm run gen-catalog` in `ui/`) after adding an API, a resource or a `TYPE_*` constant; CI fails on a stale one. See `ui/README.md`.
 - **data-migrator**: Migration tool with 3 sub-modules (legacy-loader, update-writer, migrator).
 
 ### Layered Architecture (per API module)
