@@ -201,6 +201,27 @@ Notes:
   schema needs to contain the full definition of the object, including the properties from the baseType. Else, they will
   be considered as additional properties and validation will fail.  
 
+### Caching of the schemas
+
+Schemas are downloaded from the address given in ```@schemaLocation```. To prevent a download on every single request,
+they are cached in-memory. The cache is bound by a time-to-live - e.g. changes at the schema provider are picked up
+after at most that time - and by the number of cached schemas, to prevent clients from filling up the memory through
+arbitrary schema addresses. The least recently used schemas are evicted first and failed downloads are not cached.
+
+| Property                            | Default | Description                                                                                            |
+|-------------------------------------|---------|--------------------------------------------------------------------------------------------------------|
+| ```general.schema-cache.enabled```     | true    | Enables the caching of downloaded schemas. If disabled, every validation downloads the schema again.     |
+| ```general.schema-cache.time-to-live```| 30m     | Time a downloaded schema is kept, before it is downloaded again. A duration of ```0s``` disables caching. |
+| ```general.schema-cache.max-size```    | 100     | Maximum number of schemas to be kept in the cache.                                                       |
+
+```yaml
+general:
+  schema-cache:
+    enabled: true
+    time-to-live: 30m
+    max-size: 100
+```
+
 ## Release notes
 
 |Version| Notes link                                                                                 |

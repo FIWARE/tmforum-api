@@ -14,9 +14,6 @@ import com.networknt.schema.InputFormat;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaLocation;
 import com.networknt.schema.SchemaRegistry;
-import com.networknt.schema.SpecificationVersion;
-import com.networknt.schema.resource.ClasspathResourceLoader;
-import com.networknt.schema.resource.IriResourceLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.SchemaValidationException;
 
@@ -43,6 +40,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	private final BeanDescription beanDescription;
 	private final List<SubTypePropertyProvider> subTypePropertyProviders;
+	private final SchemaRegistry schemaRegistry;
 
 	/**
 	 * Create a new ValidatingDeserializer.
@@ -50,18 +48,21 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	 * @param delegate                  the delegate deserializer
 	 * @param beanDescription           the bean description for the target type
 	 * @param subTypePropertyProviders  the registered sub-type property providers
+	 * @param schemaRegistry            the shared registry to retrieve the linked schemas from
 	 */
 	public ValidatingDeserializer(JsonDeserializer<?> delegate, BeanDescription beanDescription,
-			List<SubTypePropertyProvider> subTypePropertyProviders) {
+			List<SubTypePropertyProvider> subTypePropertyProviders, SchemaRegistry schemaRegistry) {
 		super(delegate);
 		this.beanDescription = beanDescription;
 		this.subTypePropertyProviders = subTypePropertyProviders != null
 				? subTypePropertyProviders : List.of();
+		this.schemaRegistry = schemaRegistry;
 	}
 
 	@Override
 	protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> newDelegatee) {
-		return new ValidatingDeserializer(newDelegatee, beanDescription, subTypePropertyProviders);
+		return new ValidatingDeserializer(newDelegatee, beanDescription, subTypePropertyProviders,
+				schemaRegistry);
 	}
 
 	@Override
@@ -149,14 +150,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 		}
 
 		try {
-            SchemaRegistry jsonSchemaFactory = SchemaRegistry.withDefaultDialect(
-                    SpecificationVersion.DRAFT_2020_12,
-                    builder -> builder.resourceLoaders(sb -> {
-                        sb.add(new ClasspathResourceLoader());
-                        sb.add(new IriResourceLoader());
-                    })
-            );
-			Schema schema = jsonSchemaFactory.getSchema(SchemaLocation.of(schemaAddress));
+			Schema schema = schemaRegistry.getSchema(SchemaLocation.of(schemaAddress));
 			List<Error> assertions = schema.validate(jsonString, InputFormat.JSON, executionContext -> {
 				executionContext.setExecutionConfig(ExecutionConfig.builder(executionContext.getExecutionConfig()).formatAssertionsEnabled(true).build());
 			});
