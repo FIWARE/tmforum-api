@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.networknt.schema.SchemaRegistry;
 import io.github.wistefan.mapping.AdditionalPropertyMixin;
 import io.github.wistefan.mapping.CacheSerdeableObjectMapper;
 import io.micronaut.context.event.BeanCreatedEvent;
@@ -29,6 +30,7 @@ import java.util.List;
 public class ObjectMapperEventListener implements BeanCreatedEventListener<ObjectMapper> {
 
 	private final List<SubTypePropertyProvider> subTypePropertyProviders;
+	private final SchemaRegistry schemaRegistry;
 
 	@Override
 	public ObjectMapper onCreated(BeanCreatedEvent<ObjectMapper> event) {
@@ -53,7 +55,7 @@ public class ObjectMapperEventListener implements BeanCreatedEventListener<Objec
 														  BeanDescription beanDescription,
 														  JsonDeserializer<?> originalDeserializer) {
 				return new ValidatingDeserializer(originalDeserializer, beanDescription,
-						subTypePropertyProviders);
+						subTypePropertyProviders, schemaRegistry);
 			}
 		});
 
