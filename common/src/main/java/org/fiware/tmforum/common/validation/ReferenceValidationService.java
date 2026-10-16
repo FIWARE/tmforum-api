@@ -38,7 +38,7 @@ public class ReferenceValidationService {
                                 .map(eVo -> true)
                                 .defaultIfEmpty(false))
                         .toList(),
-                t -> Arrays.stream(t).anyMatch(Boolean.class::cast));
+                t -> Arrays.stream(t).allMatch(Boolean.class::cast));
     }
 
     /**
