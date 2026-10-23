@@ -192,25 +192,28 @@ public abstract class NgsiLdBaseRepository {
 				.switchIfEmpty(Mono.error(new NgsiLdRepositoryException(
 						String.format("Entity %s does not exist.", id), Optional.empty())))
 				.map(storedEntity -> toAttributeUpdate(storedEntity, updateEntityVO))
-				.flatMap(attributeUpdate -> updateAttributes(entityId, attributeUpdate));
+				.flatMap(attributeUpdate -> updateAttributes(entityId, attributeUpdate))
+				// checked outside of updateAttributes, so that its cache invalidation also runs on a partial write
+				.flatMap(response -> failOnPartialUpdate(entityId, response));
 	}
 
 	/**
 	 * Write the attributes of an update with Update Attributes (PATCH /attrs). It answers 207 with the attributes
-	 * it could not write.
+	 * it could not write. The answer is returned as it is: the cache is only invalidated if the returned mono
+	 * completes, and a 207 means that the broker did write a part of the update.
 	 *
 	 * @param entityId        id of the entity
 	 * @param attributeUpdate the attributes to write, see {@link #toAttributeUpdate(Map, EntityVO)}
-	 * @return an empty mono on success, an INVALID_DATA error if the broker did not write everything
+	 * @return the answer of the broker for any 2xx, an error otherwise
 	 */
 	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
-	public Mono<Void> updateAttributes(URI entityId, EntityFragmentVO attributeUpdate) {
+	public Mono<HttpResponse<?>> updateAttributes(URI entityId, EntityFragmentVO attributeUpdate) {
 		return entitiesApi.updateEntityAttributes(entityId, attributeUpdate, generalProperties.getTenant())
-				.flatMap(response -> failOnPartialUpdate(entityId, response))
+				.<HttpResponse<?>>map(response -> response)
 				.onErrorResume(HttpClientResponseException.class, e -> {
 					// a status that differs from the declared one surfaces as exception, even if it is a 2xx
 					if (e.getStatus().getCode() >= 200 && e.getStatus().getCode() < 300) {
-						return failOnPartialUpdate(entityId, e.getResponse());
+						return Mono.just(e.getResponse());
 					}
 					// propagate as is, so that the controller can map the broker's status
 					return Mono.error(e);

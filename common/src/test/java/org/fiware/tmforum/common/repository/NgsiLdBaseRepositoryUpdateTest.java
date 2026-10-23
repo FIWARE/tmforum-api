@@ -198,6 +198,18 @@ class NgsiLdBaseRepositoryUpdateTest {
 	}
 
 	@Test
+	public void aMultiStatusAnswerCompletesTheCacheInvalidatingWrite() {
+		// the broker wrote a part of the update, so the cached entity is stale. @CacheInvalidate only acts on a
+		// completing mono, therefore the 207 must not fail the write itself, only the update around it.
+		when(entitiesApi.updateEntityAttributes(any(), any(), any()))
+				.thenReturn(Mono.just(HttpResponse.status(HttpStatus.MULTI_STATUS).body((Object) new UpdateResultVO())));
+
+		HttpResponse<?> response = repository.updateAttributes(URI.create(ENTITY_ID), new EntityFragmentVO()).block();
+
+		assertEquals(HttpStatus.MULTI_STATUS, response.getStatus());
+	}
+
+	@Test
 	public void aMultiStatusAnswerRaisedAsExceptionIsAnError() {
 		mockStored(Map.of());
 		mockUpdate("name", new PropertyVO().value("new"));
