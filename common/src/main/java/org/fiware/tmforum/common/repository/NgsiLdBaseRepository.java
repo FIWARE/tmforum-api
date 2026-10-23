@@ -11,13 +11,17 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
+import org.fiware.ngsi.model.BatchEntityErrorVO;
+import org.fiware.ngsi.model.BatchOperationResultVO;
 import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
+import org.fiware.ngsi.model.ProblemDetailsVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.ngsi.model.SubscriptionVO;
@@ -29,6 +33,8 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import reactor.core.publisher.Mono;
 
@@ -37,6 +43,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -46,6 +53,7 @@ import java.util.stream.Stream;
  * Base-Repository implementation for using the NGSI-LD API as a storage backend. Supports caching and asynchronous
  * retrieval of entities and subscriptions.
  */
+@Slf4j
 @RequiredArgsConstructor
 public abstract class NgsiLdBaseRepository {
 
@@ -128,16 +136,46 @@ public abstract class NgsiLdBaseRepository {
 		EntityListVO entityListVO = new EntityListVO();
 		entityListVO.add(entityVO);
 		return entitiesApi.batchEntityUpsert(entityListVO, "replace")
-				.then()
+				.flatMap(response -> failOnBatchErrors(entityId, response))
 				.onErrorResume(HttpClientResponseException.class, e -> {
-					// Scorpio 6.x may return 204/207 instead of 200; Micronaut treats status
-					// mismatch as an error even for 2xx responses. Accept any 2xx as success.
+					// Scorpio 6.x may return 201/204 instead of 200; Micronaut treats status
+					// mismatch as an error even for 2xx responses. Those are still successes,
+					// unless the broker reports the entity as failed.
 					if (e.getStatus().getCode() >= 200 && e.getStatus().getCode() < 300) {
-						return Mono.empty();
+						return failOnBatchErrors(entityId, e.getResponse());
 					}
-					return Mono.error(new NgsiLdRepositoryException(
-							"Was not able to replace entity via batch upsert.", Optional.of(e)));
+					// propagate as is, so that the controller can map the broker's status
+					return Mono.error(e);
 				});
+	}
+
+	/**
+	 * A batch operation answers 207 Multi-Status, with the failed entities listed in {@code errors},
+	 * when it could not persist an entity. Since the replace only sends one entity, that means
+	 * nothing was written.
+	 *
+	 * @param entityId the entity that was sent
+	 * @param response the broker's answer
+	 * @return an empty mono on success, an INVALID_DATA error with the broker's detail otherwise
+	 */
+	private Mono<Void> failOnBatchErrors(URI entityId, HttpResponse<?> response) {
+		List<BatchEntityErrorVO> errors = response.getBody(BatchOperationResultVO.class)
+				.map(BatchOperationResultVO::getErrors)
+				.orElse(List.of());
+		if (response.getStatus() != HttpStatus.MULTI_STATUS && errors.isEmpty()) {
+			return Mono.empty();
+		}
+		// only one entity was sent, so there is at most one problem to report
+		Optional<ProblemDetailsVO> problem = errors.stream()
+				.map(BatchEntityErrorVO::getError)
+				.filter(Objects::nonNull)
+				.findFirst();
+		String details = problem
+				.map(p -> Optional.ofNullable(p.getDetail()).orElse(p.getTitle()))
+				.orElse("The broker did not persist the entity, without giving a reason.");
+		log.warn("Broker did not replace entity {}, answered {}: {}", entityId, response.getStatus().getCode(),
+				problem.map(ProblemDetailsVO::toString).orElse(details));
+		return Mono.error(new TmForumException(details, TmForumExceptionReason.INVALID_DATA));
 	}
 
 	/**

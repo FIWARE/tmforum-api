@@ -2,13 +2,19 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.ngsi.model.BatchEntityErrorVO;
 import org.fiware.ngsi.model.BatchOperationResultVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.ngsi.model.ProblemDetailsVO;
 import org.fiware.ngsi.model.PropertyListVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -19,8 +25,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -147,6 +155,112 @@ class NgsiLdBaseRepositoryUpdateTest {
 		assertEquals("2026-08-05T10:15:30Z",
 				((PropertyVO) written.getAdditionalProperties().get("lastUpdate")).getValue(),
 				"The update still has to be merged on top of the existing entity.");
+	}
+
+	@Test
+	public void aMultiStatusAnswerIsAnError() {
+		// Scorpio and Coraine answer 207 when they reject the entity, e.g. for a duplicated datasetId.
+		// Nothing was written, so the update must not look successful.
+		mockRetrieval(anEntity());
+		when(entitiesApi.batchEntityUpsert(any(), any()))
+				.thenReturn(Mono.just(HttpResponse.status(HttpStatus.MULTI_STATUS)
+						.body(aBatchResultWithError("Duplicated datasetId or multiple entries with no datasetId found"))));
+
+		TmForumException exception = assertThrows(TmForumException.class,
+				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+
+		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason());
+		assertTrue(exception.getMessage().contains("Duplicated datasetId"),
+				"The broker's reason has to be part of the error.");
+	}
+
+	@Test
+	public void aMultiStatusAnswerWithoutParsedErrorsIsStillAnError() {
+		// a broker that does not list the failures - the status alone has to be enough
+		mockRetrieval(anEntity());
+		when(entitiesApi.batchEntityUpsert(any(), any()))
+				.thenReturn(Mono.just(HttpResponse.status(HttpStatus.MULTI_STATUS).body(new BatchOperationResultVO())));
+
+		TmForumException exception = assertThrows(TmForumException.class,
+				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+
+		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason());
+	}
+
+	@Test
+	public void aMultiStatusAnswerRaisedAsExceptionIsAnError() {
+		mockRetrieval(anEntity());
+		when(entitiesApi.batchEntityUpsert(any(), any()))
+				.thenReturn(Mono.error(new HttpClientResponseException("Multi-Status",
+						HttpResponse.status(HttpStatus.MULTI_STATUS)
+								.body(aBatchResultWithError("null values are not allowed in NGSI-LD")))));
+
+		TmForumException exception = assertThrows(TmForumException.class,
+				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+
+		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason());
+		assertTrue(exception.getMessage().contains("null values are not allowed"));
+	}
+
+	@Test
+	public void aSuccessResponseListingErrorsIsAnError() {
+		mockRetrieval(anEntity());
+		when(entitiesApi.batchEntityUpsert(any(), any()))
+				.thenReturn(Mono.just(HttpResponse.ok(aBatchResultWithError("datasetId must be a URI"))));
+
+		assertThrows(TmForumException.class, () -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+	}
+
+	@Test
+	public void aNoContentAnswerRaisedAsExceptionIsASuccess() {
+		// regression guard for the Scorpio 6.x fix: 201/204 are not the declared 200, but still a success
+		mockRetrieval(anEntity());
+		when(entitiesApi.batchEntityUpsert(any(), any()))
+				.thenReturn(Mono.error(new HttpClientResponseException("No Content",
+						HttpResponse.status(HttpStatus.NO_CONTENT))));
+
+		assertDoesNotThrow(() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+	}
+
+	@Test
+	public void aBrokerErrorIsPropagated() {
+		// the controller maps the broker's status (400, 409, ...) to the TMForum error
+		mockRetrieval(anEntity());
+		when(entitiesApi.batchEntityUpsert(any(), any()))
+				.thenReturn(Mono.error(new HttpClientResponseException("Bad Request",
+						HttpResponse.status(HttpStatus.BAD_REQUEST))));
+
+		HttpClientResponseException exception = assertThrows(HttpClientResponseException.class,
+				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+
+		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+	}
+
+	@Test
+	public void theBrokerDetailIsTheErrorMessage() {
+		// the TMForum error carries the broker's reason as is, not the NGSI-LD batch structure around it
+		mockRetrieval(anEntity());
+		when(entitiesApi.batchEntityUpsert(any(), any()))
+				.thenReturn(Mono.just(HttpResponse.status(HttpStatus.MULTI_STATUS)
+						.body(aBatchResultWithError("Duplicated datasetId or multiple entries with no datasetId found"))));
+
+		TmForumException exception = assertThrows(TmForumException.class,
+				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+
+		assertEquals("Duplicated datasetId or multiple entries with no datasetId found", exception.getMessage());
+	}
+
+	private BatchOperationResultVO aBatchResultWithError(String detail) {
+		ProblemDetailsVO problem = new ProblemDetailsVO();
+		problem.setType(URI.create("https://uri.etsi.org/ngsi-ld/errors/BadRequestData"));
+		problem.setTitle("Bad Request Data.");
+		problem.setDetail(detail);
+		BatchEntityErrorVO error = new BatchEntityErrorVO();
+		error.setEntityId(URI.create(ENTITY_ID));
+		error.setError(problem);
+		BatchOperationResultVO result = new BatchOperationResultVO();
+		result.setErrors(List.of(error));
+		return result;
 	}
 
 	private EntityVO anEntity() {
