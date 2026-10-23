@@ -100,7 +100,7 @@
         <version.io.kokuwa.micronaut.codegen>4.5.0</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.28</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.29</version.io.github.wistefan.ngsi-ld-mapping-java>
 
 
 
@@ -537,8 +537,11 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
+                        <!-- the test cluster runs Scorpio 5.0.3 (k3s/scorpio), which does not create attributes with
+                             PATCH /attrs, so replaceOnUpdate has to stay disabled despite application-scorpio.yaml -->
                         <argLine>${failsafe.jacoco.args} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
                             java.base/java.time=ALL-UNNAMED -Dmicronaut.environments=${cache},${broker}
+                            -Dgeneral.replace-on-update=false
                         </argLine>
                     </configuration>
                 </plugin>
