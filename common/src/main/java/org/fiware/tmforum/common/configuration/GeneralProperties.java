@@ -64,8 +64,10 @@ public class GeneralProperties {
 	private Boolean useDotSeperator=true;
 
 	/**
-	 * When true, updateDomainEntity uses batchEntityUpsert replace (read-merge-write) instead of PATCH /attrs.
-	 * Required for Scorpio 6.x which appends to array attributes on PATCH. Default false (Orion-LD).
+	 * When true, every attribute of an update replaces the stored one (PATCH /attrs, deleting the stored instances
+	 * the update does not carry with an NGSI-LD Null), so that e.g. a list ends up with exactly the items of the
+	 * update. Required for Scorpio 6.x and other brokers that keep the existing instances when appending. When false
+	 * (default, Orion-LD), the attributes of an update are appended as they are (POST /attrs).
 	 */
 	private boolean replaceOnUpdate = false;
 
