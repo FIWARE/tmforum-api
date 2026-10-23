@@ -140,7 +140,7 @@ controls how the attributes of a PATCH are written:
 | Broker | `replaceOnUpdate` | Behaviour |
 |--------|-------------------|-----------|
 | **Orion-LD** | `false` (default) | Orion-LD neither creates attributes with `PATCH /attrs` nor accepts the NGSI-LD Null to delete a single attribute instance. Attributes and list items of the PATCH are written, but list items that are no longer part of the PATCH stay stored, and empty lists are not supported. |
-| **Scorpio < 6.0.0** | `false` (default) | Appending replaces array attributes in place. |
+| **Scorpio < 6.0.0** | `false` (default) | Appending replaces array attributes in place. Scorpio < 6.0.0 does not create attributes with `PATCH /attrs`, so with the `scorpio` profile, which sets `true`, it has to be set back to `false` (e.g. `GENERAL_REPLACE_ON_UPDATE=false`). |
 | **Scorpio >= 6.0.0** | `true` | Required. Appending keeps the existing items of array attributes. Each module's `application-scorpio.yaml` already sets it. |
 
 ```yaml
