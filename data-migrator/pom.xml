@@ -14,7 +14,6 @@
     </parent>
 
     <modules>
-        <module>legacy-loader</module>
         <module>update-writer</module>
         <module>migrator</module>
     </modules>
@@ -32,7 +31,9 @@
 
     <properties>
         <version.io.fabric8.docker-maven-plugin>0.48.1</version.io.fabric8.docker-maven-plugin>
-        <old.io.github.wistefan.ngsi-ld-mapping-java>1.2.11</old.io.github.wistefan.ngsi-ld-mapping-java>
+        <!-- legacy-loader needs Micronaut 4 and is built from the last Micronaut 4 release, see README.md -->
+        <legacy.loader.repo>https://github.com/FIWARE/tmforum-api</legacy.loader.repo>
+        <legacy.loader.ref>1.22.0</legacy.loader.ref>
     </properties>
 
 </project>

@@ -80,12 +80,6 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.fiware.tmforum</groupId>
-                                    <artifactId>legacy-loader</artifactId>
-                                    <version>${project.version}</version>
-                                    <outputDirectory>${project.build.directory}/</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.fiware.tmforum</groupId>
                                     <artifactId>update-writer</artifactId>
                                     <version>${project.version}</version>
                                     <outputDirectory>${project.build.directory}/</outputDirectory>
@@ -116,6 +110,10 @@
                             <build>
                                 <dockerFile>${project.basedir}/Dockerfile</dockerFile>
                                 <contextDir>${project.basedir}/</contextDir>
+                                <args>
+                                    <LEGACY_LOADER_REPO>${legacy.loader.repo}</LEGACY_LOADER_REPO>
+                                    <LEGACY_LOADER_REF>${legacy.loader.ref}</LEGACY_LOADER_REF>
+                                </args>
                             </build>
                         </image>
                     </images>

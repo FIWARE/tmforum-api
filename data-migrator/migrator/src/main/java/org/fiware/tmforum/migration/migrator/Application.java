@@ -14,7 +14,7 @@ public class Application implements Runnable {
 	@CommandLine.Option(names = {"-wB", "--writeBroker"}, description = "Address of the broker to write from.", defaultValue = "http://localhost:1026")
 	String writeBroker;
 
-	@CommandLine.Option(names = {"-ll", "--legacyLoader"}, description = "Path to the jar-file of the legacy loader.", defaultValue = "data-migrator/legacy-loader/target/legacy-loader-0.1.jar")
+	@CommandLine.Option(names = {"-ll", "--legacyLoader"}, description = "Path to the jar-file of the legacy loader, built from a Micronaut 4 release (see README).", required = true)
 	String legacyLoaderJar;
 
 	@CommandLine.Option(names = {"-uw", "--updateWriter"}, description = "Path to the jar-file of the update writer.", defaultValue = "data-migrator/update-writer/target/update-writer-0.1.jar")
