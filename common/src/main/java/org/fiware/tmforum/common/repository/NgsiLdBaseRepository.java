@@ -2,7 +2,6 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
-import io.github.wistefan.mapping.ReservedWordHandler;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
@@ -10,17 +9,20 @@ import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityFragmentVO;
-import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
+import org.fiware.ngsi.model.PropertyTypeVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.ngsi.model.SubscriptionVO;
+import org.fiware.ngsi.model.UpdateResultVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -29,23 +31,29 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
+import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiConsumer;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Base-Repository implementation for using the NGSI-LD API as a storage backend. Supports caching and asynchronous
  * retrieval of entities and subscriptions.
  */
+@Slf4j
 @RequiredArgsConstructor
 public abstract class NgsiLdBaseRepository {
 
@@ -55,6 +63,20 @@ public abstract class NgsiLdBaseRepository {
 	protected final JavaObjectMapper javaObjectMapper;
 	protected final NGSIMapper ngsiMapper;
 	protected final EntityVOMapper entityVOMapper;
+
+	private static final String DATASET_ID = "datasetId";
+	private static final String TYPE = "type";
+	private static final URI NGSI_LD_NULL = URI.create("urn:ngsi-ld:null");
+
+	/**
+	 * Only needed for updates, therefore injected and not part of the constructor the subclasses have to fulfill.
+	 */
+	protected EntityAttributesApiClient entityAttributesApi;
+
+	@Inject
+	public void setEntityAttributesApi(EntityAttributesApiClient entityAttributesApi) {
+		this.entityAttributesApi = entityAttributesApi;
+	}
 
 
 	protected String getLinkHeader() {
@@ -104,7 +126,7 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	/**
-	 * Patch an entity, using the "overwrite" option.
+	 * Append the given attributes to an entity (POST /attrs), overwriting the instances with the same datasetId.
 	 *
 	 * @param entityId         id of the entity
 	 * @param entityFragmentVO the entity elements to be updated
@@ -113,31 +135,6 @@ public abstract class NgsiLdBaseRepository {
 	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<Void> patchEntity(URI entityId, EntityFragmentVO entityFragmentVO) {
 		return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null).then();
-	}
-
-	/**
-	 * Replace an entity entirely using upsert with replace semantics. This avoids the array-merge
-	 * behaviour introduced in Scorpio 6.0.0 when using POST /entities/{id}/attrs.
-	 *
-	 * @param entityId id of the entity
-	 * @param entityVO the full merged entity to replace with
-	 * @return an empty mono
-	 */
-	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
-	public Mono<Void> replaceEntity(URI entityId, EntityVO entityVO) {
-		EntityListVO entityListVO = new EntityListVO();
-		entityListVO.add(entityVO);
-		return entitiesApi.batchEntityUpsert(entityListVO, "replace")
-				.then()
-				.onErrorResume(HttpClientResponseException.class, e -> {
-					// Scorpio 6.x may return 204/207 instead of 200; Micronaut treats status
-					// mismatch as an error even for 2xx responses. Accept any 2xx as success.
-					if (e.getStatus().getCode() >= 200 && e.getStatus().getCode() < 300) {
-						return Mono.empty();
-					}
-					return Mono.error(new NgsiLdRepositoryException(
-							"Was not able to replace entity via batch upsert.", Optional.of(e)));
-				});
 	}
 
 	/**
@@ -168,12 +165,10 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	/**
-	 * Update a domain entity. Routes to different strategies depending on {@code replaceOnUpdate}:
-	 * <ul>
-	 *   <li>{@code false} (default, Orion-LD): PATCH /attrs - correctly replaces array attributes.</li>
-	 *   <li>{@code true} (Scorpio 6.x): read-merge-write via batchEntityUpsert replace - prevents
-	 *       array-append behaviour introduced in Scorpio 6.0.0.</li>
-	 * </ul>
+	 * Update a domain entity. Only the attributes the update carries are written, so concurrent updates of different
+	 * attributes do not overwrite each other. By default (Orion-LD), they are appended as they are. With
+	 * {@code replaceOnUpdate}, each one replaces what is stored for it instead (see
+	 * {@link #toAttributeUpdate(Map, EntityVO)}), for brokers that keep the existing instances when appending.
 	 *
 	 * @param id           id of the entity to be updated
 	 * @param domainEntity the (possibly partial) domain object carrying the updates
@@ -183,108 +178,163 @@ public abstract class NgsiLdBaseRepository {
 	public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
 		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity);
 		URI entityId = URI.create(id);
-		if (generalProperties.isReplaceOnUpdate()) {
-			return retrieveEntityById(entityId)
-					.switchIfEmpty(Mono.error(new NgsiLdRepositoryException(
-							String.format("Entity %s does not exist.", id), Optional.empty())))
-					.map(existingEntityVO -> mergeForUpdate(existingEntityVO, updateEntityVO))
-					.flatMap(mergedEntityVO -> replaceEntity(entityId, mergedEntityVO));
+		if (!generalProperties.isReplaceOnUpdate()) {
+			return patchEntity(entityId, ngsiMapper.map(updateEntityVO));
 		}
-		return patchEntity(URI.create(id), ngsiMapper.map(updateEntityVO));
-	}
-
-	private EntityVO mergeForUpdate(EntityVO existing, EntityVO update) {
-		// `existing` was parsed by EscapeCleaningParser, which strips the tmfEscaped- prefix
-		// from reserved words it can safely unescape (everything except VO_FIELD_COLLISIONS).
-		// Writing that back verbatim would put raw JSON-LD keywords (@id/@type/@value/@context)
-		// on the wire; brokers are free to drop them (Scorpio >= 6.0.0 does), which silently
-		// destroys nested free-form values such as an expanded ODRL policy. Re-apply the escape
-		// before the entity goes out again. Only relevant on the replaceOnUpdate path, since
-		// PATCH /attrs sends the freshly mapped `update` only, which JavaObjectMapper escapes.
-		reEscapeReservedWords(existing);
-		if (update.getAdditionalProperties() != null) {
-			update.getAdditionalProperties().forEach(existing::setAdditionalProperties);
-		}
-		if (update.getLocation() != null) existing.setLocation(update.getLocation());
-		if (update.getObservationSpace() != null) existing.setObservationSpace(update.getObservationSpace());
-		if (update.getOperationSpace() != null) existing.setOperationSpace(update.getOperationSpace());
-		if (update.getModifiedAt() != null) existing.setModifiedAt(update.getModifiedAt());
-		if (update.getAtContext() != null) existing.setAtContext(update.getAtContext());
-		return existing;
+		return entityAttributesApi
+				// read from the broker, a cached entity may miss instances written in the meantime
+				.retrieveEntityAsJson(entityId, generalProperties.getTenant(), getLinkHeader())
+				.map(HttpResponse::body)
+				.onErrorResume(HttpClientResponseException.class, e -> e.getStatus() == HttpStatus.NOT_FOUND
+						? Mono.empty()
+						: Mono.error(new NgsiLdRepositoryException("Was not able to successfully call the broker.",
+								Optional.of(e))))
+				.switchIfEmpty(Mono.error(new NgsiLdRepositoryException(
+						String.format("Entity %s does not exist.", id), Optional.empty())))
+				.map(storedEntity -> toAttributeUpdate(storedEntity, updateEntityVO))
+				.flatMap(attributeUpdate -> updateAttributes(entityId, attributeUpdate))
+				// checked outside of updateAttributes, so that its cache invalidation also runs on a partial write
+				.flatMap(response -> failOnPartialUpdate(entityId, response));
 	}
 
 	/**
-	 * Re-apply the reserved-word escape to the additional properties of an entity that was read
-	 * back from the broker, recursively. Counterpart of the {@code EscapeCleaningParser} of the
-	 * mapping library, which removes the prefix while parsing. {@code escapeReservedWords} is
-	 * idempotent, so keys that kept their prefix during parsing (the VO field collisions
-	 * {@code id}/{@code type}/{@code value}) are left untouched.
+	 * Write the attributes of an update with Update Attributes (PATCH /attrs). It answers 207 with the attributes
+	 * it could not write. The answer is returned as it is: the cache is only invalidated if the returned mono
+	 * completes, and a 207 means that the broker did write a part of the update.
 	 *
-	 * @param entityVO the entity to fix up in place
+	 * @param entityId        id of the entity
+	 * @param attributeUpdate the attributes to write, see {@link #toAttributeUpdate(Map, EntityVO)}
+	 * @return the answer of the broker for any 2xx, an error otherwise
 	 */
-	private void reEscapeReservedWords(EntityVO entityVO) {
-		reEscapeProperties(entityVO.getAdditionalProperties(), entityVO::setAdditionalProperties);
+	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
+	public Mono<HttpResponse<?>> updateAttributes(URI entityId, EntityFragmentVO attributeUpdate) {
+		return entitiesApi.updateEntityAttributes(entityId, attributeUpdate, generalProperties.getTenant())
+				.<HttpResponse<?>>map(response -> response)
+				.onErrorResume(HttpClientResponseException.class, e -> {
+					// a status that differs from the declared one surfaces as exception, even if it is a 2xx
+					if (e.getStatus().getCode() >= 200 && e.getStatus().getCode() < 300) {
+						return Mono.just(e.getResponse());
+					}
+					// propagate as is, so that the controller can map the broker's status
+					return Mono.error(e);
+				});
+	}
+
+	private Mono<Void> failOnPartialUpdate(URI entityId, HttpResponse<?> response) {
+		if (response.getStatus() != HttpStatus.MULTI_STATUS) {
+			return Mono.empty();
+		}
+		String details = response.getBody(UpdateResultVO.class)
+				.map(UpdateResultVO::getNotUpdated)
+				.filter(notUpdated -> !notUpdated.isEmpty())
+				.map(notUpdated -> notUpdated.stream()
+						.map(attribute -> String.format("%s: %s", attribute.getAttributeName(), attribute.getReason()))
+						.collect(Collectors.joining("; ")))
+				.orElse("no details given");
+		log.warn("Broker did not update all attributes of entity {}: {}", entityId, details);
+		return Mono.error(new TmForumException(
+				String.format("Not all attributes could be updated: %s", details),
+				TmForumExceptionReason.INVALID_DATA));
 	}
 
 	/**
-	 * Rewrite the keys of an additional-properties map in place and recurse into its values.
+	 * Build the fragment that makes each attribute of the update replace the stored one. A TMForum PATCH replaces
+	 * a list as a whole, while NGSI-LD only overwrites the instances with the same datasetId and keeps the others.
+	 * Therefore every stored instance whose datasetId is not part of the update gets deleted with an NGSI-LD Null,
+	 * which also makes an empty list delete the attribute instead of storing an empty array. Attributes that are
+	 * not part of the update are not sent, so the broker keeps them as they are.
 	 *
-	 * @param properties the (potentially null) map to rewrite
-	 * @param setter     the {@code setAdditionalProperties} of the owning VO, used to re-insert
+	 * @param storedEntity the entity as currently stored, plain json
+	 * @param update       the mapped update
+	 * @return the attributes to write
 	 */
-	private void reEscapeProperties(Map<String, AdditionalPropertyVO> properties,
-			BiConsumer<String, AdditionalPropertyVO> setter) {
-		if (properties == null || properties.isEmpty()) {
-			return;
+	private EntityFragmentVO toAttributeUpdate(Map<String, Object> storedEntity, EntityVO update) {
+		EntityFragmentVO attributeUpdate = ngsiMapper.map(update);
+		Map<String, AdditionalPropertyVO> attributes = attributeUpdate.getAdditionalProperties();
+		if (attributes == null) {
+			return attributeUpdate;
 		}
-		Map<String, AdditionalPropertyVO> reEscaped = new LinkedHashMap<>();
-		properties.forEach((key, value) -> reEscaped.put(ReservedWordHandler.escapeReservedWords(key),
-				reEscapeAdditionalProperty(value)));
-		properties.clear();
-		reEscaped.forEach(setter);
+		Map<String, AdditionalPropertyVO> replacements = new LinkedHashMap<>();
+		attributes.forEach((name, value) -> replacements.put(name,
+				replacingAttribute(value, storedInstances(storedEntity.get(name)))));
+		attributes.clear();
+		replacements.forEach((name, value) -> {
+			// nothing stored and nothing to store - an empty array is not valid NGSI-LD input
+			if (value != null) {
+				attributeUpdate.setAdditionalProperties(name, value);
+			}
+		});
+		return attributeUpdate;
 	}
 
-	private AdditionalPropertyVO reEscapeAdditionalProperty(AdditionalPropertyVO additionalPropertyVO) {
-		// the generated VOs do not share an accessor for the additional properties, so every
-		// concrete type has to be handled explicitly.
-		if (additionalPropertyVO instanceof PropertyVO propertyVO) {
-			propertyVO.setValue(reEscapeValue(propertyVO.getValue()));
-			reEscapeProperties(propertyVO.getAdditionalProperties(), propertyVO::setAdditionalProperties);
-		} else if (additionalPropertyVO instanceof RelationshipVO relationshipVO) {
-			reEscapeProperties(relationshipVO.getAdditionalProperties(), relationshipVO::setAdditionalProperties);
-		} else if (additionalPropertyVO instanceof GeoPropertyVO geoPropertyVO) {
-			reEscapeProperties(geoPropertyVO.getAdditionalProperties(), geoPropertyVO::setAdditionalProperties);
-		} else if (additionalPropertyVO instanceof List<?> multiAttribute) {
-			// multi-attributes: PropertyListVO, RelationshipListVO and GeoPropertyListVO are lists
-			// of the types handled above.
-			multiAttribute.stream()
+	private AdditionalPropertyVO replacingAttribute(AdditionalPropertyVO update, List<Map<?, ?>> stored) {
+		List<AdditionalPropertyVO> newInstances = attributeInstances(update);
+		Set<String> keptDatasetIds = newInstances.stream()
+				.map(NgsiLdBaseRepository::datasetId)
+				.map(datasetId -> datasetId == null ? null : datasetId.toString())
+				.collect(Collectors.toCollection(HashSet::new));
+		List<AdditionalPropertyVO> deletions = stored.stream()
+				.filter(instance -> !keptDatasetIds.contains(instance.get(DATASET_ID)))
+				.map(NgsiLdBaseRepository::deletionOf)
+				.toList();
+		if (deletions.isEmpty()) {
+			return newInstances.isEmpty() ? null : update;
+		}
+		AttributeInstancesVO instances = new AttributeInstancesVO();
+		instances.addAll(newInstances);
+		instances.addAll(deletions);
+		return instances;
+	}
+
+	private static List<AdditionalPropertyVO> attributeInstances(AdditionalPropertyVO attribute) {
+		if (attribute instanceof List<?> instances) {
+			return instances.stream()
 					.filter(AdditionalPropertyVO.class::isInstance)
 					.map(AdditionalPropertyVO.class::cast)
-					.forEach(this::reEscapeAdditionalProperty);
+					.toList();
 		}
-		return additionalPropertyVO;
+		return attribute == null ? List.of() : List.of(attribute);
+	}
+
+	private static List<Map<?, ?>> storedInstances(Object storedAttribute) {
+		if (storedAttribute instanceof List<?> instances) {
+			return instances.stream()
+					.filter(Map.class::isInstance)
+					.<Map<?, ?>>map(instance -> (Map<?, ?>) instance)
+					.toList();
+		}
+		return storedAttribute instanceof Map<?, ?> instance ? List.of(instance) : List.of();
+	}
+
+	private static URI datasetId(AdditionalPropertyVO instance) {
+		if (instance instanceof PropertyVO propertyVO) {
+			return propertyVO.getDatasetId();
+		} else if (instance instanceof RelationshipVO relationshipVO) {
+			return relationshipVO.getDatasetId();
+		} else if (instance instanceof GeoPropertyVO geoPropertyVO) {
+			return geoPropertyVO.getDatasetId();
+		}
+		return null;
 	}
 
 	/**
-	 * Free-form property values are parsed into plain maps and lists, with their keys cleaned by
-	 * the same parser, so they need the escape re-applied too. This is what carries e.g. the
-	 * expanded ODRL policy of a product-offering-price and the reason the entity has to be fixed
-	 * up at all.
-	 *
-	 * @param value the value to fix up
-	 * @return the value with all reserved keys escaped again
+	 * The NGSI-LD Null deleting the given stored instance. It has to be of the stored type: brokers reject a
+	 * Relationship carrying its Null in "value".
 	 */
-	private Object reEscapeValue(Object value) {
-		if (value instanceof Map<?, ?> valueMap) {
-			Map<String, Object> reEscaped = new LinkedHashMap<>();
-			valueMap.forEach((key, nestedValue) -> reEscaped
-					.put(ReservedWordHandler.escapeReservedWords(String.valueOf(key)), reEscapeValue(nestedValue)));
-			return reEscaped;
+	private static AdditionalPropertyVO deletionOf(Map<?, ?> storedInstance) {
+		URI datasetId = Optional.ofNullable(storedInstance.get(DATASET_ID)).map(Object::toString).map(URI::create)
+				.orElse(null);
+		if (PropertyTypeVO.RELATIONSHIP.getValue().equals(storedInstance.get(TYPE))) {
+			return new RelationshipVO()._object(NGSI_LD_NULL).datasetId(datasetId);
 		}
-		if (value instanceof List<?> valueList) {
-			return valueList.stream().map(this::reEscapeValue).toList();
-		}
-		return value;
+		return new PropertyVO().value(NGSI_LD_NULL.toString()).datasetId(datasetId);
+	}
+
+	/**
+	 * The instances of one attribute, new ones and deletions. They do not share a type if the stored attribute mixes
+	 * types, which none of the typed list VOs allows.
+	 */
+	private static class AttributeInstancesVO extends ArrayList<AdditionalPropertyVO> implements AdditionalPropertyVO {
 	}
 
 	/**
