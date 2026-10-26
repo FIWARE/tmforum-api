@@ -1,11 +1,9 @@
 package org.fiware.tmforum.common.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.wistefan.mapping.AdditionalPropertyMixin;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
@@ -40,9 +38,6 @@ public abstract class AbstractApiIT {
 
     @BeforeEach
     public void cleanUp() {
-        this.objectMapper
-                .addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
-        this.objectMapper.findAndRegisterModules();
         EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
                 null,
                 null,

@@ -1,6 +1,6 @@
 package org.fiware.tmforum.migration.writer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
