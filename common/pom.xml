@@ -73,6 +73,12 @@
             <groupId>io.micronaut.redis</groupId>
             <artifactId>micronaut-redis-lettuce</artifactId>
         </dependency>
+        <!-- RedisCache references it, but lettuce-cache only brings it at runtime; without it on the compile
+             classpath the ClientTrackingRedisCache bean definition is silently skipped -->
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-retry</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.micronaut.micrometer</groupId>

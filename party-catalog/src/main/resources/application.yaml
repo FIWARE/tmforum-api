@@ -25,7 +25,8 @@ micronaut:
 jackson:
   # Micronaut's NON_EMPTY default breaks empty-list handling
   serialization-inclusion: non_null
-  # Jackson 3 sorts properties alphabetically by default; keep declaration order
+  # Jackson 3 changed these defaults; keep the Jackson 2 behaviour:
+  # properties in declaration order, and null for a primitive is its default instead of a 400
   mapper-features:
     sort-properties-alphabetically: false
   deserialization-features:

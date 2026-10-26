@@ -28,6 +28,7 @@ public class CodecTestController {
 	public static final String VALIDATED_PATH = "/validated";
 	public static final String FIELD_CLEANED_PATH = "/field-cleaned";
 	public static final String PLAIN_PATH = "/plain";
+	public static final String PRIMITIVES_PATH = "/primitives";
 
 	public static final String ID = "urn:codec-test:1";
 	public static final String HREF = "/codec-test/1";
@@ -38,6 +39,11 @@ public class CodecTestController {
 	@Post(VALIDATED_PATH)
 	public ValidatedVO echo(@Body ValidatedVO validatedVO) {
 		return validatedVO;
+	}
+
+	@Post(PRIMITIVES_PATH)
+	public PrimitivesVO echo(@Body PrimitivesVO primitivesVO) {
+		return primitivesVO;
 	}
 
 	@Get(FIELD_CLEANED_PATH)
@@ -99,5 +105,15 @@ public class CodecTestController {
 		private String unset;
 		private List<String> tags;
 		private PropertyListVO properties;
+	}
+
+	/**
+	 * VO with primitive fields, to check how the codec treats {@code null} for them.
+	 */
+	@Data
+	public static class PrimitivesVO {
+		private String id;
+		private int count;
+		private boolean enabled;
 	}
 }
