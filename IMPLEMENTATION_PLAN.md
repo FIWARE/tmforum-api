@@ -6,7 +6,11 @@ Move the build from `io.micronaut.platform:micronaut-parent` 4.10.18 to **5.1.3*
 ### Findings that shape the plan
 - **Java baseline:** the project is on JDK 21 (root `pom.xml` `jdk.version`/`release.version`, jib base `ubi9/openjdk-21-runtime:1.24-2`, `data-migrator/migrator/Dockerfile` `eclipse-temurin:21-jdk`, CI `setup-java` 21, and `check.yml` still on 11). Some build plugins are too old for Java 25 class files: jacoco 0.8.12 and spotbugs-maven-plugin 4.5.2.0.
 - **Jackson 3:** 104 Java files import `com.fasterxml.jackson.databind`/`core`. Hotspots: `common/.../mapping/FieldCleaningSerializer.java`, `common/.../filter/BrokerRequestLoggingFilter.java`, `common/.../test/AbstractApiIT.java`, and the ITs and unit tests of every module. `jackson-annotations` (`com.fasterxml.jackson.annotation`) keeps its package in Jackson 3, so generated VOs and `UnknownPreservingBase` annotations stay as they are.
-- **`ngsi-ld-java-mapping` 1.6.x** (latest 1.6.29) is built on Micronaut 4.6/4.10 with Jackson 2 and Java 17. It ships Micronaut-4-compiled bean definitions: `EntityVOMapper`, `JavaObjectMapper`, `CacheSerdeableObjectMapper extends com.fasterxml.jackson.databind.ObjectMapper`, `EscapeCleaningJsonFactory`, and the generated declarative clients `EntitiesApiClient`/`SubscriptionsApiClient` (client id `ngsi`). It is the **main external risk**. Either its Micronaut 4 beans load and work under Micronaut 5, with Jackson 2 kept internal to the library, or a Micronaut-5/Jackson-3 release of that library (in `wistefan/ngsi-ld-java-mapping`) is a **prerequisite**. Step 3 decides this first.
+- **`ngsi-ld-java-mapping` 1.6.x** (latest 1.6.29) is built on Micronaut 4 with Jackson 2 and Java 17, and ships Micronaut-4-compiled beans (`EntityVOMapper`, `JavaObjectMapper`, `CacheSerdeableObjectMapper`, `EscapeCleaningJsonFactory`) plus the declarative clients `EntitiesApiClient`/`SubscriptionsApiClient` (client id `ngsi`). It is **not** reused on Micronaut 5. The maintainer has migrated the library in https://github.com/wistefan/ngsi-ld-java-mapping/pull/116, which becomes **2.0.0** (Micronaut 5, Java 25, Jackson 3 `tools.jackson`). That release is a **hard prerequisite for Step 3**. Steps 1 and 2 do not depend on it. Breaking changes from that PR that this repo has to absorb:
+  - Public types (`CacheSerdeableObjectMapper`, `EscapeCleaningJsonFactory`) are Jackson 3.
+  - `EntityVOMapper` no longer mutates the injected `ObjectMapper`. It needs the new `NgsiLdMappingModule` bean (registered through Micronaut's `ObjectMapperFactory`) and fails fast without it. Any hand-built `ObjectMapper` here (ITs, `BrokerRequestLoggingFilter`) must register that module.
+  - `EntityVOMapper`/`JavaObjectMapper` use `jakarta.inject`.
+  - Jackson 3 defaults are **not** reverted on the context `ObjectMapper`. The library README names three properties that restore 1.x behaviour, and the YAML has to set them (Step 4).
 - **`micronaut-openapi-codegen`:** 4.5.1 is the latest release, and no 5.x line exists. It only generates sources, so it can stay as long as the generated controllers, VOs, example builders and test interfaces compile against Micronaut 5 and Jackson 3. If they don't, use template overrides (`templateDirectory`) in this repo.
 - **RxJava 2:** only `data-migrator/update-writer/pom.xml` declares `io.reactivex.rxjava2:rxjava`, and no Java code imports it.
 - **`data-migrator/legacy-loader`** depends on the legacy mapping library 1.2.11, which will not run on Micronaut 5. It runs in its own `URLClassLoader` inside `migrator`, so it can stay on Micronaut 4.
@@ -23,7 +27,7 @@ Make the build and runtime Java 25 without touching Micronaut. Micronaut 4.10 ru
   - Check that lombok 1.18.42, mapstruct 1.6.3 and mockito 5.22.0 work on JDK 25, and bump any that don't.
   - Update the jib base image in the `oci` and `conformance-test` profiles from `ubi9/openjdk-21-runtime:1.24-2` to a Java 25 runtime image. Check that a `ubi9`/`ubi10` `openjdk-25-runtime` tag exists in `registry.access.redhat.com`. Otherwise use `eclipse-temurin:25-jre`. Put the image in a named property instead of repeating the literal.
 - `data-migrator/migrator/Dockerfile`: move to `eclipse-temurin:25-jdk`.
-- `.github/workflows/*.y*ml`: every `setup-java` `java-version` becomes `'25'`, including `check.yml`, which is still on `'11'`.
+- `.github/workflows/*.y*ml`: every `setup-java` `java-version` becomes `'25'`, that builds Java. `check.yml` only runs a semver-label dry run and never builds Java, so its `'11'` is left alone.
 - Install JDK 25 locally (`sudo apt-get install` or a Temurin tarball). If `micronaut-parent` 5.1.3 or its plugins need it, also install Maven ≥ 3.9. Check the enforcer rules in the 5.1.3 parent POM and record the result in `AGENTS.md`.
 - In `AGENTS.md`, change the Java version and base image entries.
 - **Acceptance:** `mvn clean install -DskipTests -DskipITs` and `mvn test` pass on JDK 25 with Micronaut 4.10.18. `mvn install -Poci -DskipTests -DskipITs -pl common,product-catalog -am` builds an image that starts.
@@ -39,34 +43,38 @@ Cleanups that are no-ops on Micronaut 4 but are needed before the bump.
 - **Acceptance:** the full build and `mvn test` stay green. `dependency:tree` for `legacy-loader` shows only Micronaut 4.10.18. The migrator still packages (`mvn -pl data-migrator/migrator -am package -DskipTests`).
 
 ### Step 3: Bump to Micronaut 5.1.3, migrate to Jackson 3, and make every module compile
-This is the core bump. **Start with the compatibility probe**, and stop if it fails.
-1. **Probe `ngsi-ld-java-mapping`:**
-   - Bump the parent and `micronaut.version` to `5.1.3` (root `pom.xml` lines `<parent>` and `<micronaut.version>`). Set `version.io.github.wistefan.ngsi-ld-mapping-java` to the newest release (≥ 1.6.29), and `version.io.kokuwa.micronaut.codegen` to 4.5.1.
-   - Run `mvn clean install -pl common -am -DskipTests`.
-   - Write a minimal `@MicronautTest` in `common/src/test/java` that injects `EntitiesApiClient`, `EntityVOMapper` and `JavaObjectMapper` and maps a sample domain object to an `EntityVO`. This tells you whether the library's Micronaut-4 bean definitions and declarative clients load and run on Micronaut 5.
-   - **If they don't**, write `completion-status.json` with status `blocked`. Name the requirement exactly: a release of `io.github.wistefan:ngsi-ld-java-mapping` built on `micronaut-parent` 5.1.x, Java 25 and Jackson 3, with regenerated NGSI-LD clients. Do not work around it with reflection or copied library code.
-   - **If they do**, keep the test as a regression guard and continue.
+This is the core bump.
+1. **Prerequisite check and version bump:**
+   - Check Maven Central for `io.github.wistefan:ngsi-ld-java-mapping` 2.x (the release of upstream PR #116). **If it is not released yet**, write `completion-status.json` with status `blocked` and name the requirement exactly: the 2.0.0 release of `ngsi-ld-java-mapping` from wistefan/ngsi-ld-java-mapping#116. Do not work around it with 1.6.x, reflection or copied library code.
+   - Bump the parent and `micronaut.version` to `5.1.3` (root `pom.xml` `<parent>` and `<micronaut.version>`). Set `version.io.github.wistefan.ngsi-ld-mapping-java` to the 2.x release and `version.io.kokuwa.micronaut.codegen` to 4.5.1. If the 2.x pom imports a newer Micronaut platform (the PR discussion mentions 5.2.3), check that it resolves cleanly against 5.1.3 with `mvn dependency:tree -pl common`, and record any conflict.
+   - `common` will not compile until its Jackson imports are migrated, so do sub-step 2 for `common` before building it.
 2. **Jackson 3 migration:**
    - Run OpenRewrite once, ad hoc, and do not commit the plugin config: `mvn org.openrewrite.maven:rewrite-maven-plugin:run -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-jackson:RELEASE -Drewrite.activeRecipes=org.openrewrite.java.jackson.UpgradeJackson_2_3`.
+   - Also try the Micronaut recipe the same way (`rewrite-micronaut`, `org.openrewrite.java.micronaut.Micronaut4to5Migration`) for non-Jackson renames. Review its diff by hand and drop changes that touch the parent version or generated code.
    - If that doesn't work, rename by hand: `com.fasterxml.jackson.databind` → `tools.jackson.databind`, `com.fasterxml.jackson.core` → `tools.jackson.core`, `JsonProcessingException` → `JacksonException`, `JsonMappingException` → `DatabindException`, `JsonSerializer`/`SerializerProvider` → `ValueSerializer`/`SerializationContext`.
    - In `common/pom.xml`, replace the explicit `com.fasterxml.jackson.core:jackson-databind` and `jackson-datatype-jsr310` deps with the Jackson 3 equivalents managed by the BOM (`tools.jackson.core:jackson-databind`). java.time support is built into Jackson 3. Keep `com.fasterxml.jackson.core:jackson-annotations`.
-   - Hand-check `FieldCleaningSerializer`, `BrokerRequestLoggingFilter` (it must serialize with the same primary mapper the HTTP codec uses) and `AbstractApiIT`.
-3. **Other Micronaut 5 API breaks:**
+   - Hand-check `FieldCleaningSerializer`, `BrokerRequestLoggingFilter` (it must serialize with the same primary mapper the HTTP codec uses) and `AbstractApiIT`. Any `ObjectMapper` built by hand must register `NgsiLdMappingModule`.
+   - Then run `mvn clean install -pl common -am -DskipTests`.
+3. **Mapping-library regression test** in `common/src/test/java`, written as soon as `common` compiles:
+   - A `@MicronautTest` that injects `EntityVOMapper` and `JavaObjectMapper` and maps a sample domain object to an `EntityVO` and back.
+   - One real HTTP round trip through the declarative `EntitiesApiClient`: point `micronaut.http.services.ngsi.url` at the embedded server and add a test-only stub `@Controller` for `/ngsi-ld/v1/entities`. Create an entity and retrieve it with `application/ld+json` bodies, and have the stub answer one request with an NGSI-LD error body (e.g. 404 problem details) to check error decoding.
+   - This covers bean loading, the Micronaut 5 Jackson-3 codec on `EntityVO`, `additional-types`, and error-body decoding. If it fails because of the library, block with the concrete failure instead of patching around it.
+4. **Other Micronaut 5 API breaks:**
    - Fix what the compiler reports in `common` first, then `*-shared-models`, the API modules, `all-in-one` and `data-migrator/update-writer`. Follow the official guide: https://github.com/micronaut-projects/micronaut-core/wiki/Update-to-Micronaut-5 and the per-module breaking-change pages linked from it (cache, redis, micrometer, validation, reactor, test).
    - Expected hotspots: `ClientTrackingRedisCache`, the filters, the `ExceptionHandler`s, the health indicators, and the `testcontainers`/`micronaut-test` artifact renames, if any are used.
    - Migrating `io.micronaut.core.annotation.Nullable/NonNull` to JSpecify is **optional**. Only do it where the compiler or deprecation-as-error forces it.
-4. **Generated code:** check that the kokuwa-generated sources in each module's `target/generated-sources` and `target/generated-test-sources` compile. If generated test code uses Jackson 2 databind APIs, add minimal template overrides in this repo and point the generator at them with `templateDirectory` in the root `pom.xml` `pluginManagement`.
+5. **Generated code:** check that the kokuwa-generated sources in each module's `target/generated-sources` and `target/generated-test-sources` compile. If generated test code uses Jackson 2 databind APIs, add minimal template overrides in this repo and point the generator at them with `templateDirectory` in the root `pom.xml` `pluginManagement`.
 - Leave runtime behaviour (YAML config, cache, filters at runtime) to Step 4 unless it blocks compilation.
-- **Acceptance:** `mvn clean install -DskipTests -DskipITs` passes with `micronaut-parent` 5.1.3. `mvn dependency:tree` shows no Micronaut 4.x artifacts and no `com.fasterxml.jackson.databind` outside `ngsi-ld-java-mapping` and `legacy-loader`. The probe test passes.
+- **Acceptance:** `mvn clean install -DskipTests -DskipITs` passes with `micronaut-parent` 5.1.3. `mvn dependency:tree` shows no Micronaut 4.x artifacts and no `com.fasterxml.jackson.databind` outside `legacy-loader`. The mapping-library regression test passes.
 
 ### Step 4: Get the unit tests green and fix runtime configuration
 - Run `mvn test` across all modules and fix the failures.
-- Go through every `*/src/main/resources/application*.yaml` (171 files) and check each key against the Micronaut 5 configuration reference. Rename or adjust what changed. Make the change in every module and in `all-in-one`, not just one. Keys to check:
+- Go through every `*/src/{main,test}/resources/application*.yaml` (101 main and 69 test files; the ITs run on the test ones) and check each key against the Micronaut 5 configuration reference. Rename or adjust what changed. Make the change in every module and in `all-in-one`, not just one. Keys to check:
   - `micronaut.codec.json.additional-types` (`application/ld+json` must still be (de)serialized by the JSON codec)
   - `micronaut.http.services.ngsi.{url,path,read-timeout}`, including the unit-less `read-timeout: 30` and the stray `micronaut.http.services.read-timeout`
   - `micronaut.caches.*`
   - `redis.uri` and `redis.caches.*.value-serializer`
-  - `jackson.serialization.*`. Jackson 3 changes some defaults, for example dates as timestamps. Keep the current wire format of TMForum responses.
+  - `jackson.serialization.*`. Jackson 3 changes some defaults, for example dates as timestamps. Keep the current wire format of TMForum responses, and set the three properties the `ngsi-ld-java-mapping` 2.x README lists for 1.x-compatible behaviour.
   - `micronaut.metrics.export.prometheus.*`
   - `endpoints.{health,metrics}.*`
 - Check behaviour that compiles but may have changed:
@@ -87,9 +95,9 @@ This is the core bump. **Start with the compatibility probe**, and stop if it fa
 
 ### Step 6: Images, conformance smoke test and documentation
 - `mvn install -Poci -DskipTests -DskipITs`: build all images, including `ui`, which is unaffected but must still build. Start `all-in-one` and check `/health` and one API.
-- Run the conformance test for one module (`mvn clean install -Pconformance-test --projects common,mapping,product-catalog -DskipTests -DskipITs`) to confirm the wire format did not change with Jackson 3.
+- Run the conformance test for one module (`mvn clean install -Pconformance-test --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,product-catalog -DskipTests -DskipITs`, the module list `.github/workflows/conformance-test.yaml` uses; there is no `mapping` module) to confirm the wire format did not change with Jackson 3.
 - Docs:
   - `AGENTS.md`: Micronaut 5.1.3, Java 25, Jackson 3, the codegen and mapping-library versions, and the pinned Micronaut 4 `legacy-loader`.
-  - `README.md`: any Java or Micronaut version requirements.
+  - `README.md`: any Java or Micronaut version requirements, and the conformance-test command in "Running conformance-tests", which still names the non-existent `mapping` module.
   - Add a release note under `release-notes/` that follows the existing format. It should cover the Java 25 runtime requirement, the image base change and any changed config keys.
 - **Acceptance:** the images build and start, the conformance smoke test passes, and the docs match the build.
