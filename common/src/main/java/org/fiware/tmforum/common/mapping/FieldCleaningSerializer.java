@@ -3,6 +3,7 @@ package org.fiware.tmforum.common.mapping;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.JsonException;
 import tools.jackson.databind.SerializationContext;
 import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.cfg.DateTimeFeature;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,9 +27,12 @@ public class FieldCleaningSerializer<T> extends ValueSerializer<T> {
     public static final String FIELD_PARAMETER_SEPERATOR = ",";
     public static final List<String> MANDATORY_FIELDS = List.of("id", "href");
 
-    // we cannot take the bean from the context, since that will be circular reference, e.g. stack-overflow
+    // we cannot take the bean from the context, since that will be circular reference, e.g. stack-overflow.
+    // The jackson.* config does not reach this mapper, so the wire-format features are pinned to the Jackson 2 behaviour.
     private final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
             .findAndAddModules()
+            .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+            .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
             .build();
 
     @Override

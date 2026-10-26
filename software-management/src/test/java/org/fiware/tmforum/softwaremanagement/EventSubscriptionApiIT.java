@@ -65,9 +65,6 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 		this.eventsSubscriptionApiTestClient = eventsSubscriptionApiTestClient;
 	}
 
-	/**
-	 * Fix the object mapper before each test to avoid empty query subscription issues.
-	 */
 	@Override
 	protected String getEntityType() {
 		return TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION;

@@ -17,12 +17,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import tools.jackson.databind.JacksonModule;
+import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Guards the Micronaut 5 build of ngsi-ld-java-mapping: its beans load, domain objects map to entities and back, and
@@ -45,6 +51,8 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 	private JavaObjectMapper javaObjectMapper;
 	@Inject
 	private EntitiesApiClient entitiesApiClient;
+	@Inject
+	private ObjectMapper objectMapper;
 
 	@Override
 	public Map<String, String> getProperties() {
@@ -87,6 +95,15 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The entity should have been created.");
 		assertEquals(entityVO.getId(), retrieved.getId(), "The retrieved entity should be the created one.");
 		assertEquals(status, mappedBack.getStatus(), "The property should survive the HTTP round trip.");
+	}
+
+	@ParameterizedTest
+	@ValueSource(classes = {TmForumMappingModule.class, StubFieldCleaningModule.class})
+	void registersModuleBeansOnTheContextMapper(Class<? extends JacksonModule> moduleClass) {
+		Stream<Class<?>> registered = objectMapper.registeredModules().stream().map(JacksonModule::getClass);
+
+		assertTrue(registered.anyMatch(moduleClass::equals),
+				"ObjectMapperFactory should register the module bean on the context mapper.");
 	}
 
 	@Test
