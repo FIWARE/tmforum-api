@@ -1,13 +1,13 @@
 package org.fiware.tmforum.common.mapping;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyName;
-import com.fasterxml.jackson.databind.deser.std.DelegatingDeserializer;
-import com.fasterxml.jackson.databind.util.TokenBuffer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.BeanDescription;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.PropertyName;
+import tools.jackson.databind.deser.std.DelegatingDeserializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.util.TokenBuffer;
 import com.networknt.schema.Error;
 import com.networknt.schema.ExecutionConfig;
 import com.networknt.schema.InputFormat;
@@ -16,8 +16,8 @@ import com.networknt.schema.SchemaLocation;
 import com.networknt.schema.SchemaRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.SchemaValidationException;
+import tools.jackson.databind.ValueDeserializer;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ValidatingDeserializer extends DelegatingDeserializer {
 
-	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private static final ObjectMapper OBJECT_MAPPER = new JsonMapper();
 	private final BeanDescription beanDescription;
 	private final List<SubTypePropertyProvider> subTypePropertyProviders;
 	private final SchemaRegistry schemaRegistry;
@@ -50,7 +50,7 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	 * @param subTypePropertyProviders  the registered sub-type property providers
 	 * @param schemaRegistry            the shared registry to retrieve the linked schemas from
 	 */
-	public ValidatingDeserializer(JsonDeserializer<?> delegate, BeanDescription beanDescription,
+	public ValidatingDeserializer(ValueDeserializer<?> delegate, BeanDescription beanDescription,
 			List<SubTypePropertyProvider> subTypePropertyProviders, SchemaRegistry schemaRegistry) {
 		super(delegate);
 		this.beanDescription = beanDescription;
@@ -60,20 +60,20 @@ public class ValidatingDeserializer extends DelegatingDeserializer {
 	}
 
 	@Override
-	protected JsonDeserializer<?> newDelegatingInstance(JsonDeserializer<?> newDelegatee) {
+	protected ValueDeserializer<?> newDelegatingInstance(ValueDeserializer<?> newDelegatee) {
 		return new ValidatingDeserializer(newDelegatee, beanDescription, subTypePropertyProviders,
 				schemaRegistry);
 	}
 
 	@Override
-	public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+	public Object deserialize(JsonParser p, DeserializationContext ctxt) {
 		PropertyName schemaLocationProperty = new PropertyName("@schemaLocation");
 		if (beanDescription.findProperties().stream().noneMatch(bpd -> bpd.hasName(schemaLocationProperty))) {
 			return super.deserialize(p, ctxt);
 		}
 		// copy the current value into the buffer, so that we can re-read it to validate the schema.
 		TokenBuffer tokenBuffer = ctxt.bufferAsCopyOfValue(p);
-		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(), ctxt);
+		Object targetObject = super.deserialize(tokenBuffer.asParserOnFirstToken(ctxt), ctxt);
 		if (targetObject instanceof UnknownPreservingBase upb) {
 			Map<String, Object> unknownProperties = upb.getUnknownProperties();
 			if (unknownProperties != null && !unknownProperties.isEmpty()) {

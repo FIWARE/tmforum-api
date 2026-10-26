@@ -1,6 +1,6 @@
 package org.fiware.tmforum.common.notification;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.EntityVOMapper;
 import lombok.RequiredArgsConstructor;
 import org.fiware.tmforum.common.domain.subscription.Event;

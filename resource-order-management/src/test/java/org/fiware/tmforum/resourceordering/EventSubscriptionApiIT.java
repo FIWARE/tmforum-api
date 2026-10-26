@@ -1,7 +1,7 @@
 package org.fiware.tmforum.resourceordering;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -17,7 +17,6 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,6 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(packages = { "org.fiware.tmforum.resourceordering" })
 @Requires(notEnv = "scorpio")
+// without, the test client will try to create an empty q subscription
+@Property(name = "jackson.serialization-inclusion", value = "non_empty")
 public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubscriptionApiTestSpec {
 
 	private static final String ANY_CALLBACK = "https://test.com";
@@ -48,11 +49,6 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 								  GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.eventsSubscriptionApiTestClient = eventsSubscriptionApiTestClient;
-	}
-
-	@BeforeEach
-	public void fixObjectMapper() {
-		this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 	}
 
 	@Override

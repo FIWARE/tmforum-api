@@ -1,6 +1,6 @@
 package org.fiware.tmforum.common.notification;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.context.annotation.Bean;

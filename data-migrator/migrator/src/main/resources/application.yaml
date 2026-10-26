@@ -13,8 +13,10 @@ micronaut:
         read-timeout: 30
 
 jackson:
-  serialization:
-    writeDatesAsTimestamps: false
+  # Micronaut's NON_EMPTY default breaks empty-list handling
+  serialization-inclusion: non_null
+  date-time-features:
+    write-dates-as-timestamps: false
 
 
 logger:

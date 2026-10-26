@@ -36,7 +36,7 @@ public class DocumentSpecificationNoS3IT extends AbstractApiIT {
             DocumentSpecificationApiTestClient testClient,
             EntitiesApiClient entitiesApiClient,
             GeneralProperties generalProperties,
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            tools.jackson.databind.ObjectMapper objectMapper) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.testClient = testClient;
     }

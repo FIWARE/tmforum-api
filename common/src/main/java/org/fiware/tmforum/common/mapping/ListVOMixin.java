@@ -1,6 +1,6 @@
 package org.fiware.tmforum.common.mapping;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 import java.util.List;
 
