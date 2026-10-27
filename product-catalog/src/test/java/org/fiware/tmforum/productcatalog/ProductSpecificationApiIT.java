@@ -562,7 +562,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 				() -> productSpecificationApiTestClient.patchProductSpecification(null, specId,
 						productSpecificationUpdateEmptyList));
 		assertEquals(HttpStatus.OK, emptyUpdateResponse.getStatus(), message);
-		// an emptied list is deleted in the broker, so it reads back as absent
+		// orion-ld (PATCH) returns the emptied list as [], scorpio (replace) drops the attribute
 		List<ResourceSpecificationRefVO> emptiedSpecs = emptyUpdateResponse.body().getResourceSpecification();
 		assertTrue(emptiedSpecs == null || emptiedSpecs.isEmpty(), "If set to empty, the spec-list should be emptied.");
 	}

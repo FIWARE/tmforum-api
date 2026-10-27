@@ -245,7 +245,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 						fieldsParameter));
 
 		assertEquals(HttpStatus.OK, response.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedAppliedCustomerBillingRateVo, response.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedAppliedCustomerBillingRateVo, response.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

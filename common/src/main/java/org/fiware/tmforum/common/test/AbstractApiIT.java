@@ -80,12 +80,25 @@ public abstract class AbstractApiIT {
     }
 
     /**
-     * Asserts equality of the JSON representations, treating empty arrays and nulls as absent: the mapping library
-     * does not store an empty list in the broker, so a list sent as {@code []} reads back as absent or null.
+     * Asserts equality of the JSON representations, treating empty arrays and nulls as absent at any depth: CREATE
+     * omits empty lists (mapping 1.6.31), and a list emptied by an update reads back as [] on orion-ld (PATCH) but
+     * absent or null on scorpio (replace).
      */
     protected void assertEqualsIgnoringEmptyLists(Object expected, Object actual, String message) {
         assertEquals(withoutEmptyValues(objectMapper.valueToTree(expected)),
                 withoutEmptyValues(objectMapper.valueToTree(actual)), message);
+    }
+
+    /**
+     * Strict for a {@code fields=} selection, which must not return a stray empty list for an unrequested field;
+     * without one it falls back to {@link #assertEqualsIgnoringEmptyLists}.
+     */
+    protected void assertEqualsForFields(String fields, Object expected, Object actual, String message) {
+        if (fields == null) {
+            assertEqualsIgnoringEmptyLists(expected, actual, message);
+        } else {
+            assertEquals(expected, actual, message);
+        }
     }
 
     private static JsonNode withoutEmptyValues(JsonNode node) {

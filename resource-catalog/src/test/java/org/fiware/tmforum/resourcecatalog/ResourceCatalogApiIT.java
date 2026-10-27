@@ -598,7 +598,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 		HttpResponse<ResourceCatalogVO> retrievedRF = callAndCatch(
 				() -> resourceCatalogApiTestClient.retrieveResourceCatalog(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedResourceCatalog, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedResourceCatalog, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

@@ -52,8 +52,13 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public abstract class NgsiLdBaseRepository {
 
-	/** NGSI-LD Null (ETSI GS CIM 009 4.5.0), written by {@link NgsiLdWriteOperation#UPDATE} for an emptied list. */
+	/**
+	 * NGSI-LD Null (ETSI GS CIM 009 4.5.0), written by {@link NgsiLdWriteOperation#UPDATE} for an emptied list.
+	 * Mirrors the marker shape of {@code JavaObjectMapper.buildEntity} in ngsi-ld-java-mapping 1.6.31; recheck
+	 * {@link #isNgsiLdNull} when bumping the library.
+	 */
 	private static final String NGSI_LD_NULL = "urn:ngsi-ld:null";
+	private static final URI NGSI_LD_NULL_URI = URI.create(NGSI_LD_NULL);
 
 	protected final GeneralProperties generalProperties;
 	protected final EntitiesApiClient entitiesApi;
@@ -187,7 +192,8 @@ public abstract class NgsiLdBaseRepository {
 	 * @return an empty mono, or an error if the entity does not exist
 	 */
 	public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
-		// UPDATE writes a list emptied by the update as NGSI-LD Null, so the broker deletes it instead of keeping it.
+		// UPDATE marks a list emptied by the update with a single NGSI-LD Null instance; both branches below
+		// translate that marker, so it never reaches the broker.
 		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity, NgsiLdWriteOperation.UPDATE);
 		URI entityId = URI.create(id);
 		if (generalProperties.isReplaceOnUpdate()) {
@@ -245,7 +251,7 @@ public abstract class NgsiLdBaseRepository {
 			return NGSI_LD_NULL.equals(propertyList.get(0).getValue());
 		}
 		if (value instanceof RelationshipListVO relationshipList && relationshipList.size() == 1) {
-			return URI.create(NGSI_LD_NULL).equals(relationshipList.get(0).getObject());
+			return NGSI_LD_NULL_URI.equals(relationshipList.get(0).getObject());
 		}
 		return false;
 	}

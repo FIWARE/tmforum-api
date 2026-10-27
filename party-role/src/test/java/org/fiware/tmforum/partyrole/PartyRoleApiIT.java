@@ -484,7 +484,7 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 		HttpResponse<PartyRoleVO> retrieveResponse = callAndCatch(
 				() -> prApiTestClient.retrievePartyRole(null, id, fields));
 		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedpr, retrieveResponse.body(), message);
+		assertEqualsForFields(fields, expectedpr, retrieveResponse.body(), message);
 	}
 
 	@Disabled("400 cannot happen, only 404")

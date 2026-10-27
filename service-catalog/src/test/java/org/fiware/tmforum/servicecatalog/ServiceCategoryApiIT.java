@@ -627,7 +627,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		HttpResponse<ServiceCategoryVO> retrievedRF = callAndCatch(
 				() -> serviceCategoryApiTestClient.retrieveServiceCategory(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedServiceCategory, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedServiceCategory, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

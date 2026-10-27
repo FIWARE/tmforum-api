@@ -920,7 +920,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 				() -> resourceSpecificationApiTestClient.retrieveResourceSpecification(null, id,
 						fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedResourceSpec.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedResourceSpecification, retrievedResourceSpec.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedResourceSpecification, retrievedResourceSpec.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

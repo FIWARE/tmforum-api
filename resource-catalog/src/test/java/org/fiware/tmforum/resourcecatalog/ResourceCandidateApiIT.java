@@ -618,7 +618,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		HttpResponse<ResourceCandidateVO> retrievedRF = callAndCatch(
 				() -> resourceCandidateApiTestClient.retrieveResourceCandidate(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedResourceCandidate, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedResourceCandidate, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

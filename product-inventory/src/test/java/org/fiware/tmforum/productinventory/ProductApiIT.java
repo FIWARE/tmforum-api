@@ -1257,7 +1257,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		HttpResponse<ProductVO> retrievedRF = callAndCatch(
 				() -> productApiTestClient.retrieveProduct(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedProduct, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedProduct, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

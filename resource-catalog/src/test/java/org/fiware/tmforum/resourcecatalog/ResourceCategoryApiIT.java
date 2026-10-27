@@ -659,7 +659,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		HttpResponse<ResourceCategoryVO> retrievedRF = callAndCatch(
 				() -> resourceCategoryApiTestClient.retrieveResourceCategory(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedResourceCategory, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedResourceCategory, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

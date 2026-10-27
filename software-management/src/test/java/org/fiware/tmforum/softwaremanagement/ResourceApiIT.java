@@ -985,7 +985,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 		HttpResponse<ResourceVO> retrievedRF = callAndCatch(
 				() -> resourceApiTestClient.retrieveResource(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedResource, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedResource, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

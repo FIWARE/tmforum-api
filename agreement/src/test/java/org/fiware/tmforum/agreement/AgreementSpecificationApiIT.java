@@ -556,7 +556,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 		HttpResponse<AgreementSpecificationVO> retrieveResponse = callAndCatch(
 				() -> agSpecApiTestClient.retrieveAgreementSpecification(null, id, fields));
 		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedAgSpec, retrieveResponse.body(), message);
+		assertEqualsForFields(fields, expectedAgSpec, retrieveResponse.body(), message);
 	}
 
 	@Disabled("400 cannot happen, only 404")

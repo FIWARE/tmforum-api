@@ -1009,7 +1009,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
         HttpResponse<ServiceSpecificationVO> retrievedResourceSpec = callAndCatch(
                 () -> serviceSpecificationApiTestClient.retrieveServiceSpecification(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedResourceSpec.getStatus(), message);
-        assertEqualsIgnoringEmptyLists(expectedServiceSpecification, retrievedResourceSpec.body(), message);
+        assertEqualsForFields(fieldsParameter, expectedServiceSpecification, retrievedResourceSpec.body(), message);
     }
 
     private static Stream<Arguments> provideFieldParameters() {

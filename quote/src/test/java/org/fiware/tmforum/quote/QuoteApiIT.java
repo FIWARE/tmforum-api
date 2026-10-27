@@ -1549,7 +1549,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 		HttpResponse<QuoteVO> retrievedQuote = callAndCatch(
 				() -> quoteApiTestClient.retrieveQuote(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedQuote.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedQuote, retrievedQuote.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedQuote, retrievedQuote.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

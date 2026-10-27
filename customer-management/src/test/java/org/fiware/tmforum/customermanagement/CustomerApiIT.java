@@ -679,7 +679,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 		HttpResponse<CustomerVO> retrievedRF = callAndCatch(
 				() -> customerApiTestClient.retrieveCustomer(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedCustomer, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedCustomer, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

@@ -717,7 +717,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         HttpResponse<ServiceVO> retrievedRF = callAndCatch(
                 () -> serviceApiTestClient.retrieveService(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-        assertEqualsIgnoringEmptyLists(expectedService, retrievedRF.body(), message);
+        assertEqualsForFields(fieldsParameter, expectedService, retrievedRF.body(), message);
     }
 
     private static Stream<Arguments> provideFieldParameters() {

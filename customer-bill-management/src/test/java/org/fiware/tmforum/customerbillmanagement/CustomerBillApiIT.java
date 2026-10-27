@@ -321,7 +321,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 				() -> customerBillApiTestClient.retrieveCustomerBill(null, billId, fieldsParameter));
 
 		assertEquals(HttpStatus.OK, response.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedCustomerBillVo, response.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedCustomerBillVo, response.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

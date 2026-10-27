@@ -593,7 +593,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         HttpResponse<ServiceCatalogVO> retrievedRF = callAndCatch(
                 () -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-        assertEqualsIgnoringEmptyLists(expectedServiceCatalog, retrievedRF.body(), message);
+        assertEqualsForFields(fieldsParameter, expectedServiceCatalog, retrievedRF.body(), message);
     }
 
     private static Stream<Arguments> provideFieldParameters() {

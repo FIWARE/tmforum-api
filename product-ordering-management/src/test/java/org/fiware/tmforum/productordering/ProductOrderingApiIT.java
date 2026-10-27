@@ -1433,7 +1433,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		HttpResponse<ProductOrderVO> retrievedRF = callAndCatch(
 				() -> productOrderApiTestClient.retrieveProductOrder(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedProduct, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedProduct, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

@@ -615,7 +615,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 		HttpResponse<ServiceCandidateVO> retrievedRF = callAndCatch(
 				() -> serviceCandidateApiTestClient.retrieveServiceCandidate(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEqualsIgnoringEmptyLists(expectedServiceCandidate, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedServiceCandidate, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {
