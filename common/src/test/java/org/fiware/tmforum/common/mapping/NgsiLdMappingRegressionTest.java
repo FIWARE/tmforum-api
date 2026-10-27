@@ -1,5 +1,9 @@
 package org.fiware.tmforum.common.mapping;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.core.io.socket.SocketUtils;
@@ -12,12 +16,14 @@ import jakarta.inject.Inject;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.ProblemDetailsVO;
+import org.fiware.tmforum.common.filter.BrokerRequestLoggingFilter;
 import org.fiware.tmforum.common.querying.MyEntityPojo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
 
 import tools.jackson.databind.JacksonModule;
 import tools.jackson.databind.ObjectMapper;
@@ -44,6 +50,8 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 	private static final String UNKNOWN_ENTITY_ID = ENTITY_ID_PREFIX + "unknown";
 	private static final String NGSI_PATH = "ngsi-ld/v1";
 	private static final String LD_JSON = "application/ld+json";
+	// first argument of every request line BrokerRequestLoggingFilter logs
+	private static final String BROKER_LOG_MARKER = "Broker";
 
 	@Inject
 	private EntityVOMapper entityVOMapper;
@@ -118,6 +126,29 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 		assertEquals(StubBrokerController.NOT_FOUND_TYPE, problemDetails.getType(), "The error type should be decoded.");
 		assertEquals(StubBrokerController.NOT_FOUND_TITLE, problemDetails.getTitle(), "The error title should be decoded.");
 		assertEquals(UNKNOWN_ENTITY_ID, problemDetails.getDetail(), "The error detail should be decoded.");
+	}
+
+	@Test
+	void appliesBrokerRequestLoggingFilterToTheNgsiClient() {
+		Logger filterLogger = (Logger) LoggerFactory.getLogger(BrokerRequestLoggingFilter.class);
+		Level originalLevel = filterLogger.getLevel();
+		ListAppender<ILoggingEvent> appender = new ListAppender<>();
+		appender.start();
+		filterLogger.addAppender(appender);
+		filterLogger.setLevel(Level.DEBUG);
+		try {
+			EntityVO entityVO = javaObjectMapper.toEntityVO(pojo("logged", "active"));
+			entitiesApiClient.createEntity(entityVO, null).block();
+		} finally {
+			filterLogger.detachAppender(appender);
+			filterLogger.setLevel(originalLevel);
+		}
+
+		assertTrue(appender.list.stream()
+						.anyMatch(event -> event.getArgumentArray() != null
+								&& event.getArgumentArray().length > 0
+								&& BROKER_LOG_MARKER.equals(event.getArgumentArray()[0])),
+				"The @Filter(serviceId = \"ngsi\") client filter should log the broker request.");
 	}
 
 	private static MyEntityPojo pojo(String idSuffix, String status) {

@@ -6,15 +6,20 @@ micronaut:
         - application/ld+json
   http:
     services:
-      read-timeout: 30s
       ngsi:
         path: ngsi-ld/v1
         url: http://localhost:8080
-        read-timeout: 30
+        read-timeout: 30s
 
 jackson:
   # Micronaut's NON_EMPTY default breaks empty-list handling
   serialization-inclusion: non_null
+  # Jackson 3 changed these defaults; keep the Jackson 2 behaviour:
+  # properties in declaration order, and null for a primitive is its default instead of a 400
+  mapper-features:
+    sort-properties-alphabetically: false
+  deserialization-features:
+    fail-on-null-for-primitives: false
   date-time-features:
     write-dates-as-timestamps: false
 
