@@ -29,6 +29,25 @@ JDK 17:
 
 The jar is written to `/tmp/legacy-loader/data-migrator/legacy-loader/target/legacy-loader-0.1.jar`.
 
+## Limitation: the migrated domain model is pinned to the legacy-loader release
+
+The legacy-loader jar contains the domain classes of `legacy.loader.ref`, and the entities it hands to the
+`update-writer` are instances of those classes. `JavaObjectMapper` reads their mapping annotations
+(`@AttributeGetter`, `@AttributeSetter`, `@EntityType`, ...), so the migrated data carries the attribute names of
+that release and not of the current one.
+
+With `legacy.loader.ref` at `1.18.3` these attributes differ from the current domain model:
+
+| Class                                 | Written as     | Current        |
+|---------------------------------------|----------------|----------------|
+| `RefEntity.atReferredType`            | `@referredType`| `atReferredType` |
+| `RelatedProductOrderItemRef.atReferredType` | `@referredType` | `atReferredType` |
+| `TMForumSubscription.query`/`rawQuery`| unescaped      | forbidden characters escaped |
+
+Entities using them have to be fixed up in the target broker after the migration. The list grows with every later
+change to a mapping annotation, so check it against the diff between `legacy.loader.ref` and the release you migrate
+to before running a migration.
+
 ## Run
 
 The migration tool can either be run directly as a jar:

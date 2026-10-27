@@ -4,13 +4,13 @@
 FIWARE implementation of the TMForum APIs. Each TMForum API is a Micronaut service that stores its resources as NGSI-LD entities in a context broker (Orion-LD or Scorpio).
 
 ## Tech Stack
-- Language: Java 21 (`jdk.version`/`release.version` in the root `pom.xml`)
-- Build: Maven multi-module. The parent is `io.micronaut.platform:micronaut-parent` 4.10.18, and the same version is in the `micronaut.version` property.
-- Framework: Micronaut 4, Project Reactor (`Mono`/`Flux` everywhere), Jackson 2 through `micronaut-jackson-databind` (no serde), `micronaut-validation`, Lombok, MapStruct.
-- NGSI-LD: `io.github.wistefan:ngsi-ld-java-mapping` (1.6.28). It ships `EntitiesApiClient`/`SubscriptionsApiClient` (`org.fiware.ngsi.api`, client id `ngsi`), `EntityVOMapper`, `JavaObjectMapper`, and its own Jackson-2 `ObjectMapper` bean.
-- Codegen: `openapi-generator-maven-plugin` 7.20.0 with the `io.kokuwa.micronaut:micronaut-openapi-codegen` 4.5.0 generator (`generatorName=micronaut`).
+- Language: Java 25 (`jdk.version`/`release.version` in the root `pom.xml`)
+- Build: Maven multi-module. The parent is `io.micronaut.platform:micronaut-parent` 5.2.3, and the same version is in the `micronaut.version` property.
+- Framework: Micronaut 5, Project Reactor (`Mono`/`Flux` everywhere), Jackson 3 (`tools.jackson.*`, annotations stay `com.fasterxml.jackson.annotation`) through `micronaut-jackson-databind` (no serde), `micronaut-validation`, Lombok, MapStruct.
+- NGSI-LD: `io.github.wistefan:ngsi-ld-java-mapping` (1.6.31). It ships `EntitiesApiClient`/`SubscriptionsApiClient` (`org.fiware.ngsi.api`, client id `ngsi`), `EntityVOMapper`, `JavaObjectMapper` and its own Jackson-3 beans (`CacheSerdeableObjectMapper`, `EscapeCleaningJsonFactory`).
+- Codegen: `openapi-generator-maven-plugin` 7.20.0 with the `io.kokuwa.micronaut:micronaut-openapi-codegen` 4.5.1 generator (`generatorName=micronaut`).
 - Test: JUnit 5, Mockito, Micronaut Test (`@MicronautTest`), K3S through `io.kokuwa.maven:k3s-maven-plugin`.
-- Images: jib (`oci` profile), base image `registry.access.redhat.com/ubi9/openjdk-21-runtime`.
+- Images: jib (`oci` profile), base image `registry.access.redhat.com/ubi9/openjdk-25-runtime`.
 
 ## Project Structure
 ```
@@ -23,17 +23,17 @@ common/                    shared base code (all modules depend on it)
   .../common/filter/       PaginationFilter, ForwardedForFilter (@Filter/HttpServerFilter), BrokerRequestLoggingFilter (HttpClientFilter)
   .../common/exception/    ExceptionHandler implementations
   .../common/health/       readiness/liveness indicators (@Client(id="ngsihealth"))
-  .../common/mapping/      UnknownPreservingBase (VO base class), FieldCleaningSerializer (Jackson)
-  .../common/test/         AbstractApiIT, TestServerHostConfigurer (test helpers in main code)
+  .../common/mapping/      UnknownPreservingBase (VO base class), FieldCleaningSerializer and TmForumMappingModule (Jackson 3 modules)
+  .../common/test/         AbstractApiIT, TestServerHostConfigurer, FirstMatchConfigContextBuilder (test helpers in main code)
 *-shared-models/           domain classes shared between API modules
 <api-module>/              21 API modules, e.g. product-catalog, party-catalog, customer-management
   src/main/java/.../Application.java   Micronaut.run + @Factory
   src/main/resources/application*.yaml profiles: orion-ld|scorpio, in-memory|redis
 all-in-one/                one app containing all APIs (24 codegen executions)
 ui/                        read-only browser for all-in-one; Node server + static page, jib-only, no Java
-data-migrator/             legacy-loader (old mapping lib 1.2.11), update-writer, migrator (picocli, separate classloaders)
+data-migrator/             update-writer, migrator (picocli, separate classloaders); legacy-loader (old mapping lib 1.2.11) is NOT in this build, it is built from the frozen tag in `legacy.loader.ref`
 k3s/                       manifests for orion-ld, scorpio, minio, schema-provider used by ITs/dev
-.github/workflows/         CI (Java 21; check.yml still on 11)
+.github/workflows/         CI (Java 25; check.yml still on 11)
 ```
 
 ## Build & Test
@@ -57,12 +57,13 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - Everything is reactive: repositories and controllers return `Mono`/`Flux`.
 - Domain ↔ VO mapping uses MapStruct mappers next to the domain classes. Referential integrity goes through `ReferenceValidationService`, and extension validation through `@schemaLocation`.
 - Versions are root-pom properties named `version.<groupId>.<artifactId>`. Micronaut artifacts are BOM-managed and carry no explicit version.
+- Jackson 3: the `ObjectMapper` is immutable. Customizations are `JacksonModule` beans (e.g. `TmForumMappingModule`, `FieldCleaningModule`), never a `BeanCreatedEventListener` on the mapper. Durations in `application.yaml` need a unit (`30s`), a unit-less value is silently dropped.
 - Doc density is sparse. Some non-obvious public methods in `common` have a short Javadoc. Many public methods and most module classes have none. Match the file you edit. Indentation mixes tabs and spaces by file, so keep the file's style.
 - Tests: `*Test.java` are unit tests (JUnit5/Mockito). `*IT.java` extend `AbstractApiIT` and use `@MicronautTest(packages=...)`. Use parameterized tests where possible.
 
 ## Important Files
 - `pom.xml`: Micronaut parent/version, all version properties, openapi-generator `configOptions` (`useGenericResponse`, `supportAsync`, `serdeable=false`, `modelBaseClass=...UnknownPreservingBase`), jib base image, k3s IT wiring (`-Dmicronaut.environments=${cache},${broker}`).
-- `common/pom.xml`: Micronaut, redis-lettuce, micrometer-prometheus, jackson deps.
+- `common/pom.xml`: Micronaut, redis-lettuce, micrometer-prometheus, jackson deps (`tools.jackson.core:jackson-databind` plus `com.fasterxml.jackson.core:jackson-annotations`).
 - `*/src/main/resources/application*.yaml`: `micronaut.http.services.ngsi.*`, `micronaut.codec.json.additional-types`, `micronaut.caches.*`, `redis.caches.*.value-serializer`, `jackson.*`, `endpoints.*`.
 - `data-migrator/*/src/main/java/**/{UpdateWriter,LegacyLoader}.java`: build their own `ApplicationContext`.
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.

@@ -11,7 +11,7 @@ configuration keys change as well.
 | `io.micronaut.platform:micronaut-parent`       | 4.10.18                                 | 5.2.3                                   |
 | Java (build and runtime)                       | 21                                      | 25                                      |
 | Jackson (`jackson-databind`)                   | 2.x (`com.fasterxml.jackson.databind`)  | 3.x (`tools.jackson.databind`)          |
-| `io.github.wistefan:ngsi-ld-java-mapping`      | 1.6.28                                  | 1.6.31 (Micronaut 5, Jackson 3)         |
+| `io.github.wistefan:ngsi-ld-java-mapping`      | 1.6.29                                  | 1.6.31 (Micronaut 5, Jackson 3)         |
 | `io.kokuwa.micronaut:micronaut-openapi-codegen`| 4.5.0                                   | 4.5.1                                   |
 | Service image base                             | `ubi9/openjdk-21-runtime:1.24-2`        | `ubi9/openjdk-25-runtime:1.24-3`        |
 | `data-migrator` image base                     | `eclipse-temurin:21-jdk`                | `eclipse-temurin:25-jdk`                |
@@ -44,6 +44,12 @@ request now fails after 30 s without data (read timeout), or after 31 s in total
 the value, give it a unit, e.g. `MICRONAUT_HTTP_SERVICES_NGSI_READ_TIMEOUT=30s` or `2m`. A unit-less override such
 as `=30` is still accepted without a warning and turns the timeout off again.
 
+**Helm chart users:** the [tm-forum-api chart](https://github.com/FIWARE/helm-charts/tree/main/charts/tm-forum-api) renders
+`ngsiLd.readTimeout` (and `defaultConfig.ngsiLd.readTimeout`) as `MICRONAUT_HTTP_SERVICES_READ_TIMEOUT`, which is the key
+that was never bound. Whatever you set there was ignored before and is ignored now, so these deployments get the new 30 s
+default. Until the chart is fixed to render `MICRONAUT_HTTP_SERVICES_NGSI_READ_TIMEOUT`, set the timeout through a plain
+environment variable of that name.
+
 The `micronaut.codec.json.additional-types`, `micronaut.caches.*`, `redis.*` (including
 `redis.caches.*.value-serializer`), metrics and `endpoints.*` keys are unchanged.
 
@@ -70,6 +76,14 @@ read without migration.
   1.2.11. The `migrator` image builds it from the frozen release tag `1.18.3` (property `legacy.loader.ref` in
   `data-migrator/pom.xml`). See [data-migrator/README.md](../data-migrator/README.md) for building it locally.
 * The `-ll` option of the migrator (path to the `legacy-loader` jar) is now required.
+* **Known limitation - the migrated domain model is pinned to `1.18.3`.** The entities handed to the `update-writer` are
+  instances of the domain classes from that tag, and `JavaObjectMapper` reads their mapping annotations, so data is
+  written with the `1.18.3` attribute names rather than the current ones. Two differences exist today:
+  `RefEntity.atReferredType` and `RelatedProductOrderItemRef.atReferredType` are written as `@referredType`
+  (see [#169](https://github.com/FIWARE/tmforum-api/pull/169)), and `TMForumSubscription.query`/`rawQuery` are written
+  unescaped instead of with the NGSI-LD forbidden characters escaped. Migrated entities that use these attributes need
+  to be fixed up after the migration. The same applies to any later change to the domain classes, as long as
+  `legacy.loader.ref` stays on `1.18.3`.
 * Building the `migrator` image (`mvn deploy -Poci`, or `docker build` of `data-migrator/migrator`) needs network
   access to the tmforum-api Git repository, because the Dockerfile clones the `legacy.loader.ref` tag and builds it
   with Maven on JDK 17. For mirrored or air-gapped builds, point it at a mirror with `-Dlegacy.loader.repo=<url>`
