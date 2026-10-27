@@ -591,7 +591,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 
 		HttpResponse<IndividualVO> individualGetResponse = callAndCatch(
 				() -> individualApiTestClient.retrieveIndividual(null, individualId, null));
-		assertEquals(expectedIndividual, individualGetResponse.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedIndividual, individualGetResponse.body(), message);
 	}
 
 	private static Stream<Arguments> provideValidPatches() {

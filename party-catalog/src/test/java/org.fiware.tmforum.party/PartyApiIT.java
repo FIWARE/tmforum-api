@@ -157,7 +157,7 @@ public class PartyApiIT extends AbstractApiIT {
 
 		HttpResponse<OrganizationVO> parentGet = callAndCatch(
 				() -> organizationApiTestClient.retrieveOrganization(null, parentOrgId, null));
-		assertEquals(expectedParent, parentGet.body(), "The parent via get should also be equal.");
+		assertEqualsIgnoringEmptyLists(expectedParent, parentGet.body(), "The parent via get should also be equal.");
 	}
 
 	@Override

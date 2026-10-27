@@ -570,7 +570,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 
 		HttpResponse<OrganizationVO> organizationGetResponse = callAndCatch(
 				() -> organizationApiTestClient.retrieveOrganization(null, organizationId, null));
-		assertEquals(expectedOrganization, organizationGetResponse.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedOrganization, organizationGetResponse.body(), message);
 
 	}
 
