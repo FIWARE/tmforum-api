@@ -1,0 +1,86 @@
+# Implementation Plan: TMForum - DB Backend - External refs
+
+## Overview
+References can point at entities held by another TMForum deployment. Since #178 (`anyMatch` → `allMatch`), `ReferenceValidationService` rejects every such entity, because it resolves all references against local storage. This plan makes the combination semantics explicit and adds a config-driven local/external classification: local references are validated strictly, external ones are skipped (no HTTP call) and counted. It also makes the read path tolerate unresolvable relationship targets and documents the policy in `common/README.md`. All of this lives in `common` and is backend-agnostic, so the PostgreSQL adapter (ticket 6) inherits it unchanged.
+
+### Decisions (binding for all steps)
+- **Classification is an operator allow-list and is never inferred.** A reference is EXTERNAL only if its id starts with a configured id prefix, or its `href` starts with a configured href prefix. Everything else is LOCAL. Both lists default to empty, which keeps today's strict behaviour. A foreign host in a client-supplied `href` does **not** make a reference external on its own, because then any client could switch validation off. With the allow-list, a client can at most declare a reference as held by a deployment the operator already trusts.
+- **External references are skipped.** They get no existence check, no type check and no outbound HTTP call (the ticket's recommendation). Each one is counted by a metric and debug-logged.
+- **Local references use `all` semantics.** Every non-null local reference must resolve with an accepted type. If one does not, the request fails with `NonExistentReferenceException`, which controllers map to 400 `INVALID_RELATIONSHIP`. The message names the unresolved ids.
+- **Empty input passes.** A list that is empty, all-null or all-external validates to `true`. Today `Mono.zip` over an empty iterable completes *empty* rather than `true`. That silently empties the caller's chain, and step 1 fixes it.
+- **Config lives in a new `ReferenceProperties` class** (`@ConfigurationProperties("references")`), not in `GeneralProperties`. The epic is shrinking `GeneralProperties`, which is mostly broker dialect.
+- **Read path.** Relationships whose `@AttributeSetter` lacks `fromProperties = true` are fetched on read (e.g. `ProductOffering.category`, `Customer.engagedParty`). Two places fail when a target is missing:
+  - `BrokerBackedEntitiesRepository.getEntities` uses `Mono.zip`, so one missing target empties the whole relationship map.
+  - `mapping.strictRelationships` (ngsi-ld-java-mapping `MappingProperties`) defaults to `true`, so `EntityVOMapper.getObjectFromRelationship` then throws `MappingException`.
+
+  Step 3 skips external ids, tolerates missing targets and sets `mapping.strictRelationships: false` in every module (`document-management` and `data-migrator` already do). **Known limitation, to be recorded in the README:** in non-strict mode the mapper returns an id-only object for an unresolved target. On those fetched relationships, the `href`/`name`/`@referredType` of an external reference therefore do not round-trip until ticket 5 stores the reference payload inline (`fromProperties = true`). Relationships that already use `fromProperties = true` (e.g. `Catalog.category`) round-trip fully today.
+
+## Steps
+
+### Step 1: Make the combination semantics explicit in `ReferenceValidationService`
+Files:
+- `common/src/main/java/org/fiware/tmforum/common/validation/ReferenceValidationService.java`
+- new `common/src/test/java/org/fiware/tmforum/common/validation/ReferenceValidationServiceTest.java`
+
+Changes:
+- Replace the `Mono.zip(..., allMatch)` with a combinator that is well defined on empty input. Add a method returning the unresolved references, e.g. `Mono<List<T>> findUnresolved(List<T> refs)` built with `Flux.fromIterable(refs).filter(Objects::nonNull).flatMap(ref -> exists(ref).filter(b -> !b).map(b -> ref)).collectList()`, preserving the concurrency of today's zip. `checkReferenceExists` becomes `findUnresolved(...).map(List::isEmpty)`, so its public signature and semantics stay the same. A null `refs` list counts as empty.
+- `getCheckingMono` fails with `NonExistentReferenceException("References do not exist: [<ids>]")`, listing only the unresolved entity ids rather than the whole `toString` of every reference. The existing Javadoc should say "all", which matches `TmForumExceptionHandler`'s "At least one of the references does not exist".
+- Unit test (JUnit 5 + Mockito, mocked `ReferencesRepository`). Use a `@ParameterizedTest` with a `@MethodSource` over these cases: empty list → true; only nulls → true; one resolves → true; all resolve → true; one of three missing → false (the #178 regression); wrong type (repository returns empty) → false; all missing → false. Add one test asserting that the `getCheckingMono` error message contains exactly the missing ids.
+
+Acceptance: `mvn test -pl common -Dtest=ReferenceValidationServiceTest` passes, and `mvn test -pl common` stays green.
+
+### Step 2: Local/external classification, skip external references, meter them
+Files (all in `common`):
+- new `configuration/ReferenceProperties.java`: `@ConfigurationProperties("references")`, Lombok `@Data`, `List<String> externalIdPrefixes = List.of()` and `List<String> externalHrefPrefixes = List.of()`. Env vars are `REFERENCES_EXTERNAL_ID_PREFIXES` and `REFERENCES_EXTERNAL_HREF_PREFIXES` (comma-separated).
+- `validation/ReferencedEntity.java`: add `@JsonIgnore default URI getReferenceHref() { return null; }`. It is deliberately not named `getHref`, so the Jackson and mapping annotations on `RefEntity.getHref()` are not affected.
+- `domain/RefEntity.java`: override `getReferenceHref()` to return `href`.
+- new `validation/ReferenceScope.java`: an enum with `LOCAL` and `EXTERNAL`.
+- new `validation/ReferenceClassifier.java`: a `@Singleton` with `ReferenceScope classify(ReferencedEntity ref)` and a convenience `boolean isExternal(URI id)` for the read path (step 3). It does plain `String.startsWith` matching on `id.toString()` and `href.toString()`. A null id or href is not matched. Add a one-line Javadoc that states the allow-list rule.
+- `validation/ReferenceValidationService.java`: inject `ReferenceClassifier` and a `MeterRegistry`. Make the registry optional (explicit constructor with `@Nullable MeterRegistry`) so that contexts with metrics disabled still start. External references are filtered out before the repository call, counted, and debug-logged with the id. Count with a `Counter` named in a constant, e.g. `REFERENCES_METRIC = "tmforum.references"`. Tags are `scope` (`local`|`external`) and `result` (`resolved`|`unresolved`|`skipped`). Keep tag values as constants, with no ids in tags (cardinality).
+- Tests:
+  - new `ReferenceClassifierTest`: parameterized over the id-prefix match, the href-prefix match, no match, null href, empty config, and a foreign-host href that is not in the allow-list (→ LOCAL).
+  - extend `ReferenceValidationServiceTest`: a mixed list of one local-existing and one external entry → true, with the repository never called for the external one (`verify(..., never())`); one local-missing plus one external → false; all external → true. Use `SimpleMeterRegistry` to assert the counter values per tag.
+
+Acceptance: with empty config, behaviour is identical to step 1. `mvn test -pl common` passes, and `mvn clean install -DskipTests -DskipITs` compiles all modules.
+
+### Step 3: Read path tolerates unresolvable relationship targets
+Files:
+- `common/src/main/java/org/fiware/tmforum/common/repository/BrokerBackedEntitiesRepository.java`
+- every `*/src/main/resources/application.yaml` that configures the broker and has no `mapping.strictRelationships` (find them with `grep -L strictRelationships */src/main/resources/application.yaml`; `all-in-one` is included)
+
+Changes:
+- `getEntities(List<URI>)` drops ids where `ReferenceClassifier.isExternal(id)` is true, so there is no pointless broker GET. It then fetches the rest with `Flux.fromIterable(ids).flatMap(this::retrieveEntityById).collectList()`, so a missing target no longer empties the result for all the others. Empty input gives `Mono.just(List.of())`.
+- Add `mapping:\n  strictRelationships: false` to each listed `application.yaml`, matching `document-management`'s existing block. This also changes the read of a dangling *local* reference (e.g. the target was deleted after the write): it now returns the id-only reference instead of failing the GET. Mention this in the PR description.
+- New unit test `BrokerBackedEntitiesRepositoryTest` (Mockito on `EntitiesApiClient`, or a spy on `retrieveEntityById`), parameterized: all found; one missing → the others are still returned; external id → never fetched; empty input → empty list.
+
+Acceptance: `mvn test -pl common` passes. Run `mvn integration-test -pl product-catalog` and `mvn integration-test -pl customer-management` (orion-ld, in-memory) with no regressions. If any IT asserted a failing GET for a dangling reference, report it instead of silently changing the assertion.
+
+### Step 4: Integration tests for external and missing-local references
+Files: new `product-catalog/src/test/java/org/fiware/tmforum/productcatalog/ExternalReferenceIT.java`. It is a separate class so its config does not affect the other ITs. Annotate it with `@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)` and `@Property(name = "references.external-href-prefixes", value = "https://external-tmf.example.org/")`, and set the id prefix the same way (e.g. `urn:ngsi-ld:category:ext-`). Extend `AbstractApiIT` and follow `ProductOfferingApiIT`'s patterns (`*VOTestExample.build().atSchemaLocation(null)`, cleanup of the created entities).
+
+Use a `@ParameterizedTest` where the cases share a shape:
+- Create a `Catalog` whose `category` holds an external id (matched by the id prefix) → 201. GET → 200, and the reference's `id`, `href` and `name` round-trip (`fromProperties` relationship).
+- Create a `ProductOffering` whose `category` holds an external reference (matched by the href prefix) → 201. GET → 200, and the `id` round-trips. Leave a comment on the `href`/`name` assertion that points at ticket 5, per the known limitation.
+- Mixed list of one existing local category and one external → 201.
+- A missing local id (no prefix match, foreign `href` not in the allow-list) → 400.
+- One existing local and one missing local category → 400 (the #178 regression).
+- PATCH of a `ProductOffering` adding an external category → 200, and adding a missing local category → 400.
+
+Acceptance: `mvn integration-test -pl product-catalog -Dit.test=ExternalReferenceIT -DskipTests` passes with the defaults (orion-ld, in-memory) and with `-Dbroker=scorpio`. The full `mvn integration-test -pl product-catalog` stays green.
+
+### Step 5: Document the reference validation policy
+Files:
+- `common/README.md`: extend the "Referential integrity" section.
+- `README.md` (root): one line in the configuration/env-var section, if one exists, pointing to it.
+- `AGENTS.md`: one line under Key Conventions.
+
+Write the README content tersely and cover:
+- local vs external and how classification works (allow-list only, with the reason the `href` alone is not trusted);
+- the `references.external-id-prefixes`/`references.external-href-prefixes` properties and their env vars, with an example;
+- the `all` semantics, including that empty, all-null and all-external lists pass;
+- that an external reference is never validated or fetched (no HTTP call to the other deployment) and that live resolution is out of scope;
+- the `tmforum_references_total{scope,result}` metric and the debug log;
+- the read-path behaviour with `mapping.strictRelationships: false` and the ticket-5 limitation for fetched relationships;
+- the 400 `INVALID_RELATIONSHIP` response for a missing local reference.
+
+Acceptance: the docs match the implemented property names, metric name and behaviour. No code changes in this step.
