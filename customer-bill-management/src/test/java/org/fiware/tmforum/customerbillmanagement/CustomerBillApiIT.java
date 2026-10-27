@@ -140,7 +140,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 		expectedBillVOS.stream().forEach(expectedBill -> assertTrue(retrievedBillsMap.containsKey(expectedBill.getId()),
 				String.format("All created bills should be returned - Missing: %s.", expectedBill)));
 		expectedBillVOS.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
 						"The correct bill should be retrieved."));
 
 	}

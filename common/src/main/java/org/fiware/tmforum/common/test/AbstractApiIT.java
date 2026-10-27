@@ -80,26 +80,27 @@ public abstract class AbstractApiIT {
     }
 
     /**
-     * Asserts equality of the JSON representations, ignoring empty arrays: the mapping library does not store an
-     * empty list in the broker, so a list sent as {@code []} reads back as absent.
+     * Asserts equality of the JSON representations, treating empty arrays and nulls as absent: the mapping library
+     * does not store an empty list in the broker, so a list sent as {@code []} reads back as absent or null.
      */
     protected void assertEqualsIgnoringEmptyLists(Object expected, Object actual, String message) {
-        assertEquals(withoutEmptyArrays(objectMapper.valueToTree(expected)),
-                withoutEmptyArrays(objectMapper.valueToTree(actual)), message);
+        assertEquals(withoutEmptyValues(objectMapper.valueToTree(expected)),
+                withoutEmptyValues(objectMapper.valueToTree(actual)), message);
     }
 
-    private static JsonNode withoutEmptyArrays(JsonNode node) {
+    private static JsonNode withoutEmptyValues(JsonNode node) {
         if (node == null) {
             return null;
         }
         if (node instanceof ObjectNode objectNode) {
-            List<String> emptyArrays = objectNode.properties().stream()
-                    .filter(property -> property.getValue().isArray() && property.getValue().isEmpty())
+            List<String> emptyValues = objectNode.properties().stream()
+                    .filter(property -> property.getValue().isNull()
+                            || (property.getValue().isArray() && property.getValue().isEmpty()))
                     .map(Map.Entry::getKey)
                     .toList();
-            objectNode.remove(emptyArrays);
+            objectNode.remove(emptyValues);
         }
-        node.forEach(AbstractApiIT::withoutEmptyArrays);
+        node.forEach(AbstractApiIT::withoutEmptyValues);
         return node;
     }
 
