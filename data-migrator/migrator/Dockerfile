@@ -1,6 +1,7 @@
-# legacy-loader needs Micronaut 4 and the 1.2.11 mapping library, so it is built from a frozen Micronaut 4 release.
+# legacy-loader needs Micronaut 3 to load the 1.2.11 mapping library, so it is built from the last Micronaut 3 release.
+# That release targets Java 17 and its lombok does not run on newer JDKs.
 # LEGACY_LOADER_REPO and LEGACY_LOADER_REF come from data-migrator/pom.xml.
-FROM maven:3.9-eclipse-temurin-25 AS legacy
+FROM maven:3.9-eclipse-temurin-17 AS legacy
 
 ARG LEGACY_LOADER_REPO
 ARG LEGACY_LOADER_REF
