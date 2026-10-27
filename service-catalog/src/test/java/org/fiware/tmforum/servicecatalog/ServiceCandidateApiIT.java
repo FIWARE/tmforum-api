@@ -1,6 +1,6 @@
 package org.fiware.tmforum.servicecatalog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -18,6 +18,7 @@ import org.fiware.servicecatalog.model.ServiceCategoryRefVOTestExample;
 import org.fiware.servicecatalog.model.ServiceSpecificationRefVOTestExample;
 import org.fiware.servicecatalog.model.TimePeriodVO;
 import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -46,7 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.servicecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.servicecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandidateApiTestSpec {
 
 	public final ServiceCandidateApiTestClient serviceCandidateApiTestClient;
@@ -319,7 +320,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 										expectedServiceCandidate,
 										retrievedServiceCandidates)));
 		expectedServiceCandidates.stream().forEach(
-				expectedServiceCandidate -> assertEquals(expectedServiceCandidate,
+				expectedServiceCandidate -> assertEqualsIgnoringEmptyLists(expectedServiceCandidate,
 						retrievedMap.get(expectedServiceCandidate.getId()),
 						"The correct serviceCandidates should be retrieved."));
 
@@ -344,7 +345,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 								String.format("All created serviceCandidates should be returned - Missing: %s.",
 										expectedServiceCandidate)));
 		expectedServiceCandidates.stream().forEach(
-				expectedServiceCandidate -> assertEquals(expectedServiceCandidate,
+				expectedServiceCandidate -> assertEqualsIgnoringEmptyLists(expectedServiceCandidate,
 						retrievedMap.get(expectedServiceCandidate.getId()),
 						"The correct serviceCandidates should be retrieved."));
 	}
@@ -439,7 +440,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 		ServiceCandidateVO updatedServiceCandidate = updateResponse.body();
 		expectedServiceCandidate.href(URI.create(resourceId)).id(resourceId);
 
-		assertEquals(expectedServiceCandidate, updatedServiceCandidate, message);
+		assertEqualsIgnoringEmptyLists(expectedServiceCandidate, updatedServiceCandidate, message);
 	}
 
 	private static Stream<Arguments> provideServiceCandidateUpdates() {
@@ -614,7 +615,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 		HttpResponse<ServiceCandidateVO> retrievedRF = callAndCatch(
 				() -> serviceCandidateApiTestClient.retrieveServiceCandidate(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedServiceCandidate, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedServiceCandidate, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

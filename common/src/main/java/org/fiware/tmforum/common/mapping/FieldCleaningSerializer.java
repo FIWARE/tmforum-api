@@ -1,19 +1,20 @@
 package org.fiware.tmforum.common.mapping;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.context.ServerRequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.JsonException;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.cfg.DateTimeFeature;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -21,21 +22,21 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class FieldCleaningSerializer<T> extends JsonSerializer<T> {
+public class FieldCleaningSerializer<T> extends ValueSerializer<T> {
 
     public static final String FIELD_PARAMETER_SEPERATOR = ",";
     public static final List<String> MANDATORY_FIELDS = List.of("id", "href");
 
-    // we cannot take the bean from the context, since that will be circular reference, e.g. stack-overflow
-    private final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    {
-        OBJECT_MAPPER.findAndRegisterModules();
-        OBJECT_MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    }
+    // we cannot take the bean from the context, since that will be circular reference, e.g. stack-overflow.
+    // The jackson.* config does not reach this mapper, so the wire-format features are pinned to the Jackson 2 behaviour.
+    private final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+            .findAndAddModules()
+            .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+            .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .build();
 
     @Override
-    public void serialize(T objectToSerialize, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    public void serialize(T objectToSerialize, JsonGenerator jsonGenerator, SerializationContext serializerProvider) {
         Optional<String> optionalFieldsParameter = ServerRequestContext
                 .currentRequest()
                 .map(HttpRequest::getParameters)
@@ -48,7 +49,7 @@ public class FieldCleaningSerializer<T> extends JsonSerializer<T> {
                 fieldsToInclude.addAll(Arrays.asList(optionalFieldsParameter.get().split(FIELD_PARAMETER_SEPERATOR)));
                 fieldsToInclude.addAll(MANDATORY_FIELDS);
 
-                Iterator<String> fieldNameIterator = jsonNode.fieldNames();
+                Iterator<String> fieldNameIterator = jsonNode.propertyNames().iterator();
 
                 List<String> fieldsToRemove = new ArrayList<>();
 
@@ -60,7 +61,7 @@ public class FieldCleaningSerializer<T> extends JsonSerializer<T> {
                 }
                 fieldsToRemove.forEach(objectNode::remove);
             }
-            jsonGenerator.writeObject(objectNode);
+            jsonGenerator.writePOJO(objectNode);
         } else {
             throw new JsonException("Was not able to read the json node.");
         }

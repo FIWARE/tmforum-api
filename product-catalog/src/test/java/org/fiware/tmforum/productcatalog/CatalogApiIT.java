@@ -1,7 +1,7 @@
 package org.fiware.tmforum.productcatalog;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -21,6 +21,7 @@ import org.fiware.productcatalog.model.RelatedPartyVO;
 import org.fiware.productcatalog.model.RelatedPartyVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -47,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 
 	public final CatalogApiTestClient catalogApiTestClient;
@@ -333,7 +334,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 						String.format("All created catalogs should be returned - Missing: %s.", expectedCatalog,
 								retrievedCatalogs)));
 		expectedCatalogs.stream().forEach(
-				expectedCatalog -> assertEquals(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
+				expectedCatalog -> assertEqualsIgnoringEmptyLists(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
 						"The correct catalogs should be retrieved."));
 
 		// get with pagination
@@ -354,7 +355,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 				.forEach(expectedCatalog -> assertTrue(retrievedMap.containsKey(expectedCatalog.getId()),
 						String.format("All created catalogs should be returned - Missing: %s.", expectedCatalog)));
 		expectedCatalogs.stream().forEach(
-				expectedCatalog -> assertEquals(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
+				expectedCatalog -> assertEqualsIgnoringEmptyLists(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
 						"The correct catalogs should be retrieved."));
 	}
 

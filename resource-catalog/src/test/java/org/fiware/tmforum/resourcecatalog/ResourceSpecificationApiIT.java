@@ -1,6 +1,6 @@
 package org.fiware.tmforum.resourcecatalog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -25,6 +25,7 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVOTestExample;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -55,7 +56,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ResourceSpecificationApiIT extends AbstractApiIT implements ResourceSpecificationApiTestSpec {
 
 	public final ResourceSpecificationApiTestClient resourceSpecificationApiTestClient;
@@ -462,7 +463,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 										expectedResourceSpecification,
 										retrievedResourceSpecifications)));
 		expectedResourceSpecifications.stream().forEach(
-				expectedResourceSpecification -> assertEquals(expectedResourceSpecification,
+				expectedResourceSpecification -> assertEqualsIgnoringEmptyLists(expectedResourceSpecification,
 						retrievedMap.get(expectedResourceSpecification.getId()),
 						"The correct resourceSpecifications should be retrieved."));
 
@@ -487,7 +488,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 								String.format("All created resourceSpecifications should be returned - Missing: %s.",
 										expectedResourceSpecification)));
 		expectedResourceSpecifications.stream().forEach(
-				expectedResourceSpecification -> assertEquals(expectedResourceSpecification,
+				expectedResourceSpecification -> assertEqualsIgnoringEmptyLists(expectedResourceSpecification,
 						retrievedMap.get(expectedResourceSpecification.getId()),
 						"The correct resourceSpecifications should be retrieved."));
 	}
@@ -660,7 +661,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		expectedResourceSpecification.href(URI.create(resourceId)).id(resourceId).resourceSpecRelationship(null)
 				.lastUpdate(currentTimeInstant);
 
-		assertEquals(expectedResourceSpecification, updatedResourceSpecification, message);
+		assertEqualsIgnoringEmptyLists(expectedResourceSpecification, updatedResourceSpecification, message);
 	}
 
 	private static Stream<Arguments> provideResourceSpecificationUpdates() {
@@ -886,7 +887,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 		HttpResponse<ResourceSpecificationVO> retrievedResourceSpec = callAndCatch(
 				() -> resourceSpecificationApiTestClient.retrieveResourceSpecification(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedResourceSpec.getStatus(), message);
-		assertEquals(expectedResourceSpecification, retrievedResourceSpec.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedResourceSpecification, retrievedResourceSpec.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

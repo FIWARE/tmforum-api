@@ -1,6 +1,7 @@
 package org.fiware.tmforum.product;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ProductSpecificationCharacteristicTest {
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper = new JsonMapper();
 
 	@Test
 	public void deserializesTheNewKey() throws Exception {

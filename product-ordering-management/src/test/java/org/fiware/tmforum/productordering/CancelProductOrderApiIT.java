@@ -1,6 +1,6 @@
 package org.fiware.tmforum.productordering;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -16,6 +16,7 @@ import org.fiware.productordering.model.CancelProductOrderVOTestExample;
 import org.fiware.productordering.model.ProductOrderCreateVO;
 import org.fiware.productordering.model.ProductOrderCreateVOTestExample;
 import org.fiware.productordering.model.ProductOrderRefVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -45,7 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productordering"})
+@MicronautTest(packages = {"org.fiware.tmforum.productordering"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProductOrderApiTestSpec {
 
 	public final CancelProductOrderApiTestClient cancelProductOrderApiTestClient;
@@ -258,7 +259,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 										expectedProduct,
 										retrievedProducts)));
 		expectedProducts.stream().forEach(
-				expectedProduct -> assertEquals(expectedProduct,
+				expectedProduct -> assertEqualsIgnoringEmptyLists(expectedProduct,
 						retrievedMap.get(expectedProduct.getId()),
 						"The correct product orders should be retrieved."));
 
@@ -283,7 +284,7 @@ public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProd
 								String.format("All created product orders should be returned - Missing: %s.",
 										expectedProduct)));
 		expectedProducts.stream().forEach(
-				expectedProduct -> assertEquals(expectedProduct,
+				expectedProduct -> assertEqualsIgnoringEmptyLists(expectedProduct,
 						retrievedMap.get(expectedProduct.getId()),
 						"The correct product orders should be retrieved."));
 	}

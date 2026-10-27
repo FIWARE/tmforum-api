@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.NgsiLdWriteOperation;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -21,6 +22,9 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -103,6 +108,39 @@ class NgsiLdBaseRepositoryUpdateTest {
 		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
 
 		assertFalse(writtenFragment().getAdditionalProperties().containsKey("category"));
+	}
+
+	@ParameterizedTest(name = "An emptied {0} has to delete the stored instances.")
+	@MethodSource("emptiedLists")
+	public void anEmptiedListDeletesTheAttribute(String description, AdditionalPropertyVO emptiedList) {
+		// UPDATE mode marks a list emptied by the update with a single NGSI-LD Null, not with an empty array
+		mockStored(Map.of("category", List.of(storedRelationship("c1"), storedRelationship("c2"))));
+		mockUpdate("category", emptiedList);
+
+		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
+
+		assertEquals(Set.of("delete c1", "delete c2"), writtenInstances("category"));
+	}
+
+	@ParameterizedTest(name = "An emptied {0} of an attribute that is not stored must not be sent.")
+	@MethodSource("emptiedLists")
+	public void anEmptiedListOfAnAttributeThatIsNotStoredIsNotSent(String description,
+			AdditionalPropertyVO emptiedList) {
+		// the marker would delete an attribute the entity does not have, which the broker answers with a 207
+		mockStored(Map.of());
+		mockUpdate("category", emptiedList);
+
+		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
+
+		assertFalse(writtenFragment().getAdditionalProperties().containsKey("category"));
+	}
+
+	private static Stream<Arguments> emptiedLists() {
+		PropertyListVO properties = new PropertyListVO();
+		properties.add(new PropertyVO().value(NGSI_LD_NULL));
+		RelationshipListVO relationships = new RelationshipListVO();
+		relationships.add(new RelationshipVO()._object(URI.create(NGSI_LD_NULL)));
+		return Stream.of(Arguments.of("property list", properties), Arguments.of("relationship list", relationships));
 	}
 
 	@Test
@@ -265,7 +303,7 @@ class NgsiLdBaseRepositoryUpdateTest {
 		update.setId(URI.create(ENTITY_ID));
 		update.setType("product-offering");
 		attributes.forEach(update::setAdditionalProperties);
-		when(javaObjectMapper.toEntityVO(any())).thenReturn(update);
+		when(javaObjectMapper.toEntityVO(any(), eq(NgsiLdWriteOperation.UPDATE))).thenReturn(update);
 	}
 
 	private static Map<String, Object> storedRelationship(String category) {

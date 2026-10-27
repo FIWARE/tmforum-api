@@ -23,20 +23,9 @@
             <version>4.7.7</version>
             <scope>compile</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <scope>compile</scope>
-        </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -80,12 +69,6 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>org.fiware.tmforum</groupId>
-                                    <artifactId>legacy-loader</artifactId>
-                                    <version>${project.version}</version>
-                                    <outputDirectory>${project.build.directory}/</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.fiware.tmforum</groupId>
                                     <artifactId>update-writer</artifactId>
                                     <version>${project.version}</version>
                                     <outputDirectory>${project.build.directory}/</outputDirectory>
@@ -116,6 +99,10 @@
                             <build>
                                 <dockerFile>${project.basedir}/Dockerfile</dockerFile>
                                 <contextDir>${project.basedir}/</contextDir>
+                                <args>
+                                    <LEGACY_LOADER_REPO>${legacy.loader.repo}</LEGACY_LOADER_REPO>
+                                    <LEGACY_LOADER_REF>${legacy.loader.ref}</LEGACY_LOADER_REF>
+                                </args>
                             </build>
                         </image>
                     </images>

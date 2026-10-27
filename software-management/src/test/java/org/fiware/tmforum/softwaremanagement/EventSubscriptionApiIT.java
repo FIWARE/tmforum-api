@@ -1,7 +1,7 @@
 package org.fiware.tmforum.softwaremanagement;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -13,11 +13,11 @@ import org.fiware.softwaremanagement.model.EventSubscriptionInputVO;
 import org.fiware.softwaremanagement.model.EventSubscriptionInputVOTestExample;
 import org.fiware.softwaremanagement.model.EventSubscriptionVO;
 import org.fiware.softwaremanagement.model.EventSubscriptionVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,11 +35,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Integration tests for the EventSubscription API in the Software Management module (TMF730).
  */
-@MicronautTest(packages = {"org.fiware.tmforum.softwaremanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.softwaremanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 /*
  * the test currently fails for scorpio -  {@link https://github.com/ScorpioBroker/ScorpioBroker/issues/456}
  */
 @Requires(notEnv = "scorpio")
+// without, the test client will try to create an empty q subscription
+@Property(name = "jackson.serialization-inclusion", value = "non_empty")
 public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubscriptionApiTestSpec {
 
 	private static final String ANY_CALLBACK = "https://test.com";
@@ -62,15 +64,6 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 			GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.eventsSubscriptionApiTestClient = eventsSubscriptionApiTestClient;
-	}
-
-	/**
-	 * Fix the object mapper before each test to avoid empty query subscription issues.
-	 */
-	@BeforeEach
-	public void fixObjectMapper() {
-		// without, the test client will try to create an empty q subscription
-		this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 	}
 
 	@Override

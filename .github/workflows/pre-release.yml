@@ -65,7 +65,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: '25'
           java-package: jdk
 
       - name: Log into quay.io

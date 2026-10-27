@@ -1,7 +1,6 @@
 package org.fiware.tmforum.common.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpRequest;
@@ -16,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import tools.jackson.core.JacksonException;
 
 import java.util.List;
 
@@ -83,7 +83,7 @@ public class BrokerRequestLoggingFilter implements HttpClientFilter {
 	private String toWireJson(Object value) {
 		try {
 			return objectMapper.writeValueAsString(value);
-		} catch (JsonProcessingException e) {
+		} catch (JacksonException e) {
 			return String.valueOf(value);
 		}
 	}

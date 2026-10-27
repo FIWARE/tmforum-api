@@ -10,7 +10,7 @@
     <parent>
         <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>4.10.18</version>
+        <version>5.2.3</version>
     </parent>
 
     <developers>
@@ -61,9 +61,11 @@
     </modules>
 
     <properties>
-        <jdk.version>21</jdk.version>
-        <release.version>21</release.version>
-        <micronaut.version>4.10.18</micronaut.version>
+        <jdk.version>25</jdk.version>
+        <release.version>25</release.version>
+        <micronaut.version>5.2.3</micronaut.version>
+        <!-- jib base image for all service images -->
+        <image.base.java-runtime>registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24-3</image.base.java-runtime>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- project info -->
@@ -91,21 +93,16 @@
         <version.org.projectlombok>1.18.42</version.org.projectlombok>
         <version.com.google.guava>31.1-jre</version.com.google.guava>
 
-        <!-- logging -->
-        <version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>5.13.2
-        </version.io.micronaut.configuration.micronaut-micrometer-registry-prometheus>
-
         <!-- code gen -->
         <version.org.openapitools.generator-maven-plugin>7.20.0</version.org.openapitools.generator-maven-plugin>
-        <version.io.kokuwa.micronaut.codegen>4.5.0</version.io.kokuwa.micronaut.codegen>
+        <version.io.kokuwa.micronaut.codegen>4.5.1</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.29</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.31</version.io.github.wistefan.ngsi-ld-mapping-java>
 
 
 
         <!-- rx -->
-        <version.io.reactivex.rxjava2.rxjava>2.2.21</version.io.reactivex.rxjava2.rxjava>
         <version.io.github.resilience4j.resilience4j-retry>2.0.0</version.io.github.resilience4j.resilience4j-retry>
         <version.io.github.resilience4j.resilience4j-reactor>2.0.0</version.io.github.resilience4j.resilience4j-reactor>
 
@@ -118,9 +115,9 @@
         <version.org.mockito.mockito-core>5.22.0</version.org.mockito.mockito-core>
         <version.org.mockito.mockito-junit-jupiter>5.22.0</version.org.mockito.mockito-junit-jupiter>
         <version.org.awaitility>4.0.3</version.org.awaitility>
-        <version.org.jacoco.maven-plugin>0.8.12</version.org.jacoco.maven-plugin>
+        <version.org.jacoco.maven-plugin>0.8.14</version.org.jacoco.maven-plugin>
         <version.org.eluder.coveralls.maven-plugin>4.3.0</version.org.eluder.coveralls.maven-plugin>
-        <version.com.github.spotbugs.maven-plugin>4.5.2.0</version.com.github.spotbugs.maven-plugin>
+        <version.com.github.spotbugs.maven-plugin>4.9.8.5</version.com.github.spotbugs.maven-plugin>
         <version.org.apache.maven.plugins.maven-site-plugin>3.9.1</version.org.apache.maven.plugins.maven-site-plugin>
         <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0
         </version.org.apache.maven.plugins.maven-javadoc-plugin>
@@ -183,6 +180,13 @@
                 <groupId>io.github.wistefan</groupId>
                 <artifactId>ngsi-ld-java-mapping</artifactId>
                 <version>${version.io.github.wistefan.ngsi-ld-mapping-java}</version>
+                <exclusions>
+                    <!-- stale compile dependency of the library, unused by its code; Micronaut 5 dropped RxJava 2 -->
+                    <exclusion>
+                        <groupId>io.reactivex.rxjava2</groupId>
+                        <artifactId>rxjava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.networknt</groupId>
@@ -749,7 +753,7 @@
                         <plugin>
                             <groupId>com.google.cloud.tools</groupId>
                             <artifactId>jib-maven-plugin</artifactId>
-                            <version>3.5.1</version>
+                            <version>${jib-maven-plugin.version}</version>
                             <executions>
                                 <execution>
                                     <phase>package</phase>
@@ -758,7 +762,7 @@
                                     </goals>
                                     <configuration>
                                         <from>
-                                            <image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24-2</image>
+                                            <image>${image.base.java-runtime}</image>
                                         </from>
                                         <to>
                                             <image>api</image>
@@ -870,7 +874,7 @@
                             <!-- disables the micronaut plugin extension, that breaks the exectuion individual config -->
                             <configuration combine.self="override">
                                 <from>
-                                    <image>registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24-2</image>
+                                    <image>${image.base.java-runtime}</image>
                                     <platforms>
                                         <platform>
                                             <architecture>amd64</architecture>

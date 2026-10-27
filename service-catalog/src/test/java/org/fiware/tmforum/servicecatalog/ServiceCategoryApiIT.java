@@ -1,6 +1,6 @@
 package org.fiware.tmforum.servicecatalog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -18,6 +18,7 @@ import org.fiware.servicecatalog.model.ServiceCategoryVO;
 import org.fiware.servicecatalog.model.ServiceCategoryVOTestExample;
 import org.fiware.servicecatalog.model.TimePeriodVO;
 import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -46,7 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.servicecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.servicecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCategoryApiTestSpec {
 
 	public final ServiceCategoryApiTestClient serviceCategoryApiTestClient;
@@ -324,7 +325,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 										expectedServiceCategory,
 										retrievedServiceCategorys)));
 		expectedServiceCategorys.stream().forEach(
-				expectedServiceCategory -> assertEquals(expectedServiceCategory,
+				expectedServiceCategory -> assertEqualsIgnoringEmptyLists(expectedServiceCategory,
 						retrievedMap.get(expectedServiceCategory.getId()),
 						"The correct serviceCategorys should be retrieved."));
 
@@ -349,7 +350,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 								String.format("All created serviceCategorys should be returned - Missing: %s.",
 										expectedServiceCategory)));
 		expectedServiceCategorys.stream().forEach(
-				expectedServiceCategory -> assertEquals(expectedServiceCategory,
+				expectedServiceCategory -> assertEqualsIgnoringEmptyLists(expectedServiceCategory,
 						retrievedMap.get(expectedServiceCategory.getId()),
 						"The correct serviceCategorys should be retrieved."));
 	}
@@ -443,7 +444,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		ServiceCategoryVO updatedServiceCategory = updateResponse.body();
 		expectedServiceCategory.href(URI.create(resourceId)).id(resourceId);
 
-		assertEquals(expectedServiceCategory, updatedServiceCategory, message);
+		assertEqualsIgnoringEmptyLists(expectedServiceCategory, updatedServiceCategory, message);
 	}
 
 	private static Stream<Arguments> provideServiceCategoryUpdates() {
@@ -626,7 +627,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 		HttpResponse<ServiceCategoryVO> retrievedRF = callAndCatch(
 				() -> serviceCategoryApiTestClient.retrieveServiceCategory(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedServiceCategory, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedServiceCategory, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

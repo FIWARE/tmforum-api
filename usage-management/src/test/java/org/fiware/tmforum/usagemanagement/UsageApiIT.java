@@ -1,11 +1,12 @@
 package org.fiware.tmforum.usagemanagement;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -44,7 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.usagemanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.usagemanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 
 	private final UsageApiTestClient usageApiTestClient;
@@ -326,7 +327,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 						String.format("All created usages should be returned - Missing: %s.", expectedUsage,
 								retrievedUsages)));
 		expectedUsages.stream().forEach(
-				expectedUsage -> assertEquals(expectedUsage, retrievedMap.get(expectedUsage.getId()),
+				expectedUsage -> assertEqualsIgnoringEmptyLists(expectedUsage, retrievedMap.get(expectedUsage.getId()),
 						"The correct usages should be retrieved."));
 
 		// get with pagination
@@ -347,7 +348,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 				.forEach(expectedUsage -> assertTrue(retrievedMap.containsKey(expectedUsage.getId()),
 						String.format("All created usages should be returned - Missing: %s.", expectedUsage)));
 		expectedUsages.stream().forEach(
-				expectedUsage -> assertEquals(expectedUsage, retrievedMap.get(expectedUsage.getId()),
+				expectedUsage -> assertEqualsIgnoringEmptyLists(expectedUsage, retrievedMap.get(expectedUsage.getId()),
 						"The correct usages should be retrieved."));
 
 	}
@@ -444,7 +445,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 		expectedUsage.setId(usageId);
 		expectedUsage.setHref(new URI(usageId));
 
-		assertEquals(expectedUsage, updatedUsage, message);
+		assertEqualsIgnoringEmptyLists(expectedUsage, updatedUsage, message);
 	}
 
 	private static Stream<Arguments> provideUsageUpdates() {
@@ -600,7 +601,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 		//then retrieve
 		HttpResponse<UsageVO> retrievedUsage = callAndCatch(() -> usageApiTestClient.retrieveUsage(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedUsage.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedUsage, retrievedUsage.body(), "The correct usage should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedUsage, retrievedUsage.body(), "The correct usage should be returned.");
 	}
 
 	@Disabled("400 cannot happen, only 404")

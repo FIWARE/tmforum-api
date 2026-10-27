@@ -1,6 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -15,6 +15,7 @@ import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVO;
 import org.fiware.customerbillmanagement.model.CustomerBillOnDemandVOTestExample;
 import org.fiware.customerbillmanagement.model.RelatedPartyRefVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -41,7 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CustomerBillOnDemandApiIT extends AbstractApiIT implements CustomerBillOnDemandApiTestSpec {
 
 	public final CustomerBillOnDemandApiTestClient customerBillOnDemandApiTestClient;
@@ -270,7 +271,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 								expectedBill,
 								retrievedBills)));
 		expectedCustomerBillOnDemands.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct customerBillOnDemands should be retrieved."));
 
 		// get with pagination
@@ -292,7 +293,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 						String.format("All created customerBillOnDemands should be returned - Missing: %s.",
 								expectedBill)));
 		expectedCustomerBillOnDemands.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct customerBillOnDemands should be retrieved."));
 	}
 

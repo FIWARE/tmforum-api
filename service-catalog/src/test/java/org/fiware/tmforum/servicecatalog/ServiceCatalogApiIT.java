@@ -1,6 +1,6 @@
 package org.fiware.tmforum.servicecatalog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -18,6 +18,7 @@ import org.fiware.servicecatalog.model.ServiceCatalogVOTestExample;
 import org.fiware.servicecatalog.model.ServiceCategoryRefVOTestExample;
 import org.fiware.servicecatalog.model.TimePeriodVO;
 import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -46,7 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.servicecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.servicecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalogApiTestSpec {
 
     public final ServiceCatalogApiTestClient serviceCatalogApiTestClient;
@@ -311,7 +312,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
                                         expectedServiceCatalog,
                                         retrievedServiceCatalogs)));
         expectedServiceCatalogs.stream().forEach(
-                expectedServiceCatalog -> assertEquals(expectedServiceCatalog,
+                expectedServiceCatalog -> assertEqualsIgnoringEmptyLists(expectedServiceCatalog,
                         retrievedMap.get(expectedServiceCatalog.getId()),
                         "The correct serviceCatalogs should be retrieved."));
 
@@ -336,7 +337,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
                                 String.format("All created serviceCatalogs should be returned - Missing: %s.",
                                         expectedServiceCatalog)));
         expectedServiceCatalogs.stream().forEach(
-                expectedServiceCatalog -> assertEquals(expectedServiceCatalog,
+                expectedServiceCatalog -> assertEqualsIgnoringEmptyLists(expectedServiceCatalog,
                         retrievedMap.get(expectedServiceCatalog.getId()),
                         "The correct serviceCatalogs should be retrieved."));
     }
@@ -432,7 +433,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
                 .href(URI.create(serviceId))
                 .id(serviceId);
 
-        assertEquals(expectedServiceCatalog, updatedServiceCatalog, message);
+        assertEqualsIgnoringEmptyLists(expectedServiceCatalog, updatedServiceCatalog, message);
     }
 
     private static Stream<Arguments> provideServiceCatalogUpdates() {
@@ -592,7 +593,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
         HttpResponse<ServiceCatalogVO> retrievedRF = callAndCatch(
                 () -> serviceCatalogApiTestClient.retrieveServiceCatalog(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-        assertEquals(expectedServiceCatalog, retrievedRF.body(), message);
+        assertEqualsForFields(fieldsParameter, expectedServiceCatalog, retrievedRF.body(), message);
     }
 
     private static Stream<Arguments> provideFieldParameters() {

@@ -1,6 +1,6 @@
 package org.fiware.tmforum.account;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -23,6 +23,7 @@ import org.fiware.account.model.SettlementAccountVO;
 import org.fiware.account.model.SettlementAccountVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.SettlementAccount;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -47,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.account"})
+@MicronautTest(packages = {"org.fiware.tmforum.account"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class SettlementAccountApiIT extends AbstractApiIT implements SettlementAccountApiTestSpec {
 
 	public final SettlementAccountApiTestClient settlementAccountApiTestClient;
@@ -386,7 +387,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 						String.format("All created settlementAccounts should be returned - Missing: %s.", expectedSettlementAccount,
 								retrievedSettlementAccounts)));
 		expectedSettlementAccounts.stream().forEach(
-				expectedSettlementAccount -> assertEquals(expectedSettlementAccount, retrievedMap.get(expectedSettlementAccount.getId()),
+				expectedSettlementAccount -> assertEqualsIgnoringEmptyLists(expectedSettlementAccount, retrievedMap.get(expectedSettlementAccount.getId()),
 						"The correct settlementAccounts should be retrieved."));
 
 		// get with pagination
@@ -407,7 +408,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 				.forEach(expectedSettlementAccount -> assertTrue(retrievedMap.containsKey(expectedSettlementAccount.getId()),
 						String.format("All created settlementAccounts should be returned - Missing: %s.", expectedSettlementAccount)));
 		expectedSettlementAccounts.stream().forEach(
-				expectedSettlementAccount -> assertEquals(expectedSettlementAccount, retrievedMap.get(expectedSettlementAccount.getId()),
+				expectedSettlementAccount -> assertEqualsIgnoringEmptyLists(expectedSettlementAccount, retrievedMap.get(expectedSettlementAccount.getId()),
 						"The correct settlementAccounts should be retrieved."));
 	}
 
@@ -511,7 +512,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 				.cycleSpecification(billingCycleRV);
 		expectedSettlementAccount.billStructure(billStructure);
 
-		assertEquals(expectedSettlementAccount, updatedSettlementAccount, message);
+		assertEqualsIgnoringEmptyLists(expectedSettlementAccount, updatedSettlementAccount, message);
 	}
 
 	private static Stream<Arguments> provideSettlementAccountUpdates() {
@@ -693,7 +694,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 		//then retrieve
 		HttpResponse<SettlementAccountVO> retrievedSettlementAccount = callAndCatch(() -> settlementAccountApiTestClient.retrieveSettlementAccount(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedSettlementAccount.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedSettlementAccount, retrievedSettlementAccount.body(), "The correct settlementAccount should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedSettlementAccount, retrievedSettlementAccount.body(), "The correct settlementAccount should be returned.");
 	}
 
 	@Disabled

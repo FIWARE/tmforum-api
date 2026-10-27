@@ -11,6 +11,7 @@ import org.fiware.document.model.DocumentSpecificationCreateVO;
 import org.fiware.document.model.DocumentSpecificationUpdateVO;
 import org.fiware.document.model.DocumentSpecificationVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -26,7 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.documentmanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.documentmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 @Property(name = "s3.enabled", value = "false")
 public class DocumentSpecificationNoS3IT extends AbstractApiIT {
 
@@ -36,7 +37,7 @@ public class DocumentSpecificationNoS3IT extends AbstractApiIT {
             DocumentSpecificationApiTestClient testClient,
             EntitiesApiClient entitiesApiClient,
             GeneralProperties generalProperties,
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+            tools.jackson.databind.ObjectMapper objectMapper) {
         super(entitiesApiClient, objectMapper, generalProperties);
         this.testClient = testClient;
     }

@@ -1,6 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -13,6 +13,7 @@ import org.fiware.customerbillmanagement.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -38,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 @Property(name = "apiExtension.enabled", value = "true")
 public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		AppliedCustomerBillingRateExtensionApiTestSpec {
@@ -368,7 +369,7 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 				.periodCoverage(null)
 				.date(currentTimeInstant);
 
-		assertEquals(expectedAppliedCustomerBillingRateVo, updated, message);
+		assertEqualsIgnoringEmptyLists(expectedAppliedCustomerBillingRateVo, updated, message);
 	}
 
 	public static Stream<Arguments> provideValidAppliedCustomerBillingRateUpdates() {

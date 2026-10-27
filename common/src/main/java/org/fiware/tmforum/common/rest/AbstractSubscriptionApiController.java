@@ -1,6 +1,5 @@
 package org.fiware.tmforum.common.rest;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.core.annotation.NonNull;
@@ -33,6 +32,7 @@ import org.fiware.tmforum.common.repository.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import reactor.core.publisher.Mono;
+import tools.jackson.core.JacksonException;
 
 import java.net.URI;
 import java.util.List;
@@ -187,7 +187,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 			return this.repository.retrieveSubscriptionById(notificationVO.getSubscriptionId())
 					.flatMap(subscriptionVO -> ngsiLdEventHandler.handle(notificationVO, subscriptionVO))
 					.then(Mono.just(HttpResponse.noContent()));
-		} catch (JsonProcessingException e) {
+		} catch (JacksonException e) {
 			throw new RuntimeException(e);
 		}
 	}

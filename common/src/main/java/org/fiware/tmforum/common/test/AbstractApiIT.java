@@ -1,19 +1,23 @@
 package org.fiware.tmforum.common.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.wistefan.mapping.AdditionalPropertyMixin;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Common super class for the api tests
@@ -40,9 +44,6 @@ public abstract class AbstractApiIT {
 
     @BeforeEach
     public void cleanUp() {
-        this.objectMapper
-                .addMixIn(AdditionalPropertyVO.class, AdditionalPropertyMixin.class);
-        this.objectMapper.findAndRegisterModules();
         EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
                 null,
                 null,
@@ -76,6 +77,44 @@ public abstract class AbstractApiIT {
         } catch (HttpClientResponseException e) {
             return (HttpResponse<T>) e.getResponse();
         }
+    }
+
+    /**
+     * Asserts equality of the JSON representations, treating empty arrays and nulls as absent at any depth: CREATE
+     * omits empty lists (mapping 1.6.31), and a list emptied by an update reads back as [] on orion-ld (PATCH) but
+     * absent or null on scorpio (replace).
+     */
+    protected void assertEqualsIgnoringEmptyLists(Object expected, Object actual, String message) {
+        assertEquals(withoutEmptyValues(objectMapper.valueToTree(expected)),
+                withoutEmptyValues(objectMapper.valueToTree(actual)), message);
+    }
+
+    /**
+     * Strict for a {@code fields=} selection, which must not return a stray empty list for an unrequested field;
+     * without one it falls back to {@link #assertEqualsIgnoringEmptyLists}.
+     */
+    protected void assertEqualsForFields(String fields, Object expected, Object actual, String message) {
+        if (fields == null) {
+            assertEqualsIgnoringEmptyLists(expected, actual, message);
+        } else {
+            assertEquals(expected, actual, message);
+        }
+    }
+
+    private static JsonNode withoutEmptyValues(JsonNode node) {
+        if (node == null) {
+            return null;
+        }
+        if (node instanceof ObjectNode objectNode) {
+            List<String> emptyValues = objectNode.properties().stream()
+                    .filter(property -> property.getValue().isNull()
+                            || (property.getValue().isArray() && property.getValue().isEmpty()))
+                    .map(Map.Entry::getKey)
+                    .toList();
+            objectNode.remove(emptyValues);
+        }
+        node.forEach(AbstractApiIT::withoutEmptyValues);
+        return node;
     }
 
     protected String getLinkHeader(URL contextUrl) {

@@ -1,6 +1,6 @@
 package org.fiware.tmforum.serviceordering;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -9,6 +9,7 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.serviceordering.api.ServiceOrderApiTestClient;
 import org.fiware.serviceordering.api.ServiceOrderApiTestSpec;
 import org.fiware.serviceordering.model.*;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -37,7 +38,7 @@ import static org.mockito.Mockito.when;
 /**
  * Integration tests for the ServiceOrder API endpoints.
  */
-@MicronautTest(packages = { "org.fiware.tmforum.serviceordering" })
+@MicronautTest(packages = { "org.fiware.tmforum.serviceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ServiceOrderApiIT extends AbstractApiIT implements ServiceOrderApiTestSpec {
 
 	public final ServiceOrderApiTestClient serviceOrderApiTestClient;

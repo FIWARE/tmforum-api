@@ -1,6 +1,6 @@
 package org.fiware.tmforum.productcatalog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -9,6 +9,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -38,7 +39,7 @@ import static org.mockito.Mockito.when;
  * was silently ignored and answered with a 200 containing the default page, while an invalid filter
  * value produced a query the broker rejected, surfacing as a 500. Both have to be answered with a 400.
  */
-@MicronautTest(packages = { "org.fiware.tmforum.productcatalog" })
+@MicronautTest(packages = { "org.fiware.tmforum.productcatalog" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ListParameterValidationIT extends AbstractApiIT {
 
 	/** NGSI-LD entity type the productOfferings are stored as - used to clean up between the tests. */

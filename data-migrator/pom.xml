@@ -14,7 +14,6 @@
     </parent>
 
     <modules>
-        <module>legacy-loader</module>
         <module>update-writer</module>
         <module>migrator</module>
     </modules>
@@ -32,7 +31,11 @@
 
     <properties>
         <version.io.fabric8.docker-maven-plugin>0.48.1</version.io.fabric8.docker-maven-plugin>
-        <old.io.github.wistefan.ngsi-ld-mapping-java>1.2.11</old.io.github.wistefan.ngsi-ld-mapping-java>
+        <!-- legacy-loader needs Micronaut 3 to load the 1.2.11 mapping library and is built from the last Micronaut 3 release, see README.md.
+             This also pins the domain classes the migrator writes, see "Limitation: the migrated domain model is pinned
+             to the legacy-loader release" in README.md -->
+        <legacy.loader.repo>https://github.com/FIWARE/tmforum-api</legacy.loader.repo>
+        <legacy.loader.ref>1.18.3</legacy.loader.ref>
     </properties>
 
 </project>
