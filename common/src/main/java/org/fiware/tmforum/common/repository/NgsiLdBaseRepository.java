@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.NgsiLdWriteOperation;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.cache.annotation.CachePut;
@@ -18,8 +19,10 @@ import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
+import org.fiware.ngsi.model.PropertyListVO;
 import org.fiware.ngsi.model.PropertyTypeVO;
 import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.ngsi.model.SubscriptionVO;
 import org.fiware.ngsi.model.UpdateResultVO;
@@ -57,6 +60,14 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public abstract class NgsiLdBaseRepository {
 
+	/**
+	 * NGSI-LD Null (ETSI GS CIM 009 4.5.0), written by {@link NgsiLdWriteOperation#UPDATE} for an emptied list.
+	 * Mirrors the marker shape of {@code JavaObjectMapper.buildEntity} in ngsi-ld-java-mapping 1.6.31; recheck
+	 * {@link #isNgsiLdNull} when bumping the library.
+	 */
+	private static final String NGSI_LD_NULL = "urn:ngsi-ld:null";
+	private static final URI NGSI_LD_NULL_URI = URI.create(NGSI_LD_NULL);
+
 	protected final GeneralProperties generalProperties;
 	protected final EntitiesApiClient entitiesApi;
 	protected final SubscriptionsApiClient subscriptionsApi;
@@ -66,7 +77,6 @@ public abstract class NgsiLdBaseRepository {
 
 	private static final String DATASET_ID = "datasetId";
 	private static final String TYPE = "type";
-	private static final URI NGSI_LD_NULL = URI.create("urn:ngsi-ld:null");
 
 	/**
 	 * Only needed for updates, therefore injected and not part of the constructor the subclasses have to fulfill.
@@ -176,10 +186,12 @@ public abstract class NgsiLdBaseRepository {
 	 * @return an empty mono, or an error if the entity does not exist
 	 */
 	public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
-		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity);
+		// UPDATE marks a list emptied by the update with a single NGSI-LD Null instance; both branches below
+		// translate that marker, so it never reaches the broker.
+		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity, NgsiLdWriteOperation.UPDATE);
 		URI entityId = URI.create(id);
 		if (!generalProperties.isReplaceOnUpdate()) {
-			return patchEntity(entityId, ngsiMapper.map(updateEntityVO));
+			return patchEntity(entityId, ngsiMapper.map(withEmptiedListsAsEmptyArrays(updateEntityVO)));
 		}
 		return entityAttributesApi
 				// read from the broker, a cached entity may miss instances written in the meantime
@@ -195,6 +207,29 @@ public abstract class NgsiLdBaseRepository {
 				.flatMap(attributeUpdate -> updateAttributes(entityId, attributeUpdate))
 				// checked outside of updateAttributes, so that its cache invalidation also runs on a partial write
 				.flatMap(response -> failOnPartialUpdate(entityId, response));
+	}
+
+	// Orion-LD 1.9 rejects NGSI-LD Null in POST /attrs (207, attribute kept), but stores `[]` as an empty
+	// value that reads back as an empty list - the wire format used before NgsiLdWriteOperation existed.
+	private static EntityVO withEmptiedListsAsEmptyArrays(EntityVO update) {
+		Optional.ofNullable(update.getAdditionalProperties()).ifPresent(properties -> properties.replaceAll(
+				(name, value) -> {
+					if (!isNgsiLdNull(value)) {
+						return value;
+					}
+					return value instanceof PropertyListVO ? new PropertyListVO() : new RelationshipListVO();
+				}));
+		return update;
+	}
+
+	private static boolean isNgsiLdNull(AdditionalPropertyVO value) {
+		if (value instanceof PropertyListVO propertyList && propertyList.size() == 1) {
+			return NGSI_LD_NULL.equals(propertyList.get(0).getValue());
+		}
+		if (value instanceof RelationshipListVO relationshipList && relationshipList.size() == 1) {
+			return NGSI_LD_NULL_URI.equals(relationshipList.get(0).getObject());
+		}
+		return false;
 	}
 
 	/**
@@ -268,7 +303,9 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	private AdditionalPropertyVO replacingAttribute(AdditionalPropertyVO update, List<Map<?, ?>> stored) {
-		List<AdditionalPropertyVO> newInstances = attributeInstances(update);
+		// an emptied list carries the NGSI-LD Null marker instead of instances; it is not written as it is,
+		// the deletions derived from the stored instances below remove the attribute
+		List<AdditionalPropertyVO> newInstances = isNgsiLdNull(update) ? List.of() : attributeInstances(update);
 		Set<String> keptDatasetIds = newInstances.stream()
 				.map(NgsiLdBaseRepository::datasetId)
 				.map(datasetId -> datasetId == null ? null : datasetId.toString())
@@ -325,9 +362,9 @@ public abstract class NgsiLdBaseRepository {
 		URI datasetId = Optional.ofNullable(storedInstance.get(DATASET_ID)).map(Object::toString).map(URI::create)
 				.orElse(null);
 		if (PropertyTypeVO.RELATIONSHIP.getValue().equals(storedInstance.get(TYPE))) {
-			return new RelationshipVO()._object(NGSI_LD_NULL).datasetId(datasetId);
+			return new RelationshipVO()._object(NGSI_LD_NULL_URI).datasetId(datasetId);
 		}
-		return new PropertyVO().value(NGSI_LD_NULL.toString()).datasetId(datasetId);
+		return new PropertyVO().value(NGSI_LD_NULL).datasetId(datasetId);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 package org.fiware.tmforum.agreement;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -20,6 +20,7 @@ import org.fiware.agreement.model.TimePeriodVO;
 import org.fiware.agreement.model.TimePeriodVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.agreement.domain.Agreement;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -46,7 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.agreement"})
+@MicronautTest(packages = {"org.fiware.tmforum.agreement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpec {
 	private final AgreementApiTestClient agApiTestClient;
 	private String message;
@@ -398,7 +399,7 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
 		assertEquals(HttpStatus.OK, updateAgResponse.getStatus(), message);
 		AgreementVO updatedAgSpec = updateAgResponse.body();
 		expectedAg.id(id).href(id);
-		assertEquals(expectedAg, updatedAgSpec, message);
+		assertEqualsIgnoringEmptyLists(expectedAg, updatedAgSpec, message);
 	}
 
 	@ParameterizedTest
@@ -531,7 +532,7 @@ public class AgreementApiIT extends AbstractApiIT implements AgreementApiTestSpe
 		HttpResponse<AgreementVO> retrieveResponse = callAndCatch(
 				() -> agApiTestClient.retrieveAgreement(null, id, fields));
 		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message);
-		assertEquals(expectedAg, retrieveResponse.body(), message);
+		assertEqualsForFields(fields, expectedAg, retrieveResponse.body(), message);
 	}
 
 	@Disabled("400 cannot happen, only 404")

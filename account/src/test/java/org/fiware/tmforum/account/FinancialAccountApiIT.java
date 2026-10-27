@@ -1,6 +1,6 @@
 package org.fiware.tmforum.account;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -17,6 +17,7 @@ import org.fiware.account.model.RelatedPartyVO;
 import org.fiware.account.model.RelatedPartyVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.FinancialAccount;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -42,7 +43,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-@MicronautTest(packages = {"org.fiware.tmforum.account"})
+@MicronautTest(packages = {"org.fiware.tmforum.account"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAccountApiTestSpec {
 
 	public final FinancialAccountApiTestClient financialAccountApiTestClient;
@@ -292,7 +293,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 						String.format("All created financialAccounts should be returned - Missing: %s.", expectedFinancialAccount,
 								retrievedFinancialAccounts)));
 		expectedFinancialAccounts.stream().forEach(
-				expectedFinancialAccount -> assertEquals(expectedFinancialAccount, retrievedMap.get(expectedFinancialAccount.getId()),
+				expectedFinancialAccount -> assertEqualsIgnoringEmptyLists(expectedFinancialAccount, retrievedMap.get(expectedFinancialAccount.getId()),
 						"The correct financialAccounts should be retrieved."));
 
 		// get with pagination
@@ -313,7 +314,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 				.forEach(expectedFinancialAccount -> assertTrue(retrievedMap.containsKey(expectedFinancialAccount.getId()),
 						String.format("All created financialAccounts should be returned - Missing: %s.", expectedFinancialAccount)));
 		expectedFinancialAccounts.stream().forEach(
-				expectedFinancialAccount -> assertEquals(expectedFinancialAccount, retrievedMap.get(expectedFinancialAccount.getId()),
+				expectedFinancialAccount -> assertEqualsIgnoringEmptyLists(expectedFinancialAccount, retrievedMap.get(expectedFinancialAccount.getId()),
 						"The correct financialAccounts should be retrieved."));
 	}
 
@@ -406,7 +407,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 		expectedFinancialAccount.setHref(financialAccountId);
 		expectedFinancialAccount.setId(financialAccountId);
 
-		assertEquals(expectedFinancialAccount, updatedFinancialAccount, message);
+		assertEqualsIgnoringEmptyLists(expectedFinancialAccount, updatedFinancialAccount, message);
 	}
 
 	private static Stream<Arguments> provideFinancialAccountUpdates() {
@@ -554,7 +555,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 		//then retrieve
 		HttpResponse<FinancialAccountVO> retrievedFinancialAccount = callAndCatch(() -> financialAccountApiTestClient.retrieveFinancialAccount(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedFinancialAccount.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedFinancialAccount, retrievedFinancialAccount.body(), "The correct financialAccount should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedFinancialAccount, retrievedFinancialAccount.body(), "The correct financialAccount should be returned.");
 	}
 
 	@Disabled

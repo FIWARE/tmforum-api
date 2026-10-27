@@ -1,6 +1,6 @@
 package org.fiware.tmforum.quote;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -32,6 +32,7 @@ import org.fiware.quote.model.QuoteUpdateVOTestExample;
 import org.fiware.quote.model.QuoteVO;
 import org.fiware.quote.model.QuoteVOTestExample;
 import org.fiware.quote.model.RelatedPartyVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -62,7 +63,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.quote"})
+@MicronautTest(packages = {"org.fiware.tmforum.quote"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 
 	public final QuoteApiTestClient quoteApiTestClient;
@@ -852,7 +853,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 										expectedQuote,
 										retrievedQuotes)));
 		expectedQuotes.forEach(
-				expectedQuote -> assertEquals(expectedQuote,
+				expectedQuote -> assertEqualsIgnoringEmptyLists(expectedQuote,
 						retrievedMap.get(expectedQuote.getId()),
 						"The correct quote should be retrieved."));
 
@@ -877,7 +878,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								String.format("All created quote should be returned - Missing: %s.",
 										expectedQuote)));
 		expectedQuotes.forEach(
-				expectedQuote -> assertEquals(expectedQuote,
+				expectedQuote -> assertEqualsIgnoringEmptyLists(expectedQuote,
 						retrievedMap.get(expectedQuote.getId()),
 						"The correct quote should be retrieved."));
 	}
@@ -973,7 +974,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 		QuoteVO updatedQuote = updateResponse.body();
 		expectedQuote.href(quoteId).id(quoteId).quoteDate(now);
 
-		assertEquals(expectedQuote, updatedQuote, message);
+		assertEqualsIgnoringEmptyLists(expectedQuote, updatedQuote, message);
 	}
 
 	private static Stream<Arguments> provideQuoteUpdates() {
@@ -1548,7 +1549,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 		HttpResponse<QuoteVO> retrievedQuote = callAndCatch(
 				() -> quoteApiTestClient.retrieveQuote(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedQuote.getStatus(), message);
-		assertEquals(expectedQuote, retrievedQuote.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedQuote, retrievedQuote.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

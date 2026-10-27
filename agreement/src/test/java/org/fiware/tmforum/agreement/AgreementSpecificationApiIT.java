@@ -1,6 +1,6 @@
 package org.fiware.tmforum.agreement;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -21,6 +21,7 @@ import org.fiware.agreement.model.TimePeriodVO;
 import org.fiware.agreement.model.TimePeriodVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.agreement.domain.AgreementSpecification;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -47,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.agreement"})
+@MicronautTest(packages = {"org.fiware.tmforum.agreement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class AgreementSpecificationApiIT extends AbstractApiIT implements AgreementApiTestSpec {
 	private final AgreementSpecificationApiTestClient agSpecApiTestClient;
 	private String message;
@@ -430,7 +431,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 		assertEquals(HttpStatus.OK, updateAgSpecResponse.getStatus(), message);
 		AgreementSpecificationVO updatedAgSpec = updateAgSpecResponse.body();
 		expectedAgSpec.id(id).href(id);
-		assertEquals(expectedAgSpec, updatedAgSpec, message);
+		assertEqualsIgnoringEmptyLists(expectedAgSpec, updatedAgSpec, message);
 	}
 
 	@ParameterizedTest
@@ -555,7 +556,7 @@ public class AgreementSpecificationApiIT extends AbstractApiIT implements Agreem
 		HttpResponse<AgreementSpecificationVO> retrieveResponse = callAndCatch(
 				() -> agSpecApiTestClient.retrieveAgreementSpecification(null, id, fields));
 		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message);
-		assertEquals(expectedAgSpec, retrieveResponse.body(), message);
+		assertEqualsForFields(fields, expectedAgSpec, retrieveResponse.body(), message);
 	}
 
 	@Disabled("400 cannot happen, only 404")

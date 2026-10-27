@@ -1,6 +1,6 @@
 package org.fiware.tmforum.serviceordering;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -17,6 +17,7 @@ import org.fiware.serviceordering.model.ServiceOrderCreateVO;
 import org.fiware.serviceordering.model.ServiceOrderCreateVOTestExample;
 import org.fiware.serviceordering.model.ServiceOrderRefVO;
 import org.fiware.serviceordering.model.ServiceOrderVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.when;
 /**
  * Integration tests for the CancelServiceOrder API endpoints.
  */
-@MicronautTest(packages = { "org.fiware.tmforum.serviceordering" })
+@MicronautTest(packages = { "org.fiware.tmforum.serviceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CancelServiceOrderApiIT extends AbstractApiIT implements CancelServiceOrderApiTestSpec {
 
 	public final CancelServiceOrderApiTestClient cancelServiceOrderApiTestClient;

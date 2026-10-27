@@ -1,6 +1,6 @@
 package org.fiware.tmforum.resourceordering;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -17,6 +17,7 @@ import org.fiware.resourceordering.model.ResourceOrderCreateVO;
 import org.fiware.resourceordering.model.ResourceOrderCreateVOTestExample;
 import org.fiware.resourceordering.model.ResourceOrderRefVO;
 import org.fiware.resourceordering.model.ResourceOrderVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -38,7 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.resourceordering" })
+@MicronautTest(packages = { "org.fiware.tmforum.resourceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CancelResourceOrderApiIT extends AbstractApiIT implements CancelResourceOrderApiTestSpec {
 
 	public final CancelResourceOrderApiTestClient cancelResourceOrderApiTestClient;
