@@ -91,6 +91,9 @@ the environment, use ```mvn clean k3s:rm -Pdev```.
 
 ### Running conformance-tests
 
+> **Note:** the CTK downloads referenced by `module.ctk.url` currently return 404 for every module, so the profile
+> fails until TMForum publishes them again or the URLs are updated.
+
 TMForum does provide conformance-test tooling for the
 API-implementations: [Open API Conformance](https://projects.tmforum.org/wiki/display/API/Open+API+Conformance)
 The tests are integrated into the maven lifecycle with the "conformance-test" profile. To execute them, run "mvn clean

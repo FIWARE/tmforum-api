@@ -30,12 +30,19 @@ mounted `application.yaml`, environment variables or Helm values, change your ov
 
 | Before                                                 | After                                                    | Note                                                                                     |
 |--------------------------------------------------------|----------------------------------------------------------|------------------------------------------------------------------------------------------|
-| `micronaut.http.services.ngsi.read-timeout: 30`        | `micronaut.http.services.ngsi.read-timeout: 30s`         | A unit is now required (env: `MICRONAUT_HTTP_SERVICES_NGSI_READ_TIMEOUT=30s`).           |
+| `micronaut.http.services.ngsi.read-timeout: 30`        | `micronaut.http.services.ngsi.read-timeout: 30s`         | The old value disabled the timeout. Broker calls now time out after 30 s, see below.    |
 | `micronaut.http.services.read-timeout: 30s`            | removed                                                  | It was never bound. Set the timeout on the `ngsi` service.                              |
 | `jackson.serialization.writeDatesAsTimestamps: false`  | `jackson.date-time-features.write-dates-as-timestamps: false` | Jackson 3 moved the feature. Dates are still written as ISO-8601 strings.          |
 | -                                                      | `jackson.serialization-inclusion: non_null`              | Replaces code that set this before. Micronaut's `non_empty` default would drop empty lists. |
 | -                                                      | `jackson.mapper-features.sort-properties-alphabetically: false` | Keeps the Jackson 2 property order of the responses.                               |
 | -                                                      | `jackson.deserialization-features.fail-on-null-for-primitives: false` | Keeps the Jackson 2 behaviour: `null` for a primitive is its default, not a 400. |
+
+**Broker read timeout:** Micronaut 4 and 5 both reject a duration without a unit, such as `30`, and neither
+fails at startup. The value is silently dropped, and the `ngsi` client then runs without a read timeout instead of the
+10 s default. So far, broker requests had no time limit at all. With `30s`, a broker
+request now fails after 30 s without data (read timeout), or after 31 s in total (request timeout). If you override
+the value, give it a unit, e.g. `MICRONAUT_HTTP_SERVICES_NGSI_READ_TIMEOUT=30s` or `2m`. A unit-less override such
+as `=30` is still accepted without a warning and turns the timeout off again.
 
 The `micronaut.codec.json.additional-types`, `micronaut.caches.*`, `redis.*` (including
 `redis.caches.*.value-serializer`), metrics and `endpoints.*` keys are unchanged.
@@ -63,6 +70,10 @@ read without migration.
   1.2.11. The `migrator` image builds it from the frozen release tag `1.18.3` (property `legacy.loader.ref` in
   `data-migrator/pom.xml`). See [data-migrator/README.md](../data-migrator/README.md) for building it locally.
 * The `-ll` option of the migrator (path to the `legacy-loader` jar) is now required.
+* Building the `migrator` image (`mvn deploy -Poci`, or `docker build` of `data-migrator/migrator`) needs network
+  access to the tmforum-api Git repository, because the Dockerfile clones the `legacy.loader.ref` tag and builds it
+  with Maven on JDK 17. For mirrored or air-gapped builds, point it at a mirror with `-Dlegacy.loader.repo=<url>`
+  (Docker build arg `LEGACY_LOADER_REPO`). That Maven build also needs a reachable Maven repository.
 
 ## Migration
 
