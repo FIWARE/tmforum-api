@@ -28,6 +28,15 @@ The project also contains 3 non-module folders:
 - [conformance-test](conformance-test) - contains a dockerfile to be used for running the TMForum-Conformance Tests
   inside the K3S setup. Also contains a kubernetes manifest for running the api-implementations.
 
+## Building
+
+The project is built with [Micronaut 5](https://micronaut.io/) and needs JDK 25 (Jackson 3 is used for JSON). Build
+all modules with ```mvn clean install -DskipTests -DskipITs -Dk3s.skip=true```. ```-DskipITs``` does not stop the k3s
+cluster for the integration-tests from starting, ```-Dk3s.skip=true``` does. The ```oci``` profile builds the container
+images in the ```deploy``` phase and pushes them (amd64 and arm64) to ```${image.registry}/${image.repository}```:
+```mvn deploy -Poci -DskipTests -DskipITs -Dk3s.skip=true -Dimage.registry=<REGISTRY> -Dimage.tag=<TAG>```. The images ship
+their own Java 25 runtime.
+
 ## Testing
 
 The current implementation supports multiple layers of testing:
@@ -85,7 +94,8 @@ the environment, use ```mvn clean k3s:rm -Pdev```.
 TMForum does provide conformance-test tooling for the
 API-implementations: [Open API Conformance](https://projects.tmforum.org/wiki/display/API/Open+API+Conformance)
 The tests are integrated into the maven lifecycle with the "conformance-test" profile. To execute them, run "mvn clean
-install -Pconformance-test --projects common,mapping,<THE_MODULE> -DskipTests -DskipITs". The tests are mounted into a
+install -Pconformance-test --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,<THE_MODULE> -DskipTests -DskipITs".
+The tests are mounted into a
 docker container and executed using them, after the API-implementation and Orion-LD are started. Currently, they need to
 run individually for each API-Module, since the tests expect them under the same port on localhost. To integrate a new
 module into the tests:
