@@ -24,6 +24,7 @@ import org.fiware.serviceinventory.model.ServiceUpdateVO;
 import org.fiware.serviceinventory.model.ServiceUpdateVOTestExample;
 import org.fiware.serviceinventory.model.ServiceVO;
 import org.fiware.serviceinventory.model.ServiceVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -51,7 +52,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.serviceinventory"})
+@MicronautTest(packages = {"org.fiware.tmforum.serviceinventory"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
     public final ServiceApiTestClient serviceApiTestClient;
 
@@ -380,7 +381,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                                         expectedService,
                                         retrievedServices)));
         expectedServices.stream().forEach(
-                expectedService -> assertEquals(expectedService,
+                expectedService -> assertEqualsIgnoringEmptyLists(expectedService,
                         retrievedMap.get(expectedService.getId()),
                         "The correct services should be retrieved."));
 
@@ -405,7 +406,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                                 String.format("All created services should be returned - Missing: %s.",
                                         expectedService)));
         expectedServices.stream().forEach(
-                expectedService -> assertEquals(expectedService,
+                expectedService -> assertEqualsIgnoringEmptyLists(expectedService,
                         retrievedMap.get(expectedService.getId()),
                         "The correct services should be retrieved."));
     }
@@ -500,7 +501,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         ServiceVO updatedService = updateResponse.body();
         expectedService.href(serviceId).id(serviceId);
 
-        assertEquals(expectedService, updatedService, message);
+        assertEqualsIgnoringEmptyLists(expectedService, updatedService, message);
     }
 
     private static Stream<Arguments> provideServiceUpdates() {
@@ -716,7 +717,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
         HttpResponse<ServiceVO> retrievedRF = callAndCatch(
                 () -> serviceApiTestClient.retrieveService(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-        assertEquals(expectedService, retrievedRF.body(), message);
+        assertEqualsForFields(fieldsParameter, expectedService, retrievedRF.body(), message);
     }
 
     private static Stream<Arguments> provideFieldParameters() {

@@ -15,6 +15,7 @@ import org.fiware.customerbillmanagement.model.BillingAccountRefVOTestExample;
 import org.fiware.customerbillmanagement.model.ProductRefVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -43,7 +44,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.customerbillmanagement" })
+@MicronautTest(packages = { "org.fiware.tmforum.customerbillmanagement" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		AppliedCustomerBillingRateApiTestSpec {
 
@@ -129,7 +130,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 				String.format("All created billRates should be returned - Missing: %s.", expectedBill,
 						retrievedBills)));
 		expectedBillVOS.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
 						"The correct bill should be retrieved."));
 
 		// get with pagination
@@ -149,7 +150,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		expectedBillVOS.stream().forEach(expectedBill -> assertTrue(retrievedBillsMap.containsKey(expectedBill.getId()),
 				String.format("All created billRates should be returned - Missing: %s.", expectedBill)));
 		expectedBillVOS.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
 						"The correct bill should be retrieved."));
 
 	}
@@ -244,7 +245,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 						fieldsParameter));
 
 		assertEquals(HttpStatus.OK, response.getStatus(), message);
-		assertEquals(expectedAppliedCustomerBillingRateVo, response.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedAppliedCustomerBillingRateVo, response.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

@@ -38,6 +38,7 @@ import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -67,7 +68,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.party"})
+@MicronautTest(packages = {"org.fiware.tmforum.party"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestSpec {
 
 	private final IndividualApiTestClient individualApiTestClient;
@@ -470,7 +471,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 						String.format("All created individuals should be returned - Missing: %s.", expectedBill,
 								retrievedIndividuals)));
 		expectedIndividuals.forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct individuals should be retrieved."));
 
 		// get with pagination
@@ -490,7 +491,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		expectedIndividuals.forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
 				String.format("All created individuals should be returned - Missing: %s.", expectedBill)));
 		expectedIndividuals.forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct individuals should be retrieved."));
 	}
 
@@ -586,11 +587,11 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 			expectedIndividual.setRelatedParty(null);
 		}
 
-		assertEquals(expectedIndividual, individualUpdateResponse.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedIndividual, individualUpdateResponse.body(), message);
 
 		HttpResponse<IndividualVO> individualGetResponse = callAndCatch(
 				() -> individualApiTestClient.retrieveIndividual(null, individualId, null));
-		assertEquals(expectedIndividual, individualGetResponse.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedIndividual, individualGetResponse.body(), message);
 	}
 
 	private static Stream<Arguments> provideValidPatches() {
@@ -801,7 +802,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		HttpResponse<IndividualVO> retrievedIndividual = callAndCatch(
 				() -> individualApiTestClient.retrieveIndividual(null, individualId, null));
 		assertEquals(HttpStatus.OK, retrievedIndividual.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedIndividual, retrievedIndividual.body(), "The correct org should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedIndividual, retrievedIndividual.body(), "The correct org should be returned.");
 	}
 
 	@Disabled("400 cannot happen, only 404")

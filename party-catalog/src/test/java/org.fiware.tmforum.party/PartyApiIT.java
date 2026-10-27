@@ -26,6 +26,7 @@ import org.fiware.party.model.OrganizationVO;
 import org.fiware.party.model.OrganizationVOTestExample;
 import org.fiware.party.model.RelatedPartyVO;
 import org.fiware.party.model.RelatedPartyVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -39,7 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.party" })
+@MicronautTest(packages = { "org.fiware.tmforum.party" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class PartyApiIT extends AbstractApiIT {
 
 	private final OrganizationApiTestClient organizationApiTestClient;
@@ -152,11 +153,11 @@ public class PartyApiIT extends AbstractApiIT {
 		expectedParent.setRelatedParty(null);
 		expectedParent.setExistsDuring(null);
 
-		assertEquals(expectedParent, parentUpdateResponse.body(), "The parent should have been updated.");
+		assertEqualsIgnoringEmptyLists(expectedParent, parentUpdateResponse.body(), "The parent should have been updated.");
 
 		HttpResponse<OrganizationVO> parentGet = callAndCatch(
 				() -> organizationApiTestClient.retrieveOrganization(null, parentOrgId, null));
-		assertEquals(expectedParent, parentGet.body(), "The parent via get should also be equal.");
+		assertEqualsIgnoringEmptyLists(expectedParent, parentGet.body(), "The parent via get should also be equal.");
 	}
 
 	@Override

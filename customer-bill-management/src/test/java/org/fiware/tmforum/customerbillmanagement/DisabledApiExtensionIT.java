@@ -13,6 +13,7 @@ import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateUpdateV
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateUpdateVOTestExample;
 import org.fiware.customerbillmanagement.model.AppliedCustomerBillingRateVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.configuration.ApiExtensionProperties;
@@ -23,7 +24,7 @@ import java.time.Clock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class DisabledApiExtensionIT extends AbstractApiIT {
 
     private final AppliedCustomerBillingRateExtensionApiTestClient appliedCustomerBillingRateExtensionApiTestClient;

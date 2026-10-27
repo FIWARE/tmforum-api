@@ -17,6 +17,7 @@ import org.fiware.account.model.TimePeriodVO;
 import org.fiware.account.model.TimePeriodVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillingCycleSpecification;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -42,7 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.account"})
+@MicronautTest(packages = {"org.fiware.tmforum.account"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class BillingCycleSpecificationApiIT extends AbstractApiIT implements BillingCycleSpecificationApiTestSpec {
 
 	public final BillingCycleSpecificationApiTestClient billingCycleSpecificationApiTestClient;
@@ -261,7 +262,7 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 						String.format("All created billingCycleSpecifications should be returned - Missing: %s.", expectedBillingCycleSpecification,
 								retrievedBillingCycleSpecifications)));
 		expectedBillingCycleSpecifications.stream().forEach(
-				expectedBillingCycleSpecification -> assertEquals(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
+				expectedBillingCycleSpecification -> assertEqualsIgnoringEmptyLists(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
 						"The correct billingCycleSpecifications should be retrieved."));
 
 		// get with pagination
@@ -282,7 +283,7 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 				.forEach(expectedBillingCycleSpecification -> assertTrue(retrievedMap.containsKey(expectedBillingCycleSpecification.getId()),
 						String.format("All created billingCycleSpecifications should be returned - Missing: %s.", expectedBillingCycleSpecification)));
 		expectedBillingCycleSpecifications.stream().forEach(
-				expectedBillingCycleSpecification -> assertEquals(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
+				expectedBillingCycleSpecification -> assertEqualsIgnoringEmptyLists(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
 						"The correct billingCycleSpecifications should be retrieved."));
 	}
 

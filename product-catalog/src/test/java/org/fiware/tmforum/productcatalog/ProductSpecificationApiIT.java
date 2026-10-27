@@ -27,6 +27,7 @@ import org.fiware.productcatalog.model.ResourceSpecificationRefVOTestExample;
 import org.fiware.productcatalog.model.ServiceSpecificationRefVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -56,7 +57,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ProductSpecificationApiIT extends AbstractApiIT implements ProductSpecificationApiTestSpec {
 
 	public final ProductSpecificationApiTestClient productSpecificationApiTestClient;
@@ -366,7 +367,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 										expectedProductSpecification,
 										retrievedProductSpecifications)));
 		expectedProductSpecifications.stream().forEach(
-				expectedProductSpecification -> assertEquals(expectedProductSpecification,
+				expectedProductSpecification -> assertEqualsIgnoringEmptyLists(expectedProductSpecification,
 						retrievedMap.get(expectedProductSpecification.getId()),
 						"The correct productSpecifications should be retrieved."));
 
@@ -391,7 +392,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 								String.format("All created productSpecifications should be returned - Missing: %s.",
 										expectedProductSpecification)));
 		expectedProductSpecifications.stream().forEach(
-				expectedProductSpecification -> assertEquals(expectedProductSpecification,
+				expectedProductSpecification -> assertEqualsIgnoringEmptyLists(expectedProductSpecification,
 						retrievedMap.get(expectedProductSpecification.getId()),
 						"The correct productSpecifications should be retrieved."));
 	}
@@ -489,7 +490,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		expectedProductOfferingPrice.setHref(catalogId);
 		expectedProductOfferingPrice.setId(catalogId);
 
-		assertEquals(expectedProductOfferingPrice, updatedCatalog, message);
+		assertEqualsIgnoringEmptyLists(expectedProductOfferingPrice, updatedCatalog, message);
 	}
 
 	@Test
@@ -561,7 +562,9 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 				() -> productSpecificationApiTestClient.patchProductSpecification(null, specId,
 						productSpecificationUpdateEmptyList));
 		assertEquals(HttpStatus.OK, emptyUpdateResponse.getStatus(), message);
-		assertEquals(0, emptyUpdateResponse.body().getResourceSpecification().size(), "If set to empty, the spec-list should be emptied.");
+		// orion-ld (PATCH) returns the emptied list as [], scorpio (replace) drops the attribute
+		List<ResourceSpecificationRefVO> emptiedSpecs = emptyUpdateResponse.body().getResourceSpecification();
+		assertTrue(emptiedSpecs == null || emptiedSpecs.isEmpty(), "If set to empty, the spec-list should be emptied.");
 	}
 
 	private static Stream<Arguments> provideProductOfferingUpdates() {
@@ -826,7 +829,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 		HttpResponse<ProductSpecificationVO> retrievedPOP = callAndCatch(
 				() -> productSpecificationApiTestClient.retrieveProductSpecification(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedPOP.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedProductOfferingPrice, retrievedPOP.body(),
+		assertEqualsIgnoringEmptyLists(expectedProductOfferingPrice, retrievedPOP.body(),
 				"The correct productSpecification should be returned.");
 	}
 

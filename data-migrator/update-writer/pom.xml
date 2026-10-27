@@ -57,6 +57,13 @@
             <version>4.8.180</version>
         </dependency>
 
+        <!-- provides the JsonMapper the http client needs; the mapping library no longer brings it in -->
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-jackson-databind</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- the modules -->
         <dependency>
             <groupId>org.fiware.tmforum</groupId>

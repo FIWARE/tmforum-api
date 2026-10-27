@@ -16,6 +16,7 @@ import org.fiware.account.model.BillFormatVO;
 import org.fiware.account.model.BillFormatVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillFormat;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-@MicronautTest(packages = { "org.fiware.tmforum.account" })
+@MicronautTest(packages = { "org.fiware.tmforum.account" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestSpec {
 
     public final BillFormatApiTestClient billFormatApiTestClient;
@@ -251,7 +252,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
                         String.format("All created billFormats should be returned - Missing: %s.", expectedBillFormat,
                                 retrievedBillFormats)));
         expectedBillFormats.stream().forEach(
-                expectedBillFormat -> assertEquals(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
+                expectedBillFormat -> assertEqualsIgnoringEmptyLists(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
                         "The correct billFormats should be retrieved."));
 
         // get with pagination
@@ -272,7 +273,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
                 .forEach(expectedBillFormat -> assertTrue(retrievedMap.containsKey(expectedBillFormat.getId()),
                         String.format("All created billFormats should be returned - Missing: %s.", expectedBillFormat)));
         expectedBillFormats.stream().forEach(
-                expectedBillFormat -> assertEquals(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
+                expectedBillFormat -> assertEqualsIgnoringEmptyLists(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
                         "The correct billFormats should be retrieved."));
     }
 

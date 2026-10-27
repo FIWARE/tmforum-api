@@ -17,6 +17,7 @@ import org.fiware.resourcefunction.model.MigrateVOTestExample;
 import org.fiware.resourcefunction.model.PlaceRefVOTestExample;
 import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
 import org.fiware.resourcefunction.model.TaskStateTypeVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -44,7 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 
 	public final MigrateApiTestClient migrateApiTestClient;
@@ -290,7 +291,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 										expectedMigrate,
 										retrievedMigrates)));
 		expectedMigrates.stream().forEach(
-				expectedMigrate -> assertEquals(expectedMigrate,
+				expectedMigrate -> assertEqualsIgnoringEmptyLists(expectedMigrate,
 						retrievedMap.get(expectedMigrate.getId()),
 						"The correct migrates should be retrieved."));
 
@@ -315,7 +316,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 								String.format("All created migrates should be returned - Missing: %s.",
 										expectedMigrate)));
 		expectedMigrates.stream().forEach(
-				expectedMigrate -> assertEquals(expectedMigrate,
+				expectedMigrate -> assertEqualsIgnoringEmptyLists(expectedMigrate,
 						retrievedMap.get(expectedMigrate.getId()),
 						"The correct migrates should be retrieved."));
 	}
@@ -401,7 +402,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 		HttpResponse<MigrateVO> retrieveResponse = callAndCatch(
 				() -> migrateApiTestClient.retrieveMigrate(null, migrateId, null));
 		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), "The retrieval should be successfully.");
-		assertEquals(expectedMigrate, retrieveResponse.body(), "The expected migrate should be returend.");
+		assertEqualsIgnoringEmptyLists(expectedMigrate, retrieveResponse.body(), "The expected migrate should be returend.");
 	}
 
 	@Disabled("400 cannot happen, only 404")

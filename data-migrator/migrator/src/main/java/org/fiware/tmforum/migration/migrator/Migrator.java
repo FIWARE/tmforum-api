@@ -43,6 +43,11 @@ public class Migrator {
 			new SharedClass("io.github.wistefan.mapping.annotations.RelationshipObject", "io/github/wistefan/mapping/annotations/RelationshipObject.class")
 	);
 
+	/**
+	 * Logging packages the legacy-loader brings in its own (older) versions of; the migrator's would break its Micronaut 3.
+	 */
+	private static final List<String> LEGACY_CHILD_FIRST_PACKAGES = List.of("ch.qos.logback.", "org.slf4j.");
+
 	public void runUpdate() throws MalformedURLException {
 		// both libraries have to be loaded into their dedicated classloaders.
 		URL legacyLoader = new File(legacyLoaderJar).toURI().toURL();
@@ -51,7 +56,8 @@ public class Migrator {
 		// explicit access to parent classloader
 		ClassLoader parentClassLoader = Migrator.class.getClassLoader();
 
-		try (URLClassLoader legacyCL = new URLClassLoader(new URL[]{legacyLoader}, parentClassLoader);
+		try (URLClassLoader legacyCL = new ChildFirstClassLoader(new URL[]{legacyLoader}, parentClassLoader,
+				LEGACY_CHILD_FIRST_PACKAGES);
 			 URLClassLoader writerCL = new URLClassLoader(new URL[]{updateWriter}, parentClassLoader)) {
 			// load versions from the legacyClassloader to the parent, to have them accessible in both childs
 			loadAnnotationsInShared(parentClassLoader, legacyCL);

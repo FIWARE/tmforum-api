@@ -11,19 +11,19 @@ migration, by disabling write access to Broker A(while keeping read access)
 and switching over to the new broker once migration is finished.
 In order to have both library-versions as part of one application the following structure is used:
 
-* the legacy-loader uses the old version for loading data. It needs Micronaut 4, so it is no longer part of this build
-  and is built from the Micronaut 4 release set in `legacy.loader.ref` in [pom.xml](./pom.xml)
+* the legacy-loader uses the old version for loading data. The 1.2.11 library ships Micronaut 3 beans, so it is no longer
+  part of this build and is built from the last Micronaut 3 release, set in `legacy.loader.ref` in [pom.xml](./pom.xml)
 * module [update-writer](./update-writer) to use the new version for writing data
 * module [migrator](./migrator) to load both libraries into different classloaders and transfer objects between them
 
 ## Build the legacy-loader
 
-The container image builds it automatically. To build the jar locally, check out the release from `legacy.loader.ref` (1.22.0 below) and build it with
-JDK 25:
+The container image builds it automatically. To build the jar locally, check out the release from `legacy.loader.ref` (1.18.3 below) and build it with
+JDK 17:
 
 ```shell
-    git fetch --no-tags https://github.com/FIWARE/tmforum-api tag 1.22.0
-    git worktree add /tmp/legacy-loader 1.22.0
+    git fetch --no-tags https://github.com/FIWARE/tmforum-api tag 1.18.3
+    git worktree add /tmp/legacy-loader 1.18.3
     mvn -f /tmp/legacy-loader/pom.xml -pl data-migrator/legacy-loader -am package -DskipTests -DskipITs
 ```
 

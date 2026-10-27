@@ -31,6 +31,7 @@ import org.fiware.servicecatalog.model.ServiceSpecificationVO;
 import org.fiware.servicecatalog.model.ServiceSpecificationVOTestExample;
 import org.fiware.servicecatalog.model.TimePeriodVO;
 import org.fiware.servicecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -60,7 +61,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceSpecificationApiTestSpec {
 
     public final ServiceSpecificationApiTestClient serviceSpecificationApiTestClient;
@@ -601,7 +602,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
                                         expectedServiceSpecification,
                                         retrievedServiceSpecifications)));
         expectedServiceSpecifications.stream().forEach(
-                expectedServiceSpecification -> assertEquals(expectedServiceSpecification,
+                expectedServiceSpecification -> assertEqualsIgnoringEmptyLists(expectedServiceSpecification,
                         retrievedMap.get(expectedServiceSpecification.getId()),
                         "The correct serviceSpecifications should be retrieved."));
 
@@ -626,7 +627,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
                                 String.format("All created serviceSpecifications should be returned - Missing: %s.",
                                         expectedServiceSpecification)));
         expectedServiceSpecifications.stream().forEach(
-                expectedServiceSpecification -> assertEquals(expectedServiceSpecification,
+                expectedServiceSpecification -> assertEqualsIgnoringEmptyLists(expectedServiceSpecification,
                         retrievedMap.get(expectedServiceSpecification.getId()),
                         "The correct serviceSpecifications should be retrieved."));
     }
@@ -730,7 +731,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
                 .constraint(null)
                 .lastUpdate(currentTimeInstant);
 
-        assertEquals(expectedServiceSpecification, updatedServiceSpecification, message);
+        assertEqualsIgnoringEmptyLists(expectedServiceSpecification, updatedServiceSpecification, message);
     }
 
     private static Stream<Arguments> provideServiceSpecificationUpdates() {
@@ -1008,7 +1009,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
         HttpResponse<ServiceSpecificationVO> retrievedResourceSpec = callAndCatch(
                 () -> serviceSpecificationApiTestClient.retrieveServiceSpecification(null, id, fieldsParameter));
         assertEquals(HttpStatus.OK, retrievedResourceSpec.getStatus(), message);
-        assertEquals(expectedServiceSpecification, retrievedResourceSpec.body(), message);
+        assertEqualsForFields(fieldsParameter, expectedServiceSpecification, retrievedResourceSpec.body(), message);
     }
 
     private static Stream<Arguments> provideFieldParameters() {

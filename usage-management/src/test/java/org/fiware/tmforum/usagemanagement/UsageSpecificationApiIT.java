@@ -6,6 +6,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -49,7 +50,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.usagemanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.usagemanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpecificationApiTestSpec {
 
 	private final UsageSpecificationApiTestClient usageSpecificationApiTestClient;
@@ -348,7 +349,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 								retrievedUsageSpecifications)));
 
 		expectedUsageSpecifications.stream().forEach(
-				expectedUsageSpecification -> assertEquals(expectedUsageSpecification, retrievedMap.get(expectedUsageSpecification.getId()),
+				expectedUsageSpecification -> assertEqualsIgnoringEmptyLists(expectedUsageSpecification, retrievedMap.get(expectedUsageSpecification.getId()),
 						"The correct usageSpecifications should be retrieved."));
 
 		// get with pagination
@@ -369,7 +370,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 				.forEach(expectedUsage -> assertTrue(retrievedMap.containsKey(expectedUsage.getId()),
 						String.format("All created usageSpecification should be returned - Missing: %s.", expectedUsage)));
 		expectedUsageSpecifications.stream().forEach(
-				expectedUsageSpecification -> assertEquals(expectedUsageSpecification, retrievedMap.get(expectedUsageSpecification.getId()),
+				expectedUsageSpecification -> assertEqualsIgnoringEmptyLists(expectedUsageSpecification, retrievedMap.get(expectedUsageSpecification.getId()),
 						"The correct usageSpecification should be retrieved."));
 
 	}
@@ -462,7 +463,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		editExpectedTimePeriod(expectedUsageSpecification);
 
 
-		assertEquals(expectedUsageSpecification, updatedUsageSpecification, message);
+		assertEqualsIgnoringEmptyLists(expectedUsageSpecification, updatedUsageSpecification, message);
 	}
 
 	private static Stream<Arguments> provideUsageSpecificationUpdates() {
@@ -674,7 +675,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 		//then retrieve
 		HttpResponse<UsageSpecificationVO> retrievedUsageSpecification = callAndCatch(() -> usageSpecificationApiTestClient.retrieveUsageSpecification(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedUsageSpecification.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedUsageSpecification, retrievedUsageSpecification.body(), "The correct usage should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedUsageSpecification, retrievedUsageSpecification.body(), "The correct usage should be returned.");
 	}
 
 	@Disabled

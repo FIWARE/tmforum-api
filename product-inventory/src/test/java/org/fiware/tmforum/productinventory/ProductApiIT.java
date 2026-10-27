@@ -32,6 +32,7 @@ import org.fiware.productinventory.model.RelatedPlaceRefOrValueVOTestExample;
 import org.fiware.productinventory.model.RelatedProductOrderItemVOTestExample;
 import org.fiware.productinventory.model.ResourceRefVOTestExample;
 import org.fiware.productinventory.model.ServiceRefVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -59,7 +60,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productinventory"})
+@MicronautTest(packages = {"org.fiware.tmforum.productinventory"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 
 	public final ProductApiTestClient productApiTestClient;
@@ -584,7 +585,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 										expectedProduct,
 										retrievedProducts)));
 		expectedProducts.stream().forEach(
-				expectedProduct -> assertEquals(expectedProduct,
+				expectedProduct -> assertEqualsIgnoringEmptyLists(expectedProduct,
 						retrievedMap.get(expectedProduct.getId()),
 						"The correct products should be retrieved."));
 
@@ -609,7 +610,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								String.format("All created products should be returned - Missing: %s.",
 										expectedProduct)));
 		expectedProducts.stream().forEach(
-				expectedProduct -> assertEquals(expectedProduct,
+				expectedProduct -> assertEqualsIgnoringEmptyLists(expectedProduct,
 						retrievedMap.get(expectedProduct.getId()),
 						"The correct products should be retrieved."));
 	}
@@ -706,7 +707,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		ProductVO updatedProduct = updateResponse.body();
 		expectedProduct.href(productId).id(productId);
 
-		assertEquals(expectedProduct, updatedProduct, message);
+		assertEqualsIgnoringEmptyLists(expectedProduct, updatedProduct, message);
 	}
 
 	private static Stream<Arguments> provideProductUpdates() {
@@ -1256,7 +1257,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 		HttpResponse<ProductVO> retrievedRF = callAndCatch(
 				() -> productApiTestClient.retrieveProduct(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedProduct, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedProduct, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

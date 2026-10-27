@@ -13,6 +13,7 @@ import org.fiware.softwaremanagement.model.EventSubscriptionInputVO;
 import org.fiware.softwaremanagement.model.EventSubscriptionInputVOTestExample;
 import org.fiware.softwaremanagement.model.EventSubscriptionVO;
 import org.fiware.softwaremanagement.model.EventSubscriptionVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -34,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Integration tests for the EventSubscription API in the Software Management module (TMF730).
  */
-@MicronautTest(packages = {"org.fiware.tmforum.softwaremanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.softwaremanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 /*
  * the test currently fails for scorpio -  {@link https://github.com/ScorpioBroker/ScorpioBroker/issues/456}
  */

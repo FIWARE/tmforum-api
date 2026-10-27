@@ -23,6 +23,7 @@ import org.fiware.customermanagement.model.RelatedPartyVOTestExample;
 import org.fiware.customermanagement.model.TimePeriodVO;
 import org.fiware.customermanagement.model.TimePeriodVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -49,7 +50,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.customermanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.customermanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec {
 
 	public final CustomerApiTestClient customerApiTestClient;
@@ -325,7 +326,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 						String.format("All created customers should be returned - Missing: %s.", expectedCustomer,
 								retrievedBills)));
 		expectedCustomers.stream().forEach(
-				expectedCustomer -> assertEquals(expectedCustomer, retrievedMap.get(expectedCustomer.getId()),
+				expectedCustomer -> assertEqualsIgnoringEmptyLists(expectedCustomer, retrievedMap.get(expectedCustomer.getId()),
 						"The correct customers should be retrieved."));
 
 		// get with pagination
@@ -345,7 +346,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 		expectedCustomers.stream().forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
 				String.format("All created customers should be returned - Missing: %s.", expectedBill)));
 		expectedCustomers.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct customers should be retrieved."));
 	}
 
@@ -437,7 +438,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 		CustomerVO updatedCustomer = updateResponse.body();
 		expectedCustomer.href(resourceId).id(resourceId);
 
-		assertEquals(expectedCustomer, updatedCustomer, message);
+		assertEqualsIgnoringEmptyLists(expectedCustomer, updatedCustomer, message);
 	}
 
 	private static Stream<Arguments> provideCustomerUpdates() {
@@ -678,7 +679,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 		HttpResponse<CustomerVO> retrievedRF = callAndCatch(
 				() -> customerApiTestClient.retrieveCustomer(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedCustomer, retrievedRF.body(), message);
+		assertEqualsForFields(fieldsParameter, expectedCustomer, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

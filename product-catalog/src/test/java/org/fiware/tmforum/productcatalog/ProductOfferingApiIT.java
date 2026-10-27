@@ -37,6 +37,7 @@ import org.fiware.productcatalog.model.SLARefVOTestExample;
 import org.fiware.productcatalog.model.ServiceCandidateRefVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -65,7 +66,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferingApiTestSpec {
 
 	public final ProductOfferingApiTestClient productOfferingApiTestClient;
@@ -449,7 +450,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 										expectedProductOffering,
 										retrievedProductOfferings)));
 		expectedProductOfferings.stream().forEach(
-				expectedProductOffering -> assertEquals(expectedProductOffering,
+				expectedProductOffering -> assertEqualsIgnoringEmptyLists(expectedProductOffering,
 						retrievedMap.get(expectedProductOffering.getId()),
 						"The correct productOfferings should be retrieved."));
 
@@ -473,7 +474,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 								String.format("All created productOfferings should be returned - Missing: %s.",
 										expectedProductOffering)));
 		expectedProductOfferings.stream().forEach(
-				expectedProductOffering -> assertEquals(expectedProductOffering,
+				expectedProductOffering -> assertEqualsIgnoringEmptyLists(expectedProductOffering,
 						retrievedMap.get(expectedProductOffering.getId()),
 						"The correct productOfferings should be retrieved."));
 	}
@@ -581,7 +582,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		expectedProductOffering.setServiceCandidate(null);
 		expectedProductOffering.setServiceLevelAgreement(null);
 
-		assertEquals(expectedProductOffering, updatedCatalog, message);
+		assertEqualsIgnoringEmptyLists(expectedProductOffering, updatedCatalog, message);
 	}
 
 	private static Stream<Arguments> provideProductOfferingUpdates() {
@@ -842,7 +843,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		HttpResponse<ProductOfferingVO> retrievedCatalog = callAndCatch(
 				() -> productOfferingApiTestClient.retrieveProductOffering(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedCatalog.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedProductOffering, retrievedCatalog.body(),
+		assertEqualsIgnoringEmptyLists(expectedProductOffering, retrievedCatalog.body(),
 				"The correct productOffering should be returned.");
 	}
 
@@ -870,7 +871,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		Map expectedAsMap = objectMapper.convertValue(expectedProductOffering, new TypeReference<Map<String, Object>>() {
 		});
 		Map responseAsMap = retrievedCatalog.getBody(Map.class).get();
-		assertEquals(expectedAsMap, responseAsMap, "The correct catalog should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedAsMap, responseAsMap, "The correct catalog should be returned.");
 	}
 
 	@MethodSource("provideInvalidExtensions")

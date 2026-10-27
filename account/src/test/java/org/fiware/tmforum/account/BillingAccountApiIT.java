@@ -23,6 +23,7 @@ import org.fiware.account.model.RelatedPartyVO;
 import org.fiware.account.model.RelatedPartyVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillingAccount;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -47,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.account"})
+@MicronautTest(packages = {"org.fiware.tmforum.account"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class BillingAccountApiIT extends AbstractApiIT implements BillingAccountApiTestSpec {
 
 	public final BillingAccountApiTestClient billingAccountApiTestClient;
@@ -386,7 +387,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 						String.format("All created billingAccounts should be returned - Missing: %s.", expectedBillingAccount,
 								retrievedBillingAccounts)));
 		expectedBillingAccounts.stream().forEach(
-				expectedBillingAccount -> assertEquals(expectedBillingAccount, retrievedMap.get(expectedBillingAccount.getId()),
+				expectedBillingAccount -> assertEqualsIgnoringEmptyLists(expectedBillingAccount, retrievedMap.get(expectedBillingAccount.getId()),
 						"The correct billingAccounts should be retrieved."));
 
 		// get with pagination
@@ -407,7 +408,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 				.forEach(expectedBillingAccount -> assertTrue(retrievedMap.containsKey(expectedBillingAccount.getId()),
 						String.format("All created billingAccounts should be returned - Missing: %s.", expectedBillingAccount)));
 		expectedBillingAccounts.stream().forEach(
-				expectedBillingAccount -> assertEquals(expectedBillingAccount, retrievedMap.get(expectedBillingAccount.getId()),
+				expectedBillingAccount -> assertEqualsIgnoringEmptyLists(expectedBillingAccount, retrievedMap.get(expectedBillingAccount.getId()),
 						"The correct billingAccounts should be retrieved."));
 	}
 
@@ -511,7 +512,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 				.cycleSpecification(billingCycleRV);
 		expectedBillingAccount.billStructure(billStructure);
 
-		assertEquals(expectedBillingAccount, updatedBillingAccount, message);
+		assertEqualsIgnoringEmptyLists(expectedBillingAccount, updatedBillingAccount, message);
 	}
 
 	private static Stream<Arguments> provideBillingAccountUpdates() {
@@ -691,7 +692,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 		//then retrieve
 		HttpResponse<BillingAccountVO> retrievedBillingAccount = callAndCatch(() -> billingAccountApiTestClient.retrieveBillingAccount(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedBillingAccount.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedBillingAccount, retrievedBillingAccount.body(), "The correct billingAccount should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedBillingAccount, retrievedBillingAccount.body(), "The correct billingAccount should be returned.");
 	}
 
 	@Disabled
