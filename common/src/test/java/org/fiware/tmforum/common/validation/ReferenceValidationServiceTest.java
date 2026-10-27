@@ -1,6 +1,9 @@
 package org.fiware.tmforum.common.validation;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.configuration.ReferenceProperties;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
 import org.fiware.tmforum.common.repository.ReferencesRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ReferenceValidationServiceTest {
@@ -37,6 +43,16 @@ class ReferenceValidationServiceTest {
 	// a category reference pointing at an existing entity of another type
 	private static final TestRef WRONG_TYPE = categoryRef("urn:ngsi-ld:product-offering:o");
 
+	private static final String EXTERNAL_ID_PREFIX = "urn:ngsi-ld:category:partner-a-";
+	private static final String EXTERNAL_HREF_PREFIX = "https://partner-a.example.org/";
+	private static final URI EXTERNAL_HREF = URI.create(EXTERNAL_HREF_PREFIX + "category/1");
+	private static final TestRef EXTERNAL_1 = categoryRef(EXTERNAL_ID_PREFIX + "1");
+	private static final TestRef EXTERNAL_2 = categoryRef(EXTERNAL_ID_PREFIX + "2");
+	// external by href only; the id decides what the local type guard finds
+	private static final TestRef HREF_ONLY_MISSING = hrefRef(MISSING_X.id());
+	private static final TestRef HREF_ONLY_ACCEPTED = hrefRef(CATEGORY_A.id());
+	private static final TestRef HREF_ONLY_WRONG_TYPE = hrefRef(WRONG_TYPE.id());
+
 	/** Entities present in local storage, id to type. */
 	private static final Map<String, String> STORED_ENTITIES = Map.of(
 			CATEGORY_A.id().toString(), CATEGORY_TYPE,
@@ -44,17 +60,31 @@ class ReferenceValidationServiceTest {
 			CATEGORY_C.id().toString(), CATEGORY_TYPE,
 			WRONG_TYPE.id().toString(), OFFERING_TYPE);
 
+	private ReferencesRepository referencesRepository;
+	private SimpleMeterRegistry meterRegistry;
 	private ReferenceValidationService service;
+	private ReferenceValidationService externalAwareService;
 
 	@BeforeEach
 	public void setUp() {
-		ReferencesRepository referencesRepository = mock(ReferencesRepository.class);
+		referencesRepository = mock(ReferencesRepository.class);
 		when(referencesRepository.referenceExists(anyString(), anyList())).thenAnswer(invocation -> {
 			String type = STORED_ENTITIES.get(invocation.<String>getArgument(0));
 			List<String> acceptedTypes = invocation.getArgument(1);
 			return type != null && acceptedTypes.contains(type) ? Mono.just(new EntityVO()) : Mono.empty();
 		});
-		service = new ReferenceValidationService(referencesRepository);
+		when(referencesRepository.findReference(anyString())).thenAnswer(invocation -> {
+			String type = STORED_ENTITIES.get(invocation.<String>getArgument(0));
+			return type == null ? Mono.empty() : Mono.just(new EntityVO().type(type));
+		});
+		meterRegistry = new SimpleMeterRegistry();
+		service = new ReferenceValidationService(referencesRepository,
+				new ReferenceClassifier(new ReferenceProperties()), meterRegistry);
+		ReferenceProperties externalConfig = new ReferenceProperties();
+		externalConfig.setExternalIdPrefixes(List.of(EXTERNAL_ID_PREFIX));
+		externalConfig.setExternalHrefPrefixes(List.of(EXTERNAL_HREF_PREFIX));
+		externalAwareService = new ReferenceValidationService(referencesRepository,
+				new ReferenceClassifier(externalConfig), meterRegistry);
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -75,6 +105,51 @@ class ReferenceValidationServiceTest {
 				Arguments.of("one of three missing", List.of(CATEGORY_A, MISSING_X, CATEGORY_B), false),
 				Arguments.of("wrong type", List.of(WRONG_TYPE), false),
 				Arguments.of("all missing", List.of(MISSING_X, MISSING_Y), false));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("externalCombinations")
+	public void externalReferencesAreSkippedAndCounted(String description, List<TestRef> refs, boolean expected,
+			double localResolved, double localUnresolved, double externalSkipped) {
+		assertEquals(expected, externalAwareService.checkReferenceExists(refs).block());
+
+		assertEquals(localResolved, count(ReferenceValidationService.SCOPE_LOCAL,
+				ReferenceValidationService.RESULT_RESOLVED));
+		assertEquals(localUnresolved, count(ReferenceValidationService.SCOPE_LOCAL,
+				ReferenceValidationService.RESULT_UNRESOLVED));
+		assertEquals(externalSkipped, count(ReferenceValidationService.SCOPE_EXTERNAL,
+				ReferenceValidationService.RESULT_SKIPPED));
+	}
+
+	private static Stream<Arguments> externalCombinations() {
+		return Stream.of(
+				Arguments.of("local existing and external", List.of(CATEGORY_A, EXTERNAL_1), true, 1, 0, 1),
+				Arguments.of("local missing and external", List.of(MISSING_X, EXTERNAL_1), false, 0, 1, 1),
+				Arguments.of("all external", List.of(EXTERNAL_1, EXTERNAL_2), true, 0, 0, 2),
+				Arguments.of("href-only without local entity", List.of(HREF_ONLY_MISSING), true, 0, 0, 1),
+				Arguments.of("href-only with local entity of accepted type", List.of(HREF_ONLY_ACCEPTED), true, 1,
+						0, 0),
+				Arguments.of("href-only with local entity of another type", List.of(HREF_ONLY_WRONG_TYPE), false,
+						0, 1, 0));
+	}
+
+	@Test
+	public void externalReferencesByIdAreNeverLookedUp() {
+		assertEquals(true, externalAwareService.checkReferenceExists(List.of(CATEGORY_A, EXTERNAL_1)).block());
+
+		verify(referencesRepository).referenceExists(eq(CATEGORY_A.id().toString()), anyList());
+		verify(referencesRepository, never()).referenceExists(eq(EXTERNAL_1.id().toString()), anyList());
+		verify(referencesRepository, never()).findReference(anyString());
+	}
+
+	@Test
+	public void getCheckingMonoNamesTheWrongTypedHrefOnlyReference() {
+		Exception exception = assertThrows(Exception.class, () -> externalAwareService
+				.getCheckingMono(List.of(EXTERNAL_1, HREF_ONLY_MISSING, HREF_ONLY_WRONG_TYPE), new Object()).block());
+
+		assertEquals(NonExistentReferenceException.class, exception.getCause().getClass());
+		assertEquals(String.format("References do not exist: [%s]", WRONG_TYPE.id()),
+				exception.getCause().getMessage());
 	}
 
 	@Test
@@ -103,11 +178,28 @@ class ReferenceValidationServiceTest {
 				MISSING_X.id()), exception.getCause().getMessage());
 	}
 
-	private static TestRef categoryRef(String id) {
-		return new TestRef(URI.create(id), List.of(CATEGORY_TYPE));
+	private double count(String scope, String result) {
+		Counter counter = meterRegistry.find(ReferenceValidationService.REFERENCES_METRIC)
+				.tag(ReferenceValidationService.SCOPE_TAG, scope)
+				.tag(ReferenceValidationService.RESULT_TAG, result)
+				.counter();
+		return counter == null ? 0 : counter.count();
 	}
 
-	private record TestRef(URI id, List<String> referencedTypes) implements ReferencedEntity {
+	private static TestRef categoryRef(String id) {
+		return new TestRef(URI.create(id), List.of(CATEGORY_TYPE), null);
+	}
+
+	private static TestRef hrefRef(URI id) {
+		return new TestRef(id, List.of(CATEGORY_TYPE), EXTERNAL_HREF);
+	}
+
+	private record TestRef(URI id, List<String> referencedTypes, URI href) implements ReferencedEntity {
+
+		@Override
+		public URI getReferenceHref() {
+			return href;
+		}
 
 		@Override
 		public List<String> getReferencedTypes() {

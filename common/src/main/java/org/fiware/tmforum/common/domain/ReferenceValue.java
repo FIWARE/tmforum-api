@@ -1,5 +1,7 @@
 package org.fiware.tmforum.common.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,5 +26,11 @@ public class ReferenceValue implements ReferencedEntity {
     @Override
     public URI getEntityId() {
         return this.id;
+    }
+
+    @JsonIgnore
+    @Override
+    public URI getReferenceHref() {
+        return getHref();
     }
 }

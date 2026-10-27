@@ -24,4 +24,12 @@ public interface ReferencedEntity {
 	 */
 	@JsonIgnore
 	URI getEntityId();
+
+	/**
+	 * Href of the referenced entity, used to classify it as external. Null when the reference has no href.
+	 */
+	@JsonIgnore
+	default URI getReferenceHref() {
+		return null;
+	}
 }

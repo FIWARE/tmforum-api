@@ -18,4 +18,9 @@ public interface ReferencesRepository {
 	 * @return a Mono emitting the entity, in case it exists.
 	 */
 	Mono<EntityVO> referenceExists(String id, List<String> acceptedTypes);
+
+	/**
+	 * Returns the entity regardless of its type, or empty if it does not exist.
+	 */
+	Mono<EntityVO> findReference(String id);
 }
