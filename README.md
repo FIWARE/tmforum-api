@@ -132,17 +132,29 @@ See the logs via:
 
 ## Broker compatibility
 
-### Array attribute updates (`replaceOnUpdate`)
+### Attribute updates (`replaceOnUpdate`)
 
-The `general.replaceOnUpdate` property controls how PATCH operations handle array attributes (e.g. `productOrderItem`, `notes`, `characteristics`).
+A PATCH only writes the attributes it contains. Every other attribute of the entity stays as it is stored, so
+concurrent PATCHes of different attributes do not interfere with each other. The property `general.replaceOnUpdate`
+controls how the attributes of a PATCH are written:
 
-The global default is `false`. Each module's `application-scorpio.yaml` already sets it to `true`, so when running with the `scorpio` profile no extra configuration is needed.
+- `false` (default): the attributes are appended as they are, with `POST /entities/{id}/attrs`.
+- `true`: each attribute of the PATCH replaces the stored one as a whole:
+  - a list ends up with exactly the items of the PATCH, items that are no longer part of it are removed
+  - an empty list removes the attribute
+  - an object value is replaced, not merged
 
-| Broker | Recommended value | Behaviour |
+  To do so, the API reads the stored entity and sends a single `PATCH /entities/{id}/attrs` with the new attribute
+  instances and an NGSI-LD Null (`urn:ngsi-ld:null`) for every stored instance (identified by its `datasetId`) that
+  is not part of the update. A PATCH therefore results in one read and one write at the broker, independent of the
+  number of attributes or list items. If the broker does not write all attributes, the PATCH is answered with `400`.
+  Two concurrent PATCHes that replace the same list can end with the items of both.
+
+| Broker | `replaceOnUpdate` | Behaviour |
 |--------|-------------------|-----------|
-| **Orion-LD** (any version) | `false` (default) | Uses `PATCH /entities/{id}/attrs`, which replaces array attributes in place. Simple and efficient. |
-| **Scorpio < 6.0.0** | `false` or `true` | Both work. With `false`: uses `PATCH /attrs` directly (simpler, no extra broker read). With `true`: reads the existing entity, merges the update on top, then replaces the full entity via `POST /entityOperations/upsert?options=replace` (one extra GET per update). |
-| **Scorpio >= 6.0.0** | `true` | Required. Scorpio 6.x appends to existing array attributes on `PATCH /attrs` instead of replacing them. The read-merge-write strategy via `POST /entityOperations/upsert?options=replace` is the only correct option. |
+| **Orion-LD** | `false` (default) | Orion-LD neither creates attributes with `PATCH /attrs` nor accepts the NGSI-LD Null to delete a single attribute instance. Attributes and list items of the PATCH are written, but list items that are no longer part of the PATCH stay stored, and empty lists are not supported. |
+| **Scorpio < 6.0.0** | `false` (default) | Appending replaces array attributes in place. Scorpio < 6.0.0 does not create attributes with `PATCH /attrs`, so with the `scorpio` profile, which sets `true`, it has to be set back to `false` (e.g. `GENERAL_REPLACE_ON_UPDATE=false`). |
+| **Scorpio >= 6.0.0** | `true` | Required. Appending keeps the existing items of array attributes. Each module's `application-scorpio.yaml` already sets it. |
 
 ```yaml
 # application-scorpio.yaml (already included in each module)

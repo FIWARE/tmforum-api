@@ -34,10 +34,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for the default (non-{@code replaceOnUpdate}, Orion-LD) update path: a plain
- * {@code PATCH /attrs} built from a single mapping of the domain object.
+ * Tests for the default (Orion-LD) update path: a plain {@code POST /attrs} built from a single
+ * mapping of the domain object.
  */
-class NgsiLdBaseRepositoryPatchUpdateTest {
+class NgsiLdBaseRepositoryAppendUpdateTest {
 
 	private static final String NGSI_LD_NULL = "urn:ngsi-ld:null";
 	private static final String LIST_ATTRIBUTE = "productOfferingTerm";
