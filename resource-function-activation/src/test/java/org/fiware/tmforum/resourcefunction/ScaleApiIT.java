@@ -252,7 +252,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
                                 String.format("All created scales should be returned - Missing: %s.",
                                         expectedScale)));
         expectedScales.stream().forEach(
-                expectedScale -> assertEquals(expectedScale,
+                expectedScale -> assertEqualsIgnoringEmptyLists(expectedScale,
                         retrievedMap.get(expectedScale.getId()),
                         "The correct scales should be retrieved."));
     }

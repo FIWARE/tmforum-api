@@ -348,7 +348,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 				.forEach(expectedCategory -> assertTrue(retrievedMap.containsKey(expectedCategory.getId()),
 						String.format("All created categorys should be returned - Missing: %s.", expectedCategory)));
 		expectedCategorys.stream().forEach(
-				expectedCategory -> assertEquals(expectedCategory, retrievedMap.get(expectedCategory.getId()),
+				expectedCategory -> assertEqualsIgnoringEmptyLists(expectedCategory, retrievedMap.get(expectedCategory.getId()),
 						"The correct categorys should be retrieved."));
 	}
 

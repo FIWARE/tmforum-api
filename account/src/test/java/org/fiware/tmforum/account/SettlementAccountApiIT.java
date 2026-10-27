@@ -408,7 +408,7 @@ public class SettlementAccountApiIT extends AbstractApiIT implements SettlementA
 				.forEach(expectedSettlementAccount -> assertTrue(retrievedMap.containsKey(expectedSettlementAccount.getId()),
 						String.format("All created settlementAccounts should be returned - Missing: %s.", expectedSettlementAccount)));
 		expectedSettlementAccounts.stream().forEach(
-				expectedSettlementAccount -> assertEquals(expectedSettlementAccount, retrievedMap.get(expectedSettlementAccount.getId()),
+				expectedSettlementAccount -> assertEqualsIgnoringEmptyLists(expectedSettlementAccount, retrievedMap.get(expectedSettlementAccount.getId()),
 						"The correct settlementAccounts should be retrieved."));
 	}
 

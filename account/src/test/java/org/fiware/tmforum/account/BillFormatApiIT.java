@@ -252,7 +252,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
                         String.format("All created billFormats should be returned - Missing: %s.", expectedBillFormat,
                                 retrievedBillFormats)));
         expectedBillFormats.stream().forEach(
-                expectedBillFormat -> assertEquals(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
+                expectedBillFormat -> assertEqualsIgnoringEmptyLists(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
                         "The correct billFormats should be retrieved."));
 
         // get with pagination
@@ -273,7 +273,7 @@ public class BillFormatApiIT extends AbstractApiIT implements BillFormatApiTestS
                 .forEach(expectedBillFormat -> assertTrue(retrievedMap.containsKey(expectedBillFormat.getId()),
                         String.format("All created billFormats should be returned - Missing: %s.", expectedBillFormat)));
         expectedBillFormats.stream().forEach(
-                expectedBillFormat -> assertEquals(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
+                expectedBillFormat -> assertEqualsIgnoringEmptyLists(expectedBillFormat, retrievedMap.get(expectedBillFormat.getId()),
                         "The correct billFormats should be retrieved."));
     }
 

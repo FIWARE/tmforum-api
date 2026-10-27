@@ -339,7 +339,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 								String.format("All created resourceCatalogs should be returned - Missing: %s.",
 										expectedResourceCatalog)));
 		expectedResourceCatalogs.stream().forEach(
-				expectedResourceCatalog -> assertEquals(expectedResourceCatalog,
+				expectedResourceCatalog -> assertEqualsIgnoringEmptyLists(expectedResourceCatalog,
 						retrievedMap.get(expectedResourceCatalog.getId()),
 						"The correct resourceCatalogs should be retrieved."));
 	}

@@ -279,7 +279,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 								String.format("All created heals should be returned - Missing: %s.",
 										expectedHeal)));
 		expectedHeals.stream().forEach(
-				expectedHeal -> assertEquals(expectedHeal,
+				expectedHeal -> assertEqualsIgnoringEmptyLists(expectedHeal,
 						retrievedMap.get(expectedHeal.getId()),
 						"The correct heals should be retrieved."));
 	}

@@ -314,7 +314,7 @@ public class FinancialAccountApiIT extends AbstractApiIT implements FinancialAcc
 				.forEach(expectedFinancialAccount -> assertTrue(retrievedMap.containsKey(expectedFinancialAccount.getId()),
 						String.format("All created financialAccounts should be returned - Missing: %s.", expectedFinancialAccount)));
 		expectedFinancialAccounts.stream().forEach(
-				expectedFinancialAccount -> assertEquals(expectedFinancialAccount, retrievedMap.get(expectedFinancialAccount.getId()),
+				expectedFinancialAccount -> assertEqualsIgnoringEmptyLists(expectedFinancialAccount, retrievedMap.get(expectedFinancialAccount.getId()),
 						"The correct financialAccounts should be retrieved."));
 	}
 

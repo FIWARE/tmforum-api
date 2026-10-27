@@ -392,7 +392,7 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 								String.format("All created productSpecifications should be returned - Missing: %s.",
 										expectedProductSpecification)));
 		expectedProductSpecifications.stream().forEach(
-				expectedProductSpecification -> assertEquals(expectedProductSpecification,
+				expectedProductSpecification -> assertEqualsIgnoringEmptyLists(expectedProductSpecification,
 						retrievedMap.get(expectedProductSpecification.getId()),
 						"The correct productSpecifications should be retrieved."));
 	}

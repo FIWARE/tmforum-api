@@ -361,7 +361,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 								String.format("All created resourceCategorys should be returned - Missing: %s.",
 										expectedResourceCategory)));
 		expectedResourceCategorys.stream().forEach(
-				expectedResourceCategory -> assertEquals(expectedResourceCategory,
+				expectedResourceCategory -> assertEqualsIgnoringEmptyLists(expectedResourceCategory,
 						retrievedMap.get(expectedResourceCategory.getId()),
 						"The correct resourceCategorys should be retrieved."));
 	}

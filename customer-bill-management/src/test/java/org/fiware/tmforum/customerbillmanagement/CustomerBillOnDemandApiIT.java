@@ -271,7 +271,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 								expectedBill,
 								retrievedBills)));
 		expectedCustomerBillOnDemands.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct customerBillOnDemands should be retrieved."));
 
 		// get with pagination
@@ -293,7 +293,7 @@ public class CustomerBillOnDemandApiIT extends AbstractApiIT implements Customer
 						String.format("All created customerBillOnDemands should be returned - Missing: %s.",
 								expectedBill)));
 		expectedCustomerBillOnDemands.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct customerBillOnDemands should be retrieved."));
 	}
 

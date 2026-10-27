@@ -610,7 +610,7 @@ public class ProductApiIT extends AbstractApiIT implements ProductApiTestSpec {
 								String.format("All created products should be returned - Missing: %s.",
 										expectedProduct)));
 		expectedProducts.stream().forEach(
-				expectedProduct -> assertEquals(expectedProduct,
+				expectedProduct -> assertEqualsIgnoringEmptyLists(expectedProduct,
 						retrievedMap.get(expectedProduct.getId()),
 						"The correct products should be retrieved."));
 	}

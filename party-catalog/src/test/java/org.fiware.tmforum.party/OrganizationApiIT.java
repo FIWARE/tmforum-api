@@ -413,7 +413,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 						String.format("All created organizations should be returned - Missing: %s.",
 								expectedOrganization)));
 		expectedOrganizations.stream().forEach(
-				expectedOrganization -> assertEquals(expectedOrganization,
+				expectedOrganization -> assertEqualsIgnoringEmptyLists(expectedOrganization,
 						retrievedMap.get(expectedOrganization.getId()),
 						"The correct organizations should be retrieved."));
 	}

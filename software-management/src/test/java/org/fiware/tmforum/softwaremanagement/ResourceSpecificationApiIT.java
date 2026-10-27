@@ -526,7 +526,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 										expectedResourceSpecification,
 										retrievedResourceSpecifications)));
 		expectedResourceSpecifications.stream().forEach(
-				expectedResourceSpecification -> assertEquals(expectedResourceSpecification,
+				expectedResourceSpecification -> assertEqualsIgnoringEmptyLists(expectedResourceSpecification,
 						retrievedMap.get(expectedResourceSpecification.getId()),
 						"The correct resourceSpecifications should be retrieved."));
 
@@ -553,7 +553,7 @@ public class ResourceSpecificationApiIT extends AbstractApiIT implements Resourc
 										"All created resourceSpecifications should be returned - Missing: %s.",
 										expectedResourceSpecification)));
 		expectedResourceSpecifications.stream().forEach(
-				expectedResourceSpecification -> assertEquals(expectedResourceSpecification,
+				expectedResourceSpecification -> assertEqualsIgnoringEmptyLists(expectedResourceSpecification,
 						retrievedMap.get(expectedResourceSpecification.getId()),
 						"The correct resourceSpecifications should be retrieved."));
 	}

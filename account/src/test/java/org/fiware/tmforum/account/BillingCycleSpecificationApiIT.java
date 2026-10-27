@@ -262,7 +262,7 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 						String.format("All created billingCycleSpecifications should be returned - Missing: %s.", expectedBillingCycleSpecification,
 								retrievedBillingCycleSpecifications)));
 		expectedBillingCycleSpecifications.stream().forEach(
-				expectedBillingCycleSpecification -> assertEquals(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
+				expectedBillingCycleSpecification -> assertEqualsIgnoringEmptyLists(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
 						"The correct billingCycleSpecifications should be retrieved."));
 
 		// get with pagination
@@ -283,7 +283,7 @@ public class BillingCycleSpecificationApiIT extends AbstractApiIT implements Bil
 				.forEach(expectedBillingCycleSpecification -> assertTrue(retrievedMap.containsKey(expectedBillingCycleSpecification.getId()),
 						String.format("All created billingCycleSpecifications should be returned - Missing: %s.", expectedBillingCycleSpecification)));
 		expectedBillingCycleSpecifications.stream().forEach(
-				expectedBillingCycleSpecification -> assertEquals(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
+				expectedBillingCycleSpecification -> assertEqualsIgnoringEmptyLists(expectedBillingCycleSpecification, retrievedMap.get(expectedBillingCycleSpecification.getId()),
 						"The correct billingCycleSpecifications should be retrieved."));
 	}
 

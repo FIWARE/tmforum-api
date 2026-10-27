@@ -334,7 +334,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 						String.format("All created catalogs should be returned - Missing: %s.", expectedCatalog,
 								retrievedCatalogs)));
 		expectedCatalogs.stream().forEach(
-				expectedCatalog -> assertEquals(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
+				expectedCatalog -> assertEqualsIgnoringEmptyLists(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
 						"The correct catalogs should be retrieved."));
 
 		// get with pagination
@@ -355,7 +355,7 @@ public class CatalogApiIT extends AbstractApiIT implements CatalogApiTestSpec {
 				.forEach(expectedCatalog -> assertTrue(retrievedMap.containsKey(expectedCatalog.getId()),
 						String.format("All created catalogs should be returned - Missing: %s.", expectedCatalog)));
 		expectedCatalogs.stream().forEach(
-				expectedCatalog -> assertEquals(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
+				expectedCatalog -> assertEqualsIgnoringEmptyLists(expectedCatalog, retrievedMap.get(expectedCatalog.getId()),
 						"The correct catalogs should be retrieved."));
 	}
 

@@ -252,7 +252,7 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 						String.format("All created billPresentationMedias should be returned - Missing: %s.", expectedBillPresentationMedia,
 								retrievedBillPresentationMedias)));
 		expectedBillPresentationMedias.stream().forEach(
-				expectedBillPresentationMedia -> assertEquals(expectedBillPresentationMedia, retrievedMap.get(expectedBillPresentationMedia.getId()),
+				expectedBillPresentationMedia -> assertEqualsIgnoringEmptyLists(expectedBillPresentationMedia, retrievedMap.get(expectedBillPresentationMedia.getId()),
 						"The correct billPresentationMedias should be retrieved."));
 
 		// get with pagination
@@ -273,7 +273,7 @@ public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPre
 				.forEach(expectedBillPresentationMedia -> assertTrue(retrievedMap.containsKey(expectedBillPresentationMedia.getId()),
 						String.format("All created billPresentationMedias should be returned - Missing: %s.", expectedBillPresentationMedia)));
 		expectedBillPresentationMedias.stream().forEach(
-				expectedBillPresentationMedia -> assertEquals(expectedBillPresentationMedia, retrievedMap.get(expectedBillPresentationMedia.getId()),
+				expectedBillPresentationMedia -> assertEqualsIgnoringEmptyLists(expectedBillPresentationMedia, retrievedMap.get(expectedBillPresentationMedia.getId()),
 						"The correct billPresentationMedias should be retrieved."));
 	}
 

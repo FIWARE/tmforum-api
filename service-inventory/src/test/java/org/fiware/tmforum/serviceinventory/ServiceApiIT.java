@@ -406,7 +406,7 @@ public class ServiceApiIT extends AbstractApiIT implements ServiceApiTestSpec {
                                 String.format("All created services should be returned - Missing: %s.",
                                         expectedService)));
         expectedServices.stream().forEach(
-                expectedService -> assertEquals(expectedService,
+                expectedService -> assertEqualsIgnoringEmptyLists(expectedService,
                         retrievedMap.get(expectedService.getId()),
                         "The correct services should be retrieved."));
     }

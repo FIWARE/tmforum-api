@@ -345,7 +345,7 @@ public class ServiceCandidateApiIT extends AbstractApiIT implements ServiceCandi
 								String.format("All created serviceCandidates should be returned - Missing: %s.",
 										expectedServiceCandidate)));
 		expectedServiceCandidates.stream().forEach(
-				expectedServiceCandidate -> assertEquals(expectedServiceCandidate,
+				expectedServiceCandidate -> assertEqualsIgnoringEmptyLists(expectedServiceCandidate,
 						retrievedMap.get(expectedServiceCandidate.getId()),
 						"The correct serviceCandidates should be retrieved."));
 	}

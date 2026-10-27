@@ -370,7 +370,7 @@ public class UsageSpecificationApiIT extends AbstractApiIT implements UsageSpeci
 				.forEach(expectedUsage -> assertTrue(retrievedMap.containsKey(expectedUsage.getId()),
 						String.format("All created usageSpecification should be returned - Missing: %s.", expectedUsage)));
 		expectedUsageSpecifications.stream().forEach(
-				expectedUsageSpecification -> assertEquals(expectedUsageSpecification, retrievedMap.get(expectedUsageSpecification.getId()),
+				expectedUsageSpecification -> assertEqualsIgnoringEmptyLists(expectedUsageSpecification, retrievedMap.get(expectedUsageSpecification.getId()),
 						"The correct usageSpecification should be retrieved."));
 
 	}

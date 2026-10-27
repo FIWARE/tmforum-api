@@ -408,7 +408,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 				.forEach(expectedPartyAccount -> assertTrue(retrievedMap.containsKey(expectedPartyAccount.getId()),
 						String.format("All created partyAccounts should be returned - Missing: %s.", expectedPartyAccount)));
 		expectedPartyAccounts.stream().forEach(
-				expectedPartyAccount -> assertEquals(expectedPartyAccount, retrievedMap.get(expectedPartyAccount.getId()),
+				expectedPartyAccount -> assertEqualsIgnoringEmptyLists(expectedPartyAccount, retrievedMap.get(expectedPartyAccount.getId()),
 						"The correct partyAccounts should be retrieved."));
 	}
 

@@ -350,7 +350,7 @@ public class ServiceCategoryApiIT extends AbstractApiIT implements ServiceCatego
 								String.format("All created serviceCategorys should be returned - Missing: %s.",
 										expectedServiceCategory)));
 		expectedServiceCategorys.stream().forEach(
-				expectedServiceCategory -> assertEquals(expectedServiceCategory,
+				expectedServiceCategory -> assertEqualsIgnoringEmptyLists(expectedServiceCategory,
 						retrievedMap.get(expectedServiceCategory.getId()),
 						"The correct serviceCategorys should be retrieved."));
 	}

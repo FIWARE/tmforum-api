@@ -627,7 +627,7 @@ public class ServiceSpecificationApiIT extends AbstractApiIT implements ServiceS
                                 String.format("All created serviceSpecifications should be returned - Missing: %s.",
                                         expectedServiceSpecification)));
         expectedServiceSpecifications.stream().forEach(
-                expectedServiceSpecification -> assertEquals(expectedServiceSpecification,
+                expectedServiceSpecification -> assertEqualsIgnoringEmptyLists(expectedServiceSpecification,
                         retrievedMap.get(expectedServiceSpecification.getId()),
                         "The correct serviceSpecifications should be retrieved."));
     }

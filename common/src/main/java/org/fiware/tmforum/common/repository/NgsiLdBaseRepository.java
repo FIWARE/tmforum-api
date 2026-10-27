@@ -197,7 +197,20 @@ public abstract class NgsiLdBaseRepository {
 					.map(existingEntityVO -> mergeForUpdate(existingEntityVO, updateEntityVO))
 					.flatMap(mergedEntityVO -> replaceEntity(entityId, mergedEntityVO));
 		}
-		return patchEntity(URI.create(id), ngsiMapper.map(updateEntityVO));
+		return patchEntity(URI.create(id), ngsiMapper.map(withEmptiedListsAsEmptyArrays(updateEntityVO)));
+	}
+
+	// Orion-LD 1.9 rejects NGSI-LD Null in PATCH /attrs (207, attribute kept), but stores `[]` as an empty
+	// value that reads back as an empty list - the wire format used before NgsiLdWriteOperation existed.
+	private static EntityVO withEmptiedListsAsEmptyArrays(EntityVO update) {
+		Optional.ofNullable(update.getAdditionalProperties()).ifPresent(properties -> properties.replaceAll(
+				(name, value) -> {
+					if (!isNgsiLdNull(value)) {
+						return value;
+					}
+					return value instanceof PropertyListVO ? new PropertyListVO() : new RelationshipListVO();
+				}));
+		return update;
 	}
 
 	private EntityVO mergeForUpdate(EntityVO existing, EntityVO update) {

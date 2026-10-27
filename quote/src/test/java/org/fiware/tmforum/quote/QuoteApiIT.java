@@ -878,7 +878,7 @@ public class QuoteApiIT extends AbstractApiIT implements QuoteApiTestSpec {
 								String.format("All created quote should be returned - Missing: %s.",
 										expectedQuote)));
 		expectedQuotes.forEach(
-				expectedQuote -> assertEquals(expectedQuote,
+				expectedQuote -> assertEqualsIgnoringEmptyLists(expectedQuote,
 						retrievedMap.get(expectedQuote.getId()),
 						"The correct quote should be retrieved."));
 	}

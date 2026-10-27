@@ -528,7 +528,7 @@ public class ResourceApiIT extends AbstractApiIT implements ResourceApiTestSpec 
 								String.format("All created resources should be returned - Missing: %s.",
 										expectedResource)));
 		expectedResources.stream().forEach(
-				expectedResource -> assertEquals(expectedResource,
+				expectedResource -> assertEqualsIgnoringEmptyLists(expectedResource,
 						retrievedMap.get(expectedResource.getId()),
 						"The correct resources should be retrieved."));
 	}

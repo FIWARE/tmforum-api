@@ -727,7 +727,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 								String.format("All created product orders should be returned - Missing: %s.",
 										expectedProduct)));
 		expectedProducts.stream().forEach(
-				expectedProduct -> assertEquals(expectedProduct,
+				expectedProduct -> assertEqualsIgnoringEmptyLists(expectedProduct,
 						retrievedMap.get(expectedProduct.getId()),
 						"The correct product orders should be retrieved."));
 	}

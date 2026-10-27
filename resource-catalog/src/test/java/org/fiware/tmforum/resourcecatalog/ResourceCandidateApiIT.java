@@ -349,7 +349,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 								String.format("All created resourceCandidates should be returned - Missing: %s.",
 										expectedResourceCandidate)));
 		expectedResourceCandidates.stream().forEach(
-				expectedResourceCandidate -> assertEquals(expectedResourceCandidate,
+				expectedResourceCandidate -> assertEqualsIgnoringEmptyLists(expectedResourceCandidate,
 						retrievedMap.get(expectedResourceCandidate.getId()),
 						"The correct resourceCandidates should be retrieved."));
 	}

@@ -400,7 +400,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 								String.format("All created resourceFunctions should be returned - Missing: %s.",
 										expectedResourceFunction)));
 		expectedResourceFunctions.stream().forEach(
-				expectedResourceFunction -> assertEquals(expectedResourceFunction,
+				expectedResourceFunction -> assertEqualsIgnoringEmptyLists(expectedResourceFunction,
 						retrievedMap.get(expectedResourceFunction.getId()),
 						"The correct resourceFunctions should be retrieved."));
 	}

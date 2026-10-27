@@ -348,7 +348,7 @@ public class UsageApiIT extends AbstractApiIT implements UsageApiTestSpec {
 				.forEach(expectedUsage -> assertTrue(retrievedMap.containsKey(expectedUsage.getId()),
 						String.format("All created usages should be returned - Missing: %s.", expectedUsage)));
 		expectedUsages.stream().forEach(
-				expectedUsage -> assertEquals(expectedUsage, retrievedMap.get(expectedUsage.getId()),
+				expectedUsage -> assertEqualsIgnoringEmptyLists(expectedUsage, retrievedMap.get(expectedUsage.getId()),
 						"The correct usages should be retrieved."));
 
 	}

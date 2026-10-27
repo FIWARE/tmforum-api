@@ -346,7 +346,7 @@ public class CustomerApiIT extends AbstractApiIT implements CustomerApiTestSpec 
 		expectedCustomers.stream().forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
 				String.format("All created customers should be returned - Missing: %s.", expectedBill)));
 		expectedCustomers.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct customers should be retrieved."));
 	}
 

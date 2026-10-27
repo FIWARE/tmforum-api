@@ -424,7 +424,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 								String.format("All created productOfferingPrices should be returned - Missing: %s.",
 										expectedProductOfferingPrice)));
 		expectedProductOfferingPrices.stream().forEach(
-				expectedProductOfferingPrice -> assertEquals(expectedProductOfferingPrice,
+				expectedProductOfferingPrice -> assertEqualsIgnoringEmptyLists(expectedProductOfferingPrice,
 						retrievedMap.get(expectedProductOfferingPrice.getId()),
 						"The correct productOfferingPrices should be retrieved."));
 	}

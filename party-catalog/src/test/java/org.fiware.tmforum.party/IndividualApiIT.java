@@ -491,7 +491,7 @@ public class IndividualApiIT extends AbstractApiIT implements IndividualApiTestS
 		expectedIndividuals.forEach(expectedBill -> assertTrue(retrievedMap.containsKey(expectedBill.getId()),
 				String.format("All created individuals should be returned - Missing: %s.", expectedBill)));
 		expectedIndividuals.forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedMap.get(expectedBill.getId()),
 						"The correct individuals should be retrieved."));
 	}
 

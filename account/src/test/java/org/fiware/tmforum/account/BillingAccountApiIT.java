@@ -408,7 +408,7 @@ public class BillingAccountApiIT extends AbstractApiIT implements BillingAccount
 				.forEach(expectedBillingAccount -> assertTrue(retrievedMap.containsKey(expectedBillingAccount.getId()),
 						String.format("All created billingAccounts should be returned - Missing: %s.", expectedBillingAccount)));
 		expectedBillingAccounts.stream().forEach(
-				expectedBillingAccount -> assertEquals(expectedBillingAccount, retrievedMap.get(expectedBillingAccount.getId()),
+				expectedBillingAccount -> assertEqualsIgnoringEmptyLists(expectedBillingAccount, retrievedMap.get(expectedBillingAccount.getId()),
 						"The correct billingAccounts should be retrieved."));
 	}
 

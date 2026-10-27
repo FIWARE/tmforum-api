@@ -337,7 +337,7 @@ public class ServiceCatalogApiIT extends AbstractApiIT implements ServiceCatalog
                                 String.format("All created serviceCatalogs should be returned - Missing: %s.",
                                         expectedServiceCatalog)));
         expectedServiceCatalogs.stream().forEach(
-                expectedServiceCatalog -> assertEquals(expectedServiceCatalog,
+                expectedServiceCatalog -> assertEqualsIgnoringEmptyLists(expectedServiceCatalog,
                         retrievedMap.get(expectedServiceCatalog.getId()),
                         "The correct serviceCatalogs should be retrieved."));
     }

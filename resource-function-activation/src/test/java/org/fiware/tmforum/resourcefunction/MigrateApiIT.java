@@ -316,7 +316,7 @@ public class MigrateApiIT extends AbstractApiIT implements MigrateApiTestSpec {
 								String.format("All created migrates should be returned - Missing: %s.",
 										expectedMigrate)));
 		expectedMigrates.stream().forEach(
-				expectedMigrate -> assertEquals(expectedMigrate,
+				expectedMigrate -> assertEqualsIgnoringEmptyLists(expectedMigrate,
 						retrievedMap.get(expectedMigrate.getId()),
 						"The correct migrates should be retrieved."));
 	}
