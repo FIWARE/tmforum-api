@@ -42,8 +42,8 @@ public class ReferenceValidationService {
         if (references == null) {
             return Mono.just(List.of());
         }
-        // filtered before Flux.fromIterable, which rejects null elements
-        return Flux.fromStream(references.stream().filter(Objects::nonNull))
+        // Flux.fromIterable rejects null elements; the supplier gives each subscription a fresh stream
+        return Flux.fromStream(() -> references.stream().filter(Objects::nonNull))
                 .flatMapSequential(ref -> referenceResolves(ref)
                         .filter(resolves -> !resolves)
                         .map(resolves -> ref))

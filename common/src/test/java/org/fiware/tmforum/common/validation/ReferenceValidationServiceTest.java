@@ -78,6 +78,14 @@ class ReferenceValidationServiceTest {
 	}
 
 	@Test
+	public void findUnresolvedCanBeSubscribedRepeatedly() {
+		Mono<List<TestRef>> unresolved = service.findUnresolved(List.of(CATEGORY_A, MISSING_X));
+
+		assertEquals(List.of(MISSING_X), unresolved.block());
+		assertEquals(List.of(MISSING_X), unresolved.block());
+	}
+
+	@Test
 	public void getCheckingMonoReturnsTheObjectIfAllReferencesResolve() {
 		Object returnObject = new Object();
 
