@@ -23,6 +23,7 @@ import org.fiware.account.model.RelatedPartyVO;
 import org.fiware.account.model.RelatedPartyVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.PartyAccount;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -47,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.account"})
+@MicronautTest(packages = {"org.fiware.tmforum.account"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiTestSpec {
 
 	public final PartyAccountApiTestClient partyAccountApiTestClient;
@@ -386,7 +387,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 						String.format("All created partyAccounts should be returned - Missing: %s.", expectedPartyAccount,
 								retrievedPartyAccounts)));
 		expectedPartyAccounts.stream().forEach(
-				expectedPartyAccount -> assertEquals(expectedPartyAccount, retrievedMap.get(expectedPartyAccount.getId()),
+				expectedPartyAccount -> assertEqualsIgnoringEmptyLists(expectedPartyAccount, retrievedMap.get(expectedPartyAccount.getId()),
 						"The correct partyAccounts should be retrieved."));
 
 		// get with pagination
@@ -511,7 +512,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 				.cycleSpecification(billingCycleRV);
 		expectedPartyAccount.billStructure(billStructure);
 
-		assertEquals(expectedPartyAccount, updatedPartyAccount, message);
+		assertEqualsIgnoringEmptyLists(expectedPartyAccount, updatedPartyAccount, message);
 	}
 
 	private static Stream<Arguments> providePartyAccountUpdates() {
@@ -692,7 +693,7 @@ public class PartyAccountApiIT extends AbstractApiIT implements PartyAccountApiT
 		//then retrieve
 		HttpResponse<PartyAccountVO> retrievedPartyAccount = callAndCatch(() -> partyAccountApiTestClient.retrievePartyAccount(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedPartyAccount.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedPartyAccount, retrievedPartyAccount.body(), "The correct partyAccount should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedPartyAccount, retrievedPartyAccount.body(), "The correct partyAccount should be returned.");
 	}
 
 	@Disabled

@@ -32,6 +32,7 @@ import org.fiware.party.model.TaxExemptionCertificateVO;
 import org.fiware.party.model.TaxExemptionCertificateVOTestExample;
 import org.fiware.party.model.TimePeriodVO;
 import org.fiware.party.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -59,7 +60,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.party"})
+@MicronautTest(packages = {"org.fiware.tmforum.party"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec {
 
 	private final OrganizationApiTestClient organizationApiTestClient;
@@ -389,7 +390,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 								expectedOrganization,
 								retrievedOrganizations)));
 		expectedOrganizations.stream().forEach(
-				expectedOrganization -> assertEquals(expectedOrganization,
+				expectedOrganization -> assertEqualsIgnoringEmptyLists(expectedOrganization,
 						retrievedMap.get(expectedOrganization.getId()),
 						"The correct organizations should be retrieved."));
 
@@ -536,7 +537,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		HttpResponse<OrganizationVO> updateResponse = callAndCatch(
 				() -> organizationApiTestClient.patchOrganization(null, id, updateVO));
 		assertEquals(HttpStatus.OK, updateResponse.getStatus(), "The organization should have been updated");
-		assertEquals(expectedOrg, updateResponse.body(), "The changes should have been set.");
+		assertEqualsIgnoringEmptyLists(expectedOrg, updateResponse.body(), "The changes should have been set.");
 
 	}
 
@@ -565,7 +566,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		}
 
 
-		assertEquals(expectedOrganization, organizationUpdateResponse.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedOrganization, organizationUpdateResponse.body(), message);
 
 		HttpResponse<OrganizationVO> organizationGetResponse = callAndCatch(
 				() -> organizationApiTestClient.retrieveOrganization(null, organizationId, null));
@@ -793,7 +794,7 @@ class OrganizationApiIT extends AbstractApiIT implements OrganizationApiTestSpec
 		HttpResponse<OrganizationVO> retrievedOrganization = callAndCatch(
 				() -> organizationApiTestClient.retrieveOrganization(null, organizationId, null));
 		assertEquals(HttpStatus.OK, retrievedOrganization.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedOrg, retrievedOrganization.body(), "The correct org should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedOrg, retrievedOrganization.body(), "The correct org should be returned.");
 	}
 
 	@Disabled("400 cannot happen, only 404")

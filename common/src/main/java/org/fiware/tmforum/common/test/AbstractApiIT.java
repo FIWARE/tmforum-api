@@ -1,6 +1,8 @@
 package org.fiware.tmforum.common.test;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
@@ -10,8 +12,12 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Common super class for the api tests
@@ -71,6 +77,30 @@ public abstract class AbstractApiIT {
         } catch (HttpClientResponseException e) {
             return (HttpResponse<T>) e.getResponse();
         }
+    }
+
+    /**
+     * Asserts equality of the JSON representations, ignoring empty arrays: the mapping library does not store an
+     * empty list in the broker, so a list sent as {@code []} reads back as absent.
+     */
+    protected void assertEqualsIgnoringEmptyLists(Object expected, Object actual, String message) {
+        assertEquals(withoutEmptyArrays(objectMapper.valueToTree(expected)),
+                withoutEmptyArrays(objectMapper.valueToTree(actual)), message);
+    }
+
+    private static JsonNode withoutEmptyArrays(JsonNode node) {
+        if (node == null) {
+            return null;
+        }
+        if (node instanceof ObjectNode objectNode) {
+            List<String> emptyArrays = objectNode.properties().stream()
+                    .filter(property -> property.getValue().isArray() && property.getValue().isEmpty())
+                    .map(Map.Entry::getKey)
+                    .toList();
+            objectNode.remove(emptyArrays);
+        }
+        node.forEach(AbstractApiIT::withoutEmptyArrays);
+        return node;
     }
 
     protected String getLinkHeader(URL contextUrl) {

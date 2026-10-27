@@ -13,6 +13,7 @@ import org.fiware.serviceordering.model.EventSubscriptionInputVO;
 import org.fiware.serviceordering.model.EventSubscriptionInputVOTestExample;
 import org.fiware.serviceordering.model.EventSubscriptionVO;
 import org.fiware.serviceordering.model.EventSubscriptionVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -34,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Integration tests for the event subscription API endpoints of the Service Order Management API.
  */
-@MicronautTest(packages = { "org.fiware.tmforum.serviceordering" })
+@MicronautTest(packages = { "org.fiware.tmforum.serviceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 @Requires(notEnv = "scorpio")
 // without, the test client will try to create an empty q subscription
 @Property(name = "jackson.serialization-inclusion", value = "non_empty")

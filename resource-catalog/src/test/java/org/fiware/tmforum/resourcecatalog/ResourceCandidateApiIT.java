@@ -18,6 +18,7 @@ import org.fiware.resourcecatalog.model.ResourceCategoryRefVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceSpecificationRefVOTestExample;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -46,7 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCandidateApiTestSpec {
 
 	public final ResourceCandidateApiTestClient resourceCandidateApiTestClient;
@@ -323,7 +324,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 										expectedResourceCandidate,
 										retrievedResourceCandidates)));
 		expectedResourceCandidates.stream().forEach(
-				expectedResourceCandidate -> assertEquals(expectedResourceCandidate,
+				expectedResourceCandidate -> assertEqualsIgnoringEmptyLists(expectedResourceCandidate,
 						retrievedMap.get(expectedResourceCandidate.getId()),
 						"The correct resourceCandidates should be retrieved."));
 
@@ -443,7 +444,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		ResourceCandidateVO updatedResourceCandidate = updateResponse.body();
 		expectedResourceCandidate.href(URI.create(resourceId)).id(resourceId);
 
-		assertEquals(expectedResourceCandidate, updatedResourceCandidate, message);
+		assertEqualsIgnoringEmptyLists(expectedResourceCandidate, updatedResourceCandidate, message);
 	}
 
 	private static Stream<Arguments> provideResourceCandidateUpdates() {
@@ -617,7 +618,7 @@ public class ResourceCandidateApiIT extends AbstractApiIT implements ResourceCan
 		HttpResponse<ResourceCandidateVO> retrievedRF = callAndCatch(
 				() -> resourceCandidateApiTestClient.retrieveResourceCandidate(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedResourceCandidate, retrievedRF.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedResourceCandidate, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

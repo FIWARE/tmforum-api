@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.NgsiLdWriteOperation;
 import io.micronaut.http.HttpResponse;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityFragmentVO;
@@ -49,21 +50,21 @@ class NgsiLdBaseRepositoryPatchUpdateTest {
 
 	@Test
 	public void domainEntityIsOnlyMappedOnce() {
-		// used to call javaObjectMapper.toEntityVO(domainEntity) a second time inline instead of
+		// used to call javaObjectMapper.toEntityVO a second time inline instead of
 		// reusing the already-computed value, wastefully mapping the same object twice.
 		EntityVO mapped = anEntity();
-		when(javaObjectMapper.toEntityVO(any())).thenReturn(mapped);
+		when(javaObjectMapper.toEntityVO(any(), eq(NgsiLdWriteOperation.UPDATE))).thenReturn(mapped);
 
 		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
 
-		verify(javaObjectMapper, times(1)).toEntityVO(any());
+		verify(javaObjectMapper, times(1)).toEntityVO(any(), eq(NgsiLdWriteOperation.UPDATE));
 	}
 
 	@Test
 	public void thePatchIsBuiltFromTheSingleMappedEntity() {
 		EntityVO mapped = anEntity();
 		mapped.setAdditionalProperties("name", null);
-		when(javaObjectMapper.toEntityVO(any())).thenReturn(mapped);
+		when(javaObjectMapper.toEntityVO(any(), eq(NgsiLdWriteOperation.UPDATE))).thenReturn(mapped);
 
 		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
 

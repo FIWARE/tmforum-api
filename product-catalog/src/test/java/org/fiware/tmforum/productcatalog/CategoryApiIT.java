@@ -20,6 +20,7 @@ import org.fiware.productcatalog.model.ProductOfferingRefVO;
 import org.fiware.productcatalog.model.ProductOfferingRefVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -47,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec {
 
 	public final CategoryApiTestClient categoryApiTestClient;
@@ -326,7 +327,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 						String.format("All created categorys should be returned - Missing: %s.", expectedCategory,
 								retrievedCategorys)));
 		expectedCategorys.stream().forEach(
-				expectedCategory -> assertEquals(expectedCategory, retrievedMap.get(expectedCategory.getId()),
+				expectedCategory -> assertEqualsIgnoringEmptyLists(expectedCategory, retrievedMap.get(expectedCategory.getId()),
 						"The correct categorys should be retrieved."));
 
 		// get with pagination
@@ -445,7 +446,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 		expectedCategory.setId(catalogId);
 		expectedCategory.setParentId(null);
 
-		assertEquals(expectedCategory, updatedCategory, message);
+		assertEqualsIgnoringEmptyLists(expectedCategory, updatedCategory, message);
 	}
 
 	private static Stream<Arguments> provideCategoryUpdates() {
@@ -638,7 +639,7 @@ public class CategoryApiIT extends AbstractApiIT implements CategoryApiTestSpec 
 		HttpResponse<CategoryVO> retrievedCategory = callAndCatch(
 				() -> categoryApiTestClient.retrieveCategory(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedCategory.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedCategory, retrievedCategory.body(), "The correct category should be returned.");
+		assertEqualsIgnoringEmptyLists(expectedCategory, retrievedCategory.body(), "The correct category should be returned.");
 	}
 
 	@Disabled("400 cannot happen, only 404")

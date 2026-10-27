@@ -18,6 +18,7 @@ import org.fiware.resourcecatalog.model.ResourceCatalogVOTestExample;
 import org.fiware.resourcecatalog.model.ResourceCategoryRefVOTestExample;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -46,7 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatalogApiTestSpec {
 
 	public final ResourceCatalogApiTestClient resourceCatalogApiTestClient;
@@ -313,7 +314,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 										expectedResourceCatalog,
 										retrievedResourceCatalogs)));
 		expectedResourceCatalogs.stream().forEach(
-				expectedResourceCatalog -> assertEquals(expectedResourceCatalog,
+				expectedResourceCatalog -> assertEqualsIgnoringEmptyLists(expectedResourceCatalog,
 						retrievedMap.get(expectedResourceCatalog.getId()),
 						"The correct resourceCatalogs should be retrieved."));
 
@@ -432,7 +433,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 		ResourceCatalogVO updatedResourceCatalog = updateResponse.body();
 		expectedResourceCatalog.href(URI.create(resourceId)).id(resourceId);
 
-		assertEquals(expectedResourceCatalog, updatedResourceCatalog, message);
+		assertEqualsIgnoringEmptyLists(expectedResourceCatalog, updatedResourceCatalog, message);
 	}
 
 	private static Stream<Arguments> provideResourceCatalogUpdates() {
@@ -597,7 +598,7 @@ public class ResourceCatalogApiIT extends AbstractApiIT implements ResourceCatal
 		HttpResponse<ResourceCatalogVO> retrievedRF = callAndCatch(
 				() -> resourceCatalogApiTestClient.retrieveResourceCatalog(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedResourceCatalog, retrievedRF.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedResourceCatalog, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

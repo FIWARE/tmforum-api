@@ -14,6 +14,7 @@ import org.fiware.document.model.DocumentSpecificationUpdateVO;
 import org.fiware.document.model.DocumentSpecificationVO;
 import org.fiware.document.model.RelatedPartyVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
@@ -39,7 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.documentmanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.documentmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class DocumentSpecificationApiIT extends AbstractApiIT implements DocumentSpecificationApiTestSpec {
 
     public final DocumentSpecificationApiTestClient documentSpecificationApiTestClient;

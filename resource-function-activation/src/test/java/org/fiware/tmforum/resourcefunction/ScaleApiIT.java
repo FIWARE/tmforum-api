@@ -15,6 +15,7 @@ import org.fiware.resourcefunction.model.ScaleVO;
 import org.fiware.resourcefunction.model.ScaleVOTestExample;
 import org.fiware.resourcefunction.model.ScheduleRefVOTestExample;
 import org.fiware.resourcefunction.model.TaskStateTypeVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -40,7 +41,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
 
     public final ScaleApiTestClient scaleApiTestClient;
@@ -226,7 +227,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
                                         expectedScale,
                                         retrievedScales)));
         expectedScales.stream().forEach(
-                expectedScale -> assertEquals(expectedScale,
+                expectedScale -> assertEqualsIgnoringEmptyLists(expectedScale,
                         retrievedMap.get(expectedScale.getId()),
                         "The correct scales should be retrieved."));
 
@@ -330,7 +331,7 @@ public class ScaleApiIT extends AbstractApiIT implements ScaleApiTestSpec {
 
         HttpResponse<ScaleVO> retreiveResponse = callAndCatch(() -> scaleApiTestClient.retrieveScale(null, scaleId, null));
         assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");
-        assertEquals(expectedScale, retreiveResponse.body(), "The expected scale should be returend.");
+        assertEqualsIgnoringEmptyLists(expectedScale, retreiveResponse.body(), "The expected scale should be returend.");
     }
 
     @Disabled("400 cannot happen, only 404")

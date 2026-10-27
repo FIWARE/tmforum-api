@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.NgsiLdWriteOperation;
 import io.github.wistefan.mapping.ReservedWordHandler;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.cache.annotation.CacheInvalidate;
@@ -18,7 +19,9 @@ import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
+import org.fiware.ngsi.model.PropertyListVO;
 import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.ngsi.model.SubscriptionVO;
 import org.fiware.tmforum.common.CommonConstants;
@@ -48,6 +51,9 @@ import java.util.stream.Stream;
  */
 @RequiredArgsConstructor
 public abstract class NgsiLdBaseRepository {
+
+	/** NGSI-LD Null (ETSI GS CIM 009 4.5.0), written by {@link NgsiLdWriteOperation#UPDATE} for an emptied list. */
+	private static final String NGSI_LD_NULL = "urn:ngsi-ld:null";
 
 	protected final GeneralProperties generalProperties;
 	protected final EntitiesApiClient entitiesApi;
@@ -181,7 +187,8 @@ public abstract class NgsiLdBaseRepository {
 	 * @return an empty mono, or an error if the entity does not exist
 	 */
 	public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
-		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity);
+		// UPDATE writes a list emptied by the update as NGSI-LD Null, so the broker deletes it instead of keeping it.
+		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity, NgsiLdWriteOperation.UPDATE);
 		URI entityId = URI.create(id);
 		if (generalProperties.isReplaceOnUpdate()) {
 			return retrieveEntityById(entityId)
@@ -203,7 +210,14 @@ public abstract class NgsiLdBaseRepository {
 		// PATCH /attrs sends the freshly mapped `update` only, which JavaObjectMapper escapes.
 		reEscapeReservedWords(existing);
 		if (update.getAdditionalProperties() != null) {
-			update.getAdditionalProperties().forEach(existing::setAdditionalProperties);
+			update.getAdditionalProperties().forEach((name, value) -> {
+				// a full replace has no delete semantics for NGSI-LD Null, so an emptied list is dropped instead
+				if (isNgsiLdNull(value)) {
+					Optional.ofNullable(existing.getAdditionalProperties()).ifPresent(properties -> properties.remove(name));
+				} else {
+					existing.setAdditionalProperties(name, value);
+				}
+			});
 		}
 		if (update.getLocation() != null) existing.setLocation(update.getLocation());
 		if (update.getObservationSpace() != null) existing.setObservationSpace(update.getObservationSpace());
@@ -211,6 +225,16 @@ public abstract class NgsiLdBaseRepository {
 		if (update.getModifiedAt() != null) existing.setModifiedAt(update.getModifiedAt());
 		if (update.getAtContext() != null) existing.setAtContext(update.getAtContext());
 		return existing;
+	}
+
+	private static boolean isNgsiLdNull(AdditionalPropertyVO value) {
+		if (value instanceof PropertyListVO propertyList && propertyList.size() == 1) {
+			return NGSI_LD_NULL.equals(propertyList.get(0).getValue());
+		}
+		if (value instanceof RelationshipListVO relationshipList && relationshipList.size() == 1) {
+			return URI.create(NGSI_LD_NULL).equals(relationshipList.get(0).getObject());
+		}
+		return false;
 	}
 
 	/**

@@ -13,6 +13,7 @@ import org.fiware.resourceordering.model.EventSubscriptionInputVO;
 import org.fiware.resourceordering.model.EventSubscriptionInputVOTestExample;
 import org.fiware.resourceordering.model.EventSubscriptionVO;
 import org.fiware.resourceordering.model.EventSubscriptionVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest(packages = { "org.fiware.tmforum.resourceordering" })
+@MicronautTest(packages = { "org.fiware.tmforum.resourceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 @Requires(notEnv = "scorpio")
 // without, the test client will try to create an empty q subscription
 @Property(name = "jackson.serialization-inclusion", value = "non_empty")

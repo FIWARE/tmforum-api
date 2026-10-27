@@ -39,6 +39,7 @@ import org.fiware.productordering.model.ProductRefOrValueVOTestExample;
 import org.fiware.productordering.model.QuoteRefVOTestExample;
 import org.fiware.productordering.model.RelatedChannelVOTestExample;
 import org.fiware.productordering.model.RelatedPartyVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -68,7 +69,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productordering"})
+@MicronautTest(packages = {"org.fiware.tmforum.productordering"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderApiTestSpec {
 
 	public final ProductOrderApiTestClient productOrderApiTestClient;
@@ -701,7 +702,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 										expectedProduct,
 										retrievedProducts)));
 		expectedProducts.stream().forEach(
-				expectedProduct -> assertEquals(expectedProduct,
+				expectedProduct -> assertEqualsIgnoringEmptyLists(expectedProduct,
 						retrievedMap.get(expectedProduct.getId()),
 						"The correct product orders should be retrieved."));
 
@@ -822,7 +823,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		ProductOrderVO updatedProduct = updateResponse.body();
 		expectedProduct.href(productId).id(productId).orderDate(now);
 
-		assertEquals(expectedProduct, updatedProduct, message);
+		assertEqualsIgnoringEmptyLists(expectedProduct, updatedProduct, message);
 	}
 
 	private static Stream<Arguments> provideProductOrderUpdates() {
@@ -1432,7 +1433,7 @@ public class ProductOrderingApiIT extends AbstractApiIT implements ProductOrderA
 		HttpResponse<ProductOrderVO> retrievedRF = callAndCatch(
 				() -> productOrderApiTestClient.retrieveProductOrder(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedProduct, retrievedRF.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedProduct, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

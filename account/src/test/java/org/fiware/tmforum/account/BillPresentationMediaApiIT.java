@@ -16,6 +16,7 @@ import org.fiware.account.model.BillPresentationMediaVO;
 import org.fiware.account.model.BillPresentationMediaVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.account.domain.BillPresentationMedia;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
-@MicronautTest(packages = {"org.fiware.tmforum.account"})
+@MicronautTest(packages = {"org.fiware.tmforum.account"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class BillPresentationMediaApiIT extends AbstractApiIT implements BillPresentationMediaApiTestSpec {
 
 	public final BillPresentationMediaApiTestClient billPresentationMediaApiTestClient;

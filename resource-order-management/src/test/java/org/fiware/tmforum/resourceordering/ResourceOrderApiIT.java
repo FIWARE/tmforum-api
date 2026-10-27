@@ -15,6 +15,7 @@ import org.fiware.resourceordering.model.ResourceOrderUpdateVO;
 import org.fiware.resourceordering.model.ResourceOrderUpdateVOTestExample;
 import org.fiware.resourceordering.model.ResourceOrderVO;
 import org.fiware.resourceordering.model.ResourceOrderVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -40,7 +41,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.resourceordering" })
+@MicronautTest(packages = { "org.fiware.tmforum.resourceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ResourceOrderApiIT extends AbstractApiIT implements ResourceOrderApiTestSpec {
 
 	public final ResourceOrderApiTestClient resourceOrderApiTestClient;

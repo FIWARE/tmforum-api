@@ -19,6 +19,7 @@ import org.fiware.resourcecatalog.model.ResourceCategoryVO;
 import org.fiware.resourcecatalog.model.ResourceCategoryVOTestExample;
 import org.fiware.resourcecatalog.model.TimePeriodVO;
 import org.fiware.resourcecatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -47,7 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCategoryApiTestSpec {
 
 	public final ResourceCategoryApiTestClient resourceCategoryApiTestClient;
@@ -335,7 +336,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 										expectedResourceCategory,
 										retrievedResourceCategorys)));
 		expectedResourceCategorys.stream().forEach(
-				expectedResourceCategory -> assertEquals(expectedResourceCategory,
+				expectedResourceCategory -> assertEqualsIgnoringEmptyLists(expectedResourceCategory,
 						retrievedMap.get(expectedResourceCategory.getId()),
 						"The correct resourceCategorys should be retrieved."));
 
@@ -454,7 +455,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		ResourceCategoryVO updatedResourceCategory = updateResponse.body();
 		expectedResourceCategory.href(URI.create(resourceId)).id(resourceId);
 
-		assertEquals(expectedResourceCategory, updatedResourceCategory, message);
+		assertEqualsIgnoringEmptyLists(expectedResourceCategory, updatedResourceCategory, message);
 	}
 
 	private static Stream<Arguments> provideResourceCategoryUpdates() {
@@ -658,7 +659,7 @@ public class ResourceCategoryApiIT extends AbstractApiIT implements ResourceCate
 		HttpResponse<ResourceCategoryVO> retrievedRF = callAndCatch(
 				() -> resourceCategoryApiTestClient.retrieveResourceCategory(null, id, fieldsParameter));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), message);
-		assertEquals(expectedResourceCategory, retrievedRF.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedResourceCategory, retrievedRF.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

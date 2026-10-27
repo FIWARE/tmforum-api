@@ -27,6 +27,7 @@ import org.fiware.productcatalog.model.TaxItemVO;
 import org.fiware.productcatalog.model.TaxItemVOTestExample;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.productcatalog.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -54,7 +55,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"})
+@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductOfferingPriceApiTestSpec {
 
 	public final ProductOfferingPriceApiTestClient productOfferingPriceApiTestClient;
@@ -398,7 +399,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 										expectedProductOfferingPrice,
 										retrievedProductOfferingPrices)));
 		expectedProductOfferingPrices.stream().forEach(
-				expectedProductOfferingPrice -> assertEquals(expectedProductOfferingPrice,
+				expectedProductOfferingPrice -> assertEqualsIgnoringEmptyLists(expectedProductOfferingPrice,
 						retrievedMap.get(expectedProductOfferingPrice.getId()),
 						"The correct productOfferingPrices should be retrieved."));
 
@@ -521,7 +522,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		expectedProductOfferingPrice.setId(catalogId);
 
 		expectedProductOfferingPrice.setBundledPopRelationship(null);
-		assertEquals(expectedProductOfferingPrice, updatedCatalog, message);
+		assertEqualsIgnoringEmptyLists(expectedProductOfferingPrice, updatedCatalog, message);
 	}
 
 	private static Stream<Arguments> provideProductOfferingPriceUpdates() {
@@ -720,7 +721,7 @@ public class ProductOfferingPriceApiIT extends AbstractApiIT implements ProductO
 		HttpResponse<ProductOfferingPriceVO> retrievedPOP = callAndCatch(
 				() -> productOfferingPriceApiTestClient.retrieveProductOfferingPrice(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedPOP.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedProductOfferingPrice, retrievedPOP.body(),
+		assertEqualsIgnoringEmptyLists(expectedProductOfferingPrice, retrievedPOP.body(),
 				"The correct productOffering should be returned.");
 	}
 

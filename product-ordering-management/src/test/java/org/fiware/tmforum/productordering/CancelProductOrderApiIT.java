@@ -16,6 +16,7 @@ import org.fiware.productordering.model.CancelProductOrderVOTestExample;
 import org.fiware.productordering.model.ProductOrderCreateVO;
 import org.fiware.productordering.model.ProductOrderCreateVOTestExample;
 import org.fiware.productordering.model.ProductOrderRefVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -45,7 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.productordering"})
+@MicronautTest(packages = {"org.fiware.tmforum.productordering"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CancelProductOrderApiIT extends AbstractApiIT implements CancelProductOrderApiTestSpec {
 
 	public final CancelProductOrderApiTestClient cancelProductOrderApiTestClient;

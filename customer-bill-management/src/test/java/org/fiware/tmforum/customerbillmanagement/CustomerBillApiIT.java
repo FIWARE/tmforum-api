@@ -14,6 +14,7 @@ import org.fiware.customerbillmanagement.model.CustomerBillVOTestExample;
 import org.fiware.customerbillmanagement.model.StateValueVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -42,7 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"})
+@MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiTestSpec {
 
 	private final CustomerBillApiTestClient customerBillApiTestClient;
@@ -119,7 +120,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 				String.format("All created bills should be returned - Missing: %s.", expectedBill,
 						retrievedBills)));
 		expectedBillVOS.stream().forEach(
-				expectedBill -> assertEquals(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
+				expectedBill -> assertEqualsIgnoringEmptyLists(expectedBill, retrievedBillsMap.get(expectedBill.getId()),
 						"The correct bill should be retrieved."));
 
 		// get with pagination
@@ -229,7 +230,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 		customerBillVO.setState(StateValueVO.ON_HOLD);
 		customerBillVO.setLastUpdate(Instant.ofEpochSecond(1234));
 		customerBillVO.setBillingPeriod(null);
-		assertEquals(customerBillVO, updatedCustomerBill, "The updated bill should be returned");
+		assertEqualsIgnoringEmptyLists(customerBillVO, updatedCustomerBill, "The updated bill should be returned");
 
 	}
 
@@ -320,7 +321,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 				() -> customerBillApiTestClient.retrieveCustomerBill(null, billId, fieldsParameter));
 
 		assertEquals(HttpStatus.OK, response.getStatus(), message);
-		assertEquals(expectedCustomerBillVo, response.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedCustomerBillVo, response.body(), message);
 	}
 
 	private static Stream<Arguments> provideFieldParameters() {

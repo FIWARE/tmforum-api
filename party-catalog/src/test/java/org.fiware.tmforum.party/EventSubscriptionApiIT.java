@@ -13,6 +13,7 @@ import org.fiware.party.model.EventSubscriptionInputVO;
 import org.fiware.party.model.EventSubscriptionInputVOTestExample;
 import org.fiware.party.model.EventSubscriptionVO;
 import org.fiware.party.model.EventSubscriptionVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest(packages = { "org.fiware.tmforum.party" })
+@MicronautTest(packages = { "org.fiware.tmforum.party" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 /*
  * the test currently fails for scorpio -  {@link https://github.com/ScorpioBroker/ScorpioBroker/issues/456}
  */

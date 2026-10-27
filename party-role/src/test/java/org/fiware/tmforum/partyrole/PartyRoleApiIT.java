@@ -26,6 +26,7 @@ import org.fiware.partyRole.model.RelatedPartyVO;
 import org.fiware.partyRole.model.RelatedPartyVOTestExample;
 import org.fiware.partyRole.model.TimePeriodVO;
 import org.fiware.partyRole.model.TimePeriodVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -43,7 +44,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.val;
 
-@MicronautTest(packages = {"org.fiware.tmforum.partyRole"})
+@MicronautTest(packages = {"org.fiware.tmforum.partyRole"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpec {
 
 	private final PartyRoleApiTestClient prApiTestClient;
@@ -375,7 +376,7 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 		assertEquals(HttpStatus.OK, updatePrResponse.getStatus(), message);
 		PartyRoleVO updatedAgSpec = updatePrResponse.body();
 		expectedpr.id(id).href(id);
-		assertEquals(expectedpr, updatedAgSpec, message);
+		assertEqualsIgnoringEmptyLists(expectedpr, updatedAgSpec, message);
 	}
 
 	private static Stream<Arguments> provideInvalidUpdates() {
@@ -483,7 +484,7 @@ public class PartyRoleApiIT extends AbstractApiIT implements PartyRoleApiTestSpe
 		HttpResponse<PartyRoleVO> retrieveResponse = callAndCatch(
 				() -> prApiTestClient.retrievePartyRole(null, id, fields));
 		assertEquals(HttpStatus.OK, retrieveResponse.getStatus(), message);
-		assertEquals(expectedpr, retrieveResponse.body(), message);
+		assertEqualsIgnoringEmptyLists(expectedpr, retrieveResponse.body(), message);
 	}
 
 	@Disabled("400 cannot happen, only 404")

@@ -1,16 +1,23 @@
 package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.github.wistefan.mapping.NgsiLdWriteOperation;
 import io.micronaut.http.HttpResponse;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.BatchOperationResultVO;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.PropertyListVO;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.ngsi.model.RelationshipListVO;
+import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Mono;
 
@@ -18,9 +25,11 @@ import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,6 +42,8 @@ import static org.mockito.Mockito.when;
  */
 class NgsiLdBaseRepositoryUpdateTest {
 
+	private static final String NGSI_LD_NULL = "urn:ngsi-ld:null";
+	private static final String LIST_ATTRIBUTE = "productOfferingTerm";
 	private static final String ENTITY_ID = "urn:ngsi-ld:product-offering-price:8de1a1f4-2e56-4e3e-8d5b-8a3fa4a0e6d1";
 
 	private GeneralProperties properties;
@@ -124,7 +135,7 @@ class NgsiLdBaseRepositoryUpdateTest {
 		// e.g. an update that only touches a structural field. The merge used to NPE here.
 		EntityVO existing = anEntity();
 		existing.setAdditionalProperties("name", aProperty("an offering price"));
-		when(javaObjectMapper.toEntityVO(any())).thenReturn(new EntityVO());
+		when(javaObjectMapper.toEntityVO(any(), eq(NgsiLdWriteOperation.UPDATE))).thenReturn(new EntityVO());
 		when(entitiesApi.retrieveEntityById(eq(URI.create(ENTITY_ID)), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.ok(existing)));
 
@@ -149,6 +160,48 @@ class NgsiLdBaseRepositoryUpdateTest {
 				"The update still has to be merged on top of the existing entity.");
 	}
 
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("emptiedLists")
+	public void anEmptiedListRemovesTheExistingAttribute(String description, AdditionalPropertyVO emptiedList) {
+		// UPDATE mode writes an emptied list as NGSI-LD Null, which a full replace cannot express as a deletion
+		EntityVO existing = anEntity();
+		existing.setAdditionalProperties("name", aProperty("an offering price"));
+		existing.setAdditionalProperties(LIST_ATTRIBUTE, propertyList(aProperty("a term")));
+		EntityVO update = new EntityVO();
+		update.setAdditionalProperties(LIST_ATTRIBUTE, emptiedList);
+		mockRetrieval(existing, update);
+
+		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
+
+		EntityVO written = writtenEntity();
+		assertNull(written.getAdditionalProperties().get(LIST_ATTRIBUTE), description);
+		assertTrue(written.getAdditionalProperties().containsKey("name"), "Other attributes have to be kept.");
+	}
+
+	private static Stream<Arguments> emptiedLists() {
+		RelationshipVO nullRelationship = new RelationshipVO();
+		nullRelationship.setObject(URI.create(NGSI_LD_NULL));
+		RelationshipListVO relationshipList = new RelationshipListVO();
+		relationshipList.add(nullRelationship);
+		return Stream.of(
+				Arguments.of("An emptied property list has to be removed.", propertyList(aProperty(NGSI_LD_NULL))),
+				Arguments.of("An emptied relationship list has to be removed.", relationshipList));
+	}
+
+	@Test
+	public void aNonEmptyListReplacesTheExistingAttribute() {
+		EntityVO existing = anEntity();
+		existing.setAdditionalProperties(LIST_ATTRIBUTE, propertyList(aProperty("a term")));
+		EntityVO update = new EntityVO();
+		update.setAdditionalProperties(LIST_ATTRIBUTE, propertyList(aProperty("another term")));
+		mockRetrieval(existing, update);
+
+		repository.updateDomainEntity(ENTITY_ID, new Object()).block();
+
+		PropertyListVO written = (PropertyListVO) writtenEntity().getAdditionalProperties().get(LIST_ATTRIBUTE);
+		assertEquals("another term", written.get(0).getValue());
+	}
+
 	private EntityVO anEntity() {
 		EntityVO entityVO = new EntityVO();
 		entityVO.setId(URI.create(ENTITY_ID));
@@ -156,7 +209,13 @@ class NgsiLdBaseRepositoryUpdateTest {
 		return entityVO;
 	}
 
-	private PropertyVO aProperty(Object value) {
+	private static PropertyListVO propertyList(PropertyVO... properties) {
+		PropertyListVO propertyList = new PropertyListVO();
+		propertyList.addAll(List.of(properties));
+		return propertyList;
+	}
+
+	private static PropertyVO aProperty(Object value) {
 		PropertyVO propertyVO = new PropertyVO();
 		// the mapping library parses free-form values into mutable maps, mirror that
 		propertyVO.setValue(value instanceof Map<?, ?> map ? new LinkedHashMap<>(map) : value);
@@ -167,7 +226,11 @@ class NgsiLdBaseRepositoryUpdateTest {
 		// what the domain object to be updated maps to - a partial entity carrying just the change
 		EntityVO update = new EntityVO();
 		update.setAdditionalProperties("lastUpdate", aProperty("2026-08-05T10:15:30Z"));
-		when(javaObjectMapper.toEntityVO(any())).thenReturn(update);
+		mockRetrieval(existing, update);
+	}
+
+	private void mockRetrieval(EntityVO existing, EntityVO update) {
+		when(javaObjectMapper.toEntityVO(any(), eq(NgsiLdWriteOperation.UPDATE))).thenReturn(update);
 		when(entitiesApi.retrieveEntityById(eq(URI.create(ENTITY_ID)), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.ok(existing)));
 	}

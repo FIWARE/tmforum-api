@@ -36,6 +36,7 @@ import org.fiware.resourcefunction.model.ResourceSpecificationRefVOTestExample;
 import org.fiware.resourcefunction.model.ResourceStatusTypeVO;
 import org.fiware.resourcefunction.model.ResourceUsageStateTypeVO;
 import org.fiware.resourcefunction.model.ScheduleRefVOTestExample;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -64,7 +65,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"})
+@MicronautTest(packages = {"org.fiware.tmforum.resourcefunction"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunctionApiTestSpec {
 
 	public final ResourceFunctionApiTestClient resourceFunctionApiTestClient;
@@ -374,7 +375,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 										expectedResourceFunction,
 										retrievedResourceFunctions)));
 		expectedResourceFunctions.stream().forEach(
-				expectedResourceFunction -> assertEquals(expectedResourceFunction,
+				expectedResourceFunction -> assertEqualsIgnoringEmptyLists(expectedResourceFunction,
 						retrievedMap.get(expectedResourceFunction.getId()),
 						"The correct resourceFunctions should be retrieved."));
 
@@ -499,7 +500,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 			expectedResourceFunction.relatedParty(null);
 		}
 
-		assertEquals(expectedResourceFunction, updatedResourceFunction, message);
+		assertEqualsIgnoringEmptyLists(expectedResourceFunction, updatedResourceFunction, message);
 	}
 
 	private static Stream<Arguments> provideResourceFunctionUpdates() {
@@ -939,7 +940,7 @@ public class ResourceFunctionApiIT extends AbstractApiIT implements ResourceFunc
 		HttpResponse<ResourceFunctionVO> retrievedRF = callAndCatch(
 				() -> resourceFunctionApiTestClient.retrieveResourceFunction(null, id, null));
 		assertEquals(HttpStatus.OK, retrievedRF.getStatus(), "The retrieval should be ok.");
-		assertEquals(expectedResourceFunctionVO, retrievedRF.body(),
+		assertEqualsIgnoringEmptyLists(expectedResourceFunctionVO, retrievedRF.body(),
 				"The correct resource function should be returned.");
 	}
 

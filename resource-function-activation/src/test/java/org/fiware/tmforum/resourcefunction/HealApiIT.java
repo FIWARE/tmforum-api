@@ -16,6 +16,7 @@ import org.fiware.resourcefunction.model.HealVO;
 import org.fiware.resourcefunction.model.HealVOTestExample;
 import org.fiware.resourcefunction.model.ResourceFunctionRefVOTestExample;
 import org.fiware.resourcefunction.model.TaskStateTypeVO;
+import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -42,7 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@MicronautTest(packages = { "org.fiware.tmforum.resourcefunction" })
+@MicronautTest(packages = { "org.fiware.tmforum.resourcefunction" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 
 	public final HealApiTestClient healApiTestClient;
@@ -253,7 +254,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 										expectedHeal,
 										retrievedHeals)));
 		expectedHeals.stream().forEach(
-				expectedHeal -> assertEquals(expectedHeal,
+				expectedHeal -> assertEqualsIgnoringEmptyLists(expectedHeal,
 						retrievedMap.get(expectedHeal.getId()),
 						"The correct heals should be retrieved."));
 
@@ -356,7 +357,7 @@ public class HealApiIT extends AbstractApiIT implements HealApiTestSpec {
 
 		HttpResponse<HealVO> retreiveResponse = callAndCatch(() -> healApiTestClient.retrieveHeal(null, healId, null));
 		assertEquals(HttpStatus.OK, retreiveResponse.getStatus(), "The retrieval should be successfully.");
-		assertEquals(expectedHeal, retreiveResponse.body(), "The expected heal should be returend.");
+		assertEqualsIgnoringEmptyLists(expectedHeal, retreiveResponse.body(), "The expected heal should be returend.");
 	}
 
 	@Disabled("400 cannot happen, only 404")
