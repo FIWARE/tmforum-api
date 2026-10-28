@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.RefEntity;
+import org.fiware.tmforum.common.mapping.Default;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
@@ -22,8 +23,13 @@ public class AccountRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "description", targetClass = String.class)}))
     private String description;
 
+    @Default
     public AccountRef(@JsonProperty("id") URI id) {
         super(id);
+    }
+
+    public AccountRef(String id) {
+        this(URI.create(id));
     }
 
     @Override

@@ -53,3 +53,6 @@ general:
 api:
   resource-catalog:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

@@ -5,6 +5,8 @@ import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,5 +29,11 @@ public class ProductOfferingQualificationItemRef extends Entity implements Refer
 
 	@Override public URI getEntityId() {
 		return getProductOfferingQualificationId();
+	}
+
+	@JsonIgnore
+	@Override
+	public URI getReferenceHref() {
+		return getHref();
 	}
 }

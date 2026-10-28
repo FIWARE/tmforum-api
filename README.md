@@ -162,6 +162,13 @@ general:
   replaceOnUpdate: true
 ```
 
+## References to other deployments
+
+A reference whose `href` names one of the hosts in `references.external-hosts` (`REFERENCES_EXTERNAL_HOSTS`) is
+external and is not validated against local storage. The list is empty by default, so every reference is validated.
+This deployment's own hosts (`general.serverHost`, `references.local-hosts`/`REFERENCES_LOCAL_HOSTS`) stay local
+even when they are listed. See [common/README.md](common/README.md#local-and-external-references).
+
 ## Extension with @schemaLocation
 
 TMForum supports the extension of API entities through the ```@schemaLocation``` property. In order to extend an entity,

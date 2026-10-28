@@ -51,3 +51,6 @@ general:
   serverHost: http://localhost:8632
   basePath: /tmf-api/productInventory/v4
   serverUrl: http://localhost
+
+mapping:
+  strictRelationships: false

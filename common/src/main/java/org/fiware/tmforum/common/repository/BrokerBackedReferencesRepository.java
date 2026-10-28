@@ -31,6 +31,11 @@ public class BrokerBackedReferencesRepository extends NgsiLdBaseRepository imple
 	 */
 	@Override
 	public Mono<EntityVO> referenceExists(String id, List<String> acceptedTypes) {
-		return retrieveEntityById(URI.create(id)).filter(e -> acceptedTypes.contains(e.getType()));
+		return findReference(id).filter(e -> acceptedTypes.contains(e.getType()));
+	}
+
+	@Override
+	public Mono<EntityVO> findReference(String id) {
+		return retrieveEntityById(URI.create(id));
 	}
 }

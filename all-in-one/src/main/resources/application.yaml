@@ -96,3 +96,6 @@ s3:
   bucket: "document-attachments"
   maxContentSize: 10485760
   # region: ""   # Required for AWS S3; omit for MinIO, IONOS, and other providers
+
+mapping:
+  strictRelationships: false
