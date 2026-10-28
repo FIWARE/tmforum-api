@@ -54,3 +54,6 @@ general:
 api:
   resource-inventory:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

@@ -54,3 +54,6 @@ general:
 api:
   usage-management:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

@@ -53,3 +53,6 @@ general:
 api:
   resource-order-management:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

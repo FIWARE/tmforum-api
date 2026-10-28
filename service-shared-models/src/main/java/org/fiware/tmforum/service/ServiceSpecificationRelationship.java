@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.RefEntity;
+import org.fiware.tmforum.common.mapping.Default;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
@@ -31,8 +32,13 @@ public class ServiceSpecificationRelationship extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor", targetClass = TimePeriod.class)}))
     private TimePeriod validFor;
 
+    @Default
     public ServiceSpecificationRelationship(@JsonProperty("id") URI id) {
         super(id);
+    }
+
+    public ServiceSpecificationRelationship(String id) {
+        this(URI.create(id));
     }
 
     @Override
