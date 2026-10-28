@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -112,6 +113,12 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 
 		assertTrue(registered.anyMatch(moduleClass::equals),
 				"ObjectMapperFactory should register the module bean on the context mapper.");
+	}
+
+	@Test
+	void injectsTheTolerantMapper() {
+		assertInstanceOf(TolerantEntityVOMapper.class, entityVOMapper,
+				"TolerantEntityVOMapper should replace the library's EntityVOMapper bean.");
 	}
 
 	@Test

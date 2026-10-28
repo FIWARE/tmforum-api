@@ -26,8 +26,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Pins the read-path contract of {@link BrokerBackedEntitiesRepository#getEntities(List)}: missing targets are left
- * out, the found ones keep their input order, and any other broker error fails the read.
+ * Pins the read-path contract of {@link BrokerBackedEntitiesRepository#getEntities(List)}: every id yields an entity,
+ * a missing target an untyped stub, and any other broker error fails the read.
  */
 class BrokerBackedEntitiesRepositoryTest {
 
@@ -51,10 +51,13 @@ class BrokerBackedEntitiesRepositoryTest {
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("getEntitiesCases")
-	public void getEntities(String description, List<URI> requested, List<URI> expected) {
+	public void getEntities(String description, List<URI> requested, List<URI> expectedFound) {
 		List<EntityVO> entities = repository.getEntities(requested).block();
 
-		assertEquals(expected, entities.stream().map(EntityVO::getId).toList(), description);
+		assertEquals(requested, entities.stream().map(EntityVO::getId).toList(), description);
+		// only fetched entities carry a type, the stubs of missing ones do not
+		assertEquals(expectedFound, entities.stream().filter(e -> e.getType() != null).map(EntityVO::getId).toList(),
+				description);
 	}
 
 	private static Stream<Arguments> getEntitiesCases() {
