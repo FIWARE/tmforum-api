@@ -1,5 +1,7 @@
 package org.fiware.tmforum.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -58,5 +60,11 @@ public class ProductRefOrValue extends Entity implements ReferencedEntity {
 	@Override
 	public URI getEntityId() {
 		return this.id;
+	}
+
+	@JsonIgnore
+	@Override
+	public URI getReferenceHref() {
+		return getHref();
 	}
 }

@@ -1,5 +1,6 @@
 package org.fiware.tmforum.resource;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -140,5 +141,11 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 	@Override
 	public String getEntityState() {
 		return resourceStatus != null ? resourceStatus.getValue() : null;
+	}
+
+	@JsonIgnore
+	@Override
+	public URI getReferenceHref() {
+		return getHref();
 	}
 }
