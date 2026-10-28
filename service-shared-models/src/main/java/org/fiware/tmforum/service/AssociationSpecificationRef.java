@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.fiware.tmforum.common.domain.RefEntity;
+import org.fiware.tmforum.common.mapping.Default;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -12,8 +13,13 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class AssociationSpecificationRef extends RefEntity {
 
+    @Default
     public AssociationSpecificationRef(@JsonProperty("id") URI id) {
         super(id);
+    }
+
+    public AssociationSpecificationRef(String id) {
+        this(URI.create(id));
     }
 
     @Override

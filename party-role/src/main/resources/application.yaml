@@ -53,3 +53,6 @@ general:
 api:
   party-role:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

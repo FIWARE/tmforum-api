@@ -7,10 +7,13 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.productcatalog.api.CategoryApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestSpec;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestClient;
 import org.fiware.productcatalog.model.AgreementRefVOTestExample;
+import org.fiware.productcatalog.model.CategoryCreateVOTestExample;
+import org.fiware.productcatalog.model.CategoryVO;
 import org.fiware.productcatalog.model.BundledProductOfferingVOTestExample;
 import org.fiware.productcatalog.model.CategoryRefVOTestExample;
 import org.fiware.productcatalog.model.ChannelRefVOTestExample;
@@ -71,6 +74,7 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 
 	public final ProductOfferingApiTestClient productOfferingApiTestClient;
 	private final ProductSpecificationApiTestClient productSpecificationApiTestClient;
+	private final CategoryApiTestClient categoryApiTestClient;
 
 	private String message;
 	private ProductOfferingCreateVO productOfferingCreateVO;
@@ -80,10 +84,12 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 	private Clock clock = mock(Clock.class);
 
 	public ProductOfferingApiIT(ProductOfferingApiTestClient productOfferingApiTestClient,
-								EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties, ProductSpecificationApiTestClient productSpecificationApiTestClient) {
+								EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties, ProductSpecificationApiTestClient productSpecificationApiTestClient,
+								CategoryApiTestClient categoryApiTestClient) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productOfferingApiTestClient = productOfferingApiTestClient;
 		this.productSpecificationApiTestClient = productSpecificationApiTestClient;
+		this.categoryApiTestClient = categoryApiTestClient;
 	}
 
 	@MockBean(Clock.class)
@@ -845,6 +851,43 @@ public class ProductOfferingApiIT extends AbstractApiIT implements ProductOfferi
 		assertEquals(HttpStatus.OK, retrievedCatalog.getStatus(), "The retrieval should be ok.");
 		assertEqualsIgnoringEmptyLists(expectedProductOffering, retrievedCatalog.body(),
 				"The correct productOffering should be returned.");
+	}
+
+	@Test
+	public void retrieveProductOfferingWithDeletedCategory200() throws Exception {
+		HttpResponse<CategoryVO> categoryResponse = callAndCatch(() -> categoryApiTestClient.createCategory(null,
+				CategoryCreateVOTestExample.build().atSchemaLocation(null).parentId(null)));
+		assertEquals(HttpStatus.CREATED, categoryResponse.getStatus(), "The category should have been created first.");
+		String categoryId = categoryResponse.body().getId();
+
+		ProductOfferingCreateVO productOfferingCreateVO = ProductOfferingCreateVOTestExample.build()
+				.atSchemaLocation(null)
+				.productSpecification(null)
+				.resourceCandidate(null)
+				.serviceCandidate(null)
+				.serviceLevelAgreement(null)
+				.category(List.of(CategoryRefVOTestExample.build().atSchemaLocation(null).id(categoryId)));
+		HttpResponse<ProductOfferingVO> createResponse = callAndCatch(
+				() -> productOfferingApiTestClient.createProductOffering(null, productOfferingCreateVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+				"The product offering should have been created first.");
+		String id = createResponse.body().getId();
+
+		try {
+			assertEquals(HttpStatus.NO_CONTENT,
+					callAndCatch(() -> categoryApiTestClient.deleteCategory(null, categoryId)).getStatus(),
+					"The category should have been deleted.");
+
+			HttpResponse<ProductOfferingVO> retrieved = callAndCatch(
+					() -> productOfferingApiTestClient.retrieveProductOffering(null, id, null));
+			assertEquals(HttpStatus.OK, retrieved.getStatus(), "A dangling category must not fail the retrieval.");
+			assertEquals(1, retrieved.body().getCategory().size(), "The dangling category should be kept.");
+			assertEquals(categoryId, retrieved.body().getCategory().get(0).getId(),
+					"The dangling category should be returned with its id.");
+		} finally {
+			// cleanUp only removes product offerings
+			callAndCatch(() -> categoryApiTestClient.deleteCategory(null, categoryId));
+		}
 	}
 
 	@MethodSource("extendedOfferingProvider")

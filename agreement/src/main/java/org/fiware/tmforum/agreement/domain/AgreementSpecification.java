@@ -62,7 +62,7 @@ public class AgreementSpecification extends EntityWithId {
         @Getter(onMethod = @__({
                         @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
         @Setter(onMethod = @__({
-                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class) }))
         private List<RelatedParty> relatedParty;
 
         @Getter(onMethod = @__({
@@ -80,7 +80,7 @@ public class AgreementSpecification extends EntityWithId {
         @Getter(onMethod = @__({
                         @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship") }))
         @Setter(onMethod = @__({
-                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship") }))
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship", targetClass = AgreementSpecificationRelationship.class) }))
         private List<AgreementSpecificationRelationship> specificationRelationship;
 
         @Getter(onMethod = @__({

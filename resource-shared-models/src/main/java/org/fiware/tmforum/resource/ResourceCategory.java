@@ -46,7 +46,7 @@ public class ResourceCategory extends EntityWithId {
 	private String name;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "parentId") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId") }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", targetClass = ResourceCategoryRef.class) }))
 	private ResourceCategoryRef parentId;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "version") }))

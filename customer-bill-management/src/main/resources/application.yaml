@@ -58,3 +58,6 @@ apiExtension:
 api:
   customer-bill-management:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

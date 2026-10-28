@@ -74,6 +74,12 @@ Changes:
 
 Acceptance: `mvn test -pl common` and `mvn test -pl all-in-one -Dtest=RelationshipTargetConstructorTest` pass (the guard test fails before the constructors are added), the dangling-local-reference IT passes, and `grep -L strictRelationships */src/{main,test}/resources/application.yaml` lists no module that talks to the broker. Run `mvn integration-test -pl product-catalog`, `-pl customer-management` and `-pl party-role` (orion-ld, in-memory) with no regressions. If any IT asserted a failing GET for a dangling reference, report it instead of silently changing the assertion.
 
+**As implemented (plan update):**
+- Step 2 classifies by href host, not by id prefix, so `getEntities` has no id-based skip. It fetches every id with `flatMapSequential`, a 404 drops the target (read back id-only), and any other broker error fails the read. The ticket-6 hand-off is the same without the external-id skip.
+- MapStruct rejects two public single-argument constructors as ambiguous. The `URI` constructors are therefore marked with the new `common/.../mapping/Default` annotation (MapStruct honours any annotation named `Default`, and 1.6.3 ships none).
+- The guard test also flagged three setters without a `targetClass` (`Object`, so they could never be read when non-empty): `AgreementSpecification.relatedParty`/`specificationRelationship` and `ResourceCategory.parentId`. They now name their field's element class.
+- **Library limitation, for Steps 4–5:** the mapper builds an unresolved target id-only only for a single relationship (or a one-entry list). For a relationship *list* with two or more entries, `EntityVOMapper.zipToList` silently drops unresolved targets. Round-trip assertions in Step 4 must use one-entry lists, and the README must state this until the library is fixed.
+
 ### Step 4: Integration tests for external and missing-local references
 Files: new `product-catalog/src/test/java/org/fiware/tmforum/productcatalog/ExternalReferenceIT.java`. It is a separate class so its config does not affect the other ITs. Annotate it with `@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)` and `@Property(name = "references.external-href-prefixes", value = "https://external-tmf.example.org/")`, and set the id prefixes the same way (e.g. `urn:ngsi-ld:category:ext-,urn:ngsi-ld:service-candidate:ext-`). Extend `AbstractApiIT` and follow `ProductOfferingApiIT`'s patterns (`*VOTestExample.build().atSchemaLocation(null)`, cleanup of the created entities).
 

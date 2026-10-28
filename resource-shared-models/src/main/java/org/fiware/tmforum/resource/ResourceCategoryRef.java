@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.RefEntity;
+import org.fiware.tmforum.common.mapping.Default;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
@@ -24,8 +25,13 @@ public class ResourceCategoryRef extends RefEntity {
     @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version", targetClass = String.class)}))
     private String version;
 
+    @Default
     public ResourceCategoryRef(@JsonProperty("id") URI id) {
         super(id);
+    }
+
+    public ResourceCategoryRef(String id) {
+        this(URI.create(id));
     }
 
     @Override

@@ -52,3 +52,6 @@ general:
 api:
   customer-management:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false
