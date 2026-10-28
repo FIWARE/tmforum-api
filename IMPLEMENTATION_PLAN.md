@@ -95,6 +95,8 @@ Use a `@ParameterizedTest` where the cases share a shape:
 
 Acceptance: `mvn integration-test -pl product-catalog -Dit.test=ExternalReferenceIT -DskipTests` passes with the defaults (orion-ld, in-memory) and with `-Dbroker=scorpio`. The full `mvn integration-test -pl product-catalog` stays green.
 
+**As implemented (plan update):** Step 2 classifies by href host, so the IT has no prefix properties. It sets `references.local-hosts` instead. An external reference has an href on a foreign host (`external-tmf.example.org`). The 400 cases cover a missing id without an href, with an href on `general.serverHost`, and with an href on a `references.local-hosts` entry. One parameterized case list (`categoryReferences`) drives both the create and the PATCH test. The 400 cases only assert the status and the error body, because the controllers wrap the validation error and drop the unresolved ids from the message. Fetched list entries are only checked by id, because their sub-properties do not round-trip (ticket 5).
+
 ### Step 5: Document the reference validation policy
 Files:
 - `common/README.md`: extend the "Referential integrity" section.
