@@ -52,21 +52,29 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Validation and read-back of references to entities held by another deployment (external: the href names a foreign
- * host) next to local ones. Separate from the other ITs, since it configures {@code references.local-hosts}.
+ * Validation and read-back of references to entities held by another deployment (external: the href names a host
+ * configured in {@code references.external-hosts}) next to local ones. Separate from the other ITs, since it
+ * configures those hosts and {@code references.local-hosts}.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 @Property(name = "references.local-hosts", value = ExternalReferenceIT.LOCAL_ALIAS_HOST)
+@Property(name = "references.external-hosts", value = ExternalReferenceIT.EXTERNAL_HOST)
 public class ExternalReferenceIT extends AbstractApiIT {
 
 	static final String LOCAL_ALIAS_HOST = "tmf.local-alias.example.org";
-	private static final String EXTERNAL_BASE_URL = "https://external-tmf.example.org/tmf-api/";
+	static final String EXTERNAL_HOST = "external-tmf.example.org";
+	// not configured as external, so references to it are validated like local ones
+	private static final String UNLISTED_HOST = "unlisted-tmf.example.org";
+	private static final String EXTERNAL_BASE_URL = "https://" + EXTERNAL_HOST + "/tmf-api/";
+	private static final String UNLISTED_BASE_URL = "https://" + UNLISTED_HOST + "/tmf-api/";
 	private static final String LOCAL_ALIAS_BASE_URL = "https://" + LOCAL_ALIAS_HOST + "/tmf-api/";
 	private static final String CATEGORY_PATH = "productCatalog/v4/category/";
 	private static final String SERVICE_CANDIDATE_PATH = "serviceCatalog/v4/serviceCandidate/";
 	// outside every local id namespace in use, so neither the write nor the read path finds a local entity
 	private static final String REMOTE_CATEGORY_ID_PREFIX = "urn:ngsi-ld:category:remote-";
 	private static final String MISSING_CATEGORY_ID_PREFIX = "urn:ngsi-ld:category:missing-";
+	// what an external deployment with plain ids would send
+	private static final String NON_URI_ID_VALUE = "1234";
 	private static final String REMOTE_SERVICE_CANDIDATE_ID = "urn:ngsi-ld:service-candidate:remote-1";
 	private static final String REMOTE_NAME = "Held by another deployment";
 	// TmForumExceptionHandler's INVALID_RELATIONSHIP message, telling a failed reference check from other 400s
@@ -78,7 +86,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	enum RefKind {
 		// an existing local category, referenced without href
 		LOCAL,
-		// a non-existent id with a foreign href
+		// a non-existent id with an href on a host configured as external
 		EXTERNAL,
 		// a non-existent id without href
 		MISSING,
@@ -86,10 +94,14 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		MISSING_SERVER_HOST,
 		// a non-existent id with an href naming a references.local-hosts entry
 		MISSING_LOCAL_ALIAS,
-		// the id of a local product specification with a foreign href (the external type guard)
+		// the id of a local product specification with an href on the external host (the external type guard)
 		EXTERNAL_WRONG_TYPE,
-		// an existing local category with a foreign href (the type guard resolves it locally)
-		LOCAL_FOREIGN_HREF
+		// an existing local category with an href on the external host (the type guard resolves it locally)
+		LOCAL_FOREIGN_HREF,
+		// a non-existent id with an href on a host that is not configured as external
+		MISSING_UNLISTED_HOST,
+		// an id that is not a URI, with an href on the external host
+		NON_URI_ID
 	}
 
 	private final ProductOfferingApiTestClient productOfferingApiTestClient;
@@ -155,10 +167,14 @@ public class ExternalReferenceIT extends AbstractApiIT {
 						List.of(RefKind.MISSING_SERVER_HOST), HttpStatus.BAD_REQUEST),
 				Arguments.of("An href naming a configured local host keeps a missing category local.",
 						List.of(RefKind.MISSING_LOCAL_ALIAS), HttpStatus.BAD_REQUEST),
-				Arguments.of("A foreign href must not smuggle in a local entity of another type.",
+				Arguments.of("An external href must not smuggle in a local entity of another type.",
 						List.of(RefKind.EXTERNAL_WRONG_TYPE), HttpStatus.BAD_REQUEST),
-				Arguments.of("A foreign href on an existing local category of the accepted type is accepted.",
-						List.of(RefKind.LOCAL_FOREIGN_HREF), HttpStatus.CREATED));
+				Arguments.of("An external href on an existing local category of the accepted type is accepted.",
+						List.of(RefKind.LOCAL_FOREIGN_HREF), HttpStatus.CREATED),
+				Arguments.of("An href to a host that is not configured as external keeps the category local.",
+						List.of(RefKind.MISSING_UNLISTED_HOST), HttpStatus.BAD_REQUEST),
+				Arguments.of("An external id that is not a URI is rejected.", List.of(RefKind.NON_URI_ID),
+						HttpStatus.BAD_REQUEST));
 	}
 
 	@ParameterizedTest
@@ -305,6 +321,11 @@ public class ExternalReferenceIT extends AbstractApiIT {
 				String specId = createProductSpecification();
 				yield categoryRefVO(specId, URI.create(EXTERNAL_BASE_URL + CATEGORY_PATH + specId));
 			}
+			case MISSING_UNLISTED_HOST -> categoryRefVO(missingId,
+					URI.create(UNLISTED_BASE_URL + CATEGORY_PATH + missingId));
+			// external deployments may use plain ids; the broker only accepts URIs, so such a reference is rejected
+			case NON_URI_ID -> categoryRefVO(NON_URI_ID_VALUE + position,
+					URI.create(EXTERNAL_BASE_URL + CATEGORY_PATH + NON_URI_ID_VALUE + position));
 			case LOCAL_FOREIGN_HREF -> {
 				String categoryId = createCategory();
 				yield categoryRefVO(categoryId, URI.create(EXTERNAL_BASE_URL + CATEGORY_PATH + categoryId));

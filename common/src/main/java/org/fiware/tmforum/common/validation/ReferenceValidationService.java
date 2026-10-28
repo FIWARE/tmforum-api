@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,7 +65,8 @@ public class ReferenceValidationService {
 
     /**
      * Emits the non-null references that do not resolve to an entity with an accepted type, in input order. External
-     * references only count when their id names a local entity of another type.
+     * references only count when their id names a local entity of another type. A reference whose id is not an
+     * absolute URI never resolves, since NGSI-LD ids are URIs.
      * Always emits a (possibly empty) list; a null list counts as empty.
      */
     public <T extends ReferencedEntity> Mono<List<T>> findUnresolved(List<T> references) {
@@ -104,22 +106,37 @@ public class ReferenceValidationService {
     }
 
     private Mono<Boolean> referenceResolves(ReferencedEntity ref) {
-        return switch (referenceClassifier.classify(ref)) {
-            case EXTERNAL -> referencesRepository.findReference(ref.getEntityId().toString())
+        ReferenceScope scope = referenceClassifier.classify(ref);
+        URI entityId = ref.getEntityId();
+        if (entityId == null || !entityId.isAbsolute()) {
+            // the broker would answer such an id with a 400, which would surface as a 500 instead of a 400
+            log.warn("The reference id '{}' is not an absolute URI (e.g. urn:ngsi-ld:category:1), so it cannot "
+                    + "resolve.", entityId);
+            return Mono.just(count(scopeTag(scope), false));
+        }
+        return switch (scope) {
+            case EXTERNAL -> referencesRepository.findReference(entityId.toString())
                     // a local entity with that id must not be smuggled in under another type
                     .map(entityVO -> count(SCOPE_EXTERNAL, ref.getReferencedTypes().contains(entityVO.getType())))
-                    .switchIfEmpty(Mono.fromSupplier(() -> skipExternal(ref)));
-            case LOCAL -> referencesRepository.referenceExists(ref.getEntityId().toString(), ref.getReferencedTypes())
+                    .switchIfEmpty(Mono.fromSupplier(() -> skipExternal(entityId)));
+            case LOCAL -> referencesRepository.referenceExists(entityId.toString(), ref.getReferencedTypes())
                     .map(entityVO -> true)
                     .defaultIfEmpty(false)
                     .map(resolves -> count(SCOPE_LOCAL, resolves));
         };
     }
 
-    private boolean skipExternal(ReferencedEntity ref) {
-        log.debug("Skipping validation of external reference {}.", ref.getEntityId());
+    private boolean skipExternal(URI entityId) {
+        log.info("Skipping validation of external reference {}.", entityId);
         count(SCOPE_EXTERNAL, RESULT_SKIPPED);
         return true;
+    }
+
+    private static String scopeTag(ReferenceScope scope) {
+        return switch (scope) {
+            case EXTERNAL -> SCOPE_EXTERNAL;
+            case LOCAL -> SCOPE_LOCAL;
+        };
     }
 
     private boolean count(String scope, boolean resolves) {

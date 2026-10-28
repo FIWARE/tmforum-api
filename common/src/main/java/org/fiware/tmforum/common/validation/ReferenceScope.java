@@ -6,6 +6,9 @@ package org.fiware.tmforum.common.validation;
 public enum ReferenceScope {
 	/** Held by this deployment, validated strictly. */
 	LOCAL,
-	/** Href names another host; only looked up locally by id to guard against a wrong-typed local entity. */
+	/**
+	 * Href names a host configured as external; only looked up locally by id to guard against a wrong-typed local
+	 * entity.
+	 */
 	EXTERNAL
 }

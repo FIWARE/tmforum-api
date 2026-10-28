@@ -44,12 +44,18 @@ class ReferenceValidationServiceTest {
 	// a category reference pointing at an existing entity of another type
 	private static final TestRef WRONG_TYPE = categoryRef("urn:ngsi-ld:product-offering:o");
 
-	private static final URI EXTERNAL_HREF = URI.create("https://partner-a.example.org/category/1");
+	private static final String EXTERNAL_HOST = "partner-a.example.org";
+	private static final URI EXTERNAL_HREF = URI.create("https://" + EXTERNAL_HOST + "/category/1");
 	// external by their href; the id decides what the local type guard finds
 	private static final TestRef EXTERNAL_1 = externalRef(URI.create("urn:ngsi-ld:category:remote-1"));
 	private static final TestRef EXTERNAL_2 = externalRef(URI.create("urn:ngsi-ld:category:remote-2"));
 	private static final TestRef EXTERNAL_ACCEPTED = externalRef(CATEGORY_A.id());
 	private static final TestRef EXTERNAL_WRONG_TYPE = externalRef(WRONG_TYPE.id());
+
+	// external systems may use plain ids; the broker only accepts URIs, so such a reference cannot resolve
+	private static final TestRef NON_URI_ID = categoryRef("1234");
+	private static final TestRef EXTERNAL_NON_URI_ID = externalRef(URI.create("1234"));
+	private static final TestRef NULL_ID = new TestRef(null, List.of(CATEGORY_TYPE), null);
 
 	/** Entities present in local storage, id to type. */
 	private static final Map<String, String> STORED_ENTITIES = Map.of(
@@ -76,7 +82,9 @@ class ReferenceValidationServiceTest {
 			return type == null ? Mono.empty() : Mono.just(new EntityVO().type(type));
 		});
 		meterRegistry = new SimpleMeterRegistry();
-		classifier = new ReferenceClassifier(new ReferenceProperties(), new GeneralProperties());
+		ReferenceProperties referenceProperties = new ReferenceProperties();
+		referenceProperties.setExternalHosts(List.of(EXTERNAL_HOST));
+		classifier = new ReferenceClassifier(referenceProperties, new GeneralProperties());
 		service = new ReferenceValidationService(referencesRepository, classifier, meterRegistry);
 	}
 
@@ -97,7 +105,10 @@ class ReferenceValidationServiceTest {
 				Arguments.of("resolving references mixed with nulls", Arrays.asList(CATEGORY_A, null), true),
 				Arguments.of("one of three missing", List.of(CATEGORY_A, MISSING_X, CATEGORY_B), false),
 				Arguments.of("wrong type", List.of(WRONG_TYPE), false),
-				Arguments.of("all missing", List.of(MISSING_X, MISSING_Y), false));
+				Arguments.of("all missing", List.of(MISSING_X, MISSING_Y), false),
+				Arguments.of("id that is not a URI", List.of(NON_URI_ID), false),
+				Arguments.of("external reference with an id that is not a URI", List.of(EXTERNAL_NON_URI_ID), false),
+				Arguments.of("reference without an id", List.of(NULL_ID), false));
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -128,6 +139,23 @@ class ReferenceValidationServiceTest {
 						1, 0, 0),
 				Arguments.of("external with local entity of another type", List.of(EXTERNAL_WRONG_TYPE), false, 0,
 						0, 0, 1, 0));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("nonUriIds")
+	public void referencesWithAnIdThatIsNotAUriAreNotLookedUp(String description, TestRef ref, String scope) {
+		assertEquals(false, service.checkReferenceExists(List.of(ref)).block());
+
+		verify(referencesRepository, never()).referenceExists(anyString(), anyList());
+		verify(referencesRepository, never()).findReference(anyString());
+		assertEquals(1, count(scope, ReferenceValidationService.RESULT_UNRESOLVED));
+	}
+
+	private static Stream<Arguments> nonUriIds() {
+		return Stream.of(
+				Arguments.of("local reference", NON_URI_ID, ReferenceValidationService.SCOPE_LOCAL),
+				Arguments.of("external reference", EXTERNAL_NON_URI_ID, ReferenceValidationService.SCOPE_EXTERNAL),
+				Arguments.of("reference without an id", NULL_ID, ReferenceValidationService.SCOPE_LOCAL));
 	}
 
 	@Test

@@ -60,7 +60,7 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - Versions are root-pom properties named `version.<groupId>.<artifactId>`. Micronaut artifacts are BOM-managed and carry no explicit version.
 - Jackson 3: the `ObjectMapper` is immutable. Customizations are `JacksonModule` beans (e.g. `TmForumMappingModule`, `FieldCleaningModule`), never a `BeanCreatedEventListener` on the mapper. Durations in `application.yaml` need a unit (`30s`), a unit-less value is silently dropped.
 - Doc density is sparse. Some non-obvious public methods in `common` have a short Javadoc. Many public methods and most module classes have none. Match the file you edit. Indentation mixes tabs and spaces by file, so keep the file's style.
-- `mapping.strictRelationships` (ngsi-ld-java-mapping) defaults to `true`: an unresolvable relationship without `fromProperties = true` fails the read.
+- `mapping.strictRelationships` (ngsi-ld-java-mapping) defaults to `true`, which fails the read of an unresolvable relationship without `fromProperties = true`. `common`'s `StrictRelationshipsDefault` sets it to `false` unless a deployment configures it, so such a target reads back id-only; every module's main and test `application.yaml` carries the block explicitly, and a new module should too.
 - Tests: `*Test.java` are unit tests (JUnit5/Mockito). `*IT.java` extend `AbstractApiIT` and use `@MicronautTest(packages=...)`. Use parameterized tests where possible.
 
 ## Important Files
