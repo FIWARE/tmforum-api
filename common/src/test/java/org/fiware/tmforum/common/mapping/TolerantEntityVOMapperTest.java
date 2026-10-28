@@ -39,6 +39,8 @@ public class TolerantEntityVOMapperTest {
 	private static final String CHILD_TYPE = "child";
 	private static final String CHILDREN = "children";
 	private static final String FAVOURITE = "favourite";
+	private static final String PLAIN_CHILDREN = "plainChildren";
+	private static final String PLAIN_FAVOURITE = "plainFavourite";
 	private static final String NAME = "name";
 	private static final String REMOTE_NAME = "remote child";
 
@@ -63,6 +65,31 @@ public class TolerantEntityVOMapperTest {
 				Arguments.of("one unresolved entry", List.of(MISSING_A)),
 				Arguments.of("unresolved between resolved", List.of(MISSING_A, FOUND, MISSING_B)),
 				Arguments.of("all unresolved", List.of(MISSING_A, MISSING_B)));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("unresolvedRelationshipLists")
+	public void fromEntityVO_keepsUnresolvedListEntriesWithoutMappingEnabled(String description, List<URI> children) {
+		RelationshipListVO relationshipList = new RelationshipListVO();
+		children.forEach(id -> relationshipList.add(relationship(id)));
+
+		Parent parent = mapper(false).fromEntityVO(parent(PLAIN_CHILDREN, relationshipList), Parent.class).block();
+
+		assertEquals(children, parent.getPlainChildren().stream().map(PlainRef::getId).toList(), description);
+	}
+
+	private static Stream<Arguments> unresolvedRelationshipLists() {
+		return Stream.of(
+				Arguments.of("one unresolved entry", List.of(MISSING_A)),
+				Arguments.of("two unresolved entries", List.of(MISSING_A, MISSING_B)));
+	}
+
+	@Test
+	public void fromEntityVO_unresolvedSingleWithoutMappingEnabledIsIdOnly() {
+		Parent parent = mapper(false).fromEntityVO(parent(PLAIN_FAVOURITE, relationship(MISSING_A)), Parent.class)
+				.block();
+
+		assertEquals(MISSING_A, parent.getPlainFavourite().getId());
 	}
 
 	@Test
@@ -127,6 +154,8 @@ public class TolerantEntityVOMapperTest {
 
 		private List<Child> children;
 		private Child favourite;
+		private List<PlainRef> plainChildren;
+		private PlainRef plainFavourite;
 
 		public Parent(String id) {
 		}
@@ -147,6 +176,39 @@ public class TolerantEntityVOMapperTest {
 		@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = FAVOURITE, targetClass = Child.class)
 		public void setFavourite(Child favourite) {
 			this.favourite = favourite;
+		}
+
+		public List<PlainRef> getPlainChildren() {
+			return plainChildren;
+		}
+
+		@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = PLAIN_CHILDREN,
+				targetClass = PlainRef.class)
+		public void setPlainChildren(List<PlainRef> plainChildren) {
+			this.plainChildren = plainChildren;
+		}
+
+		public PlainRef getPlainFavourite() {
+			return plainFavourite;
+		}
+
+		@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = PLAIN_FAVOURITE, targetClass = PlainRef.class)
+		public void setPlainFavourite(PlainRef plainFavourite) {
+			this.plainFavourite = plainFavourite;
+		}
+	}
+
+	/** Relationship target without {@link MappingEnabled}, like {@code ServiceCandidateRef}. */
+	public static class PlainRef {
+
+		private final URI id;
+
+		public PlainRef(String id) {
+			this.id = URI.create(id);
+		}
+
+		public URI getId() {
+			return id;
 		}
 	}
 

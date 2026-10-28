@@ -42,6 +42,7 @@ public class TolerantEntityVOMapper extends EntityVOMapper {
 
 	/**
 	 * Maps a stub with the target class's entity type, so only the relationship's own sub-properties are set.
+	 * A target without {@link MappingEnabled} is built id-only through its String constructor, as the library does.
 	 * In strict mode a stub fails the mapping, as the library does for an unresolved relationship.
 	 */
 	@Override
@@ -58,11 +59,20 @@ public class TolerantEntityVOMapper extends EntityVOMapper {
 				.filter(types -> types.length > 0)
 				.map(types -> types[0]);
 		if (entityType.isEmpty()) {
-			return super.fromEntityVO(entityVO, targetClass);
+			return idOnly(entityVO.getId(), targetClass);
 		}
 		EntityVO typedTarget = new EntityVO().id(entityVO.getId()).type(entityType.get());
 		entityVO.getAdditionalProperties().forEach(typedTarget::setAdditionalProperties);
 		return super.fromEntityVO(typedTarget, targetClass);
+	}
+
+	private static <T> Mono<T> idOnly(URI id, Class<T> targetClass) {
+		try {
+			return Mono.just(targetClass.getDeclaredConstructor(String.class).newInstance(id.toString()));
+		} catch (ReflectiveOperationException e) {
+			return Mono.error(new MappingException(
+					String.format("Was not able to instantiate %s with a string parameter.", targetClass), e));
+		}
 	}
 
 	/**
