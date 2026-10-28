@@ -48,8 +48,8 @@ public class ReferenceValidationService {
 
     /**
      * Check if all local referenced entities exist with an accepted type. The checks will be executed asynchronously to
-     * not block each other on sequential calls to the NGSI-LD api. Null and external entries are ignored, so an empty,
-     * null, all-null or all-external list emits true.
+     * not block each other on sequential calls to the NGSI-LD api. Null entries are ignored, as are external ones whose
+     * id names no local entity, so an empty, null, all-null or all-external list emits true.
      *
      * @param references a list of referenced objects to be checked for existence
      * @param <T>        concrete type of the referenced entity
@@ -60,8 +60,8 @@ public class ReferenceValidationService {
     }
 
     /**
-     * Emits the non-null, non-external references that do not resolve to an entity with an accepted type, in input
-     * order.
+     * Emits the non-null references that do not resolve to an entity with an accepted type, in input order. External
+     * references only count when their id names a local entity of another type.
      * Always emits a (possibly empty) list; a null list counts as empty.
      */
     public <T extends ReferencedEntity> Mono<List<T>> findUnresolved(List<T> references) {
@@ -102,8 +102,7 @@ public class ReferenceValidationService {
 
     private Mono<Boolean> referenceResolves(ReferencedEntity ref) {
         return switch (referenceClassifier.classify(ref)) {
-            case EXTERNAL -> Mono.fromSupplier(() -> skipExternal(ref));
-            case EXTERNAL_BY_HREF -> referencesRepository.findReference(ref.getEntityId().toString())
+            case EXTERNAL -> referencesRepository.findReference(ref.getEntityId().toString())
                     // a local entity with that id must not be smuggled in under another type
                     .map(entityVO -> countLocal(ref.getReferencedTypes().contains(entityVO.getType())))
                     .switchIfEmpty(Mono.fromSupplier(() -> skipExternal(ref)));

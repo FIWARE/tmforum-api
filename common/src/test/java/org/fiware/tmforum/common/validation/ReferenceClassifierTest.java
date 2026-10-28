@@ -1,11 +1,8 @@
 package org.fiware.tmforum.common.validation;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import lombok.Getter;
 import lombok.Setter;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.configuration.ReferenceProperties;
 import org.fiware.tmforum.common.domain.RefEntity;
 import org.fiware.tmforum.common.domain.ReferenceValue;
@@ -13,117 +10,87 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReferenceClassifierTest {
 
-	private static final String ID_PREFIX = "urn:ngsi-ld:category:partner-a-";
-	private static final String HREF_PREFIX = "https://partner-a.example.org/";
-	private static final String LOCAL_ID = "urn:ngsi-ld:category:1f6e2b0c-0000-4000-8000-000000000000";
-	private static final String EXTERNAL_ID = ID_PREFIX + "42";
-	private static final String EXTERNAL_HREF = HREF_PREFIX + "tmf-api/productCatalogManagement/v4/category/42";
-	private static final String FOREIGN_HREF = "https://untrusted.example.org/category/42";
-	private static final String OVERLAP_WARNING = "overlaps server-generated local ids";
+	private static final String SERVER_HOST = "http://tmf.local:8632";
+	private static final String PUBLIC_HOST = "tmf.example.org";
+	private static final String ID = "urn:ngsi-ld:category:1f6e2b0c-0000-4000-8000-000000000000";
+	private static final String SERVER_HREF = SERVER_HOST + "/tmf-api/productCatalogManagement/v4/category/1";
+	private static final String PUBLIC_HREF = "https://TMF.example.org/tmf-api/productCatalogManagement/v4/category/1";
+	private static final String FOREIGN_HREF = "https://partner-a.example.org/category/42";
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("classifications")
-	public void classify(String description, List<String> idPrefixes, List<String> hrefPrefixes,
-			ReferencedEntity ref, ReferenceScope expected) {
-		assertEquals(expected, classifier(idPrefixes, hrefPrefixes).classify(ref));
+	public void classify(String description, String serverHost, List<String> localHosts, ReferencedEntity ref,
+			ReferenceScope expected) {
+		assertEquals(expected, classifier(serverHost, localHosts).classify(ref));
 	}
 
 	private static Stream<Arguments> classifications() {
-		List<String> ids = List.of(ID_PREFIX);
-		List<String> hrefs = List.of(HREF_PREFIX);
+		List<String> hosts = List.of(PUBLIC_HOST);
 		return Stream.of(
-				Arguments.of("id prefix match", ids, hrefs, refEntity(EXTERNAL_ID, null), ReferenceScope.EXTERNAL),
-				Arguments.of("id prefix wins over href prefix", ids, hrefs, refEntity(EXTERNAL_ID, EXTERNAL_HREF),
+				Arguments.of("null href", SERVER_HOST, hosts, refEntity(null), ReferenceScope.LOCAL),
+				Arguments.of("urn href", SERVER_HOST, hosts, refEntity(ID), ReferenceScope.LOCAL),
+				Arguments.of("relative href", SERVER_HOST, hosts, refEntity("/category/1"), ReferenceScope.LOCAL),
+				Arguments.of("href to the server host", SERVER_HOST, hosts, refEntity(SERVER_HREF),
+						ReferenceScope.LOCAL),
+				Arguments.of("href to a configured local host, case-insensitive", SERVER_HOST, hosts,
+						refEntity(PUBLIC_HREF), ReferenceScope.LOCAL),
+				Arguments.of("href to another host", SERVER_HOST, hosts, refEntity(FOREIGN_HREF),
 						ReferenceScope.EXTERNAL),
-				Arguments.of("href prefix match", ids, hrefs, refEntity(LOCAL_ID, EXTERNAL_HREF),
-						ReferenceScope.EXTERNAL_BY_HREF),
-				Arguments.of("no match", ids, hrefs, refEntity(LOCAL_ID, null), ReferenceScope.LOCAL),
-				Arguments.of("null href", List.of(), hrefs, refEntity(LOCAL_ID, null), ReferenceScope.LOCAL),
-				Arguments.of("empty config", List.of(), List.of(), refEntity(EXTERNAL_ID, EXTERNAL_HREF),
+				Arguments.of("no config", null, List.of(), refEntity(FOREIGN_HREF), ReferenceScope.EXTERNAL),
+				Arguments.of("invalid server host", "not a uri", List.of(), refEntity(SERVER_HREF),
+						ReferenceScope.EXTERNAL),
+				Arguments.of("local hosts are trimmed, blank entries ignored", null,
+						Arrays.asList(" " + PUBLIC_HOST + " ", "", null), refEntity(PUBLIC_HREF),
 						ReferenceScope.LOCAL),
-				Arguments.of("foreign host not in allow-list", ids, hrefs, refEntity(LOCAL_ID, FOREIGN_HREF),
-						ReferenceScope.LOCAL),
-				Arguments.of("reference value matched by href", ids, hrefs, referenceValue(LOCAL_ID, EXTERNAL_HREF),
-						ReferenceScope.EXTERNAL_BY_HREF),
-				Arguments.of("subclass shadowing href matched by href", ids, hrefs,
-						shadowingRef(LOCAL_ID, EXTERNAL_HREF), ReferenceScope.EXTERNAL_BY_HREF),
-				Arguments.of("blank entries are ignored", List.of(" ", ""), List.of("", HREF_PREFIX),
-						refEntity(LOCAL_ID, FOREIGN_HREF), ReferenceScope.LOCAL),
-				Arguments.of("prefixes are trimmed", List.of(" " + ID_PREFIX + " "), List.of(),
-						refEntity(EXTERNAL_ID, null), ReferenceScope.EXTERNAL));
+				Arguments.of("reference value with foreign href", SERVER_HOST, hosts, referenceValue(FOREIGN_HREF),
+						ReferenceScope.EXTERNAL),
+				Arguments.of("subclass shadowing href", SERVER_HOST, hosts, shadowingRef(FOREIGN_HREF),
+						ReferenceScope.EXTERNAL));
 	}
 
+	// TestServerHostConfigurer sets the server host only once the embedded server is up
 	@Test
-	public void isExternalOnlyConsidersIdPrefixes() {
-		ReferenceClassifier classifier = classifier(List.of(ID_PREFIX), List.of(HREF_PREFIX));
+	public void serverHostIsReadPerCall() {
+		GeneralProperties generalProperties = new GeneralProperties();
+		ReferenceClassifier classifier = new ReferenceClassifier(new ReferenceProperties(), generalProperties);
+		generalProperties.setServerHost(SERVER_HOST);
 
-		assertTrue(classifier.isExternal(URI.create(EXTERNAL_ID)));
-		assertFalse(classifier.isExternal(URI.create(LOCAL_ID)));
-		assertFalse(classifier.isExternal(null));
+		assertEquals(ReferenceScope.LOCAL, classifier.classify(refEntity(SERVER_HREF)));
 	}
 
-	@ParameterizedTest(name = "{0} warns: {1}")
-	@MethodSource("overlappingPrefixes")
-	public void warnsAboutIdPrefixesOverlappingLocalIds(String prefix, boolean expectWarning) {
-		Logger logger = (Logger) LoggerFactory.getLogger(ReferenceClassifier.class);
-		ListAppender<ILoggingEvent> appender = new ListAppender<>();
-		appender.start();
-		logger.addAppender(appender);
-		try {
-			classifier(List.of(prefix), List.of());
-		} finally {
-			logger.detachAppender(appender);
-		}
-
-		boolean warned = appender.list.stream()
-				.anyMatch(event -> event.getLevel() == Level.WARN
-						&& event.getFormattedMessage().contains(OVERLAP_WARNING));
-		assertEquals(expectWarning, warned);
+	private static ReferenceClassifier classifier(String serverHost, List<String> localHosts) {
+		ReferenceProperties referenceProperties = new ReferenceProperties();
+		referenceProperties.setLocalHosts(localHosts);
+		GeneralProperties generalProperties = new GeneralProperties();
+		generalProperties.setServerHost(serverHost);
+		return new ReferenceClassifier(referenceProperties, generalProperties);
 	}
 
-	private static Stream<Arguments> overlappingPrefixes() {
-		return Stream.of(
-				Arguments.of("urn:", true),
-				Arguments.of("urn:ngsi-ld:", true),
-				Arguments.of("urn:ngsi-ld:category:", true),
-				Arguments.of("urn:ngsi-ld:category:a1", true),
-				Arguments.of(ID_PREFIX, false));
-	}
-
-	private static ReferenceClassifier classifier(List<String> idPrefixes, List<String> hrefPrefixes) {
-		ReferenceProperties properties = new ReferenceProperties();
-		properties.setExternalIdPrefixes(idPrefixes);
-		properties.setExternalHrefPrefixes(hrefPrefixes);
-		return new ReferenceClassifier(properties);
-	}
-
-	private static ReferencedEntity refEntity(String id, String href) {
-		TestRef ref = new TestRef(id);
+	private static ReferencedEntity refEntity(String href) {
+		TestRef ref = new TestRef(ID);
 		ref.setHref(href == null ? null : URI.create(href));
 		return ref;
 	}
 
-	private static ReferencedEntity referenceValue(String id, String href) {
+	private static ReferencedEntity referenceValue(String href) {
 		ReferenceValue ref = new ReferenceValue();
-		ref.setId(URI.create(id));
+		ref.setId(URI.create(ID));
 		ref.setHref(URI.create(href));
 		return ref;
 	}
 
-	private static ReferencedEntity shadowingRef(String id, String href) {
-		ShadowingRef ref = new ShadowingRef(id);
+	private static ReferencedEntity shadowingRef(String href) {
+		ShadowingRef ref = new ShadowingRef(ID);
 		ref.setHref(URI.create(href));
 		return ref;
 	}

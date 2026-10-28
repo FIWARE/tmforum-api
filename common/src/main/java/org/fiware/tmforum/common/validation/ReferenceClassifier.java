@@ -2,85 +2,72 @@ package org.fiware.tmforum.common.validation;
 
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.configuration.ReferenceProperties;
 
 import java.net.URI;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Classifies references as local or external. A reference is external only if its id or href starts with an
- * operator-configured prefix; it is never inferred, so a client cannot switch validation off on its own.
+ * Classifies references as local or external. A reference is external when its href is absolute and names a host
+ * other than this deployment's ({@code general.serverHost}, {@code references.local-hosts}); otherwise it is local.
  */
 @Slf4j
 @Singleton
 public class ReferenceClassifier {
 
-	/** Common start of all server-generated ids ({@code urn:ngsi-ld:<type>:<uuid>}). */
-	private static final String LOCAL_ID_ROOT = "urn:ngsi-ld:";
+	private final GeneralProperties generalProperties;
+	private final Set<String> localHosts;
 
-	/** Id prefixes that only name a type, optionally continued by UUID characters, overlap local ids. */
-	private static final Pattern LOCAL_ID_OVERLAP = Pattern.compile("^urn:ngsi-ld:[^:]*(:[0-9a-fA-F-]*)?$");
-
-	private final List<String> externalIdPrefixes;
-	private final List<String> externalHrefPrefixes;
-
-	public ReferenceClassifier(ReferenceProperties referenceProperties) {
-		this.externalIdPrefixes = sanitize(referenceProperties.getExternalIdPrefixes(), "external-id-prefixes");
-		this.externalHrefPrefixes = sanitize(referenceProperties.getExternalHrefPrefixes(),
-				"external-href-prefixes");
-		externalIdPrefixes.stream()
-				.filter(ReferenceClassifier::overlapsLocalIds)
-				.forEach(prefix -> log.warn("External id prefix '{}' overlaps server-generated local ids; "
-						+ "local references matching it are not validated. Use a deployment-specific prefix.",
-						prefix));
+	public ReferenceClassifier(ReferenceProperties referenceProperties, GeneralProperties generalProperties) {
+		this.generalProperties = generalProperties;
+		this.localHosts = normalize(referenceProperties.getLocalHosts());
 	}
 
 	/**
-	 * An id-prefix match wins over an href-prefix match, since only the latter needs a local type guard.
+	 * A missing, relative or non-hierarchical href (e.g. the {@code urn:} id this deployment uses) counts as local.
 	 */
 	public ReferenceScope classify(ReferencedEntity ref) {
-		if (matches(ref.getEntityId(), externalIdPrefixes)) {
-			return ReferenceScope.EXTERNAL;
+		URI href = ref.getReferenceHref();
+		String host = href == null ? null : href.getHost();
+		if (host == null || isLocalHost(host.toLowerCase(Locale.ROOT))) {
+			return ReferenceScope.LOCAL;
 		}
-		if (matches(ref.getReferenceHref(), externalHrefPrefixes)) {
-			return ReferenceScope.EXTERNAL_BY_HREF;
-		}
-		return ReferenceScope.LOCAL;
+		return ReferenceScope.EXTERNAL;
 	}
 
-	/**
-	 * Whether the id alone marks a reference as external; the read path only sees ids.
-	 */
-	public boolean isExternal(URI id) {
-		return matches(id, externalIdPrefixes);
+	// the server host is read per call, since it may be set after startup (see TestServerHostConfigurer)
+	private boolean isLocalHost(String host) {
+		return localHosts.contains(host) || host.equals(serverHost());
 	}
 
-	private static boolean matches(URI uri, List<String> prefixes) {
-		if (uri == null) {
-			return false;
+	private String serverHost() {
+		String serverHost = generalProperties.getServerHost();
+		if (serverHost == null) {
+			return null;
 		}
-		String value = uri.toString();
-		return prefixes.stream().anyMatch(value::startsWith);
-	}
-
-	private static boolean overlapsLocalIds(String prefix) {
-		return LOCAL_ID_ROOT.startsWith(prefix) || LOCAL_ID_OVERLAP.matcher(prefix).matches();
-	}
-
-	// a blank prefix would match everything and silently switch validation off
-	private static List<String> sanitize(List<String> prefixes, String property) {
-		if (prefixes == null) {
-			return List.of();
+		try {
+			String host = URI.create(serverHost.trim()).getHost();
+			return host == null ? null : host.toLowerCase(Locale.ROOT);
+		} catch (IllegalArgumentException e) {
+			log.warn("general.serverHost '{}' is not a valid URI; it is not used to classify references.",
+					serverHost);
+			return null;
 		}
-		return prefixes.stream()
-				.map(prefix -> prefix == null ? "" : prefix.trim())
-				.filter(prefix -> {
-					if (prefix.isEmpty()) {
-						log.warn("Ignoring blank entry in references.{}.", property);
-					}
-					return !prefix.isEmpty();
-				})
-				.toList();
+	}
+
+	private static Set<String> normalize(List<String> hosts) {
+		if (hosts == null) {
+			return Set.of();
+		}
+		return hosts.stream()
+				.filter(Objects::nonNull)
+				.map(host -> host.trim().toLowerCase(Locale.ROOT))
+				.filter(host -> !host.isEmpty())
+				.collect(Collectors.toUnmodifiableSet());
 	}
 }
