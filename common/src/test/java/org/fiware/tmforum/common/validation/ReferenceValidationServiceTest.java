@@ -103,12 +103,17 @@ class ReferenceValidationServiceTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("externalCombinations")
 	public void externalReferencesAreSkippedAndCounted(String description, List<TestRef> refs, boolean expected,
-			double localResolved, double localUnresolved, double externalSkipped) {
+			double localResolved, double localUnresolved, double externalResolved, double externalUnresolved,
+			double externalSkipped) {
 		assertEquals(expected, service.checkReferenceExists(refs).block());
 
 		assertEquals(localResolved, count(ReferenceValidationService.SCOPE_LOCAL,
 				ReferenceValidationService.RESULT_RESOLVED));
 		assertEquals(localUnresolved, count(ReferenceValidationService.SCOPE_LOCAL,
+				ReferenceValidationService.RESULT_UNRESOLVED));
+		assertEquals(externalResolved, count(ReferenceValidationService.SCOPE_EXTERNAL,
+				ReferenceValidationService.RESULT_RESOLVED));
+		assertEquals(externalUnresolved, count(ReferenceValidationService.SCOPE_EXTERNAL,
 				ReferenceValidationService.RESULT_UNRESOLVED));
 		assertEquals(externalSkipped, count(ReferenceValidationService.SCOPE_EXTERNAL,
 				ReferenceValidationService.RESULT_SKIPPED));
@@ -116,13 +121,13 @@ class ReferenceValidationServiceTest {
 
 	private static Stream<Arguments> externalCombinations() {
 		return Stream.of(
-				Arguments.of("local existing and external", List.of(CATEGORY_A, EXTERNAL_1), true, 1, 0, 1),
-				Arguments.of("local missing and external", List.of(MISSING_X, EXTERNAL_1), false, 0, 1, 1),
-				Arguments.of("all external", List.of(EXTERNAL_1, EXTERNAL_2), true, 0, 0, 2),
-				Arguments.of("external with local entity of accepted type", List.of(EXTERNAL_ACCEPTED), true, 1, 0,
-						0),
+				Arguments.of("local existing and external", List.of(CATEGORY_A, EXTERNAL_1), true, 1, 0, 0, 0, 1),
+				Arguments.of("local missing and external", List.of(MISSING_X, EXTERNAL_1), false, 0, 1, 0, 0, 1),
+				Arguments.of("all external", List.of(EXTERNAL_1, EXTERNAL_2), true, 0, 0, 0, 0, 2),
+				Arguments.of("external with local entity of accepted type", List.of(EXTERNAL_ACCEPTED), true, 0, 0,
+						1, 0, 0),
 				Arguments.of("external with local entity of another type", List.of(EXTERNAL_WRONG_TYPE), false, 0,
-						1, 0));
+						0, 0, 1, 0));
 	}
 
 	@Test
@@ -138,7 +143,8 @@ class ReferenceValidationServiceTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("externalCombinations")
 	public void validatesWithoutMeterRegistry(String description, List<TestRef> refs, boolean expected,
-			double localResolved, double localUnresolved, double externalSkipped) {
+			double localResolved, double localUnresolved, double externalResolved, double externalUnresolved,
+			double externalSkipped) {
 		ReferenceValidationService unmetered = new ReferenceValidationService(referencesRepository, classifier, null);
 
 		assertEquals(expected, unmetered.checkReferenceExists(refs).block());

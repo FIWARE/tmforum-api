@@ -20,7 +20,10 @@ import java.util.Objects;
 @Singleton
 public class ReferenceValidationService {
 
-    /** Counter of validated references, tagged by scope and result. */
+    /**
+     * Counter of validated references, tagged by scope and result. Scope is the classification, so an external
+     * reference whose id names a local entity counts as external resolved/unresolved, not as local.
+     */
     public static final String REFERENCES_METRIC = "tmforum.references";
     public static final String SCOPE_TAG = "scope";
     public static final String RESULT_TAG = "result";
@@ -104,12 +107,12 @@ public class ReferenceValidationService {
         return switch (referenceClassifier.classify(ref)) {
             case EXTERNAL -> referencesRepository.findReference(ref.getEntityId().toString())
                     // a local entity with that id must not be smuggled in under another type
-                    .map(entityVO -> countLocal(ref.getReferencedTypes().contains(entityVO.getType())))
+                    .map(entityVO -> count(SCOPE_EXTERNAL, ref.getReferencedTypes().contains(entityVO.getType())))
                     .switchIfEmpty(Mono.fromSupplier(() -> skipExternal(ref)));
             case LOCAL -> referencesRepository.referenceExists(ref.getEntityId().toString(), ref.getReferencedTypes())
                     .map(entityVO -> true)
                     .defaultIfEmpty(false)
-                    .map(this::countLocal);
+                    .map(resolves -> count(SCOPE_LOCAL, resolves));
         };
     }
 
@@ -119,8 +122,8 @@ public class ReferenceValidationService {
         return true;
     }
 
-    private boolean countLocal(boolean resolves) {
-        count(SCOPE_LOCAL, resolves ? RESULT_RESOLVED : RESULT_UNRESOLVED);
+    private boolean count(String scope, boolean resolves) {
+        count(scope, resolves ? RESULT_RESOLVED : RESULT_UNRESOLVED);
         return resolves;
     }
 

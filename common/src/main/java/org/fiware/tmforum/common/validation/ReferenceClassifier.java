@@ -22,6 +22,8 @@ public class ReferenceClassifier {
 
 	private final GeneralProperties generalProperties;
 	private final Set<String> localHosts;
+	// last seen general.serverHost and its parsed host, so a bad value is parsed and warned about once
+	private volatile ParsedServerHost parsedServerHost;
 
 	public ReferenceClassifier(ReferenceProperties referenceProperties, GeneralProperties generalProperties) {
 		this.generalProperties = generalProperties;
@@ -50,9 +52,24 @@ public class ReferenceClassifier {
 		if (serverHost == null) {
 			return null;
 		}
+		ParsedServerHost parsed = parsedServerHost;
+		if (parsed == null || !parsed.raw().equals(serverHost)) {
+			parsed = new ParsedServerHost(serverHost, parseHost(serverHost));
+			parsedServerHost = parsed;
+		}
+		return parsed.host();
+	}
+
+	private static String parseHost(String serverHost) {
 		try {
 			String host = URI.create(serverHost.trim()).getHost();
-			return host == null ? null : host.toLowerCase(Locale.ROOT);
+			if (host == null) {
+				// e.g. a scheme-less "tmf.local:8632" parses with "tmf.local" as its scheme
+				log.warn("general.serverHost '{}' has no host (missing scheme?); it is not used to classify "
+						+ "references.", serverHost);
+				return null;
+			}
+			return host.toLowerCase(Locale.ROOT);
 		} catch (IllegalArgumentException e) {
 			log.warn("general.serverHost '{}' is not a valid URI; it is not used to classify references.",
 					serverHost);
@@ -69,5 +86,8 @@ public class ReferenceClassifier {
 				.map(host -> host.trim().toLowerCase(Locale.ROOT))
 				.filter(host -> !host.isEmpty())
 				.collect(Collectors.toUnmodifiableSet());
+	}
+
+	private record ParsedServerHost(String raw, String host) {
 	}
 }
