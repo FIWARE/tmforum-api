@@ -69,6 +69,8 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String MISSING_CATEGORY_ID_PREFIX = "urn:ngsi-ld:category:missing-";
 	private static final String REMOTE_SERVICE_CANDIDATE_ID = "urn:ngsi-ld:service-candidate:remote-1";
 	private static final String REMOTE_NAME = "Held by another deployment";
+	// TmForumExceptionHandler's INVALID_RELATIONSHIP message, telling a failed reference check from other 400s
+	private static final String UNRESOLVED_REFERENCE_MESSAGE = "At least one of the references does not exist";
 
 	/**
 	 * How a category reference in a test case is built; resolved against the entities created by the test.
@@ -85,7 +87,9 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		// a non-existent id with an href naming a references.local-hosts entry
 		MISSING_LOCAL_ALIAS,
 		// the id of a local product specification with a foreign href (the external type guard)
-		EXTERNAL_WRONG_TYPE
+		EXTERNAL_WRONG_TYPE,
+		// an existing local category with a foreign href (the type guard resolves it locally)
+		LOCAL_FOREIGN_HREF
 	}
 
 	private final ProductOfferingApiTestClient productOfferingApiTestClient;
@@ -152,7 +156,9 @@ public class ExternalReferenceIT extends AbstractApiIT {
 				Arguments.of("An href naming a configured local host keeps a missing category local.",
 						List.of(RefKind.MISSING_LOCAL_ALIAS), HttpStatus.BAD_REQUEST),
 				Arguments.of("A foreign href must not smuggle in a local entity of another type.",
-						List.of(RefKind.EXTERNAL_WRONG_TYPE), HttpStatus.BAD_REQUEST));
+						List.of(RefKind.EXTERNAL_WRONG_TYPE), HttpStatus.BAD_REQUEST),
+				Arguments.of("A foreign href on an existing local category of the accepted type is accepted.",
+						List.of(RefKind.LOCAL_FOREIGN_HREF), HttpStatus.CREATED));
 	}
 
 	@ParameterizedTest
@@ -198,6 +204,8 @@ public class ExternalReferenceIT extends AbstractApiIT {
 			assertCategoriesReadBack(id, categories, message);
 		} else {
 			assertRejected(patchResponse);
+			List<CategoryRefVO> stored = retrieve(id).getCategory();
+			assertTrue(stored == null || stored.isEmpty(), "A rejected patch must not store anything: " + message);
 		}
 	}
 
@@ -268,7 +276,10 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	}
 
 	private static void assertRejected(HttpResponse<?> response) {
-		assertTrue(response.getBody(ErrorDetails.class).isPresent(), "Error details should be provided.");
+		ErrorDetails details = response.getBody(ErrorDetails.class)
+				.orElseThrow(() -> new AssertionError("Error details should be provided."));
+		assertTrue(details.message().startsWith(UNRESOLVED_REFERENCE_MESSAGE),
+				"The request should fail the reference validation, not something else: " + details.message());
 	}
 
 	private List<CategoryRefVO> categoryRefs(List<RefKind> kinds) throws Exception {
@@ -293,6 +304,10 @@ public class ExternalReferenceIT extends AbstractApiIT {
 			case EXTERNAL_WRONG_TYPE -> {
 				String specId = createProductSpecification();
 				yield categoryRefVO(specId, URI.create(EXTERNAL_BASE_URL + CATEGORY_PATH + specId));
+			}
+			case LOCAL_FOREIGN_HREF -> {
+				String categoryId = createCategory();
+				yield categoryRefVO(categoryId, URI.create(EXTERNAL_BASE_URL + CATEGORY_PATH + categoryId));
 			}
 		};
 	}
