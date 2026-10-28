@@ -53,3 +53,6 @@ general:
 api:
   agreement:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

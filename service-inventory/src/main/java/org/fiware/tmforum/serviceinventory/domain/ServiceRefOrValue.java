@@ -1,5 +1,6 @@
 package org.fiware.tmforum.serviceinventory.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
@@ -64,4 +65,9 @@ public class ServiceRefOrValue extends Entity implements ReferencedEntity {
         return this.id;
     }
 
+    @JsonIgnore
+    @Override
+    public URI getReferenceHref() {
+        return getHref();
+    }
 }

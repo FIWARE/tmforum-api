@@ -54,3 +54,6 @@ general:
 api:
   account:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

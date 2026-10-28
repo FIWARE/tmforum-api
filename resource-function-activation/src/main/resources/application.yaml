@@ -54,3 +54,6 @@ general:
 api:
   resource-function-activation:
     basepath: ${general.basepath:/}
+
+mapping:
+  strictRelationships: false

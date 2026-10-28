@@ -126,10 +126,25 @@ export const APIS = [
         "urnType": "agreementSpecification",
         "refs": [
           {
+            "field": "relatedParty",
+            "many": true,
+            "targets": [
+              "individual",
+              "organization"
+            ]
+          },
+          {
             "field": "serviceCategory",
             "many": false,
             "targets": [
               "category"
+            ]
+          },
+          {
+            "field": "specificationRelationship",
+            "many": true,
+            "targets": [
+              "agreementSpecification"
             ]
           }
         ]
@@ -757,6 +772,13 @@ export const APIS = [
           {
             "field": "category",
             "many": true,
+            "targets": [
+              "resource-category"
+            ]
+          },
+          {
+            "field": "parentId",
+            "many": false,
             "targets": [
               "resource-category"
             ]
