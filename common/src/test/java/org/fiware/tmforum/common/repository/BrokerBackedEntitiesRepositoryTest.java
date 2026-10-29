@@ -6,7 +6,9 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
+import org.fiware.tmforum.storage.StorageErrorReason;
+import org.fiware.tmforum.storage.StorageException;
+import org.fiware.tmforum.storage.StorageOperation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -73,7 +75,10 @@ class BrokerBackedEntitiesRepositoryTest {
 	public void getEntities_brokerErrorPropagates() {
 		Mono<List<EntityVO>> entities = repository.getEntities(List.of(CATEGORY_A, REJECTED));
 
-		assertThrows(NgsiLdRepositoryException.class, entities::block);
+		StorageException exception = assertThrows(StorageException.class, entities::block);
+
+		assertEquals(StorageOperation.READ, exception.operation());
+		assertEquals(StorageErrorReason.UNKNOWN, exception.reason());
 	}
 
 	private void answer(URI id, Mono<HttpResponse<EntityVO>> response) {
