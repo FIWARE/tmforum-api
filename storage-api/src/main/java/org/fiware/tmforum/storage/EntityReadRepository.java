@@ -29,6 +29,7 @@ public interface EntityReadRepository {
      * Values within {@code ids} and within {@code types} are comma-separated and OR-ed; the two filters and
      * {@code query} are AND-ed. {@code types} is required (NGSI-LD brokers reject a query without a type or
      * other filter); a null {@code ids}, {@code query} or {@code orderBy} means unrestricted or unordered.
+     * Without a match the result may complete empty instead of emitting an empty page (the NGSI-LD adapter does).
      */
     <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           String query, String ids, String types, String orderBy);
@@ -43,7 +44,8 @@ public interface EntityReadRepository {
 
     /**
      * Lists several types in one paged result, mapping each entity to the class {@code typeToClass} returns for
-     * its stored type. {@code ids}, {@code types} and {@code query} filter as in {@code findEntities}.
+     * its stored type. {@code ids}, {@code types} and {@code query} filter as in {@code findEntities}, but
+     * Orion-LD rejects several ids together with several types (LIST, UNKNOWN), so callers pass at most one list.
      */
     <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types, String query,
                                                      String ids, String orderBy,
