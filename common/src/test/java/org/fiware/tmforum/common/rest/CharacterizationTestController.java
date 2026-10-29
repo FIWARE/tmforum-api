@@ -15,7 +15,7 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import reactor.core.publisher.Mono;
@@ -39,7 +39,7 @@ public class CharacterizationTestController extends AbstractApiController<Charac
 	private static final String NAME = "updated";
 
 	public CharacterizationTestController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumEventHandler eventHandler) {
+			EntityRepository repository, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, repository, eventHandler);
 	}
 
