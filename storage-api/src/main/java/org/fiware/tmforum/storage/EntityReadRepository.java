@@ -20,18 +20,21 @@ public interface EntityReadRepository {
      * type segment is not a type the class is persisted as (today the class's MappingEnabled entity types).
      * Every adapter checks the id's type segment, not the stored type.
      *
-     * @throws IllegalArgumentException synchronously, if the backend cannot persist {@code entityClass}
+     * @throws IllegalArgumentException synchronously, if the backend cannot persist {@code entityClass}; checked
+     *                                  only after the id has a type segment, so a malformed id is always empty
      */
     <T> Mono<T> get(URI id, Class<T> entityClass);
 
     /**
-     * {@code ids} and {@code types} are comma-separated with OR semantics; null means unrestricted.
+     * Values within {@code ids} and within {@code types} are comma-separated and OR-ed; the two filters and
+     * {@code query} are AND-ed. {@code types} is required (NGSI-LD brokers reject a query without a type or
+     * other filter); a null {@code ids}, {@code query} or {@code orderBy} means unrestricted or unordered.
      */
     <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           String query, String ids, String types, String orderBy);
 
     /**
-     * All entities of one type, unordered.
+     * Entities of {@code entityType} matching {@code query}, unordered; the full overload without ids or orderBy.
      */
     default <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, String entityType,
                                                   Class<T> entityClass, String query) {
@@ -40,7 +43,7 @@ public interface EntityReadRepository {
 
     /**
      * Lists several types in one paged result, mapping each entity to the class {@code typeToClass} returns for
-     * its stored type. {@code ids} and {@code types} are comma-separated with OR semantics.
+     * its stored type. {@code ids}, {@code types} and {@code query} filter as in {@code findEntities}.
      */
     <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types, String query,
                                                      String ids, String orderBy,

@@ -21,7 +21,8 @@ public interface EntityWriteRepository {
      * untouched, an emptied list is cleared and reads back absent or empty, so callers must accept both.
      * Fails with {@link StorageErrorReason#NOT_FOUND} for an absent id and never creates or completes silently
      * (update-else-create callers rely on it), and with {@link StorageErrorReason#PARTIAL_UPDATE} when the
-     * backend wrote only some attributes. Failures carry UPDATE, except the NGSI-LD replace-mode pre-read (READ).
+     * backend wrote only some attributes. Failures carry UPDATE, except the recorded NGSI-LD replace-mode
+     * pre-read (see {@link StorageOperation}).
      */
     <T> Mono<Void> updateDomainEntity(String id, T domainEntity);
 
