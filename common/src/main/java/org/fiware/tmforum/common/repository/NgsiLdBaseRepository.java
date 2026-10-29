@@ -9,6 +9,7 @@ import io.micronaut.cache.annotation.CachePut;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientException;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +34,10 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
-import org.fiware.tmforum.common.exception.TmForumException;
-import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
+import org.fiware.tmforum.storage.StorageErrorReason;
+import org.fiware.tmforum.storage.StorageException;
+import org.fiware.tmforum.storage.StorageOperation;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -154,7 +156,9 @@ public abstract class NgsiLdBaseRepository {
 	 * @return an empty mono
 	 */
 	public <T> Mono<Void> createDomainEntity(T domainEntity) {
-		return createEntity(javaObjectMapper.toEntityVO(domainEntity), generalProperties.getTenant());
+		return createEntity(javaObjectMapper.toEntityVO(domainEntity), generalProperties.getTenant())
+				.onErrorMap(HttpClientException.class,
+						e -> BrokerFailures.writeFailure(StorageOperation.CREATE, e));
 	}
 
 	/**
@@ -174,7 +178,9 @@ public abstract class NgsiLdBaseRepository {
 		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity, NgsiLdWriteOperation.UPDATE);
 		URI entityId = URI.create(id);
 		if (!generalProperties.isReplaceOnUpdate()) {
-			return patchEntity(entityId, ngsiMapper.map(withEmptiedListsAsEmptyArrays(updateEntityVO)));
+			return patchEntity(entityId, ngsiMapper.map(withEmptiedListsAsEmptyArrays(updateEntityVO)))
+					.onErrorMap(HttpClientException.class,
+							e -> BrokerFailures.writeFailure(StorageOperation.UPDATE, e));
 		}
 		return entityAttributesApi
 				// read from the broker, a cached entity may miss instances written in the meantime
@@ -182,14 +188,16 @@ public abstract class NgsiLdBaseRepository {
 				.map(HttpResponse::body)
 				.onErrorResume(HttpClientResponseException.class, e -> e.getStatus() == HttpStatus.NOT_FOUND
 						? Mono.empty()
-						: Mono.error(new NgsiLdRepositoryException("Was not able to successfully call the broker.",
-								Optional.of(e))))
-				.switchIfEmpty(Mono.error(new NgsiLdRepositoryException(
-						String.format("Entity %s does not exist.", id), Optional.empty())))
+						: Mono.error(new StorageException(StorageOperation.READ, StorageErrorReason.UNKNOWN,
+								BrokerFailures.BROKER_CALL_FAILED, e)))
+				.switchIfEmpty(Mono.error(new StorageException(StorageOperation.READ, StorageErrorReason.NOT_FOUND,
+						String.format("Entity %s does not exist.", id))))
 				.map(storedEntity -> toAttributeUpdate(storedEntity, updateEntityVO))
 				.flatMap(attributeUpdate -> updateAttributes(entityId, attributeUpdate))
 				// checked outside of updateAttributes, so that its cache invalidation also runs on a partial write
-				.flatMap(response -> failOnPartialUpdate(entityId, response));
+				.flatMap(response -> failOnPartialUpdate(entityId, response))
+				// the pre-read only maps an answered call, so a pre-read without answer fails the update
+				.onErrorMap(HttpClientException.class, e -> BrokerFailures.writeFailure(StorageOperation.UPDATE, e));
 	}
 
 	// Orion-LD 1.9 rejects NGSI-LD Null in POST /attrs (207, attribute kept), but stores `[]` as an empty
@@ -250,9 +258,8 @@ public abstract class NgsiLdBaseRepository {
 						.collect(Collectors.joining("; ")))
 				.orElse("no details given");
 		log.warn("Broker did not update all attributes of entity {}: {}", entityId, details);
-		return Mono.error(new TmForumException(
-				String.format("Not all attributes could be updated: %s", details),
-				TmForumExceptionReason.INVALID_DATA));
+		return Mono.error(new StorageException(StorageOperation.UPDATE, StorageErrorReason.PARTIAL_UPDATE,
+				String.format("Not all attributes could be updated: %s", details)));
 	}
 
 	/**
@@ -367,14 +374,13 @@ public abstract class NgsiLdBaseRepository {
 	public Mono<Void> deleteDomainEntity(URI id) {
 		return entitiesApi
 				.removeEntityById(id, generalProperties.getTenant(), null)
-				.onErrorResume(t -> {
+				.onErrorMap(t -> {
 					if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
-						throw new DeletionException(String.format("Was not able to delete %s, since it does not exist.", id),
-								DeletionExceptionReason.NOT_FOUND);
+						return new StorageException(StorageOperation.DELETE, StorageErrorReason.NOT_FOUND,
+								String.format("Was not able to delete %s, since it does not exist.", id), e);
 					}
-					throw new DeletionException(String.format("Was not able to delete %s.", id),
-							t,
-							DeletionExceptionReason.UNKNOWN);
+					return new StorageException(StorageOperation.DELETE, BrokerFailures.unknownOrUnavailable(t),
+							String.format("Was not able to delete %s.", id), t);
 				})
 				.then();
 	}
@@ -475,7 +481,8 @@ public abstract class NgsiLdBaseRepository {
 		if (e instanceof HttpClientResponseException httpException && httpException.getStatus().equals(HttpStatus.NOT_FOUND)) {
 			return Mono.empty();
 		}
-		throw new NgsiLdRepositoryException("Was not able to successfully call the broker.", Optional.of(e));
+		throw new StorageException(StorageOperation.READ, BrokerFailures.unknownOrUnavailable(e),
+				BrokerFailures.BROKER_CALL_FAILED, e);
 	}
 
 	private Mono<SubscriptionVO> handleClientSubscriptionException(Throwable e) {

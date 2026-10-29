@@ -8,11 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.exception.TmForumException;
-import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.StorageException;
+import org.fiware.tmforum.storage.StorageOperation;
 import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 @Slf4j
 @Singleton
 public class TmForumRepository extends NgsiLdBaseRepository implements EntityRepository, SubscriptionRepository {
+
+    private static final String LIST_FAILED = "Was not able to list entities.";
 
     public TmForumRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
                              SubscriptionsApiClient subscriptionsApi, EntityVOMapper entityVOMapper,
@@ -87,10 +89,7 @@ public class TmForumRepository extends NgsiLdBaseRepository implements EntityRep
                         getLinkHeader())
                 .flatMap(response -> zipToList(response.body() != null ? response.body().stream() : Stream.empty(), entityClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
-                .onErrorResume(t -> {
-                    log.warn("Was not able to list entities.", t);
-                    throw new TmForumException("Was not able to list entities.", t, TmForumExceptionReason.UNKNOWN);
-                });
+                .onErrorMap(TmForumRepository::listFailure);
     }
 
     /**
@@ -124,10 +123,14 @@ public class TmForumRepository extends NgsiLdBaseRepository implements EntityRep
                         getLinkHeader())
                 .flatMap(response -> zipToPolymorphicList(response.body() != null ? response.body().stream() : Stream.empty(), typeToClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
-                .onErrorResume(t -> {
-                    log.warn("Was not able to list entities.", t);
-                    throw new TmForumException("Was not able to list entities.", t, TmForumExceptionReason.UNKNOWN);
-                });
+                .onErrorMap(TmForumRepository::listFailure);
+    }
+
+    // wraps every failure, a nested READ from relationship resolution included, so that a list always renders alike
+    private static StorageException listFailure(Throwable failure) {
+        log.warn(LIST_FAILED, failure);
+        return new StorageException(StorageOperation.LIST, BrokerFailures.unknownOrUnavailable(failure), LIST_FAILED,
+                failure);
     }
 
     Integer extractTotalCount(HttpResponse<?> response) {
