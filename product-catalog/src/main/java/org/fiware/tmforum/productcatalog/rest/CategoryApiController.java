@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -35,7 +35,7 @@ public class CategoryApiController extends AbstractApiController<Category> imple
 	private final Clock clock;
 
 	public CategoryApiController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository productCatalogRepository,
+			EntityRepository productCatalogRepository,
 			TMForumMapper tmForumMapper, Clock clock, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, productCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;

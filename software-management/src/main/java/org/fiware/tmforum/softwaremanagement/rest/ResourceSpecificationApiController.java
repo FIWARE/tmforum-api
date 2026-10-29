@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -57,7 +57,7 @@ public class ResourceSpecificationApiController extends AbstractApiController<Re
 	 * @param objectMapper      the Jackson object mapper for sub-type VO conversion
 	 */
 	public ResourceSpecificationApiController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository repository, TMForumMapper tmForumMapper,
+			EntityRepository repository, TMForumMapper tmForumMapper,
 			Clock clock, TMForumEventHandler eventHandler,
 			ObjectMapper objectMapper) {
 		super(queryParser, validationService, repository, eventHandler);
