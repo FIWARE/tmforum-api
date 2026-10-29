@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -32,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * The {@link EntityRepository} contract from its Javadoc, run by every adapter against its live backend; ticket 6
@@ -65,11 +62,10 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     protected abstract EntityFixture<O> otherFixture();
 
     /**
-     * False for a backend whose configured update mode cannot clear a list, as documented on
-     * {@link org.fiware.tmforum.storage.EntityWriteRepository#updateDomainEntity}; skips that case.
+     * Deviations of the backend under test as configured; the affected cases assert them instead of the contract.
      */
-    protected boolean clearsAnEmptiedList() {
-        return true;
+    protected Set<KnownDeviation> knownDeviations() {
+        return Set.of();
     }
 
     enum AbsentId {UNKNOWN, OTHER_TYPE, NO_TYPE_SEGMENT}
@@ -131,12 +127,16 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
     @Test
     void updateClearsAnEmptiedList() {
-        assumeTrue(clearsAnEmptiedList(), "The configured update mode cannot clear a list.");
         T created = fixture().newEntity(fixture().newId());
         URI id = create(fixture(), created);
 
         repository().updateDomainEntity(id.toString(), fixture().emptiedList(id)).block(TIMEOUT);
 
+        if (knownDeviations().contains(KnownDeviation.EMPTIED_LIST_BREAKS_READS)) {
+            assertThrows(RuntimeException.class, () -> repository().get(id, fixture().entityClass()).block(TIMEOUT),
+                    "Reading after emptying a list works now, drop " + KnownDeviation.EMPTIED_LIST_BREAKS_READS);
+            return;
+        }
         T read = read(id);
         List<?> list = fixture().listValue(read);
         assertTrue(list == null || list.isEmpty(), "An emptied list reads back absent or empty, but was " + list);
@@ -226,34 +226,44 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     void findEntitiesPolymorphicMapsEachEntityByItsStoredType() {
         URI own = create(fixture());
         URI other = create(otherFixture());
+
+        // one id per call, so the case holds regardless of SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL
+        List<Object> ownItems = itemsOf(findPolymorphic(List.of(own)));
+        List<Object> otherItems = itemsOf(findPolymorphic(List.of(other)));
+
+        assertEquals(List.of(own), idsOf(fixture(), ownItems), "The own type maps to its class.");
+        assertEquals(List.of(other), idsOf(otherFixture(), otherItems), "The other type maps to its class.");
+    }
+
+    @Test
+    void findEntitiesPolymorphicFiltersSeveralIdsWithSeveralTypes() {
+        URI own = create(fixture());
+        URI other = create(otherFixture());
+
+        if (knownDeviations().contains(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL)) {
+            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
+                    () -> findPolymorphic(List.of(own, other)));
+            return;
+        }
+        List<Object> items = itemsOf(findPolymorphic(List.of(own, other)));
+
+        assertEquals(List.of(own), idsOf(fixture(), items));
+        assertEquals(List.of(other), idsOf(otherFixture(), items));
+    }
+
+    // lists both fixtures' types, mapping each stored type to its fixture's class
+    private Mono<PagedResult<Object>> findPolymorphic(List<URI> ids) {
         Map<String, Class<?>> classes = Map.of(
                 fixture().storedType(), fixture().entityClass(),
                 otherFixture().storedType(), otherFixture().entityClass());
-        Set<String> mappedTypes = ConcurrentHashMap.newKeySet();
-        Function<String, Class<?>> typeToClass = storedType -> {
-            mappedTypes.add(storedType);
-            return classes.get(storedType);
-        };
-
-        // types only: Orion-LD rejects several ids together with several types, see findEntitiesPolymorphic
-        List<Object> items = listAll(offset -> repository().findEntitiesPolymorphic(offset, LIST_LIMIT,
-                String.join(LIST_SEPARATOR, classes.keySet()), null, null, null, typeToClass));
-
-        assertEquals(classes.keySet(), mappedTypes);
-        assertTrue(idsOf(fixture(), items).contains(own), "The own type maps to its class.");
-        assertTrue(idsOf(otherFixture(), items).contains(other), "The other type maps to its class.");
+        return repository().findEntitiesPolymorphic(FIRST_OFFSET, LIST_LIMIT,
+                String.join(LIST_SEPARATOR, classes.keySet()), null, join(ids), null, classes::get);
     }
 
-    // pages through, since entities left by other tests may share the listed types
-    private static List<Object> listAll(Function<Integer, Mono<PagedResult<Object>>> pageAt) {
-        List<Object> items = new ArrayList<>();
-        for (int offset = FIRST_OFFSET; ; offset += LIST_LIMIT) {
-            PagedResult<Object> page = pageAt.apply(offset).block(TIMEOUT);
-            if (page == null || page.items().isEmpty()) {
-                return items;
-            }
-            items.addAll(page.items());
-        }
+    private static List<Object> itemsOf(Mono<PagedResult<Object>> result) {
+        PagedResult<Object> page = result.block(TIMEOUT);
+        assertNotNull(page);
+        return page.items();
     }
 
     private T read(URI id) {

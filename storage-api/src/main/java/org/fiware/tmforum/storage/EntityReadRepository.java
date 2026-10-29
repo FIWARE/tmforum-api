@@ -44,8 +44,10 @@ public interface EntityReadRepository {
 
     /**
      * Lists several types in one paged result, mapping each entity to the class {@code typeToClass} returns for
-     * its stored type. {@code ids}, {@code types} and {@code query} filter as in {@code findEntities}, but
-     * Orion-LD rejects several ids together with several types (LIST, UNKNOWN), so callers pass at most one list.
+     * its stored type. {@code ids}, {@code types} and {@code query} filter as in {@code findEntities}.
+     * <p>
+     * Known NGSI-LD adapter defect, not a contract rule (ticket 0): Orion-LD rejects several ids together with
+     * several types, so such a call fails with (LIST, UNKNOWN).
      */
     <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types, String query,
                                                      String ids, String orderBy,

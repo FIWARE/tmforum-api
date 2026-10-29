@@ -9,7 +9,11 @@ import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest;
 import org.fiware.tmforum.storage.contract.EntityFixture;
+import org.fiware.tmforum.storage.contract.KnownDeviation;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
+
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Runs the entity port contract against the NGSI-LD adapter and the broker of the IT profile.
@@ -30,10 +34,17 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 		this.environment = environment;
 	}
 
-	// Orion-LD in append mode keeps the datasetId instances of an emptied list, see updateDomainEntity
+	// the Orion-LD defects recorded on the port Javadoc; the broker is chosen by the IT environment
 	@Override
-	protected boolean clearsAnEmptiedList() {
-		return generalProperties.isReplaceOnUpdate() || !environment.getActiveNames().contains(ORION_LD_ENVIRONMENT);
+	protected Set<KnownDeviation> knownDeviations() {
+		if (!environment.getActiveNames().contains(ORION_LD_ENVIRONMENT)) {
+			return Set.of();
+		}
+		Set<KnownDeviation> deviations = EnumSet.of(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL);
+		if (!generalProperties.isReplaceOnUpdate()) {
+			deviations.add(KnownDeviation.EMPTIED_LIST_BREAKS_READS);
+		}
+		return deviations;
 	}
 
 	@Override
