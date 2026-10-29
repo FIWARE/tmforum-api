@@ -7,7 +7,6 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Consumes;
 import io.micronaut.http.annotation.Post;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.tmforum.common.CommonConstants;
@@ -72,28 +71,6 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 								.atContext(generalProperties.getContextUrl()),
 						generalProperties.getTenant())))
 				.then(create(Mono.just(tmForumSubscription), TMForumSubscription.class));
-	}
-
-	private Mono<Subscription> create(Subscription subscriptionMono) {
-		return repository.createDomainSubscription(subscriptionMono)
-				.onErrorMap(t -> {
-					if (t instanceof HttpClientResponseException e) {
-						return switch (e.getStatus()) {
-							case CONFLICT -> new TmForumException(
-									String.format("Conflict on creating the subscription: %s", e.getMessage()),
-									TmForumExceptionReason.CONFLICT);
-							case BAD_REQUEST -> new TmForumException(
-									String.format("Did not receive a valid subscription: %s.", e.getMessage()),
-									TmForumExceptionReason.INVALID_DATA);
-							default -> new TmForumException(
-									String.format("Unspecified downstream error: %s", e.getMessage()),
-									TmForumExceptionReason.UNKNOWN);
-						};
-					} else {
-						return t;
-					}
-				})
-				.cast(Subscription.class);
 	}
 
 	private Mono<Void> assureNotExistingTMForumSubscription(TMForumSubscription subscription) {

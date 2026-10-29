@@ -2,11 +2,11 @@ package org.fiware.tmforum.common.validation;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.configuration.ReferenceProperties;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
-import org.fiware.tmforum.common.repository.ReferencesRepository;
+import org.fiware.tmforum.storage.ReferenceReadRepository;
+import org.fiware.tmforum.storage.StoredReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,22 +64,24 @@ class ReferenceValidationServiceTest {
 			CATEGORY_C.id().toString(), CATEGORY_TYPE,
 			WRONG_TYPE.id().toString(), OFFERING_TYPE);
 
-	private ReferencesRepository referencesRepository;
+	private ReferenceReadRepository referencesRepository;
 	private SimpleMeterRegistry meterRegistry;
 	private ReferenceClassifier classifier;
 	private ReferenceValidationService service;
 
 	@BeforeEach
 	public void setUp() {
-		referencesRepository = mock(ReferencesRepository.class);
+		referencesRepository = mock(ReferenceReadRepository.class);
 		when(referencesRepository.referenceExists(anyString(), anyList())).thenAnswer(invocation -> {
-			String type = STORED_ENTITIES.get(invocation.<String>getArgument(0));
+			String id = invocation.getArgument(0);
+			String type = STORED_ENTITIES.get(id);
 			List<String> acceptedTypes = invocation.getArgument(1);
-			return type != null && acceptedTypes.contains(type) ? Mono.just(new EntityVO()) : Mono.empty();
+			return type != null && acceptedTypes.contains(type) ? Mono.just(new StoredReference(id, type)) : Mono.empty();
 		});
 		when(referencesRepository.findReference(anyString())).thenAnswer(invocation -> {
-			String type = STORED_ENTITIES.get(invocation.<String>getArgument(0));
-			return type == null ? Mono.empty() : Mono.just(new EntityVO().type(type));
+			String id = invocation.getArgument(0);
+			String type = STORED_ENTITIES.get(id);
+			return type == null ? Mono.empty() : Mono.just(new StoredReference(id, type));
 		});
 		meterRegistry = new SimpleMeterRegistry();
 		ReferenceProperties referenceProperties = new ReferenceProperties();

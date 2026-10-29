@@ -29,7 +29,6 @@ import org.fiware.ngsi.model.UpdateResultVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.DeletionException;
 import org.fiware.tmforum.common.exception.DeletionExceptionReason;
@@ -156,22 +155,6 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	public <T> Mono<Void> createDomainEntity(T domainEntity) {
 		return createEntity(javaObjectMapper.toEntityVO(domainEntity), generalProperties.getTenant());
-	}
-
-	/**
-	 * Create a domain subscription
-	 *
-	 * @param domainSubscription the subscription to be created
-	 * @return an empty mono
-	 */
-	public Mono<Void> createDomainSubscription(Subscription domainSubscription) {
-		if (domainSubscription.getNotification() != null
-				&& domainSubscription.getNotification().getAttributes() != null
-				&& domainSubscription.getNotification().getAttributes().isEmpty()) {
-			// account for the api restriction on non-empty attribute lists.
-			domainSubscription.getNotification().setAttributes(null);
-		}
-		return createSubscription(entityVOMapper.toSubscriptionVO(domainSubscription), generalProperties.getTenant());
 	}
 
 	/**
