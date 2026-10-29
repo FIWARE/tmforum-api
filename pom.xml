@@ -30,6 +30,7 @@
     </licenses>
 
     <modules>
+        <module>storage-api</module>
         <module>common</module>
         <module>customer-shared-models</module>
         <module>resource-shared-models</module>

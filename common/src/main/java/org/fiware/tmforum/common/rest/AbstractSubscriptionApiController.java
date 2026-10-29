@@ -28,7 +28,7 @@ import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
-import org.fiware.tmforum.common.repository.PagedResult;
+import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import reactor.core.publisher.Mono;

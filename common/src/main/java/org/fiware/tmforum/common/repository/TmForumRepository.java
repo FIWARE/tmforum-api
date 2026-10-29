@@ -11,6 +11,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
+import org.fiware.tmforum.storage.PagedResult;
 import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
