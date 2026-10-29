@@ -7,7 +7,7 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.PagedResult;
+import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;

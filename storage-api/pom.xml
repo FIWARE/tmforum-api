@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.fiware.tmforum</groupId>
+    <artifactId>storage-api</artifactId>
+    <version>0.1</version>
+
+    <parent>
+        <groupId>org.fiware</groupId>
+        <artifactId>tmforum</artifactId>
+        <version>0.1</version>
+    </parent>
+
+    <description>Storage-neutral persistence port of the TMForum APIs, free of NGSI-LD and framework types.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- the port must stay storage- and framework-neutral, so leaking such a dependency fails the build -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <!-- inherited from micronaut-parent; dormant in every other module of this build -->
+                    <execution>
+                        <id>micronaut-enforce</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>neutral-port</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules combine.self="override">
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>io.github.wistefan:*</exclude>
+                                        <exclude>io.micronaut*:*</exclude>
+                                        <exclude>org.fiware.tmforum:*</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

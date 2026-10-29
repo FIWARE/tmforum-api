@@ -15,7 +15,7 @@ import org.fiware.tmforum.common.notification.checkers.tmforum.TmForumEventCheck
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
-import org.fiware.tmforum.common.repository.PagedResult;
+import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import reactor.core.publisher.Mono;
