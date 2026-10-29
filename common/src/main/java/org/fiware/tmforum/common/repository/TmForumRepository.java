@@ -11,6 +11,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
 import reactor.core.publisher.Mono;
 
@@ -22,7 +23,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
-public class TmForumRepository extends NgsiLdBaseRepository {
+public class TmForumRepository extends NgsiLdBaseRepository implements EntityRepository, SubscriptionRepository {
 
     public TmForumRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
                              SubscriptionsApiClient subscriptionsApi, EntityVOMapper entityVOMapper,
@@ -30,6 +31,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
         super(generalProperties, entitiesApi, subscriptionsApi, javaObjectMapper, ngsiMapper, entityVOMapper);
     }
 
+    @Override
     public <T> Mono<T> get(URI id, Class<T> entityClass) {
 
         String idString = id.toString();
@@ -63,6 +65,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                 .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
     }
 
+    @Override
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           String query, String ids, String types, String orderBy) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
@@ -90,12 +93,6 @@ public class TmForumRepository extends NgsiLdBaseRepository {
                 });
     }
 
-
-    public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, String entityType, Class<T> entityClass,
-                                          String query) {
-        return findEntities(offset, limit, entityClass, query, null, entityType, null);
-    }
-
     /**
      * Query several NGSI-LD entity types in a single broker call (NGSI-LD's {@code type} parameter
      * accepts a comma-separated list with OR semantics), instead of one call per type. This lets the
@@ -105,6 +102,7 @@ public class TmForumRepository extends NgsiLdBaseRepository {
      * Since the result is a mix of entity types, each entity is mapped to its own domain class via
      * {@code typeToClass} instead of a single fixed class.
      */
+    @Override
     public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
                                           String query, String ids, String orderBy, Function<String, Class<? extends T>> typeToClass) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
