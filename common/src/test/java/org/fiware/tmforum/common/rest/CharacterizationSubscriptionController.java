@@ -15,7 +15,7 @@ import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import reactor.core.publisher.Mono;
 
@@ -35,7 +35,7 @@ public class CharacterizationSubscriptionController extends AbstractSubscription
 	private static final String EVENT_GROUP = EventConstants.EVENT_GROUP_CATALOG;
 
 	public CharacterizationSubscriptionController(QueryParser queryParser,
-			ReferenceValidationService validationService, TmForumRepository repository,
+			ReferenceValidationService validationService, EntityRepository repository,
 			TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 			GeneralProperties generalProperties, EntityVOMapper entityVOMapper,
 			SubscriptionMapper subscriptionMapper) {

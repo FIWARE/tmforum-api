@@ -13,10 +13,10 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
-import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import reactor.core.publisher.Mono;
@@ -40,7 +40,7 @@ public abstract class AbstractApiController<T> {
 
 	protected final QueryParser queryParser;
 	protected final ReferenceValidationService validationService;
-	protected final TmForumRepository repository;
+	protected final EntityRepository repository;
 	protected final TMForumEventHandler eventHandler;
 
 	protected Mono<T> getCheckingMono(T entityToCheck, List<List<? extends ReferencedEntity>> referencedEntities) {

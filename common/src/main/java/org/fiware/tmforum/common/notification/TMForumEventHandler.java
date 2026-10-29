@@ -15,8 +15,8 @@ import org.fiware.tmforum.common.notification.checkers.tmforum.TmForumEventCheck
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
+import org.fiware.tmforum.storage.EntityReadRepository;
 import org.fiware.tmforum.storage.PagedResult;
-import org.fiware.tmforum.common.repository.TmForumRepository;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import reactor.core.publisher.Mono;
 
@@ -32,11 +32,11 @@ public class TMForumEventHandler extends EventHandler {
 
 	private final QueryParser queryParser;
 	private final SubscriptionQueryResolver subscriptionQueryResolver;
-	private final TmForumRepository repository;
+	private final EntityReadRepository repository;
 
 	public TMForumEventHandler(QueryParser queryParser, SubscriptionQueryResolver subscriptionQueryResolver,
 							   NotificationSender notificationSender, EntityVOMapper entityVOMapper,
-							   TmForumRepository repository, EventMapper eventMapper, ObjectMapper objectMapper) {
+							   EntityReadRepository repository, EventMapper eventMapper, ObjectMapper objectMapper) {
 		super(notificationSender, entityVOMapper, eventMapper, objectMapper);
 		this.queryParser = queryParser;
 		this.subscriptionQueryResolver = subscriptionQueryResolver;
