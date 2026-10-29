@@ -41,7 +41,7 @@ class NgsiLdBaseRepositoryErrorTest {
 	private static final String LIST_FAILED = "Was not able to list entities.";
 
 	private EntitiesApiClient entitiesApi;
-	private TmForumRepository repository;
+	private NgsiLdEntityRepository repository;
 
 	@BeforeEach
 	public void setUp() {
@@ -52,7 +52,7 @@ class NgsiLdBaseRepositoryErrorTest {
 		when(javaObjectMapper.toEntityVO(any(), any(NgsiLdWriteOperation.class))).thenReturn(entityVO);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new TmForumRepository(new GeneralProperties(), entitiesApi, null, null, ngsiMapper,
+		repository = new NgsiLdEntityRepository(new GeneralProperties(), entitiesApi, null, null, ngsiMapper,
 				javaObjectMapper);
 	}
 
@@ -115,7 +115,7 @@ class NgsiLdBaseRepositoryErrorTest {
 			StorageErrorReason expectedReason) {
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(failure));
-		Function<TmForumRepository, Mono<?>> list = listMethod.equals("findEntities")
+		Function<NgsiLdEntityRepository, Mono<?>> list = listMethod.equals("findEntities")
 				? r -> r.findEntities(0, 10, Object.class, null, null, "test", null)
 				: r -> r.findEntitiesPolymorphic(0, 10, "test", null, null, null, type -> Object.class);
 

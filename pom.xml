@@ -116,6 +116,7 @@
         <version.org.mockito.mockito-core>5.22.0</version.org.mockito.mockito-core>
         <version.org.mockito.mockito-junit-jupiter>5.22.0</version.org.mockito.mockito-junit-jupiter>
         <version.org.awaitility>4.0.3</version.org.awaitility>
+        <version.com.tngtech.archunit.archunit>1.5.1</version.com.tngtech.archunit.archunit>
         <version.org.jacoco.maven-plugin>0.8.14</version.org.jacoco.maven-plugin>
         <version.org.eluder.coveralls.maven-plugin>4.3.0</version.org.eluder.coveralls.maven-plugin>
         <version.com.github.spotbugs.maven-plugin>4.9.8.5</version.com.github.spotbugs.maven-plugin>
@@ -170,6 +171,12 @@
                 <groupId>org.awaitility</groupId>
                 <artifactId>awaitility</artifactId>
                 <version>${version.org.awaitility}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit</artifactId>
+                <version>${version.com.tngtech.archunit.archunit}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>

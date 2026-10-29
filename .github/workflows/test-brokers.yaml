@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models ]
+        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models, all-in-one ]
     steps:
       - uses: actions/checkout@v2
 
