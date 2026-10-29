@@ -40,10 +40,11 @@ class ControllerStorageBoundaryTest {
 	}
 
 	static Stream<Named<ArchRule>> rules() {
-		DescribedPredicate<JavaClass> concreteRepositories = resideInAPackage(ADAPTER_PACKAGES).and(not(INTERFACES))
-				.as("are concrete repositories in " + ADAPTER_PACKAGES);
+		// The whole package is adapter-private: only its interfaces are public API, so any concrete type is blocked.
+		DescribedPredicate<JavaClass> adapterPrivateTypes = resideInAPackage(ADAPTER_PACKAGES).and(not(INTERFACES))
+				.as("are non-interface types in the adapter-private package " + ADAPTER_PACKAGES);
 		return Stream.of(
-						noModuleClasses().should().dependOnClassesThat(concreteRepositories),
+						noModuleClasses().should().dependOnClassesThat(adapterPrivateTypes),
 						noModuleClasses().should().dependOnClassesThat().resideInAPackage(NGSI_PACKAGES))
 				.map(rule -> Named.of(rule.getDescription(), rule));
 	}
