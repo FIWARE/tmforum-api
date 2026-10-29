@@ -443,7 +443,7 @@ public abstract class NgsiLdBaseRepository {
 	 * Helper method for combining a stream of entities of potentially different NGSI-LD types to a
 	 * single mono, mapping each entity to its own target class instead of one fixed class for the
 	 * whole batch. Used for polymorphic list endpoints that query several NGSI-LD types at once
-	 * (see {@link TmForumRepository#findEntitiesPolymorphic}).
+	 * (see {@link NgsiLdEntityRepository#findEntitiesPolymorphic}).
 	 *
 	 * @param entityVOStream stream of entities, potentially of different NGSI-LD types
 	 * @param typeToClass    resolves the target class to map an entity to, based on its NGSI-LD type

@@ -23,13 +23,13 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
-public class TmForumRepository extends NgsiLdBaseRepository implements EntityRepository, SubscriptionRepository {
+public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements EntityRepository, SubscriptionRepository {
 
     private static final String LIST_FAILED = "Was not able to list entities.";
 
-    public TmForumRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
-                             SubscriptionsApiClient subscriptionsApi, EntityVOMapper entityVOMapper,
-                             NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
+    public NgsiLdEntityRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
+                                  SubscriptionsApiClient subscriptionsApi, EntityVOMapper entityVOMapper,
+                                  NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
         super(generalProperties, entitiesApi, subscriptionsApi, javaObjectMapper, ngsiMapper, entityVOMapper);
     }
 
@@ -89,7 +89,7 @@ public class TmForumRepository extends NgsiLdBaseRepository implements EntityRep
                         getLinkHeader())
                 .flatMap(response -> zipToList(response.body() != null ? response.body().stream() : Stream.empty(), entityClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
-                .onErrorMap(TmForumRepository::listFailure);
+                .onErrorMap(NgsiLdEntityRepository::listFailure);
     }
 
     /**
@@ -123,7 +123,7 @@ public class TmForumRepository extends NgsiLdBaseRepository implements EntityRep
                         getLinkHeader())
                 .flatMap(response -> zipToPolymorphicList(response.body() != null ? response.body().stream() : Stream.empty(), typeToClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
-                .onErrorMap(TmForumRepository::listFailure);
+                .onErrorMap(NgsiLdEntityRepository::listFailure);
     }
 
     // wraps every failure, a nested READ from relationship resolution included, so that a list always renders alike

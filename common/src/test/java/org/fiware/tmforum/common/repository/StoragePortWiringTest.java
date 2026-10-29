@@ -35,10 +35,10 @@ class StoragePortWiringTest {
 
 	static Stream<Arguments> ports() {
 		return Stream.of(
-				Arguments.of(EntityRepository.class, TmForumRepository.class),
-				Arguments.of(EntityReadRepository.class, TmForumRepository.class),
-				Arguments.of(EntityWriteRepository.class, TmForumRepository.class),
-				Arguments.of(SubscriptionRepository.class, TmForumRepository.class),
+				Arguments.of(EntityRepository.class, NgsiLdEntityRepository.class),
+				Arguments.of(EntityReadRepository.class, NgsiLdEntityRepository.class),
+				Arguments.of(EntityWriteRepository.class, NgsiLdEntityRepository.class),
+				Arguments.of(SubscriptionRepository.class, NgsiLdEntityRepository.class),
 				Arguments.of(ReferenceReadRepository.class, BrokerBackedReferencesRepository.class));
 	}
 
