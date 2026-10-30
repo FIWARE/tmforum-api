@@ -17,9 +17,11 @@ The Javadoc of the types is the contract. This file is only a map of it.
 | `EntityRepository`        | both of the above, what most controllers inject                            |
 | `ReferenceReadRepository` | `referenceExists`/`findReference`, returning a neutral `StoredReference`   |
 
-Inject the narrowest interface you need. ArchUnit (`common`'s `StorageBoundaryTest`, `all-in-one`'s
-`ControllerStorageBoundaryTest`) fails the build when code outside the adapter package references a concrete
-adapter class or NGSI-LD types, or when a REST class branches on broker responses.
+Inject the narrowest interface you need. ArchUnit fails the build in three cases. In `common`'s
+`StorageBoundaryTest`, code outside the adapter package references one of the four concrete adapter classes, or
+a `..rest..` class references `HttpClientResponseException`. In `all-in-one`'s `ControllerStorageBoundaryTest`,
+API-module code (outside `common`) references a concrete class of `common.repository` or NGSI-LD types. `common`
+itself is not NGSI-free: subscriptions, notifications, mapping and caching use NGSI-LD types on purpose.
 
 NGSI-LD subscriptions (`SubscriptionRepository` in `common`) are broker-only and are not part of the port.
 
@@ -53,6 +55,10 @@ syntax until ticket 7 adds a neutral query model.
    that cannot meet a rule yet declares it in `knownDeviations()`. The affected cases then assert today's
    behaviour, so a fix fails the case instead of passing silently.
 4. Select the adapter per deployment through a Micronaut profile/`@Requires` (ticket 6), so exactly one
-   implementation of each interface is in the context.
+   implementation of each interface is in the context. `NgsiLdEntityRepository` is also the only
+   `SubscriptionRepository` bean, and every subscription controller requires one through its `@Inject` setter.
+   A profile that switches the NGSI-LD adapter off must still supply a `SubscriptionRepository`, or ticket 1 must
+   split it out of `NgsiLdEntityRepository` first. Without one, every module with a subscription controller fails
+   at startup.
 
 The known deviations of the NGSI-LD adapter are listed in `KnownDeviation` and in the port Javadoc.
