@@ -27,15 +27,17 @@ NGSI-LD subscriptions (`SubscriptionRepository` in `common`) are broker-only and
 
 An adapter signals every failure as a `StorageException` with a `StorageOperation` (the backend step that failed:
 READ, LIST, CREATE, UPDATE, DELETE) and a `StorageErrorReason` (NOT_FOUND, CONFLICT, INVALID_DATA,
-PARTIAL_UPDATE, UNAVAILABLE, UNKNOWN). `common` renders the HTTP response from that pair alone, at the call site
-or in `StorageExceptionHandler`. It never looks at the cause, so an adapter must not throw anything else to change
-a response.
+PARTIAL_UPDATE, UNAVAILABLE, UNKNOWN). The one exception is `get` for a class the backend cannot persist: it throws
+`IllegalArgumentException` synchronously, which renders as a 400, so do not wrap it. `common` renders the HTTP
+response at the call site or in `StorageExceptionHandler`. The cause is kept for logging only, and the response
+depends on (operation, reason) alone.
 
 ## Update semantics
 
 `updateDomainEntity` writes only the attributes the entity carries. Null fields stay untouched, and an emptied list
-is cleared (it reads back absent or empty). An absent id fails with NOT_FOUND. The update never creates the entity
-and never completes silently.
+is cleared (it reads back absent or empty). An absent id fails with NOT_FOUND and operation UPDATE. The NGSI-LD
+replace mode reports READ instead, which renders differently; ticket 6 has to decide this open parity question (see
+the `updateDomainEntity` Javadoc). The update never creates the entity and never completes silently.
 
 `query` and `orderBy` are still `QueryParser` output (NGSI-LD q syntax). A second adapter has to translate that
 syntax until ticket 7 adds a neutral query model.
@@ -43,7 +45,8 @@ syntax until ticket 7 adds a neutral query model.
 ## Adding an adapter
 
 1. Depend on `storage-api` and `common`, nothing else from this build.
-2. Implement `EntityRepository` and `ReferenceReadRepository`, and throw `StorageException` on every failure.
+2. Implement `EntityRepository` and `ReferenceReadRepository`, and throw `StorageException` on every failure,
+   except the synchronous `IllegalArgumentException` of `get` described under *Errors*.
 3. Run the contract against the live backend: depend on the `storage-api` test-jar (`<type>test-jar</type>`,
    scope `test`), then extend `AbstractEntityRepositoryContractTest` and
    `AbstractReferenceReadRepositoryContractTest`. `product-catalog`'s `NgsiLd*ContractIT` show how. A backend
