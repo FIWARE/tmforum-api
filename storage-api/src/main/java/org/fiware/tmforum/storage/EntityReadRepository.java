@@ -29,7 +29,10 @@ public interface EntityReadRepository {
      * Values within {@code ids} and within {@code types} are comma-separated and OR-ed; the two filters and
      * {@code query} are AND-ed. {@code types} is required (NGSI-LD brokers reject a query without a type or
      * other filter); a null {@code ids}, {@code query} or {@code orderBy} means unrestricted or unordered.
-     * Without a match the result may complete empty instead of emitting an empty page (the NGSI-LD adapter does).
+     * Always emits a page, an empty one when nothing matches or the offset is past the last match, because the
+     * controllers set the pagination headers from it.
+     * <p>
+     * Known NGSI-LD adapter defect, not a contract rule (ticket 0): an empty page completes empty instead.
      */
     <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           String query, String ids, String types, String orderBy);
@@ -44,7 +47,8 @@ public interface EntityReadRepository {
 
     /**
      * Lists several types in one paged result, mapping each entity to the class {@code typeToClass} returns for
-     * its stored type. {@code ids}, {@code types} and {@code query} filter as in {@code findEntities}.
+     * its stored type. {@code ids}, {@code types} and {@code query} filter and the result pages as in
+     * {@code findEntities}.
      * <p>
      * Known NGSI-LD adapter defect, not a contract rule (ticket 0): Orion-LD rejects several ids together with
      * several types, so such a call fails with (LIST, UNKNOWN).

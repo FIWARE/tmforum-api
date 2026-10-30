@@ -12,6 +12,12 @@ public enum KnownDeviation {
     EMPTIED_LIST_BREAKS_READS,
 
     /**
+     * {@code findEntities} completes empty instead of emitting a page when the page holds no entity, also when
+     * the offset is past the last match.
+     */
+    EMPTY_PAGE_COMPLETES_EMPTY,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL

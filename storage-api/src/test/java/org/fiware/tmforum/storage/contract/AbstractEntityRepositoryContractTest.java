@@ -133,8 +133,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         repository().updateDomainEntity(id.toString(), fixture().emptiedList(id)).block(TIMEOUT);
 
         if (knownDeviations().contains(KnownDeviation.EMPTIED_LIST_BREAKS_READS)) {
-            assertThrows(RuntimeException.class, () -> repository().get(id, fixture().entityClass()).block(TIMEOUT),
-                    "Reading after emptying a list works now, drop " + KnownDeviation.EMPTIED_LIST_BREAKS_READS);
+            assertFailure(StorageOperation.READ, StorageErrorReason.UNKNOWN,
+                    () -> repository().get(id, fixture().entityClass()));
             return;
         }
         T read = read(id);
@@ -187,10 +187,11 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         PagedResult<T> page = repository().findEntities(offset, limit, fixture().entityClass(), null, join(ids),
                 fixture().storedType(), null).block(TIMEOUT);
 
-        if (page == null) {
-            assertEquals(0, expectedSize, "Only a result without matches may complete empty.");
+        if (expectedSize == 0 && knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
+            assertNull(page, "An empty page is emitted now, drop " + KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
             return;
         }
+        assertNotNull(page, "A page is always emitted, an empty one included.");
         assertEquals(expectedSize, page.items().size());
         assertTrue(ids.containsAll(idsOf(page)), "The page holds only matching entities.");
         assertEquals(offset, page.offset());
@@ -251,12 +252,29 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertEquals(List.of(other), idsOf(otherFixture(), items));
     }
 
-    // lists both fixtures' types, mapping each stored type to its fixture's class
+    @Test
+    void findEntitiesPolymorphicEmitsAnEmptyPagePastTheLastMatch() {
+        List<URI> matches = List.of(create(fixture()));
+
+        PagedResult<Object> page = findPolymorphic(matches.size(), matches).block(TIMEOUT);
+
+        assertNotNull(page, "A page is always emitted, an empty one included.");
+        assertTrue(page.items().isEmpty(), "The page past the last match is empty, but was " + page.items());
+        assertEquals(matches.size(), page.offset());
+        assertTrue(page.totalCount() == null || page.totalCount() == matches.size(),
+                "The total count is null or counts all matches, but was " + page.totalCount());
+    }
+
     private Mono<PagedResult<Object>> findPolymorphic(List<URI> ids) {
+        return findPolymorphic(FIRST_OFFSET, ids);
+    }
+
+    // lists both fixtures' types, mapping each stored type to its fixture's class
+    private Mono<PagedResult<Object>> findPolymorphic(int offset, List<URI> ids) {
         Map<String, Class<?>> classes = Map.of(
                 fixture().storedType(), fixture().entityClass(),
                 otherFixture().storedType(), otherFixture().entityClass());
-        return repository().findEntitiesPolymorphic(FIRST_OFFSET, LIST_LIMIT,
+        return repository().findEntitiesPolymorphic(offset, LIST_LIMIT,
                 String.join(LIST_SEPARATOR, classes.keySet()), null, join(ids), null, classes::get);
     }
 
