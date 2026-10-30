@@ -165,7 +165,7 @@ Today's error responses depend on *where* a failure comes from, not only on the 
 
 ### Step 8: Full verification and context docs
 - Run the full gate: `mvn clean install -DskipTests -DskipITs`, `mvn test`, and `mvn integration-test` over all modules (all 73 `*IT.java`) with the default `in-memory,orion-ld`. Also run at least `product-catalog` and `party-catalog` with `-Dbroker=scorpio -Dcache=redis`. Run `mvn spotbugs:spotbugs` on `storage-api` and `common`.
-- Update `AGENTS.md`:
+- Update `AGENTS.md` (step agents may not edit it, so the Step 8 agent hands these edits to plan mode through a `[plan-update]` comment):
   - Project Structure: add `storage-api/` and list `NgsiLdEntityRepository` and `SubscriptionRepository` under `common/.../repository`.
   - Key Conventions: controllers and services inject `EntityRepository`/`EntityReadRepository`/`ReferenceReadRepository`, never the NGSI-LD classes, and ArchUnit enforces this. Adapters signal failures as `StorageException` (operation + reason), and `StorageExceptionHandler` renders them.
   - Build & Test: CI `--projects` lists include `storage-api`.
