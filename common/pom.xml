@@ -15,6 +15,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>storage-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>io.github.wistefan</groupId>
             <artifactId>ngsi-ld-java-mapping</artifactId>
             <scope>compile</scope>
@@ -156,6 +161,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
             <scope>test</scope>
         </dependency>
 

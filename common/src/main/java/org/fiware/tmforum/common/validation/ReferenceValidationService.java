@@ -5,7 +5,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
-import org.fiware.tmforum.common.repository.ReferencesRepository;
+import org.fiware.tmforum.storage.ReferenceReadRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,7 +34,7 @@ public class ReferenceValidationService {
     public static final String RESULT_UNRESOLVED = "unresolved";
     public static final String RESULT_SKIPPED = "skipped";
 
-    private final ReferencesRepository referencesRepository;
+    private final ReferenceReadRepository referencesRepository;
     private final ReferenceClassifier referenceClassifier;
     @Nullable
     private final MeterRegistry meterRegistry;
@@ -42,7 +42,7 @@ public class ReferenceValidationService {
     /**
      * The registry is optional, so contexts with metrics disabled still start; references are then not counted.
      */
-    public ReferenceValidationService(ReferencesRepository referencesRepository,
+    public ReferenceValidationService(ReferenceReadRepository referencesRepository,
                                       ReferenceClassifier referenceClassifier,
                                       @Nullable MeterRegistry meterRegistry) {
         this.referencesRepository = referencesRepository;
@@ -117,10 +117,10 @@ public class ReferenceValidationService {
         return switch (scope) {
             case EXTERNAL -> referencesRepository.findReference(entityId.toString())
                     // a local entity with that id must not be smuggled in under another type
-                    .map(entityVO -> count(SCOPE_EXTERNAL, ref.getReferencedTypes().contains(entityVO.getType())))
+                    .map(reference -> count(SCOPE_EXTERNAL, ref.getReferencedTypes().contains(reference.type())))
                     .switchIfEmpty(Mono.fromSupplier(() -> skipExternal(entityId)));
             case LOCAL -> referencesRepository.referenceExists(entityId.toString(), ref.getReferencedTypes())
-                    .map(entityVO -> true)
+                    .map(reference -> true)
                     .defaultIfEmpty(false)
                     .map(resolves -> count(SCOPE_LOCAL, resolves));
         };

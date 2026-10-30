@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import org.fiware.tmforum.party.TMForumMapper;
@@ -34,7 +34,7 @@ public class IndividualApiController extends AbstractPartyApiController<Individu
 
 	private final TMForumMapper tmForumMapper;
 
-	public IndividualApiController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository partyRepository,
+	public IndividualApiController(QueryParser queryParser, ReferenceValidationService validationService, EntityRepository partyRepository,
 			TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, partyRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;

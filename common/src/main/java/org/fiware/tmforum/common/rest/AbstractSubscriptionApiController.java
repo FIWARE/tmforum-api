@@ -7,7 +7,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Consumes;
 import io.micronaut.http.annotation.Post;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.tmforum.common.CommonConstants;
@@ -28,9 +28,10 @@ import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
 import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
-import org.fiware.tmforum.common.repository.PagedResult;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.common.repository.SubscriptionRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
+import org.fiware.tmforum.storage.EntityRepository;
+import org.fiware.tmforum.storage.PagedResult;
 import reactor.core.publisher.Mono;
 import tools.jackson.core.JacksonException;
 
@@ -49,9 +50,10 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	protected final EntityVOMapper entityVOMapper;
 	private final NgsiLdEventHandler ngsiLdEventHandler;
 	private final SubscriptionMapper subscriptionMapper;
+	private SubscriptionRepository subscriptionRepository;
 
 	public AbstractSubscriptionApiController(
-			QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository repository,
+			QueryParser queryParser, ReferenceValidationService validationService, EntityRepository repository,
 			Map<String, String> eventGroupToEntityNameMapping,
 			TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
 			GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
@@ -63,37 +65,21 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 		this.subscriptionMapper = subscriptionMapper;
 	}
 
+	/** Setter-injected so the module constructors stay port-only; the broker notification path stays out of the port. */
+	@Inject
+	public void setSubscriptionRepository(SubscriptionRepository subscriptionRepository) {
+		this.subscriptionRepository = subscriptionRepository;
+	}
+
 	@CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
 	protected Mono<TMForumSubscription> create(TMForumSubscription tmForumSubscription) {
 		return assureNotExistingTMForumSubscription(tmForumSubscription)
-				.then(Mono.defer(() -> repository.createSubscription(
+				.then(Mono.defer(() -> subscriptionRepository.createSubscription(
 						subscriptionMapper
 								.map(tmForumSubscription.getSubscription())
 								.atContext(generalProperties.getContextUrl()),
 						generalProperties.getTenant())))
 				.then(create(Mono.just(tmForumSubscription), TMForumSubscription.class));
-	}
-
-	private Mono<Subscription> create(Subscription subscriptionMono) {
-		return repository.createDomainSubscription(subscriptionMono)
-				.onErrorMap(t -> {
-					if (t instanceof HttpClientResponseException e) {
-						return switch (e.getStatus()) {
-							case CONFLICT -> new TmForumException(
-									String.format("Conflict on creating the subscription: %s", e.getMessage()),
-									TmForumExceptionReason.CONFLICT);
-							case BAD_REQUEST -> new TmForumException(
-									String.format("Did not receive a valid subscription: %s.", e.getMessage()),
-									TmForumExceptionReason.INVALID_DATA);
-							default -> new TmForumException(
-									String.format("Unspecified downstream error: %s", e.getMessage()),
-									TmForumExceptionReason.UNKNOWN);
-						};
-					} else {
-						return t;
-					}
-				})
-				.cast(Subscription.class);
 	}
 
 	private Mono<Void> assureNotExistingTMForumSubscription(TMForumSubscription subscription) {
@@ -160,7 +146,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	@Override
 	@CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
 	protected Mono<HttpResponse<Object>> delete(String id) {
-		return repository.deleteDomainSubscriptionByTmForumSubscription(URI.create(id))
+		return subscriptionRepository.deleteDomainSubscriptionByTmForumSubscription(URI.create(id))
 				.then(super.delete(id));
 	}
 
@@ -184,7 +170,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 
 			assert !notificationVO.getData().isEmpty();
 
-			return this.repository.retrieveSubscriptionById(notificationVO.getSubscriptionId())
+			return subscriptionRepository.retrieveSubscriptionById(notificationVO.getSubscriptionId())
 					.flatMap(subscriptionVO -> ngsiLdEventHandler.handle(notificationVO, subscriptionVO))
 					.then(Mono.just(HttpResponse.noContent()));
 		} catch (JacksonException e) {

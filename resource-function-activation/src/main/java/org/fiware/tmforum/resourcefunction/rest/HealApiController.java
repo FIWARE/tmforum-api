@@ -10,7 +10,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -29,7 +29,7 @@ public class HealApiController extends AbstractApiController<Heal> implements He
 
 	private final TMForumMapper tmForumMapper;
 
-	public HealApiController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository resourceCatalogRepository,
+	public HealApiController(QueryParser queryParser, ReferenceValidationService validationService, EntityRepository resourceCatalogRepository,
 			TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, resourceCatalogRepository, eventHandler);
 		this.tmForumMapper = tmForumMapper;

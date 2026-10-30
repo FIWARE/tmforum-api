@@ -6,7 +6,7 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 
@@ -17,7 +17,7 @@ import java.util.Objects;
 public class AbstractPartyApiController<T> extends AbstractApiController<T> {
 
 	public AbstractPartyApiController(QueryParser queryParser, ReferenceValidationService validationService,
-									  TmForumRepository repository, TMForumEventHandler eventHandler) {
+									  EntityRepository repository, TMForumEventHandler eventHandler) {
 		super(queryParser, validationService, repository, eventHandler);
 	}
 
