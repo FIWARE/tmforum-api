@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 /**
- * Broker-only notification path (owned by ticket 1); not part of the storage port, its errors stay broker-specific.
+ * Broker-only notification path, its errors stay broker-specific.
  */
 public interface SubscriptionRepository {
 
