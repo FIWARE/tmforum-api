@@ -13,7 +13,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -32,19 +31,14 @@ public final class NgsiLdRoundTrip {
 			.addModule(new NgsiLdMappingModule())
 			.changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
 			.build();
-	private static final EntitiesRepository NOTHING_RESOLVES = entityIds -> Mono.just(List.of());
 
 	private NgsiLdRoundTrip() {
 	}
 
-	/** Writes, serializes and reads back the entity. Blocks, and throws if the read mapping fails. */
-	public static <T> T roundTrip(T entity, Class<T> entityClass) {
-		return read(store(entity), entityClass, NOTHING_RESOLVES);
-	}
-
 	/**
-	 * Like {@link #roundTrip(Object, Class)}, but a relationship without {@code fromProperties} resolves against the
-	 * stored {@code targets}, as on a broker, so its sub-properties are merged over the target's. The targets' ids must be unique.
+	 * Writes, serializes and reads back the entity. Blocks, and throws if the read mapping fails.
+	 * A relationship without {@code fromProperties} resolves against the stored {@code targets}, as on a broker, so its
+	 * sub-properties are merged over the target's. The targets' ids must be unique.
 	 */
 	public static <T> T roundTrip(T entity, Class<T> entityClass, Object... targets) {
 		Map<URI, EntityVO> stored = Arrays.stream(targets)

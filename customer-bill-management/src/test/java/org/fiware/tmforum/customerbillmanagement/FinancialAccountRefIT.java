@@ -40,7 +40,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * Pins that a broker keeps every balance of a {@link FinancialAccountRefVO} stored inline in the financialAccount relationship.
- * Re-enabling it needs the accountBalance getter change of ticket 88 Step 4; until then it fails on every broker (see IMPLEMENTATION_PLAN.md).
+ * Kept as the reproduction of the Orion-LD merge. Re-enabling it needs the accountBalance getter change, which waits on
+ * the open encoding decision in the ticket 88 plan's Step 1 result; until then it fails on every broker.
  */
 @Disabled("accountBalance is not stored inline until its encoding is decided; with a PROPERTY getter Orion-LD merges the instances and the read fails with 400.")
 @MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)

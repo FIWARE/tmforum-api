@@ -114,6 +114,17 @@ when a relationship is still resolved, its sub-properties already override the t
     pod resolves DNS. The resolving merge path is also pinned broker-less by
     `AccountRefRoundTripTest#writtenFieldsWinOverTheResolvedTarget` (`BillingAccount` over a stored
     `FinancialAccount`).
+  - **Result (open, blocks list setters in Steps 2–4 on orion-ld):** `service-catalog/.../EntitySpecificationRelationshipIT`
+    writes a `RELATIONSHIP_LIST` of `EntitySpecificationRelationship` (all fields, nested `associationSpec`) with
+    the production mappers, retrieves it from the broker and reads it with `fromProperties = true`. Scorpio
+    (java-5.0.3) returns everything for one and for several relationships. Orion-LD 1.9.0 stores everything, but
+    when the attribute has **several instances** it returns their sub-attributes **expanded**
+    (`https://uri.etsi.org/ngsi-ld/default-context/validFor`, `https://uri.etsi.org/ngsi-ld/name`), so the read
+    gets id-only refs. One instance comes back compacted and reads fine. The IT therefore skips the several-instances
+    case on orion-ld. This hits every `RELATIONSHIP_LIST` read from properties with 2+ entries: the ones flipped in
+    Steps 2–4, and by inference the existing `fromProperties` lists such as `relatedParty` (no IT posts 2+ of those,
+    not checked through the API). A maintainer has to choose a remedy before Steps 2–4 flip any list setter, e.g.
+    compacting expanded sub-attribute names on read in the mapping library, or an Orion-LD fix.
 
 ### Step 2: Read product-family references from properties
 Flip the relationship setters of the product family to `fromProperties = true`: `product-shared-models` (23,
