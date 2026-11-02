@@ -33,6 +33,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -99,6 +100,7 @@ public class FinancialAccountRefIT extends AbstractApiIT {
 		assertEquals(financialAccount.getHref(), read.getHref(), message);
 		assertEquals(financialAccount.getName(), read.getName(), message);
 		assertEquals(financialAccount.getAtReferredType(), read.getAtReferredType(), message);
+		assertNotNull(read.getAccountBalance(), message);
 		// NGSI-LD does not guarantee the order of the instances of a multi-instance attribute
 		assertEquals(sortedByType(financialAccount.getAccountBalance()), sortedByType(read.getAccountBalance()), message);
 	}

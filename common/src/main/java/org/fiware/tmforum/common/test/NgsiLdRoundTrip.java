@@ -44,12 +44,14 @@ public final class NgsiLdRoundTrip {
 
 	/**
 	 * Like {@link #roundTrip(Object, Class)}, but a relationship without {@code fromProperties} resolves against the
-	 * stored {@code targets}, as on a broker, so its sub-properties are merged over the target's.
+	 * stored {@code targets}, as on a broker, so its sub-properties are merged over the target's. The targets' ids must be unique.
 	 */
 	public static <T> T roundTrip(T entity, Class<T> entityClass, Object... targets) {
 		Map<URI, EntityVO> stored = Arrays.stream(targets)
 				.map(NgsiLdRoundTrip::store)
-				.collect(Collectors.toMap(EntityVO::getId, Function.identity()));
+				.collect(Collectors.toMap(EntityVO::getId, Function.identity(), (first, second) -> {
+					throw new IllegalArgumentException("Two targets share the id " + first.getId());
+				}));
 		EntitiesRepository resolving = entityIds -> Mono.just(
 				entityIds.stream().map(stored::get).filter(Objects::nonNull).toList());
 		return read(store(entity), entityClass, resolving);
