@@ -142,8 +142,14 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   - a relationship target class has an `@AttributeGetter` that is not `PROPERTY` with `embedProperty = true`.
     Target classes are every `targetClass` of a `RELATIONSHIP`/`RELATIONSHIP_LIST` setter plus all `RefEntity`
     subclasses. That covers non-`RefEntity` targets such as `RelatedProductOrderItemRef` (extends `Entity`) and
-    `Subscription` (`TMForumSubscription.subscription`). Generated `*VO` classes (e.g. `PaymentMethodRefVO`) are
-    skipped, since the getter side does not use them.
+    `OrganizationParent/ChildRelationship`. Generated `*VO` classes (e.g. `PaymentMethodRefVO`) are skipped,
+    since the getter side does not use them.
+  - Target exemption: `Subscription` (`TMForumSubscription.subscription`) is excluded by an explicit,
+    commented allow-list entry. It is a pointer to the broker subscription, not a reference payload: reads use
+    only its id (`NgsiLdBaseRepository` delete path), and the full object is needed only on the create path
+    before persisting (`AbstractSubscriptionApiController.create`). Its getters are non-embedded `PROPERTY` and
+    `PROPERTY_LIST` (including the `Set`-typed `watchedAttributes`), and they must not be changed to embed it.
+    Its setter still falls under the first rule, which it already satisfies.
   - Getter exemption: a `List`-typed getter may be `PROPERTY, embedProperty = true` with a `PROPERTY_LIST` setter
     (Decision 2, customer-bill `accountBalance`).
 - Fan-out IT in `product-catalog`: an `HttpClientFilter` test bean (or a counter on `BrokerRequestLoggingFilter`)
@@ -179,5 +185,5 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     ticket 8 backfill runs;
   - the list of IT assertions changed in Steps 2–4 and why.
 - `AGENTS.md` Key Conventions: every relationship setter must be `fromProperties = true`, and every field of a
-  relationship target class an embedded `PROPERTY` getter, enforced by the Step 5 guard test. Reword the `strictRelationships`
+  relationship target class (except the `Subscription` pointer) an embedded `PROPERTY` getter, enforced by the Step 5 guard test. Reword the `strictRelationships`
   bullet, which no longer matters for reads.
