@@ -101,6 +101,12 @@ when a relationship is still resolved, its sub-properties already override the t
   `RefEntityAtReferredTypeTest` and `TolerantEntityVOMapperTest`.
 - Acceptance: `mvn test -pl common,usage-management,agreement,account,resource-function-activation,service-shared-models,customer-bill-management -am`
   passes, the ITs of those modules still pass on orion-ld, and the `accountBalance` IT passes on both brokers.
+  - **Result:** `mvn install -DskipITs` of those modules is green. The orion-ld ITs (account, agreement,
+    usage-management, resource-function-activation, service-catalog, service-inventory, document-management,
+    customer-bill-management) did **not** run in the agent container: the k3s cluster cannot resolve DNS, so no
+    pod (not even coredns) starts. They must run in CI or locally before merge. The resolving merge path is pinned
+    broker-less by `AccountRefRoundTripTest#writtenFieldsWinOverTheResolvedTarget` (`BillingAccount` over a stored
+    `FinancialAccount`).
 
 ### Step 2: Read product-family references from properties
 Flip the relationship setters of the product family to `fromProperties = true`: `product-shared-models` (23,
@@ -125,8 +131,15 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
   `resource-function-activation`, `resource-order-management`, `service-catalog`, `service-inventory`,
   `service-order-management`, and `document-management`, whose `DocumentSpecification.entitySpecRelationship` uses
   `EntitySpecificationRelationship`) on both brokers. Adjust assertions that depended on resolution, as in Step 2.
-- Check `EndpointRef.connectionPoint` and `EntitySpecificationRelationship.associationSpec` round-trip through
-  the API, using the property mapping from Step 1.
+- Pre-existing failure, fixed by this step: `EntitySpecificationRelationship` has no `@MappingEnabled`, so today a
+  `ServiceSpecification`/`DocumentSpecification` whose `entitySpecRelationship` points at a **stored** target fails
+  the read with `MappingException: Mapping is not enabled` (checked broker-less, same before and after Step 1).
+  Add an IT that references a local specification.
+- Check `EntitySpecificationRelationship.associationSpec` round-trips through the API, using the property mapping
+  from Step 1. `EndpointRef` is never a relationship value: it is only reached through
+  `ResourceFunction.resourceGraph` (`PROPERTY_LIST`) → `ResourceGraph.connection` → `Connection.endpoint`, all
+  plain Jackson. Its Step 1 annotations have no runtime effect and exist for consistency and the Step 5 guard, so
+  an API check of `connectionPoint` there exercises Jackson only.
 
 ### Step 4: Read the remaining modules' references from properties
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
@@ -139,6 +152,9 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   `MappingException`, because the resolved target's balance list cannot map to the ref's single `accountBalance`.
   This is unchanged by Step 1, which was checked against the annotations before and after. With
   `fromProperties = true` the target is no longer read. Add an account IT for it.
+- Agreement: same pre-existing failure as `EntitySpecificationRelationship` in Step 3.
+  `AgreementSpecificationRelationship` has no `@MappingEnabled`, so an `AgreementSpecification.specificationRelationship`
+  to a stored specification fails the read today. Add an agreement IT that references a local specification.
 - Acceptance: re-run the setter scan (any `RELATIONSHIP`/`RELATIONSHIP_LIST` `@AttributeSetter` without
   `fromProperties = true` in non-test sources). It finds 0 of 141.
 

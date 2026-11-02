@@ -11,12 +11,15 @@ import lombok.Setter;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.test.NgsiLdRoundTrip;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -29,10 +32,12 @@ class AccountRefRoundTripTest {
 
 	private static final String HOLDER_TYPE = "holder";
 	private static final String HOLDER_ID = "urn:ngsi-ld:holder:h";
-	private static final String FINANCIAL_ACCOUNT_ID = "urn:ngsi-ld:financial-account:f";
+	private static final String FINANCIAL_ACCOUNT_ID = "urn:ngsi-ld:financialAccount:f";
+	private static final String BILLING_ACCOUNT_ID = "urn:ngsi-ld:billing-account:b";
 	private static final String ACCOUNT_ID = "urn:ngsi-ld:party-account:a";
 	private static final Instant START = Instant.parse("2026-01-01T00:00:00Z");
 	private static final float BALANCE = 42.5f;
+	private static final String ADDITIONAL_PROPERTIES = "additionalProperties";
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("refs")
@@ -42,21 +47,46 @@ class AccountRefRoundTripTest {
 		assertEquals(NgsiLdRoundTrip.toTree(ref.apply(holder)), NgsiLdRoundTrip.toTree(ref.apply(read)), description);
 	}
 
-	private static Stream<Arguments> refs() {
+	// BillingAccount still resolves its financialAccount, so the embedded fields are merged over the stored target
+	@Test
+	public void writtenFieldsWinOverTheResolvedTarget() {
+		FinancialAccount target = new FinancialAccount(FINANCIAL_ACCOUNT_ID);
+		target.setName("target name");
+		target.setAccountBalance(List.of(accountBalance("target balance")));
+		BillingAccount billingAccount = new BillingAccount(BILLING_ACCOUNT_ID);
+		billingAccount.setFinancialAccount(fullFinancialAccount());
+
+		BillingAccount read = NgsiLdRoundTrip.roundTrip(billingAccount, BillingAccount.class, target);
+
+		// the resolved target contributes an empty additionalProperties list, not a field of the ref
+		ObjectNode readRef = (ObjectNode) NgsiLdRoundTrip.toTree(read.getFinancialAccount());
+		readRef.remove(ADDITIONAL_PROPERTIES);
+		assertEquals(NgsiLdRoundTrip.toTree(billingAccount.getFinancialAccount()), readRef);
+	}
+
+	private static AccountBalance accountBalance(String balanceType) {
 		Money amount = new Money();
 		amount.setUnit("EUR");
 		amount.setTmfValue(BALANCE);
 		TimePeriod validFor = new TimePeriod();
 		validFor.setStartDateTime(START);
 		AccountBalance accountBalance = new AccountBalance();
-		accountBalance.setBalanceType("deposit");
+		accountBalance.setBalanceType(balanceType);
 		accountBalance.setAmount(amount);
 		accountBalance.setValidFor(validFor);
+		return accountBalance;
+	}
+
+	private static FinancialAccountRef fullFinancialAccount() {
 		FinancialAccountRef financialAccount = new FinancialAccountRef(FINANCIAL_ACCOUNT_ID);
 		financialAccount.setHref(URI.create("https://external.org/financial-account/f"));
 		financialAccount.setName("financial account");
 		financialAccount.setAtReferredType(FinancialAccount.TYPE_FINANCIALAC);
-		financialAccount.setAccountBalance(accountBalance);
+		financialAccount.setAccountBalance(accountBalance("deposit"));
+		return financialAccount;
+	}
+
+	private static Stream<Arguments> refs() {
 		AccountRef account = new AccountRef(ACCOUNT_ID);
 		account.setHref(URI.create("https://external.org/party-account/a"));
 		account.setName("account");
@@ -66,7 +96,7 @@ class AccountRefRoundTripTest {
 		Holder idOnlyFinancialAccount = new Holder(HOLDER_ID);
 		idOnlyFinancialAccount.setFinancialAccount(new FinancialAccountRef(FINANCIAL_ACCOUNT_ID));
 		Holder fullFinancialAccount = new Holder(HOLDER_ID);
-		fullFinancialAccount.setFinancialAccount(financialAccount);
+		fullFinancialAccount.setFinancialAccount(fullFinancialAccount());
 		Holder idOnlyAccount = new Holder(HOLDER_ID);
 		idOnlyAccount.setAccount(new AccountRef(ACCOUNT_ID));
 		Holder fullAccount = new Holder(HOLDER_ID);
