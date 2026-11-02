@@ -85,7 +85,11 @@ when a relationship is still resolved, its sub-properties already override the t
   `customer-bill-management` that round-trips a `FinancialAccountRef` with one and with several balances on
   orion-ld **and** scorpio. If a broker drops or merges the instances, stop and report it on the ticket before
   Step 4.
-  - **Result (open, blocks Step 4):** scorpio keeps the instances, orion-ld does not. Orion-LD stores the
+  - **Result (open, blocks Step 4):** observed by running `FinancialAccountRefIT` with the getter change on the
+    k3s IT setup (`quay.io/fiware/orion-ld:1.9.0`, `scorpiobroker/all-in-one-runner:java-5.0.3` from `k3s/`). To
+    reproduce, change the getter as above, drop `@Disabled` and run
+    `mvn verify -pl customer-bill-management -Dbroker=orion-ld -Dit.test=FinancialAccountRefIT -DskipTests`.
+    Scorpio keeps the instances, orion-ld does not. Orion-LD stores the
     written array of instances (`datasetId` `list-item:0..n`) as **one** `Property` whose `value` is the array of
     the instance objects (`value`, `datasetId`, `type`, sub-properties). A single balance collapses to one plain
     instance and reads fine. With several, the read maps the instance objects to `AccountBalance` and the API
@@ -101,11 +105,14 @@ when a relationship is still resolved, its sub-properties already override the t
   `RefEntityAtReferredTypeTest` and `TolerantEntityVOMapperTest`.
 - Acceptance: `mvn test -pl common,usage-management,agreement,account,resource-function-activation,service-shared-models,customer-bill-management -am`
   passes, the ITs of those modules still pass on orion-ld, and the `accountBalance` IT passes on both brokers.
-  - **Result:** `mvn install -DskipITs` of those modules is green. The orion-ld ITs (account, agreement,
-    usage-management, resource-function-activation, service-catalog, service-inventory, document-management,
-    customer-bill-management) did **not** run in the agent container: the k3s cluster cannot resolve DNS, so no
-    pod (not even coredns) starts. They must run in CI or locally before merge. The resolving merge path is pinned
-    broker-less by `AccountRefRoundTripTest#writtenFieldsWinOverTheResolvedTarget` (`BillingAccount` over a stored
+  - **Result:** `mvn install -DskipITs` of those modules is green. The orion-ld ITs pass at 3dfe1edd
+    (`mvn verify -pl <module> -Dbroker=orion-ld -DskipTests`, orion-ld 1.9.0), with run/failed/skipped counts:
+    account 237/0/119, agreement 85/0/44, usage-management 80/0/27, resource-function-activation 191/0/63,
+    service-catalog 238/0/89, service-inventory 71/0/22, document-management 40/0/23, customer-bill-management
+    120/0/53 (`FinancialAccountRefIT` disabled). In a container whose Docker network overlaps the k3s defaults, pass
+    `-Dk3s.serviceCidr=10.143.0.0/16 -Dk3s.clusterDns=10.143.0.10 -Dk3s.clusterCidr=10.142.0.0/16`, otherwise no
+    pod resolves DNS. The resolving merge path is also pinned broker-less by
+    `AccountRefRoundTripTest#writtenFieldsWinOverTheResolvedTarget` (`BillingAccount` over a stored
     `FinancialAccount`).
 
 ### Step 2: Read product-family references from properties
