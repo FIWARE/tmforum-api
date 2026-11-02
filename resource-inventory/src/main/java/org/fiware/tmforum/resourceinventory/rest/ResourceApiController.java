@@ -13,7 +13,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -45,7 +45,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 	private final Clock clock;
 
 	public ResourceApiController(QueryParser queryParser, ReferenceValidationService validationService,
-			TmForumRepository resourceInventoryRepository,
+			EntityRepository resourceInventoryRepository,
 			TMForumMapper tmForumMapper, TMForumEventHandler eventHandler,
 			ObjectMapper objectMapper, Clock clock) {
 		super(queryParser, validationService, resourceInventoryRepository, eventHandler);

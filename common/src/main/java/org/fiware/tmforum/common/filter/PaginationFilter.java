@@ -41,7 +41,7 @@ import java.util.Optional;
  * {@code X-Total-Count} and the {@code last} link are only added when
  * {@link org.fiware.tmforum.common.configuration.GeneralProperties#getCountHeader()} is configured
  * for the active broker profile and the broker actually sent that header (see
- * {@link org.fiware.tmforum.common.repository.TmForumRepository#findEntities}). Without a total,
+ * {@link org.fiware.tmforum.storage.EntityReadRepository#findEntities}). Without a total,
  * {@code next} is inferred from whether the page came back full ({@code returnedCount == limit}) -
  * a reasonable heuristic that can produce a false positive exactly on the last page; with a total,
  * both {@code next} and the response status ({@code 206 Partial Content} vs {@code 200 OK}, per

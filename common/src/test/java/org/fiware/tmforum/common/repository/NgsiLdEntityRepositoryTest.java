@@ -16,15 +16,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class TmForumRepositoryTest {
+class NgsiLdEntityRepositoryTest {
 
 	private GeneralProperties properties;
-	private TmForumRepository repository;
+	private NgsiLdEntityRepository repository;
 
 	@BeforeEach
 	public void setUp() {
 		properties = new GeneralProperties();
-		repository = new TmForumRepository(properties, null, null, null, null, null);
+		repository = new NgsiLdEntityRepository(properties, null, null, null, null, null);
 	}
 
 	@Test
@@ -33,7 +33,7 @@ class TmForumRepositoryTest {
 		// "id" query param to null, silently dropping any ?id= filter on polymorphic list
 		// endpoints (e.g. resourceSpecification, which spans several NGSI-LD types).
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		TmForumRepository repositoryWithClient = new TmForumRepository(properties, entitiesApi, null, null, null, null);
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null, null, null, null);
 		String requestedId = "urn:ngsi-ld:software-specification:0e2d5c4a-cf51-43cf-a510-dff06f62f4a3";
 
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),

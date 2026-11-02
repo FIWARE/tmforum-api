@@ -45,7 +45,7 @@ class NgsiLdBaseRepositoryAppendUpdateTest {
 
 	private EntitiesApiClient entitiesApi;
 	private JavaObjectMapper javaObjectMapper;
-	private TmForumRepository repository;
+	private NgsiLdEntityRepository repository;
 
 	@BeforeEach
 	public void setUp() {
@@ -55,7 +55,7 @@ class NgsiLdBaseRepositoryAppendUpdateTest {
 		javaObjectMapper = mock(JavaObjectMapper.class);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new TmForumRepository(properties, entitiesApi, null, null, ngsiMapper, javaObjectMapper);
+		repository = new NgsiLdEntityRepository(properties, entitiesApi, null, null, ngsiMapper, javaObjectMapper);
 		when(entitiesApi.updateEntity(any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.noContent()));
 	}

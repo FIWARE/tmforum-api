@@ -97,7 +97,7 @@ the environment, use ```mvn clean k3s:rm -Pdev```.
 TMForum does provide conformance-test tooling for the
 API-implementations: [Open API Conformance](https://projects.tmforum.org/wiki/display/API/Open+API+Conformance)
 The tests are integrated into the maven lifecycle with the "conformance-test" profile. To execute them, run "mvn clean
-install -Pconformance-test --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,<THE_MODULE> -DskipTests -DskipITs".
+install -Pconformance-test --projects storage-api,common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,<THE_MODULE> -DskipTests -DskipITs".
 The tests are mounted into a
 docker container and executed using them, after the API-implementation and Orion-LD are started. Currently, they need to
 run individually for each API-Module, since the tests expect them under the same port on localhost. To integrate a new

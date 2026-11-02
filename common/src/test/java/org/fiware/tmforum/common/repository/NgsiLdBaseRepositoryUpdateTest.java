@@ -16,10 +16,10 @@ import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.ngsi.model.UpdateResultVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
-import org.fiware.tmforum.common.exception.TmForumException;
-import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
+import org.fiware.tmforum.storage.StorageErrorReason;
+import org.fiware.tmforum.storage.StorageException;
+import org.fiware.tmforum.storage.StorageOperation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,7 +60,7 @@ class NgsiLdBaseRepositoryUpdateTest {
 	private EntitiesApiClient entitiesApi;
 	private EntityAttributesApiClient entityAttributesApi;
 	private JavaObjectMapper javaObjectMapper;
-	private TmForumRepository repository;
+	private NgsiLdEntityRepository repository;
 
 	@BeforeEach
 	public void setUp() {
@@ -71,7 +71,7 @@ class NgsiLdBaseRepositoryUpdateTest {
 		javaObjectMapper = mock(JavaObjectMapper.class);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new TmForumRepository(properties, entitiesApi, null, null, ngsiMapper, javaObjectMapper);
+		repository = new NgsiLdEntityRepository(properties, entitiesApi, null, null, ngsiMapper, javaObjectMapper);
 		repository.setEntityAttributesApi(entityAttributesApi);
 		when(entitiesApi.updateEntityAttributes(any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.noContent()));
@@ -214,8 +214,12 @@ class NgsiLdBaseRepositoryUpdateTest {
 						HttpResponse.status(HttpStatus.NOT_FOUND))));
 		mockUpdate("name", new PropertyVO().value("new"));
 
-		assertThrows(NgsiLdRepositoryException.class,
+		StorageException exception = assertThrows(StorageException.class,
 				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+
+		assertEquals(StorageOperation.READ, exception.operation());
+		assertEquals(StorageErrorReason.NOT_FOUND, exception.reason());
+		assertEquals(String.format("Entity %s does not exist.", ENTITY_ID), exception.getMessage());
 	}
 
 	@Test
@@ -227,10 +231,12 @@ class NgsiLdBaseRepositoryUpdateTest {
 				.thenReturn(Mono.just(HttpResponse.status(HttpStatus.MULTI_STATUS).body((Object) new UpdateResultVO()
 						.notUpdated(List.of(new NotUpdatedDetailsVO().attributeName("name").reason("invalid value"))))));
 
-		TmForumException exception = assertThrows(TmForumException.class,
+		StorageException exception = assertThrows(StorageException.class,
 				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
 
-		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason());
+		assertEquals(StorageOperation.UPDATE, exception.operation());
+		assertEquals(StorageErrorReason.PARTIAL_UPDATE, exception.reason());
+		assertTrue(exception.getMessage().startsWith("Not all attributes could be updated: "));
 		assertTrue(exception.getMessage().contains("name: invalid value"),
 				"The attributes the broker did not update have to be part of the error.");
 	}
@@ -255,7 +261,12 @@ class NgsiLdBaseRepositoryUpdateTest {
 				.thenReturn(Mono.error(new HttpClientResponseException("Multi-Status",
 						HttpResponse.status(HttpStatus.MULTI_STATUS))));
 
-		assertThrows(TmForumException.class, () -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+		StorageException exception = assertThrows(StorageException.class,
+				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
+
+		assertEquals(StorageOperation.UPDATE, exception.operation());
+		assertEquals(StorageErrorReason.PARTIAL_UPDATE, exception.reason());
+		assertTrue(exception.getMessage().startsWith("Not all attributes could be updated: "));
 	}
 
 	@Test
@@ -272,17 +283,19 @@ class NgsiLdBaseRepositoryUpdateTest {
 
 	@Test
 	public void aBrokerErrorIsPropagated() {
-		// the controller maps the broker's status (400, 409, ...) to the TMForum error
+		// the controller maps the reason (INVALID_DATA, CONFLICT, ...) to the TMForum error
 		mockStored(Map.of());
 		mockUpdate("name", new PropertyVO().value("new"));
 		when(entitiesApi.updateEntityAttributes(any(), any(), any()))
 				.thenReturn(Mono.error(new HttpClientResponseException("Bad Request",
 						HttpResponse.status(HttpStatus.BAD_REQUEST))));
 
-		HttpClientResponseException exception = assertThrows(HttpClientResponseException.class,
+		StorageException exception = assertThrows(StorageException.class,
 				() -> repository.updateDomainEntity(ENTITY_ID, new Object()).block());
 
-		assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+		assertEquals(StorageOperation.UPDATE, exception.operation());
+		assertEquals(StorageErrorReason.INVALID_DATA, exception.reason());
+		assertEquals("Bad Request", exception.getMessage());
 	}
 
 	private void mockStored(Map<String, Object> attributes) {

@@ -2,7 +2,6 @@ package org.fiware.tmforum.common.rest;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.context.ServerRequestContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +13,10 @@ import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.PagedResult;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
+import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.StorageException;
+import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import reactor.core.publisher.Mono;
@@ -39,7 +40,7 @@ public abstract class AbstractApiController<T> {
 
 	protected final QueryParser queryParser;
 	protected final ReferenceValidationService validationService;
-	protected final TmForumRepository repository;
+	protected final EntityRepository repository;
 	protected final TMForumEventHandler eventHandler;
 
 	protected Mono<T> getCheckingMono(T entityToCheck, List<List<? extends ReferencedEntity>> referencedEntities) {
@@ -63,24 +64,10 @@ public abstract class AbstractApiController<T> {
 											.subscribe();
 								})
 								.then(Mono.just(checkedResult)))
-				.onErrorMap(t -> {
-					if (t instanceof HttpClientResponseException e) {
-						String responseBody = e.getResponse().getBody(String.class).orElse(e.getMessage());
-						log.warn("Broker rejected the entity creation with status {}: {}", e.getStatus(), responseBody);
-						return switch (e.getStatus()) {
-							case CONFLICT -> new TmForumException(
-									String.format("Conflict on creating the entity: %s", responseBody),
-									TmForumExceptionReason.CONFLICT);
-							case BAD_REQUEST -> new TmForumException(
-									String.format("Did not receive a valid entity: %s.", responseBody),
-									TmForumExceptionReason.INVALID_DATA);
-							default -> new TmForumException(
-									String.format("Unspecified downstream error: %s", responseBody),
-									TmForumExceptionReason.UNKNOWN);
-						};
-					} else {
-						return t;
-					}
+				.onErrorMap(AbstractApiController::isRejectedWrite, t -> {
+					StorageException e = (StorageException) t;
+					log.warn("Broker rejected the entity creation with reason {}: {}", e.reason(), e.getMessage());
+					return rejectedWrite(e, "creating");
 				})
 				.cast(entityClass);
 	}
@@ -258,24 +245,31 @@ public abstract class AbstractApiController<T> {
 										.subscribe()
 						)
 				)
-				.onErrorMap(t -> {
-					if (t instanceof HttpClientResponseException e) {
-						String responseBody = e.getResponse().getBody(String.class).orElse(e.getMessage());
-						return switch (e.getStatus()) {
-							case CONFLICT -> new TmForumException(
-									String.format("Conflict on updating the entity: %s", responseBody),
-									TmForumExceptionReason.CONFLICT);
-							case BAD_REQUEST -> new TmForumException(
-									String.format("Did not receive a valid entity: %s.", responseBody),
-									TmForumExceptionReason.INVALID_DATA);
-							default -> new TmForumException(
-									String.format("Unspecified downstream error: %s", responseBody),
-									TmForumExceptionReason.UNKNOWN);
-						};
-					} else {
-						return t;
-					}
-				});
+				.onErrorMap(AbstractApiController::isRejectedWrite, t -> rejectedWrite((StorageException) t, "updating"));
+	}
+
+	// the backend answered a write with an error; every other failure is rendered by the exception handlers
+	private static boolean isRejectedWrite(Throwable t) {
+		return t instanceof StorageException e
+				&& (e.operation() == StorageOperation.CREATE || e.operation() == StorageOperation.UPDATE)
+				&& switch (e.reason()) {
+					case CONFLICT, INVALID_DATA, NOT_FOUND, UNKNOWN -> true;
+					default -> false;
+				};
+	}
+
+	private static TmForumException rejectedWrite(StorageException e, String action) {
+		return switch (e.reason()) {
+			case CONFLICT -> new TmForumException(
+					String.format("Conflict on %s the entity: %s", action, e.getMessage()),
+					TmForumExceptionReason.CONFLICT);
+			case INVALID_DATA -> new TmForumException(
+					String.format("Did not receive a valid entity: %s.", e.getMessage()),
+					TmForumExceptionReason.INVALID_DATA);
+			default -> new TmForumException(
+					String.format("Unspecified downstream error: %s", e.getMessage()),
+					TmForumExceptionReason.UNKNOWN);
+		};
 	}
 
 	protected <R extends EntityWithId> Mono<T> relatedEntityHandlingMono(T entity, Mono<T> entityMono,

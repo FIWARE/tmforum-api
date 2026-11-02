@@ -7,8 +7,8 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.querying.MyPojo;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.PagedResult;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 class AbstractApiControllerTest {
 
 	private static class TestController extends AbstractApiController<MyPojo> {
-		TestController(QueryParser queryParser, TmForumRepository repository) {
+		TestController(QueryParser queryParser, EntityRepository repository) {
 			super(queryParser, null, repository, null);
 		}
 	}
@@ -43,7 +43,7 @@ class AbstractApiControllerTest {
 		// it; listPolymorphic must do the same.
 		GeneralProperties properties = new GeneralProperties();
 		QueryParser queryParser = new QueryParser(properties);
-		TmForumRepository repository = mock(TmForumRepository.class);
+		EntityRepository repository = mock(EntityRepository.class);
 		TestController controller = new TestController(queryParser, repository);
 
 		String requestedId = "urn:ngsi-ld:software-specification:0e2d5c4a-cf51-43cf-a510-dff06f62f4a3";
@@ -73,7 +73,7 @@ class AbstractApiControllerTest {
 	@MethodSource("provideNonIntegerPaginationParameters")
 	public void listRejectsNonIntegerPaginationParameters(String message, String queryString) {
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
-				mock(TmForumRepository.class));
+				mock(EntityRepository.class));
 		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
 		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
@@ -87,7 +87,7 @@ class AbstractApiControllerTest {
 	@MethodSource("provideNonIntegerPaginationParameters")
 	public void listPolymorphicRejectsNonIntegerPaginationParameters(String message, String queryString) {
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
-				mock(TmForumRepository.class));
+				mock(EntityRepository.class));
 		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
 		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
@@ -115,7 +115,7 @@ class AbstractApiControllerTest {
 	 */
 	@Test
 	public void listAcceptsIntegerPaginationParameters() {
-		TmForumRepository repository = mock(TmForumRepository.class);
+		EntityRepository repository = mock(EntityRepository.class);
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
 		HttpRequest<?> request = HttpRequest.GET("/resource?offset=10&limit=5");
 		when(repository.findEntities(any(), any(), any(), any(), any(), any(), any()))

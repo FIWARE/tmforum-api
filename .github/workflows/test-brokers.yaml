@@ -45,7 +45,7 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test integration-test verify --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
+          mvn clean test integration-test verify --projects storage-api,common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}} -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
 
       - name: Archive coverage
         if: matrix.broker == 'scorpio' && matrix.cache == 'in-memory'
@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models ]
+        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models, all-in-one ]
     steps:
       - uses: actions/checkout@v2
 
@@ -73,7 +73,7 @@ jobs:
       - name: Execute tests
         id: test
         run: |
-          mvn clean test --projects common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}}
+          mvn clean test --projects storage-api,common,resource-shared-models,customer-shared-models,service-shared-models,product-shared-models,${{matrix.module}}
 
       - name: Archive coverage
         uses: actions/upload-artifact@v4

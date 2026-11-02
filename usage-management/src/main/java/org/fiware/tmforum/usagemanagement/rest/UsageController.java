@@ -9,7 +9,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
-import org.fiware.tmforum.common.repository.TmForumRepository;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
@@ -33,7 +33,7 @@ public class UsageController extends AbstractApiController<Usage> implements Usa
 
         private final TMForumMapper tmForumMapper;
 
-        public UsageController(QueryParser queryParser, ReferenceValidationService validationService, TmForumRepository partyRepository,
+        public UsageController(QueryParser queryParser, ReferenceValidationService validationService, EntityRepository partyRepository,
                                TMForumMapper tmForumMapper, TMForumEventHandler eventHandler) {
                 super(queryParser, validationService, partyRepository, eventHandler);
                 this.tmForumMapper = tmForumMapper;
