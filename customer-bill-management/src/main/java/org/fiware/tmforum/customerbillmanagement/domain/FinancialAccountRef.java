@@ -21,8 +21,10 @@ public class FinancialAccountRef extends RefEntity {
         super(id);
     }
 
+    // only embedded PROPERTY getters are written into a relationship (a List becomes a property list), while
+    // reading a list back from the relationship needs the PROPERTY_LIST setter
     @Getter(onMethod = @__({
-            @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance", embedProperty = true)}))
+            @AttributeGetter(value = AttributeType.PROPERTY, targetName = "accountBalance", embedProperty = true)}))
     @Setter(onMethod = @__({
             @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance", fromProperties = true, targetClass = AccountBalance.class)}))
     private List<AccountBalance> accountBalance;

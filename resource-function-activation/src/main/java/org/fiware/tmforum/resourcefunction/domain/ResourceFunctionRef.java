@@ -16,8 +16,8 @@ import java.util.List;
 @MappingEnabled(entityType = ResourceFunction.TYPE_RESOURCE_FUNCTION)
 public class ResourceFunctionRef extends RefEntity {
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "version")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version")}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "version", embedProperty = true)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version", fromProperties = true)}))
     private String version;
 
     public ResourceFunctionRef(@JsonProperty("id") String id) {
