@@ -85,12 +85,46 @@ when a relationship is still resolved, its sub-properties already override the t
   `customer-bill-management` that round-trips a `FinancialAccountRef` with one and with several balances on
   orion-ld **and** scorpio. If a broker drops or merges the instances, stop and report it on the ticket before
   Step 4.
+  - **Result (open, blocks Step 4):** observed by running `FinancialAccountRefIT` with the getter change on the
+    k3s IT setup (`quay.io/fiware/orion-ld:1.9.0`, `scorpiobroker/all-in-one-runner:java-5.0.3` from `k3s/`). To
+    reproduce, change the getter as above, drop `@Disabled` and run
+    `mvn verify -pl customer-bill-management -Dbroker=orion-ld -Dit.test=FinancialAccountRefIT -DskipTests`.
+    Scorpio keeps the instances, orion-ld does not. Orion-LD stores the
+    written array of instances (`datasetId` `list-item:0..n`) as **one** `Property` whose `value` is the array of
+    the instance objects (`value`, `datasetId`, `type`, sub-properties). A single balance collapses to one plain
+    instance and reads fine. With several, the read maps the instance objects to `AccountBalance` and the API
+    answers 400 "Invalid JSON". `CustomerBill.financialAccount` already reads from properties, so this would turn
+    today's silent drop into an unreadable bill. The getter change was therefore **not** made: `accountBalance`
+    is still dropped on write. `customer-bill-management/.../FinancialAccountRefIT` is `@Disabled`. At this
+    state it fails on **both** brokers, because nothing is stored inline. It shows the Orion-LD merge only once the
+    getter is `PROPERTY, embedProperty = true`, so re-enable it together with that change. A reviewer has to choose an encoding (e.g. one `PROPERTY` whose value is the plain JSON array,
+    which needs a getter the library writes as a single property) before Step 4.
 - Unit tests in `common/src/test/.../domain/` and in each touched module's `src/test`: a parameterized
   round-trip through `JavaObjectMapper` (`toEntityVO`) and `EntityVOMapper.fromEntityVO`, with a mocked
   `EntitiesRepository` that returns nothing. Per touched ref class, assert every field survives. Follow
   `RefEntityAtReferredTypeTest` and `TolerantEntityVOMapperTest`.
 - Acceptance: `mvn test -pl common,usage-management,agreement,account,resource-function-activation,service-shared-models,customer-bill-management -am`
   passes, the ITs of those modules still pass on orion-ld, and the `accountBalance` IT passes on both brokers.
+  - **Result:** `mvn install -DskipITs` of those modules is green. The orion-ld ITs pass at 3dfe1edd
+    (`mvn verify -pl <module> -Dbroker=orion-ld -DskipTests`, orion-ld 1.9.0), with run/failed/skipped counts:
+    account 237/0/119, agreement 85/0/44, usage-management 80/0/27, resource-function-activation 191/0/63,
+    service-catalog 238/0/89, service-inventory 71/0/22, document-management 40/0/23, customer-bill-management
+    120/0/53 (`FinancialAccountRefIT` disabled). In a container whose Docker network overlaps the k3s defaults, pass
+    `-Dk3s.serviceCidr=10.143.0.0/16 -Dk3s.clusterDns=10.143.0.10 -Dk3s.clusterCidr=10.142.0.0/16`, otherwise no
+    pod resolves DNS. The resolving merge path is also pinned broker-less by
+    `AccountRefRoundTripTest#writtenFieldsWinOverTheResolvedTarget` (`BillingAccount` over a stored
+    `FinancialAccount`).
+  - **Result (open, blocks list setters in Steps 2–4 on orion-ld):** `service-catalog/.../EntitySpecificationRelationshipIT`
+    writes a `RELATIONSHIP_LIST` of `EntitySpecificationRelationship` (all fields, nested `associationSpec`) with
+    the production mappers, retrieves it from the broker and reads it with `fromProperties = true`. Scorpio
+    (java-5.0.3) returns everything for one and for several relationships. Orion-LD 1.9.0 stores everything, but
+    when the attribute has **several instances** it returns their sub-attributes **expanded**
+    (`https://uri.etsi.org/ngsi-ld/default-context/validFor`, `https://uri.etsi.org/ngsi-ld/name`), so the read
+    gets id-only refs. One instance comes back compacted and reads fine. The IT therefore skips the several-instances
+    case on orion-ld. This hits every `RELATIONSHIP_LIST` read from properties with 2+ entries: the ones flipped in
+    Steps 2–4, and by inference the existing `fromProperties` lists such as `relatedParty` (no IT posts 2+ of those,
+    not checked through the API). A maintainer has to choose a remedy before Steps 2–4 flip any list setter, e.g.
+    compacting expanded sub-attribute names on read in the mapping library, or an Orion-LD fix.
 
 ### Step 2: Read product-family references from properties
 Flip the relationship setters of the product family to `fromProperties = true`: `product-shared-models` (23,
@@ -113,16 +147,32 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
 `resource-catalog` (1), `service-shared-models` (10), `service-catalog` (2) and `service-inventory` (2).
 - Run the ITs of every module that consumes these models (`resource-catalog`, `resource-inventory`,
   `resource-function-activation`, `resource-order-management`, `service-catalog`, `service-inventory`,
-  `service-order-management`) on both brokers. Adjust assertions that depended on resolution, as in Step 2.
-- Check `EndpointRef.connectionPoint` and `EntitySpecificationRelationship.associationSpec` round-trip through
-  the API, using the property mapping from Step 1.
+  `service-order-management`, and `document-management`, whose `DocumentSpecification.entitySpecRelationship` uses
+  `EntitySpecificationRelationship`) on both brokers. Adjust assertions that depended on resolution, as in Step 2.
+- Pre-existing failure, fixed by this step: `EntitySpecificationRelationship` has no `@MappingEnabled`, so today a
+  `ServiceSpecification`/`DocumentSpecification` whose `entitySpecRelationship` points at a **stored** target fails
+  the read with `MappingException: Mapping is not enabled` (checked broker-less, same before and after Step 1).
+  Add an IT that references a local specification.
+- Check `EntitySpecificationRelationship.associationSpec` round-trips through the API, using the property mapping
+  from Step 1. `EndpointRef` is never a relationship value: it is only reached through
+  `ResourceFunction.resourceGraph` (`PROPERTY_LIST`) → `ResourceGraph.connection` → `Connection.endpoint`, all
+  plain Jackson. Its Step 1 annotations have no runtime effect and exist for consistency and the Step 5 guard, so
+  an API check of `connectionPoint` there exercises Jackson only.
 
 ### Step 4: Read the remaining modules' references from properties
+**Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
 Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3), `customer-management` (2),
 `document-management` (2), `party-catalog` (2), `party-role` (4) and `usage-management` (3).
 - Look at `party-catalog/.../TMForumMapper` (the organization parent/child relationship hrefs) and
   `document-management/.../S3AttachmentService` (copies `href`). Check that nothing relies on a resolved target.
 - Run these modules' ITs and the `all-in-one` ITs on both brokers, and adjust assertions as in Step 2.
+- Account: today a `financialAccount` ref to a local `FinancialAccount` with 2+ balances fails the read with a
+  `MappingException`, because the resolved target's balance list cannot map to the ref's single `accountBalance`.
+  This is unchanged by Step 1, which was checked against the annotations before and after. With
+  `fromProperties = true` the target is no longer read. Add an account IT for it.
+- Agreement: same pre-existing failure as `EntitySpecificationRelationship` in Step 3.
+  `AgreementSpecificationRelationship` has no `@MappingEnabled`, so an `AgreementSpecification.specificationRelationship`
+  to a stored specification fails the read today. Add an agreement IT that references a local specification.
 - Acceptance: re-run the setter scan (any `RELATIONSHIP`/`RELATIONSHIP_LIST` `@AttributeSetter` without
   `fromProperties = true` in non-test sources). It finds 0 of 141.
 
