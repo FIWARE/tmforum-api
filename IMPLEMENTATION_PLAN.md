@@ -85,6 +85,15 @@ when a relationship is still resolved, its sub-properties already override the t
   `customer-bill-management` that round-trips a `FinancialAccountRef` with one and with several balances on
   orion-ld **and** scorpio. If a broker drops or merges the instances, stop and report it on the ticket before
   Step 4.
+  - **Result (open, blocks Step 4):** scorpio keeps the instances, orion-ld does not. Orion-LD stores the
+    written array of instances (`datasetId` `list-item:0..n`) as **one** `Property` whose `value` is the array of
+    the instance objects (`value`, `datasetId`, `type`, sub-properties). A single balance collapses to one plain
+    instance and reads fine. With several, the read maps the instance objects to `AccountBalance` and the API
+    answers 400 "Invalid JSON". `CustomerBill.financialAccount` already reads from properties, so this would turn
+    today's silent drop into an unreadable bill. The getter change was therefore **not** made: `accountBalance`
+    is still dropped on write. `customer-bill-management/.../FinancialAccountRefIT` reproduces it and is
+    `@Disabled`. A reviewer has to choose an encoding (e.g. one `PROPERTY` whose value is the plain JSON array,
+    which needs a getter the library writes as a single property) before Step 4.
 - Unit tests in `common/src/test/.../domain/` and in each touched module's `src/test`: a parameterized
   round-trip through `JavaObjectMapper` (`toEntityVO`) and `EntityVOMapper.fromEntityVO`, with a mocked
   `EntitiesRepository` that returns nothing. Per touched ref class, assert every field survives. Follow
@@ -118,6 +127,7 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
   the API, using the property mapping from Step 1.
 
 ### Step 4: Read the remaining modules' references from properties
+**Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
 Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3), `customer-management` (2),
 `document-management` (2), `party-catalog` (2), `party-role` (4) and `usage-management` (3).
 - Look at `party-catalog/.../TMForumMapper` (the organization parent/child relationship hrefs) and
