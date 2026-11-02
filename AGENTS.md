@@ -26,6 +26,8 @@ common/                    shared base code (all modules depend on it)
   .../common/mapping/      UnknownPreservingBase (VO base class), FieldCleaningSerializer and TmForumMappingModule (Jackson 3 modules)
   .../common/validation/   ReferenceValidationService (referential integrity on create/update), ReferencedEntity
   .../common/test/         AbstractApiIT, TestServerHostConfigurer, FirstMatchConfigContextBuilder (test helpers in main code)
+storage-api/               backend-neutral storage port (EntityRepository, EntityReadRepository, ReferenceReadRepository, StoredReference);
+                           src/test/.../contract/ holds abstract contract tests (AbstractEntityRepositoryContractTest, EntityFixture) that each adapter extends
 *-shared-models/           domain classes shared between API modules
 <api-module>/              21 API modules, e.g. product-catalog, party-catalog, customer-management
   src/main/java/.../Application.java   Micronaut.run + @Factory
@@ -68,5 +70,5 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - `common/pom.xml`: Micronaut, redis-lettuce, micrometer-prometheus, jackson deps (`tools.jackson.core:jackson-databind` plus `com.fasterxml.jackson.core:jackson-annotations`).
 - `*/src/main/resources/application*.yaml`: `micronaut.http.services.ngsi.*`, `micronaut.codec.json.additional-types`, `micronaut.caches.*`, `redis.caches.*.value-serializer`, `jackson.*`, `endpoints.*`.
 - `data-migrator/*/src/main/java/**/{UpdateWriter,LegacyLoader}.java`: build their own `ApplicationContext`.
-- `common/.../repository/{TmForumRepository,NgsiLdBaseRepository,BrokerBackedReferencesRepository}.java`: the concrete NGSI-LD storage, injected directly by every controller (ticket 86 puts a `storage-api` port in front of it).
+- `common/.../repository/{TmForumRepository,NgsiLdBaseRepository,BrokerBackedReferencesRepository}.java`: the concrete NGSI-LD storage, the NGSI-LD adapter behind the `storage-api` port; `product-catalog/.../storage/NgsiLdEntityRepositoryContractIT` runs the port contract against it.
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.
