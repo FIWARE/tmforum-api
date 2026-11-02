@@ -52,9 +52,13 @@ the `storage-api` port contract that ticket 6 has to pass. The broker backfill f
    make the stored payload depend on target state on both adapters.
    This is the documented behaviour change: an IT that posts `{id}` only and expects the target's `name`/`href`
    gets its assertion changed to the posted payload.
-2. **Non-`PROPERTY` sub-attributes of a ref** (`EndpointRef.connectionPoint`,
-   `EntitySpecificationRelationship.associationSpec`, customer-bill `FinancialAccountRef.accountBalance`) are
-   re-mapped as embedded `PROPERTY` with a structured value. They are not added to the mapping library.
+2. **Non-`PROPERTY` sub-attributes of a ref** are made embeddable without changing the mapping library.
+   `EndpointRef.connectionPoint` and `EntitySpecificationRelationship.associationSpec` are single objects and are
+   re-mapped as embedded `PROPERTY` (getter and setter) with a structured value. Customer-bill
+   `FinancialAccountRef.accountBalance` is a list. Only its **getter** becomes `PROPERTY, embedProperty = true`,
+   because the library writes a `List` as a `PropertyListVO`. Its setter stays `PROPERTY_LIST` with
+   `targetClass = AccountBalance.class`, because `relationshipFromProperties` reads a `PROPERTY_LIST` setter
+   through `handlePropertyList`, while a `PROPERTY` setter rejects a list.
 3. **Unflagged setters fail loudly.** After the flip, the NGSI-LD `EntitiesRepository` returns an empty list for
    an empty request and **errors** for a non-empty one, so a setter that was missed fails instead of reading back
    id-only. A build-time guard test (Step 5) keeps that path unreachable.
@@ -71,16 +75,22 @@ when a relationship is still resolved, its sub-properties already override the t
   that flag on properties, so this is cosmetic.
 - `UsageSpecificationRef`: delete the shadowing `href`/`name` fields so `RefEntity`'s embedded ones apply. Check
   the usage-management MapStruct mapper still compiles.
-- `EndpointRef.connectionPoint`, `EntitySpecificationRelationship.associationSpec` and customer-bill
-  `FinancialAccountRef.accountBalance`: re-map as `AttributeType.PROPERTY`, `embedProperty = true`, with a
-  `targetClass` on the setter where the library needs one to deserialize a structured or list value. The setter
-  takes a list for `accountBalance`, so check that it gets `List<AccountBalance>` and not `List<Map>`.
+- `EndpointRef.connectionPoint` and `EntitySpecificationRelationship.associationSpec`: re-map getter and setter
+  as `AttributeType.PROPERTY`, `embedProperty = true`, with a `targetClass` on the setter where the library needs
+  one to deserialize the structured value.
+- Customer-bill `FinancialAccountRef.accountBalance` (Decision 2): change only the getter to
+  `AttributeType.PROPERTY, embedProperty = true`. Keep the `PROPERTY_LIST` setter with
+  `targetClass = AccountBalance.class`, and assert the read gives `List<AccountBalance>`, not `List<Map>`.
+  A relationship sub-attribute with several datasetId instances is unusual NGSI-LD, so add an IT in
+  `customer-bill-management` that round-trips a `FinancialAccountRef` with one and with several balances on
+  orion-ld **and** scorpio. If a broker drops or merges the instances, stop and report it on the ticket before
+  Step 4.
 - Unit tests in `common/src/test/.../domain/` and in each touched module's `src/test`: a parameterized
   round-trip through `JavaObjectMapper` (`toEntityVO`) and `EntityVOMapper.fromEntityVO`, with a mocked
   `EntitiesRepository` that returns nothing. Per touched ref class, assert every field survives. Follow
   `RefEntityAtReferredTypeTest` and `TolerantEntityVOMapperTest`.
 - Acceptance: `mvn test -pl common,usage-management,agreement,account,resource-function-activation,service-shared-models,customer-bill-management -am`
-  passes, and the ITs of those modules still pass on orion-ld.
+  passes, the ITs of those modules still pass on orion-ld, and the `accountBalance` IT passes on both brokers.
 
 ### Step 2: Read product-family references from properties
 Flip the relationship setters of the product family to `fromProperties = true`: `product-shared-models` (23,
@@ -91,8 +101,9 @@ e.g. `ProductOffering` `agreement`/`bundledProductOffering`/`category`/`channel`
   models): run their ITs. Where an assertion expected a value the request did not carry (target `name`/`href`/
   `version` filled in by resolution), change the expectation to the posted payload. Add a one-line comment
   naming this ticket. Do not change any other assertion. A failure for any other reason is a bug to fix.
-- Extend `product-catalog/.../ExternalReferenceIT`: a `ProductOffering` whose 10 relationship attributes all
-  point at non-existent external ids. Each carries `href`, `name`, `@referredType` and any subclass extras, and
+- Extend `product-catalog/.../ExternalReferenceIT`: a `ProductOffering` whose 12 relationship attributes (the 11
+  listed above plus `productSpecification`, which is already `fromProperties`) all point at non-existent
+  external ids. Each carries `href`, `name`, `@referredType` and any subclass extras, and
   must round-trip intact through create, `GET` and `PATCH`. Use a parameterized test over the attributes.
 - Acceptance: `mvn integration-test` for the four modules passes with `-Dbroker=orion-ld` and
   `-Dbroker=scorpio`.
@@ -122,13 +133,24 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   `TolerantEntityVOMapper` and its stub, and `BrokerBackedEntitiesRepositoryTest`. Fold the cases of
   `TolerantEntityVOMapperTest` that still apply into a test of the new class. Update `StorageBoundaryTest`
   (`common/src/test/.../architecture/`), which lists `BrokerBackedEntitiesRepository`.
+  Also replace `NgsiLdMappingRegressionTest#injectsTheTolerantMapper` (`common/src/test/.../mapping/`), which
+  asserts the `TolerantEntityVOMapper` bean type, with a check that the new `EntitiesRepository` is the injected
+  bean. Remove the `{@link TolerantEntityVOMapper}` from the `StrictRelationshipsDefault` Javadoc.
 - Guard test in `all-in-one/src/test` (the module that sees every domain class), reflection- or ArchUnit-based
   next to `ControllerStorageBoundaryTest`. It fails when:
   - a `RELATIONSHIP`/`RELATIONSHIP_LIST` `@AttributeSetter` lacks `fromProperties = true`;
-  - a `RefEntity` subclass has an `@AttributeGetter` that is not `PROPERTY` with `embedProperty = true`.
+  - a relationship target class has an `@AttributeGetter` that is not `PROPERTY` with `embedProperty = true`.
+    Target classes are every `targetClass` of a `RELATIONSHIP`/`RELATIONSHIP_LIST` setter plus all `RefEntity`
+    subclasses. That covers non-`RefEntity` targets such as `RelatedProductOrderItemRef` (extends `Entity`) and
+    `Subscription` (`TMForumSubscription.subscription`). Generated `*VO` classes (e.g. `PaymentMethodRefVO`) are
+    skipped, since the getter side does not use them.
+  - Getter exemption: a `List`-typed getter may be `PROPERTY, embedProperty = true` with a `PROPERTY_LIST` setter
+    (Decision 2, customer-bill `accountBalance`).
 - Fan-out IT in `product-catalog`: an `HttpClientFilter` test bean (or a counter on `BrokerRequestLoggingFilter`)
   counts the broker requests of one `GET /productOffering/{id}` whose offering references several local and
-  external targets. Assert exactly one entity retrieve and no further request.
+  external targets. Assert that no broker request targets any referenced id, and that the offering itself is
+  retrieved at most once. Do not assert exactly one retrieve: `createEntity` is `@CachePut` on the `entities`
+  cache, so a `GET` right after the create may be a cache hit with zero broker requests.
 - Keep the `entities` cache, because `get`, reference checks and updates still use it. Reword its "not call
   twice in one call" comment in the `application-in-memory.yaml`/`application-redis.yaml` files if it no longer
   fits.
@@ -156,6 +178,6 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   - data written before this release reads back with only the fields that were embedded at the time until the
     ticket 8 backfill runs;
   - the list of IT assertions changed in Steps 2–4 and why.
-- `AGENTS.md` Key Conventions: every relationship setter must be `fromProperties = true`, and every `RefEntity`
-  subclass field an embedded `PROPERTY`, enforced by the Step 5 guard test. Reword the `strictRelationships`
+- `AGENTS.md` Key Conventions: every relationship setter must be `fromProperties = true`, and every field of a
+  relationship target class an embedded `PROPERTY` getter, enforced by the Step 5 guard test. Reword the `strictRelationships`
   bullet, which no longer matters for reads.
