@@ -91,8 +91,9 @@ when a relationship is still resolved, its sub-properties already override the t
     instance and reads fine. With several, the read maps the instance objects to `AccountBalance` and the API
     answers 400 "Invalid JSON". `CustomerBill.financialAccount` already reads from properties, so this would turn
     today's silent drop into an unreadable bill. The getter change was therefore **not** made: `accountBalance`
-    is still dropped on write. `customer-bill-management/.../FinancialAccountRefIT` reproduces it and is
-    `@Disabled`. A reviewer has to choose an encoding (e.g. one `PROPERTY` whose value is the plain JSON array,
+    is still dropped on write. `customer-bill-management/.../FinancialAccountRefIT` is `@Disabled`. At this
+    state it fails on **both** brokers, because nothing is stored inline. It shows the Orion-LD merge only once the
+    getter is `PROPERTY, embedProperty = true`, so re-enable it together with that change. A reviewer has to choose an encoding (e.g. one `PROPERTY` whose value is the plain JSON array,
     which needs a getter the library writes as a single property) before Step 4.
 - Unit tests in `common/src/test/.../domain/` and in each touched module's `src/test`: a parameterized
   round-trip through `JavaObjectMapper` (`toEntityVO`) and `EntityVOMapper.fromEntityVO`, with a mocked
@@ -122,7 +123,8 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
 `resource-catalog` (1), `service-shared-models` (10), `service-catalog` (2) and `service-inventory` (2).
 - Run the ITs of every module that consumes these models (`resource-catalog`, `resource-inventory`,
   `resource-function-activation`, `resource-order-management`, `service-catalog`, `service-inventory`,
-  `service-order-management`) on both brokers. Adjust assertions that depended on resolution, as in Step 2.
+  `service-order-management`, and `document-management`, whose `DocumentSpecification.entitySpecRelationship` uses
+  `EntitySpecificationRelationship`) on both brokers. Adjust assertions that depended on resolution, as in Step 2.
 - Check `EndpointRef.connectionPoint` and `EntitySpecificationRelationship.associationSpec` round-trip through
   the API, using the property mapping from Step 1.
 
@@ -133,6 +135,10 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
 - Look at `party-catalog/.../TMForumMapper` (the organization parent/child relationship hrefs) and
   `document-management/.../S3AttachmentService` (copies `href`). Check that nothing relies on a resolved target.
 - Run these modules' ITs and the `all-in-one` ITs on both brokers, and adjust assertions as in Step 2.
+- Account: today a `financialAccount` ref to a local `FinancialAccount` with 2+ balances fails the read with a
+  `MappingException`, because the resolved target's balance list cannot map to the ref's single `accountBalance`.
+  This is unchanged by Step 1, which was checked against the annotations before and after. With
+  `fromProperties = true` the target is no longer read. Add an account IT for it.
 - Acceptance: re-run the setter scan (any `RELATIONSHIP`/`RELATIONSHIP_LIST` `@AttributeSetter` without
   `fromProperties = true` in non-test sources). It finds 0 of 141.
 

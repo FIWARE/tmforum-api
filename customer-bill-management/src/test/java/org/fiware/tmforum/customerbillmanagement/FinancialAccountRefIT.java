@@ -38,10 +38,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Pins that a broker keeps every balance of a {@link FinancialAccountRefVO}, stored as a multi-instance sub-property
- * of the financialAccount relationship. Disabled until ticket 88 decides how to store the list (see IMPLEMENTATION_PLAN.md).
+ * Pins that a broker keeps every balance of a {@link FinancialAccountRefVO} stored inline in the financialAccount relationship.
+ * Re-enabling it needs the accountBalance getter change of ticket 88 Step 4; until then it fails on every broker (see IMPLEMENTATION_PLAN.md).
  */
-@Disabled("Orion-LD merges the instances of a multi-instance relationship sub-attribute into one property, so the read fails with 400.")
+@Disabled("accountBalance is not stored inline until its encoding is decided; with a PROPERTY getter Orion-LD merges the instances and the read fails with 400.")
 @MicronautTest(packages = {"org.fiware.tmforum.customerbillmanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class FinancialAccountRefIT extends AbstractApiIT {
 

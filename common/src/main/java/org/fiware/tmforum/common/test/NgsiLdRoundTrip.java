@@ -29,6 +29,7 @@ public final class NgsiLdRoundTrip {
 	private NgsiLdRoundTrip() {
 	}
 
+	/** Writes, serializes and reads back the entity. Blocks, and throws if the read mapping fails. */
 	public static <T> T roundTrip(T entity, Class<T> entityClass) {
 		MappingProperties mappingProperties = new MappingProperties();
 		mappingProperties.setStrictRelationships(true);
