@@ -144,9 +144,9 @@ e.g. `ProductOffering` `agreement`/`bundledProductOffering`/`category`/`channel`
   must round-trip intact through create, `GET` and `PATCH`. Use a parameterized test over the attributes.
 - Acceptance: `mvn integration-test` for the four modules passes with `-Dbroker=orion-ld` and
   `-Dbroker=scorpio`.
-- **Known defect, pinned in Step 2 (open):** without `replaceOnUpdate` (the production default, and forced for every
-  IT by the root pom's failsafe `argLine`), a PATCH that swaps the ids of a reference list keeps the old entries,
-  because the broker merges the instances by datasetId. It predates this ticket (resolved lists merged the same
+- **Known defect, pinned in Step 2 (open):** on Orion-LD without `replaceOnUpdate` (the production default, and forced
+  for every IT by the root pom's failsafe `argLine`), a PATCH that swaps the ids of a reference list keeps the old
+  entries, because the broker merges the instances by datasetId. Scorpio replaces the whole attribute and drops them. It predates this ticket (resolved lists merged the same
   way). `ExternalReferenceIT#patchReplacingTheIdsOfAReferenceList` asserts the current behaviour, so a fix has to
   change that expectation on purpose. Ticket 6 (PostgreSQL) will replace the list, which is a parity gap to settle
   there.

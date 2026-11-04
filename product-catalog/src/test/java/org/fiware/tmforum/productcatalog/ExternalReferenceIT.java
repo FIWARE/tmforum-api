@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productcatalog;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.env.Environment;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -87,6 +88,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	static final String EXTERNAL_HOST = "external-tmf.example.org";
 	// not configured as external, so references to it are validated like local ones
 	private static final String UNLISTED_HOST = "unlisted-tmf.example.org";
+	private static final String ORION_LD_ENVIRONMENT = "orion-ld";
 	private static final String EXTERNAL_BASE_URL = "https://" + EXTERNAL_HOST + "/tmf-api/";
 	private static final String UNLISTED_BASE_URL = "https://" + UNLISTED_HOST + "/tmf-api/";
 	private static final String LOCAL_ALIAS_BASE_URL = "https://" + LOCAL_ALIAS_HOST + "/tmf-api/";
@@ -183,6 +185,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private final CategoryApiTestClient categoryApiTestClient;
 	private final ProductSpecificationApiTestClient productSpecificationApiTestClient;
 	private final GeneralProperties generalProperties;
+	private final Environment environment;
 
 	// cleanUp only removes product offerings
 	private final List<String> createdCatalogs = new ArrayList<>();
@@ -194,9 +197,11 @@ public class ExternalReferenceIT extends AbstractApiIT {
 							   ProductOfferingApiTestClient productOfferingApiTestClient,
 							   CatalogApiTestClient catalogApiTestClient,
 							   CategoryApiTestClient categoryApiTestClient,
-							   ProductSpecificationApiTestClient productSpecificationApiTestClient) {
+							   ProductSpecificationApiTestClient productSpecificationApiTestClient,
+							   Environment environment) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.generalProperties = generalProperties;
+		this.environment = environment;
 		this.productOfferingApiTestClient = productOfferingApiTestClient;
 		this.catalogApiTestClient = catalogApiTestClient;
 		this.categoryApiTestClient = categoryApiTestClient;
@@ -353,8 +358,9 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		assertPayloads(updateVO, retrieve(id), ALL_REFERENCES, "retrieval after patch");
 	}
 
-	// Known defect (ticket 88): without replaceOnUpdate, the production default and forced for every IT by the root
-	// pom's failsafe argLine, a PATCH merges a reference list by datasetId and keeps the instances it omits. This pins
+	// Known defect (ticket 88): on Orion-LD without replaceOnUpdate, the production default and forced for every IT by
+	// the root pom's failsafe argLine, a PATCH merges a reference list by datasetId and keeps the instances it omits.
+	// Scorpio replaces all instances of an appended attribute, so it drops them. This pins
 	// that behaviour, so a fix (or the PostgreSQL adapter of ticket 6) has to update the expectation on purpose.
 	// The created entries survive next to the patched ones because a RefEntity's datasetId is its id (@DatasetId),
 	// not its list position, so new ids are new instances.
@@ -371,14 +377,16 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		ProductOfferingVO readBack = retrieve(id);
 		JsonNode created = objectMapper.valueToTree(createVO);
 		JsonNode patched = objectMapper.valueToTree(updateVO);
+		boolean keepsCreated = !generalProperties.isReplaceOnUpdate()
+				&& environment.getActiveNames().contains(ORION_LD_ENVIRONMENT);
 		assertAll(LIST_REFERENCES.stream().map(attribute -> () -> {
 			Map<JsonNode, Long> expected = new HashMap<>(multiset(patched.get(attribute)));
-			if (!generalProperties.isReplaceOnUpdate()) {
+			if (keepsCreated) {
 				multiset(created.get(attribute)).forEach((entry, count) -> expected.merge(entry, count, Long::sum));
 			}
 			assertEquals(expected, multiset(objectMapper.valueToTree(readBack).get(attribute)),
 					String.format("A patch swapping the ids of %s should %s the created entries.", attribute,
-							generalProperties.isReplaceOnUpdate() ? "drop" : "(known defect) keep"));
+							keepsCreated ? "(known defect) keep" : "drop"));
 		}));
 	}
 
