@@ -58,7 +58,8 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -66,6 +67,7 @@ import java.util.stream.StreamSupport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -112,6 +114,18 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String PRODUCT_SPECIFICATION_PATH = "productCatalog/v4/productSpecification/";
 	private static final String RESOURCE_CANDIDATE_PATH = "resourceCatalog/v4/resourceCandidate/";
 	private static final String SLA_PATH = "slaManagement/v4/sla/";
+	// the type segment of each external reference's id
+	private static final String AGREEMENT_ID_TYPE = "agreement";
+	private static final String CATEGORY_ID_TYPE = "category";
+	private static final String CHANNEL_ID_TYPE = "channel";
+	private static final String MARKET_SEGMENT_ID_TYPE = "market-segment";
+	private static final String PLACE_ID_TYPE = "place";
+	private static final String PRODUCT_OFFERING_ID_TYPE = "product-offering";
+	private static final String PRODUCT_OFFERING_PRICE_ID_TYPE = "product-offering-price";
+	private static final String PRODUCT_SPECIFICATION_ID_TYPE = "product-specification";
+	private static final String RESOURCE_CANDIDATE_ID_TYPE = "resource-candidate";
+	private static final String SERVICE_CANDIDATE_ID_TYPE = "service-candidate";
+	private static final String SLA_ID_TYPE = "service-level-agreement";
 	private static final String REFERRED_TYPE_AGREEMENT = "Agreement";
 	private static final String REFERRED_TYPE_CATEGORY = "Category";
 	private static final String REFERRED_TYPE_CHANNEL = "Channel";
@@ -123,9 +137,12 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String REFERRED_TYPE_RESOURCE_CANDIDATE = "ResourceCandidate";
 	private static final String REFERRED_TYPE_SERVICE_CANDIDATE = "ServiceCandidate";
 	private static final String REFERRED_TYPE_SLA = "ServiceLevelAgreement";
-	// the stage names the payload; the patch keeps the ids, since Orion-LD's append mode keeps instances a patch omits
+	// the stage names the payload
 	private static final String CREATE = "create";
 	private static final String PATCH = "patch";
+	// first position of a list's two external ids; a patch from REPLACING_POSITION swaps every id of the list
+	private static final int CREATED_POSITION = 0;
+	private static final int REPLACING_POSITION = 2;
 	// TmForumExceptionHandler's INVALID_RELATIONSHIP message, telling a failed reference check from other 400s
 	private static final String UNRESOLVED_REFERENCE_MESSAGE = "At least one of the references does not exist";
 
@@ -322,19 +339,44 @@ public class ExternalReferenceIT extends AbstractApiIT {
 				.map(Arguments::of);
 	}
 
+	// the patch keeps the ids, since append mode keeps the instances a patch omits (see below)
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("productOfferingRelationships")
 	public void externalReferencePayloadRoundTrips(String attribute) throws Exception {
+		assertPatchRoundTrips(attribute, CREATED_POSITION);
+	}
+
+	private static Stream<Arguments> productOfferingRelationshipLists() {
+		return Stream.of("agreement", "bundledProductOffering", "category", "channel", "marketSegment", "place",
+						"productOfferingPrice", "productOfferingRelationship")
+				.map(Arguments::of);
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("productOfferingRelationshipLists")
+	public void patchReplacingTheIdsOfAReferenceListDropsTheOldOnes(String attribute) throws Exception {
+		// known defect (ticket 88): in append mode a PATCH merges by datasetId, so the old instances stay stored. The ITs
+		// force append mode (root pom failsafe argLine), so this case only runs against a broker with replaceOnUpdate.
+		assumeTrue(generalProperties.isReplaceOnUpdate(),
+				"Known defect: without replaceOnUpdate a PATCH keeps the list instances it omits.");
+		assertPatchRoundTrips(attribute, REPLACING_POSITION);
+	}
+
+	private void assertPatchRoundTrips(String attribute, int patchPosition) throws Exception {
 		ProductOfferingCreateVO createVO = productOfferingCreate()
-				.agreement(List.of(agreementRef(CREATE, 0), agreementRef(CREATE, 1)))
-				.bundledProductOffering(List.of(bundledProductOffering(CREATE, 0), bundledProductOffering(CREATE, 1)))
-				.category(List.of(externalCategoryRef(CREATE, 0), externalCategoryRef(CREATE, 1)))
-				.channel(List.of(channelRef(CREATE, 0), channelRef(CREATE, 1)))
-				.marketSegment(List.of(marketSegmentRef(CREATE, 0), marketSegmentRef(CREATE, 1)))
-				.place(List.of(placeRef(CREATE, 0), placeRef(CREATE, 1)))
-				.productOfferingPrice(List.of(productOfferingPriceRef(CREATE, 0), productOfferingPriceRef(CREATE, 1)))
-				.productOfferingRelationship(List.of(productOfferingRelationship(CREATE, 0),
-						productOfferingRelationship(CREATE, 1)))
+				.agreement(List.of(agreementRef(CREATE, CREATED_POSITION), agreementRef(CREATE, CREATED_POSITION + 1)))
+				.bundledProductOffering(List.of(bundledProductOffering(CREATE, CREATED_POSITION),
+						bundledProductOffering(CREATE, CREATED_POSITION + 1)))
+				.category(List.of(externalCategoryRef(CREATE, CREATED_POSITION),
+						externalCategoryRef(CREATE, CREATED_POSITION + 1)))
+				.channel(List.of(channelRef(CREATE, CREATED_POSITION), channelRef(CREATE, CREATED_POSITION + 1)))
+				.marketSegment(List.of(marketSegmentRef(CREATE, CREATED_POSITION),
+						marketSegmentRef(CREATE, CREATED_POSITION + 1)))
+				.place(List.of(placeRef(CREATE, CREATED_POSITION), placeRef(CREATE, CREATED_POSITION + 1)))
+				.productOfferingPrice(List.of(productOfferingPriceRef(CREATE, CREATED_POSITION),
+						productOfferingPriceRef(CREATE, CREATED_POSITION + 1)))
+				.productOfferingRelationship(List.of(productOfferingRelationship(CREATE, CREATED_POSITION),
+						productOfferingRelationship(CREATE, CREATED_POSITION + 1)))
 				.productSpecification(productSpecificationRef(CREATE))
 				.resourceCandidate(resourceCandidateRef(CREATE))
 				.serviceCandidate(serviceCandidateRef(CREATE))
@@ -349,15 +391,19 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		assertPayload(createVO, retrieve(id), attribute, "retrieval after create");
 
 		ProductOfferingUpdateVO updateVO = ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
-				.agreement(List.of(agreementRef(PATCH, 0), agreementRef(PATCH, 1)))
-				.bundledProductOffering(List.of(bundledProductOffering(PATCH, 0), bundledProductOffering(PATCH, 1)))
-				.category(List.of(externalCategoryRef(PATCH, 0), externalCategoryRef(PATCH, 1)))
-				.channel(List.of(channelRef(PATCH, 0), channelRef(PATCH, 1)))
-				.marketSegment(List.of(marketSegmentRef(PATCH, 0), marketSegmentRef(PATCH, 1)))
-				.place(List.of(placeRef(PATCH, 0), placeRef(PATCH, 1)))
-				.productOfferingPrice(List.of(productOfferingPriceRef(PATCH, 0), productOfferingPriceRef(PATCH, 1)))
-				.productOfferingRelationship(List.of(productOfferingRelationship(PATCH, 0),
-						productOfferingRelationship(PATCH, 1)))
+				.agreement(List.of(agreementRef(PATCH, patchPosition), agreementRef(PATCH, patchPosition + 1)))
+				.bundledProductOffering(List.of(bundledProductOffering(PATCH, patchPosition),
+						bundledProductOffering(PATCH, patchPosition + 1)))
+				.category(List.of(externalCategoryRef(PATCH, patchPosition),
+						externalCategoryRef(PATCH, patchPosition + 1)))
+				.channel(List.of(channelRef(PATCH, patchPosition), channelRef(PATCH, patchPosition + 1)))
+				.marketSegment(List.of(marketSegmentRef(PATCH, patchPosition),
+						marketSegmentRef(PATCH, patchPosition + 1)))
+				.place(List.of(placeRef(PATCH, patchPosition), placeRef(PATCH, patchPosition + 1)))
+				.productOfferingPrice(List.of(productOfferingPriceRef(PATCH, patchPosition),
+						productOfferingPriceRef(PATCH, patchPosition + 1)))
+				.productOfferingRelationship(List.of(productOfferingRelationship(PATCH, patchPosition),
+						productOfferingRelationship(PATCH, patchPosition + 1)))
 				.productSpecification(productSpecificationRef(PATCH))
 				.resourceCandidate(resourceCandidateRef(PATCH))
 				.serviceCandidate(serviceCandidateRef(PATCH))
@@ -373,17 +419,17 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private void assertPayload(Object posted, ProductOfferingVO readBack, String attribute, String stage) {
 		JsonNode expected = objectMapper.valueToTree(posted).get(attribute);
 		assertNotNull(expected, "The request should carry " + attribute);
-		assertEquals(unordered(expected), unordered(objectMapper.valueToTree(readBack).get(attribute)),
+		assertEquals(multiset(expected), multiset(objectMapper.valueToTree(readBack).get(attribute)),
 				String.format("The posted %s should be read back intact in the %s.", attribute, stage));
 	}
 
-	// the broker does not keep the order of a multi-instance relationship
-	private static Set<JsonNode> unordered(JsonNode node) {
+	// the broker does not keep the order of a multi-instance relationship; counting, unlike a set, catches duplicates
+	private static Map<JsonNode, Long> multiset(JsonNode node) {
 		if (node == null) {
-			return Set.of();
+			return Map.of();
 		}
-		return node.isArray() ? StreamSupport.stream(node.spliterator(), false).collect(Collectors.toSet())
-				: Set.of(node);
+		Stream<JsonNode> entries = node.isArray() ? StreamSupport.stream(node.spliterator(), false) : Stream.of(node);
+		return entries.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 	}
 
 	private static String externalId(String type, int position) {
@@ -399,13 +445,13 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	}
 
 	private static AgreementRefVO agreementRef(String stage, int position) {
-		String id = externalId("agreement", position);
+		String id = externalId(AGREEMENT_ID_TYPE, position);
 		return new AgreementRefVO().id(id).href(URI.create(externalHref(AGREEMENT_PATH, id))).name(remoteName(stage))
 				.atReferredType(REFERRED_TYPE_AGREEMENT);
 	}
 
 	private static BundledProductOfferingVO bundledProductOffering(String stage, int position) {
-		String id = externalId("product-offering", position);
+		String id = externalId(PRODUCT_OFFERING_ID_TYPE, position);
 		return new BundledProductOfferingVO().id(id).href(externalHref(PRODUCT_OFFERING_PATH, id)).name(remoteName(stage))
 				.lifecycleStatus(REMOTE_LIFECYCLE_STATUS)
 				.bundledProductOfferingOption(new BundledProductOfferingOptionVO()
@@ -415,37 +461,37 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	}
 
 	private static CategoryRefVO externalCategoryRef(String stage, int position) {
-		String id = externalId("category", position);
+		String id = externalId(CATEGORY_ID_TYPE, position);
 		return new CategoryRefVO().id(id).href(URI.create(externalHref(CATEGORY_PATH, id))).name(remoteName(stage))
 				.version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_CATEGORY);
 	}
 
 	private static ChannelRefVO channelRef(String stage, int position) {
-		String id = externalId("channel", position);
+		String id = externalId(CHANNEL_ID_TYPE, position);
 		return new ChannelRefVO().id(id).href(URI.create(externalHref(CHANNEL_PATH, id))).name(remoteName(stage))
 				.atReferredType(REFERRED_TYPE_CHANNEL);
 	}
 
 	private static MarketSegmentRefVO marketSegmentRef(String stage, int position) {
-		String id = externalId("market-segment", position);
+		String id = externalId(MARKET_SEGMENT_ID_TYPE, position);
 		return new MarketSegmentRefVO().id(id).href(externalHref(MARKET_SEGMENT_PATH, id)).name(remoteName(stage))
 				.atReferredType(REFERRED_TYPE_MARKET_SEGMENT);
 	}
 
 	private static PlaceRefVO placeRef(String stage, int position) {
-		String id = externalId("place", position);
+		String id = externalId(PLACE_ID_TYPE, position);
 		return new PlaceRefVO().id(id).href(URI.create(externalHref(PLACE_PATH, id))).name(remoteName(stage))
 				.atReferredType(REFERRED_TYPE_PLACE);
 	}
 
 	private static ProductOfferingPriceRefOrValueVO productOfferingPriceRef(String stage, int position) {
-		String id = externalId("product-offering-price", position);
+		String id = externalId(PRODUCT_OFFERING_PRICE_ID_TYPE, position);
 		return new ProductOfferingPriceRefOrValueVO().id(id).href(URI.create(externalHref(PRODUCT_OFFERING_PRICE_PATH, id)))
 				.name(remoteName(stage)).atReferredType(REFERRED_TYPE_PRODUCT_OFFERING_PRICE);
 	}
 
 	private static ProductOfferingRelationshipVO productOfferingRelationship(String stage, int position) {
-		String id = externalId("product-offering", position);
+		String id = externalId(PRODUCT_OFFERING_ID_TYPE, position);
 		return new ProductOfferingRelationshipVO().id(id).href(URI.create(externalHref(PRODUCT_OFFERING_PATH, id)))
 				.name(remoteName(stage)).relationshipType(REMOTE_RELATIONSHIP_TYPE).role(REMOTE_ROLE)
 				.validFor(new TimePeriodVO().startDateTime(REMOTE_VALID_FROM))
@@ -453,7 +499,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	}
 
 	private static ProductSpecificationRefVO productSpecificationRef(String stage) {
-		String id = externalId("product-specification", 0);
+		String id = externalId(PRODUCT_SPECIFICATION_ID_TYPE, 0);
 		return new ProductSpecificationRefVO().id(id).href(URI.create(externalHref(PRODUCT_SPECIFICATION_PATH, id)))
 				.name(remoteName(stage)).version(REMOTE_VERSION)
 				.targetProductSchema(new TargetProductSchemaVO().atType(REMOTE_SCHEMA_TYPE)
@@ -462,19 +508,19 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	}
 
 	private static ResourceCandidateRefVO resourceCandidateRef(String stage) {
-		String id = externalId("resource-candidate", 0);
+		String id = externalId(RESOURCE_CANDIDATE_ID_TYPE, 0);
 		return new ResourceCandidateRefVO().id(id).href(URI.create(externalHref(RESOURCE_CANDIDATE_PATH, id)))
 				.name(remoteName(stage)).version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_RESOURCE_CANDIDATE);
 	}
 
 	private static ServiceCandidateRefVO serviceCandidateRef(String stage) {
-		String id = externalId("service-candidate", 0);
+		String id = externalId(SERVICE_CANDIDATE_ID_TYPE, 0);
 		return new ServiceCandidateRefVO().id(id).href(URI.create(externalHref(SERVICE_CANDIDATE_PATH, id)))
 				.name(remoteName(stage)).version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_SERVICE_CANDIDATE);
 	}
 
 	private static SLARefVO slaRef(String stage) {
-		String id = externalId("service-level-agreement", 0);
+		String id = externalId(SLA_ID_TYPE, 0);
 		return new SLARefVO().id(id).href(externalHref(SLA_PATH, id)).name(remoteName(stage))
 				.atReferredType(REFERRED_TYPE_SLA);
 	}
@@ -500,7 +546,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		List<CategoryRefVO> readBack = retrieve(productOfferingId).getCategory();
 		// ProductOffering.category is read from the relationship's own properties (ticket 88), so the whole posted
 		// reference round-trips
-		assertEquals(unordered(objectMapper.valueToTree(expected)), unordered(objectMapper.valueToTree(readBack)),
+		assertEquals(multiset(objectMapper.valueToTree(expected)), multiset(objectMapper.valueToTree(readBack)),
 				message);
 	}
 

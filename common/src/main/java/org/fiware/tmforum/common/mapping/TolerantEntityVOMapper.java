@@ -4,6 +4,7 @@ import io.github.wistefan.mapping.EntitiesRepository;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.MappingException;
 import io.github.wistefan.mapping.MappingProperties;
+import io.github.wistefan.mapping.NgsiLdKeyCompactor;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.context.annotation.Replaces;
 import jakarta.inject.Singleton;
@@ -28,8 +29,8 @@ public class TolerantEntityVOMapper extends EntityVOMapper {
 	private final boolean strictRelationships;
 
 	public TolerantEntityVOMapper(MappingProperties mappingProperties, ObjectMapper objectMapper,
-								  EntitiesRepository entitiesRepository) {
-		super(mappingProperties, objectMapper, entitiesRepository);
+								  EntitiesRepository entitiesRepository, NgsiLdKeyCompactor keyCompactor) {
+		super(mappingProperties, objectMapper, entitiesRepository, keyCompactor);
 		this.strictRelationships = mappingProperties.isStrictRelationships();
 	}
 
