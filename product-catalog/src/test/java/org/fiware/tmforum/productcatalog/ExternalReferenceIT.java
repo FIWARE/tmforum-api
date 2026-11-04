@@ -356,6 +356,8 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	// Known defect (ticket 88): without replaceOnUpdate, the production default and forced for every IT by the root
 	// pom's failsafe argLine, a PATCH merges a reference list by datasetId and keeps the instances it omits. This pins
 	// that behaviour, so a fix (or the PostgreSQL adapter of ticket 6) has to update the expectation on purpose.
+	// The created entries survive next to the patched ones because a RefEntity's datasetId is its id (@DatasetId),
+	// not its list position, so new ids are new instances.
 	@Test
 	public void patchReplacingTheIdsOfAReferenceList() throws Exception {
 		ProductOfferingCreateVO createVO = createWithAllReferencesVO();

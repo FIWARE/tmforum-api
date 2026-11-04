@@ -46,9 +46,9 @@ public class TolerantEntityVOMapperTest {
 	private static final String PLAIN_FAVOURITE = "plainFavourite";
 	private static final String INLINE_CHILDREN = "inlineChildren";
 	private static final String NAME = "name";
-	private static final String REMOTE_NAME = "remote child";
+	static final String REMOTE_NAME = "remote child";
 	// a deployment context's IRI for "name", which Orion-LD returns for the sub-attributes of a multi-instance list
-	private static final String CUSTOM_NAME_IRI = "https://context.example.org/terms/name";
+	static final String CUSTOM_NAME_IRI = "https://context.example.org/terms/name";
 
 	private static final URI PARENT = URI.create("urn:ngsi-ld:parent:p");
 	private static final URI FOUND = URI.create("urn:ngsi-ld:child:found");
@@ -119,13 +119,10 @@ public class TolerantEntityVOMapperTest {
 
 	@Test
 	public void fromEntityVO_compactsSubAttributesExpandedUnderTheConfiguredContext() {
-		RelationshipListVO relationshipList = new RelationshipListVO();
-		relationshipList.add(expandedNameRelationship(MISSING_A));
-		relationshipList.add(expandedNameRelationship(MISSING_B));
 		NgsiLdKeyCompactor keyCompactor = new NgsiLdKeyCompactor(
 				new JsonLdContext(Map.of(CUSTOM_NAME_IRI, NAME), List.of()));
 
-		Parent parent = mapper(false, keyCompactor).fromEntityVO(parent(INLINE_CHILDREN, relationshipList), Parent.class)
+		Parent parent = mapper(false, keyCompactor).fromEntityVO(parentWithExpandedInlineChildren(), Parent.class)
 				.block();
 
 		assertEquals(List.of(REMOTE_NAME, REMOTE_NAME), parent.getInlineChildren().stream().map(Child::getName).toList());
@@ -170,6 +167,14 @@ public class TolerantEntityVOMapperTest {
 
 	private static RelationshipVO relationship(URI target) {
 		return new RelationshipVO()._object(target);
+	}
+
+	// two inline children whose "name" arrives expanded under CUSTOM_NAME_IRI
+	static EntityVO parentWithExpandedInlineChildren() {
+		RelationshipListVO relationshipList = new RelationshipListVO();
+		relationshipList.add(expandedNameRelationship(MISSING_A));
+		relationshipList.add(expandedNameRelationship(MISSING_B));
+		return parent(INLINE_CHILDREN, relationshipList);
 	}
 
 	private static RelationshipVO expandedNameRelationship(URI target) {
