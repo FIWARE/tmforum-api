@@ -6,6 +6,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.mapping.TolerantEntityVOMapper;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Pins the read-path contract of {@link BrokerBackedEntitiesRepository#getEntities(List)}: every id yields an entity,
- * a missing target an untyped stub, and any other broker error fails the read.
+ * a missing target an unresolved-target stub, and any other broker error fails the read.
  */
 class BrokerBackedEntitiesRepositoryTest {
 
@@ -38,6 +39,7 @@ class BrokerBackedEntitiesRepositoryTest {
 	private static final URI CATEGORY_C = URI.create("urn:ngsi-ld:category:c");
 	private static final URI MISSING = URI.create("urn:ngsi-ld:category:missing");
 	private static final URI REJECTED = URI.create("urn:ngsi-ld:category:rejected");
+	private static final String STUB_TYPE = TolerantEntityVOMapper.unresolvedTarget(MISSING).getType();
 
 	private EntitiesApiClient entitiesApi;
 	private BrokerBackedEntitiesRepository repository;
@@ -57,8 +59,7 @@ class BrokerBackedEntitiesRepositoryTest {
 		List<EntityVO> entities = repository.getEntities(requested).block();
 
 		assertEquals(requested, entities.stream().map(EntityVO::getId).toList(), description);
-		// only fetched entities carry a type, the stubs of missing ones do not
-		assertEquals(expectedFound, entities.stream().filter(e -> e.getType() != null).map(EntityVO::getId).toList(),
+		assertEquals(expectedFound, entities.stream().filter(e -> !STUB_TYPE.equals(e.getType())).map(EntityVO::getId).toList(),
 				description);
 	}
 
