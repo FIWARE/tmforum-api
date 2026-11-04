@@ -46,7 +46,7 @@ public class Category extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "parentId") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", targetClass = CategoryRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", fromProperties = true, targetClass = CategoryRef.class) }))
 	private CategoryRef parentId;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "version") }))
@@ -56,12 +56,12 @@ public class Category extends EntityWithId {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOffering") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOffering", targetClass = ProductOfferingRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOffering", fromProperties = true, targetClass = ProductOfferingRef.class) }))
 	private List<ProductOfferingRef> productOffering;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "subCategory") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "subCategory", targetClass = CategoryRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "subCategory", fromProperties = true, targetClass = CategoryRef.class) }))
 	private List<CategoryRef> subCategory;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor") }))

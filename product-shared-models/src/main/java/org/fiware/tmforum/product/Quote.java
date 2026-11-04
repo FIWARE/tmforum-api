@@ -66,7 +66,7 @@ public class Quote extends EntityWithId {
 	private String version;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", fromProperties = true, targetClass = AgreementRef.class)}))
 	private List<AgreementRef> agreement;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "authorization")}))
@@ -74,7 +74,7 @@ public class Quote extends EntityWithId {
 	private List<Authorization> authorization;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "billingAccount")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "billingAccount", targetClass = BillingAccountRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "billingAccount", fromProperties = true, targetClass = BillingAccountRef.class)}))
 	private List<BillingAccountRef> billingAccount;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "contactMedium")}))
@@ -86,7 +86,7 @@ public class Quote extends EntityWithId {
 	private List<Note> note;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingQualification")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingQualification", targetClass = ProductOfferingQualificationRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingQualification", fromProperties = true, targetClass = ProductOfferingQualificationRef.class)}))
 	private List<ProductOfferingQualificationRef> productOfferingQualification;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "quoteItem")}))
