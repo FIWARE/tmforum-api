@@ -71,7 +71,6 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -285,7 +284,6 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		referencedIds.add(productSpecificationId);
 		referencedIds.add(serviceCandidate.getId());
 
-		assertFalse(brokerRequestRecorder.requests().isEmpty(), "The recorder should have seen the create's requests.");
 		assertFalse(brokerRequestRecorder.requests().isEmpty(), "The recorder should have seen the create's requests.");
 		brokerRequestRecorder.clear();
 		ProductOfferingVO readBack = retrieve(id);
