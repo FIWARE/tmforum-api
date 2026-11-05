@@ -5,7 +5,6 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import org.fiware.tmforum.common.repository.BrokerBackedEntitiesRepository;
 import org.fiware.tmforum.common.repository.BrokerBackedReferencesRepository;
 import org.fiware.tmforum.common.repository.NgsiLdBaseRepository;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
@@ -43,7 +42,7 @@ class StorageBoundaryTest {
 						noClasses().that().resideOutsideOfPackages(ADAPTER_PACKAGE, IT_HELPER_PACKAGE)
 								.should().dependOnClassesThat().belongToAnyOf(
 										NgsiLdEntityRepository.class, NgsiLdBaseRepository.class,
-										BrokerBackedReferencesRepository.class, BrokerBackedEntitiesRepository.class),
+										BrokerBackedReferencesRepository.class),
 						noClasses().that().resideInAPackage(REST_PACKAGES)
 								.should().dependOnClassesThat().areAssignableTo(HttpClientResponseException.class))
 				.map(rule -> Named.of(rule.getDescription(), rule));

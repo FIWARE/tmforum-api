@@ -40,7 +40,7 @@ public class CharacterizationEntity extends EntityWithId {
 	}
 
 	@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = RELATED,
-			targetClass = CharacterizationRelated.class)
+			targetClass = CharacterizationRelated.class, fromProperties = true)
 	public void setRelated(List<CharacterizationRelated> related) {
 		this.related = related;
 	}

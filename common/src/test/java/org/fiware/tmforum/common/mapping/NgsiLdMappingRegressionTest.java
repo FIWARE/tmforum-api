@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import io.github.wistefan.mapping.EntitiesRepository;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.core.io.socket.SocketUtils;
@@ -57,6 +58,8 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 
 	@Inject
 	private EntityVOMapper entityVOMapper;
+	@Inject
+	private EntitiesRepository entitiesRepository;
 	@Inject
 	private JavaObjectMapper javaObjectMapper;
 	@Inject
@@ -118,20 +121,20 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 	}
 
 	@Test
-	void injectsTheTolerantMapper() {
-		assertInstanceOf(TolerantEntityVOMapper.class, entityVOMapper,
-				"TolerantEntityVOMapper should replace the library's EntityVOMapper bean.");
+	void injectsTheInlineReferencesRepository() {
+		assertInstanceOf(InlineReferencesEntitiesRepository.class, entitiesRepository,
+				"References should be read inline, never resolved against the broker.");
 	}
 
 	// the read path relies on the injected compactor resolving mapping.context-url, not only the NGSI-LD prefixes
 	@Test
 	void compactsSubAttributesExpandedUnderTheConfiguredContext() {
-		TolerantEntityVOMapperTest.Parent parent = entityVOMapper.fromEntityVO(
-						TolerantEntityVOMapperTest.parentWithExpandedInlineChildren(), TolerantEntityVOMapperTest.Parent.class)
+		InlineReferencesEntitiesRepositoryTest.Parent parent = entityVOMapper.fromEntityVO(
+						InlineReferencesEntitiesRepositoryTest.parentWithExpandedInlineChildren(), InlineReferencesEntitiesRepositoryTest.Parent.class)
 				.block();
 
-		assertEquals(List.of(TolerantEntityVOMapperTest.REMOTE_NAME, TolerantEntityVOMapperTest.REMOTE_NAME),
-				parent.getInlineChildren().stream().map(TolerantEntityVOMapperTest.Child::getName).toList(),
+		assertEquals(List.of(InlineReferencesEntitiesRepositoryTest.REMOTE_NAME, InlineReferencesEntitiesRepositoryTest.REMOTE_NAME),
+				parent.getInlineChildren().stream().map(InlineReferencesEntitiesRepositoryTest.Child::getName).toList(),
 				"The injected mapper should compact sub-attribute names against mapping.context-url.");
 	}
 

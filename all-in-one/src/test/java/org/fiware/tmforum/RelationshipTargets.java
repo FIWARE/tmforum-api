@@ -11,8 +11,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -39,25 +41,36 @@ final class RelationshipTargets {
 	 * The relationship setters, keyed by {@code <declaring class>#<setter>} so that failures name them.
 	 */
 	static TreeMap<String, AttributeSetter> find() throws IOException, URISyntaxException, ClassNotFoundException {
-		ClassLoader classLoader = RelationshipTargets.class.getClassLoader();
-		Set<String> classNames = findClassNames(classLoader);
-		if (classNames.isEmpty()) {
-			throw new IllegalStateException("No classes found under " + BASE_PACKAGE_PATH);
-		}
 		TreeMap<String, AttributeSetter> relationships = new TreeMap<>();
-		for (String className : classNames) {
-			for (Method method : Class.forName(className, false, classLoader).getDeclaredMethods()) {
+		for (Class<?> scanned : classes()) {
+			for (Method method : scanned.getDeclaredMethods()) {
 				AttributeSetter setter = method.getAnnotation(AttributeSetter.class);
 				if (setter == null || !RELATIONSHIP_TYPES.contains(setter.value())) {
 					continue;
 				}
-				relationships.put(className + "#" + method.getName(), setter);
+				relationships.put(scanned.getName() + "#" + method.getName(), setter);
 			}
 		}
 		if (relationships.isEmpty()) {
 			throw new IllegalStateException("Expected to find relationship setters.");
 		}
 		return relationships;
+	}
+
+	/**
+	 * Every class under {@code org.fiware.tmforum} on the test classpath, loaded without initialization.
+	 */
+	static List<Class<?>> classes() throws IOException, URISyntaxException, ClassNotFoundException {
+		ClassLoader classLoader = RelationshipTargets.class.getClassLoader();
+		Set<String> classNames = findClassNames(classLoader);
+		if (classNames.isEmpty()) {
+			throw new IllegalStateException("No classes found under " + BASE_PACKAGE_PATH);
+		}
+		List<Class<?>> classes = new ArrayList<>();
+		for (String className : classNames) {
+			classes.add(Class.forName(className, false, classLoader));
+		}
+		return classes;
 	}
 
 	private static Set<String> findClassNames(ClassLoader classLoader) throws IOException, URISyntaxException {

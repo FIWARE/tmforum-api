@@ -282,27 +282,29 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		assertResponse(expected, HttpRequest.GET(ENTITIES + "/" + newEntityId()));
 	}
 
+	// references are read from their stored properties (ticket 88), so the related entity is never retrieved
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
-	void listFailsOnTheRelationshipResolution(Failure failure) {
+	void listDoesNotResolveTheRelationship(Failure failure) {
 		EntityVO stored = storedWithRelated(newEntityId());
 		EntityListVO entities = new EntityListVO();
 		entities.add(stored);
 		broker.answer("queryEntities", args -> Mono.just(HttpResponse.ok(entities)));
 		broker.answer("retrieveEntityById", args -> failure.mono());
 
-		assertResponse(listFailed(), HttpRequest.GET(ENTITIES));
+		assertEquals(HttpStatus.OK, httpClient.toBlocking().exchange(HttpRequest.GET(ENTITIES)).getStatus());
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
-	void retrieveFailsOnTheRelationshipResolution(Failure failure) {
+	void retrieveDoesNotResolveTheRelationship(Failure failure) {
 		String id = newEntityId();
 		EntityVO stored = storedWithRelated(id);
 		broker.answer("retrieveEntityById", args -> id.equals(args[0].toString())
 				? Mono.just(HttpResponse.ok(stored)) : failure.mono());
 
-		assertResponse(caInternal(), HttpRequest.GET(ENTITIES + "/" + id));
+		assertEquals(HttpStatus.OK,
+				httpClient.toBlocking().exchange(HttpRequest.GET(ENTITIES + "/" + id)).getStatus());
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")

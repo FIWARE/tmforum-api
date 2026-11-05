@@ -264,9 +264,12 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     `RelatedProductOrderItemDatasetIdTest` pins distinct datasetIds for items of one order, the fallback included.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
-**Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
-The guard test below rejects that class's `PROPERTY_LIST` getter, and the getter exemption assumes Decision 2's
-encoding, which Orion-LD does not keep for 2+ balances.
+No longer blocked by the customer-bill `FinancialAccountRef.accountBalance` encoding (Step 1 result). Removing
+resolution does not change that field: its only setter (`CustomerBill.financialAccount`) already reads from
+properties, and the field is still dropped on write. The guard therefore exempts the one getter
+(`customerbillmanagement.domain.FinancialAccountRef#getAccountBalance`) by name, with a comment pointing at the open
+decision. Whoever picks the encoding removes that entry together with the getter change and the `@Disabled` on
+`FinancialAccountRefIT`.
 - Replace `common/.../repository/BrokerBackedEntitiesRepository` with a non-resolving `EntitiesRepository`
   (e.g. `common/.../mapping/InlineReferencesEntitiesRepository`). It returns `Mono.just(List.of())` for an empty
   id list and `Mono.error(MappingException)` naming the ids otherwise (Decision 3). Delete
@@ -290,8 +293,9 @@ encoding, which Orion-LD does not keep for 2+ balances.
     before persisting (`AbstractSubscriptionApiController.create`). Its getters are non-embedded `PROPERTY` and
     `PROPERTY_LIST` (including the `Set`-typed `watchedAttributes`), and they must not be changed to embed it.
     Its setter still falls under the first rule, which it already satisfies.
-  - Getter exemption: a `List`-typed getter may be `PROPERTY, embedProperty = true` with a `PROPERTY_LIST` setter
-    (Decision 2, customer-bill `accountBalance`).
+  - Getter exemption: the customer-bill `FinancialAccountRef#getAccountBalance` (`PROPERTY_LIST`) by name, until
+    its encoding is decided (see above). A `List`-typed `PROPERTY, embedProperty = true` getter (Decision 2) passes
+    the rule as is.
 - Fan-out IT in `product-catalog`: an `HttpClientFilter` test bean (or a counter on `BrokerRequestLoggingFilter`)
   counts the broker requests of one `GET /productOffering/{id}` whose offering references several local and
   external targets. Assert that no broker request targets any referenced id, and that the offering itself is
