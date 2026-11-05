@@ -245,12 +245,19 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     product-ordering-management 149/0/36 | 149/0/46 | 149/0/36, quote 90/0/22 | 90/0/31 | 90/0/22.
     `RelatedProductOrderItemRef` used the product order id as its datasetId, so two items of the **same** order
     collided: on orion-ld the PATCH response lost one of them. The datasetId is now `<productOrderId>:<orderItemId>`
-    (URL-encoded, `item` when absent); the relationship object stays the order id. A stored instance with the old
-    datasetId should be removed by the next PATCH of the attribute, like any instance the update does not keep
-    (read from `NgsiLdBaseRepository#replacingAttribute`, not tested).
+    (URL-encoded, `~none` when absent, which no encoded item id can equal); the relationship object stays the order
+    id. A stored instance with the old datasetId (the bare order id) should be removed by the next PATCH of the
+    attribute, like any instance the update does not keep (read from `NgsiLdBaseRepository#replacingAttribute`, not
+    tested). Until then such products keep it, so the ticket 8 backfill has to rewrite those datasetIds.
     `ProductOrderItemApiIT` gained minimal and full two-items-of-one-order cases. Without the change, both fail on
-    orion-ld. With it, product-inventory passes at 124/0/22 | 124/0/32 | 124/0/22. The new getter is `@JsonIgnore`,
-    so the plain-JSON form in product-ordering-management and quote does not change.
+    orion-ld. With it, product-inventory passes at 124/0/22 | 124/0/32 | 124/0/22. The datasetId getter
+    (`getDatasetId`) is `@JsonIgnore`, so it adds nothing to the plain-JSON form in product-ordering-management and
+    quote (unlike the `productOrderId` getter above).
+    `RelatedProductOrderItemRef` also overrides `getReferenceHref` with `productOrderHref`, like `RefEntity` with
+    `href`. Before, a `productOrderItem` was always classified as local, so an order held by a configured external
+    host was rejected with a 400. `ProductOrderItemApiIT` gained external-order cases, which fail without the override
+    (3 of 9 on orion-ld). With it, product-inventory passes at 127/0/22 | 127/0/32 (orion-ld | scorpio).
+    `RelatedProductOrderItemDatasetIdTest` pins distinct datasetIds for items of one order, the fallback included.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).

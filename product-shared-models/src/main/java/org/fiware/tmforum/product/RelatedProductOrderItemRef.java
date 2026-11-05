@@ -24,7 +24,8 @@ import java.util.Optional;
 @EqualsAndHashCode(callSuper = true)
 public class RelatedProductOrderItemRef extends Entity implements ReferencedEntity {
 
-	private static final String NO_ORDER_ITEM_ID = "item";
+	// not encoded, and URLEncoder always escapes '~', so no encoded orderItemId equals this fallback
+	private static final String NO_ORDER_ITEM_ID = "~none";
 
 	// the relationship object: written through getEntityId and read through the String constructor. The accessors
 	// serve the VO mapping and the plain-JSON form wherever the ref is embedded as a value (e.g. ProductRefOrValue)
@@ -81,12 +82,21 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 		return productOrderId;
 	}
 
+	/** The productOrderHref classifies the referenced order as local or external, like {@link RefEntity#getHref()}. */
+	@JsonIgnore
+	@Override
+	public URI getReferenceHref() {
+		return productOrderHref;
+	}
+
 	/** Includes the orderItemId, so that several items of one product order stay distinct instances. */
 	@JsonIgnore
 	@DatasetId
 	public URI getDatasetId() {
-		String orderItem = Optional.ofNullable(orderItemId).orElse(NO_ORDER_ITEM_ID);
-		return URI.create(String.format("%s:%s", productOrderId, URLEncoder.encode(orderItem, StandardCharsets.UTF_8)));
+		String orderItem = Optional.ofNullable(orderItemId)
+				.map(itemId -> URLEncoder.encode(itemId, StandardCharsets.UTF_8))
+				.orElse(NO_ORDER_ITEM_ID);
+		return URI.create(String.format("%s:%s", productOrderId, orderItem));
 	}
 
 }

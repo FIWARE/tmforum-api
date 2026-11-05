@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productinventory;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -41,7 +42,10 @@ import static org.mockito.Mockito.when;
  * {@code RelatedProductOrderItemRef} had no String constructor, so a stored item could not be read back.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productinventory"}, contextBuilder = FirstMatchConfigContextBuilder.class)
+@Property(name = "references.external-hosts", value = ProductOrderItemApiIT.EXTERNAL_HOST)
 public class ProductOrderItemApiIT extends AbstractApiIT {
+
+	static final String EXTERNAL_HOST = "external-tmf.example.org";
 
 	private static final String CORE_CONTEXT = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld";
 	// product orders live in product-ordering-management, so the targets are written to the broker directly
@@ -49,6 +53,12 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 	private static final String FIRST_ORDER_ID = "urn:ngsi-ld:product-order:order-item-api-it-1";
 	private static final String SECOND_ORDER_ID = "urn:ngsi-ld:product-order:order-item-api-it-2";
 	private static final List<String> ORDER_IDS = List.of(FIRST_ORDER_ID, SECOND_ORDER_ID);
+	private static final Order FIRST_ORDER = Order.stored(FIRST_ORDER_ID);
+	private static final Order SECOND_ORDER = Order.stored(SECOND_ORDER_ID);
+	// held by another deployment's product ordering, so neither stored nor validated here
+	private static final String EXTERNAL_ORDER_ID = "urn:ngsi-ld:product-order:order-item-api-it-external";
+	private static final Order EXTERNAL_ORDER = new Order(EXTERNAL_ORDER_ID,
+			"https://" + EXTERNAL_HOST + "/tmf-api/productOrderingManagement/v4/productOrder/" + EXTERNAL_ORDER_ID);
 	private static final String REFERRED_TYPE = "ProductOrderItem";
 	private static final String ITEM_ID_PREFIX = "item-";
 	// written into the items' action and role, so a read-back tells the patched payload from the created one
@@ -63,6 +73,20 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 		MINIMAL,
 		// every field the domain class stores
 		FULL
+	}
+
+	/**
+	 * A referenced product order. An external order carries the href that classifies it as external in every payload.
+	 */
+	record Order(String id, String externalHref) {
+
+		static Order stored(String id) {
+			return new Order(id, null);
+		}
+
+		String fullHref() {
+			return externalHref == null ? id : externalHref;
+		}
 	}
 
 	private final ProductApiTestClient productApiTestClient;
@@ -103,21 +127,30 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 
 	private static Stream<Arguments> orderItems() {
 		return Stream.of(
-				Arguments.of("A minimal order item should round-trip.", Payload.MINIMAL, List.of(FIRST_ORDER_ID)),
-				Arguments.of("A full order item should round-trip.", Payload.FULL, List.of(FIRST_ORDER_ID)),
-				Arguments.of("Minimal items of two orders should round-trip.", Payload.MINIMAL, ORDER_IDS),
-				Arguments.of("Full items of two orders should round-trip.", Payload.FULL, ORDER_IDS),
+				Arguments.of("A minimal order item should round-trip.", Payload.MINIMAL, List.of(FIRST_ORDER)),
+				Arguments.of("A full order item should round-trip.", Payload.FULL, List.of(FIRST_ORDER)),
+				Arguments.of("Minimal items of two orders should round-trip.", Payload.MINIMAL,
+						List.of(FIRST_ORDER, SECOND_ORDER)),
+				Arguments.of("Full items of two orders should round-trip.", Payload.FULL,
+						List.of(FIRST_ORDER, SECOND_ORDER)),
 				// the datasetId combines order and item id, so items of the same order do not collide
 				Arguments.of("Minimal items of one order should round-trip.", Payload.MINIMAL,
-						List.of(FIRST_ORDER_ID, FIRST_ORDER_ID)),
+						List.of(FIRST_ORDER, FIRST_ORDER)),
 				Arguments.of("Full items of one order should round-trip.", Payload.FULL,
-						List.of(FIRST_ORDER_ID, FIRST_ORDER_ID)));
+						List.of(FIRST_ORDER, FIRST_ORDER)),
+				// the productOrderHref classifies the order as external, so it is not validated against the broker
+				Arguments.of("A minimal item of an external order should round-trip.", Payload.MINIMAL,
+						List.of(EXTERNAL_ORDER)),
+				Arguments.of("A full item of an external order should round-trip.", Payload.FULL,
+						List.of(EXTERNAL_ORDER)),
+				Arguments.of("Full items of a stored and an external order should round-trip.", Payload.FULL,
+						List.of(FIRST_ORDER, EXTERNAL_ORDER)));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orderItems")
-	public void productOrderItemsRoundTrip(String message, Payload payload, List<String> orderIds) throws Exception {
-		List<RelatedProductOrderItemVO> created = items(orderIds, payload, CREATE);
+	public void productOrderItemsRoundTrip(String message, Payload payload, List<Order> orders) throws Exception {
+		List<RelatedProductOrderItemVO> created = items(orders, payload, CREATE);
 		ProductCreateVO createVO = ProductCreateVOTestExample.build().atSchemaLocation(null)
 				.productSpecification(null)
 				.billingAccount(null)
@@ -130,7 +163,7 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 		assertRoundTrip(created, createResponse.body(), "create response: " + message);
 		assertRoundTrip(created, retrieve(id), "retrieval after create: " + message);
 
-		List<RelatedProductOrderItemVO> patched = items(orderIds, payload, PATCH);
+		List<RelatedProductOrderItemVO> patched = items(orders, payload, PATCH);
 		ProductUpdateVO updateVO = ProductUpdateVOTestExample.build().atSchemaLocation(null)
 				.productSpecification(null)
 				.billingAccount(null)
@@ -143,21 +176,22 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 		assertRoundTrip(patched, retrieve(id), "retrieval after patch: " + message);
 	}
 
-	private static List<RelatedProductOrderItemVO> items(List<String> orderIds, Payload payload, String stage) {
-		return IntStream.range(0, orderIds.size())
-				.mapToObj(index -> item(orderIds.get(index), ITEM_ID_PREFIX + index, payload, stage))
+	private static List<RelatedProductOrderItemVO> items(List<Order> orders, Payload payload, String stage) {
+		return IntStream.range(0, orders.size())
+				.mapToObj(index -> item(orders.get(index), ITEM_ID_PREFIX + index, payload, stage))
 				.toList();
 	}
 
-	private static RelatedProductOrderItemVO item(String orderId, String orderItemId, Payload payload, String stage) {
+	private static RelatedProductOrderItemVO item(Order order, String orderItemId, Payload payload, String stage) {
 		RelatedProductOrderItemVO item = new RelatedProductOrderItemVO()
-				.productOrderId(orderId)
-				.orderItemId(orderItemId);
+				.productOrderId(order.id())
+				.orderItemId(orderItemId)
+				.productOrderHref(order.externalHref());
 		if (payload == Payload.MINIMAL) {
 			return item;
 		}
 		return item
-				.productOrderHref(orderId)
+				.productOrderHref(order.fullHref())
 				.orderItemAction(stage)
 				.role(stage)
 				.atReferredType(REFERRED_TYPE);
