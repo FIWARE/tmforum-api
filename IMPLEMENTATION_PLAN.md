@@ -217,6 +217,17 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   to a stored specification fails the read today. Add an agreement IT that references a local specification.
 - Acceptance: re-run the setter scan (any `RELATIONSHIP`/`RELATIONSHIP_LIST` `@AttributeSetter` without
   `fromProperties = true` in non-test sources). It finds 0 of 141.
+  - **Result:** the scan finds 0 of 139. The other 2 of the 141 are `EndpointRef.connectionPoint` and
+    `EntitySpecificationRelationship.associationSpec`, which Step 1 re-mapped as embedded `PROPERTY`. `TMForumMapper`
+    (party-catalog) maps the stored `href` of the organization parent/child refs, and `S3AttachmentService` copies the
+    posted attachment's `href`. Neither relies on a resolved target. New ITs: `account/.../FinancialAccountRefApiIT`,
+    `agreement/.../SpecificationRelationshipApiIT`, `document-management/.../EntitySpecRelationshipApiIT`. No existing
+    assertion needed changing.
+    ITs (`mvn verify -pl <module> -Dbroker=<broker> -DskipTests`, run/failed/skipped, orion-ld | scorpio):
+    account 241/0/119 | 241/0/129, agreement 88/0/44 | 88/0/54, customer-bill-management 120/0/53 | 120/0/53,
+    customer-management 71/0/22 | 71/0/32, document-management 43/0/23 | 43/0/23, party-catalog 111/0/49 |
+    111/0/58, party-role 36/0/19 | 36/0/19, usage-management 80/0/27 | 80/0/37. `all-in-one` has no `*IT`. Its unit
+    tests (`RelationshipsReadFromPropertiesTest` and the relationship-target tests) pass.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
