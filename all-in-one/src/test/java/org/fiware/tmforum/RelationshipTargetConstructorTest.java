@@ -4,7 +4,6 @@ import io.github.wistefan.mapping.annotations.AttributeSetter;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,19 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class RelationshipTargetConstructorTest {
 
-	// Pre-existing defects found by ticket 88 Step 4 (see IMPLEMENTATION_PLAN.md): a stored value of these relationships
-	// fails the read. The two PaymentMethodRefVO setters name the generated VO instead of the domain PaymentMethodRef.
-	private static final Set<String> KNOWN_WITHOUT_STRING_CONSTRUCTOR = Set.of(
-			"org.fiware.account.model.PaymentMethodRefVO",
-			"org.fiware.customerbillmanagement.model.PaymentMethodRefVO",
-			"org.fiware.tmforum.product.RelatedProductOrderItemRef");
-
 	@Test
 	void relationshipTargetsDeclareAStringConstructor() throws Exception {
 		TreeSet<String> offenders = new TreeSet<>();
 		for (Map.Entry<String, AttributeSetter> relationship : RelationshipTargets.find().entrySet()) {
 			Class<?> targetClass = relationship.getValue().targetClass();
-			if (!KNOWN_WITHOUT_STRING_CONSTRUCTOR.contains(targetClass.getName()) && !hasStringConstructor(targetClass)) {
+			if (!hasStringConstructor(targetClass)) {
 				offenders.add(relationship.getKey() + " -> " + targetClass.getName());
 			}
 		}

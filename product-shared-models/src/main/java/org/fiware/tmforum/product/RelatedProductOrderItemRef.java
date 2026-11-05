@@ -20,8 +20,10 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class RelatedProductOrderItemRef extends Entity implements ReferencedEntity {
 
-	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "productOrderHref", fromProperties = true, targetClass = URI.class) }))
+	// the relationship object: written through getEntityId and read through the String constructor, so the accessors
+	// only serve the VO mapping
+	@Getter
+	@Setter
 	private URI productOrderId;
 
 	@Getter(onMethod = @__({
@@ -54,6 +56,14 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "atReferredType", fromProperties = true,
 					legacyNames = { "@referredType" }) }))
 	private String atReferredType;
+
+	public RelatedProductOrderItemRef() {
+	}
+
+	/** Used by the NGSI-LD mapping to build the ref from its relationship object, the product order id. */
+	public RelatedProductOrderItemRef(String productOrderId) {
+		this.productOrderId = URI.create(productOrderId);
+	}
 
 	@Override public List<String> getReferencedTypes() {
 		return new ArrayList<>(List.of("product-order"));

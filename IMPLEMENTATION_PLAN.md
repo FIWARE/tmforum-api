@@ -228,6 +228,15 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     customer-management 71/0/22 | 71/0/32, document-management 43/0/23 | 43/0/23, party-catalog 111/0/49 |
     111/0/58, party-role 36/0/19 | 36/0/19, usage-management 80/0/27 | 80/0/37. `all-in-one` has no `*IT`. Its unit
     tests (`RelationshipsReadFromPropertiesTest` and the relationship-target tests) pass.
+  - **Fixed in review (PR #12):** three relationships could not be read back at all, because the mapper builds a
+    target through its String constructor and these targets had none. `defaultPaymentMethod` (BillingAccount,
+    PartyAccount, SettlementAccount) and customer-bill `CustomerBill.paymentMethod` named the generated
+    `PaymentMethodRefVO` as `targetClass`; they now name the domain `PaymentMethodRef`. `Product.productOrderItem`'s
+    `RelatedProductOrderItemRef` gained a String constructor (the product order id) and a getter for
+    `productOrderId`, which the VO mapping needs, and lost the `productOrderId` setter annotation that mapped
+    `productOrderHref` onto the id. Pinned broker-less by `account/.../DefaultPaymentMethodRoundTripTest`,
+    `customer-bill-management/.../PaymentMethodRoundTripTest` and
+    `product-inventory/.../ProductOrderItemRoundTripTest`. `RelationshipTargetConstructorTest` has no allow-list now.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
@@ -248,8 +257,8 @@ encoding, which Orion-LD does not keep for 2+ balances.
   - a relationship target class has an `@AttributeGetter` that is not `PROPERTY` with `embedProperty = true`.
     Target classes are every `targetClass` of a `RELATIONSHIP`/`RELATIONSHIP_LIST` setter plus all `RefEntity`
     subclasses. That covers non-`RefEntity` targets such as `RelatedProductOrderItemRef` (extends `Entity`) and
-    `OrganizationParent/ChildRelationship`. Generated `*VO` classes (e.g. `PaymentMethodRefVO`) are skipped,
-    since the getter side does not use them.
+    `OrganizationParent/ChildRelationship`. No setter names a generated `*VO` class any more (see the Step 4
+    review fix), so fail on one instead of skipping it.
   - Target exemption: `Subscription` (`TMForumSubscription.subscription`) is excluded by an explicit,
     commented allow-list entry. It is a pointer to the broker subscription, not a reference payload: reads use
     only its id (`NgsiLdBaseRepository` delete path), and the full object is needed only on the create path

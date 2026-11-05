@@ -10,7 +10,6 @@ import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
-import org.fiware.account.model.PaymentMethodRefVO;
 
 import java.net.URI;
 import java.time.Instant;
@@ -35,7 +34,7 @@ public class PartyAccount extends Account {
     private BillStructure billStructure;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "defaultPaymentMethod", embedProperty = true) }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "defaultPaymentMethod", targetClass = PaymentMethodRefVO.class, fromProperties = true) }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "defaultPaymentMethod", targetClass = PaymentMethodRef.class, fromProperties = true) }))
     private PaymentMethodRef defaultPaymentMethod;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount") }))
