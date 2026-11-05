@@ -67,7 +67,7 @@ public class CharacterizationTestController extends AbstractApiController<Charac
 	@Get(ENTITIES_PATH)
 	public Mono<HttpResponse<Object>> listEntities() {
 		return list(null, null, CharacterizationEntity.TYPE, CharacterizationEntity.class)
-				.map(entities -> HttpResponse.ok());
+				.map(entities -> HttpResponse.ok(entities.flatMap(entity -> relatedIds(entity).stream()).toList()));
 	}
 
 	@Get(ENTITIES_PATH + "/{id}")
@@ -75,7 +75,7 @@ public class CharacterizationTestController extends AbstractApiController<Charac
 		return retrieve(id, CharacterizationEntity.class)
 				.switchIfEmpty(Mono.error(new TmForumException("No such entity exists.",
 						TmForumExceptionReason.NOT_FOUND)))
-				.map(entity -> HttpResponse.ok());
+				.map(entity -> HttpResponse.ok(relatedIds(entity)));
 	}
 
 	/** Updates without the call-site error mapping, like the module controllers that call the repository. */
@@ -90,6 +90,13 @@ public class CharacterizationTestController extends AbstractApiController<Charac
 		entity.setName(NAME);
 		Optional.ofNullable(related).ifPresent(relatedId -> entity.setRelated(List.of(new CharacterizationRelated(relatedId))));
 		return entity;
+	}
+
+	// the reads answer with the related ids they read, so a test can tell a relationship read inline from a dropped one
+	private static List<String> relatedIds(CharacterizationEntity entity) {
+		return Optional.ofNullable(entity.getRelated()).orElse(List.of()).stream()
+				.map(related -> related.getId().toString())
+				.toList();
 	}
 
 	private Mono<CharacterizationEntity> checkingMono(CharacterizationEntity entity, @Nullable String reference,

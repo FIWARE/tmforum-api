@@ -15,11 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import tools.jackson.databind.node.ObjectNode;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -37,7 +35,6 @@ class AccountRefRoundTripTest {
 	private static final String ACCOUNT_ID = "urn:ngsi-ld:party-account:a";
 	private static final Instant START = Instant.parse("2026-01-01T00:00:00Z");
 	private static final float BALANCE = 42.5f;
-	private static final String ADDITIONAL_PROPERTIES = "additionalProperties";
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("refs")
@@ -47,21 +44,16 @@ class AccountRefRoundTripTest {
 		assertEquals(NgsiLdRoundTrip.toTree(ref.apply(holder)), NgsiLdRoundTrip.toTree(ref.apply(read)), description);
 	}
 
-	// BillingAccount still resolves its financialAccount, so the embedded fields are merged over the stored target
+	// the production entity, not only the test holder: its financialAccount is read from the sub-properties alone
 	@Test
-	public void writtenFieldsWinOverTheResolvedTarget() {
-		FinancialAccount target = new FinancialAccount(FINANCIAL_ACCOUNT_ID);
-		target.setName("target name");
-		target.setAccountBalance(List.of(accountBalance("target balance")));
+	public void billingAccountReadsItsFinancialAccountFromItsProperties() {
 		BillingAccount billingAccount = new BillingAccount(BILLING_ACCOUNT_ID);
 		billingAccount.setFinancialAccount(fullFinancialAccount());
 
-		BillingAccount read = NgsiLdRoundTrip.roundTrip(billingAccount, BillingAccount.class, target);
+		BillingAccount read = NgsiLdRoundTrip.roundTrip(billingAccount, BillingAccount.class);
 
-		// the resolved target contributes an empty additionalProperties list, not a field of the ref
-		ObjectNode readRef = (ObjectNode) NgsiLdRoundTrip.toTree(read.getFinancialAccount());
-		readRef.remove(ADDITIONAL_PROPERTIES);
-		assertEquals(NgsiLdRoundTrip.toTree(billingAccount.getFinancialAccount()), readRef);
+		assertEquals(NgsiLdRoundTrip.toTree(billingAccount.getFinancialAccount()),
+				NgsiLdRoundTrip.toTree(read.getFinancialAccount()));
 	}
 
 	private static AccountBalance accountBalance(String balanceType) {

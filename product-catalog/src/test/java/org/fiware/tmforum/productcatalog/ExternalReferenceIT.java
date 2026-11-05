@@ -269,6 +269,8 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	// references are read from their stored properties (ticket 88), so a GET must not fetch any referenced entity
 	@Test
 	public void retrieveProductOfferingDoesNotFetchReferences() throws Exception {
+		// keep the external refs: a just-created local target sits in the entities cache, so resolving it would not
+		// reach the broker either, and only the external ids make this test fail when reads resolve again
 		List<CategoryRefVO> categories = categoryRefs(
 				List.of(RefKind.LOCAL, RefKind.LOCAL, RefKind.EXTERNAL, RefKind.EXTERNAL));
 		String productSpecificationId = createProductSpecification();

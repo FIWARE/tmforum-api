@@ -286,25 +286,32 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
 	void listDoesNotResolveTheRelationship(Failure failure) {
-		EntityVO stored = storedWithRelated(newEntityId());
+		String relatedId = newRelatedId();
 		EntityListVO entities = new EntityListVO();
-		entities.add(stored);
+		entities.add(storedWithRelated(newEntityId(), relatedId));
 		broker.answer("queryEntities", args -> Mono.just(HttpResponse.ok(entities)));
 		broker.answer("retrieveEntityById", args -> failure.mono());
 
-		assertEquals(HttpStatus.OK, httpClient.toBlocking().exchange(HttpRequest.GET(ENTITIES)).getStatus());
+		assertReadsRelated(relatedId, HttpRequest.GET(ENTITIES));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
 	void retrieveDoesNotResolveTheRelationship(Failure failure) {
 		String id = newEntityId();
-		EntityVO stored = storedWithRelated(id);
+		String relatedId = newRelatedId();
+		EntityVO stored = storedWithRelated(id, relatedId);
 		broker.answer("retrieveEntityById", args -> id.equals(args[0].toString())
 				? Mono.just(HttpResponse.ok(stored)) : failure.mono());
 
-		assertEquals(HttpStatus.OK,
-				httpClient.toBlocking().exchange(HttpRequest.GET(ENTITIES + "/" + id)).getStatus());
+		assertReadsRelated(relatedId, HttpRequest.GET(ENTITIES + "/" + id));
+	}
+
+	private void assertReadsRelated(String relatedId, HttpRequest<?> read) {
+		HttpResponse<String[]> response = httpClient.toBlocking().exchange(read, String[].class);
+
+		assertEquals(HttpStatus.OK, response.getStatus(), "The read should succeed without the related entity.");
+		assertEquals(List.of(relatedId), List.of(response.body()), "The relationship should read back as stored.");
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
@@ -429,9 +436,9 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		return "urn:ngsi-ld:" + TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION + ":" + UUID.randomUUID();
 	}
 
-	private EntityVO storedWithRelated(String id) {
+	private EntityVO storedWithRelated(String id, String relatedId) {
 		CharacterizationEntity entity = new CharacterizationEntity(id);
-		entity.setRelated(List.of(new CharacterizationRelated(newRelatedId())));
+		entity.setRelated(List.of(new CharacterizationRelated(relatedId)));
 		return javaObjectMapper.toEntityVO(entity);
 	}
 
