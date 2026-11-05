@@ -28,6 +28,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,6 +50,7 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 	private static final String SECOND_ORDER_ID = "urn:ngsi-ld:product-order:order-item-api-it-2";
 	private static final List<String> ORDER_IDS = List.of(FIRST_ORDER_ID, SECOND_ORDER_ID);
 	private static final String REFERRED_TYPE = "ProductOrderItem";
+	private static final String ITEM_ID_PREFIX = "item-";
 	// written into the items' action and role, so a read-back tells the patched payload from the created one
 	private static final String CREATE = "add";
 	private static final String PATCH = "modify";
@@ -104,7 +106,12 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 				Arguments.of("A minimal order item should round-trip.", Payload.MINIMAL, List.of(FIRST_ORDER_ID)),
 				Arguments.of("A full order item should round-trip.", Payload.FULL, List.of(FIRST_ORDER_ID)),
 				Arguments.of("Minimal items of two orders should round-trip.", Payload.MINIMAL, ORDER_IDS),
-				Arguments.of("Full items of two orders should round-trip.", Payload.FULL, ORDER_IDS));
+				Arguments.of("Full items of two orders should round-trip.", Payload.FULL, ORDER_IDS),
+				// the datasetId combines order and item id, so items of the same order do not collide
+				Arguments.of("Minimal items of one order should round-trip.", Payload.MINIMAL,
+						List.of(FIRST_ORDER_ID, FIRST_ORDER_ID)),
+				Arguments.of("Full items of one order should round-trip.", Payload.FULL,
+						List.of(FIRST_ORDER_ID, FIRST_ORDER_ID)));
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -137,13 +144,15 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 	}
 
 	private static List<RelatedProductOrderItemVO> items(List<String> orderIds, Payload payload, String stage) {
-		return orderIds.stream().map(orderId -> item(orderId, payload, stage)).toList();
+		return IntStream.range(0, orderIds.size())
+				.mapToObj(index -> item(orderIds.get(index), ITEM_ID_PREFIX + index, payload, stage))
+				.toList();
 	}
 
-	private static RelatedProductOrderItemVO item(String orderId, Payload payload, String stage) {
+	private static RelatedProductOrderItemVO item(String orderId, String orderItemId, Payload payload, String stage) {
 		RelatedProductOrderItemVO item = new RelatedProductOrderItemVO()
 				.productOrderId(orderId)
-				.orderItemId(orderId + "-item");
+				.orderItemId(orderItemId);
 		if (payload == Payload.MINIMAL) {
 			return item;
 		}

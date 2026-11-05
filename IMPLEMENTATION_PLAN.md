@@ -243,6 +243,14 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     and of two stored product orders through create, `GET` and `PATCH`. ITs with it (run/failed/skipped, orion-ld |
     scorpio | orion-ld with `-Dcache=redis`): product-inventory 122/0/22 | 122/0/32 | 122/0/22,
     product-ordering-management 149/0/36 | 149/0/46 | 149/0/36, quote 90/0/22 | 90/0/31 | 90/0/22.
+    `RelatedProductOrderItemRef` used the product order id as its datasetId, so two items of the **same** order
+    collided: on orion-ld the PATCH response lost one of them. The datasetId is now `<productOrderId>:<orderItemId>`
+    (URL-encoded, `item` when absent); the relationship object stays the order id. A stored instance with the old
+    datasetId should be removed by the next PATCH of the attribute, like any instance the update does not keep
+    (read from `NgsiLdBaseRepository#replacingAttribute`, not tested).
+    `ProductOrderItemApiIT` gained minimal and full two-items-of-one-order cases. Without the change, both fail on
+    orion-ld. With it, product-inventory passes at 124/0/22 | 124/0/32 | 124/0/22. The new getter is `@JsonIgnore`,
+    so the plain-JSON form in product-ordering-management and quote does not change.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).

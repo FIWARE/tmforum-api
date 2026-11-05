@@ -39,7 +39,9 @@ class ProductOrderItemRoundTripTest {
 		return Stream.of(
 				Arguments.of("id only", List.of(idOnly(FIRST_ORDER_ID))),
 				Arguments.of("every field", List.of(full(FIRST_ORDER_ID, "item-1"))),
-				Arguments.of("two items", List.of(full(FIRST_ORDER_ID, "item-1"), full(SECOND_ORDER_ID, "item-2"))));
+				Arguments.of("two items", List.of(full(FIRST_ORDER_ID, "item-1"), full(SECOND_ORDER_ID, "item-2"))),
+				Arguments.of("two items of one order",
+						List.of(full(FIRST_ORDER_ID, "item-1"), full(FIRST_ORDER_ID, "item-2"))));
 	}
 
 	private static RelatedProductOrderItemRef idOnly(String orderId) {

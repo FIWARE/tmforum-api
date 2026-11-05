@@ -1,5 +1,6 @@
 package org.fiware.tmforum.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -14,11 +15,16 @@ import io.github.wistefan.mapping.annotations.DatasetId;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 public class RelatedProductOrderItemRef extends Entity implements ReferencedEntity {
+
+	private static final String NO_ORDER_ITEM_ID = "item";
 
 	// the relationship object: written through getEntityId and read through the String constructor. The accessors
 	// serve the VO mapping and the plain-JSON form wherever the ref is embedded as a value (e.g. ProductRefOrValue)
@@ -70,10 +76,17 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 	}
 
 	@RelationshipObject
-	@DatasetId
 	@Override
 	public URI getEntityId() {
 		return productOrderId;
+	}
+
+	/** Includes the orderItemId, so that several items of one product order stay distinct instances. */
+	@JsonIgnore
+	@DatasetId
+	public URI getDatasetId() {
+		String orderItem = Optional.ofNullable(orderItemId).orElse(NO_ORDER_ITEM_ID);
+		return URI.create(String.format("%s:%s", productOrderId, URLEncoder.encode(orderItem, StandardCharsets.UTF_8)));
 	}
 
 }
