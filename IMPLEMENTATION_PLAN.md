@@ -239,7 +239,10 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     `product-inventory/.../ProductOrderItemRoundTripTest`. `RelationshipTargetConstructorTest` has no allow-list now.
     The new `productOrderId` getter also makes Jackson write the id wherever the ref is embedded as a plain-JSON
     value (`ProductRefOrValue.productOrderItem` in product-ordering-management and quote, and the redis cache), where
-    it was dropped before. Their orion-ld ITs pass with it: product-ordering-management 149/0/36, quote 90/0/22.
+    it was dropped before. `product-inventory/.../ProductOrderItemApiIT` round-trips minimal and full items of one
+    and of two stored product orders through create, `GET` and `PATCH`. ITs with it (run/failed/skipped, orion-ld |
+    scorpio | orion-ld with `-Dcache=redis`): product-inventory 122/0/22 | 122/0/32 | 122/0/22,
+    product-ordering-management 149/0/36 | 149/0/46 | 149/0/36, quote 90/0/22 | 90/0/31 | 90/0/22.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
