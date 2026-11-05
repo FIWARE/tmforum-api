@@ -63,11 +63,11 @@ public class DocumentSpecification extends EntityWithId {
     private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", targetClass = ConstraintRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", targetClass = ConstraintRef.class, fromProperties = true)}))
     private List<ConstraintRef> constraint;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class, fromProperties = true)}))
     private List<EntitySpecificationRelationship> entitySpecRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic")}))

@@ -196,7 +196,10 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
   `PROPERTY`, is accepted) still fails.
 
 ### Step 4: Read the remaining modules' references from properties
-**Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
+Not blocked by the customer-bill `FinancialAccountRef.accountBalance` encoding (Step 1 result), contrary to the
+earlier note: the only setter that reaches that class is `CustomerBill.financialAccount`, which was already
+`fromProperties = true` before this ticket, so none of this step's flips touches it. The open decision moves to Step 5,
+whose guard test is the first place that rejects the class's `PROPERTY_LIST` getter.
 Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3), `customer-management` (2),
 `document-management` (2), `party-catalog` (2), `party-role` (4) and `usage-management` (3).
 - Look at `party-catalog/.../TMForumMapper` (the organization parent/child relationship hrefs) and
@@ -214,8 +217,56 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   to a stored specification fails the read today. Add an agreement IT that references a local specification.
 - Acceptance: re-run the setter scan (any `RELATIONSHIP`/`RELATIONSHIP_LIST` `@AttributeSetter` without
   `fromProperties = true` in non-test sources). It finds 0 of 141.
+  - **Result:** the scan finds 0 of 139. The other 2 of the 141 are `EndpointRef.connectionPoint` and
+    `EntitySpecificationRelationship.associationSpec`, which Step 1 re-mapped as embedded `PROPERTY`. `TMForumMapper`
+    (party-catalog) maps the stored `href` of the organization parent/child refs, and `S3AttachmentService` copies the
+    posted attachment's `href`. Neither relies on a resolved target. New ITs: `account/.../FinancialAccountRefApiIT`,
+    `agreement/.../SpecificationRelationshipApiIT`, `document-management/.../EntitySpecRelationshipApiIT`. No existing
+    assertion needed changing.
+    ITs (`mvn verify -pl <module> -Dbroker=<broker> -DskipTests`, run/failed/skipped, orion-ld | scorpio):
+    account 241/0/119 | 241/0/129, agreement 88/0/44 | 88/0/54, customer-bill-management 120/0/53 | 120/0/53,
+    customer-management 71/0/22 | 71/0/32, document-management 43/0/23 | 43/0/23, party-catalog 111/0/49 |
+    111/0/58, party-role 36/0/19 | 36/0/19, usage-management 80/0/27 | 80/0/37. `all-in-one` has no `*IT`. Its unit
+    tests (`RelationshipsReadFromPropertiesTest` and the relationship-target tests) pass.
+  - **Fixed in review (PR #12):** three relationships could not be read back at all, because the mapper builds a
+    target through its String constructor and these targets had none. `defaultPaymentMethod` (BillingAccount,
+    PartyAccount, SettlementAccount) and customer-bill `CustomerBill.paymentMethod` named the generated
+    `PaymentMethodRefVO` as `targetClass`; they now name the domain `PaymentMethodRef`. `Product.productOrderItem`'s
+    `RelatedProductOrderItemRef` gained a String constructor (the product order id) and a getter for
+    `productOrderId`, which the VO mapping needs, and lost the `productOrderId` setter annotation that mapped
+    `productOrderHref` onto the id. Pinned broker-less by `account/.../DefaultPaymentMethodRoundTripTest`,
+    `customer-bill-management/.../PaymentMethodRoundTripTest` and
+    `product-inventory/.../ProductOrderItemRoundTripTest`. `RelationshipTargetConstructorTest` has no allow-list now.
+    The new `productOrderId` getter also makes Jackson write the id wherever the ref is embedded as a plain-JSON
+    value (`ProductRefOrValue.productOrderItem` in product-ordering-management and quote, and the redis cache), where
+    it was dropped before. `product-inventory/.../ProductOrderItemApiIT` round-trips minimal and full items of one
+    and of two stored product orders through create, `GET` and `PATCH`. ITs with it (run/failed/skipped, orion-ld |
+    scorpio | orion-ld with `-Dcache=redis`): product-inventory 122/0/22 | 122/0/32 | 122/0/22,
+    product-ordering-management 149/0/36 | 149/0/46 | 149/0/36, quote 90/0/22 | 90/0/31 | 90/0/22.
+    `RelatedProductOrderItemRef` used the product order id as its datasetId, so two items of the **same** order
+    collided: on orion-ld the PATCH response lost one of them. The datasetId is now `<productOrderId>:<orderItemId>`
+    (URL-encoded, `~none` when absent, which no encoded item id can equal); the relationship object stays the order
+    id. A stored instance with the old datasetId (the bare order id) is **not** removed by a PATCH on Orion-LD:
+    `updateDomainEntity` drops instances the update does not keep (`NgsiLdBaseRepository#replacingAttribute`) only
+    with `replaceOnUpdate`, which is off on Orion-LD (the production default) and for every IT (root pom failsafe
+    `argLine`). Without it the PATCH appends by datasetId, so the old instance survives next to the new one and the
+    product reads back a duplicate item (the Step 2 PATCH defect's mechanism; not tested). The ticket 8 backfill
+    therefore has to rewrite the datasetId of **every** stored `productOrderItem` instance to
+    `<productOrderId>:<orderItemId>`, single-item products included.
+    `ProductOrderItemApiIT` gained minimal and full two-items-of-one-order cases. Without the change, both fail on
+    orion-ld. With it, product-inventory passes at 124/0/22 | 124/0/32 | 124/0/22. The datasetId getter
+    (`getDatasetId`) is `@JsonIgnore`, so it adds nothing to the plain-JSON form in product-ordering-management and
+    quote (unlike the `productOrderId` getter above).
+    `RelatedProductOrderItemRef` also overrides `getReferenceHref` with `productOrderHref`, like `RefEntity` with
+    `href`. Before, a `productOrderItem` was always classified as local, so an order held by a configured external
+    host was rejected with a 400. `ProductOrderItemApiIT` gained external-order cases, which fail without the override
+    (3 of 9 on orion-ld). With it, product-inventory passes at 127/0/22 | 127/0/32 (orion-ld | scorpio).
+    `RelatedProductOrderItemDatasetIdTest` pins distinct datasetIds for items of one order, the fallback included.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
+**Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
+The guard test below rejects that class's `PROPERTY_LIST` getter, and the getter exemption assumes Decision 2's
+encoding, which Orion-LD does not keep for 2+ balances.
 - Replace `common/.../repository/BrokerBackedEntitiesRepository` with a non-resolving `EntitiesRepository`
   (e.g. `common/.../mapping/InlineReferencesEntitiesRepository`). It returns `Mono.just(List.of())` for an empty
   id list and `Mono.error(MappingException)` naming the ids otherwise (Decision 3). Delete
@@ -231,8 +282,8 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   - a relationship target class has an `@AttributeGetter` that is not `PROPERTY` with `embedProperty = true`.
     Target classes are every `targetClass` of a `RELATIONSHIP`/`RELATIONSHIP_LIST` setter plus all `RefEntity`
     subclasses. That covers non-`RefEntity` targets such as `RelatedProductOrderItemRef` (extends `Entity`) and
-    `OrganizationParent/ChildRelationship`. Generated `*VO` classes (e.g. `PaymentMethodRefVO`) are skipped,
-    since the getter side does not use them.
+    `OrganizationParent/ChildRelationship`. No setter names a generated `*VO` class any more (see the Step 4
+    review fix), so fail on one instead of skipping it.
   - Target exemption: `Subscription` (`TMForumSubscription.subscription`) is excluded by an explicit,
     commented allow-list entry. It is a pointer to the broker subscription, not a reference payload: reads use
     only its id (`NgsiLdBaseRepository` delete path), and the full object is needed only on the create path

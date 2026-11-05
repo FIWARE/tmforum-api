@@ -38,17 +38,17 @@ public class CustomerBillOnDemand extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "billingAccount") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "billingAccount", targetClass = BillingAccountRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "billingAccount", targetClass = BillingAccountRef.class, fromProperties = true) }))
 	private BillingAccountRef billingAccount;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "customerBill") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "customerBill", targetClass = CustomerBillRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "customerBill", targetClass = CustomerBillRef.class, fromProperties = true) }))
 	private CustomerBillRef customerBill;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "relatedParty") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "relatedParty", targetClass = RelatedParty.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "relatedParty", targetClass = RelatedParty.class, fromProperties = true) }))
 	private RelatedParty relatedParty;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "state") }))
