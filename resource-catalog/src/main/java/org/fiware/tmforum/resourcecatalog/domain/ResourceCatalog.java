@@ -47,7 +47,7 @@ public class ResourceCatalog extends EntityWithId {
     private String version;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", targetClass = ResourceCategoryRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", fromProperties = true, targetClass = ResourceCategoryRef.class)}))
     private List<ResourceCategoryRef> category;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty")}))

@@ -93,7 +93,7 @@ public class ResourceFunction extends EntityWithId {
     private List<Characteristic> autoModification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "connectionPoint")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "connectionPoint", targetClass = ConnectionPointRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "connectionPoint", fromProperties = true, targetClass = ConnectionPointRef.class)}))
     private List<ConnectionPointRef> connectionPoint;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "resourceGraph")}))
@@ -109,7 +109,7 @@ public class ResourceFunction extends EntityWithId {
     private ResourceOperationalState operationalState;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "place")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "place", targetClass = PlaceRefInRole.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "place", fromProperties = true, targetClass = PlaceRefInRole.class)}))
     private PlaceRefInRole place;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty")}))
@@ -125,7 +125,7 @@ public class ResourceFunction extends EntityWithId {
     private List<ResourceRelationship> resourceRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification", targetClass = ResourceSpecificationRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification", fromProperties = true, targetClass = ResourceSpecificationRef.class)}))
     private ResourceSpecificationRef resourceSpecification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "resourceStatus")}))
@@ -133,7 +133,7 @@ public class ResourceFunction extends EntityWithId {
     private ResourceStatusType resourceStatus;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "schedule")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "schedule", targetClass = ScheduleRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "schedule", fromProperties = true, targetClass = ScheduleRef.class)}))
     private List<ScheduleRef> schedule;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "usageState")}))
