@@ -20,11 +20,10 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 /**
- * Collects the relationships that are fetched from storage on read, i.e. every {@link AttributeSetter} of type
- * relationship without {@code fromProperties}, from every class on the test classpath. The all-in-one module
- * compiles every API module, so the scan sees all of them.
+ * Collects every {@link AttributeSetter} of type relationship from every class on the test classpath. The all-in-one
+ * module compiles every API module, so the scan sees all of them.
  */
-final class FetchedRelationshipTargets {
+final class RelationshipTargets {
 
 	private static final String BASE_PACKAGE_PATH = "org/fiware/tmforum";
 	private static final String CLASS_SUFFIX = ".class";
@@ -33,30 +32,30 @@ final class FetchedRelationshipTargets {
 	private static final Set<AttributeType> RELATIONSHIP_TYPES =
 			EnumSet.of(AttributeType.RELATIONSHIP, AttributeType.RELATIONSHIP_LIST);
 
-	private FetchedRelationshipTargets() {
+	private RelationshipTargets() {
 	}
 
 	/**
-	 * The fetched relationships, keyed by {@code <declaring class>#<setter>} so that failures name them.
+	 * The relationship setters, keyed by {@code <declaring class>#<setter>} so that failures name them.
 	 */
-	static TreeMap<String, Class<?>> find() throws IOException, URISyntaxException, ClassNotFoundException {
-		ClassLoader classLoader = FetchedRelationshipTargets.class.getClassLoader();
+	static TreeMap<String, AttributeSetter> find() throws IOException, URISyntaxException, ClassNotFoundException {
+		ClassLoader classLoader = RelationshipTargets.class.getClassLoader();
 		Set<String> classNames = findClassNames(classLoader);
 		if (classNames.isEmpty()) {
 			throw new IllegalStateException("No classes found under " + BASE_PACKAGE_PATH);
 		}
-		TreeMap<String, Class<?>> relationships = new TreeMap<>();
+		TreeMap<String, AttributeSetter> relationships = new TreeMap<>();
 		for (String className : classNames) {
 			for (Method method : Class.forName(className, false, classLoader).getDeclaredMethods()) {
 				AttributeSetter setter = method.getAnnotation(AttributeSetter.class);
-				if (setter == null || setter.fromProperties() || !RELATIONSHIP_TYPES.contains(setter.value())) {
+				if (setter == null || !RELATIONSHIP_TYPES.contains(setter.value())) {
 					continue;
 				}
-				relationships.put(className + "#" + method.getName(), setter.targetClass());
+				relationships.put(className + "#" + method.getName(), setter);
 			}
 		}
 		if (relationships.isEmpty()) {
-			throw new IllegalStateException("Expected to find relationships that are fetched on read.");
+			throw new IllegalStateException("Expected to find relationship setters.");
 		}
 		return relationships;
 	}
@@ -76,7 +75,7 @@ final class FetchedRelationshipTargets {
 	private static void addFromDirectory(Path packageRoot, Set<String> classNames) throws IOException {
 		try (Stream<Path> files = Files.walk(packageRoot)) {
 			files.map(file -> BASE_PACKAGE_PATH + "/" + packageRoot.relativize(file).toString().replace('\\', '/'))
-					.filter(FetchedRelationshipTargets::isClassFile)
+					.filter(RelationshipTargets::isClassFile)
 					.forEach(entry -> classNames.add(toClassName(entry)));
 		} catch (UncheckedIOException e) {
 			throw e.getCause();
@@ -90,7 +89,7 @@ final class FetchedRelationshipTargets {
 			jar.stream()
 					.map(entry -> entry.getName())
 					.filter(name -> name.startsWith(BASE_PACKAGE_PATH + "/"))
-					.filter(FetchedRelationshipTargets::isClassFile)
+					.filter(RelationshipTargets::isClassFile)
 					.forEach(entry -> classNames.add(toClassName(entry)));
 		}
 	}

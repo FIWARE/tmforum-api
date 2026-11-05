@@ -196,7 +196,10 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
   `PROPERTY`, is accepted) still fails.
 
 ### Step 4: Read the remaining modules' references from properties
-**Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
+Not blocked by the customer-bill `FinancialAccountRef.accountBalance` encoding (Step 1 result), contrary to the
+earlier note: the only setter that reaches that class is `CustomerBill.financialAccount`, which was already
+`fromProperties = true` before this ticket, so none of this step's flips touches it. The open decision moves to Step 5,
+whose guard test is the first place that rejects the class's `PROPERTY_LIST` getter.
 Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3), `customer-management` (2),
 `document-management` (2), `party-catalog` (2), `party-role` (4) and `usage-management` (3).
 - Look at `party-catalog/.../TMForumMapper` (the organization parent/child relationship hrefs) and
@@ -216,6 +219,9 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   `fromProperties = true` in non-test sources). It finds 0 of 141.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
+**Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
+The guard test below rejects that class's `PROPERTY_LIST` getter, and the getter exemption assumes Decision 2's
+encoding, which Orion-LD does not keep for 2+ balances.
 - Replace `common/.../repository/BrokerBackedEntitiesRepository` with a non-resolving `EntitiesRepository`
   (e.g. `common/.../mapping/InlineReferencesEntitiesRepository`). It returns `Mono.just(List.of())` for an empty
   id list and `Mono.error(MappingException)` naming the ids otherwise (Decision 3). Delete

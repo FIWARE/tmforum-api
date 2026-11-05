@@ -67,7 +67,7 @@ public class Usage extends EntityWithId {
     @Getter(onMethod = @__({
         @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "usageSpecification") }))
     @Setter(onMethod = @__({
-        @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "usageSpecification", targetClass = UsageSpecificationRef.class) }))
+        @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "usageSpecification", targetClass = UsageSpecificationRef.class, fromProperties = true) }))
     private UsageSpecificationRef usageSpecification;
 
 }

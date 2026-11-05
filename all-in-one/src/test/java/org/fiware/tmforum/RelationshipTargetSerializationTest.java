@@ -1,6 +1,7 @@
 package org.fiware.tmforum;
 
 import io.github.wistefan.mapping.CacheSerdeableObjectMapper;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Guards the String constructors the non-strict read path needs ({@link RelationshipTargetConstructorTest}) against
+ * Guards the String constructors the relationship read path needs ({@link RelationshipTargetConstructorTest}) against
  * Jackson's creator detection: a public single-String constructor can be picked up as a delegating creator, which
  * would change how the domain classes are (de)serialized on the paths that use them directly, e.g. the redis cache.
  */
@@ -28,10 +29,13 @@ class RelationshipTargetSerializationTest {
 	// the mapper the cached entities are (de)serialized with
 	private static final ObjectMapper CACHE_MAPPER = new CacheSerdeableObjectMapper();
 
-	private static Stream<Arguments> fetchedRelationshipTargets() throws Exception {
+	private static Stream<Arguments> relationshipTargets() throws Exception {
 		TreeMap<String, Class<?>> distinctTargets = new TreeMap<>();
-		for (Class<?> targetClass : FetchedRelationshipTargets.find().values()) {
-			distinctTargets.put(targetClass.getName(), targetClass);
+		for (AttributeSetter setter : RelationshipTargets.find().values()) {
+			// a target without one is reported by RelationshipTargetConstructorTest
+			if (RelationshipTargetConstructorTest.hasStringConstructor(setter.targetClass())) {
+				distinctTargets.put(setter.targetClass().getName(), setter.targetClass());
+			}
 		}
 		return distinctTargets.entrySet().stream()
 				.flatMap(target -> Stream.of(
@@ -40,7 +44,7 @@ class RelationshipTargetSerializationTest {
 	}
 
 	@ParameterizedTest(name = "{0}")
-	@MethodSource("fetchedRelationshipTargets")
+	@MethodSource("relationshipTargets")
 	void relationshipTargetsAreSerializedAsObjects(String description, Class<?> targetClass, ObjectMapper objectMapper)
 			throws Exception {
 		Object target = targetClass.getDeclaredConstructor(String.class).newInstance(TEST_ID);
@@ -52,7 +56,7 @@ class RelationshipTargetSerializationTest {
 	}
 
 	@ParameterizedTest(name = "{0}")
-	@MethodSource("fetchedRelationshipTargets")
+	@MethodSource("relationshipTargets")
 	void relationshipTargetsAreDeserializedFromObjects(String description, Class<?> targetClass,
 			ObjectMapper objectMapper) throws Exception {
 		Object target = targetClass.getDeclaredConstructor(String.class).newInstance(TEST_ID);

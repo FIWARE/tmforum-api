@@ -39,7 +39,7 @@ public class PartyAccount extends Account {
     private PaymentMethodRef defaultPaymentMethod;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount") }))
-    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount", targetClass = FinancialAccountRef.class) }))
+    @Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "financialAccount", targetClass = FinancialAccountRef.class, fromProperties = true) }))
     private FinancialAccountRef financialAccount;
 
     @Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "paymentPlan") }))

@@ -75,13 +75,13 @@ public class Organization extends EntityWithId {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "organizationChildRelationship") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "organizationChildRelationship", targetClass = OrganizationChildRelationship.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "organizationChildRelationship", targetClass = OrganizationChildRelationship.class, fromProperties = true) }))
 	private List<OrganizationChildRelationship> organizationChildRelationship;
 
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "organizationParentRelationship") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "organizationParentRelationship", targetClass = OrganizationParentRelationship.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "organizationParentRelationship", targetClass = OrganizationParentRelationship.class, fromProperties = true) }))
 	private OrganizationParentRelationship organizationParentRelationship;
 
 	@Getter(onMethod = @__({
