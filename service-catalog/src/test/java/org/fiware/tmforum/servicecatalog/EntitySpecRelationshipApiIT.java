@@ -24,18 +24,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -160,12 +155,6 @@ public class EntitySpecRelationshipApiIT extends AbstractApiIT {
 			String message) {
 		assertEquals(multiset(objectMapper.valueToTree(posted)),
 				multiset(objectMapper.valueToTree(readBack.getEntitySpecRelationship())), message);
-	}
-
-	// the broker does not keep the order of a multi-instance relationship; counting, unlike a set, catches duplicates
-	private static Map<JsonNode, Long> multiset(JsonNode node) {
-		return StreamSupport.stream(node.spliterator(), false)
-				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 	}
 
 	private static ServiceSpecificationCreateVO specificationCreate() {

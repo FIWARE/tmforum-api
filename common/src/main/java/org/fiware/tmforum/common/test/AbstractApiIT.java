@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -99,6 +103,19 @@ public abstract class AbstractApiIT {
         } else {
             assertEquals(expected, actual, message);
         }
+    }
+
+    /**
+     * Counts the entries of a JSON array (a non-array node counts as one entry, null as none), for order-insensitive
+     * reference assertions: the broker does not keep the order of a multi-instance relationship, and counting, unlike
+     * a set, catches duplicates.
+     */
+    protected static Map<JsonNode, Long> multiset(JsonNode node) {
+        if (node == null) {
+            return Map.of();
+        }
+        Stream<JsonNode> entries = node.isArray() ? StreamSupport.stream(node.spliterator(), false) : Stream.of(node);
+        return entries.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
     }
 
     private static JsonNode withoutEmptyValues(JsonNode node) {

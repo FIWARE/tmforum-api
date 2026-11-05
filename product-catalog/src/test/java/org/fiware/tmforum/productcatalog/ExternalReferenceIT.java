@@ -64,10 +64,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -507,15 +504,6 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		assertNotNull(expected, "The request should carry " + attribute);
 		assertEquals(multiset(expected), multiset(objectMapper.valueToTree(readBack).get(attribute)),
 				String.format("The posted %s should be read back intact in the %s.", attribute, stage));
-	}
-
-	// the broker does not keep the order of a multi-instance relationship; counting, unlike a set, catches duplicates
-	private static Map<JsonNode, Long> multiset(JsonNode node) {
-		if (node == null) {
-			return Map.of();
-		}
-		Stream<JsonNode> entries = node.isArray() ? StreamSupport.stream(node.spliterator(), false) : Stream.of(node);
-		return entries.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 	}
 
 	private static String externalId(String type, int position) {
