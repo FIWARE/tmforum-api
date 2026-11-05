@@ -106,12 +106,12 @@ public abstract class AbstractApiIT {
     }
 
     /**
-     * Counts the entries of a JSON array (a non-array node counts as one entry, null as none), for order-insensitive
-     * reference assertions: the broker does not keep the order of a multi-instance relationship, and counting, unlike
-     * a set, catches duplicates.
+     * Counts the entries of a JSON array (a non-array node counts as one entry; Java null, a JSON null and a missing
+     * node as none), for order-insensitive reference assertions: the broker does not keep the order of a
+     * multi-instance relationship, and counting, unlike a set, catches duplicates.
      */
     protected static Map<JsonNode, Long> multiset(JsonNode node) {
-        if (node == null) {
+        if (node == null || node.isNull() || node.isMissingNode()) {
             return Map.of();
         }
         Stream<JsonNode> entries = node.isArray() ? StreamSupport.stream(node.spliterator(), false) : Stream.of(node);
