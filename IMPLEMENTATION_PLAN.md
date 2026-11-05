@@ -246,9 +246,13 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     `RelatedProductOrderItemRef` used the product order id as its datasetId, so two items of the **same** order
     collided: on orion-ld the PATCH response lost one of them. The datasetId is now `<productOrderId>:<orderItemId>`
     (URL-encoded, `~none` when absent, which no encoded item id can equal); the relationship object stays the order
-    id. A stored instance with the old datasetId (the bare order id) should be removed by the next PATCH of the
-    attribute, like any instance the update does not keep (read from `NgsiLdBaseRepository#replacingAttribute`, not
-    tested). Until then such products keep it, so the ticket 8 backfill has to rewrite those datasetIds.
+    id. A stored instance with the old datasetId (the bare order id) is **not** removed by a PATCH on Orion-LD:
+    `updateDomainEntity` drops instances the update does not keep (`NgsiLdBaseRepository#replacingAttribute`) only
+    with `replaceOnUpdate`, which is off on Orion-LD (the production default) and for every IT (root pom failsafe
+    `argLine`). Without it the PATCH appends by datasetId, so the old instance survives next to the new one and the
+    product reads back a duplicate item (the Step 2 PATCH defect's mechanism; not tested). The ticket 8 backfill
+    therefore has to rewrite the datasetId of **every** stored `productOrderItem` instance to
+    `<productOrderId>:<orderItemId>`, single-item products included.
     `ProductOrderItemApiIT` gained minimal and full two-items-of-one-order cases. Without the change, both fail on
     orion-ld. With it, product-inventory passes at 124/0/22 | 124/0/32 | 124/0/22. The datasetId getter
     (`getDatasetId`) is `@JsonIgnore`, so it adds nothing to the plain-JSON form in product-ordering-management and
