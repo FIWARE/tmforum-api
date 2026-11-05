@@ -33,8 +33,11 @@ import org.fiware.productcatalog.model.ProductOfferingUpdateVOTestExample;
 import org.fiware.productcatalog.model.ProductOfferingVO;
 import org.fiware.productcatalog.model.ProductSpecificationCreateVOTestExample;
 import org.fiware.productcatalog.model.ProductSpecificationRefVO;
+import org.fiware.productcatalog.model.ProductSpecificationUpdateVO;
+import org.fiware.productcatalog.model.ProductSpecificationUpdateVOTestExample;
 import org.fiware.productcatalog.model.ProductSpecificationVO;
 import org.fiware.productcatalog.model.ResourceCandidateRefVO;
+import org.fiware.productcatalog.model.ResourceSpecificationRefVO;
 import org.fiware.productcatalog.model.SLARefVO;
 import org.fiware.productcatalog.model.ServiceCandidateRefVO;
 import org.fiware.productcatalog.model.ServiceCandidateRefVOTestExample;
@@ -116,6 +119,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String PRODUCT_OFFERING_PRICE_PATH = "productCatalog/v4/productOfferingPrice/";
 	private static final String PRODUCT_SPECIFICATION_PATH = "productCatalog/v4/productSpecification/";
 	private static final String RESOURCE_CANDIDATE_PATH = "resourceCatalog/v4/resourceCandidate/";
+	private static final String RESOURCE_SPECIFICATION_PATH = "resourceCatalog/v4/resourceSpecification/";
 	private static final String SLA_PATH = "slaManagement/v4/sla/";
 	// the type segment of each external reference's id
 	private static final String AGREEMENT_ID_TYPE = "agreement";
@@ -127,6 +131,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String PRODUCT_OFFERING_PRICE_ID_TYPE = "product-offering-price";
 	private static final String PRODUCT_SPECIFICATION_ID_TYPE = "product-specification";
 	private static final String RESOURCE_CANDIDATE_ID_TYPE = "resource-candidate";
+	private static final String RESOURCE_SPECIFICATION_ID_TYPE = "resource-specification";
 	private static final String SERVICE_CANDIDATE_ID_TYPE = "service-candidate";
 	private static final String SLA_ID_TYPE = "service-level-agreement";
 	private static final String REFERRED_TYPE_AGREEMENT = "Agreement";
@@ -138,6 +143,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String REFERRED_TYPE_PRODUCT_OFFERING_PRICE = "ProductOfferingPrice";
 	private static final String REFERRED_TYPE_PRODUCT_SPECIFICATION = "ProductSpecification";
 	private static final String REFERRED_TYPE_RESOURCE_CANDIDATE = "ResourceCandidate";
+	private static final String REFERRED_TYPE_RESOURCE_SPECIFICATION = "ResourceSpecification";
 	private static final String REFERRED_TYPE_SERVICE_CANDIDATE = "ServiceCandidate";
 	private static final String REFERRED_TYPE_SLA = "ServiceLevelAgreement";
 	// written into each reference's name, so a read-back tells the patched payload from the created one
@@ -390,6 +396,53 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		}));
 	}
 
+	// ResourceSpecificationRef.version is stored since ticket 88; before, a posted version was dropped
+	@Test
+	public void externalResourceSpecificationsRoundTrip() throws Exception {
+		List<ResourceSpecificationRefVO> created = List.of(resourceSpecificationRef(CREATE, CREATED_POSITION),
+				resourceSpecificationRef(CREATE, CREATED_POSITION + 1));
+		HttpResponse<ProductSpecificationVO> createResponse = callAndCatch(
+				() -> productSpecificationApiTestClient.createProductSpecification(null,
+						ProductSpecificationCreateVOTestExample.build().atSchemaLocation(null)
+								.targetProductSchema(null)
+								.productSpecCharacteristic(null)
+								.resourceSpecification(created)));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+				"A product specification with external resource specifications should be created.");
+		String id = createResponse.body().getId();
+		createdProductSpecifications.add(id);
+		assertResourceSpecifications(created, createResponse.body(), "create response");
+		assertResourceSpecifications(created, retrieveProductSpecification(id), "retrieval after create");
+
+		// same ids, so the patch updates the stored instances on both brokers
+		List<ResourceSpecificationRefVO> patched = List.of(resourceSpecificationRef(PATCH, CREATED_POSITION),
+				resourceSpecificationRef(PATCH, CREATED_POSITION + 1));
+		ProductSpecificationUpdateVO updateVO = ProductSpecificationUpdateVOTestExample.build().atSchemaLocation(null)
+				.targetProductSchema(null)
+				.productSpecCharacteristic(null)
+				.resourceSpecification(patched);
+		HttpResponse<ProductSpecificationVO> patchResponse = callAndCatch(
+				() -> productSpecificationApiTestClient.patchProductSpecification(null, id, updateVO));
+		assertEquals(HttpStatus.OK, patchResponse.getStatus(),
+				"A product specification should be patchable with external resource specifications.");
+		assertResourceSpecifications(patched, patchResponse.body(), "patch response");
+		assertResourceSpecifications(patched, retrieveProductSpecification(id), "retrieval after patch");
+	}
+
+	private void assertResourceSpecifications(List<ResourceSpecificationRefVO> posted, ProductSpecificationVO readBack,
+			String stage) {
+		assertEquals(multiset(objectMapper.valueToTree(posted)),
+				multiset(objectMapper.valueToTree(readBack.getResourceSpecification())),
+				String.format("The posted resourceSpecification should be read back intact in the %s.", stage));
+	}
+
+	private ProductSpecificationVO retrieveProductSpecification(String id) throws Exception {
+		HttpResponse<ProductSpecificationVO> retrieved = callAndCatch(
+				() -> productSpecificationApiTestClient.retrieveProductSpecification(null, id, null));
+		assertEquals(HttpStatus.OK, retrieved.getStatus(), "The product specification should be retrievable.");
+		return retrieved.body();
+	}
+
 	// checks the create response and the read-back
 	private String createWithAllReferences(ProductOfferingCreateVO createVO) throws Exception {
 		HttpResponse<ProductOfferingVO> createResponse = callAndCatch(
@@ -544,6 +597,12 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		String id = externalId(RESOURCE_CANDIDATE_ID_TYPE, CREATED_POSITION);
 		return new ResourceCandidateRefVO().id(id).href(URI.create(externalHref(RESOURCE_CANDIDATE_PATH, id)))
 				.name(remoteName(stage)).version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_RESOURCE_CANDIDATE);
+	}
+
+	private static ResourceSpecificationRefVO resourceSpecificationRef(String stage, int position) {
+		String id = externalId(RESOURCE_SPECIFICATION_ID_TYPE, position);
+		return new ResourceSpecificationRefVO().id(id).href(URI.create(externalHref(RESOURCE_SPECIFICATION_PATH, id)))
+				.name(remoteName(stage)).version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_RESOURCE_SPECIFICATION);
 	}
 
 	private static ServiceCandidateRefVO serviceCandidateRef(String stage) {

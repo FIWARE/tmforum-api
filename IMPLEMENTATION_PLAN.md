@@ -173,6 +173,27 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
   still resolve, it would be filled from the target's `version`, which is why it goes in with this step's flips and
   IT runs. Add a `ProductSpecification.resourceSpecification` external round-trip to product-catalog's
   `ExternalReferenceIT`.
+- **Result:** all 34 setters flipped (resource-function-activation has 12, not 13; the scan now finds the 23 of
+  Step 4 and nothing else). `ResourceSpecificationRef` has `version`, pinned broker-less by
+  `resource-shared-models/.../ResourceSpecificationRefRoundTripTest` (the module gained JUnit test dependencies) and
+  through the API by `ExternalReferenceIT#externalResourceSpecificationsRoundTrip`. Every target class of the flipped
+  setters already embeds all its fields, so no assertion needed changing.
+  `service-catalog/.../EntitySpecRelationshipApiIT` posts minimal, full (with an external `associationSpec`) and
+  two-entry `entitySpecRelationship` lists to stored specifications and checks create, `GET` and `PATCH`. On the
+  unchanged work branch all 3 cases fail the retrieval with a 500. `DocumentSpecification.entitySpecRelationship`
+  (and `UsageSpecification.entitySpecRelationship`) are document-management and usage-management setters, so they
+  keep the failure until Step 4.
+  ITs (`mvn verify -pl <module> -Dbroker=<broker> -DskipTests`, run/failed/skipped, orion-ld | scorpio):
+  service-catalog 245/0/89 | 245/0/99, product-catalog 399/0/115 | 399/0/125, resource-catalog 224/0/89 |
+  224/0/99, resource-inventory 101/0/22 | 101/0/32, resource-function-activation 191/0/63 | 191/0/73,
+  service-inventory 71/0/22 | 71/0/32, service-order-management 28/0/0 | 28/0/8, document-management 40/0/23 |
+  40/0/23, software-management (also a resource-shared-models consumer) 196/1/45 | 196/1/55,
+  resource-order-management 29/5/0 | 29/5/8. The failures predate this step: on the unchanged work branch
+  (orion-ld) resource-order-management fails the same 5 `ResourceOrderApiIT.createResourceOrder201` cases (`state`
+  reads back null) and software-management fails 3. This step fixes 2 of those 3:
+  `ResourceApiIT.createResource400`/`patchResource400` with a non-existent resource ref now answer 400 instead of
+  500. `ResourceSpecificationApiIT.createResourceSpecification400` (a non-URI `resourceSpecRelationship` id, a
+  `PROPERTY`, is accepted) still fails.
 
 ### Step 4: Read the remaining modules' references from properties
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
@@ -185,6 +206,9 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   `MappingException`, because the resolved target's balance list cannot map to the ref's single `accountBalance`.
   This is unchanged by Step 1, which was checked against the annotations before and after. With
   `fromProperties = true` the target is no longer read. Add an account IT for it.
+- Document-management and usage-management: `DocumentSpecification.entitySpecRelationship` and
+  `UsageSpecification.entitySpecRelationship` still resolve and fail the read for a stored target (see Step 3
+  result). Add a document-management IT like `service-catalog/.../EntitySpecRelationshipApiIT`.
 - Agreement: same pre-existing failure as `EntitySpecificationRelationship` in Step 3.
   `AgreementSpecificationRelationship` has no `@MappingEnabled`, so an `AgreementSpecification.specificationRelationship`
   to a stored specification fails the read today. Add an agreement IT that references a local specification.

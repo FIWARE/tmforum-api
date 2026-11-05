@@ -76,7 +76,7 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "place") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "place", targetClass = PlaceRefInRole.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "place", fromProperties = true, targetClass = PlaceRefInRole.class) }))
 	private PlaceRefInRole place;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
@@ -99,7 +99,7 @@ public class Resource extends EntityWithId implements ReferencedEntity {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification", targetClass = ResourceSpecificationRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification", fromProperties = true, targetClass = ResourceSpecificationRef.class) }))
 	private ResourceSpecificationRef resourceSpecification;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "resourceStatus") }))
