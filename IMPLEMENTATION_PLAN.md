@@ -251,6 +251,9 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
   - the list of IT assertions changed in Steps 2–4 and why;
   - reads compact sub-attribute names against `mapping.contextUrl`, so a deployment with a custom
     `general.contextUrl` has to set `mapping.contextUrl` to the same URL (it already had to for writes);
+    `common`'s `JsonLdContextPreloader` fetches that context at server startup off the event loop, but if it is
+    unreachable then, the library retries the blocking fetch (up to `mapping.context-retrieval-timeout`) on the
+    reading thread once per `mapping.context-retrieval-retry-delay` until it succeeds;
   - the reference-list PATCH defect recorded under Step 2, if still open.
 - `AGENTS.md` Key Conventions: every relationship setter must be `fromProperties = true`, and every field of a
   relationship target class (except the `Subscription` pointer) an embedded `PROPERTY` getter, enforced by the Step 5 guard test. Reword the `strictRelationships`

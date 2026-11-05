@@ -140,7 +140,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String REFERRED_TYPE_RESOURCE_CANDIDATE = "ResourceCandidate";
 	private static final String REFERRED_TYPE_SERVICE_CANDIDATE = "ServiceCandidate";
 	private static final String REFERRED_TYPE_SLA = "ServiceLevelAgreement";
-	// the stage names the payload
+	// written into each reference's name, so a read-back tells the patched payload from the created one
 	private static final String CREATE = "create";
 	private static final String PATCH = "patch";
 	// first position of a list's two external ids; a patch from REPLACING_POSITION swaps every id of the list
