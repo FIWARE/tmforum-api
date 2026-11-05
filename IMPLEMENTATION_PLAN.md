@@ -253,7 +253,11 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     `general.contextUrl` has to set `mapping.contextUrl` to the same URL (it already had to for writes);
     `common`'s `JsonLdContextPreloader` fetches that context at server startup off the event loop, but if it is
     unreachable then, the library retries the blocking fetch (up to `mapping.context-retrieval-timeout`) on the
-    reading thread once per `mapping.context-retrieval-retry-delay` until it succeeds;
+    reading thread once per `mapping.context-retrieval-retry-delay` until it succeeds. The preload makes every
+    start of every module issue a GET to `mapping.contextUrl` (default: the ETSI core context), so a deployment
+    has to allow egress to that URL or self-host the context, otherwise each start spends up to the timeout and
+    logs a WARN. While the preload is in flight, a read that needs compaction waits on the resolver's lock (its
+    `retrieve()` is `synchronized`) for up to the same timeout;
   - the reference-list PATCH defect recorded under Step 2, if still open.
 - `AGENTS.md` Key Conventions: every relationship setter must be `fromProperties = true`, and every field of a
   relationship target class (except the `Subscription` pointer) an embedded `PROPERTY` getter, enforced by the Step 5 guard test. Reword the `strictRelationships`

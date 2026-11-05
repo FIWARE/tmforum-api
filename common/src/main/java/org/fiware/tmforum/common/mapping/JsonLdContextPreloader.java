@@ -25,7 +25,8 @@ public class JsonLdContextPreloader {
 	public void onServerStartup(ServerStartupEvent event) {
 		Mono.fromCallable(contextResolver::resolve)
 				.subscribeOn(Schedulers.boundedElastic())
+				// resolve() logs a failed retrieval itself, so this only reports unexpected errors
 				.subscribe(context -> {
-				}, e -> log.warn("Was not able to preload the JSON-LD context.", e));
+				}, e -> log.warn("Unexpected error while preloading the JSON-LD context.", e));
 	}
 }
