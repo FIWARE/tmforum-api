@@ -29,6 +29,7 @@ import tools.jackson.databind.JacksonModule;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -71,6 +72,7 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 				"micronaut.server.port", String.valueOf(port),
 				"micronaut.http.services.ngsi.url", "http://localhost:" + port,
 				"micronaut.http.services.ngsi.path", NGSI_PATH,
+				"mapping.context-url", "http://localhost:" + port + StubContextController.CONTEXT_PATH,
 				"micronaut.codec.json.additional-types", LD_JSON,
 				"jackson.serialization-inclusion", "non_null");
 	}
@@ -119,6 +121,18 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 	void injectsTheTolerantMapper() {
 		assertInstanceOf(TolerantEntityVOMapper.class, entityVOMapper,
 				"TolerantEntityVOMapper should replace the library's EntityVOMapper bean.");
+	}
+
+	// the read path relies on the injected compactor resolving mapping.context-url, not only the NGSI-LD prefixes
+	@Test
+	void compactsSubAttributesExpandedUnderTheConfiguredContext() {
+		TolerantEntityVOMapperTest.Parent parent = entityVOMapper.fromEntityVO(
+						TolerantEntityVOMapperTest.parentWithExpandedInlineChildren(), TolerantEntityVOMapperTest.Parent.class)
+				.block();
+
+		assertEquals(List.of(TolerantEntityVOMapperTest.REMOTE_NAME, TolerantEntityVOMapperTest.REMOTE_NAME),
+				parent.getInlineChildren().stream().map(TolerantEntityVOMapperTest.Child::getName).toList(),
+				"The injected mapper should compact sub-attribute names against mapping.context-url.");
 	}
 
 	@Test

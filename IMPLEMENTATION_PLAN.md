@@ -125,6 +125,9 @@ when a relationship is still resolved, its sub-properties already override the t
     Steps 2–4, and by inference the existing `fromProperties` lists such as `relatedParty` (no IT posts 2+ of those,
     not checked through the API). A maintainer has to choose a remedy before Steps 2–4 flip any list setter, e.g.
     compacting expanded sub-attribute names on read in the mapping library, or an Orion-LD fix.
+  - **Resolved in Step 2:** `ngsi-ld-java-mapping` 1.6.33 compacts expanded sub-attribute names on read
+    (`NgsiLdKeyCompactor`, against `mapping.contextUrl`). `TolerantEntityVOMapper` passes the injected compactor on,
+    and the orion-ld skip in `EntitySpecificationRelationshipIT` is gone. List setters are no longer blocked.
 
 ### Step 2: Read product-family references from properties
 Flip the relationship setters of the product family to `fromProperties = true`: `product-shared-models` (23,
@@ -141,6 +144,12 @@ e.g. `ProductOffering` `agreement`/`bundledProductOffering`/`category`/`channel`
   must round-trip intact through create, `GET` and `PATCH`. Use a parameterized test over the attributes.
 - Acceptance: `mvn integration-test` for the four modules passes with `-Dbroker=orion-ld` and
   `-Dbroker=scorpio`.
+- **Known defect, pinned in Step 2 (open):** on Orion-LD without `replaceOnUpdate` (the production default, and forced
+  for every IT by the root pom's failsafe `argLine`), a PATCH that swaps the ids of a reference list keeps the old
+  entries, because the broker merges the instances by datasetId. Scorpio replaces the whole attribute and drops them. It predates this ticket (resolved lists merged the same
+  way). `ExternalReferenceIT#patchReplacingTheIdsOfAReferenceList` asserts the current behaviour, so a fix has to
+  change that expectation on purpose. Ticket 6 (PostgreSQL) will replace the list, which is a parity gap to settle
+  there.
 
 ### Step 3: Read resource- and service-family references from properties
 Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-activation` (13),
@@ -158,6 +167,12 @@ Same procedure as Step 2 for `resource-shared-models` (8), `resource-function-ac
   `ResourceFunction.resourceGraph` (`PROPERTY_LIST`) → `ResourceGraph.connection` → `Connection.endpoint`, all
   plain Jackson. Its Step 1 annotations have no runtime effect and exist for consistency and the Step 5 guard, so
   an API check of `connectionPoint` there exercises Jackson only.
+- Deferred from Step 2: `resource-shared-models` `ResourceSpecificationRef` has no `version`, although every API's
+  `ResourceSpecificationRef` schema has one, so a posted `version` is dropped (before and after Step 2). Add it as an
+  embedded `PROPERTY` (getter `embedProperty = true`, setter `fromProperties = true`). While the resource setters
+  still resolve, it would be filled from the target's `version`, which is why it goes in with this step's flips and
+  IT runs. Add a `ProductSpecification.resourceSpecification` external round-trip to product-catalog's
+  `ExternalReferenceIT`.
 
 ### Step 4: Read the remaining modules' references from properties
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
@@ -233,7 +248,17 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     `name`s stale;
   - data written before this release reads back with only the fields that were embedded at the time until the
     ticket 8 backfill runs;
-  - the list of IT assertions changed in Steps 2–4 and why.
+  - the list of IT assertions changed in Steps 2–4 and why;
+  - reads compact sub-attribute names against `mapping.contextUrl`, so a deployment with a custom
+    `general.contextUrl` has to set `mapping.contextUrl` to the same URL (it already had to for writes);
+    `common`'s `JsonLdContextPreloader` fetches that context at server startup off the event loop, but if it is
+    unreachable then, the library retries the blocking fetch (up to `mapping.context-retrieval-timeout`) on the
+    reading thread once per `mapping.context-retrieval-retry-delay` until it succeeds. The preload makes every
+    start of every module issue a GET to `mapping.contextUrl` (default: the ETSI core context), so a deployment
+    has to allow egress to that URL or self-host the context, otherwise each start spends up to the timeout and
+    logs a WARN. While the preload is in flight, a read that needs compaction waits on the resolver's lock (its
+    `retrieve()` is `synchronized`) for up to the same timeout;
+  - the reference-list PATCH defect recorded under Step 2, if still open.
 - `AGENTS.md` Key Conventions: every relationship setter must be `fromProperties = true`, and every field of a
   relationship target class (except the `Subscription` pointer) an embedded `PROPERTY` getter, enforced by the Step 5 guard test. Reword the `strictRelationships`
   bullet, which no longer matters for reads.

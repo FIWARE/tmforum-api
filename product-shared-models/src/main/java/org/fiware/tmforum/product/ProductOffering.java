@@ -62,7 +62,7 @@ public class ProductOffering extends EntityWithId {
 	private String version;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", fromProperties = true, targetClass = AgreementRef.class)}))
 	private List<AgreementRef> agreement;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "attachment")}))
@@ -70,23 +70,23 @@ public class ProductOffering extends EntityWithId {
 	private List<AttachmentRefOrValue> attachment;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "bundledProductOffering")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "bundledProductOffering", targetClass = BundleProductOffering.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "bundledProductOffering", fromProperties = true, targetClass = BundleProductOffering.class)}))
 	private List<BundleProductOffering> bundledProductOffering;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", targetClass = CategoryRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", fromProperties = true, targetClass = CategoryRef.class)}))
 	private List<CategoryRef> category;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "channel")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "channel", targetClass = ChannelRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "channel", fromProperties = true, targetClass = ChannelRef.class)}))
 	private List<ChannelRef> channel;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "marketSegment")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "marketSegment", targetClass = MarketSegmentRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "marketSegment", fromProperties = true, targetClass = MarketSegmentRef.class)}))
 	private List<MarketSegmentRef> marketSegment;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "place")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "place", targetClass = PlaceRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "place", fromProperties = true, targetClass = PlaceRef.class)}))
 	private List<PlaceRef> place;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "prodSpecCharValueUse")}))
@@ -94,11 +94,11 @@ public class ProductOffering extends EntityWithId {
 	private List<ProductSpecificationCharacteristicValueUse> prodSpecCharValueUse;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingPrice")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingPrice", targetClass = ProductOfferingPriceRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingPrice", fromProperties = true, targetClass = ProductOfferingPriceRef.class)}))
 	private List<ProductOfferingPriceRef> productOfferingPrice;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingRelationship")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingRelationship", targetClass = ProductOfferingRelationship.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingRelationship", fromProperties = true, targetClass = ProductOfferingRelationship.class)}))
 	private List<ProductOfferingRelationship> productOfferingRelationship;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "productOfferingTerm")}))
@@ -110,15 +110,15 @@ public class ProductOffering extends EntityWithId {
 	private ProductSpecificationRef productSpecification;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceCandidate")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceCandidate", targetClass = ResourceCandidateRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceCandidate", fromProperties = true, targetClass = ResourceCandidateRef.class)}))
 	private ResourceCandidateRef resourceCandidate;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCandidate")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCandidate", targetClass = ServiceCandidateRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceCandidate", fromProperties = true, targetClass = ServiceCandidateRef.class)}))
 	private ServiceCandidateRef serviceCandidate;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "serviceLevelAgreement")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceLevelAgreement", targetClass = SLARef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceLevelAgreement", fromProperties = true, targetClass = SLARef.class)}))
 	private SLARef serviceLevelAgreement;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))

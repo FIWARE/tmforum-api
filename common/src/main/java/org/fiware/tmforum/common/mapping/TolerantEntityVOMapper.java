@@ -4,17 +4,15 @@ import io.github.wistefan.mapping.EntitiesRepository;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.MappingException;
 import io.github.wistefan.mapping.MappingProperties;
+import io.github.wistefan.mapping.NgsiLdKeyCompactor;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.context.annotation.Replaces;
 import jakarta.inject.Singleton;
-import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -25,11 +23,14 @@ import java.util.Optional;
 @Replaces(EntityVOMapper.class)
 public class TolerantEntityVOMapper extends EntityVOMapper {
 
+	// marks a stub by type, since the library maps a copy of the target with the relationship's sub-properties merged in
+	private static final String UNRESOLVED_TARGET_TYPE = "tmforum-unresolved-relationship-target";
+
 	private final boolean strictRelationships;
 
 	public TolerantEntityVOMapper(MappingProperties mappingProperties, ObjectMapper objectMapper,
-								  EntitiesRepository entitiesRepository) {
-		super(mappingProperties, objectMapper, entitiesRepository);
+								  EntitiesRepository entitiesRepository, NgsiLdKeyCompactor keyCompactor) {
+		super(mappingProperties, objectMapper, entitiesRepository, keyCompactor);
 		this.strictRelationships = mappingProperties.isStrictRelationships();
 	}
 
@@ -37,7 +38,7 @@ public class TolerantEntityVOMapper extends EntityVOMapper {
 	 * Placeholder for a relationship target that does not exist, for {@link EntitiesRepository#getEntities} to return.
 	 */
 	public static EntityVO unresolvedTarget(URI id) {
-		return new UnresolvedTarget().id(id);
+		return new EntityVO().id(id).type(UNRESOLVED_TARGET_TYPE);
 	}
 
 	/**
@@ -47,7 +48,7 @@ public class TolerantEntityVOMapper extends EntityVOMapper {
 	 */
 	@Override
 	public <T> Mono<T> fromEntityVO(EntityVO entityVO, Class<T> targetClass) {
-		if (!(entityVO instanceof UnresolvedTarget)) {
+		if (!UNRESOLVED_TARGET_TYPE.equals(entityVO.getType())) {
 			return super.fromEntityVO(entityVO, targetClass);
 		}
 		if (strictRelationships) {
@@ -62,7 +63,8 @@ public class TolerantEntityVOMapper extends EntityVOMapper {
 			return idOnly(entityVO.getId(), targetClass);
 		}
 		EntityVO typedTarget = new EntityVO().id(entityVO.getId()).type(entityType.get());
-		entityVO.getAdditionalProperties().forEach(typedTarget::setAdditionalProperties);
+		Optional.ofNullable(entityVO.getAdditionalProperties())
+				.ifPresent(properties -> properties.forEach(typedTarget::setAdditionalProperties));
 		return super.fromEntityVO(typedTarget, targetClass);
 	}
 
@@ -72,19 +74,6 @@ public class TolerantEntityVOMapper extends EntityVOMapper {
 		} catch (ReflectiveOperationException e) {
 			return Mono.error(new MappingException(
 					String.format("Was not able to instantiate %s with a string parameter.", targetClass), e));
-		}
-	}
-
-	/**
-	 * The library merges a relationship's sub-properties into its target's map, so the stub needs a mutable one.
-	 */
-	private static final class UnresolvedTarget extends EntityVO {
-
-		private final Map<String, AdditionalPropertyVO> mergedProperties = new HashMap<>();
-
-		@Override
-		public Map<String, AdditionalPropertyVO> getAdditionalProperties() {
-			return mergedProperties;
 		}
 	}
 }

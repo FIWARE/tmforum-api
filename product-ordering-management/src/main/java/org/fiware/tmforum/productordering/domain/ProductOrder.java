@@ -82,7 +82,7 @@ public class ProductOrder extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", fromProperties = true, targetClass = AgreementRef.class) }))
 	private List<AgreementRef> agreement;
 
 	@Getter(onMethod = @__({

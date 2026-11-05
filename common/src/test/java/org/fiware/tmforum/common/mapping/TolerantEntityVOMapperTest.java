@@ -1,8 +1,10 @@
 package org.fiware.tmforum.common.mapping;
 
 import io.github.wistefan.mapping.EntitiesRepository;
+import io.github.wistefan.mapping.JsonLdContext;
 import io.github.wistefan.mapping.MappingException;
 import io.github.wistefan.mapping.MappingProperties;
+import io.github.wistefan.mapping.NgsiLdKeyCompactor;
 import io.github.wistefan.mapping.NgsiLdMappingModule;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
@@ -21,6 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,8 +44,11 @@ public class TolerantEntityVOMapperTest {
 	private static final String FAVOURITE = "favourite";
 	private static final String PLAIN_CHILDREN = "plainChildren";
 	private static final String PLAIN_FAVOURITE = "plainFavourite";
+	private static final String INLINE_CHILDREN = "inlineChildren";
 	private static final String NAME = "name";
-	private static final String REMOTE_NAME = "remote child";
+	static final String REMOTE_NAME = "remote child";
+	// a deployment context's IRI for "name", which Orion-LD returns for the sub-attributes of a multi-instance list
+	static final String CUSTOM_NAME_IRI = "https://context.example.org/terms/name";
 
 	private static final URI PARENT = URI.create("urn:ngsi-ld:parent:p");
 	private static final URI FOUND = URI.create("urn:ngsi-ld:child:found");
@@ -112,6 +118,17 @@ public class TolerantEntityVOMapperTest {
 	}
 
 	@Test
+	public void fromEntityVO_compactsSubAttributesExpandedUnderTheConfiguredContext() {
+		NgsiLdKeyCompactor keyCompactor = new NgsiLdKeyCompactor(
+				new JsonLdContext(Map.of(CUSTOM_NAME_IRI, NAME), List.of()));
+
+		Parent parent = mapper(false, keyCompactor).fromEntityVO(parentWithExpandedInlineChildren(), Parent.class)
+				.block();
+
+		assertEquals(List.of(REMOTE_NAME, REMOTE_NAME), parent.getInlineChildren().stream().map(Child::getName).toList());
+	}
+
+	@Test
 	public void fromEntityVO_strictModeFailsOnUnresolvedTarget() {
 		RelationshipListVO relationshipList = new RelationshipListVO();
 		relationshipList.add(relationship(FOUND));
@@ -123,6 +140,10 @@ public class TolerantEntityVOMapperTest {
 	}
 
 	private static TolerantEntityVOMapper mapper(boolean strictRelationships) {
+		return mapper(strictRelationships, new NgsiLdKeyCompactor());
+	}
+
+	private static TolerantEntityVOMapper mapper(boolean strictRelationships, NgsiLdKeyCompactor keyCompactor) {
 		MappingProperties mappingProperties = new MappingProperties();
 		mappingProperties.setStrictRelationships(strictRelationships);
 		EntitiesRepository entitiesRepository = mock(EntitiesRepository.class);
@@ -135,7 +156,7 @@ public class TolerantEntityVOMapperTest {
 					.toList());
 		});
 		JsonMapper objectMapper = JsonMapper.builder().addModule(new NgsiLdMappingModule()).build();
-		return new TolerantEntityVOMapper(mappingProperties, objectMapper, entitiesRepository);
+		return new TolerantEntityVOMapper(mappingProperties, objectMapper, entitiesRepository, keyCompactor);
 	}
 
 	private static EntityVO parent(String attribute, AdditionalPropertyVO value) {
@@ -148,6 +169,20 @@ public class TolerantEntityVOMapperTest {
 		return new RelationshipVO()._object(target);
 	}
 
+	// two inline children whose "name" arrives expanded under CUSTOM_NAME_IRI
+	static EntityVO parentWithExpandedInlineChildren() {
+		RelationshipListVO relationshipList = new RelationshipListVO();
+		relationshipList.add(expandedNameRelationship(MISSING_A));
+		relationshipList.add(expandedNameRelationship(MISSING_B));
+		return parent(INLINE_CHILDREN, relationshipList);
+	}
+
+	private static RelationshipVO expandedNameRelationship(URI target) {
+		RelationshipVO relationship = relationship(target).datasetId(target);
+		relationship.setAdditionalProperties(CUSTOM_NAME_IRI, new PropertyVO().value(REMOTE_NAME));
+		return relationship;
+	}
+
 	/** Entity holding a fetched relationship list and a fetched single relationship. */
 	@MappingEnabled(entityType = PARENT_TYPE)
 	public static class Parent {
@@ -156,6 +191,7 @@ public class TolerantEntityVOMapperTest {
 		private Child favourite;
 		private List<PlainRef> plainChildren;
 		private PlainRef plainFavourite;
+		private List<Child> inlineChildren;
 
 		public Parent(String id) {
 		}
@@ -195,6 +231,16 @@ public class TolerantEntityVOMapperTest {
 		@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = PLAIN_FAVOURITE, targetClass = PlainRef.class)
 		public void setPlainFavourite(PlainRef plainFavourite) {
 			this.plainFavourite = plainFavourite;
+		}
+
+		public List<Child> getInlineChildren() {
+			return inlineChildren;
+		}
+
+		@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = INLINE_CHILDREN, targetClass = Child.class,
+				fromProperties = true)
+		public void setInlineChildren(List<Child> inlineChildren) {
+			this.inlineChildren = inlineChildren;
 		}
 	}
 

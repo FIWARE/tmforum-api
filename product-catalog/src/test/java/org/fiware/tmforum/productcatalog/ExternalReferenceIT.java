@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productcatalog;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.env.Environment;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -10,6 +11,9 @@ import org.fiware.productcatalog.api.CatalogApiTestClient;
 import org.fiware.productcatalog.api.CategoryApiTestClient;
 import org.fiware.productcatalog.api.ProductOfferingApiTestClient;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestClient;
+import org.fiware.productcatalog.model.AgreementRefVO;
+import org.fiware.productcatalog.model.BundledProductOfferingOptionVO;
+import org.fiware.productcatalog.model.BundledProductOfferingVO;
 import org.fiware.productcatalog.model.CatalogCreateVO;
 import org.fiware.productcatalog.model.CatalogCreateVOTestExample;
 import org.fiware.productcatalog.model.CatalogVO;
@@ -17,15 +21,25 @@ import org.fiware.productcatalog.model.CategoryCreateVOTestExample;
 import org.fiware.productcatalog.model.CategoryRefVO;
 import org.fiware.productcatalog.model.CategoryRefVOTestExample;
 import org.fiware.productcatalog.model.CategoryVO;
+import org.fiware.productcatalog.model.ChannelRefVO;
+import org.fiware.productcatalog.model.MarketSegmentRefVO;
+import org.fiware.productcatalog.model.PlaceRefVO;
 import org.fiware.productcatalog.model.ProductOfferingCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingCreateVOTestExample;
+import org.fiware.productcatalog.model.ProductOfferingPriceRefOrValueVO;
+import org.fiware.productcatalog.model.ProductOfferingRelationshipVO;
 import org.fiware.productcatalog.model.ProductOfferingUpdateVO;
 import org.fiware.productcatalog.model.ProductOfferingUpdateVOTestExample;
 import org.fiware.productcatalog.model.ProductOfferingVO;
 import org.fiware.productcatalog.model.ProductSpecificationCreateVOTestExample;
+import org.fiware.productcatalog.model.ProductSpecificationRefVO;
 import org.fiware.productcatalog.model.ProductSpecificationVO;
+import org.fiware.productcatalog.model.ResourceCandidateRefVO;
+import org.fiware.productcatalog.model.SLARefVO;
 import org.fiware.productcatalog.model.ServiceCandidateRefVO;
 import org.fiware.productcatalog.model.ServiceCandidateRefVOTestExample;
+import org.fiware.productcatalog.model.TargetProductSchemaVO;
+import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
@@ -38,14 +52,23 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -65,6 +88,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	static final String EXTERNAL_HOST = "external-tmf.example.org";
 	// not configured as external, so references to it are validated like local ones
 	private static final String UNLISTED_HOST = "unlisted-tmf.example.org";
+	private static final String ORION_LD_ENVIRONMENT = "orion-ld";
 	private static final String EXTERNAL_BASE_URL = "https://" + EXTERNAL_HOST + "/tmf-api/";
 	private static final String UNLISTED_BASE_URL = "https://" + UNLISTED_HOST + "/tmf-api/";
 	private static final String LOCAL_ALIAS_BASE_URL = "https://" + LOCAL_ALIAS_HOST + "/tmf-api/";
@@ -77,6 +101,58 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String NON_URI_ID_VALUE = "1234";
 	private static final String REMOTE_SERVICE_CANDIDATE_ID = "urn:ngsi-ld:service-candidate:remote-1";
 	private static final String REMOTE_NAME = "Held by another deployment";
+	private static final String REMOTE_VERSION = "2.1";
+	private static final String REMOTE_LIFECYCLE_STATUS = "Launched";
+	private static final String REMOTE_RELATIONSHIP_TYPE = "requires";
+	private static final String REMOTE_ROLE = "dependency";
+	private static final Instant REMOTE_VALID_FROM = Instant.parse("2026-01-01T00:00:00Z");
+	private static final String REMOTE_SCHEMA_TYPE = "RemoteProductSchema";
+	private static final String REMOTE_SCHEMA_PATH = "schema/product.json";
+	private static final String AGREEMENT_PATH = "agreementManagement/v4/agreement/";
+	private static final String CHANNEL_PATH = "salesChannel/v4/channel/";
+	private static final String MARKET_SEGMENT_PATH = "marketSegment/v4/marketSegment/";
+	private static final String PLACE_PATH = "geographicAddress/v4/place/";
+	private static final String PRODUCT_OFFERING_PATH = "productCatalog/v4/productOffering/";
+	private static final String PRODUCT_OFFERING_PRICE_PATH = "productCatalog/v4/productOfferingPrice/";
+	private static final String PRODUCT_SPECIFICATION_PATH = "productCatalog/v4/productSpecification/";
+	private static final String RESOURCE_CANDIDATE_PATH = "resourceCatalog/v4/resourceCandidate/";
+	private static final String SLA_PATH = "slaManagement/v4/sla/";
+	// the type segment of each external reference's id
+	private static final String AGREEMENT_ID_TYPE = "agreement";
+	private static final String CATEGORY_ID_TYPE = "category";
+	private static final String CHANNEL_ID_TYPE = "channel";
+	private static final String MARKET_SEGMENT_ID_TYPE = "market-segment";
+	private static final String PLACE_ID_TYPE = "place";
+	private static final String PRODUCT_OFFERING_ID_TYPE = "product-offering";
+	private static final String PRODUCT_OFFERING_PRICE_ID_TYPE = "product-offering-price";
+	private static final String PRODUCT_SPECIFICATION_ID_TYPE = "product-specification";
+	private static final String RESOURCE_CANDIDATE_ID_TYPE = "resource-candidate";
+	private static final String SERVICE_CANDIDATE_ID_TYPE = "service-candidate";
+	private static final String SLA_ID_TYPE = "service-level-agreement";
+	private static final String REFERRED_TYPE_AGREEMENT = "Agreement";
+	private static final String REFERRED_TYPE_CATEGORY = "Category";
+	private static final String REFERRED_TYPE_CHANNEL = "Channel";
+	private static final String REFERRED_TYPE_MARKET_SEGMENT = "MarketSegment";
+	private static final String REFERRED_TYPE_PLACE = "Place";
+	private static final String REFERRED_TYPE_PRODUCT_OFFERING = "ProductOffering";
+	private static final String REFERRED_TYPE_PRODUCT_OFFERING_PRICE = "ProductOfferingPrice";
+	private static final String REFERRED_TYPE_PRODUCT_SPECIFICATION = "ProductSpecification";
+	private static final String REFERRED_TYPE_RESOURCE_CANDIDATE = "ResourceCandidate";
+	private static final String REFERRED_TYPE_SERVICE_CANDIDATE = "ServiceCandidate";
+	private static final String REFERRED_TYPE_SLA = "ServiceLevelAgreement";
+	// written into each reference's name, so a read-back tells the patched payload from the created one
+	private static final String CREATE = "create";
+	private static final String PATCH = "patch";
+	// first position of a list's two external ids; a patch from REPLACING_POSITION swaps every id of the list
+	private static final int CREATED_POSITION = 0;
+	private static final int REPLACING_POSITION = 2;
+	// the ProductOffering reference attributes; each list is written with two entries
+	private static final List<String> LIST_REFERENCES = List.of("agreement", "bundledProductOffering", "category",
+			"channel", "marketSegment", "place", "productOfferingPrice", "productOfferingRelationship");
+	private static final List<String> SINGLE_REFERENCES = List.of("productSpecification", "resourceCandidate",
+			"serviceCandidate", "serviceLevelAgreement");
+	private static final List<String> ALL_REFERENCES = Stream.concat(LIST_REFERENCES.stream(),
+			SINGLE_REFERENCES.stream()).toList();
 	// TmForumExceptionHandler's INVALID_RELATIONSHIP message, telling a failed reference check from other 400s
 	private static final String UNRESOLVED_REFERENCE_MESSAGE = "At least one of the references does not exist";
 
@@ -109,6 +185,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private final CategoryApiTestClient categoryApiTestClient;
 	private final ProductSpecificationApiTestClient productSpecificationApiTestClient;
 	private final GeneralProperties generalProperties;
+	private final Environment environment;
 
 	// cleanUp only removes product offerings
 	private final List<String> createdCatalogs = new ArrayList<>();
@@ -120,9 +197,11 @@ public class ExternalReferenceIT extends AbstractApiIT {
 							   ProductOfferingApiTestClient productOfferingApiTestClient,
 							   CatalogApiTestClient catalogApiTestClient,
 							   CategoryApiTestClient categoryApiTestClient,
-							   ProductSpecificationApiTestClient productSpecificationApiTestClient) {
+							   ProductSpecificationApiTestClient productSpecificationApiTestClient,
+							   Environment environment) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.generalProperties = generalProperties;
+		this.environment = environment;
 		this.productOfferingApiTestClient = productOfferingApiTestClient;
 		this.catalogApiTestClient = catalogApiTestClient;
 		this.categoryApiTestClient = categoryApiTestClient;
@@ -246,7 +325,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 
 	@Test
 	public void createCatalogWithExternalCategory() throws Exception {
-		CategoryRefVO externalCategory = externalCategoryRef(0);
+		CategoryRefVO externalCategory = externalCategoryRef(CREATED_POSITION);
 		CatalogCreateVO createVO = CatalogCreateVOTestExample.build().atSchemaLocation(null)
 				.relatedParty(null)
 				.category(List.of(externalCategory));
@@ -264,6 +343,219 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		assertEquals(externalCategory.getId(), readBack.getId(), "The id should round-trip.");
 		assertEquals(externalCategory.getHref(), readBack.getHref(), "The href should round-trip.");
 		assertEquals(externalCategory.getName(), readBack.getName(), "The name should round-trip.");
+	}
+
+	// the patch keeps the ids, since append mode keeps the instances a patch omits (see below)
+	@Test
+	public void externalReferencePayloadsRoundTrip() throws Exception {
+		String id = createWithAllReferences(createWithAllReferencesVO());
+		ProductOfferingUpdateVO updateVO = updateWithAllReferences(CREATED_POSITION);
+		HttpResponse<ProductOfferingVO> patchResponse = callAndCatch(
+				() -> productOfferingApiTestClient.patchProductOffering(null, id, updateVO));
+		assertEquals(HttpStatus.OK, patchResponse.getStatus(),
+				"A product offering should be patchable with external references.");
+		assertPayloads(updateVO, patchResponse.body(), ALL_REFERENCES, "patch response");
+		assertPayloads(updateVO, retrieve(id), ALL_REFERENCES, "retrieval after patch");
+	}
+
+	// Known defect (ticket 88): on Orion-LD without replaceOnUpdate, the production default and forced for every IT by
+	// the root pom's failsafe argLine, a PATCH merges a reference list by datasetId and keeps the instances it omits.
+	// Scorpio replaces all instances of an appended attribute, so it drops them. This pins
+	// that behaviour, so a fix (or the PostgreSQL adapter of ticket 6) has to update the expectation on purpose.
+	// The created entries survive next to the patched ones because a RefEntity's datasetId is its id (@DatasetId),
+	// not its list position, so new ids are new instances.
+	@Test
+	public void patchReplacingTheIdsOfAReferenceList() throws Exception {
+		ProductOfferingCreateVO createVO = createWithAllReferencesVO();
+		String id = createWithAllReferences(createVO);
+		ProductOfferingUpdateVO updateVO = updateWithAllReferences(REPLACING_POSITION);
+		HttpResponse<ProductOfferingVO> patchResponse = callAndCatch(
+				() -> productOfferingApiTestClient.patchProductOffering(null, id, updateVO));
+		assertEquals(HttpStatus.OK, patchResponse.getStatus(),
+				"A product offering should be patchable with external references.");
+
+		ProductOfferingVO readBack = retrieve(id);
+		JsonNode created = objectMapper.valueToTree(createVO);
+		JsonNode patched = objectMapper.valueToTree(updateVO);
+		boolean keepsCreated = !generalProperties.isReplaceOnUpdate()
+				&& environment.getActiveNames().contains(ORION_LD_ENVIRONMENT);
+		assertAll(LIST_REFERENCES.stream().map(attribute -> () -> {
+			Map<JsonNode, Long> expected = new HashMap<>(multiset(patched.get(attribute)));
+			if (keepsCreated) {
+				multiset(created.get(attribute)).forEach((entry, count) -> expected.merge(entry, count, Long::sum));
+			}
+			assertEquals(expected, multiset(objectMapper.valueToTree(readBack).get(attribute)),
+					String.format("A patch swapping the ids of %s should %s the created entries.", attribute,
+							keepsCreated ? "(known defect) keep" : "drop"));
+		}));
+	}
+
+	// checks the create response and the read-back
+	private String createWithAllReferences(ProductOfferingCreateVO createVO) throws Exception {
+		HttpResponse<ProductOfferingVO> createResponse = callAndCatch(
+				() -> productOfferingApiTestClient.createProductOffering(null, createVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(),
+				"A product offering with external references should be created.");
+		String id = createResponse.body().getId();
+		assertPayloads(createVO, createResponse.body(), ALL_REFERENCES, "create response");
+		assertPayloads(createVO, retrieve(id), ALL_REFERENCES, "retrieval after create");
+		return id;
+	}
+
+	private ProductOfferingCreateVO createWithAllReferencesVO() {
+		return productOfferingCreate()
+				.agreement(List.of(agreementRef(CREATE, CREATED_POSITION), agreementRef(CREATE, CREATED_POSITION + 1)))
+				.bundledProductOffering(List.of(bundledProductOffering(CREATE, CREATED_POSITION),
+						bundledProductOffering(CREATE, CREATED_POSITION + 1)))
+				.category(List.of(externalCategoryRef(CREATE, CREATED_POSITION),
+						externalCategoryRef(CREATE, CREATED_POSITION + 1)))
+				.channel(List.of(channelRef(CREATE, CREATED_POSITION), channelRef(CREATE, CREATED_POSITION + 1)))
+				.marketSegment(List.of(marketSegmentRef(CREATE, CREATED_POSITION),
+						marketSegmentRef(CREATE, CREATED_POSITION + 1)))
+				.place(List.of(placeRef(CREATE, CREATED_POSITION), placeRef(CREATE, CREATED_POSITION + 1)))
+				.productOfferingPrice(List.of(productOfferingPriceRef(CREATE, CREATED_POSITION),
+						productOfferingPriceRef(CREATE, CREATED_POSITION + 1)))
+				.productOfferingRelationship(List.of(productOfferingRelationship(CREATE, CREATED_POSITION),
+						productOfferingRelationship(CREATE, CREATED_POSITION + 1)))
+				.productSpecification(productSpecificationRef(CREATE))
+				.resourceCandidate(resourceCandidateRef(CREATE))
+				.serviceCandidate(serviceCandidateRef(CREATE))
+				.serviceLevelAgreement(slaRef(CREATE));
+	}
+
+	// the lists start at patchPosition; the single references keep their ids
+	private static ProductOfferingUpdateVO updateWithAllReferences(int patchPosition) {
+		return ProductOfferingUpdateVOTestExample.build().atSchemaLocation(null)
+				.agreement(List.of(agreementRef(PATCH, patchPosition), agreementRef(PATCH, patchPosition + 1)))
+				.bundledProductOffering(List.of(bundledProductOffering(PATCH, patchPosition),
+						bundledProductOffering(PATCH, patchPosition + 1)))
+				.category(List.of(externalCategoryRef(PATCH, patchPosition),
+						externalCategoryRef(PATCH, patchPosition + 1)))
+				.channel(List.of(channelRef(PATCH, patchPosition), channelRef(PATCH, patchPosition + 1)))
+				.marketSegment(List.of(marketSegmentRef(PATCH, patchPosition),
+						marketSegmentRef(PATCH, patchPosition + 1)))
+				.place(List.of(placeRef(PATCH, patchPosition), placeRef(PATCH, patchPosition + 1)))
+				.productOfferingPrice(List.of(productOfferingPriceRef(PATCH, patchPosition),
+						productOfferingPriceRef(PATCH, patchPosition + 1)))
+				.productOfferingRelationship(List.of(productOfferingRelationship(PATCH, patchPosition),
+						productOfferingRelationship(PATCH, patchPosition + 1)))
+				.productSpecification(productSpecificationRef(PATCH))
+				.resourceCandidate(resourceCandidateRef(PATCH))
+				.serviceCandidate(serviceCandidateRef(PATCH))
+				.serviceLevelAgreement(slaRef(PATCH));
+	}
+
+	private void assertPayloads(Object posted, ProductOfferingVO readBack, List<String> attributes, String stage) {
+		assertAll(attributes.stream().map(attribute -> () -> assertPayload(posted, readBack, attribute, stage)));
+	}
+
+	private void assertPayload(Object posted, ProductOfferingVO readBack, String attribute, String stage) {
+		JsonNode expected = objectMapper.valueToTree(posted).get(attribute);
+		assertNotNull(expected, "The request should carry " + attribute);
+		assertEquals(multiset(expected), multiset(objectMapper.valueToTree(readBack).get(attribute)),
+				String.format("The posted %s should be read back intact in the %s.", attribute, stage));
+	}
+
+	// the broker does not keep the order of a multi-instance relationship; counting, unlike a set, catches duplicates
+	private static Map<JsonNode, Long> multiset(JsonNode node) {
+		if (node == null) {
+			return Map.of();
+		}
+		Stream<JsonNode> entries = node.isArray() ? StreamSupport.stream(node.spliterator(), false) : Stream.of(node);
+		return entries.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+	}
+
+	private static String externalId(String type, int position) {
+		return String.format("urn:ngsi-ld:%s:remote-%d", type, position);
+	}
+
+	private static String remoteName(String stage) {
+		return String.format("%s (%s)", REMOTE_NAME, stage);
+	}
+
+	private static String externalHref(String path, String id) {
+		return EXTERNAL_BASE_URL + path + id;
+	}
+
+	private static AgreementRefVO agreementRef(String stage, int position) {
+		String id = externalId(AGREEMENT_ID_TYPE, position);
+		return new AgreementRefVO().id(id).href(URI.create(externalHref(AGREEMENT_PATH, id))).name(remoteName(stage))
+				.atReferredType(REFERRED_TYPE_AGREEMENT);
+	}
+
+	private static BundledProductOfferingVO bundledProductOffering(String stage, int position) {
+		String id = externalId(PRODUCT_OFFERING_ID_TYPE, position);
+		return new BundledProductOfferingVO().id(id).href(externalHref(PRODUCT_OFFERING_PATH, id)).name(remoteName(stage))
+				.lifecycleStatus(REMOTE_LIFECYCLE_STATUS)
+				.bundledProductOfferingOption(new BundledProductOfferingOptionVO()
+						.numberRelOfferDefault(position + 1)
+						.numberRelOfferLowerLimit(position)
+						.numberRelOfferUpperLimit(position + 2));
+	}
+
+	private static CategoryRefVO externalCategoryRef(String stage, int position) {
+		String id = externalId(CATEGORY_ID_TYPE, position);
+		return new CategoryRefVO().id(id).href(URI.create(externalHref(CATEGORY_PATH, id))).name(remoteName(stage))
+				.version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_CATEGORY);
+	}
+
+	private static ChannelRefVO channelRef(String stage, int position) {
+		String id = externalId(CHANNEL_ID_TYPE, position);
+		return new ChannelRefVO().id(id).href(URI.create(externalHref(CHANNEL_PATH, id))).name(remoteName(stage))
+				.atReferredType(REFERRED_TYPE_CHANNEL);
+	}
+
+	private static MarketSegmentRefVO marketSegmentRef(String stage, int position) {
+		String id = externalId(MARKET_SEGMENT_ID_TYPE, position);
+		return new MarketSegmentRefVO().id(id).href(externalHref(MARKET_SEGMENT_PATH, id)).name(remoteName(stage))
+				.atReferredType(REFERRED_TYPE_MARKET_SEGMENT);
+	}
+
+	private static PlaceRefVO placeRef(String stage, int position) {
+		String id = externalId(PLACE_ID_TYPE, position);
+		return new PlaceRefVO().id(id).href(URI.create(externalHref(PLACE_PATH, id))).name(remoteName(stage))
+				.atReferredType(REFERRED_TYPE_PLACE);
+	}
+
+	private static ProductOfferingPriceRefOrValueVO productOfferingPriceRef(String stage, int position) {
+		String id = externalId(PRODUCT_OFFERING_PRICE_ID_TYPE, position);
+		return new ProductOfferingPriceRefOrValueVO().id(id).href(URI.create(externalHref(PRODUCT_OFFERING_PRICE_PATH, id)))
+				.name(remoteName(stage)).atReferredType(REFERRED_TYPE_PRODUCT_OFFERING_PRICE);
+	}
+
+	private static ProductOfferingRelationshipVO productOfferingRelationship(String stage, int position) {
+		String id = externalId(PRODUCT_OFFERING_ID_TYPE, position);
+		return new ProductOfferingRelationshipVO().id(id).href(URI.create(externalHref(PRODUCT_OFFERING_PATH, id)))
+				.name(remoteName(stage)).relationshipType(REMOTE_RELATIONSHIP_TYPE).role(REMOTE_ROLE)
+				.validFor(new TimePeriodVO().startDateTime(REMOTE_VALID_FROM))
+				.atReferredType(REFERRED_TYPE_PRODUCT_OFFERING);
+	}
+
+	private static ProductSpecificationRefVO productSpecificationRef(String stage) {
+		String id = externalId(PRODUCT_SPECIFICATION_ID_TYPE, CREATED_POSITION);
+		return new ProductSpecificationRefVO().id(id).href(URI.create(externalHref(PRODUCT_SPECIFICATION_PATH, id)))
+				.name(remoteName(stage)).version(REMOTE_VERSION)
+				.targetProductSchema(new TargetProductSchemaVO().atType(REMOTE_SCHEMA_TYPE)
+						.atSchemaLocation(URI.create(EXTERNAL_BASE_URL + REMOTE_SCHEMA_PATH)))
+				.atReferredType(REFERRED_TYPE_PRODUCT_SPECIFICATION);
+	}
+
+	private static ResourceCandidateRefVO resourceCandidateRef(String stage) {
+		String id = externalId(RESOURCE_CANDIDATE_ID_TYPE, CREATED_POSITION);
+		return new ResourceCandidateRefVO().id(id).href(URI.create(externalHref(RESOURCE_CANDIDATE_PATH, id)))
+				.name(remoteName(stage)).version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_RESOURCE_CANDIDATE);
+	}
+
+	private static ServiceCandidateRefVO serviceCandidateRef(String stage) {
+		String id = externalId(SERVICE_CANDIDATE_ID_TYPE, CREATED_POSITION);
+		return new ServiceCandidateRefVO().id(id).href(URI.create(externalHref(SERVICE_CANDIDATE_PATH, id)))
+				.name(remoteName(stage)).version(REMOTE_VERSION).atReferredType(REFERRED_TYPE_SERVICE_CANDIDATE);
+	}
+
+	private static SLARefVO slaRef(String stage) {
+		String id = externalId(SLA_ID_TYPE, CREATED_POSITION);
+		return new SLARefVO().id(id).href(externalHref(SLA_PATH, id)).name(remoteName(stage))
+				.atReferredType(REFERRED_TYPE_SLA);
 	}
 
 	private ProductOfferingCreateVO productOfferingCreate() {
@@ -285,10 +577,10 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private void assertCategoriesReadBack(String productOfferingId, List<CategoryRefVO> expected, String message)
 			throws Exception {
 		List<CategoryRefVO> readBack = retrieve(productOfferingId).getCategory();
-		// only ids: ProductOffering.category fetches its targets, so an external one reads back without its
-		// href/name until ticket 5 stores the reference payload inline (fromProperties)
-		assertEquals(expected.stream().map(CategoryRefVO::getId).sorted().toList(),
-				readBack.stream().map(CategoryRefVO::getId).sorted().toList(), message);
+		// ProductOffering.category is read from the relationship's own properties (ticket 88), so the whole posted
+		// reference round-trips
+		assertEquals(multiset(objectMapper.valueToTree(expected)), multiset(objectMapper.valueToTree(readBack)),
+				message);
 	}
 
 	private static void assertRejected(HttpResponse<?> response) {
