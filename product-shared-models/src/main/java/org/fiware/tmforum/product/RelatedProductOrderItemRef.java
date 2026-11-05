@@ -20,8 +20,8 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class RelatedProductOrderItemRef extends Entity implements ReferencedEntity {
 
-	// the relationship object: written through getEntityId and read through the String constructor, so the accessors
-	// only serve the VO mapping
+	// the relationship object: written through getEntityId and read through the String constructor. The accessors
+	// serve the VO mapping and the plain-JSON form wherever the ref is embedded as a value (e.g. ProductRefOrValue)
 	@Getter
 	@Setter
 	private URI productOrderId;

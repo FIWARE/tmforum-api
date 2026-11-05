@@ -237,6 +237,9 @@ Same procedure for `account` (3), `agreement` (4), `customer-bill-management` (3
     `productOrderHref` onto the id. Pinned broker-less by `account/.../DefaultPaymentMethodRoundTripTest`,
     `customer-bill-management/.../PaymentMethodRoundTripTest` and
     `product-inventory/.../ProductOrderItemRoundTripTest`. `RelationshipTargetConstructorTest` has no allow-list now.
+    The new `productOrderId` getter also makes Jackson write the id wherever the ref is embedded as a plain-JSON
+    value (`ProductRefOrValue.productOrderItem` in product-ordering-management and quote, and the redis cache), where
+    it was dropped before. Their orion-ld ITs pass with it: product-ordering-management 149/0/36, quote 90/0/22.
 
 ### Step 5: Remove read-time resolution from the NGSI-LD adapter
 **Blocked** until the customer-bill `FinancialAccountRef.accountBalance` encoding is decided (see Step 1 result).
