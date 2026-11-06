@@ -31,6 +31,8 @@ class RelationshipsReadFromPropertiesTest {
 	// a pointer to the broker subscription, not a reference payload: reads use only its id, so it is not embedded
 	private static final Set<Class<?>> EXEMPT_TARGETS = Set.of(Subscription.class);
 
+	private static final String TARGET_CLASS_ATTRIBUTE = "targetClass";
+
 	private static final List<Class<? extends Annotation>> MAPPING_ANNOTATIONS =
 			List.of(AttributeGetter.class, AttributeSetter.class);
 
@@ -51,6 +53,22 @@ class RelationshipsReadFromPropertiesTest {
 
 		assertTrue(offenders.isEmpty(),
 				"Relationship setters without fromProperties = true resolve their target on read:\n"
+						+ String.join("\n", offenders));
+	}
+
+	// without a targetClass the setter falls back to the annotation default, which has no mapped fields to check
+	@Test
+	void everyRelationshipNamesItsTargetClass() throws Exception {
+		Object defaultTarget = AttributeSetter.class.getMethod(TARGET_CLASS_ATTRIBUTE).getDefaultValue();
+		TreeSet<String> offenders = new TreeSet<>();
+		for (Map.Entry<String, AttributeSetter> relationship : RelationshipTargets.find().entrySet()) {
+			if (relationship.getValue().targetClass().equals(defaultTarget)) {
+				offenders.add(relationship.getKey());
+			}
+		}
+
+		assertTrue(offenders.isEmpty(),
+				"Relationship setters without a targetClass escape the target checks:\n"
 						+ String.join("\n", offenders));
 	}
 
