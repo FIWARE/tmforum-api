@@ -305,6 +305,14 @@ decision. Whoever picks the encoding removes that entry together with the getter
   twice in one call" comment in the `application-in-memory.yaml`/`application-redis.yaml` files if it no longer
   fits.
 - Acceptance: `mvn test` and `mvn integration-test` pass on both brokers, and with `-Dcache=redis`.
+  - **Result:** the `entities` cache comment in every `application-in-memory.yaml`/`application-redis.yaml` now says
+    it dedups one request's reads of an entity (get after create/update, reference checks). ITs at ba689bee
+    (`mvn verify -pl <module> -Dbroker=<broker> -Dcache=<cache> -DskipTests`, run/failed/skipped, orion-ld |
+    scorpio | orion-ld with `-Dcache=redis`): product-catalog 400/0/115 | 400/0/125 | 400/0/115 (the new
+    `ExternalReferenceIT#retrieveProductOfferingDoesNotFetchReferences` runs on all three), account 241/0/119 |
+    241/0/129 | 241/0/119, customer-bill-management 120/0/53 | 120/0/53 | 120/0/53, product-inventory 127/0/22 |
+    127/0/32 | 127/0/22. The counts match Step 4 plus the one new IT. The other modules' ITs were not re-run for this
+    step.
 
 ### Step 6: Pin inline references in the backend-neutral port contract
 - `storage-api/src/test/.../contract/`: add an optional `ReferenceFixture<T>` (or default methods on
