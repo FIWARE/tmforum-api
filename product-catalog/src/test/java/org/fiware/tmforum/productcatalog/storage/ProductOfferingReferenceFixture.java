@@ -76,7 +76,12 @@ class ProductOfferingReferenceFixture implements ReferenceFixture<ProductOfferin
 
 	@Override
 	public URI targetId(ProductOffering entity) {
-		return entity.getCategory().getFirst().getId();
+		// the name-less reference, so a resolving read would fill the target's name in
+		return entity.getCategory().stream()
+				.filter(categoryRef -> categoryRef.getName() == null)
+				.findFirst()
+				.orElseThrow()
+				.getId();
 	}
 
 	@Override
