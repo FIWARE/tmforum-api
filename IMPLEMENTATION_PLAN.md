@@ -92,7 +92,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   - `findEntities`/`findEntitiesPolymorphic`: `type = ANY($types)`, optional `id = ANY($ids)`,
     `ORDER BY created_at, id LIMIT/OFFSET`, `count(*) OVER ()` as `totalCount`; always emits a page (also empty);
     polymorphic maps each row by its `type` column through `typeToClass`. `query`/`orderBy` -> the interim failure
-    defined above.
+    defined above. A page with no rows has no window count, so when it comes back empty and `offset > 0` a second
+    `SELECT count(*)` with the same predicate supplies `totalCount` (never report 0 for "past the last match": the
+    contract accepts only null or the real count, and the total-count header must stay correct). Add a unit/IT
+    case for an offset past the last match.
   - `PostgresFailures` (mirrors `BrokerFailures`): connection/timeout errors -> UNAVAILABLE, the rest UNKNOWN, with
     the step's `StorageOperation`.
   - `importDomainEntity(T entity, Instant updatedAt)`: public adapter method (not on the port) for ticket 8, which
@@ -135,30 +138,65 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 
 ### Step 6: Transactional event outbox and dispatcher
 - `V2__event_outbox.sql`: `tmforum.event_outbox (id bigint generated always as identity primary key, event_kind
-  text not null, entity_id text not null, entity_class text not null, new_state jsonb not null, old_state jsonb,
+  text not null, entity_id text not null, entity_type text not null, new_state jsonb, old_state jsonb,
   created_at timestamptz not null default now(), attempts int not null default 0, next_attempt_at timestamptz not
-  null default now())`. No extra index (decision 12).
-- `common`: `EntityEventPublisher` interface (`<T> Mono<Void> createWithEvent(T)`,
-  `<T> Mono<T> updateWithEvent(String id, T patch, T oldState, Class<T>)`, returning the new state).
-  `DirectEntityEventPublisher` (`@Requires(notEnv = "postgresql")`) holds today's controller code unchanged: write,
-  then fire-and-forget `TMForumEventHandler`. `AbstractApiController.create`/`patch` call the publisher instead of
-  `repository` + `eventHandler`; `relatedEntityHandlingMono` keeps calling the repository (no events, as today).
+  null default now())`. `event_kind` is CREATE, UPDATE or DELETE; `new_state` is null for DELETE, `old_state` null
+  for CREATE. `entity_type` (the NGSI-LD type segment, not a class name) scopes which deployment owns a row, see the
+  dispatcher. No extra index (decision 12).
+- `common`: `EntityEventPublisher` interface:
+  `<T> Mono<Void> createWithEvent(T)`, `<T> Mono<T> updateWithEvent(String id, T patch, Class<T>)` (returns the
+  new state), `Mono<Void> deleteWithEvent(URI id)`. There is no `oldState` parameter: every implementation reads
+  the old state itself, immediately before its write, so both carry the same "state the write replaced".
+  - `DirectEntityEventPublisher` (`@Requires(notEnv = "postgresql")`) holds today's controller behaviour: create,
+    then fire-and-forget `handleCreateEvent`; update = `get` (old state, served from the entity cache the
+    controller's existence check just filled) -> `updateDomainEntity` -> `get` -> fire-and-forget
+    `handleUpdateEvent`; delete = `deleteDomainEntity` only, because on the broker DeleteEvents keep coming from
+    `NgsiLdEventHandler` via the NGSI-LD subscriptions (firing one here would duplicate them).
+  - `AbstractApiController.create`/`patch`/`delete` call the publisher instead of `repository` + `eventHandler`.
+    `patch` keeps its existence check (404 before reference validation); `relatedEntityHandlingMono` keeps calling
+    the repository (no events, as today).
 - `storage-postgresql`: `OutboxEntityEventPublisher` uses new transactional methods on `PostgresEntityRepository`
   that, in one transaction, write the entity and insert the outbox row (`create`: new_state = written document;
-  `update`: `SELECT data ... FOR UPDATE` as old_state, merge as in Step 4, `RETURNING data` as new_state). Rollback
-  of either rolls back both. Skip the outbox row for `TMForumSubscription` (as `makeEventDetails` does).
+  `update`: `SELECT data ... FOR UPDATE` as old_state, merge as in Step 4, `RETURNING data` as new_state;
+  `delete`: `DELETE ... RETURNING type, data` as old_state, 0 rows -> NOT_FOUND and no outbox row). Rollback of
+  either statement rolls back both. Skip the outbox row for `TMForumSubscription` (as `makeEventDetails` does).
+  On PG the API is the only writer, so API create/patch/delete are every change there is (no broker-originated
+  events to replace).
+- `NotificationSender`: new `deliverNotifications(List<TMForumNotification>)` returning a `Mono<Void>` that
+  completes only when every POST got a 2xx and errors otherwise (one attempt per callback, no resilience4j retry:
+  the outbox backoff is the retry, which keeps the lease short). `sendNotifications` keeps its fire-and-forget
+  behaviour for the broker path.
+- `TMForumEventHandler`: outbox overloads `handleCreateEvent`/`handleUpdateEvent`/`handleDeleteEvent` taking the
+  outbox `created_at` as event time and a deterministic event id (`UUID.nameUUIDFromBytes(outboxId + eventType)`),
+  so retries carry the same `eventId`. They go through `deliverNotifications`, so their `Mono` fails when any
+  delivery fails. `handleDeleteEvent` builds the same `<Type>DeleteEvent` payload `NgsiLdEventHandler` produces
+  today (reuse its event construction, do not fork it). The existing signatures keep their behaviour.
 - `OutboxDispatcher` (`@Scheduled(fixedDelay = "${tmforum.outbox.poll-interval:1s}")`, config record
-  `OutboxProperties` with `poll-interval`, `batch-size`, `max-backoff`, all with units): claims due rows with
-  `FOR UPDATE SKIP LOCKED LIMIT batch-size`, deserializes `new_state`/`old_state` into `entity_class`, calls
-  `TMForumEventHandler.handleCreateEvent`/`handleUpdateEvent`, deletes the row on success, else increments
-  `attempts` and pushes `next_attempt_at` with capped exponential backoff. At-least-once.
-- `TMForumEventHandler`: overloads taking the outbox `created_at` as event time and a deterministic event id
-  (`UUID.nameUUIDFromBytes(outboxId + eventType)`), so retries carry the same `eventId`; the existing signatures keep
-  their behaviour for the broker path.
+  `OutboxProperties` with `poll-interval`, `batch-size`, `lease`, `max-backoff`, all with units):
+  - Ownership: the claim only takes rows whose `entity_type` is in the union of `getEntityClassMapping()` keys of
+    the app's `EventMapper` beans, so product-catalog never claims party-catalog rows (all-in-one owns all types).
+    The state documents are deserialized into the domain class of that type's `EventMapping` (confirm whether
+    `rawClass` or `targetClass` is the domain class).
+  - Transaction boundaries: (1) claim + lease in one short auto-committed statement:
+    `UPDATE tmforum.event_outbox SET attempts = attempts + 1, next_attempt_at = now() + $lease WHERE id IN
+    (SELECT id FROM tmforum.event_outbox WHERE next_attempt_at <= now() AND entity_type = ANY($types) ORDER BY id
+    FOR UPDATE SKIP LOCKED LIMIT $batch) RETURNING *`. No transaction or lock is held during delivery; the lease
+    keeps other instances off the row, and a crashed instance's rows become due again when the lease expires.
+    (2) deliver through the outbox overloads. (3) on success `DELETE` the row; on failure `UPDATE ...
+    next_attempt_at = now() + least(poll-interval * 2^attempts, max-backoff)`. `lease` must exceed the time one
+    batch can take (HTTP client read timeout x callbacks per batch); document that in `OutboxProperties`.
+  - At-least-once: a row is deleted only after every callback acknowledged it. A partly failed row is redelivered
+    to all its subscribers with the same `eventId` (consumers deduplicate on it).
 - Note: delivery on PG needs subscription lookup with a query (ticket 7); until then rows stay pending and retry.
-  Tests therefore cover: unit tests of `DirectEntityEventPublisher` (same behaviour as before) and of the dispatcher
-  with a mocked `TMForumEventHandler` (success deletes, failure backs off, parameterized); a PG IT asserting entity +
-  outbox row commit together and that a failing outbox insert leaves no entity row.
+  Tests therefore cover:
+  - unit tests of `DirectEntityEventPublisher` (same events, same order as before, no event on delete);
+  - `NotificationSender.deliverNotifications` (all 2xx completes, one failing callback errors, parameterized);
+  - the dispatcher with a mocked `TMForumEventHandler`, parameterized over CREATE/UPDATE/DELETE: success deletes
+    the row; a failing callback leaves the row with `attempts + 1` and a pushed `next_attempt_at`; the backoff is
+    capped;
+  - PG ITs: entity + outbox row commit together, and a failing outbox insert leaves no entity row (also for delete);
+    two dispatchers with disjoint type sets each claim only their own rows; a leased row is not claimed again
+    before the lease expires.
 
 ### Step 7: Health indicator, module rollout and storage-neutral IT cleanup
 - `PostgresReadinessIndicator` (`@Readiness @Requires(env = "postgresql")`, `SELECT 1` with a configured timeout),
@@ -173,7 +211,7 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   contacts the broker at startup with `@Requires(notEnv = "postgresql")`.
 - `common/.../test`: `TestEntityCleaner` interface; `AbstractApiIT.cleanUp` delegates to it. NGSI-LD implementation
   = today's broker query+delete; `PostgresTestEntityCleaner` (main code of `storage-postgresql`, like `common.test`)
-  = `DELETE FROM tmforum.entity WHERE type = $1` plus outbox rows of that entity. Keep the `AbstractApiIT`
+  = `DELETE FROM tmforum.entity WHERE type = $1` plus `DELETE FROM tmforum.event_outbox WHERE entity_type = $1`. Keep the `AbstractApiIT`
   constructor signature so the 73 ITs need no changes.
 - Tests: health indicator unit test (up/down, parameterized); a startup smoke IT in `all-in-one` with
   `environments = "postgresql"`.
@@ -182,9 +220,16 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - `-Dbroker=postgresql`: verify the full IT suite of each module runs against PG. Inventory the ITs that cannot run
   on PG yet and exclude them only in a `broker=postgresql`-activated profile (prefer JUnit 5 tags + failsafe
   `excludedGroups`; a precise name pattern is acceptable): (a) list/filter/sort tests and hub registration/event
-  delivery tests (ticket 7), (b) tests that talk to the broker directly via `EntitiesApiClient`, the NGSI-LD
-  contract ITs and NGSI-LD subscription ITs (broker-only). Each exclusion names the ticket that lifts it. CRUD tests
-  (create/get/patch/delete, references, TMF730 sub-types, extensions) must run and pass unchanged.
+  delivery tests (ticket 7), (b) broker-only tests: the NGSI-LD contract ITs and the NGSI-LD subscription ITs. Each
+  exclusion names the ticket that lifts it. CRUD tests (create/get/patch/delete, references, TMF730 sub-types,
+  extensions) must run and pass unchanged. Passing an `EntitiesApiClient` to the `AbstractApiIT` constructor does
+  not make an IT broker-only.
+- Port the 6 ITs that call `EntitiesApiClient` directly (`ProductOrderItemApiIT`,
+  `EntitySpecificationRelationshipIT`, `CustomerBillApiIT`, `AppliedCustomerBillingRateApiIT`,
+  `ExtendedAppliedCustomerBillingRateApiIT`, `FinancialAccountRefIT`) to seed through the injected
+  `EntityRepository` (`createDomainEntity`), so the read-only resources (CustomerBill, AppliedCustomerBillingRate)
+  keep their GET coverage on every backend. Only an assertion that inspects the broker's own representation stays
+  in bucket (b), split into its own test method.
 - One-query GET: `GetIssuesOneQueryIT` (product-catalog, `environments = "postgresql"`) wrapping the
   `ConnectionFactory` with `io.r2dbc:r2dbc-proxy` (test scope) to count statements; `GET /productOffering/{id}` with
   references issues exactly one statement. Also assert the id format `urn:ngsi-ld:product-offering:<id>` in the
@@ -195,8 +240,12 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - Docs: `release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md` (new adapter and how to enable it; schema; atomic
   PATCH, so the #179 concurrent-merge race no longer happens, callers relying on merged lists must not;
   at-least-once TMForum events with stable `eventId` on PG vs fire-and-forget on the broker (accepted deviation,
-  ticket 0/9); `\u0000` rejected with 400 and the broker behaviour observed for it; interim limits until ticket 7);
+  ticket 0/9); DeleteEvents on PG come from the outbox, on the broker from `NgsiLdEventHandler`; `\u0000` rejected
+  with 400 and the broker behaviour observed for it; interim limits until ticket 7);
   update `storage-api/README.md` ("Today the only adapter..."), `storage-postgresql/README.md`, and `AGENTS.md`
-  (module, `-Dbroker=postgresql`, `k3s/postgresql-db`).
+  (module, `-Dbroker=postgresql`, `k3s/postgresql-db`; replace the "only place TMForum events are fired" line with:
+  API create/patch/delete events go through `EntityEventPublisher` (direct on the broker, outbox on PG);
+  broker-originated events, including all DeleteEvents on the broker, come from `NgsiLdEventHandler` via NGSI-LD
+  subscriptions created in `AbstractSubscriptionApiController`).
 - Acceptance: all 6 matrix combinations green; contract ITs green for NGSI-LD (broker jobs) and PostgreSQL (every
   job).
