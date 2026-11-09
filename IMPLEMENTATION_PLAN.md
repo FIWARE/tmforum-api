@@ -62,35 +62,40 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - Acceptance: `mvn clean install -pl storage-postgresql -am` and `mvn integration-test -pl storage-postgresql` pass.
 
 ### Step 2: JSONB mapping of domain POJOs (Jackson 3) and `\u0000` rejection
-- `PostgresMappingModule` (a `JacksonModule` bean, `@Requires(env = "postgresql")`; never a
-  `BeanCreatedEventListener`) plus a `PostgresDocumentMapper` that turns a domain object into a jsonb document and
-  back for a given class:
+- `PostgresDocumentMapper` (`@Singleton @Requires(env = "postgresql")`) turns a domain object into a jsonb document
+  and back for a given class. It holds a document mapper derived from the application `ObjectMapper` (`rebuild()`,
+  so it keeps `TmForumMappingModule`/`FieldCleaningModule`) with `PostgresMappingModule` added. That module is a plain
+  Jackson module registered only on the derived mapper, not a `JacksonModule` bean, so API serialization, the Redis
+  caches (e.g. `TMForumSubscription` lists) and events keep today's `Entity` serialization in every environment:
   - instantiation through the domain classes' `(String id)` constructor (they have no no-arg constructor and a final
     `type`); `type` is written but ignored on read;
   - unknown/additional properties: `Entity.additionalProperties` is a `List<UnmappedProperty>` (name/value pairs)
     behind the mapping library's `@UnmappedPropertiesGetter/Setter`, which Jackson ignores, so plain Jackson would
-    write an `additionalProperties` array. `PostgresMappingModule` registers a mixin for `Entity` that
-    `@JsonIgnore`s the list and adapts it with `@JsonAnyGetter` (each pair as a top-level key) and `@JsonAnySetter`
-    (each key no declared property takes becomes an `UnmappedProperty` via `addAdditionalProperties`), so extension
-    fields round-trip and an update patch replaces them per key like any other attribute. Collision rule: a
-    declared property name always wins; the any-getter skips an extension entry whose name is a declared property
-    of the class (whether or not that property is null), so the document never has a duplicate key and a read
-    puts the stored value into the declared field. Add a contract case to `AbstractEntityRepositoryContractTest`
+    write an `additionalProperties` array. A mix-in cannot add members, and `Entity` has no `Map` getter for
+    `@JsonAnyGetter`, so the two directions use different mechanisms. Write: `PostgresMappingModule` registers a
+    `ValueSerializerModifier` (Jackson 3's `BeanSerializerModifier`) that, for every `Entity` subclass, removes the
+    `additionalProperties` bean property and appends a writer emitting each `UnmappedProperty` as a top-level field.
+    Read: a mix-in for `Entity` puts `@JsonIgnore` on `getAdditionalProperties`/`setAdditionalProperties` and
+    `@JsonAnySetter` on the existing `addAdditionalProperties(String, Object)`, so each key no declared property
+    takes becomes an `UnmappedProperty`. Extension fields round-trip and an update patch replaces them per key like
+    any other attribute. Collision rule: a declared property name always wins; the serializer modifier knows the
+    class's declared bean properties and skips an extension entry with such a name (whether or not that property
+    is null), so the document never has a duplicate key and a read puts the stored value into the declared
+    field. No domain class gains a member. Add a contract case to `AbstractEntityRepositoryContractTest`
     (an extension entry named like a declared property; the declared value reads back, the entry is gone), so both
     adapters must agree; if the NGSI-LD adapter differs, its contract IT records it in `knownDeviations()` and
     in ticket 0;
   - references (`RefEntity` and subclasses) stored inline with every field the writer sent (ticket 5 semantics);
   - two write modes: full document (create) and "carried attributes only" (update: null fields omitted, an emptied
     list kept as `[]`).
-  Use the application `ObjectMapper` (it carries `TmForumMappingModule`/`FieldCleaningModule`); do not create a
-  private mapper unless a module above conflicts, and then document why.
+  Never build a mapper from scratch: the document mapper is always derived from the application one, so a module
+  added to the application mapper later reaches the stored document too.
 - Not-stored fields (parity with the port contract): the `EntityReadRepository.get` Javadoc makes customer-bill
   `FinancialAccountRef.accountBalance` "not stored yet, reads back absent" part of the port contract, and the ticket
   requires identical response payloads on every backend, so PG drops it too. Add a marker annotation
   `@NotStored` to `storage-api` (Javadoc: not persisted by any adapter until its encoding is decided, see
-  `EntityReadRepository.get`), put it on that field, and have `PostgresDocumentMapper` use a mapper derived from
-  the application one (`rebuild()` with an annotation introspector that ignores `@NotStored` properties) for the
-  stored document only; API serialization, caches and events are unaffected. The NGSI-LD adapter already drops it,
+  `EntityReadRepository.get`), put it on that field, and give the derived document mapper above an annotation
+  introspector that ignores `@NotStored` properties; API serialization, caches and events are unaffected. The NGSI-LD adapter already drops it,
   so this is the contract, not a deviation: `knownDeviations()` stays empty. Test: a round-trip case asserting the
   field reads back absent; `FinancialAccountRefIT` (ported in Step 8) asserts the same on every backend.
 - `NullCharacterValidator`: walks the produced `JsonNode`, finds the first string value or key containing `\u0000`
@@ -107,7 +112,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   with a declared property name); update-mode serialization (null omitted, `[]` kept);
   parameterized `\u0000` cases (top-level, nested, in a list, in a key) x write mode (create, update) asserting the
   reported path and operation.
-- Acceptance: unit tests green; no NGSI-LD types referenced in the module except `MappingEnabled`.
+- Tests also cover that the application `ObjectMapper` in the `postgresql` env still serializes an `Entity`'s
+  `additionalProperties` as today (the module is not global).
+- Acceptance: unit tests green; no NGSI-LD types referenced in the module except `MappingEnabled` and the mapping
+  library's `UnmappedProperty`.
 
 ### Step 3: PostgreSQL entity repository: get, create, delete, unfiltered list
 - `PostgresEntityRepository implements EntityRepository` (`@Singleton @Primary @Requires(env = "postgresql")`):
