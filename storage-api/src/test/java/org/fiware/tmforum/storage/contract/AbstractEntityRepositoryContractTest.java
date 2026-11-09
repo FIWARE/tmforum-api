@@ -75,9 +75,10 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     }
 
     /**
-     * References of the main class for the inline-reference cases, which skip when empty.
+     * Entities with references for the inline-reference cases, which skip when empty. Pick a class whose references
+     * a resolving adapter would fill in from their targets, so the cases discriminate.
      */
-    protected Optional<ReferenceFixture<T>> referenceFixture() {
+    protected Optional<ReferenceFixture<?>> referenceFixture() {
         return Optional.empty();
     }
 
@@ -186,19 +187,30 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
     @Test
     void createdReferencesRoundTripIntact() {
-        ReferenceFixture<T> references = requireReferenceFixture();
-        T created = references.withReferences(fixture().newId());
-        URI id = create(fixture(), created);
-
-        assertEquals(references.references(created), references.references(read(id)));
+        assertCreatedReferencesRoundTripIntact(requireReferenceFixture());
     }
 
     @Test
     void updateKeepsUntouchedReferences() {
-        ReferenceFixture<T> references = requireReferenceFixture();
-        T created = references.withReferences(fixture().newId());
-        URI id = create(fixture(), created);
-        T update = references.withOneReferenceReplaced(id);
+        assertUpdateKeepsUntouchedReferences(requireReferenceFixture());
+    }
+
+    @Test
+    void getDoesNotResolveReferences() {
+        assertGetDoesNotResolveReferences(requireReferenceFixture());
+    }
+
+    private <R> void assertCreatedReferencesRoundTripIntact(ReferenceFixture<R> references) {
+        R created = references.newEntity(references.newId());
+        URI id = create(references, created);
+
+        assertEquals(references.references(created), references.references(read(references, id)));
+    }
+
+    private <R> void assertUpdateKeepsUntouchedReferences(ReferenceFixture<R> references) {
+        R created = references.newEntity(references.newId());
+        URI id = create(references, created);
+        R update = references.withOneReferenceReplaced(id);
         Map<String, List<?>> expected = new HashMap<>(references.references(created));
         expected.putAll(references.references(update));
         assertTrue(expected.size() > references.references(update).size(),
@@ -206,7 +218,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
         repository().updateDomainEntity(id.toString(), update).block(TIMEOUT);
 
-        Map<String, List<?>> read = references.references(read(id));
+        Map<String, List<?>> read = references.references(read(references, id));
         if (knownDeviations().contains(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES)) {
             Map<String, Set<Object>> merged = asSets(references.references(created));
             asSets(references.references(update))
@@ -218,18 +230,20 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertEquals(expected, read);
     }
 
-    @Test
-    void getDoesNotResolveReferences() {
-        ReferenceFixture<T> references = requireReferenceFixture();
-        T created = references.withReferences(fixture().newId());
-        URI id = create(fixture(), created);
+    // the reference at targetId omits the name its target carries, so a resolving read would fill it in
+    private <R> void assertGetDoesNotResolveReferences(ReferenceFixture<R> references) {
+        R created = references.newEntity(references.newId());
+        URI id = create(references, created);
+        Map<String, List<?>> written = references.references(created);
         URI targetId = references.targetId(created);
         createdIds.add(targetId);
+
         repository().createDomainEntity(references.target(targetId, TARGET_NAME)).block(TIMEOUT);
+        assertEquals(written, references.references(read(references, id)), "Read after the target was created.");
+
         repository().updateDomainEntity(targetId.toString(), references.target(targetId, RENAMED_TARGET_NAME))
                 .block(TIMEOUT);
-
-        assertEquals(references.references(created), references.references(read(id)));
+        assertEquals(written, references.references(read(references, id)), "Read after the target was renamed.");
     }
 
     static Stream<Arguments> pages() {
@@ -345,8 +359,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         return page.items();
     }
 
-    private ReferenceFixture<T> requireReferenceFixture() {
-        Optional<ReferenceFixture<T>> references = referenceFixture();
+    private ReferenceFixture<?> requireReferenceFixture() {
+        Optional<ReferenceFixture<?>> references = referenceFixture();
         assumeTrue(references.isPresent(), "The adapter provides no reference fixture.");
         return references.get();
     }
@@ -359,7 +373,11 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     }
 
     private T read(URI id) {
-        T read = repository().get(id, fixture().entityClass()).block(TIMEOUT);
+        return read(fixture(), id);
+    }
+
+    private <E> E read(EntityFixture<E> entityFixture, URI id) {
+        E read = repository().get(id, entityFixture.entityClass()).block(TIMEOUT);
         assertNotNull(read, "Entity " + id + " should exist.");
         return read;
     }

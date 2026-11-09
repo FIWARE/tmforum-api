@@ -28,7 +28,8 @@ public interface EntityWriteRepository {
      * Known NGSI-LD adapter defect, not a contract rule (ticket 0): on Orion-LD in append mode (no
      * {@code replaceOnUpdate}) an emptied list whose instances carry a datasetId is not cleared; the broker keeps
      * them and adds an empty instance, so later reads fail. For the same reason a carried reference list is merged
-     * into the stored one by id instead of replacing it.
+     * into the stored one by datasetId (not by reference id) instead of replacing it: a stored instance whose datasetId
+     * the update does not carry survives next to the carried ones.
      */
     <T> Mono<Void> updateDomainEntity(String id, T domainEntity);
 

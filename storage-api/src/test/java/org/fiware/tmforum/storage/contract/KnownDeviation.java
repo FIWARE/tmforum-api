@@ -18,8 +18,8 @@ public enum KnownDeviation {
     EMPTY_PAGE_COMPLETES_EMPTY,
 
     /**
-     * An update carrying a reference list keeps the stored references whose ids it does not carry, next to the
-     * carried ones, instead of replacing the list.
+     * An update carrying a reference list keeps the stored references whose datasetIds it does not carry, next to
+     * the carried ones, instead of replacing the list. The merge key is the datasetId, not the reference id.
      */
     REFERENCE_LIST_UPDATE_MERGES,
 

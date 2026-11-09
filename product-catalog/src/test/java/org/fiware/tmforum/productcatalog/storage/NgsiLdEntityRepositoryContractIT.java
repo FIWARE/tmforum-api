@@ -67,7 +67,7 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	}
 
 	@Override
-	protected Optional<ReferenceFixture<Catalog>> referenceFixture() {
-		return Optional.of(new CatalogReferenceFixture());
+	protected Optional<ReferenceFixture<?>> referenceFixture() {
+		return Optional.of(new ProductOfferingReferenceFixture());
 	}
 }

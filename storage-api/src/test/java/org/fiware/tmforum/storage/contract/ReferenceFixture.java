@@ -5,32 +5,34 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Entities of the contract's main class whose references point at ids the backend does not hold, every payload
- * field set, the extra fields of reference subclasses included. Drives the inline-reference cases.
+ * Entities whose references point at ids the backend does not hold, with the extra fields of reference subclasses.
+ * Drives the inline-reference cases. Its class may differ from the contract's main class.
  */
-public interface ReferenceFixture<T> {
+public interface ReferenceFixture<R> extends EntityFixture<R> {
 
     /**
-     * Carries at least two reference attributes.
+     * Carries at least two reference attributes. The reference at {@link #targetId} omits {@code name}, all others
+     * set every payload field.
      */
-    T withReferences(URI id);
+    @Override
+    R newEntity(URI id);
 
     /**
-     * Carries only one of the reference attributes of {@link #withReferences}, with references to other ids.
+     * Carries only one of the reference attributes of {@link #newEntity}, with references to other ids.
      */
-    T withOneReferenceReplaced(URI id);
+    R withOneReferenceReplaced(URI id);
 
     /**
-     * Reference payloads keyed by attribute, comparable with {@code equals}; an attribute the entity does not carry
-     * is left out.
+     * Reference payloads keyed by attribute, comparable with {@code equals} and including {@code name}; an attribute
+     * the entity does not carry is left out.
      */
-    Map<String, List<?>> references(T entity);
+    Map<String, List<?>> references(R entity);
 
     /**
-     * Id of a reference of {@code entity} whose target type the backend stores, so a same-id {@link #target} can
-     * be created.
+     * Id of the reference of {@code entity} that omits {@code name}; the backend stores its target type, so a
+     * same-id {@link #target} can be created.
      */
-    URI targetId(T entity);
+    URI targetId(R entity);
 
     /**
      * A target entity carrying only {@code name}, so it serves both its creation and its rename.

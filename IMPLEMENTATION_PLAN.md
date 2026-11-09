@@ -327,14 +327,18 @@ decision. Whoever picks the encoding removes that entry together with the getter
   `ProductOffering`) carrying external `CategoryRef`s, including an extra-bearing subclass.
 - Document the rule in `storage-api/README.md` and in the Javadoc of `EntityReadRepository#get`: references are
   stored and returned as written and never resolved. Ticket 6 has to pass these cases.
-- **Result:** `ReferenceFixture<T>` is returned by `AbstractEntityRepositoryContractTest#referenceFixture()`
-  (`Optional`, empty skips the three cases). `product-catalog`'s `CatalogReferenceFixture` writes a `Catalog` with
-  external `CategoryRef`s (`version` extra) and `RelatedParty`s (`role` extra); the update replaces only the
-  categories, and the same-id target is a `Category`. `updateKeepsUntouchedReferences` hit the Step 2 PATCH defect
-  on Orion-LD (the replaced category list is merged with the stored one), so it is recorded as
+- **Result:** `AbstractEntityRepositoryContractTest#referenceFixture()` returns a `ReferenceFixture<?>`. It is an
+  `EntityFixture` of its own and may use a class other than the contract's main class. When it is empty, the three
+  cases are skipped. `product-catalog`'s `ProductOfferingReferenceFixture` writes a `ProductOffering` with external
+  `CategoryRef`s (`version` extra) and `ChannelRef`s. Both attributes were flipped in Step 2, so the cases also guard
+  the flip on the NGSI-LD adapter. The update replaces only the categories. The same-id target is a `Category`.
+  The fixture's reference to that `Category` omits `name`. A resolving read used to merge the written sub-properties
+  over the target, so it would fill `name` from the target, and `getDoesNotResolveReferences` (checked after the
+  target is created and again after it is renamed) fails it. `updateKeepsUntouchedReferences` hit the Step 2 PATCH
+  defect on Orion-LD: the replaced category list is merged with the stored one by datasetId. It is recorded as
   `KnownDeviation.REFERENCE_LIST_UPDATE_MERGES` (Orion-LD without `replaceOnUpdate`, next to
-  `EMPTIED_LIST_BREAKS_READS`); the case then asserts the merge, order-insensitively. The port rule (a carried list
-  replaces the stored one) and the defect are in the `updateDomainEntity` Javadoc. `NgsiLd*ContractIT`
+  `EMPTIED_LIST_BREAKS_READS`), and in that setup the case asserts the merge, order-insensitively. The port rule (a
+  carried list replaces the stored one) and the defect are in the `updateDomainEntity` Javadoc. `NgsiLd*ContractIT`
   (`mvn verify -pl product-catalog -Dit.test='NgsiLd*ContractIT' -DskipTests`): 27/0/0 on orion-ld, scorpio and
   scorpio with `-Dcache=redis`.
 
