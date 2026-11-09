@@ -265,7 +265,8 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     shows in the broker's payload (id-only if it carries only id/type), taken from `old_state`. A PG IT asserts
     the payload against the field set the broker IT recorded.
 - `OutboxDispatcher` (`@Scheduled(fixedDelay = "${tmforum.outbox.poll-interval:1s}")`, config record
-  `OutboxProperties` with `enabled`, `poll-interval`, `batch-size`, `lease`, `max-backoff`, durations with units):
+  `OutboxProperties` with `enabled`, `poll-interval`, `batch-size`, `lease`, `max-backoff`, `retention`,
+  `housekeeping-interval`, durations with units):
   - On/off switch: the bean is `@Requires(env = "postgresql")` and
     `@Requires(property = "tmforum.outbox.enabled", notEquals = "false")` (on by default). The test
     `application-postgresql.yaml` of every module sets it to `false`, so no scheduled dispatcher races the outbox
@@ -294,6 +295,22 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     batch); document that in `OutboxProperties`.
   - At-least-once: a row is deleted only after every callback acknowledged it. A partly failed row is redelivered
     to all its subscribers with the same `eventId` (consumers deduplicate on it).
+  - No per-entity ordering, on purpose: each row backs off on its own, so a ChangeEvent can arrive before the
+    CreateEvent of the same entity, or an older ChangeEvent after a newer one. The broker path gives no ordering
+    either (fire-and-forget, parallel POSTs); consumers order by the event's `eventTime` (the outbox `created_at`).
+    Skipping rows behind an earlier pending row of the same `entity_id` would let one dead callback block every
+    later event of that entity for all subscribers, so it is not done. State this next to the at-least-once
+    guarantee in `OutboxProperties`' Javadoc and in the Step 8 release notes.
+  - Retention and observability: `OutboxProperties.retention` (default `7d`) bounds how long a row is retried.
+    A separate `@Scheduled(fixedDelay = "${tmforum.outbox.housekeeping-interval:1m}")` method `housekeeping()`
+    (same bean, same on/off switch, public for the ITs) runs two statements over the owned types only:
+    `DELETE FROM tmforum.event_outbox WHERE entity_type = ANY($types) AND created_at < now() - $retention
+    RETURNING id, event_kind, entity_id, entity_type, attempts`, logging each discarded row at WARN and counting it
+    in the Micrometer counter `tmforum.outbox.discarded` (tags `entity_type`, `event_kind`); then
+    `SELECT count(*), min(created_at) ... WHERE entity_type = ANY($types)`, published as the gauges
+    `tmforum.outbox.pending` and `tmforum.outbox.oldest.age` (seconds), so a stuck outbox shows up in monitoring.
+    Until tickets 1 and 7 land, every row of a mapped type is discarded after `retention`; ticket 9 (which makes
+    PG the default) revisits the default once delivery works.
 - Note: delivery on PG needs subscription lookup with a query (ticket 7) and hub registration without a broker (tickets 1 and 7); until then rows stay pending and retry.
   Tests therefore cover:
   - unit tests of `DirectEntityEventPublisher` (same events, same order as before, no event on delete);
@@ -305,6 +322,9 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     the row; a failing callback leaves the row with `attempts + 1` and a pushed `next_attempt_at`; a CREATE row of
     an entity with an extension field (and a customer-bill `FinancialAccountRef` with `accountBalance`) hands the
     handler an entity carrying both;
+  - `housekeeping()` (PG IT, rows inserted with a backdated `created_at`): a row past `retention` is deleted
+    without delivery and counted in `tmforum.outbox.discarded`, a younger row and a row of a type the dispatcher
+    does not own stay; the gauges report the owned rows' count and oldest age;
   - `OutboxBackoff.delay`, parameterized over `attempts` (0, 1, a value just below the cap, and 100, 10_000,
     `Integer.MAX_VALUE`): grows exponentially, then stays at `max-backoff` without overflowing;
   - PG ITs (all with `tmforum.outbox.enabled: false`, dispatchers driven through `dispatchOnce()`): entity + outbox
@@ -365,7 +385,8 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - Docs: `release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md` (new adapter and how to enable it; schema; atomic
   PATCH, so the #179 concurrent-merge race no longer happens, callers relying on merged lists must not;
   at-least-once TMForum events with stable `eventId` on PG vs fire-and-forget on the broker (accepted deviation,
-  ticket 0/9); DeleteEvents on PG come from the outbox, on the broker from `NgsiLdEventHandler`, and the
+  ticket 0/9), no per-entity event ordering on either backend (order by `eventTime`), outbox retention
+  (`tmforum.outbox.retention`, discarded rows logged and counted) and the outbox metrics; DeleteEvents on PG come from the outbox, on the broker from `NgsiLdEventHandler`, and the
   recipient difference the Step 6 broker IT found (PG honours `eventType` and the hub's query); TMF730 sub-type
   patches (resource-inventory, software-management, resource-catalog) now fire update events on every backend,
   the broker included (Step 6); `\u0000` rejected
