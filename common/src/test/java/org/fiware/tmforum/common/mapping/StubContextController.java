@@ -21,6 +21,6 @@ public class StubContextController {
 
 	@Get(produces = LD_JSON)
 	public Map<String, Object> context() {
-		return Map.of(CONTEXT_KEY, Map.of(NAME_TERM, TolerantEntityVOMapperTest.CUSTOM_NAME_IRI));
+		return Map.of(CONTEXT_KEY, Map.of(NAME_TERM, InlineReferencesEntitiesRepositoryTest.CUSTOM_NAME_IRI));
 	}
 }

@@ -4,7 +4,7 @@ import io.github.wistefan.mapping.annotations.MappingEnabled;
 import org.fiware.tmforum.common.domain.EntityWithId;
 
 /**
- * Related entity of {@link CharacterizationEntity}, written by the related-entity handling and looked up on read.
+ * Related entity of {@link CharacterizationEntity}, written by the related-entity handling and read back inline.
  */
 @MappingEnabled(entityType = CharacterizationRelated.TYPE)
 public class CharacterizationRelated extends EntityWithId {

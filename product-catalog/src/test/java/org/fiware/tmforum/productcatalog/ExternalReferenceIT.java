@@ -59,6 +59,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,6 +70,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,6 +85,7 @@ import static org.mockito.Mockito.when;
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 @Property(name = "references.local-hosts", value = ExternalReferenceIT.LOCAL_ALIAS_HOST)
 @Property(name = "references.external-hosts", value = ExternalReferenceIT.EXTERNAL_HOST)
+@Property(name = BrokerRequestRecorder.ENABLED_PROPERTY, value = "true")
 public class ExternalReferenceIT extends AbstractApiIT {
 
 	static final String LOCAL_ALIAS_HOST = "tmf.local-alias.example.org";
@@ -101,6 +105,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private static final String NON_URI_ID_VALUE = "1234";
 	private static final String REMOTE_SERVICE_CANDIDATE_ID = "urn:ngsi-ld:service-candidate:remote-1";
 	private static final String REMOTE_NAME = "Held by another deployment";
+	private static final String FAN_OUT_STAGE = "fan-out";
 	private static final String REMOTE_VERSION = "2.1";
 	private static final String REMOTE_LIFECYCLE_STATUS = "Launched";
 	private static final String REMOTE_RELATIONSHIP_TYPE = "requires";
@@ -189,6 +194,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private final ProductSpecificationApiTestClient productSpecificationApiTestClient;
 	private final GeneralProperties generalProperties;
 	private final Environment environment;
+	private final BrokerRequestRecorder brokerRequestRecorder;
 
 	// cleanUp only removes product offerings
 	private final List<String> createdCatalogs = new ArrayList<>();
@@ -201,10 +207,11 @@ public class ExternalReferenceIT extends AbstractApiIT {
 							   CatalogApiTestClient catalogApiTestClient,
 							   CategoryApiTestClient categoryApiTestClient,
 							   ProductSpecificationApiTestClient productSpecificationApiTestClient,
-							   Environment environment) {
+							   Environment environment, BrokerRequestRecorder brokerRequestRecorder) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.generalProperties = generalProperties;
 		this.environment = environment;
+		this.brokerRequestRecorder = brokerRequestRecorder;
 		this.productOfferingApiTestClient = productOfferingApiTestClient;
 		this.catalogApiTestClient = catalogApiTestClient;
 		this.categoryApiTestClient = categoryApiTestClient;
@@ -257,6 +264,43 @@ public class ExternalReferenceIT extends AbstractApiIT {
 						List.of(RefKind.MISSING_UNLISTED_HOST), HttpStatus.BAD_REQUEST),
 				Arguments.of("An external id that is not a URI is rejected.", List.of(RefKind.NON_URI_ID),
 						HttpStatus.BAD_REQUEST));
+	}
+
+	// references are read from their stored properties (ticket 88), so a GET must not fetch any referenced entity
+	@Test
+	public void retrieveProductOfferingDoesNotFetchReferences() throws Exception {
+		// keep the external refs: a just-created local target sits in the entities cache, so resolving it would not
+		// reach the broker either, and only the external ids make this test fail when reads resolve again
+		List<CategoryRefVO> categories = categoryRefs(
+				List.of(RefKind.LOCAL, RefKind.LOCAL, RefKind.EXTERNAL, RefKind.EXTERNAL));
+		String productSpecificationId = createProductSpecification();
+		ServiceCandidateRefVO serviceCandidate = serviceCandidateRef(FAN_OUT_STAGE);
+		ProductOfferingCreateVO createVO = productOfferingCreate().category(categories)
+				.productSpecification(new ProductSpecificationRefVO().id(productSpecificationId))
+				.serviceCandidate(serviceCandidate);
+		HttpResponse<ProductOfferingVO> createResponse = callAndCatch(
+				() -> productOfferingApiTestClient.createProductOffering(null, createVO));
+		assertEquals(HttpStatus.CREATED, createResponse.getStatus(), "The product offering should have been created.");
+		String id = createResponse.body().getId();
+		List<String> referencedIds = new ArrayList<>(categories.stream().map(CategoryRefVO::getId).toList());
+		referencedIds.add(productSpecificationId);
+		referencedIds.add(serviceCandidate.getId());
+
+		assertFalse(brokerRequestRecorder.requests().isEmpty(), "The recorder should have seen the create's requests.");
+		brokerRequestRecorder.clear();
+		ProductOfferingVO readBack = retrieve(id);
+		List<String> requests = brokerRequestRecorder.requests().stream()
+				.map(uri -> URLDecoder.decode(uri.toString(), StandardCharsets.UTF_8))
+				.toList();
+
+		assertEquals(categories.size(), readBack.getCategory().size(), "Every category should be read back.");
+		for (String referencedId : referencedIds) {
+			assertTrue(requests.stream().noneMatch(request -> request.contains(referencedId)),
+					"The referenced entity " + referencedId + " must not be fetched: " + requests);
+		}
+		// createEntity puts the offering into the entities cache, so the GET may not reach the broker at all
+		assertTrue(requests.stream().filter(request -> request.contains(id)).count() <= 1,
+				"The offering should be retrieved at most once: " + requests);
 	}
 
 	@ParameterizedTest
