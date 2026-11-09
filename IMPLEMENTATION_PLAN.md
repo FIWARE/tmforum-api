@@ -373,7 +373,8 @@ decision. Whoever picks the encoding removes that entry together with the getter
   `AccountRefRoundTripTest`) are left out. They name no ticket or step numbers, and say the backfill is not part of
   the release. They say `mapping.compact-against-context` only gates resolving names outside the built-in NGSI-LD
   prefixes (stripped either way), so a deployment on the default core context can set it to `false` and skip the
-  startup GET, while a custom context needs it `true` plus egress or a self-hosted context. The `AGENTS.md` change is **not** made on this step branch (step agents must not edit it); it goes to a
+  startup GET, while a custom context needs it `true` plus egress or a self-hosted context. The shipped
+  `application.yaml`s leave it `true`, and the notes say so; shipping `false` is a possible follow-up. The `AGENTS.md` change is **not** made on this step branch (step agents must not edit it); it goes to a
   plan-mode agent through a `[plan-update]`. Proposed replacement for the `strictRelationships` bullet:
   "References are stored inline and never resolved on read: every `RELATIONSHIP`/`RELATIONSHIP_LIST`
   `@AttributeSetter` is `fromProperties = true`, every `@AttributeGetter` of a relationship target class (except the

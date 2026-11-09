@@ -92,11 +92,12 @@ release upgrades to; `mapping.contextUrl` existed before and now matters for rea
   to for writes. Reads now compact sub-attribute names against `mapping.contextUrl`, so a mismatch turns
   multi-instance references on Orion-LD into id-only ones.
 * **Every start of every module issues a GET to `mapping.contextUrl`** (the preload), by default to the ETSI core
-  context, unless `mapping.compact-against-context` is `false`. If the GET fails, each start waits up to
-  `mapping.context-retrieval-timeout` and logs a WARN.
+  context, unless `mapping.compact-against-context` is `false`. If the GET fails, the background preload takes up to
+  `mapping.context-retrieval-timeout` and logs a WARN; startup itself is not delayed.
   * **With the default (core) context, set `mapping.compact-against-context=false`.** Orion-LD's expanded names are
     then all under the built-in prefixes, which are compacted without the context, so nothing is lost and the
-    startup GET is skipped.
+    startup GET is skipped. The shipped `application.yaml`s use the core context but leave the flag at `true`, so
+    operators have to set it themselves.
   * **With a custom context, keep it `true`** and allow egress to `mapping.contextUrl` or self-host the context.
 * The preload runs on a blocking-capable thread, off the event loop. If the context is unreachable then, the library
   retries the blocking fetch (again up to `mapping.context-retrieval-timeout`) on the reading thread, at most once per
