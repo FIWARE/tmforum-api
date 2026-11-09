@@ -71,6 +71,10 @@ makes no request for any referenced id, whatever the number of references.
   of them was lost on a PATCH.
 * **A `productOrderItem` whose `productOrderHref` names a configured external host is accepted.** It was always
   classified as local, so such an order was rejected with `400`.
+* **`productOrderId` now appears in the `productOrderItem`s of an embedded product value.** In product-ordering-management
+  (`ProductOrder.productOrderItem[].product.productOrderItem`) and quote (`Quote.quoteItem[].product.productOrderItem`)
+  the product is stored as a plain JSON value. That value, and the redis cache entry, used to drop `productOrderId`,
+  so responses omitted it. Data stored before this release still reads back without it.
 * **software-management** answers `400` instead of `500` when a resource is created or patched with a reference to a
   non-existent resource.
 * **`mapping.strictRelationships` has no effect any more.** Nothing is resolved on read, so there is no unresolvable
@@ -94,17 +98,21 @@ release upgrades to; `mapping.contextUrl` existed before and now matters for rea
 * **Every start of every module issues a GET to `mapping.contextUrl`** (the preload), by default to the ETSI core
   context, unless `mapping.compact-against-context` is `false`. If the GET fails, the background preload takes up to
   `mapping.context-retrieval-timeout` and logs a WARN; startup itself is not delayed.
-  * **With the default (core) context, set `mapping.compact-against-context=false`.** Orion-LD's expanded names are
-    then all under the built-in prefixes, which are compacted without the context, so nothing is lost and the
-    startup GET is skipped. The shipped `application.yaml`s use the core context but leave the flag at `true`, so
-    operators have to set it themselves.
+  * **With the default (core) context, set `mapping.compact-against-context=false`.** That skips the startup GET and
+    compacts nothing less than `true` does. The default context maps every term under the built-in prefixes, which
+    are compacted without the context, so it cannot compact any other name either (see
+    [Known limitations](#known-limitations) for `description`). The shipped `application.yaml`s use the core context
+    but leave the flag at `true`, so operators have to set it themselves.
   * **With a custom context, keep it `true`** and allow egress to `mapping.contextUrl` or self-host the context.
-* The preload runs on a blocking-capable thread, off the event loop. If the context is unreachable then, the library
-  retries the blocking fetch (again up to `mapping.context-retrieval-timeout`) on the reading thread, at most once per
-  `mapping.context-retrieval-retry-delay`, until it succeeds. Until then, expanded names outside the built-in prefixes
-  are not compacted.
-* While the preload is in flight, a read that needs the context (an expanded name outside the built-in prefixes) waits on the resolver's lock (its `retrieve()` is
-  `synchronized`) for up to `mapping.context-retrieval-timeout`.
+* The preload runs on a blocking-capable thread, off the event loop. If the context is unreachable then, a read that
+  meets an expanded name outside the built-in prefixes makes the library retry the blocking fetch (again up to
+  `mapping.context-retrieval-timeout`), at most once per `mapping.context-retrieval-retry-delay`, until it succeeds.
+  That fetch runs on the thread mapping the broker response, typically an HTTP event-loop thread, so it stalls every
+  other request served on that loop. Until it succeeds, such names are not compacted. Reads that meet no such name
+  never fetch.
+* While the preload is in flight, a read that needs the context (an expanded name outside the built-in prefixes)
+  waits on the resolver's lock (its `retrieve()` is `synchronized`) for up to `mapping.context-retrieval-timeout`, on
+  the same event-loop thread and with the same effect.
 
 ## Known limitations
 
@@ -119,6 +127,18 @@ release upgrades to; `mapping.contextUrl` existed before and now matters for rea
   `<productOrderId>:<orderItemId>`.
 * **A PATCH that shortens a property list presumably keeps the stored tail on Orion-LD** by the same merge, because
   a property list's datasetId is the position (`list-item:n`). This is inferred, not checked against a broker.
+* **On Orion-LD, the `description` of a reference in a list of two or more reads back absent.** Orion-LD 1.9.0
+  expands names against its built-in core context v1.8, which maps `description` and `title` to
+  `http://purl.org/dc/terms/` and the GeoJSON terms to `https://purl.org/geojson/vocab#`, outside the built-in
+  prefixes. In a reference list of two or more entries (a one-entry list is written without datasetId and comes back
+  compact), Orion-LD returns such a sub-attribute as `http://purl.org/dc/terms/description`. The shipped
+  `mapping.contextUrl` (`https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld`) maps `description` to
+  `https://uri.etsi.org/ngsi-ld/description`, so the name is not compacted, whatever `mapping.compact-against-context`
+  says. The only reference field affected today is the customer `AccountRef.description`, in `Customer.account`
+  (customer-management) and `PartyRole.account` (party-role). No reference field is named `title` or after a GeoJSON
+  term. The broker output was checked against Orion-LD 1.9.0, and the read result follows from the compactor's code;
+  it was not run through the API. Pointing `general.contextUrl` and `mapping.contextUrl` at the broker's versioned core
+  context with the flag `true` should compact the name, but this has not been tested. Scorpio is not affected.
 * **Customer-bill `FinancialAccountRef.accountBalance` is still not stored** and reads back absent. Writing it as an
   embedded list makes Orion-LD merge several balances into one property that no longer reads back. Its encoding is an
   open decision. The guard test exempts that getter by name, and `FinancialAccountRefIT` is `@Disabled` until the
