@@ -96,11 +96,17 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - `NullCharacterValidator`: walks the produced `JsonNode`, finds the first string value or key containing `\u0000`
   and throws `StorageException(<op>, INVALID_DATA, "Field '<json.path[2]>' contains the NUL character (\\u0000), which
   cannot be stored.")`. `AbstractApiController.rejectedWrite` already renders INVALID_DATA as 400 with the message.
+  Every PG write path runs it on the document it writes, with that path's `StorageOperation`: create, update (the
+  patch document), `importDomainEntity`, and the transactional outbox create/update of Step 6 (their outbox
+  `new_state` is the validated document). PostgreSQL itself rejects `\u0000` in jsonb (SQLState `22P05`);
+  `PostgresFailures` (Step 3) maps that SQLState to INVALID_DATA as well, so a path that missed the validator still
+  answers 400, not 500, only without the field path.
 - Tests (`storage-postgresql/src/test`): parameterized round-trip tests (object -> json -> object equals) over
   representative classes (an `EntityWithId` with lists, nested values, references, additional properties, a TMF730
   sub-type-like class with `atType`/`atBaseType`; additional properties as top-level keys, including one colliding
   with a declared property name); update-mode serialization (null omitted, `[]` kept);
-  parameterized `\u0000` cases (top-level, nested, in a list, in a key) asserting the reported path.
+  parameterized `\u0000` cases (top-level, nested, in a list, in a key) x write mode (create, update) asserting the
+  reported path and operation.
 - Acceptance: unit tests green; no NGSI-LD types referenced in the module except `MappingEnabled`.
 
 ### Step 3: PostgreSQL entity repository: get, create, delete, unfiltered list
@@ -119,8 +125,8 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     `SELECT count(*)` with the same predicate supplies `totalCount` (never report 0 for "past the last match": the
     contract accepts only null or the real count, and the total-count header must stay correct). Add a unit/IT
     case for an offset past the last match.
-  - `PostgresFailures` (mirrors `BrokerFailures`): connection/timeout errors -> UNAVAILABLE, the rest UNKNOWN, with
-    the step's `StorageOperation`.
+  - `PostgresFailures` (mirrors `BrokerFailures`): connection/timeout errors -> UNAVAILABLE, SQLState `22P05`
+    (NUL in jsonb) -> INVALID_DATA, the rest UNKNOWN, with the step's `StorageOperation`.
   - `importDomainEntity(T entity, Instant updatedAt)`: public adapter method (not on the port) for ticket 8, which
     writes `updated_at` (and `created_at`) from the broker's `modifiedAt`.
 - Extend `common`'s `StorageBoundaryTest` (and `all-in-one`'s `ControllerStorageBoundaryTest` if it lists adapter
@@ -136,7 +142,8 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   0 rows -> `StorageException(UPDATE, NOT_FOUND)` (never creates). `$2` is the update-mode document from Step 2:
   only carried attributes, each replaces its stored top-level value (per-attribute replace, which covers both
   broker strategies); an emptied list is written as `[]`. `id`/`type` keys are never overwritten (strip them from
-  the patch document).
+  the patch document). The patch document goes through `NullCharacterValidator` (UPDATE) before the statement, so
+  a PATCH carrying `\u0000` is a 400; add a PG IT for it next to the create case.
 - No `replaceOnUpdate`, no read-merge-write, no entity cache on this path (they stay for the broker adapter).
 - `product-catalog/src/test/.../storage/PostgresEntityRepositoryContractIT` extending
   `AbstractEntityRepositoryContractTest` with the same fixtures as `NgsiLdEntityRepositoryContractIT`,
@@ -233,8 +240,13 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     FOR UPDATE SKIP LOCKED LIMIT $batch) RETURNING *`. No transaction or lock is held during delivery; the lease
     keeps other instances off the row, and a crashed instance's rows become due again when the lease expires.
     (2) deliver through the outbox overloads. (3) on success `DELETE` the row; on failure `UPDATE ...
-    next_attempt_at = now() + least(poll-interval * 2^attempts, max-backoff)`. `lease` must exceed the time one
-    batch can take (HTTP client read timeout x callbacks per batch); document that in `OutboxProperties`.
+    next_attempt_at = now() + $delay`. `attempts` is unbounded (rows keep failing until tickets 1 and 7, or for a
+    dead callback forever), so the delay must not grow with it: `OutboxBackoff.delay(attempts)` computes it in Java
+    as `poll-interval * 2^min(attempts, MAX_BACKOFF_EXPONENT)`, then `min(..., max-backoff)`, where
+    `MAX_BACKOFF_EXPONENT` is a named constant small enough that the product cannot overflow `Duration` or a
+    PostgreSQL interval (e.g. 20). It is bound as milliseconds (`$delay * interval '1 millisecond'`); no exponent is
+    evaluated in SQL. `lease` must exceed the time one batch can take (HTTP client read timeout x callbacks per
+    batch); document that in `OutboxProperties`.
   - At-least-once: a row is deleted only after every callback acknowledged it. A partly failed row is redelivered
     to all its subscribers with the same `eventId` (consumers deduplicate on it).
 - Note: delivery on PG needs subscription lookup with a query (ticket 7) and hub registration without a broker (tickets 1 and 7); until then rows stay pending and retry.
@@ -242,8 +254,9 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   - unit tests of `DirectEntityEventPublisher` (same events, same order as before, no event on delete);
   - `NotificationSender.deliverNotifications` (all 2xx completes, one failing callback errors, parameterized);
   - the dispatcher with a mocked `TMForumEventHandler`, parameterized over CREATE/UPDATE/DELETE: success deletes
-    the row; a failing callback leaves the row with `attempts + 1` and a pushed `next_attempt_at`; the backoff is
-    capped;
+    the row; a failing callback leaves the row with `attempts + 1` and a pushed `next_attempt_at`;
+  - `OutboxBackoff.delay`, parameterized over `attempts` (0, 1, a value just below the cap, and 100, 10_000,
+    `Integer.MAX_VALUE`): grows exponentially, then stays at `max-backoff` without overflowing;
   - PG ITs (all with `tmforum.outbox.enabled: false`, dispatchers driven through `dispatchOnce()`): entity + outbox
     row commit together, and a failing outbox insert leaves no entity row (also for delete); two dispatchers with
     disjoint type sets each claim only their own rows; a leased row is not claimed again before the lease expires;
