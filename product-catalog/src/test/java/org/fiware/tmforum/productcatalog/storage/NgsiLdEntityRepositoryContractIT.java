@@ -10,9 +10,11 @@ import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest;
 import org.fiware.tmforum.storage.contract.EntityFixture;
 import org.fiware.tmforum.storage.contract.KnownDeviation;
+import org.fiware.tmforum.storage.contract.ReferenceFixture;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -44,6 +46,7 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 		deviations.add(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL);
 		if (!generalProperties.isReplaceOnUpdate()) {
 			deviations.add(KnownDeviation.EMPTIED_LIST_BREAKS_READS);
+			deviations.add(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
 		}
 		return deviations;
 	}
@@ -61,5 +64,10 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	@Override
 	protected EntityFixture<Category> otherFixture() {
 		return new CategoryFixture();
+	}
+
+	@Override
+	protected Optional<ReferenceFixture<?>> referenceFixture() {
+		return Optional.of(new ProductOfferingReferenceFixture());
 	}
 }

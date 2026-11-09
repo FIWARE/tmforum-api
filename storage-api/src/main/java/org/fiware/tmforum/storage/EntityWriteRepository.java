@@ -18,7 +18,8 @@ public interface EntityWriteRepository {
 
     /**
      * Writes only the attributes the entity carries, never a whole-document overwrite: null fields stay
-     * untouched, an emptied list is cleared and reads back absent or empty, so callers must accept both.
+     * untouched, an emptied list is cleared and reads back absent or empty, so callers must accept both. A carried
+     * list replaces the stored one.
      * Fails with {@link StorageErrorReason#NOT_FOUND} for an absent id and never creates or completes silently
      * (update-else-create callers rely on it), and with {@link StorageErrorReason#PARTIAL_UPDATE} when the
      * backend wrote only some attributes. Failures carry UPDATE, except the recorded NGSI-LD replace-mode
@@ -26,7 +27,14 @@ public interface EntityWriteRepository {
      * <p>
      * Known NGSI-LD adapter defect, not a contract rule (ticket 0): on Orion-LD in append mode (no
      * {@code replaceOnUpdate}) an emptied list whose instances carry a datasetId is not cleared; the broker keeps
-     * them and adds an empty instance, so later reads fail.
+     * them and adds an empty instance, so later reads fail. For the same reason any carried list whose instances
+     * carry a datasetId is merged into the stored one by datasetId instead of replacing it: a stored instance whose
+     * datasetId the update does not carry survives next to the carried ones. For a reference list the datasetId is
+     * the reference id, except where a subclass extends it ({@code RelatedParty} {@code <id>:<role>},
+     * {@code ProductSpecificationRelationship} {@code <id>:<relationshipType>}, {@code RelatedProductOrderItemRef}
+     * {@code <productOrderId>:<orderItemId>}). For a property list it is the position ({@code list-item:n}), so
+     * shortening the list presumably keeps the stored tail; that is inferred, not checked against a broker. Only the
+     * reference-list case is pinned by a contract case.
      */
     <T> Mono<Void> updateDomainEntity(String id, T domainEntity);
 

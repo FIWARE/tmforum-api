@@ -327,6 +327,22 @@ decision. Whoever picks the encoding removes that entry together with the getter
   `ProductOffering`) carrying external `CategoryRef`s, including an extra-bearing subclass.
 - Document the rule in `storage-api/README.md` and in the Javadoc of `EntityReadRepository#get`: references are
   stored and returned as written and never resolved. Ticket 6 has to pass these cases.
+- **Result:** `AbstractEntityRepositoryContractTest#referenceFixture()` returns a `ReferenceFixture<?>`. It is an
+  `EntityFixture` of its own and may use a class other than the contract's main class. When it is empty, the three
+  cases are skipped. `product-catalog`'s `ProductOfferingReferenceFixture` writes a `ProductOffering` with external
+  `CategoryRef`s (`version` extra) and `ChannelRef`s. Both attributes were flipped in Step 2, so the cases also guard
+  the flip on the NGSI-LD adapter. The update replaces only the categories. The same-id target is a `Category`.
+  The fixture's reference to that `Category` omits `name`. A resolving read merges the written sub-properties over
+  the target, so it would fill `name` from the target and fail `getDoesNotResolveReferences` (checked after the
+  target is created, renamed and deleted). This is reasoned from the merge pinned by `AccountRefRoundTripTest`; it
+  was not run against a resolving adapter, which the NGSI-LD adapter no longer is since Step 5. `updateKeepsUntouchedReferences` hit the Step 2 PATCH
+  defect on Orion-LD: the replaced category list is merged with the stored one by datasetId. It is recorded as
+  `KnownDeviation.REFERENCE_LIST_UPDATE_MERGES` (Orion-LD without `replaceOnUpdate`, next to
+  `EMPTIED_LIST_BREAKS_READS`), and in that setup the case asserts the merge: the created list plus every carried entry, each once, in any order. The other comparisons ignore list order too but
+  count entries, and the README and `EntityReadRepository#get` say that order is not part of the rule. The port rule (a
+  carried list replaces the stored one) and the defect are in the `updateDomainEntity` Javadoc. `NgsiLd*ContractIT`
+  (`mvn verify -pl product-catalog -Dit.test='NgsiLd*ContractIT' -DskipTests`): 27/0/0 on orion-ld, scorpio and
+  scorpio with `-Dcache=redis`.
 
 ### Step 7: Document the behaviour change
 - Add `release-notes/RELEASE_NOTES_INLINE_REFERENCES.md`, in the style of `RELEASE_NOTES_EXTERNAL_REFERENCES.md`.

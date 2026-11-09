@@ -16,10 +16,13 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -30,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * The {@link EntityRepository} contract from its Javadoc, run by every adapter against its live backend; ticket 6
@@ -46,6 +50,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final int FIRST_OFFSET = 0;
     // high enough to return every entity a single case creates
     private static final int LIST_LIMIT = 100;
+    private static final String TARGET_NAME = "contract-reference-target";
+    private static final String RENAMED_TARGET_NAME = "renamed-contract-reference-target";
 
     private final List<URI> createdIds = new ArrayList<>();
 
@@ -66,6 +72,14 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
      */
     protected Set<KnownDeviation> knownDeviations() {
         return Set.of();
+    }
+
+    /**
+     * Entities with references for the inline-reference cases, which skip when empty. Pick a class whose references
+     * a resolving adapter would fill in from their targets, so the cases discriminate.
+     */
+    protected Optional<ReferenceFixture<?>> referenceFixture() {
+        return Optional.empty();
     }
 
     enum AbsentId {UNKNOWN, OTHER_TYPE, NO_TYPE_SEGMENT}
@@ -169,6 +183,75 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertNull(repository().get(id, fixture().entityClass()).block(TIMEOUT));
         assertFailure(StorageOperation.DELETE, StorageErrorReason.NOT_FOUND,
                 () -> repository().deleteDomainEntity(id));
+    }
+
+    @Test
+    void createdReferencesRoundTripIntact() {
+        assertCreatedReferencesRoundTripIntact(requireReferenceFixture());
+    }
+
+    @Test
+    void updateKeepsUntouchedReferences() {
+        assertUpdateKeepsUntouchedReferences(requireReferenceFixture());
+    }
+
+    @Test
+    void getDoesNotResolveReferences() {
+        assertGetDoesNotResolveReferences(requireReferenceFixture());
+    }
+
+    private <R> void assertCreatedReferencesRoundTripIntact(ReferenceFixture<R> references) {
+        R created = references.newEntity(references.newId());
+        URI id = create(references, created);
+
+        assertSameReferences(references.references(created), references.references(read(references, id)),
+                "Read after the create.");
+    }
+
+    private <R> void assertUpdateKeepsUntouchedReferences(ReferenceFixture<R> references) {
+        R created = references.newEntity(references.newId());
+        URI id = create(references, created);
+        R update = references.withOneReferenceReplaced(id);
+        Map<String, List<?>> expected = new HashMap<>(references.references(created));
+        expected.putAll(references.references(update));
+        assertTrue(expected.size() > references.references(update).size(),
+                "The update has to leave at least one reference attribute out.");
+
+        repository().updateDomainEntity(id.toString(), update).block(TIMEOUT);
+
+        Map<String, List<?>> read = references.references(read(references, id));
+        if (knownDeviations().contains(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES)) {
+            // the carried references point at other ids, so the merge appends every one of them
+            Map<String, List<?>> merged = new HashMap<>(references.references(created));
+            references.references(update).forEach((attribute, carried) -> merged.merge(attribute, carried,
+                    (stored, appended) -> Stream.concat(stored.stream(), appended.stream()).toList()));
+            assertSameReferences(merged, read,
+                    "The update replaces the list now, drop " + KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
+            return;
+        }
+        assertSameReferences(expected, read, "Read after the update.");
+    }
+
+    // the reference at targetId omits the name its target carries, so that a resolving read would fill it in
+    private <R> void assertGetDoesNotResolveReferences(ReferenceFixture<R> references) {
+        R created = references.newEntity(references.newId());
+        URI id = create(references, created);
+        Map<String, List<?>> written = references.references(created);
+        URI targetId = references.targetId(created);
+        createdIds.add(targetId);
+
+        repository().createDomainEntity(references.target(targetId, TARGET_NAME)).block(TIMEOUT);
+        assertSameReferences(written, references.references(read(references, id)),
+                "Read after the target was created.");
+
+        repository().updateDomainEntity(targetId.toString(), references.target(targetId, RENAMED_TARGET_NAME))
+                .block(TIMEOUT);
+        assertSameReferences(written, references.references(read(references, id)),
+                "Read after the target was renamed.");
+
+        repository().deleteDomainEntity(targetId).block(TIMEOUT);
+        assertSameReferences(written, references.references(read(references, id)),
+                "Read after the target was deleted.");
     }
 
     static Stream<Arguments> pages() {
@@ -284,8 +367,32 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         return page.items();
     }
 
+    private ReferenceFixture<?> requireReferenceFixture() {
+        Optional<ReferenceFixture<?>> references = referenceFixture();
+        assumeTrue(references.isPresent(), "The adapter provides no reference fixture.");
+        return references.get();
+    }
+
+    // list order is not part of the port contract (NGSI-LD does not define the order of attribute instances),
+    // multiplicity is: a duplicated or lost reference fails
+    private static void assertSameReferences(Map<String, List<?>> expected, Map<String, List<?>> actual,
+                                             String message) {
+        assertEquals(asCounts(expected), asCounts(actual), message);
+    }
+
+    private static Map<String, Map<Object, Long>> asCounts(Map<String, List<?>> references) {
+        Map<String, Map<Object, Long>> counts = new HashMap<>();
+        references.forEach((attribute, payloads) -> counts.put(attribute,
+                payloads.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))));
+        return counts;
+    }
+
     private T read(URI id) {
-        T read = repository().get(id, fixture().entityClass()).block(TIMEOUT);
+        return read(fixture(), id);
+    }
+
+    private <E> E read(EntityFixture<E> entityFixture, URI id) {
+        E read = repository().get(id, entityFixture.entityClass()).block(TIMEOUT);
         assertNotNull(read, "Entity " + id + " should exist.");
         return read;
     }
