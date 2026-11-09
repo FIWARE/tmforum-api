@@ -38,15 +38,14 @@ depends on (operation, reason) alone.
 
 A reference (a `RefEntity` and its subclasses, any relationship target) is stored inline as the writer sent it,
 the extra fields of subclasses included, and returned exactly as written. No adapter resolves a reference on read:
-a field the writer omitted stays absent, and creating, renaming or deleting the target changes nothing. List order is not part of the rule (NGSI-LD does not define
-the order of attribute instances), but every written entry comes back once. An update
-replaces only the reference attributes it carries. The contract cases `createdReferencesRoundTripIntact`,
-`updateKeepsUntouchedReferences` and `getDoesNotResolveReferences` pin this for every adapter that supplies a
-`ReferenceFixture`; ticket 6 has to pass them. The no-resolve case reads after the target is created, renamed and
-deleted. The fixture's reference to that target omits `name`, which the target carries, so that a resolving read
-would fill it in and fail the case (reasoned from the resolving merge, not run against a resolving adapter). On
-Orion-LD in append mode an update merges a carried reference list into the stored one by datasetId
-(`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
+a field the writer omitted stays absent, and creating, renaming or deleting the target changes nothing. List order
+is not part of the rule (NGSI-LD does not define the order of attribute instances), but every written entry comes
+back once. An update replaces only the reference attributes it carries.
+
+The contract cases `createdReferencesRoundTripIntact`, `updateKeepsUntouchedReferences` and
+`getDoesNotResolveReferences` pin this. An adapter has to supply a `ReferenceFixture` through `referenceFixture()`
+to run them; ticket 6 has to pass them. On Orion-LD in append mode an update merges a carried reference list into
+the stored one by datasetId (`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
 
 ## Update semantics
 

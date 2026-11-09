@@ -17,7 +17,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -222,10 +221,11 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
         Map<String, List<?>> read = references.references(read(references, id));
         if (knownDeviations().contains(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES)) {
-            Map<String, Set<Object>> merged = asSets(references.references(created));
-            asSets(references.references(update))
-                    .forEach((attribute, carried) -> merged.get(attribute).addAll(carried));
-            assertEquals(merged, asSets(read),
+            // the carried references point at other ids, so the merge appends every one of them
+            Map<String, List<?>> merged = new HashMap<>(references.references(created));
+            references.references(update).forEach((attribute, carried) -> merged.merge(attribute, carried,
+                    (stored, appended) -> Stream.concat(stored.stream(), appended.stream()).toList()));
+            assertSameReferences(merged, read,
                     "The update replaces the list now, drop " + KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
             return;
         }
@@ -371,13 +371,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         Optional<ReferenceFixture<?>> references = referenceFixture();
         assumeTrue(references.isPresent(), "The adapter provides no reference fixture.");
         return references.get();
-    }
-
-    // order-insensitive, because a merged list has no defined order
-    private static Map<String, Set<Object>> asSets(Map<String, List<?>> references) {
-        Map<String, Set<Object>> sets = new HashMap<>();
-        references.forEach((attribute, payloads) -> sets.put(attribute, new HashSet<>(payloads)));
-        return sets;
     }
 
     // list order is not part of the port contract (NGSI-LD does not define the order of attribute instances),
