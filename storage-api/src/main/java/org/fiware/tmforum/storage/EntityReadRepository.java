@@ -21,7 +21,8 @@ public interface EntityReadRepository {
      * Every adapter checks the id's type segment, not the stored type.
      * <p>
      * References are returned exactly as written and never resolved: a field the writer omitted stays absent, and
-     * the target's existence or current state does not change the result.
+     * the target's existence or current state does not change the result. A reference list may come back in another
+     * order, but with every written entry exactly once.
      *
      * @throws IllegalArgumentException synchronously, if the backend cannot persist {@code entityClass}; checked
      *                                  only after the id has a type segment, so a malformed id is always empty

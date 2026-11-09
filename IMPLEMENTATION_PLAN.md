@@ -338,7 +338,8 @@ decision. Whoever picks the encoding removes that entry together with the getter
   was not run against a resolving adapter, which the NGSI-LD adapter no longer is since Step 5. `updateKeepsUntouchedReferences` hit the Step 2 PATCH
   defect on Orion-LD: the replaced category list is merged with the stored one by datasetId. It is recorded as
   `KnownDeviation.REFERENCE_LIST_UPDATE_MERGES` (Orion-LD without `replaceOnUpdate`, next to
-  `EMPTIED_LIST_BREAKS_READS`), and in that setup the case asserts the merge, order-insensitively. The port rule (a
+  `EMPTIED_LIST_BREAKS_READS`), and in that setup the case asserts the merge, order-insensitively. The other comparisons ignore list order too but
+  count entries, and the README and `EntityReadRepository#get` say that order is not part of the rule. The port rule (a
   carried list replaces the stored one) and the defect are in the `updateDomainEntity` Javadoc. `NgsiLd*ContractIT`
   (`mvn verify -pl product-catalog -Dit.test='NgsiLd*ContractIT' -DskipTests`): 27/0/0 on orion-ld, scorpio and
   scorpio with `-Dcache=redis`.

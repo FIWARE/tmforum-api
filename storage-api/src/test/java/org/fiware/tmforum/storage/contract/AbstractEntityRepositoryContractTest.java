@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -204,7 +205,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         R created = references.newEntity(references.newId());
         URI id = create(references, created);
 
-        assertEquals(references.references(created), references.references(read(references, id)));
+        assertSameReferences(references.references(created), references.references(read(references, id)),
+                "Read after the create.");
     }
 
     private <R> void assertUpdateKeepsUntouchedReferences(ReferenceFixture<R> references) {
@@ -227,7 +229,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                     "The update replaces the list now, drop " + KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
             return;
         }
-        assertEquals(expected, read);
+        assertSameReferences(expected, read, "Read after the update.");
     }
 
     // the reference at targetId omits the name its target carries, so that a resolving read would fill it in
@@ -239,14 +241,17 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         createdIds.add(targetId);
 
         repository().createDomainEntity(references.target(targetId, TARGET_NAME)).block(TIMEOUT);
-        assertEquals(written, references.references(read(references, id)), "Read after the target was created.");
+        assertSameReferences(written, references.references(read(references, id)),
+                "Read after the target was created.");
 
         repository().updateDomainEntity(targetId.toString(), references.target(targetId, RENAMED_TARGET_NAME))
                 .block(TIMEOUT);
-        assertEquals(written, references.references(read(references, id)), "Read after the target was renamed.");
+        assertSameReferences(written, references.references(read(references, id)),
+                "Read after the target was renamed.");
 
         repository().deleteDomainEntity(targetId).block(TIMEOUT);
-        assertEquals(written, references.references(read(references, id)), "Read after the target was deleted.");
+        assertSameReferences(written, references.references(read(references, id)),
+                "Read after the target was deleted.");
     }
 
     static Stream<Arguments> pages() {
@@ -373,6 +378,20 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         Map<String, Set<Object>> sets = new HashMap<>();
         references.forEach((attribute, payloads) -> sets.put(attribute, new HashSet<>(payloads)));
         return sets;
+    }
+
+    // list order is not part of the port contract (NGSI-LD does not define the order of attribute instances),
+    // multiplicity is: a duplicated or lost reference fails
+    private static void assertSameReferences(Map<String, List<?>> expected, Map<String, List<?>> actual,
+                                             String message) {
+        assertEquals(asCounts(expected), asCounts(actual), message);
+    }
+
+    private static Map<String, Map<Object, Long>> asCounts(Map<String, List<?>> references) {
+        Map<String, Map<Object, Long>> counts = new HashMap<>();
+        references.forEach((attribute, payloads) -> counts.put(attribute,
+                payloads.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))));
+        return counts;
     }
 
     private T read(URI id) {
