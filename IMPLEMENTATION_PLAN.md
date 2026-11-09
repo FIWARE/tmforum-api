@@ -67,8 +67,14 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   so it keeps `TmForumMappingModule`/`FieldCleaningModule`) with `PostgresMappingModule` added. That module is a plain
   Jackson module registered only on the derived mapper, not a `JacksonModule` bean, so API serialization, the Redis
   caches (e.g. `TMForumSubscription` lists) and events keep today's `Entity` serialization in every environment:
-  - instantiation through the domain classes' `(String id)` constructor (they have no no-arg constructor and a final
-    `type`); `type` is written but ignored on read;
+  - instantiation: domain classes have no no-arg constructor, only `(String id)` (some `RefEntity` subclasses only
+    `(URI id)`). The derived mapper's `DocumentAnnotationIntrospector` (a `JacksonAnnotationIntrospector` subclass,
+    also used for `@NotStored` below) reports that single-argument constructor of every `Entity` subclass without a
+    no-arg one as a `JsonCreator.Mode.PROPERTIES` creator and names its parameter `id`; no per-class code;
+  - `type`: `EntityWithId.type` is final with no setter, so a mix-in for `EntityWithId` carries
+    `@JsonIgnoreProperties(value = "type", allowGetters = true)`: it is written, and on read it is skipped before the
+    any-setter below sees it (the constructor derives it). Round-trip test: a document with no extension fields reads
+    back with `additionalProperties` null;
   - unknown/additional properties: `Entity.additionalProperties` is a `List<UnmappedProperty>` (name/value pairs)
     behind the mapping library's `@UnmappedPropertiesGetter/Setter`, which Jackson ignores, so plain Jackson would
     write an `additionalProperties` array. A mix-in cannot add members, and `Entity` has no `Map` getter for
@@ -94,8 +100,11 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   `FinancialAccountRef.accountBalance` "not stored yet, reads back absent" part of the port contract, and the ticket
   requires identical response payloads on every backend, so PG drops it too. Add a marker annotation
   `@NotStored` to `storage-api` (Javadoc: not persisted by any adapter until its encoding is decided, see
-  `EntityReadRepository.get`), put it on that field, and give the derived document mapper above an annotation
-  introspector that ignores `@NotStored` properties; API serialization, caches and events are unaffected. The NGSI-LD adapter already drops it,
+  `EntityReadRepository.get`), put it on that field, and let `DocumentAnnotationIntrospector` ignore `@NotStored`
+  properties on the storage mapper. `PostgresDocumentMapper` exposes two variants of the derived mapper that differ
+  only in that flag: `storage` (drops `@NotStored`; every `tmforum.entity.data` document) and `event` (keeps it; the
+  outbox state documents of Step 6). Both write the same document format and read each other's documents; API
+  serialization, caches and events are unaffected. The NGSI-LD adapter already drops it,
   so this is the contract, not a deviation: `knownDeviations()` stays empty. Test: a round-trip case asserting the
   field reads back absent; `FinancialAccountRefIT` (ported in Step 8) asserts the same on every backend.
 - `NullCharacterValidator`: walks the produced `JsonNode`, finds the first string value or key containing `\u0000`
@@ -135,14 +144,15 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     case for an offset past the last match.
   - `PostgresFailures` (mirrors `BrokerFailures`): connection/timeout errors -> UNAVAILABLE, SQLState `22P05`
     (NUL in jsonb) -> INVALID_DATA, the rest UNKNOWN, with the step's `StorageOperation`.
-  - `importDomainEntity(T entity, Instant updatedAt)`: public adapter method (not on the port) for ticket 8, which
-    writes `updated_at` (and `created_at`) from the broker's `modifiedAt`.
+  - `importDomainEntity(T entity, Instant createdAt, Instant updatedAt)`: public adapter method (not on the port)
+    for ticket 8, which writes `updated_at` from the broker's `modifiedAt` and `created_at` from its `createdAt`
+    (default `now()` when null), so a migrated deployment lists in the broker's creation order, not by last change.
 - Extend `common`'s `StorageBoundaryTest` (and `all-in-one`'s `ControllerStorageBoundaryTest` if it lists adapter
   packages) so nothing outside `org.fiware.tmforum.storage.postgresql` references the PG adapter classes.
 - Add `storage-postgresql` as a dependency of `product-catalog` (for the ITs from Step 4 on).
 - Tests: unit tests with a mocked `ConnectionFactory` for error mapping (parameterized over exception -> reason);
   `PostgresEntityRepositoryIT` in `storage-postgresql` (or `product-catalog/.../storage/`) covering get/create/
-  delete/list against the k3s PostgreSQL, plus `importDomainEntity` keeping the given timestamp.
+  delete/list against the k3s PostgreSQL, plus `importDomainEntity` keeping both given timestamps.
 
 ### Step 4: Partial-merge update and the entity contract IT
 - `updateDomainEntity(id, entity)` as one statement:
@@ -213,10 +223,11 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     `EntityEventPublisher` implementations calls `createDomainEntity`/`updateDomainEntity`/`deleteDomainEntity`
     except `relatedEntityHandlingMono`; extend `StorageBoundaryTest` with that rule if it can express it.
 - `storage-postgresql`: `OutboxEntityEventPublisher` uses new transactional methods on `PostgresEntityRepository`
-  that, in one transaction, write the entity and insert the outbox row (`create`: new_state = the request object
-  serialized with the application mapper, not the stored document, so `@NotStored` fields such as `accountBalance`
-  are in the CreateEvent as on the broker, whose direct CreateEvent carries the request object; it goes through
-  `NullCharacterValidator` like the entity document;
+  that, in one transaction, write the entity and insert the outbox row. Every outbox state is in document format
+  (Step 2), never the application mapper's (that one writes `additionalProperties` as an array and cannot
+  instantiate domain classes). `create`: new_state = the request object serialized with the `event` variant, so
+  `@NotStored` fields such as `accountBalance` are in the CreateEvent as on the broker, whose direct CreateEvent
+  carries the request object; it goes through `NullCharacterValidator` like the entity document;
   `update`: `SELECT data ... FOR UPDATE` as old_state, merge as in Step 4, `RETURNING data` as new_state;
   `delete`: `DELETE ... RETURNING type, data` as old_state, 0 rows -> NOT_FOUND and no outbox row). Rollback of
   either statement rolls back both. Write the outbox row only when the entity's type is in the app's
@@ -264,9 +275,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     only calls it.
   - Ownership: the claim only takes rows whose `entity_type` is in `EventTypes` (a `common` singleton holding the
     union of `getEntityClassMapping()` keys of the app's `EventMapper` beans, shared with the publisher above), so
-    product-catalog never claims party-catalog rows (all-in-one owns all types). The state documents are
-    deserialized into that type's `EventMapping.rawClass()`, the domain class (`NgsiLdEventHandler` and
-    `EventHandler.createEvent` use it the same way; `targetClass` is the VO).
+    product-catalog never claims party-catalog rows (all-in-one owns all types). The dispatcher reads every
+    new_state/old_state with `PostgresDocumentMapper`'s `event` variant into that type's `EventMapping.rawClass()`,
+    the domain class (`NgsiLdEventHandler` and `EventHandler.createEvent` use it the same way; `targetClass` is the
+    VO).
   - Transaction boundaries: (1) claim + lease in one short auto-committed statement:
     `UPDATE tmforum.event_outbox SET attempts = attempts + 1, next_attempt_at = now() + $lease WHERE id IN
     (SELECT id FROM tmforum.event_outbox WHERE next_attempt_at <= now() AND entity_type = ANY($types) ORDER BY id
@@ -290,7 +302,9 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     gets nothing, and the payload has exactly the broker's field set;
   - `NotificationSender.deliverNotifications` (all 2xx completes, one failing callback errors, parameterized);
   - the dispatcher with a mocked `TMForumEventHandler`, parameterized over CREATE/UPDATE/DELETE: success deletes
-    the row; a failing callback leaves the row with `attempts + 1` and a pushed `next_attempt_at`;
+    the row; a failing callback leaves the row with `attempts + 1` and a pushed `next_attempt_at`; a CREATE row of
+    an entity with an extension field (and a customer-bill `FinancialAccountRef` with `accountBalance`) hands the
+    handler an entity carrying both;
   - `OutboxBackoff.delay`, parameterized over `attempts` (0, 1, a value just below the cap, and 100, 10_000,
     `Integer.MAX_VALUE`): grows exponentially, then stays at `max-backoff` without overflowing;
   - PG ITs (all with `tmforum.outbox.enabled: false`, dispatchers driven through `dispatchOnce()`): entity + outbox
