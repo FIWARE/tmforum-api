@@ -2,7 +2,7 @@ redis:
   uri: redis://localhost:6379
   caches:
     entities:
-      # short enough to avoid stale reads; dedups one request's reads of an entity (get after create/update, reference checks)
+      # bounds stale reads to 2s; dedups one request's reads of an entity (get after create/update, reference checks)
       expire-after-write: 2s
       expire-after-access: 2s
       value-serializer: io.github.wistefan.mapping.EntityVOSerializer
