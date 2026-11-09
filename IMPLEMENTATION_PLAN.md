@@ -31,7 +31,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   `offset`, `limit` and a total count. A non-null `query` or `orderBy` fails with
   `StorageException(LIST, UNKNOWN, "... not supported by the PostgreSQL backend before ticket 7")`. This covers the
   port contract tests; filtered list endpoints, TMForum hub registration (`AbstractSubscriptionApiController`
-  duplicate check) and event subscription lookup (`TMForumEventHandler.getSubscriptions`) need ticket 7.
+  duplicate check) and event subscription lookup (`TMForumEventHandler.getSubscriptions`) need ticket 7. Hub
+  registration and deletion also need ticket 1: `AbstractSubscriptionApiController.create` always calls
+  `subscriptionRepository.createSubscription`, which creates an NGSI-LD subscription on a broker a PG deployment
+  does not have.
 - **IT harness:** PostgreSQL is provisioned in every IT run (like minio). `-Dbroker=postgresql` selects PG as the
   storage under test (property name kept so the existing `-Dmicronaut.environments=${cache},${broker}` wiring and CI
   matrix work; ticket 9 may rename it).
@@ -71,6 +74,15 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     list kept as `[]`).
   Use the application `ObjectMapper` (it carries `TmForumMappingModule`/`FieldCleaningModule`); do not create a
   private mapper unless a module above conflicts, and then document why.
+- Not-stored fields (parity with the port contract): the `EntityReadRepository.get` Javadoc makes customer-bill
+  `FinancialAccountRef.accountBalance` "not stored yet, reads back absent" part of the port contract, and the ticket
+  requires identical response payloads on every backend, so PG drops it too. Add a marker annotation
+  `@NotStored` to `storage-api` (Javadoc: not persisted by any adapter until its encoding is decided, see
+  `EntityReadRepository.get`), put it on that field, and have `PostgresDocumentMapper` use a mapper derived from
+  the application one (`rebuild()` with an annotation introspector that ignores `@NotStored` properties) for the
+  stored document only; API serialization, caches and events are unaffected. The NGSI-LD adapter already drops it,
+  so this is the contract, not a deviation: `knownDeviations()` stays empty. Test: a round-trip case asserting the
+  field reads back absent; `FinancialAccountRefIT` (ported in Step 8) asserts the same on every backend.
 - `NullCharacterValidator`: walks the produced `JsonNode`, finds the first string value or key containing `\u0000`
   and throws `StorageException(<op>, INVALID_DATA, "Field '<json.path[2]>' contains the NUL character (\\u0000), which
   cannot be stored.")`. `AbstractApiController.rejectedWrite` already renders INVALID_DATA as 400 with the message.
@@ -159,7 +171,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   that, in one transaction, write the entity and insert the outbox row (`create`: new_state = written document;
   `update`: `SELECT data ... FOR UPDATE` as old_state, merge as in Step 4, `RETURNING data` as new_state;
   `delete`: `DELETE ... RETURNING type, data` as old_state, 0 rows -> NOT_FOUND and no outbox row). Rollback of
-  either statement rolls back both. Skip the outbox row for `TMForumSubscription` (as `makeEventDetails` does).
+  either statement rolls back both. Write the outbox row only when the entity's type is in the app's
+  `EventTypes` (below), the set the dispatcher claims; any other type (e.g. all of party-role, whose
+  `PartyRoleEventMapper` maps nothing, and `TMForumSubscription`) gets no row, matching today's silent no-op, so
+  no row is left that no deployment would ever claim.
   On PG the API is the only writer, so API create/patch/delete are every change there is (no broker-originated
   events to replace).
 - `NotificationSender`: new `deliverNotifications(List<TMForumNotification>)` returning a `Mono<Void>` that
@@ -173,10 +188,11 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   today (reuse its event construction, do not fork it). The existing signatures keep their behaviour.
 - `OutboxDispatcher` (`@Scheduled(fixedDelay = "${tmforum.outbox.poll-interval:1s}")`, config record
   `OutboxProperties` with `poll-interval`, `batch-size`, `lease`, `max-backoff`, all with units):
-  - Ownership: the claim only takes rows whose `entity_type` is in the union of `getEntityClassMapping()` keys of
-    the app's `EventMapper` beans, so product-catalog never claims party-catalog rows (all-in-one owns all types).
-    The state documents are deserialized into the domain class of that type's `EventMapping` (confirm whether
-    `rawClass` or `targetClass` is the domain class).
+  - Ownership: the claim only takes rows whose `entity_type` is in `EventTypes` (a `common` singleton holding the
+    union of `getEntityClassMapping()` keys of the app's `EventMapper` beans, shared with the publisher above), so
+    product-catalog never claims party-catalog rows (all-in-one owns all types). The state documents are
+    deserialized into that type's `EventMapping.rawClass()`, the domain class (`NgsiLdEventHandler` and
+    `EventHandler.createEvent` use it the same way; `targetClass` is the VO).
   - Transaction boundaries: (1) claim + lease in one short auto-committed statement:
     `UPDATE tmforum.event_outbox SET attempts = attempts + 1, next_attempt_at = now() + $lease WHERE id IN
     (SELECT id FROM tmforum.event_outbox WHERE next_attempt_at <= now() AND entity_type = ANY($types) ORDER BY id
@@ -196,7 +212,8 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     capped;
   - PG ITs: entity + outbox row commit together, and a failing outbox insert leaves no entity row (also for delete);
     two dispatchers with disjoint type sets each claim only their own rows; a leased row is not claimed again
-    before the lease expires.
+    before the lease expires; create/patch/delete of an unmapped type (a party-role entity) leave no outbox row
+    (assert on the table directly, before any test cleanup).
 
 ### Step 7: Health indicator, module rollout and storage-neutral IT cleanup
 - `PostgresReadinessIndicator` (`@Readiness @Requires(env = "postgresql")`, `SELECT 1` with a configured timeout),
@@ -211,17 +228,19 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   contacts the broker at startup with `@Requires(notEnv = "postgresql")`.
 - `common/.../test`: `TestEntityCleaner` interface; `AbstractApiIT.cleanUp` delegates to it. NGSI-LD implementation
   = today's broker query+delete; `PostgresTestEntityCleaner` (main code of `storage-postgresql`, like `common.test`)
-  = `DELETE FROM tmforum.entity WHERE type = $1` plus `DELETE FROM tmforum.event_outbox WHERE entity_type = $1`. Keep the `AbstractApiIT`
-  constructor signature so the 73 ITs need no changes.
+  = `DELETE FROM tmforum.entity WHERE type = $1` plus `DELETE FROM tmforum.event_outbox WHERE entity_type = $1`
+  (the latter only cleans up rows of mapped types; Step 6's IT proves unmapped types never get one). Keep the
+  `AbstractApiIT` constructor signature so the 73 ITs need no changes.
 - Tests: health indicator unit test (up/down, parameterized); a startup smoke IT in `all-in-one` with
   `environments = "postgresql"`.
 
 ### Step 8: PostgreSQL in the IT matrix, one-query GET, CI and release notes
 - `-Dbroker=postgresql`: verify the full IT suite of each module runs against PG. Inventory the ITs that cannot run
   on PG yet and exclude them only in a `broker=postgresql`-activated profile (prefer JUnit 5 tags + failsafe
-  `excludedGroups`; a precise name pattern is acceptable): (a) list/filter/sort tests and hub registration/event
-  delivery tests (ticket 7), (b) broker-only tests: the NGSI-LD contract ITs and the NGSI-LD subscription ITs. Each
-  exclusion names the ticket that lifts it. CRUD tests (create/get/patch/delete, references, TMF730 sub-types,
+  `excludedGroups`; a precise name pattern is acceptable): (a) list/filter/sort tests (ticket 7), (b) hub
+  registration/deletion and event delivery tests (tickets 1 and 7: both must land before this exclusion is
+  lifted), (c) broker-only tests: the NGSI-LD contract ITs and the NGSI-LD subscription ITs. Each exclusion names
+  every ticket that has to land before it is lifted. CRUD tests (create/get/patch/delete, references, TMF730 sub-types,
   extensions) must run and pass unchanged. Passing an `EntitiesApiClient` to the `AbstractApiIT` constructor does
   not make an IT broker-only.
 - Port the 6 ITs that call `EntitiesApiClient` directly (`ProductOrderItemApiIT`,
@@ -229,7 +248,7 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   `ExtendedAppliedCustomerBillingRateApiIT`, `FinancialAccountRefIT`) to seed through the injected
   `EntityRepository` (`createDomainEntity`), so the read-only resources (CustomerBill, AppliedCustomerBillingRate)
   keep their GET coverage on every backend. Only an assertion that inspects the broker's own representation stays
-  in bucket (b), split into its own test method.
+  in bucket (c), split into its own test method.
 - One-query GET: `GetIssuesOneQueryIT` (product-catalog, `environments = "postgresql"`) wrapping the
   `ConnectionFactory` with `io.r2dbc:r2dbc-proxy` (test scope) to count statements; `GET /productOffering/{id}` with
   references issues exactly one statement. Also assert the id format `urn:ngsi-ld:product-offering:<id>` in the
@@ -243,7 +262,8 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   ticket 0/9); DeleteEvents on PG come from the outbox, on the broker from `NgsiLdEventHandler`; `\u0000` rejected
   with 400 and the broker behaviour observed for it; interim limits until ticket 7);
   update `storage-api/README.md` ("Today the only adapter..."), `storage-postgresql/README.md`, and `AGENTS.md`
-  (module, `-Dbroker=postgresql`, `k3s/postgresql-db`; replace the "only place TMForum events are fired" line with:
+  (module, `-Dbroker=postgresql`, `k3s/postgresql-db`; unless the plan-mode `[plan-update]` already did it,
+  replace the "only place TMForum events are fired" line with:
   API create/patch/delete events go through `EntityEventPublisher` (direct on the broker, outbox on PG);
   broker-originated events, including all DeleteEvents on the broker, come from `NgsiLdEventHandler` via NGSI-LD
   subscriptions created in `AbstractSubscriptionApiController`).
