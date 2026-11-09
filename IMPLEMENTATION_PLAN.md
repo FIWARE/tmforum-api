@@ -327,6 +327,16 @@ decision. Whoever picks the encoding removes that entry together with the getter
   `ProductOffering`) carrying external `CategoryRef`s, including an extra-bearing subclass.
 - Document the rule in `storage-api/README.md` and in the Javadoc of `EntityReadRepository#get`: references are
   stored and returned as written and never resolved. Ticket 6 has to pass these cases.
+- **Result:** `ReferenceFixture<T>` is returned by `AbstractEntityRepositoryContractTest#referenceFixture()`
+  (`Optional`, empty skips the three cases). `product-catalog`'s `CatalogReferenceFixture` writes a `Catalog` with
+  external `CategoryRef`s (`version` extra) and `RelatedParty`s (`role` extra); the update replaces only the
+  categories, and the same-id target is a `Category`. `updateKeepsUntouchedReferences` hit the Step 2 PATCH defect
+  on Orion-LD (the replaced category list is merged with the stored one), so it is recorded as
+  `KnownDeviation.REFERENCE_LIST_UPDATE_MERGES` (Orion-LD without `replaceOnUpdate`, next to
+  `EMPTIED_LIST_BREAKS_READS`); the case then asserts the merge, order-insensitively. The port rule (a carried list
+  replaces the stored one) and the defect are in the `updateDomainEntity` Javadoc. `NgsiLd*ContractIT`
+  (`mvn verify -pl product-catalog -Dit.test='NgsiLd*ContractIT' -DskipTests`): 27/0/0 on orion-ld, scorpio and
+  scorpio with `-Dcache=redis`.
 
 ### Step 7: Document the behaviour change
 - Add `release-notes/RELEASE_NOTES_INLINE_REFERENCES.md`, in the style of `RELEASE_NOTES_EXTERNAL_REFERENCES.md`.

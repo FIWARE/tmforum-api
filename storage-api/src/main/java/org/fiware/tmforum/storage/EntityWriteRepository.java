@@ -18,7 +18,8 @@ public interface EntityWriteRepository {
 
     /**
      * Writes only the attributes the entity carries, never a whole-document overwrite: null fields stay
-     * untouched, an emptied list is cleared and reads back absent or empty, so callers must accept both.
+     * untouched, an emptied list is cleared and reads back absent or empty, so callers must accept both. A carried
+     * list replaces the stored one.
      * Fails with {@link StorageErrorReason#NOT_FOUND} for an absent id and never creates or completes silently
      * (update-else-create callers rely on it), and with {@link StorageErrorReason#PARTIAL_UPDATE} when the
      * backend wrote only some attributes. Failures carry UPDATE, except the recorded NGSI-LD replace-mode
@@ -26,7 +27,8 @@ public interface EntityWriteRepository {
      * <p>
      * Known NGSI-LD adapter defect, not a contract rule (ticket 0): on Orion-LD in append mode (no
      * {@code replaceOnUpdate}) an emptied list whose instances carry a datasetId is not cleared; the broker keeps
-     * them and adds an empty instance, so later reads fail.
+     * them and adds an empty instance, so later reads fail. For the same reason a carried reference list is merged
+     * into the stored one by id instead of replacing it.
      */
     <T> Mono<Void> updateDomainEntity(String id, T domainEntity);
 

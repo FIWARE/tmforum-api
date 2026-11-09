@@ -34,6 +34,15 @@ PARTIAL_UPDATE, UNAVAILABLE, UNKNOWN). The one exception is `get` for a class th
 response at the call site or in `StorageExceptionHandler`. The cause is kept for logging only, and the response
 depends on (operation, reason) alone.
 
+## References
+
+A reference (a `RefEntity` and its subclasses, any relationship target) is stored inline as the writer sent it,
+the extra fields of subclasses included, and returned exactly as written. No adapter resolves a reference on read:
+a field the writer omitted stays absent, and creating, renaming or deleting the target changes nothing. An update
+replaces only the reference attributes it carries. The contract cases `createdReferencesRoundTripIntact`,
+`updateKeepsUntouchedReferences` and `getDoesNotResolveReferences` pin this for every adapter that supplies a
+`ReferenceFixture`; ticket 6 has to pass them.
+
 ## Update semantics
 
 `updateDomainEntity` writes only the attributes the entity carries. Null fields stay untouched, and an emptied list
@@ -51,9 +60,10 @@ syntax until ticket 7 adds a neutral query model.
    except the synchronous `IllegalArgumentException` of `get` described under *Errors*.
 3. Run the contract against the live backend: depend on the `storage-api` test-jar (`<type>test-jar</type>`,
    scope `test`), then extend `AbstractEntityRepositoryContractTest` and
-   `AbstractReferenceReadRepositoryContractTest`. `product-catalog`'s `NgsiLd*ContractIT` show how. A backend
-   that cannot meet a rule yet declares it in `knownDeviations()`. The affected cases then assert today's
-   behaviour, so a fix fails the case instead of passing silently.
+   `AbstractReferenceReadRepositoryContractTest`, and supply a `ReferenceFixture` through `referenceFixture()`.
+   `product-catalog`'s `NgsiLd*ContractIT` show how. A backend that cannot meet a rule yet declares it in
+   `knownDeviations()`. The affected cases then assert today's behaviour, so a fix fails the case instead of
+   passing silently.
 4. Select the adapter per deployment through a Micronaut profile/`@Requires` (ticket 6), so exactly one
    implementation of each interface is in the context. `NgsiLdEntityRepository` is also the only
    `SubscriptionRepository` bean, and every subscription controller requires one through its `@Inject` setter.

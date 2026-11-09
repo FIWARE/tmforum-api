@@ -18,6 +18,12 @@ public enum KnownDeviation {
     EMPTY_PAGE_COMPLETES_EMPTY,
 
     /**
+     * An update carrying a reference list keeps the stored references whose ids it does not carry, next to the
+     * carried ones, instead of replacing the list.
+     */
+    REFERENCE_LIST_UPDATE_MERGES,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL
