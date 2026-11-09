@@ -31,7 +31,8 @@ makes no request for any referenced id, whatever the number of references.
   from its properties fails loudly instead of reading back id-only.
 * `ngsi-ld-java-mapping` is raised to 1.6.33. Orion-LD returns the sub-attributes of a relationship with several
   instances expanded (`https://uri.etsi.org/ngsi-ld/name`), which read back as id-only references. The library now
-  compacts such names on read against `mapping.contextUrl`, and
+  compacts such names on read: it strips the built-in NGSI-LD core and default-context prefixes, and resolves any
+  other expanded name against `mapping.contextUrl`.
   [JsonLdContextPreloader](../common/src/main/java/org/fiware/tmforum/common/mapping/JsonLdContextPreloader.java)
   fetches that context once the server is up.
 * The `entities` cache stays. It now only dedups one request's reads of an entity (get after create/update,
@@ -82,21 +83,26 @@ release upgrades to; `mapping.contextUrl` existed before and now matters for rea
 
 | Property                                  | Env var                                   | Default                                                      | Description                                                                                  |
 |-------------------------------------------|-------------------------------------------|--------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| `mapping.contextUrl`                      | `MAPPING_CONTEXT_URL`                     | `https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld` | Context written with every entity, and now also the one expanded names are compacted against. |
+| `mapping.contextUrl`                      | `MAPPING_CONTEXT_URL`                     | `https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld` | Context written with every entity, and now also the one expanded names outside the built-in prefixes are resolved against. |
 | `mapping.context-retrieval-timeout`       | `MAPPING_CONTEXT_RETRIEVAL_TIMEOUT`       | `10s`                                                        | Timeout of one retrieval of that context.                                                    |
 | `mapping.context-retrieval-retry-delay`   | `MAPPING_CONTEXT_RETRIEVAL_RETRY_DELAY`   | `60s`                                                        | Time after a failed retrieval before the next one is attempted.                              |
-| `mapping.compact-against-context`         | `MAPPING_COMPACT_AGAINST_CONTEXT`         | `true`                                                       | Compact expanded attribute names on read.                                                    |
+| `mapping.compact-against-context`         | `MAPPING_COMPACT_AGAINST_CONTEXT`         | `true`                                                       | Resolve expanded names that are not under the built-in NGSI-LD core/default-context prefixes against `mapping.contextUrl`. `false` skips retrieving the context; names under the built-in prefixes are compacted either way. |
 
 * **A deployment with a custom `general.contextUrl` has to set `mapping.contextUrl` to the same URL.** It already had
   to for writes. Reads now compact sub-attribute names against `mapping.contextUrl`, so a mismatch turns
   multi-instance references on Orion-LD into id-only ones.
 * **Every start of every module issues a GET to `mapping.contextUrl`** (the preload), by default to the ETSI core
-  context, unless `mapping.compact-against-context` is `false`. Allow egress to that URL or self-host the context. Otherwise each start waits up to
+  context, unless `mapping.compact-against-context` is `false`. If the GET fails, each start waits up to
   `mapping.context-retrieval-timeout` and logs a WARN.
+  * **With the default (core) context, set `mapping.compact-against-context=false`.** Orion-LD's expanded names are
+    then all under the built-in prefixes, which are compacted without the context, so nothing is lost and the
+    startup GET is skipped.
+  * **With a custom context, keep it `true`** and allow egress to `mapping.contextUrl` or self-host the context.
 * The preload runs on a blocking-capable thread, off the event loop. If the context is unreachable then, the library
   retries the blocking fetch (again up to `mapping.context-retrieval-timeout`) on the reading thread, at most once per
-  `mapping.context-retrieval-retry-delay`, until it succeeds. Until then, expanded names are not compacted.
-* While the preload is in flight, a read that needs compaction waits on the resolver's lock (its `retrieve()` is
+  `mapping.context-retrieval-retry-delay`, until it succeeds. Until then, expanded names outside the built-in prefixes
+  are not compacted.
+* While the preload is in flight, a read that needs the context (an expanded name outside the built-in prefixes) waits on the resolver's lock (its `retrieve()` is
   `synchronized`) for up to `mapping.context-retrieval-timeout`.
 
 ## Known limitations
