@@ -29,6 +29,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -156,6 +157,21 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertTrue(list == null || list.isEmpty(), "An emptied list reads back absent or empty, but was " + list);
         assertEquals(fixture().mutableValue(created), fixture().mutableValue(read));
         assertEquals(fixture().untouchedValue(created), fixture().untouchedValue(read));
+    }
+
+    @Test
+    void aDeclaredPropertyWinsOverAnExtensionOfTheSameName() {
+        T created = fixture().withExtensionNamedLikeTheMutableAttribute(fixture().newId());
+        URI id = create(fixture(), created);
+
+        T read = read(id);
+
+        assertEquals(Set.of(), fixture().extensionNames(read));
+        if (knownDeviations().contains(KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY)) {
+            assertNotEquals(fixture().mutableValue(created), fixture().mutableValue(read));
+            return;
+        }
+        assertEquals(fixture().mutableValue(created), fixture().mutableValue(read));
     }
 
     @Test

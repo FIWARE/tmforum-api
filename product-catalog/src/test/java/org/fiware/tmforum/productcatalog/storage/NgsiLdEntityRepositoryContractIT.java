@@ -39,7 +39,8 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	// the NGSI-LD defects recorded on the port Javadoc; the broker is chosen by the IT environment
 	@Override
 	protected Set<KnownDeviation> knownDeviations() {
-		Set<KnownDeviation> deviations = EnumSet.of(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
+		Set<KnownDeviation> deviations = EnumSet.of(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY,
+				KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY);
 		if (!environment.getActiveNames().contains(ORION_LD_ENVIRONMENT)) {
 			return deviations;
 		}

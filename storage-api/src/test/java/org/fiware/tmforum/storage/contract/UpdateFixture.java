@@ -2,6 +2,7 @@ package org.fiware.tmforum.storage.contract;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An {@link EntityFixture} whose entities also serve the update cases: partial entities that carry only one of a
@@ -30,4 +31,14 @@ public interface UpdateFixture<T> extends EntityFixture<T> {
      * Null when the list reads back absent.
      */
     List<?> listValue(T entity);
+
+    /**
+     * {@link #newEntity} plus an extension (unknown) property named like the mutable attribute, with another value.
+     */
+    T withExtensionNamedLikeTheMutableAttribute(URI id);
+
+    /**
+     * Names of the entity's extension properties, empty when it has none.
+     */
+    Set<String> extensionNames(T entity);
 }

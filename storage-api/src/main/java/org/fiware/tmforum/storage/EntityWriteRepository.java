@@ -12,7 +12,11 @@ public interface EntityWriteRepository {
 
     /**
      * Fails with {@link StorageErrorReason#CONFLICT} when the id exists and {@link StorageErrorReason#INVALID_DATA}
-     * when the backend rejects the content.
+     * when the backend rejects the content. An extension (unknown) property named like a declared property is
+     * dropped, the declared value is stored.
+     * <p>
+     * Known NGSI-LD adapter defect, not a contract rule (ticket 0): the mapping library writes the extension
+     * property over the declared one, so the declared value is lost.
      */
     <T> Mono<Void> createDomainEntity(T domainEntity);
 
