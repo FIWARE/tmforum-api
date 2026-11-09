@@ -332,9 +332,10 @@ decision. Whoever picks the encoding removes that entry together with the getter
   cases are skipped. `product-catalog`'s `ProductOfferingReferenceFixture` writes a `ProductOffering` with external
   `CategoryRef`s (`version` extra) and `ChannelRef`s. Both attributes were flipped in Step 2, so the cases also guard
   the flip on the NGSI-LD adapter. The update replaces only the categories. The same-id target is a `Category`.
-  The fixture's reference to that `Category` omits `name`. A resolving read used to merge the written sub-properties
-  over the target, so it would fill `name` from the target, and `getDoesNotResolveReferences` (checked after the
-  target is created and again after it is renamed) fails it. `updateKeepsUntouchedReferences` hit the Step 2 PATCH
+  The fixture's reference to that `Category` omits `name`. A resolving read merges the written sub-properties over
+  the target, so it would fill `name` from the target and fail `getDoesNotResolveReferences` (checked after the
+  target is created, renamed and deleted). This is reasoned from the merge pinned by `AccountRefRoundTripTest`; it
+  was not run against a resolving adapter, which the NGSI-LD adapter no longer is since Step 5. `updateKeepsUntouchedReferences` hit the Step 2 PATCH
   defect on Orion-LD: the replaced category list is merged with the stored one by datasetId. It is recorded as
   `KnownDeviation.REFERENCE_LIST_UPDATE_MERGES` (Orion-LD without `replaceOnUpdate`, next to
   `EMPTIED_LIST_BREAKS_READS`), and in that setup the case asserts the merge, order-insensitively. The port rule (a

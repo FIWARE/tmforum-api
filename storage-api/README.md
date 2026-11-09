@@ -41,9 +41,11 @@ the extra fields of subclasses included, and returned exactly as written. No ada
 a field the writer omitted stays absent, and creating, renaming or deleting the target changes nothing. An update
 replaces only the reference attributes it carries. The contract cases `createdReferencesRoundTripIntact`,
 `updateKeepsUntouchedReferences` and `getDoesNotResolveReferences` pin this for every adapter that supplies a
-`ReferenceFixture`; ticket 6 has to pass them. The fixture's reference to the target the no-resolve case creates
-omits `name`, which the target carries, so a resolving read fails that case. On Orion-LD in append mode an update
-merges a carried reference list into the stored one by datasetId (`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
+`ReferenceFixture`; ticket 6 has to pass them. The no-resolve case reads after the target is created, renamed and
+deleted. The fixture's reference to that target omits `name`, which the target carries, so that a resolving read
+would fill it in and fail the case (reasoned from the resolving merge, not run against a resolving adapter). On
+Orion-LD in append mode an update merges a carried reference list into the stored one by datasetId
+(`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
 
 ## Update semantics
 

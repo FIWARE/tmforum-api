@@ -230,7 +230,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertEquals(expected, read);
     }
 
-    // the reference at targetId omits the name its target carries, so a resolving read would fill it in
+    // the reference at targetId omits the name its target carries, so that a resolving read would fill it in
     private <R> void assertGetDoesNotResolveReferences(ReferenceFixture<R> references) {
         R created = references.newEntity(references.newId());
         URI id = create(references, created);
@@ -244,6 +244,9 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         repository().updateDomainEntity(targetId.toString(), references.target(targetId, RENAMED_TARGET_NAME))
                 .block(TIMEOUT);
         assertEquals(written, references.references(read(references, id)), "Read after the target was renamed.");
+
+        repository().deleteDomainEntity(targetId).block(TIMEOUT);
+        assertEquals(written, references.references(read(references, id)), "Read after the target was deleted.");
     }
 
     static Stream<Arguments> pages() {
