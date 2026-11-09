@@ -32,6 +32,7 @@
     <modules>
         <module>storage-api</module>
         <module>common</module>
+        <module>storage-postgresql</module>
         <module>customer-shared-models</module>
         <module>resource-shared-models</module>
         <module>product-shared-models</module>
@@ -130,7 +131,7 @@
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
-        <!-- broker to be used for testing, could be scorpio or orion-ld -->
+        <!-- storage under test: orion-ld or scorpio (NGSI-LD broker), or postgresql (k3s/postgresql-db, no broker) -->
         <broker>orion-ld</broker>
         <!-- caching to be used for testing, could be in-memory or redis -->
         <cache>in-memory</cache>
@@ -622,6 +623,7 @@
                                             <portBinding>3000:3000</portBinding>
                                             <portBinding>9000:9000</portBinding>
                                             <portBinding>9001:9001</portBinding>
+                                            <portBinding>5432:5432</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -643,6 +645,16 @@
                                     </goals>
                                     <configuration>
                                         <manifests>${project.parent.basedir}/k3s/minio</manifests>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-postgresql</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/postgresql-db</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -684,6 +696,7 @@
                                             <portBinding>3000:3000</portBinding>
                                             <portBinding>9000:9000</portBinding>
                                             <portBinding>9001:9001</portBinding>
+                                            <portBinding>5432:5432</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -704,6 +717,15 @@
                                     </goals>
                                     <configuration>
                                         <manifests>${project.parent.basedir}/k3s/minio</manifests>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-postgresql</id>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${project.parent.basedir}/k3s/postgresql-db</manifests>
                                     </configuration>
                                 </execution>
                             </executions>
