@@ -22,7 +22,8 @@ public interface EntityReadRepository {
      * <p>
      * References are returned exactly as written and never resolved: a field the writer omitted stays absent, and
      * the target's existence or current state does not change the result. A reference list may come back in another
-     * order, but with every written entry exactly once.
+     * order, but with every written entry exactly once. Exception: customer-bill {@code FinancialAccountRef}'s
+     * {@code accountBalance} is not stored yet (its encoding is an open decision), so it reads back absent.
      *
      * @throws IllegalArgumentException synchronously, if the backend cannot persist {@code entityClass}; checked
      *                                  only after the id has a type segment, so a malformed id is always empty

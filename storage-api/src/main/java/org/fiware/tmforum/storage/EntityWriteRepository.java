@@ -29,9 +29,12 @@ public interface EntityWriteRepository {
      * {@code replaceOnUpdate}) an emptied list whose instances carry a datasetId is not cleared; the broker keeps
      * them and adds an empty instance, so later reads fail. For the same reason any carried list whose instances
      * carry a datasetId is merged into the stored one by datasetId instead of replacing it: a stored instance whose
-     * datasetId the update does not carry survives next to the carried ones. For a reference list the key is the
-     * reference's datasetId, not its id; for a property list it is the position ({@code list-item:n}), so shortening
-     * the list keeps the stored tail. Only the reference-list case is pinned by a contract case.
+     * datasetId the update does not carry survives next to the carried ones. For a reference list the datasetId is
+     * the reference id, except where a subclass extends it ({@code RelatedParty} {@code <id>:<role>},
+     * {@code ProductSpecificationRelationship} {@code <id>:<relationshipType>}, {@code RelatedProductOrderItemRef}
+     * {@code <productOrderId>:<orderItemId>}). For a property list it is the position ({@code list-item:n}), so
+     * shortening the list presumably keeps the stored tail; that is inferred, not checked against a broker. Only the
+     * reference-list case is pinned by a contract case.
      */
     <T> Mono<Void> updateDomainEntity(String id, T domainEntity);
 

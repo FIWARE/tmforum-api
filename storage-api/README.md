@@ -40,7 +40,9 @@ A reference (a `RefEntity` and its subclasses, any relationship target) is store
 the extra fields of subclasses included, and returned exactly as written. No adapter resolves a reference on read:
 a field the writer omitted stays absent, and creating, renaming or deleting the target changes nothing. List order
 is not part of the rule (NGSI-LD does not define the order of attribute instances), but every written entry comes
-back once. An update replaces only the reference attributes it carries.
+back once. An update replaces only the reference attributes it carries. One exception: customer-bill
+`FinancialAccountRef.accountBalance` is not stored yet and reads back absent. Its encoding is an open decision, and
+the guard test in `all-in-one` exempts that getter by name until it is made.
 
 The contract cases `createdReferencesRoundTripIntact`, `updateKeepsUntouchedReferences` and
 `getDoesNotResolveReferences` pin this. An adapter has to supply a `ReferenceFixture` through `referenceFixture()`

@@ -19,7 +19,8 @@ public enum KnownDeviation {
 
     /**
      * An update carrying a reference list keeps the stored references whose datasetIds it does not carry, next to
-     * the carried ones, instead of replacing the list. The merge key is the datasetId, not the reference id.
+     * the carried ones, instead of replacing the list. The merge key is the datasetId, which is the reference id
+     * unless the ref class extends it (e.g. {@code RelatedParty} adds the role).
      */
     REFERENCE_LIST_UPDATE_MERGES,
 
