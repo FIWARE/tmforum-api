@@ -186,15 +186,18 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     `patch` keeps its existence check (404 before reference validation) and is generalized to
     `<S extends T> Mono<S> patch(String id, S patch, Mono<?> checkingMono, Class<S> entityClass)` so sub-type
     patches can use it.
-  - Writers that bypass `AbstractApiController` today (on the broker their changes still produce events through
-    `NgsiLdEventHandler`, so on PG they must go through the publisher too):
+  - Writers that bypass `AbstractApiController` today. On the broker, only their deletes still produce an event
+    (through `NgsiLdEventHandler`; its Create/AttributeValueChange/StateChange checkers always return `false`), so
+    on PG the delete must go through the publisher. Routing the sub-type patches through `patch` adds update events
+    on both backends:
     - `OrganizationApiController.deleteOrganization` (party-catalog) -> `deleteWithEvent` (keeps its
       `DeletionException` for an invalid id);
     - the sub-type patch paths that call `repository.updateDomainEntity` themselves: resource-inventory
       `ResourceApiController.patchSubTypeResource`, software-management `ResourceApiController` and
       `ResourceSpecificationApiController`, resource-catalog `ResourceSpecifcationApiController` -> the generalized
-      `patch` (same existence check, checking mono and re-read, now with the event). On the broker this gives
-      sub-type patches the direct update event every other patch already fires; it is not a new kind of event.
+      `patch` (same existence check, checking mono and re-read, now with the event). Sub-type patches emit no
+      update event on either backend today; afterwards they fire the direct update event every other patch already
+      fires. This is a broker behaviour change, listed in the Step 8 release notes.
     - `relatedEntityHandlingMono` has no production caller (only `CharacterizationTestController` in `common`'s
       tests); it keeps calling the repository without events, as today. Its Javadoc gets a line saying so.
     - `importDomainEntity` (ticket 8 migration) writes without events by design.
@@ -202,7 +205,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     `EntityEventPublisher` implementations calls `createDomainEntity`/`updateDomainEntity`/`deleteDomainEntity`
     except `relatedEntityHandlingMono`; extend `StorageBoundaryTest` with that rule if it can express it.
 - `storage-postgresql`: `OutboxEntityEventPublisher` uses new transactional methods on `PostgresEntityRepository`
-  that, in one transaction, write the entity and insert the outbox row (`create`: new_state = written document;
+  that, in one transaction, write the entity and insert the outbox row (`create`: new_state = the request object
+  serialized with the application mapper, not the stored document, so `@NotStored` fields such as `accountBalance`
+  are in the CreateEvent as on the broker, whose direct CreateEvent carries the request object; it goes through
+  `NullCharacterValidator` like the entity document;
   `update`: `SELECT data ... FOR UPDATE` as old_state, merge as in Step 4, `RETURNING data` as new_state;
   `delete`: `DELETE ... RETURNING type, data` as old_state, 0 rows -> NOT_FOUND and no outbox row). Rollback of
   either statement rolls back both. Write the outbox row only when the entity's type is in the app's
@@ -218,8 +224,27 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - `TMForumEventHandler`: outbox overloads `handleCreateEvent`/`handleUpdateEvent`/`handleDeleteEvent` taking the
   outbox `created_at` as event time and a deterministic event id (`UUID.nameUUIDFromBytes(outboxId + eventType)`),
   so retries carry the same `eventId`. They go through `deliverNotifications`, so their `Mono` fails when any
-  delivery fails. `handleDeleteEvent` builds the same `<Type>DeleteEvent` payload `NgsiLdEventHandler` produces
-  today (reuse its event construction, do not fork it). The existing signatures keep their behaviour.
+  delivery fails. The existing signatures keep their behaviour.
+- DeleteEvents on PG (decided here; the broker path is not changed):
+  - Broker today: `AbstractSubscriptionApiController` registers the NGSI-LD subscription with only `entities` and
+    `q`, no event-type filter, and `NgsiLdEventHandler` fires `DeleteNgsiLdEventChecker` for every notification
+    with `deletedAt`, so recipients and payload are whatever the broker's deletion notification gives. No IT pins
+    either today. Step 6 first adds a broker-only IT (`DeleteEventBrokerIT`, product-catalog, bucket (c) in Step 8)
+    that registers hubs with and without `eventType=CatalogDeleteEvent` and with a `q`, deletes a Catalog and
+    records which hubs got a DeleteEvent and with which payload fields, on Orion-LD and Scorpio.
+  - Recipients on PG: the TMForum-correct rule every Create/Change event already follows on both backends:
+    `getSubscriptions` with `eventTypes=<Type>DeleteEvent` (a hub without an `eventType` filter gets the group's
+    default event types, which include `DeleteEvent` where `ALLOWED_EVENT_TYPES` allows it), then a new
+    `checkers/tmforum/DeleteTmForumEventChecker` evaluating the hub's `query` against `old_state` through
+    `SubscriptionQueryResolver.doesQueryMatchCreateEvent` (the deleted entity matched the hub's filter). Where
+    the broker IT shows the broker also notifies hubs that excluded DeleteEvents or whose `q` did not match, that
+    difference is an accepted deviation (PG follows TMF630), recorded in ticket 0 and the Step 8 release notes.
+  - Payload on PG: the same shape as the broker's, so a consumer sees no difference. `handleDeleteEvent` builds it
+    through the calls `NgsiLdEventHandler.createNotification` makes after `fromEntityVO`
+    (`makeEventDetails`, `eventMapper.mapPayload(entity, rawClass)`, `createEvent` with the fields filter), moved
+    into `EventHandler` and shared, not forked. The entity is the domain object with only the fields the broker IT
+    shows in the broker's payload (id-only if it carries only id/type), taken from `old_state`. A PG IT asserts
+    the payload against the field set the broker IT recorded.
 - `OutboxDispatcher` (`@Scheduled(fixedDelay = "${tmforum.outbox.poll-interval:1s}")`, config record
   `OutboxProperties` with `enabled`, `poll-interval`, `batch-size`, `lease`, `max-backoff`, durations with units):
   - On/off switch: the bean is `@Requires(env = "postgresql")` and
@@ -252,6 +277,9 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - Note: delivery on PG needs subscription lookup with a query (ticket 7) and hub registration without a broker (tickets 1 and 7); until then rows stay pending and retry.
   Tests therefore cover:
   - unit tests of `DirectEntityEventPublisher` (same events, same order as before, no event on delete);
+  - `DeleteTmForumEventChecker`, parameterized over hub queries (none, matching, not matching `old_state`);
+    `TMForumEventHandler.handleDeleteEvent` with a mocked `getSubscriptions`: a hub without `<Type>DeleteEvent`
+    gets nothing, and the payload has exactly the broker's field set;
   - `NotificationSender.deliverNotifications` (all 2xx completes, one failing callback errors, parameterized);
   - the dispatcher with a mocked `TMForumEventHandler`, parameterized over CREATE/UPDATE/DELETE: success deletes
     the row; a failing callback leaves the row with `attempts + 1` and a pushed `next_attempt_at`;
@@ -295,7 +323,7 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   on PG yet and exclude them only in a `broker=postgresql`-activated profile (prefer JUnit 5 tags + failsafe
   `excludedGroups`; a precise name pattern is acceptable): (a) list/filter/sort tests (ticket 7), (b) hub
   registration/deletion and event delivery tests (tickets 1 and 7: both must land before this exclusion is
-  lifted), (c) broker-only tests: the NGSI-LD contract ITs and the NGSI-LD subscription ITs. Each exclusion names
+  lifted), (c) broker-only tests: the NGSI-LD contract ITs, the NGSI-LD subscription ITs and `DeleteEventBrokerIT` (Step 6). Each exclusion names
   every ticket that has to land before it is lifted. CRUD tests (create/get/patch/delete, references, TMF730 sub-types,
   extensions) must run and pass unchanged. Passing an `EntitiesApiClient` to the `AbstractApiIT` constructor does
   not make an IT broker-only.
@@ -315,7 +343,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - Docs: `release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md` (new adapter and how to enable it; schema; atomic
   PATCH, so the #179 concurrent-merge race no longer happens, callers relying on merged lists must not;
   at-least-once TMForum events with stable `eventId` on PG vs fire-and-forget on the broker (accepted deviation,
-  ticket 0/9); DeleteEvents on PG come from the outbox, on the broker from `NgsiLdEventHandler`; `\u0000` rejected
+  ticket 0/9); DeleteEvents on PG come from the outbox, on the broker from `NgsiLdEventHandler`, and the
+  recipient difference the Step 6 broker IT found (PG honours `eventType` and the hub's query); TMF730 sub-type
+  patches (resource-inventory, software-management, resource-catalog) now fire update events on every backend,
+  the broker included (Step 6); `\u0000` rejected
   with 400 and the broker behaviour observed for it; interim limits until ticket 7);
   update `storage-api/README.md` ("Today the only adapter..."), `storage-postgresql/README.md`, and `AGENTS.md`
   (module, `-Dbroker=postgresql`, `k3s/postgresql-db`; the event line and the IT cleanup line are updated in
