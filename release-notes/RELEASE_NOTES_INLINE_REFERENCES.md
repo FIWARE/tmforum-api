@@ -37,7 +37,7 @@ makes no request for any referenced id, whatever the number of references.
 * The `entities` cache stays. It now only dedups one request's reads of an entity (get after create/update,
   reference checks).
 * The backend-neutral port contract in `storage-api` pins the rule with `createdReferencesRoundTripIntact`,
-  `updateKeepsUntouchedReferences` and `getDoesNotResolveReferences`, so the PostgreSQL adapter (ticket 6) has to
+  `updateKeepsUntouchedReferences` and `getDoesNotResolveReferences`, so the upcoming PostgreSQL adapter has to
   behave the same. See [storage-api/README.md](../storage-api/README.md#references).
 
 ## Behaviour changes
@@ -48,10 +48,13 @@ makes no request for any referenced id, whatever the number of references.
   the current state of the target has to fetch it.
 * **Data written before this release reads back with only the fields that were embedded at the time.** Fields that
   were filled in from the target (e.g. `name`/`href` the client never sent, or the extra fields listed above, which
-  were dropped on write) are absent until the ticket 8 backfill rewrites the stored references. A `productOrderItem`
-  (product-inventory) stored before this release also has to be rewritten by that backfill: its datasetId changed
-  from the product order id to `<productOrderId>:<orderItemId>`, and on Orion-LD a PATCH without `replaceOnUpdate`
-  keeps the old instance next to the new one, so the product reads back a duplicate item until then.
+  were dropped on write) are absent. **This release does not migrate stored data.** A
+  later data-migration release will rewrite the stored references; until it is applied, existing data stays as
+  described here. In the meantime a client can restore the fields of a reference by PATCHing its attribute with the
+  full reference payload. A `productOrderItem` (product-inventory) stored before this release is the exception: its
+  datasetId changed from the product order id to `<productOrderId>:<orderItemId>`, and on Orion-LD a PATCH without
+  `replaceOnUpdate` keeps the old instance next to the new one, so a re-PATCH makes the product read back a duplicate
+  item. Leave such products untouched until the data migration has rewritten them.
 * **Reads that used to fail now succeed.** A reference to a stored target is no longer fetched, so these reads,
   which answered `500` or `400` before, return the entity:
   * `ServiceSpecification`, `DocumentSpecification` and `UsageSpecification` whose `entitySpecRelationship` points at a
@@ -74,7 +77,8 @@ makes no request for any referenced id, whatever the number of references.
 
 ## Configuration
 
-No new properties. The mapping library's context properties now matter for reads:
+No new properties in this repository. The last three below are new in `ngsi-ld-java-mapping` 1.6.33, which this
+release upgrades to; `mapping.contextUrl` existed before and now matters for reads too:
 
 | Property                                  | Env var                                   | Default                                                      | Description                                                                                  |
 |-------------------------------------------|-------------------------------------------|--------------------------------------------------------------|----------------------------------------------------------------------------------------------|
@@ -115,23 +119,20 @@ No new properties. The mapping library's context properties now matter for reads
 
 ## Changed test expectations
 
-Only one existing IT assertion changed in Steps 2–4, and one Orion-LD skip was dropped. No assertion had to change
+Against the previous release, only these existing tests changed their expectations. No IT assertion had to change
 from a target-filled value to the posted payload: every IT already posted the fields it asserted.
 
 * `product-catalog` `ExternalReferenceIT` (`assertCategoriesReadBack`): compared only the ids of the read-back
   categories, because an external `ProductOffering.category` was fetched, 404'd and came back id-only. It now
   compares the whole posted reference, which is what the read returns.
-* `service-catalog` `EntitySpecificationRelationshipIT`: the multi-instance case no longer skips Orion-LD, now that
-  expanded sub-attribute names are compacted on read.
-
-The unit tests that pinned resolution were rewritten in Step 5:
-
 * `ErrorResponseCharacterizationTest`: a list or retrieve whose related entity fails to fetch used to fail. It now
   reads back `200` with the stored relationship, and the related entity is never fetched.
-* `AccountRefRoundTripTest`: `writtenFieldsWinOverTheResolvedTarget` (sub-properties merged over the fetched target)
-  became `billingAccountReadsItsFinancialAccountFromItsProperties`.
-* `TolerantEntityVOMapperTest` and `BrokerBackedEntitiesRepositoryTest` were folded into
-  `InlineReferencesEntitiesRepositoryTest`.
+* `NgsiLdMappingRegressionTest`: the assertion that `TolerantEntityVOMapper` is the injected mapper became one that
+  `InlineReferencesEntitiesRepository` is the injected `EntitiesRepository`.
+* `RelationshipTargetConstructorTest` and `RelationshipTargetSerializationTest`: they covered only the targets that
+  were fetched on read, and now cover every relationship target.
+* `TolerantEntityVOMapperTest` and `BrokerBackedEntitiesRepositoryTest` were removed together with their classes;
+  the cases that still apply are in `InlineReferencesEntitiesRepositoryTest`.
 
 ## Breaking changes for consumers of `common`
 

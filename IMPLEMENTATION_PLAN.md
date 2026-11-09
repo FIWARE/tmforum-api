@@ -367,12 +367,16 @@ decision. Whoever picks the encoding removes that entry together with the getter
   bullet, which no longer matters for reads.
 - **Result:** `release-notes/RELEASE_NOTES_INLINE_REFERENCES.md` added. Steps 3 and 4 changed no existing IT
   assertion; Step 2 changed one (`ExternalReferenceIT#assertCategoriesReadBack`, ids only → whole posted reference)
-  and dropped the Orion-LD skip in `EntitySpecificationRelationshipIT`. The notes also list the Step 5 unit-test
-  rewrites. The `AGENTS.md` change is **not** made on this step branch (step agents must not edit it); it goes to a
+  and dropped the Orion-LD skip in `EntitySpecificationRelationshipIT`. The notes list only tests that changed
+  against the previous release (`assertCategoriesReadBack`, the Step 5 unit-test rewrites, and the
+  `RelationshipTarget*Test` scope change); tests added within this ticket (`EntitySpecificationRelationshipIT`,
+  `AccountRefRoundTripTest`) are left out. They name no ticket or step numbers, and say the backfill is not part of
+  the release. The `AGENTS.md` change is **not** made on this step branch (step agents must not edit it); it goes to a
   plan-mode agent through a `[plan-update]`. Proposed replacement for the `strictRelationships` bullet:
   "References are stored inline and never resolved on read: every `RELATIONSHIP`/`RELATIONSHIP_LIST`
   `@AttributeSetter` is `fromProperties = true`, every `@AttributeGetter` of a relationship target class (except the
-  `Subscription` pointer) is `PROPERTY` with `embedProperty = true`, and the target class has a `String` constructor.
+  `Subscription` pointer) is `PROPERTY` with `embedProperty = true` (one getter, customer-bill `FinancialAccountRef#getAccountBalance`, is
+  exempt by name until its encoding is decided), and the target class has a `String` constructor.
   `all-in-one`'s `RelationshipsReadFromPropertiesTest` and `RelationshipTargetConstructorTest` enforce this.
   `mapping.strictRelationships`/`StrictRelationshipsDefault` no longer affect reads; the `application.yaml` blocks
   stay."
