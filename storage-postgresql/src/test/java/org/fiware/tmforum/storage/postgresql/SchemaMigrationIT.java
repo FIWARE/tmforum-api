@@ -50,9 +50,10 @@ class SchemaMigrationIT {
         // column name, data type, default (null if none); every column is NOT NULL
         return Stream.of(
                 Arguments.of("id", "text", null),
-                Arguments.of("type", "text", null),
-                Arguments.of("version", "integer", "1"),
+                Arguments.of("version", "text", "''::text"),
+                Arguments.of("revision", "bigint", "1"),
                 Arguments.of("is_current", "boolean", "true"),
+                Arguments.of("type", "text", null),
                 Arguments.of("data", "jsonb", null),
                 Arguments.of("created_at", "timestamp with time zone", "now()"),
                 Arguments.of("updated_at", "timestamp with time zone", "now()"));

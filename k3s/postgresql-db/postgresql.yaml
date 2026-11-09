@@ -55,7 +55,8 @@ spec:
               value: "tmforum"
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "tmforum", "-d", "tmforum"]
+              # over TCP: the image's init server listens only on the Unix socket
+              command: ["pg_isready", "-h", "127.0.0.1", "-U", "tmforum", "-d", "tmforum"]
             initialDelaySeconds: 5
             periodSeconds: 5
             failureThreshold: 6

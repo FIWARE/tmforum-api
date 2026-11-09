@@ -9,16 +9,18 @@ uses R2DBC. Flyway migrates the schema over JDBC at startup, and nothing else us
 Flyway owns the schema `tmforum`: it creates it and keeps its history table (`tmforum.flyway_schema_history`)
 there. The migrations are in `src/main/resources/db/migration/tmforum`.
 
-`tmforum.entity` holds one row per entity. `data` is the domain object as JSON. `version` and `is_current` are
-reserved for versioning and keep their defaults (`1`, `true`) for now. The partial unique index
+`tmforum.entity` holds one row per entity. `data` is the domain object as JSON. `version`, `revision` and
+`is_current` are reserved for versioning and keep their defaults (`''`, `1`, `true`) for now: `version` is `''` for
+unversioned types, `revision` is monotonic per `id`. The partial unique index
 `entity_current_idx` allows only one current row per `id`.
 
 | Column       | Type          | Default |
 |--------------|---------------|---------|
 | `id`         | `text`        |         |
-| `type`       | `text`        |         |
-| `version`    | `integer`     | `1`     |
+| `version`    | `text`        | `''`    |
+| `revision`   | `bigint`      | `1`     |
 | `is_current` | `boolean`     | `true`  |
+| `type`       | `text`        |         |
 | `data`       | `jsonb`       |         |
 | `created_at` | `timestamptz` | `now()` |
 | `updated_at` | `timestamptz` | `now()` |
