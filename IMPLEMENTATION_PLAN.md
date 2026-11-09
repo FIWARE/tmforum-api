@@ -203,7 +203,7 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     batch can take (HTTP client read timeout x callbacks per batch); document that in `OutboxProperties`.
   - At-least-once: a row is deleted only after every callback acknowledged it. A partly failed row is redelivered
     to all its subscribers with the same `eventId` (consumers deduplicate on it).
-- Note: delivery on PG needs subscription lookup with a query (ticket 7); until then rows stay pending and retry.
+- Note: delivery on PG needs subscription lookup with a query (ticket 7) and hub registration without a broker (tickets 1 and 7); until then rows stay pending and retry.
   Tests therefore cover:
   - unit tests of `DirectEntityEventPublisher` (same events, same order as before, no event on delete);
   - `NotificationSender.deliverNotifications` (all 2xx completes, one failing callback errors, parameterized);
