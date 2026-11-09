@@ -365,3 +365,21 @@ decision. Whoever picks the encoding removes that entry together with the getter
 - `AGENTS.md` Key Conventions: every relationship setter must be `fromProperties = true`, and every field of a
   relationship target class (except the `Subscription` pointer) an embedded `PROPERTY` getter, enforced by the Step 5 guard test. Reword the `strictRelationships`
   bullet, which no longer matters for reads.
+- **Result:** `release-notes/RELEASE_NOTES_INLINE_REFERENCES.md` added. Steps 3 and 4 changed no existing IT
+  assertion; Step 2 changed one (`ExternalReferenceIT#assertCategoriesReadBack`, ids only → whole posted reference)
+  and dropped the Orion-LD skip in `EntitySpecificationRelationshipIT`. The notes list only tests that changed
+  against the previous release (`assertCategoriesReadBack`, the Step 5 unit-test rewrites, and the
+  `RelationshipTarget*Test` scope change); tests added within this ticket (`EntitySpecificationRelationshipIT`,
+  `AccountRefRoundTripTest`) are left out. They name no ticket or step numbers, and say the backfill is not part of
+  the release. They say `mapping.compact-against-context` only gates resolving names outside the built-in NGSI-LD
+  prefixes (stripped either way), so a deployment on the default core context can set it to `false` and skip the
+  startup GET, while a custom context needs it `true` plus egress or a self-hosted context. The shipped
+  `application.yaml`s leave it `true`, and the notes say so; shipping `false` is a possible follow-up. The `AGENTS.md` change is **not** made on this step branch (step agents must not edit it); it goes to a
+  plan-mode agent through a `[plan-update]`. Proposed replacement for the `strictRelationships` bullet:
+  "References are stored inline and never resolved on read: every `RELATIONSHIP`/`RELATIONSHIP_LIST`
+  `@AttributeSetter` is `fromProperties = true`, every `@AttributeGetter` of a relationship target class (except the
+  `Subscription` pointer) is `PROPERTY` with `embedProperty = true` (one getter, customer-bill `FinancialAccountRef#getAccountBalance`, is
+  exempt by name until its encoding is decided), and the target class has a `String` constructor.
+  `all-in-one`'s `RelationshipsReadFromPropertiesTest` and `RelationshipTargetConstructorTest` enforce this.
+  `mapping.strictRelationships`/`StrictRelationshipsDefault` no longer affect reads; the `application.yaml` blocks
+  stay."
