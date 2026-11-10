@@ -21,7 +21,8 @@ final class PostgresFailures {
     static final String UNIQUE_VIOLATION = "23505";
     // NUL in the document: 22P05 for an escaped \u0000 in jsonb, 22021 for a raw NUL byte in a text parameter
     static final Set<String> INVALID_CHARACTER_STATES = Set.of("22P05", "22021");
-    static final String CONNECTION_EXCEPTION_CLASS = "08";
+    // connection_exception, insufficient_resources, and 57P01-57P05 (shutdown, cannot connect now, ...)
+    static final Set<String> UNAVAILABLE_STATE_PREFIXES = Set.of("08", "53", "57P0");
 
     private PostgresFailures() {
     }
@@ -37,8 +38,8 @@ final class PostgresFailures {
     }
 
     /**
-     * UNAVAILABLE when the database gave no answer, CONFLICT for a unique violation, INVALID_DATA for content
-     * PostgreSQL cannot store, UNKNOWN otherwise.
+     * UNAVAILABLE when the database gave no answer or refused for lack of resources or a shutdown, CONFLICT for a
+     * unique violation, INVALID_DATA for content PostgreSQL cannot store, UNKNOWN otherwise.
      */
     static StorageErrorReason reasonOf(Throwable failure) {
         if (isUnavailable(failure)) {
@@ -60,16 +61,23 @@ final class PostgresFailures {
             if (cause instanceof StorageException storageException) {
                 return storageException.reason() == StorageErrorReason.UNAVAILABLE;
             }
-            if (cause instanceof R2dbcNonTransientResourceException
-                    || cause instanceof R2dbcTransientResourceException
-                    || cause instanceof R2dbcTimeoutException
+            if (cause instanceof R2dbcTimeoutException
                     || cause instanceof TimeoutException
                     || cause instanceof IOException) {
                 return true;
             }
-            if (cause instanceof R2dbcException r2dbcException && r2dbcException.getSqlState() != null
-                    && r2dbcException.getSqlState().startsWith(CONNECTION_EXCEPTION_CLASS)) {
-                return true;
+            if (cause instanceof R2dbcException r2dbcException) {
+                String sqlState = r2dbcException.getSqlState();
+                if (sqlState == null || sqlState.isEmpty()) {
+                    // the driver reports a closed or unopenable connection as a resource failure without a state
+                    if (cause instanceof R2dbcNonTransientResourceException
+                            || cause instanceof R2dbcTransientResourceException) {
+                        return true;
+                    }
+                } else {
+                    // the driver also raises every server state it does not classify as a resource failure
+                    return UNAVAILABLE_STATE_PREFIXES.stream().anyMatch(sqlState::startsWith);
+                }
             }
         }
         return false;

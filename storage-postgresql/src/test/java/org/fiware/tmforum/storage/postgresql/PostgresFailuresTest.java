@@ -30,6 +30,13 @@ class PostgresFailuresTest {
     private static final String UNDEFINED_TABLE_STATE = "42P01";
     private static final String NUL_IN_JSONB_STATE = "22P05";
     private static final String NUL_IN_TEXT_STATE = "22021";
+    private static final String TOO_MANY_CONNECTIONS_STATE = "53300";
+    private static final String ADMIN_SHUTDOWN_STATE = "57P01";
+    private static final String PROGRAM_LIMIT_EXCEEDED_STATE = "54000";
+    private static final String FEATURE_NOT_SUPPORTED_STATE = "0A000";
+    private static final String INTERNAL_ERROR_STATE = "XX000";
+    private static final String IN_FAILED_TRANSACTION_STATE = "25P02";
+    private static final String QUERY_CANCELED_STATE = "57014";
 
     static Stream<Arguments> failures() {
         return Stream.of(
@@ -46,6 +53,27 @@ class PostgresFailuresTest {
                 Arguments.of(Named.of("connection exception state",
                         new R2dbcPermissionDeniedException(DRIVER_MESSAGE, CONNECTION_FAILURE_STATE)),
                         StorageErrorReason.UNAVAILABLE),
+                Arguments.of(Named.of("too many connections",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, TOO_MANY_CONNECTIONS_STATE)),
+                        StorageErrorReason.UNAVAILABLE),
+                Arguments.of(Named.of("admin shutdown",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, ADMIN_SHUTDOWN_STATE)),
+                        StorageErrorReason.UNAVAILABLE),
+                Arguments.of(Named.of("unclassified state: program limit exceeded",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, PROGRAM_LIMIT_EXCEEDED_STATE)),
+                        StorageErrorReason.UNKNOWN),
+                Arguments.of(Named.of("unclassified state: feature not supported",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, FEATURE_NOT_SUPPORTED_STATE)),
+                        StorageErrorReason.UNKNOWN),
+                Arguments.of(Named.of("unclassified state: internal error",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, INTERNAL_ERROR_STATE)),
+                        StorageErrorReason.UNKNOWN),
+                Arguments.of(Named.of("unclassified state: in failed transaction",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, IN_FAILED_TRANSACTION_STATE)),
+                        StorageErrorReason.UNKNOWN),
+                Arguments.of(Named.of("unclassified state: query canceled",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, QUERY_CANCELED_STATE)),
+                        StorageErrorReason.UNKNOWN),
                 Arguments.of(Named.of("unique violation", new R2dbcDataIntegrityViolationException(DRIVER_MESSAGE,
                         PostgresFailures.UNIQUE_VIOLATION)), StorageErrorReason.CONFLICT),
                 Arguments.of(Named.of("NUL in jsonb",
