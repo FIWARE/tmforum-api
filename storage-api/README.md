@@ -15,7 +15,7 @@ The Javadoc of the types is the contract. This file is only a map of it.
 | `EntityReadRepository`    | `get`, `findEntities`, `findEntitiesPolymorphic` (paged in a `PagedResult`) |
 | `EntityWriteRepository`   | `createDomainEntity`, `updateDomainEntity`, `deleteDomainEntity`           |
 | `EntityRepository`        | both of the above, what most controllers inject                            |
-| `ReferenceReadRepository` | `referenceExists`/`findReference`, returning a neutral `StoredReference`   |
+| `ReferenceReadRepository` | `referenceExists`/`findReference`/`findReferences`, returning `StoredReference` |
 
 Inject the narrowest interface you need. ArchUnit fails the build in three cases. In `common`'s
 `StorageBoundaryTest`, code outside the adapter package references one of the four concrete adapter classes, or
@@ -24,6 +24,10 @@ API-module code (outside `common`) references a concrete class of `common.reposi
 itself is not NGSI-free: subscriptions, notifications, mapping and caching use NGSI-LD types on purpose.
 
 NGSI-LD subscriptions (`SubscriptionRepository` in `common`) are broker-only and are not part of the port.
+
+`ReferenceValidationService` checks all references of one list with a single `findReferences` call. Its default
+fans out to `findReference`, which is what the NGSI-LD adapter uses. The PostgreSQL adapter overrides it with one
+query.
 
 ## Errors
 
