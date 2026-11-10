@@ -40,10 +40,10 @@ public class PostgresEntityRepository implements EntityRepository {
     static final String LIST_NOT_SUPPORTED =
             "Filtering or ordering a list is not supported by the PostgreSQL backend before ticket 7.";
     static final String TYPES_REQUIRED = "Listing entities requires at least one type.";
-    static final String UPDATE_NOT_SUPPORTED = "Updates are not supported by the PostgreSQL backend yet.";
     private static final String LIST_FAILED = "Was not able to list entities.";
     private static final String LIST_SEPARATOR = ",";
 
+    private static final String ID_COLUMN = "id";
     private static final String TYPE_COLUMN = "type";
     private static final String DATA_COLUMN = "data";
     private static final String TOTAL_COUNT_COLUMN = "total_count";
@@ -54,6 +54,9 @@ public class PostgresEntityRepository implements EntityRepository {
     private static final String INSERT = "INSERT INTO " + QUALIFIED_ENTITY_TABLE
             + " (id, type, data, created_at, updated_at)"
             + " VALUES ($1, $2, $3::jsonb, COALESCE($4::timestamptz, now()), COALESCE($5::timestamptz, now()))";
+    // || replaces each carried top-level key; the patch never carries id or type
+    private static final String UPDATE_CURRENT = "UPDATE " + QUALIFIED_ENTITY_TABLE
+            + " SET data = data || $2::jsonb, updated_at = now() WHERE id = $1 AND is_current RETURNING id";
     private static final String DELETE_CURRENT =
             "DELETE FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1 AND is_current";
     private static final String TYPE_PREDICATE = " WHERE is_current AND type = ANY($1)";
@@ -111,10 +114,24 @@ public class PostgresEntityRepository implements EntityRepository {
         return insert(domainEntity, createdAt, updatedAt);
     }
 
+    /**
+     * One statement merging the carried attributes into the stored document, so concurrent updates never interleave
+     * a read and a write.
+     */
     @Override
     public <T> Mono<Void> updateDomainEntity(String id, T domainEntity) {
-        return Mono.error(new StorageException(StorageOperation.UPDATE, StorageErrorReason.UNKNOWN,
-                UPDATE_NOT_SUPPORTED));
+        return Mono.fromCallable(() -> documents.toDocument(domainEntity, DocumentMode.CARRIED_ATTRIBUTES,
+                        StorageOperation.UPDATE))
+                .flatMapMany(patch -> execute(UPDATE_CURRENT,
+                        statement -> statement.bind(0, id).bind(1, Json.of(patch)),
+                        result -> result.map(row -> row.get(ID_COLUMN, String.class))))
+                .count()
+                .onErrorMap(failure -> PostgresFailures.failure(StorageOperation.UPDATE,
+                        String.format("Was not able to update %s.", id), failure))
+                .flatMap(updated -> updated == 0
+                        ? Mono.error(new StorageException(StorageOperation.UPDATE, StorageErrorReason.NOT_FOUND,
+                        String.format("Was not able to update %s, since it does not exist.", id)))
+                        : Mono.empty());
     }
 
     @Override

@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doReturn;
@@ -46,6 +47,7 @@ class PostgresEntityRepositoryTest {
     private static final String DRIVER_MESSAGE = "driver failure";
     private static final String UNDEFINED_TABLE_STATE = "42P01";
     private static final String NUL_IN_JSONB_STATE = "22P05";
+    private static final String NUL = "\u0000";
     private static final String QUERY = "name==catalog";
     private static final String ORDER_BY = "name";
     private static final int OFFSET = 0;
@@ -74,6 +76,8 @@ class PostgresEntityRepositoryTest {
                 TestCatalog.class);
         Function<PostgresEntityRepository, Mono<?>> create = repository -> repository.createDomainEntity(
                 new TestCatalog(CATALOG_ID));
+        Function<PostgresEntityRepository, Mono<?>> update = repository -> repository.updateDomainEntity(CATALOG_ID,
+                new TestCatalog(CATALOG_ID));
         Function<PostgresEntityRepository, Mono<?>> delete = repository -> repository.deleteDomainEntity(
                 URI.create(CATALOG_ID));
         Function<PostgresEntityRepository, Mono<?>> list = repository -> repository.findEntities(OFFSET, LIMIT,
@@ -90,6 +94,11 @@ class PostgresEntityRepositoryTest {
                 Arguments.of(Named.of("create", create),
                         new R2dbcBadGrammarException(DRIVER_MESSAGE, NUL_IN_JSONB_STATE),
                         StorageOperation.CREATE, StorageErrorReason.INVALID_DATA),
+                Arguments.of(Named.of("update", update), new R2dbcTimeoutException(DRIVER_MESSAGE),
+                        StorageOperation.UPDATE, StorageErrorReason.UNAVAILABLE),
+                Arguments.of(Named.of("update", update),
+                        new R2dbcBadGrammarException(DRIVER_MESSAGE, NUL_IN_JSONB_STATE),
+                        StorageOperation.UPDATE, StorageErrorReason.INVALID_DATA),
                 Arguments.of(Named.of("delete", delete), new R2dbcTimeoutException(DRIVER_MESSAGE),
                         StorageOperation.DELETE, StorageErrorReason.UNAVAILABLE),
                 Arguments.of(Named.of("list", list),
@@ -133,6 +142,31 @@ class PostgresEntityRepositoryTest {
 
         assertEquals(StorageOperation.DELETE, exception.operation(), "The failed operation should be reported.");
         assertEquals(StorageErrorReason.NOT_FOUND, exception.reason(), "No deleted row means not found.");
+    }
+
+    @Test
+    void updatingMissingEntityIsNotFound() {
+        Result result = mock(Result.class);
+        doReturn(Flux.empty()).when(result).map(any(Function.class));
+        doReturn(Flux.just(result)).when(statement).execute();
+
+        StorageException exception = assertStorageFailure(repository.updateDomainEntity(CATALOG_ID,
+                new TestCatalog(CATALOG_ID)));
+
+        assertEquals(StorageOperation.UPDATE, exception.operation(), "The failed operation should be reported.");
+        assertEquals(StorageErrorReason.NOT_FOUND, exception.reason(), "No updated row means not found.");
+    }
+
+    @Test
+    void updateCarryingNulIsRejectedBeforeTheStatement() {
+        TestCatalog patch = new TestCatalog(CATALOG_ID);
+        patch.setName(NUL);
+
+        StorageException exception = assertStorageFailure(repository.updateDomainEntity(CATALOG_ID, patch));
+
+        assertEquals(StorageOperation.UPDATE, exception.operation(), "The failed operation should be reported.");
+        assertEquals(StorageErrorReason.INVALID_DATA, exception.reason(), "A NUL character is invalid data.");
+        verifyNoInteractions(connectionFactory);
     }
 
     static Stream<Arguments> unsupportedListArguments() {
