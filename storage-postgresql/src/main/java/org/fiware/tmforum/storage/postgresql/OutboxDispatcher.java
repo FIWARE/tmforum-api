@@ -20,6 +20,7 @@ import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.storage.StorageOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -132,6 +133,9 @@ public class OutboxDispatcher {
                                 .bind(1, ownedTypes())
                                 .bind(2, properties.batchSize()),
                         result -> result.map(ClaimedRow::of))
+                // finish the claim, and release its connection, before any hub is called
+                .collectList()
+                .flatMapMany(Flux::fromIterable)
                 .concatMap(row -> deliver(row)
                         .then(Mono.defer(() -> settle(SETTLE_DELIVERED, statement -> statement.bind(0, row.id()))))
                         .onErrorResume(failure -> {

@@ -134,7 +134,9 @@ public class TMForumEventHandler extends EventHandler {
 			TmForumEventChecker eventChecker = new DeleteTmForumEventChecker<>(subscriptionQueryResolver, oldState,
 					eventDetails.payloadName());
 			return Mono.fromCallable(() -> idOnly(oldState, eventDetails.entityType()))
-					.flatMap(payload -> handleOutbox(payload, eventDetails, eventChecker, outboxId));
+					.flatMap(payload -> handleOutbox(payload, eventDetails, eventChecker, outboxId))
+					// an unmapped type is no delivery failure, as in the create/update overloads
+					.onErrorResume(EventHandlingException.class, e -> Mono.empty());
 		} catch (EventHandlingException e) {
 			return Mono.empty();
 		}

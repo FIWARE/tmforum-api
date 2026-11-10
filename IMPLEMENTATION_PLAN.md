@@ -215,7 +215,12 @@ the default here; ticket 9 makes the backend selectable and flips the default.
       `ResourceSpecificationApiController`, resource-catalog `ResourceSpecifcationApiController` -> the generalized
       `patch` (same existence check, checking mono and re-read, now with the event). Sub-type patches emit no
       update event on either backend today; afterwards they fire the direct update event every other patch already
-      fires. This is a broker behaviour change, listed in the Step 8 release notes.
+      fires, but a hub can only receive it where the module's `EventMapper` maps the sub-type's NGSI-LD type:
+      software-management does, so its sub-type patches now notify (broker behaviour change, listed in the Step 8
+      release notes). resource-inventory and resource-catalog map only the base types (`resource`,
+      `resource-specification`), so no hub can register for e.g. `logical-resource`: on the broker the event finds
+      no hub, on PG the type is outside `EventTypes` and no outbox row is written. Mapping those sub-types (and
+      deciding which event type a TMF639/TMF634 hub sees for them) is out of scope for this ticket.
     - `relatedEntityHandlingMono` has no production caller (only `CharacterizationTestController` in `common`'s
       tests); it keeps calling the repository without events, as today. Its Javadoc gets a line saying so.
     - `importDomainEntity` (ticket 8 migration) writes without events by design.
@@ -244,20 +249,33 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   outbox `created_at` as event time and a deterministic event id (`UUID.nameUUIDFromBytes(outboxId + eventType)`),
   so retries carry the same `eventId`. They go through `deliverNotifications`, so their `Mono` fails when any
   delivery fails. The existing signatures keep their behaviour.
-- DeleteEvents on PG (decided here; the broker path is not changed):
+- DeleteEvents on PG (decided here) and the broker's DeleteEvent fix:
+  - Before Step 6, no broker-originated DeleteEvent was ever delivered: `NgsiLdEventHandler.createNotification`
+    mapped the domain object to its VO and `createEvent` then mapped that VO again, which every module's
+    `mapPayload` rejects with a ClassCastException. Step 6 maps once (shared `EventHandler.createNotification`), so
+    the broker now delivers DeleteEvents. Because the broker notifies every NGSI-LD subscription of the type of a
+    deletion, `NgsiLdEventHandler` keeps a DeleteEvent only when the hub behind the notified callback is among the
+    `getSubscriptions` result for `<Type>DeleteEvent`, so a hub that did not ask for DeleteEvents gets none. The
+    hub's query cannot be honoured on the broker (its deletion notification carries no state, only the id). Both
+    are broker behaviour changes, listed in the Step 8 release notes.
   - Broker today: `AbstractSubscriptionApiController` registers the NGSI-LD subscription with only `entities` and
     `q`, no event-type filter, and `NgsiLdEventHandler` fires `DeleteNgsiLdEventChecker` for every notification
     with `deletedAt`, so recipients and payload are whatever the broker's deletion notification gives. No IT pins
     either today. Step 6 first adds a broker-only IT (`DeleteEventBrokerIT`, product-catalog, bucket (c) in Step 8)
     that registers hubs with and without `eventType=CatalogDeleteEvent` and with a `q`, deletes a Catalog and
-    records which hubs got a DeleteEvent and with which payload fields, on Orion-LD and Scorpio.
+    records which hubs got a DeleteEvent and with which payload fields, on Orion-LD and Scorpio. Result (with the
+    `eventType` filter above): every hub taking `CatalogDeleteEvent` gets one, whatever its query, the
+    `CatalogCreateEvent`-only hub none; the payload is id-only. Found on the way (pre-existing, not changed here,
+    follow-up ticket): a hub registered without `eventType` is stored on Orion-LD without its multi-valued
+    `eventTypes`/`entities`/`fields`, so `getSubscriptions` never returns it and it gets no TMForum event of any
+    kind on the broker; the IT therefore registers no such hub.
   - Recipients on PG: the TMForum-correct rule every Create/Change event already follows on both backends:
     `getSubscriptions` with `eventTypes=<Type>DeleteEvent` (a hub without an `eventType` filter gets the group's
     default event types, which include `DeleteEvent` where `ALLOWED_EVENT_TYPES` allows it), then a new
     `checkers/tmforum/DeleteTmForumEventChecker` evaluating the hub's `query` against `old_state` through
-    `SubscriptionQueryResolver.doesQueryMatchCreateEvent` (the deleted entity matched the hub's filter). Where
-    the broker IT shows the broker also notifies hubs that excluded DeleteEvents or whose `q` did not match, that
-    difference is an accepted deviation (PG follows TMF630), recorded in ticket 0 and the Step 8 release notes.
+    `SubscriptionQueryResolver.doesQueryMatchCreateEvent` (the deleted entity matched the hub's filter). The
+    broker also notifies `<Type>DeleteEvent` hubs whose query did not match; that difference is an accepted
+    deviation (PG follows TMF630), recorded in ticket 0 and the Step 8 release notes.
   - Payload on PG: the same shape as the broker's, so a consumer sees no difference. `handleDeleteEvent` builds it
     through the calls `NgsiLdEventHandler.createNotification` makes after `fromEntityVO`
     (`makeEventDetails`, `eventMapper.mapPayload(entity, rawClass)`, `createEvent` with the fields filter), moved
@@ -362,8 +380,9 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   `environments = "postgresql"`.
 - Outbox ITs moved from Step 6 (`environments = "postgresql"`, `tmforum.outbox.enabled: false`, assert on
   `tmforum.event_outbox` directly before cleanup): create/patch/delete of a party-role entity leave no outbox row;
-  a sub-type Resource patch (resource-inventory) and an Organization delete (party-catalog) each leave exactly one
-  outbox row of the right kind.
+  a sub-type Resource patch in software-management (`logical-resource`, mapped there) and an Organization delete
+  (party-catalog) each leave exactly one outbox row of the right kind; a sub-type Resource patch in
+  resource-inventory leaves none (its `EventMapper` maps only `resource`, see Step 6).
 
 ### Step 8: PostgreSQL in the IT matrix, one-query GET, CI and release notes
 - `-Dbroker=postgresql`: verify the full IT suite of each module runs against PG. Inventory the ITs that cannot run
@@ -392,9 +411,11 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   at-least-once TMForum events with stable `eventId` on PG vs fire-and-forget on the broker (accepted deviation,
   ticket 0/9), no per-entity event ordering on either backend (order by `eventTime`), outbox retention
   (`tmforum.outbox.retention`, discarded rows logged and counted) and the outbox metrics; DeleteEvents on PG come from the outbox, on the broker from `NgsiLdEventHandler`, and the
-  recipient difference the Step 6 broker IT found (PG honours `eventType` and the hub's query); TMF730 sub-type
-  patches (resource-inventory, software-management, resource-catalog) now fire update events on every backend,
-  the broker included (Step 6); `\u0000` rejected
+  recipient difference the Step 6 broker IT found (both honour `eventType`, only PG the hub's query); broker
+  DeleteEvents are delivered at all only since Step 6 (a double VO mapping made every one fail before), and only
+  to hubs taking `<Type>DeleteEvent`; TMF730 sub-type patches in software-management now fire update events on
+  every backend, the broker included, while resource-inventory and resource-catalog sub-types stay without events
+  because their `EventMapper`s do not map them (Step 6); `\u0000` rejected
   with 400 and the broker behaviour observed for it; interim limits until ticket 7);
   update `storage-api/README.md` ("Today the only adapter..."), `storage-postgresql/README.md`, and `AGENTS.md`
   (module, `-Dbroker=postgresql`, `k3s/postgresql-db`; the event line and the IT cleanup line are updated in

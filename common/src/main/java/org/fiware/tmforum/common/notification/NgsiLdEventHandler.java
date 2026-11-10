@@ -32,8 +32,12 @@ public class NgsiLdEventHandler extends EventHandler {
 			new DeleteNgsiLdEventChecker()
 	);
 
-	public NgsiLdEventHandler(NotificationSender notificationSender, EntityVOMapper entityVOMapper, EventMapper eventMapper, ObjectMapper objectMapper) {
+	private final TMForumEventHandler tmForumEventHandler;
+
+	public NgsiLdEventHandler(NotificationSender notificationSender, EntityVOMapper entityVOMapper, EventMapper eventMapper,
+							  ObjectMapper objectMapper, TMForumEventHandler tmForumEventHandler) {
 		super(notificationSender, entityVOMapper, eventMapper, objectMapper);
+		this.tmForumEventHandler = tmForumEventHandler;
 	}
 
 	public Mono<Void> handle(NotificationVO notificationVO, SubscriptionVO subscriptionVO) {
@@ -59,9 +63,19 @@ public class NgsiLdEventHandler extends EventHandler {
 		EventDetails eventDetails = makeEventDetails(payload.getType(), eventTypeSuffix, eventTime);
 		EventMapping eventMapping = entityNameToEntityClassMapping.get(eventDetails.entityType());
 		// createEvent maps the domain object to its VO; mapping it here as well handed the mapper a VO
-		return entityVOMapper.fromEntityVO(payload, eventMapping.rawClass())
+		Mono<TMForumNotification> notification = entityVOMapper.fromEntityVO(payload, eventMapping.rawClass())
 				.map(entity -> createNotification(listenerCallback, eventDetails, entity, selectedFields,
 						UUID.randomUUID().toString()));
+		if (!EventConstants.DELETE_EVENT_SUFFIX.equals(eventTypeSuffix)) {
+			return notification;
+		}
+		// the broker notifies every subscription of a deletion, whatever the hub's eventType
+		return notification.filterWhen(n -> hubTakesEvent(eventDetails, listenerCallback));
+	}
+
+	private Mono<Boolean> hubTakesEvent(EventDetails eventDetails, URI listenerCallback) {
+		return tmForumEventHandler.getSubscriptions(eventDetails)
+				.map(hubs -> hubs.stream().anyMatch(hub -> listenerCallback.equals(hub.getCallback())));
 	}
 
 	private EventDetails makeEventDetails(String entityType, String eventTypeSuffix, Instant eventTime) {

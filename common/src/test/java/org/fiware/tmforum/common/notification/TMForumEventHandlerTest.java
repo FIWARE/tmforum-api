@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -46,13 +47,14 @@ class TMForumEventHandlerTest {
 	private static final URI CALLBACK = URI.create("http://hub");
 
 	private NotificationSender notificationSender;
+	private EventMapper eventMapper;
 	private TMForumEventHandler eventHandler;
 
 	@BeforeEach
 	void setUp() {
 		notificationSender = mock(NotificationSender.class);
 		when(notificationSender.deliverNotifications(anyList())).thenReturn(Mono.empty());
-		EventMapper eventMapper = mock(EventMapper.class);
+		eventMapper = mock(EventMapper.class);
 		when(eventMapper.getEntityClassMapping()).thenReturn(Map.of(CharacterizationEntity.TYPE,
 				new EventMapping(CharacterizationEntity.class, CharacterizationEntity.class)));
 		when(eventMapper.mapPayload(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -108,6 +110,15 @@ class TMForumEventHandlerTest {
 		verify(eventHandler).getSubscriptions(details.capture());
 		assertEquals(new EventDetails(CharacterizationEntity.TYPE, DELETE_EVENT_TYPE, EVENT_TIME, PAYLOAD_NAME),
 				details.getValue());
+	}
+
+	@Test
+	void handleDeleteEventOfAnUnmappedTypeCompletesWithoutDelivery() {
+		when(eventMapper.getEntityClassMapping()).thenReturn(Map.of());
+
+		eventHandler.handleDeleteEvent(oldState(), OUTBOX_ID, EVENT_TIME).block();
+
+		verify(notificationSender, never()).deliverNotifications(anyList());
 	}
 
 	@Test

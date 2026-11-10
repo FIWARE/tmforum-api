@@ -32,10 +32,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Pins which hubs the broker path sends a DeleteEvent to, and its payload. The broker's NGSI-LD subscriptions carry
- * no event-type filter, so every hub of the entity type is notified of a deletion, whatever its eventType and query.
- * The PostgreSQL outbox follows TMF630 instead (only {@code <Type>DeleteEvent} hubs whose query matched) and sends
- * the same id-only payload ({@link #BROKER_DELETE_PAYLOAD_FIELDS}).
+ * Pins which hubs the broker path sends a DeleteEvent to, and its payload. Only hubs that take
+ * {@code <Type>DeleteEvent} get one, but whatever their query: the broker notifies every subscription of a deletion
+ * and its notification carries no state to evaluate the query on. The PostgreSQL outbox also honours the query and
+ * sends the same id-only payload ({@link #BROKER_DELETE_PAYLOAD_FIELDS}).
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 // hub registration fails on Scorpio, see EventSubscriptionApiIT; DeleteEvents come from the broker only
@@ -53,17 +53,18 @@ public class DeleteEventBrokerIT extends AbstractApiIT {
 	private static final Duration DELIVERY_TIMEOUT = Duration.ofSeconds(20);
 	private static final Duration QUIET_PERIOD = Duration.ofSeconds(5);
 
-	private static final String HUB_NO_FILTER = "no-filter";
 	private static final String HUB_CREATE_ONLY = "create-only";
 	private static final String HUB_DELETE_ONLY = "delete-only";
 	private static final String HUB_DELETE_MATCHING = "delete-matching";
 	private static final String HUB_DELETE_NOT_MATCHING = "delete-not-matching";
+	// no hub without eventType: Orion-LD drops its multi-valued eventTypes, so no event lookup ever finds it
 	private static final Map<String, String> HUB_QUERIES = Map.of(
-			HUB_NO_FILTER, "",
 			HUB_CREATE_ONLY, "eventType=CatalogCreateEvent",
 			HUB_DELETE_ONLY, "eventType=" + DELETE_EVENT,
 			HUB_DELETE_MATCHING, "eventType=" + DELETE_EVENT + "&event.catalog.lifecycleStatus=" + MATCHING_STATUS,
 			HUB_DELETE_NOT_MATCHING, "eventType=" + DELETE_EVENT + "&event.catalog.lifecycleStatus=retired");
+
+	private static final Set<String> HUBS_WITHOUT_DELETE_EVENTS = Set.of(HUB_CREATE_ONLY);
 
 	private final CatalogApiTestClient catalogApiTestClient;
 	private final EventsSubscriptionApiTestClient hubApiTestClient;
@@ -97,7 +98,7 @@ public class DeleteEventBrokerIT extends AbstractApiIT {
 	}
 
 	@Test
-	public void deletionNotifiesEveryHubOfTheTypeWithAnIdOnlyPayload() throws Exception {
+	public void deletionNotifiesTheDeleteEventHubsWithAnIdOnlyPayload() throws Exception {
 		for (Map.Entry<String, String> hub : HUB_QUERIES.entrySet()) {
 			registerHub(hub.getKey(), hub.getValue());
 		}
@@ -108,11 +109,18 @@ public class DeleteEventBrokerIT extends AbstractApiIT {
 		assertEquals(HttpStatus.NO_CONTENT, callAndCatch(() -> catalogApiTestClient.deleteCatalog(null, id)).getStatus());
 
 		await().atMost(DELIVERY_TIMEOUT).until(() -> HUB_QUERIES.keySet().stream()
+				.filter(hub -> !HUBS_WITHOUT_DELETE_EVENTS.contains(hub))
 				.allMatch(hub -> !deleteEvents(hub).isEmpty()));
-		// later notifications would be duplicates; give them the time to show up
+		// later notifications would be duplicates or unwanted; give them the time to show up
 		Thread.sleep(QUIET_PERIOD.toMillis());
 
+		for (String hub : HUBS_WITHOUT_DELETE_EVENTS) {
+			assertTrue(deleteEvents(hub).isEmpty(), String.format("Hub %s should get no DeleteEvent.", hub));
+		}
 		for (String hub : HUB_QUERIES.keySet()) {
+			if (HUBS_WITHOUT_DELETE_EVENTS.contains(hub)) {
+				continue;
+			}
 			List<Map<String, Object>> events = deleteEvents(hub);
 			assertEquals(1, events.size(), String.format("Hub %s should get exactly one DeleteEvent.", hub));
 			Map<?, ?> catalog = (Map<?, ?>) ((Map<?, ?>) events.getFirst().get("event")).get("catalog");
