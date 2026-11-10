@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -176,6 +177,20 @@ class PostgresDocumentMapperTest {
         assertEquals(NAME, document.get(NAME_PROPERTY).stringValue());
         assertTrue(document.get(KEYWORDS_PROPERTY).isArray());
         assertTrue(document.get(KEYWORDS_PROPERTY).isEmpty());
+    }
+
+    @ParameterizedTest
+    @EnumSource(DocumentMode.class)
+    void aNullExtensionIsNotWritten(DocumentMode mode) {
+        TestCatalog catalog = new TestCatalog(CATALOG_ID);
+        catalog.setName(NAME);
+        catalog.addAdditionalProperties(EXTENSION_KEY, null);
+
+        JsonNode document = document(documentMapper.storage(), catalog, mode);
+        TestCatalog read = readBack(documentMapper.storage(), catalog, DocumentMode.FULL);
+
+        assertFalse(document.has(EXTENSION_KEY), document.toString());
+        assertNull(read.getAdditionalProperties());
     }
 
     @Test

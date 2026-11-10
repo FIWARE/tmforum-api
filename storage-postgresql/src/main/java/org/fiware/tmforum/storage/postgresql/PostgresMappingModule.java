@@ -126,7 +126,7 @@ class PostgresMappingModule extends SimpleModule {
 
     /**
      * Writes each extension entry as a property, skipping names of declared properties so no key is duplicated;
-     * of two entries with the same name the last one wins.
+     * of two entries with the same name the last one wins, and a null value is omitted like a null declared one.
      */
     private static final class ExtensionPropertiesWriter extends BeanPropertyWriter {
 
@@ -151,6 +151,9 @@ class PostgresMappingModule extends SimpleModule {
                 }
             }
             for (Map.Entry<String, Object> extension : extensionValues.entrySet()) {
+                if (extension.getValue() == null) {
+                    continue;
+                }
                 generator.writeName(extension.getKey());
                 context.writeValue(generator, extension.getValue());
             }
