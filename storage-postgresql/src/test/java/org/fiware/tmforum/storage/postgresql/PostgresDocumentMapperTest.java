@@ -18,6 +18,7 @@ import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestCatalog;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestLogicalResource;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestNotStoredHolder;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestSelfIgnoringCatalog;
+import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestSetterOnlyHolder;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestUriRef;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
@@ -125,6 +126,8 @@ class PostgresDocumentMapperTest {
                         Set.of("id", "type", EXTENSION_KEY, "count", "nested", "list")),
                 Arguments.of(Named.of("extension named like the extension list", withExtensionListKey()),
                         Set.of("id", "type", EXTENSION_KEY, "count", "nested", "list")),
+                Arguments.of(Named.of("extension named like a setter-only property", withSetterOnlyExtension()),
+                        Set.of("id", "type")),
                 Arguments.of(Named.of("reference with only a URI constructor", catalogWithParent()),
                         Set.of("id", "type", "parent")),
                 Arguments.of(Named.of("subscription without the broker-escaped queries", subscription()),
@@ -400,6 +403,13 @@ class PostgresDocumentMapperTest {
         TestCatalog catalog = withExtensions(new TestCatalog(CATALOG_ID));
         catalog.addAdditionalProperties(Entity.ADDITIONAL_PROPERTIES_KEY, EXTENSION_NAME);
         return catalog;
+    }
+
+    private static TestSetterOnlyHolder withSetterOnlyExtension() {
+        TestSetterOnlyHolder holder = new TestSetterOnlyHolder(
+                "urn:ngsi-ld:" + TestSetterOnlyHolder.TYPE + ":holder-1");
+        holder.addAdditionalProperties(TestSetterOnlyHolder.SETTER_ONLY_PROPERTY, EXTENSION_NAME);
+        return holder;
     }
 
     private static TMForumSubscription subscription() {

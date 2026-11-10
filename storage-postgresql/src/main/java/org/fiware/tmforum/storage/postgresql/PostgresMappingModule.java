@@ -117,8 +117,14 @@ class PostgresMappingModule extends SimpleModule {
             }
             properties.remove(additionalProperties);
             // ignored accessors as well, since the read side skips their keys; a PostgreSQL-only drop (ticket 0)
-            Set<String> declaredNames = new HashSet<>(beanDesc.get().getIgnoredPropertyNames());
+            BeanDescription description = beanDesc.get();
+            Set<String> declaredNames = new HashSet<>(description.getIgnoredPropertyNames());
             properties.forEach(property -> declaredNames.add(property.getName()));
+            // properties only the read side has (setter-only, creator parameters) would take such a key on read
+            config.classIntrospectorInstance()
+                    .introspectForDeserialization(description.getType(), description.getClassInfo())
+                    .findProperties()
+                    .forEach(property -> declaredNames.add(property.getName()));
             // the read side never hands this key to the any-setter, so writing it would lose it silently
             declaredNames.add(Entity.ADDITIONAL_PROPERTIES_KEY);
             properties.add(new ExtensionPropertiesWriter(additionalProperties, declaredNames));

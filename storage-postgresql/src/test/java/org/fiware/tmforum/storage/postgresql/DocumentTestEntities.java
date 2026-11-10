@@ -118,6 +118,25 @@ final class DocumentTestEntities {
         }
     }
 
+    // a property with a setter but no getter, so the serializer has no writer for it
+    @ToString(callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    public static class TestSetterOnlyHolder extends EntityWithId {
+
+        static final String TYPE = "test-setter-only-holder";
+        static final String SETTER_ONLY_PROPERTY = "alias";
+
+        private String alias;
+
+        public TestSetterOnlyHolder(String id) {
+            super(TYPE, id);
+        }
+
+        public void setAlias(String alias) {
+            this.alias = alias;
+        }
+    }
+
     // like customer-bill FinancialAccountRef.accountBalance
     @Getter
     @Setter
