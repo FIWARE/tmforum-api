@@ -1,9 +1,12 @@
 r2dbc:
   datasources:
     default:
-      url: r2dbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
+      url: r2dbc:pool:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
       username: ${POSTGRES_USER:tmforum}
       password: ${POSTGRES_PASSWORD:tmforum}
+      options:
+        initial-size: ${POSTGRES_POOL_INITIAL_SIZE:2}
+        max-size: ${POSTGRES_POOL_MAX_SIZE:10}
 
 flyway:
   datasources:

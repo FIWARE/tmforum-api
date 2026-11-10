@@ -30,15 +30,19 @@ All columns are `NOT NULL`. The primary key is `(id, version)`.
 ## Configuration
 
 Put this block in the `application-postgresql.yaml` of the API module. Both datasources must point at the same
-database:
+database. The `r2dbc:pool:` URL puts an `r2dbc-pool` connection pool in front of the driver. Without it, every
+statement opens its own connection:
 
 ```yaml
 r2dbc:
   datasources:
     default:
-      url: r2dbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
+      url: r2dbc:pool:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
       username: ${POSTGRES_USER:tmforum}
       password: ${POSTGRES_PASSWORD:tmforum}
+      options:
+        initial-size: ${POSTGRES_POOL_INITIAL_SIZE:2}
+        max-size: ${POSTGRES_POOL_MAX_SIZE:10}
 
 flyway:
   datasources:
@@ -52,13 +56,15 @@ flyway:
       locations: classpath:db/migration/tmforum
 ```
 
-| Environment variable | Default     |
-|----------------------|-------------|
-| `POSTGRES_HOST`      | `localhost` |
-| `POSTGRES_PORT`      | `5432`      |
-| `POSTGRES_DB`        | `tmforum`   |
-| `POSTGRES_USER`      | `tmforum`   |
-| `POSTGRES_PASSWORD`  | `tmforum`   |
+| Environment variable         | Default     |
+|------------------------------|-------------|
+| `POSTGRES_HOST`              | `localhost` |
+| `POSTGRES_PORT`              | `5432`      |
+| `POSTGRES_DB`                | `tmforum`   |
+| `POSTGRES_USER`              | `tmforum`   |
+| `POSTGRES_PASSWORD`          | `tmforum`   |
+| `POSTGRES_POOL_INITIAL_SIZE` | `2`         |
+| `POSTGRES_POOL_MAX_SIZE`     | `10`        |
 
 ## Tests
 
