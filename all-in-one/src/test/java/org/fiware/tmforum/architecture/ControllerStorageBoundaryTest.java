@@ -29,6 +29,7 @@ class ControllerStorageBoundaryTest {
 	private static final String COMMON_PACKAGES = "org.fiware.tmforum.common..";
 	private static final String ADAPTER_PACKAGES = "org.fiware.tmforum.common.repository..";
 	private static final String NGSI_PACKAGES = "org.fiware.ngsi..";
+	private static final String POSTGRES_ADAPTER_PACKAGES = "org.fiware.tmforum.storage.postgresql..";
 
 	private static JavaClasses mainClasses;
 
@@ -45,7 +46,9 @@ class ControllerStorageBoundaryTest {
 				.as("are non-interface types in the adapter-private package " + ADAPTER_PACKAGES);
 		return Stream.of(
 						noModuleClasses().should().dependOnClassesThat(adapterPrivateTypes),
-						noModuleClasses().should().dependOnClassesThat().resideInAPackage(NGSI_PACKAGES))
+						noModuleClasses().should().dependOnClassesThat().resideInAPackage(NGSI_PACKAGES),
+						noModuleClasses().and().resideOutsideOfPackage(POSTGRES_ADAPTER_PACKAGES)
+								.should().dependOnClassesThat().resideInAPackage(POSTGRES_ADAPTER_PACKAGES))
 				.map(rule -> Named.of(rule.getDescription(), rule));
 	}
 
