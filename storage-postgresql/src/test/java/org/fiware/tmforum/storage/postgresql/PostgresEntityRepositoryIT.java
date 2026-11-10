@@ -136,6 +136,8 @@ class PostgresEntityRepositoryIT {
                         CATALOG_COUNT),
                 Arguments.of(0, PAGE_SIZE, allIds, TestCatalog.TYPE, List.of(1, 3), 2),
                 Arguments.of(PAGE_SIZE, PAGE_SIZE, allIds, TestCatalog.TYPE, List.of(), 2),
+                Arguments.of(0, 0, null, TestCatalog.TYPE, List.of(), CATALOG_COUNT),
+                Arguments.of(null, 0, allIds, TestCatalog.TYPE, List.of(), 2),
                 Arguments.of(0, PAGE_SIZE, null, UNKNOWN_TYPE, List.of(), 0));
     }
 

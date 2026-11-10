@@ -83,6 +83,11 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!-- runtime for @MicronautTest; common declares these as provided -->
         <dependency>
             <groupId>io.micronaut</groupId>

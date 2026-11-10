@@ -4,9 +4,10 @@ r2dbc:
       url: r2dbc:pool:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
       username: ${POSTGRES_USER:tmforum}
       password: ${POSTGRES_PASSWORD:tmforum}
+      # not r2dbc-pool's default size (10), so ConnectionPoolIT can tell the options are applied
       options:
-        initial-size: ${POSTGRES_POOL_INITIAL_SIZE:2}
-        max-size: ${POSTGRES_POOL_MAX_SIZE:10}
+        initial-size: 2
+        max-size: 4
 
 flyway:
   datasources:

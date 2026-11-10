@@ -168,19 +168,20 @@ public class PostgresEntityRepository implements EntityRepository {
             return bindNullable(statement, limitIndex + 1, offset, Integer.class);
         }, result -> result.map(ListedRow::of))
                 .collectList()
-                .flatMap(rows -> totalCount(rows, offset, typeList, idList)
+                .flatMap(rows -> totalCount(rows, offset, limit, typeList, idList)
                         .map(totalCount -> new PagedResult<T>(
                                 rows.stream().map(row -> this.<T>toEntity(row, typeToClass)).toList(),
                                 offset, limit, totalCount)))
                 .onErrorMap(failure -> PostgresFailures.failure(StorageOperation.LIST, LIST_FAILED, failure));
     }
 
-    // an empty page has no window count, and past the last match the real count is still owed
-    private Mono<Integer> totalCount(List<ListedRow> rows, Integer offset, String[] typeList, String[] idList) {
+    // an empty page has no window count; past the last match or with limit 0 the real count is still owed
+    private Mono<Integer> totalCount(List<ListedRow> rows, Integer offset, Integer limit, String[] typeList,
+                                     String[] idList) {
         if (!rows.isEmpty()) {
             return Mono.just(Math.toIntExact(rows.getFirst().totalCount()));
         }
-        if (offset == null || offset <= 0) {
+        if ((offset == null || offset <= 0) && (limit == null || limit > 0)) {
             return Mono.just(0);
         }
         return execute(COUNT_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate(idList),
