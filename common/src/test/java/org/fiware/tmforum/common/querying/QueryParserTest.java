@@ -159,7 +159,33 @@ class QueryParserTest {
 				Arguments.of("sub.valueType=string", new QueryParams(null, null, "sub[tmfEscaped-valueType]==\"string\"")),
 				Arguments.of("sub.valueType.eq=string", new QueryParams(null, null, "sub[tmfEscaped-valueType]==\"string\"")),
 				// not reserved, unchanged
-				Arguments.of("sub.status=Active", new QueryParams(null, null, "sub[status]==\"Active\"")));
+				Arguments.of("sub.status=Active", new QueryParams(null, null, "sub[status]==\"Active\"")),
+				// nested "id" of a structured property is persisted escaped
+				Arguments.of("sub.id=abc", new QueryParams(null, null, "sub[tmfEscaped-id]==\"abc\"")),
+				// trailing "id" of a relationship stays unescaped (and is dropped, see getQueryPart)
+				Arguments.of("rel.id=abc", new QueryParams(null, null, "rel==\"abc\"")),
+				// relationship paths are joined with dots
+				Arguments.of("rel.valueType=string", new QueryParams(null, null, "rel.tmfEscaped-valueType==\"string\"")));
+	}
+
+	@ParameterizedTest
+	@MethodSource("reservedNameDotQueries")
+	public void testReservedAttributeNamesAreEscapedWithDotSeparator(String tmForumQuery, QueryParams ngsiLdQuery) {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setEncloseQuery(false);
+		properties.setNgsildOrQueryKey(",");
+		properties.setNgsildOrQueryValue(",");
+		properties.setIncludeAttributeInList(false);
+		properties.setUseDotSeperator(true);
+
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery));
+	}
+
+	private static Stream<Arguments> reservedNameDotQueries() {
+		return Stream.of(
+				Arguments.of("sub.valueType=string", new QueryParams(null, null, "sub.tmfEscaped-valueType==\"string\"")),
+				Arguments.of("rel.valueType=string", new QueryParams(null, null, "rel.tmfEscaped-valueType==\"string\"")));
 	}
 
 	@ParameterizedTest
@@ -269,6 +295,9 @@ class QueryParserTest {
 				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-color,-temperature")), "color;desc,temperature;desc", MyPojo.class),
 				// nested attribute path
 				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-sub.status")), "sub.status;desc", MyPojo.class),
+				// reserved names are escaped like in filters
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("sub.valueType")), "sub.tmfEscaped-valueType", MyPojo.class),
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-rel.valueType")), "rel.tmfEscaped-valueType;desc", MyPojo.class),
 				// JSON-LD reserved token translation, same as filtering
 				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-@type")), "atType;desc", MyEntityPojo.class)
 		);
