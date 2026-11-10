@@ -79,8 +79,7 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 	}
 
 	@Override
-	public Catalog withExtensionNamedLikeTheMutableAttribute(URI id) {
-		Catalog catalog = newEntity(id);
+	public Catalog withExtensionNamedLikeTheMutableAttribute(Catalog catalog) {
 		catalog.addAdditionalProperties(NAME_ATTRIBUTE, EXTENSION_NAME);
 		return catalog;
 	}

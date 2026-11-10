@@ -18,7 +18,8 @@ public enum KnownDeviation {
     EMPTY_PAGE_COMPLETES_EMPTY,
 
     /**
-     * An extension (unknown) property named like a declared property overwrites the declared value on write.
+     * An extension (unknown) property named like a declared property overwrites the declared value, on create
+     * and on update.
      */
     EXTENSION_OVERRIDES_DECLARED_PROPERTY,
 

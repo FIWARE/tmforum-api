@@ -161,17 +161,29 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
     @Test
     void aDeclaredPropertyWinsOverAnExtensionOfTheSameName() {
-        T created = fixture().withExtensionNamedLikeTheMutableAttribute(fixture().newId());
+        T created = fixture().withExtensionNamedLikeTheMutableAttribute(fixture().newEntity(fixture().newId()));
         URI id = create(fixture(), created);
 
-        T read = read(id);
+        assertDeclaredValueWon(fixture().mutableValue(created), read(id));
+    }
 
+    @Test
+    void anUpdatedDeclaredPropertyWinsOverAnExtensionOfTheSameName() {
+        URI id = create(fixture());
+        T mutation = fixture().withExtensionNamedLikeTheMutableAttribute(fixture().mutate(id));
+
+        repository().updateDomainEntity(id.toString(), mutation).block(TIMEOUT);
+
+        assertDeclaredValueWon(fixture().mutableValue(mutation), read(id));
+    }
+
+    private void assertDeclaredValueWon(Object declaredValue, T read) {
         assertEquals(Set.of(), fixture().extensionNames(read));
         if (knownDeviations().contains(KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY)) {
-            assertNotEquals(fixture().mutableValue(created), fixture().mutableValue(read));
+            assertNotEquals(declaredValue, fixture().mutableValue(read));
             return;
         }
-        assertEquals(fixture().mutableValue(created), fixture().mutableValue(read));
+        assertEquals(declaredValue, fixture().mutableValue(read));
     }
 
     @Test

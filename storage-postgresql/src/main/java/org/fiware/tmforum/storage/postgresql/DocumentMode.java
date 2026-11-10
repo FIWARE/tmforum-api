@@ -8,8 +8,8 @@ public enum DocumentMode {
     FULL,
     /**
      * Only the attributes an update carries, without {@code id} and {@code type}; an emptied list stays {@code []}.
-     * A primitive field (e.g. {@code Agreement.documentNumber}) cannot be absent, so it is always carried, its
-     * default included; the NGSI-LD adapter writes it the same way.
+     * Known defect shared with the NGSI-LD adapter (see {@code EntityWriteRepository.updateDomainEntity}): a
+     * primitive field cannot be absent, so it is always carried and its default overwrites the stored value.
      */
     CARRIED_ATTRIBUTES
 }

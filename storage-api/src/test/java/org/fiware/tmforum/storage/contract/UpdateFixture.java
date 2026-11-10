@@ -33,9 +33,10 @@ public interface UpdateFixture<T> extends EntityFixture<T> {
     List<?> listValue(T entity);
 
     /**
-     * {@link #newEntity} plus an extension (unknown) property named like the mutable attribute, with another value.
+     * Adds to the entity an extension (unknown) property named like the mutable attribute, with a value that
+     * differs from the ones of {@link #newEntity} and {@link #mutate}, and returns it.
      */
-    T withExtensionNamedLikeTheMutableAttribute(URI id);
+    T withExtensionNamedLikeTheMutableAttribute(T entity);
 
     /**
      * Names of the entity's extension properties, empty when it has none.

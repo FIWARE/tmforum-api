@@ -39,6 +39,12 @@ public interface EntityWriteRepository {
      * {@code <productOrderId>:<orderItemId>}). For a property list it is the position ({@code list-item:n}), so
      * shortening the list presumably keeps the stored tail; that is inferred, not checked against a broker. Only the
      * reference-list case is pinned by a contract case.
+     * <p>
+     * The extension rule of {@link #createDomainEntity} applies, and so does its NGSI-LD defect.
+     * <p>
+     * Known defect of every adapter, not a contract rule (ticket 0): a primitive field cannot be absent, so an
+     * update always carries it and writes its default (e.g. {@code Agreement.documentNumber} reset to 0 by a PATCH
+     * that does not carry it). The fix is a boxed type in the domain class.
      */
     <T> Mono<Void> updateDomainEntity(String id, T domainEntity);
 
