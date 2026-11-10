@@ -140,6 +140,29 @@ class QueryParserTest {
 	}
 
 	@ParameterizedTest
+	@MethodSource("reservedNameQueries")
+	public void testReservedAttributeNamesAreEscaped(String tmForumQuery, QueryParams ngsiLdQuery) {
+		GeneralProperties properties = new GeneralProperties();
+		properties.setEncloseQuery(false);
+		properties.setNgsildOrQueryKey(",");
+		properties.setNgsildOrQueryValue(",");
+		properties.setIncludeAttributeInList(false);
+		properties.setUseDotSeperator(false);
+
+		QueryParser qp = new QueryParser(properties);
+		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery),
+				"Reserved names have to be escaped like they are when the entity is persisted.");
+	}
+
+	private static Stream<Arguments> reservedNameQueries() {
+		return Stream.of(
+				Arguments.of("sub.valueType=string", new QueryParams(null, null, "sub[tmfEscaped-valueType]==\"string\"")),
+				Arguments.of("sub.valueType.eq=string", new QueryParams(null, null, "sub[tmfEscaped-valueType]==\"string\"")),
+				// not reserved, unchanged
+				Arguments.of("sub.status=Active", new QueryParams(null, null, "sub[status]==\"Active\"")));
+	}
+
+	@ParameterizedTest
 	@MethodSource("scorpioQueries")
 	public void testScorpioQueryParsing(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
 		GeneralProperties properties = new GeneralProperties();
