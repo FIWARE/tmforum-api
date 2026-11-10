@@ -35,6 +35,12 @@
             <groupId>org.postgresql</groupId>
             <artifactId>r2dbc-postgresql</artifactId>
         </dependency>
+        <!-- pools the connections behind the r2dbc:pool: URL; without it every statement opens a connection -->
+        <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-pool</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- Flyway migrates over JDBC at startup, the data path never uses it -->
         <dependency>
@@ -75,6 +81,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- runtime for @MicronautTest; common declares these as provided -->

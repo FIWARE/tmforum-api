@@ -19,7 +19,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
  * Keeps {@code common} on the storage port: only the adapter package and the IT helpers may touch the NGSI-LD
- * adapter, and no REST class may branch on broker responses.
+ * adapter, and no REST class may branch on broker responses. {@code common} cannot reach the PostgreSQL adapter at
+ * all: {@code storage-postgresql} depends on {@code common}, so Maven rejects the reverse dependency.
  */
 class StorageBoundaryTest {
 

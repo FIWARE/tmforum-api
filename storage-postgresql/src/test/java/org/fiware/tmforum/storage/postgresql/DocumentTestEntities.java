@@ -1,6 +1,7 @@
 package org.fiware.tmforum.storage.postgresql;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +30,7 @@ final class DocumentTestEntities {
     @Setter
     @ToString(callSuper = true)
     @EqualsAndHashCode(callSuper = true)
+    @MappingEnabled(entityType = TestCatalog.TYPE)
     public static class TestCatalog extends EntityWithId {
 
         static final String TYPE = "test-catalog";
@@ -71,6 +73,7 @@ final class DocumentTestEntities {
     @Setter
     @ToString(callSuper = true)
     @EqualsAndHashCode(callSuper = true)
+    @MappingEnabled(entityType = {TestResource.TYPE, TestLogicalResource.TYPE})
     public static class TestResource extends EntityWithId {
 
         static final String TYPE = "test-resource";
@@ -90,6 +93,7 @@ final class DocumentTestEntities {
     @Setter
     @ToString(callSuper = true)
     @EqualsAndHashCode(callSuper = true)
+    @MappingEnabled(entityType = TestLogicalResource.TYPE)
     public static class TestLogicalResource extends TestResource {
 
         static final String TYPE = "test-logical-resource";
