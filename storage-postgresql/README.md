@@ -27,6 +27,11 @@ unversioned types, `revision` is monotonic per `id`. The partial unique index
 
 All columns are `NOT NULL`. The primary key is `(id, version)`.
 
+An update is one statement, `data = data || patch`. The patch holds only the attributes the entity carries (never
+`id` or `type`), and each one replaces its stored top-level value, so a carried list replaces the stored list. An
+emptied list is stored as `[]`. Nothing is read first, so two concurrent updates of the same attribute cannot
+interleave: the last one wins whole.
+
 ## Configuration
 
 Put this block in the `application-postgresql.yaml` of the API module. Both datasources must point at the same
@@ -81,5 +86,6 @@ Every IT run provisions PostgreSQL in the k3s test cluster (`k3s/postgresql-db`,
 password `tmforum`), next to the broker. `-Dbroker=postgresql` starts no broker, only Redis (`k3s/postgresql`).
 
 ```bash
-mvn verify -pl storage-postgresql                       # SchemaMigrationIT
+mvn verify -pl storage-postgresql                       # SchemaMigrationIT, PostgresEntityRepositoryIT, ...
+mvn verify -pl product-catalog -Dit.test=PostgresEntityRepositoryContractIT   # port contract on PostgreSQL
 ```

@@ -34,9 +34,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Get, create, delete and unfiltered list of the PostgreSQL repository against the k3s PostgreSQL.
+ * Get, create, update, delete and unfiltered list of the PostgreSQL repository against the k3s PostgreSQL.
  */
 @MicronautTest(environments = PostgresStorage.ENVIRONMENT)
 class PostgresEntityRepositoryIT {
@@ -45,6 +46,13 @@ class PostgresEntityRepositoryIT {
     private static final String RESOURCE_ID = "urn:ngsi-ld:" + TestResource.TYPE + ":resource-1";
     private static final String LOGICAL_RESOURCE_ID = "urn:ngsi-ld:" + TestLogicalResource.TYPE + ":resource-2";
     private static final String NAME = "catalog name";
+    private static final String UPDATED_NAME = "updated catalog name";
+    private static final String DESCRIPTION = "catalog description";
+    private static final List<String> STORED_KEYWORDS = List.of("stored");
+    private static final List<String> FIRST_KEYWORDS = List.of("first-1", "first-2");
+    private static final List<String> SECOND_KEYWORDS = List.of("second-1", "second-2", "second-3");
+    // each round races two updates once; several rounds make an interleaving likely if one were possible
+    private static final int CONCURRENT_UPDATE_ROUNDS = 20;
     private static final String NUL = "\u0000";
     private static final String UNKNOWN_TYPE = "unknown-type";
     private static final List<String> TEST_TYPES =
@@ -110,6 +118,74 @@ class PostgresEntityRepositoryIT {
 
         assertEquals(StorageOperation.CREATE, failure.operation(), "The failed operation should be reported.");
         assertEquals(expectedReason, failure.reason(), "The failure should be mapped to the expected reason.");
+    }
+
+    @Test
+    void updateMergesOnlyTheCarriedAttributes() {
+        TestCatalog stored = catalog(1);
+        stored.setName(NAME);
+        stored.setDescription(DESCRIPTION);
+        stored.setKeywords(STORED_KEYWORDS);
+        repository.createDomainEntity(stored).block();
+        TestCatalog patch = catalog(1);
+        patch.setName(UPDATED_NAME);
+        patch.setKeywords(List.of());
+
+        repository.updateDomainEntity(stored.getId().toString(), patch).block();
+
+        TestCatalog expected = catalog(1);
+        expected.setName(UPDATED_NAME);
+        expected.setDescription(DESCRIPTION);
+        expected.setKeywords(List.of());
+        assertEquals(expected, repository.get(stored.getId(), TestCatalog.class).block(),
+                "Carried attributes should replace the stored ones, the others should stay.");
+    }
+
+    @Test
+    void updateOfMissingEntityCreatesNothing() {
+        TestCatalog patch = catalog(1);
+
+        StorageException failure = assertThrows(StorageException.class,
+                () -> repository.updateDomainEntity(patch.getId().toString(), patch).block(),
+                "The update should fail.");
+
+        assertEquals(StorageErrorReason.NOT_FOUND, failure.reason(), "A missing entity should not be found.");
+        assertNull(repository.get(patch.getId(), TestCatalog.class).block(), "The update should not create.");
+    }
+
+    @Test
+    void updateCarryingNulIsInvalidAndKeepsTheStoredEntity() {
+        TestCatalog stored = catalog(1);
+        stored.setName(NAME);
+        repository.createDomainEntity(stored).block();
+        TestCatalog patch = catalog(1);
+        patch.setName(UPDATED_NAME + NUL);
+
+        StorageException failure = assertThrows(StorageException.class,
+                () -> repository.updateDomainEntity(stored.getId().toString(), patch).block(),
+                "The update should fail.");
+
+        assertEquals(StorageOperation.UPDATE, failure.operation(), "The failed operation should be reported.");
+        assertEquals(StorageErrorReason.INVALID_DATA, failure.reason(), "A NUL character is invalid data.");
+        assertEquals(stored, repository.get(stored.getId(), TestCatalog.class).block(),
+                "The stored entity should be unchanged.");
+    }
+
+    @Test
+    void concurrentListReplacementsKeepExactlyOneList() {
+        TestCatalog stored = catalog(1);
+        stored.setKeywords(STORED_KEYWORDS);
+        repository.createDomainEntity(stored).block();
+        String id = stored.getId().toString();
+
+        for (int round = 0; round < CONCURRENT_UPDATE_ROUNDS; round++) {
+            Mono.when(repository.updateDomainEntity(id, withKeywords(FIRST_KEYWORDS)),
+                    repository.updateDomainEntity(id, withKeywords(SECOND_KEYWORDS))).block();
+
+            List<String> keywords = repository.get(stored.getId(), TestCatalog.class).block().getKeywords();
+            assertTrue(FIRST_KEYWORDS.equals(keywords) || SECOND_KEYWORDS.equals(keywords),
+                    "Round " + round + " should end with one of the two lists, but was " + keywords);
+        }
     }
 
     @Test
@@ -189,6 +265,12 @@ class PostgresEntityRepositoryIT {
                 repository.findEntities(null, null, TestCatalog.class, null, null, TestCatalog.TYPE, null)
                         .block().items(),
                 "An imported entity should list by its original creation time.");
+    }
+
+    private static TestCatalog withKeywords(List<String> keywords) {
+        TestCatalog patch = catalog(1);
+        patch.setKeywords(keywords);
+        return patch;
     }
 
     private static String catalogId(int number) {
