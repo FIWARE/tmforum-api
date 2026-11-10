@@ -1,5 +1,6 @@
 package org.fiware.tmforum.storage.postgresql;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,6 +44,24 @@ final class DocumentTestEntities {
         private TestUriRef parent;
 
         public TestCatalog(String id) {
+            super(TYPE, id);
+        }
+    }
+
+    // its own class-level ignorals replace any inherited or mixed-in ones, like PropertyDefinition's
+    @Getter
+    @Setter
+    @ToString(callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    @JsonIgnoreProperties(value = TestSelfIgnoringCatalog.IGNORED_PROPERTY)
+    public static class TestSelfIgnoringCatalog extends EntityWithId {
+
+        static final String TYPE = "test-self-ignoring-catalog";
+        static final String IGNORED_PROPERTY = "ignored";
+
+        private String name;
+
+        public TestSelfIgnoringCatalog(String id) {
             super(TYPE, id);
         }
     }

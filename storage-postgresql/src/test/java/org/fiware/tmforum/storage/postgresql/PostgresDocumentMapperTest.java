@@ -17,6 +17,7 @@ import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestCatalog;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestLogicalResource;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestNotStoredHolder;
+import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestSelfIgnoringCatalog;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestUriRef;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
@@ -138,15 +139,25 @@ class PostgresDocumentMapperTest {
         assertEquals(Set.of("id", "href"), Set.copyOf(parent.propertyNames()), parent.toString());
     }
 
-    @Test
-    void aDocumentWithoutExtensionsReadsBackWithoutAdditionalProperties() {
-        TestCatalog read = documentMapper.storage().fromDocument(
-                "{\"id\":\"" + CATALOG_ID + "\",\"type\":\"" + TestCatalog.TYPE + "\",\"name\":\"" + NAME + "\"}",
-                TestCatalog.class, StorageOperation.READ);
+    @ParameterizedTest
+    @MethodSource("typedEntities")
+    void aDocumentWithoutExtensionsReadsBackWithoutAdditionalProperties(Class<? extends EntityWithId> entityClass,
+                                                                        String type) {
+        String id = "urn:ngsi-ld:" + type + ":entity-1";
+        EntityWithId read = documentMapper.storage().fromDocument(
+                "{\"id\":\"" + id + "\",\"type\":\"" + type + "\",\"name\":\"" + NAME + "\"}",
+                entityClass, StorageOperation.READ);
 
         assertNull(read.getAdditionalProperties());
-        assertEquals(NAME, read.getName());
-        assertEquals(TestCatalog.TYPE, read.getType());
+        assertEquals(id, read.getId().toString());
+        assertEquals(type, read.getType());
+    }
+
+    private static Stream<Arguments> typedEntities() {
+        return Stream.of(
+                Arguments.of(TestCatalog.class, TestCatalog.TYPE),
+                Arguments.of(Named.of("own class-level ignorals", TestSelfIgnoringCatalog.class),
+                        TestSelfIgnoringCatalog.TYPE));
     }
 
     @ParameterizedTest

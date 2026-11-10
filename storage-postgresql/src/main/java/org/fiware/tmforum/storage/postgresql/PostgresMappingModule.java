@@ -2,7 +2,6 @@ package org.fiware.tmforum.storage.postgresql;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.wistefan.mapping.UnmappedProperty;
 import org.fiware.tmforum.common.domain.Entity;
@@ -55,9 +54,12 @@ class PostgresMappingModule extends SimpleModule {
         context.insertAnnotationIntrospector(new DocumentAnnotationIntrospector(dropNotStored));
     }
 
-    // the constructor derives the type, so a stored one is skipped instead of reaching the any-setter
-    @JsonIgnoreProperties(value = TYPE_PROPERTY, allowGetters = true)
+    // the constructor derives the type, so a stored one is skipped instead of reaching the any-setter. Member-level:
+    // a class-level @JsonIgnoreProperties is not merged, a subclass declaring its own would replace it.
     abstract static class EntityWithIdMixIn {
+
+        @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+        abstract String getType();
     }
 
     // read: every key no declared property takes becomes an extension; write: see ExtensionPropertiesModifier
@@ -77,8 +79,7 @@ class PostgresMappingModule extends SimpleModule {
         abstract List<String> getReferencedTypes();
     }
 
-    // broker-facing, escaped views of query/rawQuery; the document keeps the original values. Member-level, since a
-    // class-level @JsonIgnoreProperties would hide the one of EntityWithIdMixIn.
+    // broker-facing, escaped views of query/rawQuery; the document keeps the original values
     abstract static class TMForumSubscriptionMixIn {
 
         @JsonIgnore
@@ -115,6 +116,7 @@ class PostgresMappingModule extends SimpleModule {
                 return beanProperties;
             }
             properties.remove(additionalProperties);
+            // ignored accessors as well, since the read side skips their keys; a PostgreSQL-only drop (ticket 0)
             Set<String> declaredNames = new HashSet<>(beanDesc.get().getIgnoredPropertyNames());
             properties.forEach(property -> declaredNames.add(property.getName()));
             // the read side never hands this key to the any-setter, so writing it would lose it silently
