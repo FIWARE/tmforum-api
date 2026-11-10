@@ -21,3 +21,8 @@ flyway:
       schemas: tmforum
       create-schemas: true
       locations: classpath:db/migration/tmforum
+
+# outbox ITs drive OutboxDispatcher.dispatchOnce() themselves; no scheduled dispatcher may race them
+tmforum:
+  outbox:
+    enabled: false

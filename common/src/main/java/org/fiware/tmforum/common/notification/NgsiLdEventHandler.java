@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -57,10 +58,10 @@ public class NgsiLdEventHandler extends EventHandler {
 		}
 		EventDetails eventDetails = makeEventDetails(payload.getType(), eventTypeSuffix, eventTime);
 		EventMapping eventMapping = entityNameToEntityClassMapping.get(eventDetails.entityType());
+		// createEvent maps the domain object to its VO; mapping it here as well handed the mapper a VO
 		return entityVOMapper.fromEntityVO(payload, eventMapping.rawClass())
-				.map(o -> eventMapper.mapPayload(o, eventMapping.rawClass()))
-				.map(entity -> new TMForumNotification(listenerCallback, createEvent(eventDetails, entity, (e) -> applyFieldsFilter(
-						e, selectedFields))));
+				.map(entity -> createNotification(listenerCallback, eventDetails, entity, selectedFields,
+						UUID.randomUUID().toString()));
 	}
 
 	private EventDetails makeEventDetails(String entityType, String eventTypeSuffix, Instant eventTime) {

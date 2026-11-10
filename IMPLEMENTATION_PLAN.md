@@ -330,9 +330,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   - PG ITs (all with `tmforum.outbox.enabled: false`, dispatchers driven through `dispatchOnce()`): entity + outbox
     row commit together, and a failing outbox insert leaves no entity row (also for delete); two dispatchers with
     disjoint type sets each claim only their own rows; a leased row is not claimed again before the lease expires;
-    create/patch/delete of an unmapped type (a party-role entity) leave no outbox row (assert on the table
-    directly, before any test cleanup); a sub-type Resource patch (resource-inventory) and an Organization delete
-    (party-catalog) each leave exactly one outbox row of the right kind;
+    create/patch/delete of an entity of a type outside the publisher's `EventTypes` leave no outbox row (assert
+    on the table directly, before any test cleanup). The module-level variants (party-role entity, sub-type
+    Resource patch in resource-inventory, Organization delete in party-catalog) moved to Step 7, because those
+    modules only get the `storage-postgresql` dependency there;
   - a unit test that the dispatcher bean is absent with `tmforum.outbox.enabled=false` and present by default.
 - `AGENTS.md`: replace the TMForum events line with: API create/patch/delete events go through
   `EntityEventPublisher` (direct on the broker, outbox on PG; `OutboxDispatcher` delivers, off in tests via
@@ -359,6 +360,10 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   `AGENTS.md`: per-test cleanup goes through `TestEntityCleaner` (broker query+delete, or SQL delete on PG).
 - Tests: health indicator unit test (up/down, parameterized); a startup smoke IT in `all-in-one` with
   `environments = "postgresql"`.
+- Outbox ITs moved from Step 6 (`environments = "postgresql"`, `tmforum.outbox.enabled: false`, assert on
+  `tmforum.event_outbox` directly before cleanup): create/patch/delete of a party-role entity leave no outbox row;
+  a sub-type Resource patch (resource-inventory) and an Organization delete (party-catalog) each leave exactly one
+  outbox row of the right kind.
 
 ### Step 8: PostgreSQL in the IT matrix, one-query GET, CI and release notes
 - `-Dbroker=postgresql`: verify the full IT suite of each module runs against PG. Inventory the ITs that cannot run

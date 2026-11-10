@@ -3,6 +3,7 @@ package org.fiware.tmforum.common.rest;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.context.ServerRequestContext;
+import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -10,6 +11,7 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.filter.PaginationFilter;
 import org.fiware.tmforum.common.mapping.IdHelper;
+import org.fiware.tmforum.common.notification.EntityEventPublisher;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParams;
 import org.fiware.tmforum.common.querying.QueryParser;
@@ -26,7 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -42,6 +43,13 @@ public abstract class AbstractApiController<T> {
 	protected final ReferenceValidationService validationService;
 	protected final EntityRepository repository;
 	protected final TMForumEventHandler eventHandler;
+	protected EntityEventPublisher eventPublisher;
+
+	/** Setter-injected so the module constructors stay unchanged. */
+	@Inject
+	public void setEventPublisher(EntityEventPublisher eventPublisher) {
+		this.eventPublisher = eventPublisher;
+	}
 
 	protected Mono<T> getCheckingMono(T entityToCheck, List<List<? extends ReferencedEntity>> referencedEntities) {
 		Mono<T> checkingMono = Mono.just(entityToCheck);
@@ -56,14 +64,8 @@ public abstract class AbstractApiController<T> {
 
 	protected Mono<T> create(Mono<T> checkingMono, Class<T> entityClass) {
 		return checkingMono
-				.flatMap(checkedResult ->
-						repository.createDomainEntity(checkedResult)
-								.doOnSuccess(v -> {
-									eventHandler.handleCreateEvent(checkedResult)
-											.doOnError(e -> log.warn("Was not able to handle the create event.", e))
-											.subscribe();
-								})
-								.then(Mono.just(checkedResult)))
+				.flatMap(checkedResult -> eventPublisher.createWithEvent(checkedResult)
+						.then(Mono.just(checkedResult)))
 				.onErrorMap(AbstractApiController::isRejectedWrite, t -> {
 					StorageException e = (StorageException) t;
 					log.warn("Broker rejected the entity creation with reason {}: {}", e.reason(), e.getMessage());
@@ -78,7 +80,7 @@ public abstract class AbstractApiController<T> {
 			throw new TmForumException("Did not receive a valid id, such entity cannot exist.",
 					TmForumExceptionReason.NOT_FOUND);
 		}
-		return repository.deleteDomainEntity(URI.create(id))
+		return eventPublisher.deleteWithEvent(URI.create(id))
 				.then(Mono.just(HttpResponse.noContent()));
 	}
 
@@ -225,26 +227,17 @@ public abstract class AbstractApiController<T> {
 				.get(URI.create(id), entityClass);
 	}
 
-	protected Mono<T> patch(String id, T updatedObject, Mono<T> checkingMono, Class<T> entityClass) {
-		URI idUri = URI.create(id);
-
-		AtomicReference<T> old = new AtomicReference<>();
+	/**
+	 * Updates an existing entity: 404 before the checking mono runs, then the update with its event.
+	 * Generic in the entity class, so that sub-type patches (TMF730) take the same path.
+	 */
+	protected <S extends T> Mono<S> patch(String id, S updatedObject, Mono<?> checkingMono, Class<S> entityClass) {
 		return repository
-				.get(idUri, entityClass)
+				.get(URI.create(id), entityClass)
 				.switchIfEmpty(
 						Mono.error(new TmForumException("No such entity exists.", TmForumExceptionReason.NOT_FOUND)))
-				.flatMap(entity -> {
-					old.set(entity);
-					return checkingMono;
-				})
-				.flatMap(entity -> repository.updateDomainEntity(id, updatedObject)
-						.then(repository.get(idUri, entityClass))
-						.doOnNext(updatedState ->
-								eventHandler.handleUpdateEvent(updatedState, old.get())
-										.doOnError(e -> log.warn("Was not able to handle the create event.", e))
-										.subscribe()
-						)
-				)
+				.flatMap(entity -> checkingMono)
+				.flatMap(checked -> eventPublisher.updateWithEvent(id, updatedObject, entityClass))
 				.onErrorMap(AbstractApiController::isRejectedWrite, t -> rejectedWrite((StorageException) t, "updating"));
 	}
 
@@ -272,6 +265,9 @@ public abstract class AbstractApiController<T> {
 		};
 	}
 
+	/**
+	 * Writes the related entities through the repository, without TMForum events. No production controller uses it.
+	 */
 	protected <R extends EntityWithId> Mono<T> relatedEntityHandlingMono(T entity, Mono<T> entityMono,
 																		 List<R> relatedList, Consumer<List<R>> entityUpdater, Class<R> relatedEntityClass) {
 		List<R> relatedEntities = Optional.ofNullable(relatedList).orElseGet(List::of);

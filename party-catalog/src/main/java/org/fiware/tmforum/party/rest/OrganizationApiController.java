@@ -93,7 +93,7 @@ public class OrganizationApiController extends AbstractPartyApiController<Organi
 					DeletionExceptionReason.NOT_FOUND);
 		}
 
-		return repository.deleteDomainEntity(URI.create(id))
+		return eventPublisher.deleteWithEvent(URI.create(id))
 				.then(Mono.just(HttpResponse.noContent()));
 	}
 
