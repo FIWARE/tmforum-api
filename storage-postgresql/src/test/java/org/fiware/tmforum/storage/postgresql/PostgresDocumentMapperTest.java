@@ -111,6 +111,8 @@ class PostgresDocumentMapperTest {
                 Arguments.of(Named.of("id only", new TestCatalog(CATALOG_ID)), Set.of("id", "type")),
                 Arguments.of(Named.of("additional properties", withExtensions(new TestCatalog(CATALOG_ID))),
                         Set.of("id", "type", EXTENSION_KEY, "count", "nested", "list")),
+                Arguments.of(Named.of("extension named like the extension list", withExtensionListKey()),
+                        Set.of("id", "type", EXTENSION_KEY, "count", "nested", "list")),
                 Arguments.of(Named.of("reference with only a URI constructor", catalogWithParent()),
                         Set.of("id", "type", "parent")));
     }
@@ -317,6 +319,12 @@ class PostgresDocumentMapperTest {
         entity.addAdditionalProperties("nested", Map.of("inner", "value"));
         entity.addAdditionalProperties("list", List.of("a", "b"));
         return entity;
+    }
+
+    private static TestCatalog withExtensionListKey() {
+        TestCatalog catalog = withExtensions(new TestCatalog(CATALOG_ID));
+        catalog.addAdditionalProperties(Entity.ADDITIONAL_PROPERTIES_KEY, EXTENSION_NAME);
+        return catalog;
     }
 
     private static TestLogicalResource logicalResource() {

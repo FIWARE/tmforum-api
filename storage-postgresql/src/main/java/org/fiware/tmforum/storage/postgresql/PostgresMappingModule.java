@@ -98,6 +98,8 @@ class PostgresMappingModule extends SimpleModule {
             properties.remove(additionalProperties);
             Set<String> declaredNames = new HashSet<>(beanDesc.get().getIgnoredPropertyNames());
             properties.forEach(property -> declaredNames.add(property.getName()));
+            // the read side never hands this key to the any-setter, so writing it would lose it silently
+            declaredNames.add(Entity.ADDITIONAL_PROPERTIES_KEY);
             properties.add(new ExtensionPropertiesWriter(additionalProperties, declaredNames));
             return properties;
         }
