@@ -1,12 +1,16 @@
 package org.fiware.tmforum.productcatalog.storage;
 
+import io.github.wistefan.mapping.UnmappedProperty;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Catalogs for the port contract: {@code name} is mutated, {@code description} stays untouched and
@@ -17,6 +21,8 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 	private static final String NAME = "contract-catalog";
 	private static final String MUTATED_NAME = "mutated-contract-catalog";
 	private static final String DESCRIPTION = "untouched description";
+	private static final String EXTENSION_VALUE = "extension-named-like-name";
+	private static final String NAME_ATTRIBUTE = "name";
 	private static final String PARTY_ID_FORMAT = "urn:ngsi-ld:individual:%s";
 
 	@Override
@@ -70,6 +76,24 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 	@Override
 	public List<?> listValue(Catalog entity) {
 		return entity.getRelatedParty();
+	}
+
+	@Override
+	public Catalog withExtensionNamedLikeTheMutableAttribute(Catalog catalog) {
+		catalog.addAdditionalProperties(NAME_ATTRIBUTE, EXTENSION_VALUE);
+		return catalog;
+	}
+
+	@Override
+	public Object extensionValue() {
+		return EXTENSION_VALUE;
+	}
+
+	@Override
+	public Set<String> extensionNames(Catalog entity) {
+		return Optional.ofNullable(entity.getAdditionalProperties()).orElse(List.of()).stream()
+				.map(UnmappedProperty::getName)
+				.collect(Collectors.toSet());
 	}
 
 	private static RelatedParty relatedParty() {

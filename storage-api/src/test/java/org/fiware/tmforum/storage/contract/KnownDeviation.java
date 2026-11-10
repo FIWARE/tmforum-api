@@ -18,6 +18,13 @@ public enum KnownDeviation {
     EMPTY_PAGE_COMPLETES_EMPTY,
 
     /**
+     * An extension (unknown) property named like a declared property overwrites the declared value, on create
+     * and on update, and no extension of that name reads back. Observed on Orion-LD 1.9.0 and Scorpio 5.0.3: the
+     * mapping library merges the extension into the {@code EntityVO} before the request reaches the broker.
+     */
+    EXTENSION_OVERRIDES_DECLARED_PROPERTY,
+
+    /**
      * An update carrying a reference list keeps the stored references whose datasetIds it does not carry, next to
      * the carried ones, instead of replacing the list. The merge key is the datasetId, which is the reference id
      * unless the ref class extends it (e.g. {@code RelatedParty} adds the role).
