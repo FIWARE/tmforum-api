@@ -26,6 +26,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
 
 import java.net.URI;
 import java.time.Instant;
@@ -68,6 +69,8 @@ class PostgresDocumentMapperTest {
     private static final String NAME_PROPERTY = "name";
     private static final String KEYWORDS_PROPERTY = "keywords";
     private static final String BALANCE_PROPERTY = "balance";
+    private static final String LAST_UPDATE_PROPERTY = "lastUpdate";
+    private static final Instant LAST_UPDATE = Instant.parse("2026-11-10T08:15:30Z");
     private static final String NUL_MESSAGE_FORMAT =
             "Field '%s' contains the NUL character (\\u0000), which cannot be stored.";
     private static final String NUL = "\u0000";
@@ -182,15 +185,35 @@ class PostgresDocumentMapperTest {
     @ParameterizedTest
     @EnumSource(DocumentMode.class)
     void aNullExtensionIsNotWritten(DocumentMode mode) {
-        TestCatalog catalog = new TestCatalog(CATALOG_ID);
-        catalog.setName(NAME);
-        catalog.addAdditionalProperties(EXTENSION_KEY, null);
-
-        JsonNode document = document(documentMapper.storage(), catalog, mode);
-        TestCatalog read = readBack(documentMapper.storage(), catalog, DocumentMode.FULL);
+        JsonNode document = document(documentMapper.storage(), catalogWithNullExtension(), mode);
 
         assertFalse(document.has(EXTENSION_KEY), document.toString());
+    }
+
+    @Test
+    void aNullExtensionReadsBackAbsent() {
+        // only FULL: a CARRIED_ATTRIBUTES document has no id and cannot be read back on its own
+        TestCatalog read = readBack(documentMapper.storage(), catalogWithNullExtension(), DocumentMode.FULL);
+
         assertNull(read.getAdditionalProperties());
+    }
+
+    @ParameterizedTest
+    @EnumSource(DocumentMode.class)
+    void datesAreIsoStringsWhateverTheApplicationDateFormat(DocumentMode mode) {
+        ObjectMapper timestampWriting = applicationMapper.rebuild()
+                .enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .build();
+        TestCatalog catalog = catalog(c -> c.setLastUpdate(LAST_UPDATE));
+
+        for (PostgresDocumentMapper mapper : List.of(documentMapper, new PostgresDocumentMapper(timestampWriting))) {
+            for (DocumentMapper variant : List.of(mapper.storage(), mapper.event())) {
+                JsonNode lastUpdate = document(variant, catalog, mode).get(LAST_UPDATE_PROPERTY);
+
+                assertTrue(lastUpdate.isString(), lastUpdate.toString());
+                assertEquals(LAST_UPDATE.toString(), lastUpdate.stringValue());
+            }
+        }
     }
 
     @Test
@@ -303,6 +326,13 @@ class PostgresDocumentMapperTest {
     private static TestCatalog catalog(Consumer<TestCatalog> customizer) {
         TestCatalog catalog = new TestCatalog(CATALOG_ID);
         customizer.accept(catalog);
+        return catalog;
+    }
+
+    private static TestCatalog catalogWithNullExtension() {
+        TestCatalog catalog = new TestCatalog(CATALOG_ID);
+        catalog.setName(NAME);
+        catalog.addAdditionalProperties(EXTENSION_KEY, null);
         return catalog;
     }
 
