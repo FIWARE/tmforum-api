@@ -47,6 +47,8 @@ class ControllerStorageBoundaryTest {
 		return Stream.of(
 						noModuleClasses().should().dependOnClassesThat(adapterPrivateTypes),
 						noModuleClasses().should().dependOnClassesThat().resideInAPackage(NGSI_PACKAGES),
+						// Inert until Step 7 puts storage-postgresql on this module's classpath; product-catalog's
+						// StorageBoundaryTest enforces it meanwhile.
 						noModuleClasses().and().resideOutsideOfPackage(POSTGRES_ADAPTER_PACKAGES)
 								.should().dependOnClassesThat().resideInAPackage(POSTGRES_ADAPTER_PACKAGES))
 				.map(rule -> Named.of(rule.getDescription(), rule));

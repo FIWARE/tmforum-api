@@ -19,7 +19,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
  * Keeps {@code common} on the storage port: only the adapter package and the IT helpers may touch the NGSI-LD
- * adapter, nothing touches the PostgreSQL adapter, and no REST class may branch on broker responses.
+ * adapter, and no REST class may branch on broker responses. {@code common} cannot reach the PostgreSQL adapter at
+ * all: {@code storage-postgresql} depends on {@code common}, so Maven rejects the reverse dependency.
  */
 class StorageBoundaryTest {
 
@@ -27,7 +28,6 @@ class StorageBoundaryTest {
 	private static final String ADAPTER_PACKAGE = "org.fiware.tmforum.common.repository..";
 	private static final String IT_HELPER_PACKAGE = "org.fiware.tmforum.common.test..";
 	private static final String REST_PACKAGES = "..rest..";
-	private static final String POSTGRES_ADAPTER_PACKAGE = "org.fiware.tmforum.storage.postgresql..";
 
 	private static JavaClasses mainClasses;
 
@@ -45,8 +45,7 @@ class StorageBoundaryTest {
 										NgsiLdEntityRepository.class, NgsiLdBaseRepository.class,
 										BrokerBackedReferencesRepository.class),
 						noClasses().that().resideInAPackage(REST_PACKAGES)
-								.should().dependOnClassesThat().areAssignableTo(HttpClientResponseException.class),
-						noClasses().should().dependOnClassesThat().resideInAPackage(POSTGRES_ADAPTER_PACKAGE))
+								.should().dependOnClassesThat().areAssignableTo(HttpClientResponseException.class))
 				.map(rule -> Named.of(rule.getDescription(), rule));
 	}
 
