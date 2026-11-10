@@ -22,9 +22,9 @@ public interface ReferenceReadRepository {
     Mono<StoredReference> findReference(String id);
 
     /**
-     * Emits one reference per distinct id of {@code ids} (no nulls) that exists, in no particular order; unknown ids
-     * are skipped; a failure carries {@link StorageOperation#READ}. The default fans out to {@link #findReference};
-     * an adapter overrides it with a single lookup.
+     * Emits one reference per distinct id of {@code ids} that exists, in no particular order; unknown ids are skipped;
+     * a failure carries {@link StorageOperation#READ}. {@code ids} must not contain null. The default fans out to
+     * {@link #findReference}; an adapter overrides it with a single lookup.
      */
     default Flux<StoredReference> findReferences(Collection<String> ids) {
         return Flux.fromIterable(ids).distinct().flatMap(this::findReference);
