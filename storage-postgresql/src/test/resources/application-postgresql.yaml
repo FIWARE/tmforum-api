@@ -8,6 +8,8 @@ r2dbc:
       options:
         initial-size: 2
         max-size: 4
+        max-acquire-time: PT10S
+        max-create-connection-time: PT10S
 
 flyway:
   datasources:
