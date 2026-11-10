@@ -26,6 +26,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.cfg.DateTimeFeature;
 
 import java.net.URI;
@@ -199,21 +200,30 @@ class PostgresDocumentMapperTest {
     }
 
     @ParameterizedTest
-    @EnumSource(DocumentMode.class)
-    void datesAreIsoStringsWhateverTheApplicationDateFormat(DocumentMode mode) {
-        ObjectMapper timestampWriting = applicationMapper.rebuild()
-                .enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .build();
+    @MethodSource("applicationMapperSettings")
+    void keysAndDatesIgnoreTheApplicationMapperSettings(Function<ObjectMapper, ObjectMapper> settings,
+                                                        DocumentMode mode) {
+        PostgresDocumentMapper mapper = new PostgresDocumentMapper(settings.apply(applicationMapper));
         TestCatalog catalog = catalog(c -> c.setLastUpdate(LAST_UPDATE));
 
-        for (PostgresDocumentMapper mapper : List.of(documentMapper, new PostgresDocumentMapper(timestampWriting))) {
-            for (DocumentMapper variant : List.of(mapper.storage(), mapper.event())) {
-                JsonNode lastUpdate = document(variant, catalog, mode).get(LAST_UPDATE_PROPERTY);
+        for (DocumentMapper variant : List.of(mapper.storage(), mapper.event())) {
+            JsonNode lastUpdate = document(variant, catalog, mode).get(LAST_UPDATE_PROPERTY);
 
-                assertTrue(lastUpdate.isString(), lastUpdate.toString());
-                assertEquals(LAST_UPDATE.toString(), lastUpdate.stringValue());
-            }
+            assertNotNull(lastUpdate, "no '" + LAST_UPDATE_PROPERTY + "' key");
+            assertTrue(lastUpdate.isString(), lastUpdate.toString());
+            assertEquals(LAST_UPDATE.toString(), lastUpdate.stringValue());
         }
+    }
+
+    static Stream<Arguments> applicationMapperSettings() {
+        List<Named<Function<ObjectMapper, ObjectMapper>>> settings = List.of(
+                Named.of("as configured", Function.identity()),
+                Named.of("dates as timestamps",
+                        m -> m.rebuild().enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS).build()),
+                Named.of("snake_case names",
+                        m -> m.rebuild().propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE).build()));
+        return settings.stream()
+                .flatMap(setting -> Stream.of(DocumentMode.values()).map(mode -> Arguments.of(setting, mode)));
     }
 
     @Test

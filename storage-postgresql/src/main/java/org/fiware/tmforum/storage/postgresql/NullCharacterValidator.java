@@ -10,7 +10,8 @@ import java.util.Optional;
 
 /**
  * Rejects documents PostgreSQL cannot store as jsonb because a key or string value contains {@code \u0000}, naming
- * the first such field instead of the database's generic error.
+ * the first such field instead of the database's generic error. The path is the stored document's, so it uses domain
+ * property names ({@code atType}, {@code characteristic[0].tmfValue}), not always the names the client sent.
  */
 public final class NullCharacterValidator {
 

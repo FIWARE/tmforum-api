@@ -180,7 +180,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertEquals(Set.of(), fixture().extensionNames(read));
         if (knownDeviations().contains(KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY)) {
             assertEquals(fixture().extensionValue(), fixture().mutableValue(read),
-                    "The declared value wins now, drop " + KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY);
+                    "Expected the extension value while " + KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY
+                            + " is listed");
             return;
         }
         assertEquals(declaredValue, fixture().mutableValue(read));

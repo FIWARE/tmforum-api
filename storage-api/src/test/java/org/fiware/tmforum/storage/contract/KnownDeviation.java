@@ -19,7 +19,8 @@ public enum KnownDeviation {
 
     /**
      * An extension (unknown) property named like a declared property overwrites the declared value, on create
-     * and on update.
+     * and on update, and no extension of that name reads back. Observed on Orion-LD 1.9.0 and Scorpio 5.0.3: the
+     * mapping library merges the extension into the {@code EntityVO} before the request reaches the broker.
      */
     EXTENSION_OVERRIDES_DECLARED_PROPERTY,
 

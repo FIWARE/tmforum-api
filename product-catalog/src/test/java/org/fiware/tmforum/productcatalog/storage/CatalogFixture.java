@@ -21,7 +21,7 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 	private static final String NAME = "contract-catalog";
 	private static final String MUTATED_NAME = "mutated-contract-catalog";
 	private static final String DESCRIPTION = "untouched description";
-	private static final String EXTENSION_NAME = "extension-named-like-name";
+	private static final String EXTENSION_VALUE = "extension-named-like-name";
 	private static final String NAME_ATTRIBUTE = "name";
 	private static final String PARTY_ID_FORMAT = "urn:ngsi-ld:individual:%s";
 
@@ -80,13 +80,13 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 
 	@Override
 	public Catalog withExtensionNamedLikeTheMutableAttribute(Catalog catalog) {
-		catalog.addAdditionalProperties(NAME_ATTRIBUTE, EXTENSION_NAME);
+		catalog.addAdditionalProperties(NAME_ATTRIBUTE, EXTENSION_VALUE);
 		return catalog;
 	}
 
 	@Override
 	public Object extensionValue() {
-		return EXTENSION_NAME;
+		return EXTENSION_VALUE;
 	}
 
 	@Override
