@@ -3,7 +3,6 @@ package org.fiware.tmforum.storage.postgresql;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.r2dbc.postgresql.codec.Json;
-import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Readable;
 import io.r2dbc.spi.Result;
@@ -219,10 +218,7 @@ public class PostgresEntityRepository implements EntityRepository {
 
     private <R> Flux<R> execute(String sql, Function<Statement, Statement> binder,
                                 Function<Result, Publisher<R>> resultMapper) {
-        return Flux.usingWhen(connectionFactory.create(),
-                connection -> Flux.from(binder.apply(connection.createStatement(sql)).execute())
-                        .flatMap(resultMapper),
-                Connection::close);
+        return PostgresStatements.execute(connectionFactory, sql, binder, resultMapper);
     }
 
     // parameter $1 holds the types, $2 the ids if any

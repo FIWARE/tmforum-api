@@ -6,13 +6,16 @@ import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
-import reactor.core.publisher.Flux;
+import org.fiware.tmforum.storage.StoredReference;
 import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service to support validation of referential integrity.
@@ -51,9 +54,9 @@ public class ReferenceValidationService {
     }
 
     /**
-     * Check if all local referenced entities exist with an accepted type. The checks will be executed asynchronously to
-     * not block each other on sequential calls to the NGSI-LD api. Null entries are ignored, as are external ones whose
-     * id names no local entity, so an empty, null, all-null or all-external list emits true.
+     * Check if all local referenced entities exist with an accepted type, with one storage lookup for the whole list.
+     * Null entries are ignored, as are external ones whose id names no local entity, so an empty, null, all-null or
+     * all-external list emits true.
      *
      * @param references a list of referenced objects to be checked for existence
      * @param <T>        concrete type of the referenced entity
@@ -67,18 +70,24 @@ public class ReferenceValidationService {
      * Emits the non-null references that do not resolve to an entity with an accepted type, in input order. External
      * references only count when their id names a local entity of another type. A reference whose id is not an
      * absolute URI never resolves, since NGSI-LD ids are URIs.
-     * Always emits a (possibly empty) list; a null list counts as empty.
+     * Always emits a (possibly empty) list; a null list counts as empty. At most one {@code findReferences} call per
+     * subscription, none when no id can resolve.
      */
     public <T extends ReferencedEntity> Mono<List<T>> findUnresolved(List<T> references) {
         if (references == null) {
             return Mono.just(List.of());
         }
-        // Flux.fromIterable rejects null elements; the supplier gives each subscription a fresh stream
-        return Flux.fromStream(() -> references.stream().filter(Objects::nonNull))
-                .flatMapSequential(ref -> referenceResolves(ref)
-                        .filter(resolves -> !resolves)
-                        .map(resolves -> ref))
-                .collectList();
+        // deferred, so each subscription classifies, looks up and counts afresh
+        return Mono.defer(() -> {
+            List<ClassifiedReference<T>> classified = references.stream()
+                    .filter(Objects::nonNull)
+                    .map(ref -> new ClassifiedReference<>(ref, referenceClassifier.classify(ref)))
+                    .toList();
+            return storedTypes(classified).map(storedTypes -> classified.stream()
+                    .filter(reference -> !resolves(reference, storedTypes))
+                    .map(ClassifiedReference::reference)
+                    .toList());
+        });
     }
 
     /**
@@ -105,25 +114,41 @@ public class ReferenceValidationService {
                 });
     }
 
-    private Mono<Boolean> referenceResolves(ReferencedEntity ref) {
-        ReferenceScope scope = referenceClassifier.classify(ref);
+    // one lookup for all ids of the list that can resolve, keyed by id
+    private Mono<Map<String, String>> storedTypes(List<? extends ClassifiedReference<?>> references) {
+        Set<String> ids = references.stream()
+                .map(ClassifiedReference::reference)
+                .filter(ReferenceValidationService::hasLookupId)
+                .map(ref -> ref.getEntityId().toString())
+                .collect(Collectors.toSet());
+        if (ids.isEmpty()) {
+            return Mono.just(Map.of());
+        }
+        return referencesRepository.findReferences(ids).collectMap(StoredReference::id, StoredReference::type);
+    }
+
+    private boolean resolves(ClassifiedReference<?> classified, Map<String, String> storedTypes) {
+        ReferencedEntity ref = classified.reference();
         URI entityId = ref.getEntityId();
-        if (entityId == null || !entityId.isAbsolute()) {
+        if (!hasLookupId(ref)) {
             // the broker would answer such an id with a 400, which would surface as a 500 instead of a 400
             log.warn("The reference id '{}' is not an absolute URI (e.g. urn:ngsi-ld:category:1), so it cannot "
                     + "resolve.", entityId);
-            return Mono.just(count(scopeTag(scope), false));
+            return count(scopeTag(classified.scope()), false);
         }
-        return switch (scope) {
-            case EXTERNAL -> referencesRepository.findReference(entityId.toString())
-                    // a local entity with that id must not be smuggled in under another type
-                    .map(reference -> count(SCOPE_EXTERNAL, ref.getReferencedTypes().contains(reference.type())))
-                    .switchIfEmpty(Mono.fromSupplier(() -> skipExternal(entityId)));
-            case LOCAL -> referencesRepository.referenceExists(entityId.toString(), ref.getReferencedTypes())
-                    .map(reference -> true)
-                    .defaultIfEmpty(false)
-                    .map(resolves -> count(SCOPE_LOCAL, resolves));
+        String storedType = storedTypes.get(entityId.toString());
+        return switch (classified.scope()) {
+            // a local entity with that id must not be smuggled in under another type
+            case EXTERNAL -> storedType == null
+                    ? skipExternal(entityId)
+                    : count(SCOPE_EXTERNAL, ref.getReferencedTypes().contains(storedType));
+            case LOCAL -> count(SCOPE_LOCAL, storedType != null && ref.getReferencedTypes().contains(storedType));
         };
+    }
+
+    private static boolean hasLookupId(ReferencedEntity ref) {
+        URI entityId = ref.getEntityId();
+        return entityId != null && entityId.isAbsolute();
     }
 
     private boolean skipExternal(URI entityId) {
@@ -155,4 +180,6 @@ public class ReferenceValidationService {
                 .increment();
     }
 
+    private record ClassifiedReference<T extends ReferencedEntity>(T reference, ReferenceScope scope) {
+    }
 }
