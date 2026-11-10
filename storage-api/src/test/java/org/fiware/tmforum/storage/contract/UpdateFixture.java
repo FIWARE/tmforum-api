@@ -39,6 +39,11 @@ public interface UpdateFixture<T> extends EntityFixture<T> {
     T withExtensionNamedLikeTheMutableAttribute(T entity);
 
     /**
+     * The value {@link #withExtensionNamedLikeTheMutableAttribute} gives its extension.
+     */
+    Object extensionValue();
+
+    /**
      * Names of the entity's extension properties, empty when it has none.
      */
     Set<String> extensionNames(T entity);

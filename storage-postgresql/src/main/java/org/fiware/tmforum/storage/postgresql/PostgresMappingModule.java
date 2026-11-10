@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.wistefan.mapping.UnmappedProperty;
 import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.common.domain.EntityWithId;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.BeanDescription;
@@ -44,6 +45,7 @@ class PostgresMappingModule extends SimpleModule {
         setMixInAnnotation(EntityWithId.class, EntityWithIdMixIn.class);
         setMixInAnnotation(Entity.class, EntityMixIn.class);
         setMixInAnnotation(ReferencedEntity.class, ReferencedEntityMixIn.class);
+        setMixInAnnotation(TMForumSubscription.class, TMForumSubscriptionMixIn.class);
         setSerializerModifier(new ExtensionPropertiesModifier());
     }
 
@@ -73,6 +75,23 @@ class PostgresMappingModule extends SimpleModule {
 
         @JsonIgnore
         abstract List<String> getReferencedTypes();
+    }
+
+    // broker-facing, escaped views of query/rawQuery; the document keeps the original values. Member-level, since a
+    // class-level @JsonIgnoreProperties would hide the one of EntityWithIdMixIn.
+    abstract static class TMForumSubscriptionMixIn {
+
+        @JsonIgnore
+        abstract String getEscapedQuery();
+
+        @JsonIgnore
+        abstract void setEscapedQuery(String escapedQuery);
+
+        @JsonIgnore
+        abstract String getEscapedRawQuery();
+
+        @JsonIgnore
+        abstract void setEscapedRawQuery(String escapedRawQuery);
     }
 
     /**

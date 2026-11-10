@@ -85,6 +85,11 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 	}
 
 	@Override
+	public Object extensionValue() {
+		return EXTENSION_NAME;
+	}
+
+	@Override
 	public Set<String> extensionNames(Catalog entity) {
 		return Optional.ofNullable(entity.getAdditionalProperties()).orElse(List.of()).stream()
 				.map(UnmappedProperty::getName)

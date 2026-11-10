@@ -29,7 +29,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -180,7 +179,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private void assertDeclaredValueWon(Object declaredValue, T read) {
         assertEquals(Set.of(), fixture().extensionNames(read));
         if (knownDeviations().contains(KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY)) {
-            assertNotEquals(declaredValue, fixture().mutableValue(read));
+            assertEquals(fixture().extensionValue(), fixture().mutableValue(read),
+                    "The declared value wins now, drop " + KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY);
             return;
         }
         assertEquals(declaredValue, fixture().mutableValue(read));

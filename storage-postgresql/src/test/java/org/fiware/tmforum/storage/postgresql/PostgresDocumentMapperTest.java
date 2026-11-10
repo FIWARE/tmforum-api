@@ -10,6 +10,7 @@ import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
@@ -54,6 +55,10 @@ class PostgresDocumentMapperTest {
     private static final String CATALOG_ID = "urn:ngsi-ld:" + TestCatalog.TYPE + ":catalog-1";
     private static final String RESOURCE_ID = "urn:ngsi-ld:" + TestLogicalResource.TYPE + ":resource-1";
     private static final String HOLDER_ID = "urn:ngsi-ld:" + TestNotStoredHolder.TYPE + ":holder-1";
+    private static final String SUBSCRIPTION_ID =
+            "urn:ngsi-ld:" + TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION + ":subscription-1";
+    // carries NGSI-LD forbidden characters, which only the broker-facing accessors escape
+    private static final String QUERY = "name=\"a b\"&lifecycleStatus=active";
     private static final String PARTY_ID = "urn:ngsi-ld:individual:party-1";
     private static final URI PARENT_ID = URI.create("urn:ngsi-ld:" + TestCatalog.TYPE + ":parent");
     private static final String NAME = "declared name";
@@ -94,7 +99,8 @@ class PostgresDocumentMapperTest {
                 Arguments.of(Named.of("id only", new TestCatalog(CATALOG_ID))),
                 Arguments.of(Named.of("lists, nested values and references", fullCatalog())),
                 Arguments.of(Named.of("additional properties", withExtensions(fullCatalog()))),
-                Arguments.of(Named.of("sub-type with atType and atBaseType", logicalResource())));
+                Arguments.of(Named.of("sub-type with atType and atBaseType", logicalResource())),
+                Arguments.of(Named.of("subscription with broker-escaped query accessors", subscription())));
     }
 
     @ParameterizedTest
@@ -114,7 +120,10 @@ class PostgresDocumentMapperTest {
                 Arguments.of(Named.of("extension named like the extension list", withExtensionListKey()),
                         Set.of("id", "type", EXTENSION_KEY, "count", "nested", "list")),
                 Arguments.of(Named.of("reference with only a URI constructor", catalogWithParent()),
-                        Set.of("id", "type", "parent")));
+                        Set.of("id", "type", "parent")),
+                Arguments.of(Named.of("subscription without the broker-escaped queries", subscription()),
+                        Set.of("id", "type", "callback", "query", "rawQuery", "eventTypes", "entities",
+                                "fields")));
     }
 
     @Test
@@ -325,6 +334,17 @@ class PostgresDocumentMapperTest {
         TestCatalog catalog = withExtensions(new TestCatalog(CATALOG_ID));
         catalog.addAdditionalProperties(Entity.ADDITIONAL_PROPERTIES_KEY, EXTENSION_NAME);
         return catalog;
+    }
+
+    private static TMForumSubscription subscription() {
+        TMForumSubscription subscription = new TMForumSubscription(SUBSCRIPTION_ID);
+        subscription.setCallback(URI.create("https://hub.example.org/listener"));
+        subscription.setQuery(QUERY);
+        subscription.setRawQuery(QUERY);
+        subscription.setEventTypes(List.of("CatalogCreateEvent"));
+        subscription.setEntities(List.of(TestCatalog.TYPE));
+        subscription.setFields(List.of(NAME_PROPERTY));
+        return subscription;
     }
 
     private static TestLogicalResource logicalResource() {
