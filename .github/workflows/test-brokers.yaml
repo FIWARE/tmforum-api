@@ -24,10 +24,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ customer-bill-management, customer-management, document-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog, service-inventory, quote, software-management, all-in-one ]
+        module: [ customer-bill-management, customer-management, document-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog, service-inventory, quote, software-management ]
         # only test scorpio for speed up, orion is currently not really used with the tmforum
         broker: [ scorpio, orion-ld ]
         cache: [ in-memory, redis ]
+        # all-in-one's only IT (PostgresStartupIT) pins the postgresql env and ignores broker and cache, so one job is enough;
+        # scorpio/in-memory keeps its coverage upload
+        include:
+          - module: all-in-one
+            broker: scorpio
+            cache: in-memory
 
     steps:
       - uses: actions/checkout@v2
