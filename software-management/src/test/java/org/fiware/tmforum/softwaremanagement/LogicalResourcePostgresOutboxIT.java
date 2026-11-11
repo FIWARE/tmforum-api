@@ -14,7 +14,7 @@ import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.resource.ResourceTypeRegistry;
 import org.fiware.tmforum.storage.postgresql.EventKind;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
-import org.fiware.tmforum.storage.postgresql.PostgresTestEntityCleaner;
+import org.fiware.tmforum.storage.postgresql.PostgresOutboxInspector;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
@@ -32,13 +32,13 @@ class LogicalResourcePostgresOutboxIT extends AbstractApiIT {
 	private static final String LOGICAL_RESOURCE = "LogicalResource";
 
 	private final ResourceApiTestClient resourceApiTestClient;
-	private final PostgresTestEntityCleaner postgresTestEntityCleaner;
+	private final PostgresOutboxInspector postgresOutboxInspector;
 
-	LogicalResourcePostgresOutboxIT(ResourceApiTestClient resourceApiTestClient, PostgresTestEntityCleaner postgresTestEntityCleaner,
+	LogicalResourcePostgresOutboxIT(ResourceApiTestClient resourceApiTestClient, PostgresOutboxInspector postgresOutboxInspector,
 			EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.resourceApiTestClient = resourceApiTestClient;
-		this.postgresTestEntityCleaner = postgresTestEntityCleaner;
+		this.postgresOutboxInspector = postgresOutboxInspector;
 	}
 
 	@Override
@@ -58,6 +58,6 @@ class LogicalResourcePostgresOutboxIT extends AbstractApiIT {
 				ResourceUpdateVOTestExample.build().atSchemaLocation(null).place(null).resourceSpecification(null)
 						.name("updated"))).getStatus());
 
-		assertEquals(List.of(EventKind.CREATE, EventKind.UPDATE), postgresTestEntityCleaner.outboxEventKinds(id));
+		assertEquals(List.of(EventKind.CREATE, EventKind.UPDATE), postgresOutboxInspector.outboxEventKinds(id));
 	}
 }

@@ -14,7 +14,7 @@ import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.party.domain.organization.Organization;
 import org.fiware.tmforum.storage.postgresql.EventKind;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
-import org.fiware.tmforum.storage.postgresql.PostgresTestEntityCleaner;
+import org.fiware.tmforum.storage.postgresql.PostgresOutboxInspector;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 
@@ -30,15 +30,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class OrganizationPostgresOutboxIT extends AbstractApiIT {
 
 	private final OrganizationApiTestClient organizationApiTestClient;
-	private final PostgresTestEntityCleaner postgresTestEntityCleaner;
+	private final PostgresOutboxInspector postgresOutboxInspector;
 
 	OrganizationPostgresOutboxIT(OrganizationApiTestClient organizationApiTestClient,
-								 PostgresTestEntityCleaner postgresTestEntityCleaner,
+								 PostgresOutboxInspector postgresOutboxInspector,
 								 EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
 								 GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.organizationApiTestClient = organizationApiTestClient;
-		this.postgresTestEntityCleaner = postgresTestEntityCleaner;
+		this.postgresOutboxInspector = postgresOutboxInspector;
 	}
 
 	@Override
@@ -54,11 +54,11 @@ class OrganizationPostgresOutboxIT extends AbstractApiIT {
 				() -> organizationApiTestClient.createOrganization(null, organizationCreateVO));
 		assertEquals(HttpStatus.CREATED, created.getStatus());
 		String id = created.body().getId();
-		assertEquals(List.of(EventKind.CREATE), postgresTestEntityCleaner.outboxEventKinds(id));
+		assertEquals(List.of(EventKind.CREATE), postgresOutboxInspector.outboxEventKinds(id));
 
 		assertEquals(HttpStatus.NO_CONTENT,
 				callAndCatch(() -> organizationApiTestClient.deleteOrganization(null, id)).getStatus());
 
-		assertEquals(List.of(EventKind.CREATE, EventKind.DELETE), postgresTestEntityCleaner.outboxEventKinds(id));
+		assertEquals(List.of(EventKind.CREATE, EventKind.DELETE), postgresOutboxInspector.outboxEventKinds(id));
 	}
 }
