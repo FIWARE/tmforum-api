@@ -265,12 +265,22 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     with `deletedAt`, so recipients and payload are whatever the broker's deletion notification gives. No IT pins
     either today. Step 6 first adds a broker-only IT (`DeleteEventBrokerIT`, product-catalog, bucket (c) in Step 8)
     that registers hubs with and without `eventType=CatalogDeleteEvent` and with a `q`, deletes a Catalog and
-    records which hubs got a DeleteEvent and with which payload fields, on Orion-LD and Scorpio. Result (with the
-    `eventType` filter above): every hub taking `CatalogDeleteEvent` gets one, whatever its query, the
-    `CatalogCreateEvent`-only hub none; the payload is id-only. Found on the way (pre-existing, not changed here,
-    follow-up ticket): a hub registered without `eventType` is stored on Orion-LD without its multi-valued
-    `eventTypes`/`entities`/`fields`, so `getSubscriptions` never returns it and it gets no TMForum event of any
-    kind on the broker; the IT therefore registers no such hub.
+    records which hubs got a DeleteEvent and with which payload fields. It runs on Orion-LD only (it is
+    `@Requires(notEnv = {"scorpio", "postgresql"})`: hub registration fails on Scorpio, see `EventSubscriptionApiIT`).
+    Expected behaviour the IT pins (with the `eventType` filter above), NOT yet observed: the IT has not run in the
+    step agents' containers (no k3s), so the first CI run on Orion-LD confirms or corrects it before Step 8 writes the
+    release notes: every hub taking `CatalogDeleteEvent` gets one, whatever its query, the `CatalogCreateEvent`-only
+    hub none; the payload is id-only. It relies on Orion-LD sending a `deletedAt` notification to a subscription
+    without `notificationTrigger` (seen on an Orion-LD 1.1 build in FIWARE/context.Orion-LD#1307, not yet on the
+    1.9.0 in `k3s/orion-ld`); if the IT shows no notification, the subscriptions created in
+    `AbstractSubscriptionApiController` need `notificationTrigger` with `entityDeleted`. Suspected, unverified
+    (from code reading, confirm on Orion-LD before opening a follow-up ticket): a hub registered without
+    `eventType` may be stored on Orion-LD without its multi-valued `eventTypes`/`entities`/`fields`, so
+    `getSubscriptions` would never return it and it would get no TMForum event of any kind on the broker; the IT
+    registers no such hub, so it neither depends on nor checks this.
+  - Limit: `getSubscriptions` reads only the first 100 hubs of a type and event type (no paging). Create/Change
+    events share that limit; for broker DeleteEvents it means a notified hub beyond the first 100 loses its
+    DeleteEvent. Lifted with the paging/filtering work of ticket 7.
   - Recipients on PG: the TMForum-correct rule every Create/Change event already follows on both backends:
     `getSubscriptions` with `eventTypes=<Type>DeleteEvent` (a hub without an `eventType` filter gets the group's
     default event types, which include `DeleteEvent` where `ALLOWED_EVENT_TYPES` allows it), then a new

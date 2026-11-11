@@ -36,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * {@code <Type>DeleteEvent} get one, but whatever their query: the broker notifies every subscription of a deletion
  * and its notification carries no state to evaluate the query on. The PostgreSQL outbox also honours the query and
  * sends the same id-only payload ({@link #BROKER_DELETE_PAYLOAD_FIELDS}).
+ * Relies on Orion-LD notifying a deletion ({@code deletedAt}) to a subscription without {@code notificationTrigger},
+ * as {@code AbstractSubscriptionApiController} creates them (FIWARE/context.Orion-LD#1307).
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 // hub registration fails on Scorpio, see EventSubscriptionApiIT; DeleteEvents come from the broker only
@@ -57,7 +59,7 @@ public class DeleteEventBrokerIT extends AbstractApiIT {
 	private static final String HUB_DELETE_ONLY = "delete-only";
 	private static final String HUB_DELETE_MATCHING = "delete-matching";
 	private static final String HUB_DELETE_NOT_MATCHING = "delete-not-matching";
-	// no hub without eventType: Orion-LD drops its multi-valued eventTypes, so no event lookup ever finds it
+	// no hub without eventType: suspected (unverified) that Orion-LD drops its multi-valued eventTypes
 	private static final Map<String, String> HUB_QUERIES = Map.of(
 			HUB_CREATE_ONLY, "eventType=CatalogCreateEvent",
 			HUB_DELETE_ONLY, "eventType=" + DELETE_EVENT,
