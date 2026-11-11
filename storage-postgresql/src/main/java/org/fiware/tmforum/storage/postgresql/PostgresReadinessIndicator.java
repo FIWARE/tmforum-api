@@ -30,6 +30,7 @@ public class PostgresReadinessIndicator implements HealthIndicator {
     static final String HEALTH_QUERY = "SELECT 1";
     static final String TIMEOUT_PROPERTY = "endpoints.health.postgresql.timeout";
     static final String DEFAULT_TIMEOUT = "5s";
+    private static final int HEALTH_COLUMN = 0;
 
     private final ConnectionFactory connectionFactory;
     private final Duration timeout;
@@ -43,7 +44,8 @@ public class PostgresReadinessIndicator implements HealthIndicator {
     @Override
     public Publisher<HealthResult> getResult() {
         return PostgresStatements.execute(connectionFactory, HEALTH_QUERY, Function.identity(),
-                        result -> result.map(row -> row))
+                        // read the value inside the callback: an R2DBC Row is only valid there
+                        result -> result.map(row -> row.get(HEALTH_COLUMN)))
                 .then(Mono.fromCallable(() -> HealthResult.builder(NAME).status(HealthStatus.UP).build()))
                 .timeout(timeout)
                 .onErrorResume(e -> Mono.just(HealthResult.builder(NAME).status(HealthStatus.DOWN).exception(e).build()));
