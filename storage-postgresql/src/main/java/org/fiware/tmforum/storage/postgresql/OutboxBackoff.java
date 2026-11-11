@@ -10,6 +10,8 @@ final class OutboxBackoff {
 
     // 2^20 times the poll interval is already days; no Duration or PostgreSQL interval overflows below it
     static final int MAX_BACKOFF_EXPONENT = 20;
+    // the claim counts an attempt before delivering, so a failed row has at least this many
+    static final int FIRST_ATTEMPT = 1;
 
     private final Duration base;
     private final Duration max;
@@ -29,8 +31,18 @@ final class OutboxBackoff {
         }
     }
 
-    // true for exactly one attempt count per row: the first whose delay is the maximum
-    boolean firstAtMaximum(int attempts) {
-        return delay(attempts).equals(max) && (attempts <= 0 || !delay(attempts - 1).equals(max));
+    /** The delay every retry ends up at: {@code max}, or the capped exponent's delay when that is shorter. */
+    Duration longestDelay() {
+        return delay(Integer.MAX_VALUE);
+    }
+
+    /**
+     * True for exactly one attempt count {@code >= FIRST_ATTEMPT}: the first whose delay is {@link #longestDelay()},
+     * whichever of {@code max} or the exponent cap bounds it.
+     */
+    boolean firstAtLongestDelay(int attempts) {
+        Duration longest = longestDelay();
+        return attempts >= FIRST_ATTEMPT && delay(attempts).equals(longest)
+                && (attempts == FIRST_ATTEMPT || !delay(attempts - 1).equals(longest));
     }
 }

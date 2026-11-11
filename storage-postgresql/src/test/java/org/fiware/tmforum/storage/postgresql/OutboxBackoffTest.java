@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Duration;
 import java.util.stream.Stream;
 
+import static org.fiware.tmforum.storage.postgresql.OutboxBackoff.FIRST_ATTEMPT;
 import static org.fiware.tmforum.storage.postgresql.OutboxBackoff.MAX_BACKOFF_EXPONENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -41,19 +42,30 @@ class OutboxBackoffTest {
                 "The delay should be base * 2^min(attempts, cap), at most the maximum.");
     }
 
-    static Stream<Arguments> maximumReached() {
+    static Stream<Arguments> longestDelayReached() {
         return Stream.of(
-                Arguments.of(0, false),
-                Arguments.of(BELOW_ONE_HOUR, false),
-                Arguments.of(ONE_HOUR_EXCEEDED, true),
-                Arguments.of(ONE_HOUR_EXCEEDED + 1, false),
-                Arguments.of(Integer.MAX_VALUE, false));
+                Arguments.of(BASE, MAX, 0, false),
+                Arguments.of(BASE, MAX, FIRST_ATTEMPT, false),
+                Arguments.of(BASE, MAX, BELOW_ONE_HOUR, false),
+                Arguments.of(BASE, MAX, ONE_HOUR_EXCEEDED, true),
+                Arguments.of(BASE, MAX, ONE_HOUR_EXCEEDED + 1, false),
+                Arguments.of(BASE, MAX, Integer.MAX_VALUE, false),
+                // max-backoff beyond the exponent cap: the capped delay is the longest one
+                Arguments.of(BASE, UNLIMITED, MAX_BACKOFF_EXPONENT - 1, false),
+                Arguments.of(BASE, UNLIMITED, MAX_BACKOFF_EXPONENT, true),
+                Arguments.of(BASE, UNLIMITED, MAX_BACKOFF_EXPONENT + 1, false),
+                // poll interval at or above max-backoff: every delay is the longest one, the first attempt reports it
+                Arguments.of(MAX, MAX, FIRST_ATTEMPT, true),
+                Arguments.of(MAX, MAX, FIRST_ATTEMPT + 1, false),
+                Arguments.of(MAX.multipliedBy(2), MAX, FIRST_ATTEMPT, true),
+                Arguments.of(MAX.multipliedBy(2), MAX, FIRST_ATTEMPT + 1, false));
     }
 
     @ParameterizedTest
-    @MethodSource("maximumReached")
-    void firstAtMaximumHoldsForExactlyOneAttemptCount(int attempts, boolean expected) {
-        assertEquals(expected, new OutboxBackoff(BASE, MAX).firstAtMaximum(attempts),
-                "Only the first attempt count whose delay is the maximum should report it.");
+    @MethodSource("longestDelayReached")
+    void firstAtLongestDelayHoldsForExactlyOneAttemptCount(Duration base, Duration max, int attempts,
+                                                           boolean expected) {
+        assertEquals(expected, new OutboxBackoff(base, max).firstAtLongestDelay(attempts),
+                "Only the first attempt count whose delay is the longest one should report it.");
     }
 }

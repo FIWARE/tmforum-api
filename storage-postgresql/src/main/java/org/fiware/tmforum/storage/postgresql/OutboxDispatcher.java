@@ -86,6 +86,8 @@ public class OutboxDispatcher {
     private final MeterRegistry meterRegistry;
     private final AtomicLong pending = new AtomicLong();
     private final AtomicLong oldestAgeSeconds = new AtomicLong();
+    private final FailureStreak dispatchFailures = new FailureStreak();
+    private final FailureStreak housekeepingFailures = new FailureStreak();
 
     @Inject
     public OutboxDispatcher(ConnectionFactory connectionFactory, PostgresDocumentMapper documentMapper,
@@ -107,17 +109,28 @@ public class OutboxDispatcher {
 
     @Scheduled(fixedDelay = "${tmforum.outbox.poll-interval:" + OutboxProperties.DEFAULT_POLL_INTERVAL + "}")
     void poll() {
-        dispatchOnce().onErrorResume(failure -> {
-            LOGGER.warn("Was not able to dispatch the event outbox.", failure);
-            return Mono.empty();
-        }).block();
+        runLogged(dispatchOnce(), dispatchFailures, "dispatch");
     }
 
     @Scheduled(fixedDelay = "${tmforum.outbox.housekeeping-interval:"
             + OutboxProperties.DEFAULT_HOUSEKEEPING_INTERVAL + "}")
     void scheduledHousekeeping() {
-        housekeeping().onErrorResume(failure -> {
-            LOGGER.warn("Was not able to clean up the event outbox.", failure);
+        runLogged(housekeeping(), housekeepingFailures, "clean up");
+    }
+
+    // a database outage fails every run, so only the first failure of a streak (and the recovery) is a WARN
+    private void runLogged(Mono<?> run, FailureStreak failures, String action) {
+        run.doOnSuccess(ignored -> {
+            if (failures.succeeded()) {
+                LOGGER.warn("Was able to {} the event outbox again.", action);
+            }
+        }).onErrorResume(failure -> {
+            if (failures.failed()) {
+                LOGGER.warn("Was not able to {} the event outbox, retrying every run; repeats are logged at DEBUG.",
+                        action, failure);
+            } else {
+                LOGGER.debug("Was still not able to {} the event outbox.", action, failure);
+            }
             return Mono.empty();
         }).block();
     }
@@ -209,12 +222,12 @@ public class OutboxDispatcher {
         return PostgresStatements.execute(connectionFactory, sql, binder, Result::getRowsUpdated).then();
     }
 
-    // every row fails until PG can look up hubs (ticket 7), so only a row reaching max-backoff gets one WARN
+    // every row fails until PG can look up hubs (ticket 7), so only a row reaching its longest delay gets one WARN
     private void reportFailedDelivery(ClaimedRow row, Throwable failure) {
-        if (backoff.firstAtMaximum(row.attempts())) {
+        if (backoff.firstAtLongestDelay(row.attempts())) {
             LOGGER.warn("Delivery of outbox row {} ({} of {}) failed {} times, retrying every {} until it is older"
                             + " than the retention of {}.", row.id(), row.kind(), row.entityType(), row.attempts(),
-                    properties.maxBackoff(), properties.retention(), failure);
+                    backoff.longestDelay(), properties.retention(), failure);
         } else {
             LOGGER.debug("Delivery of outbox row {} failed, retrying later.", row.id(), failure);
         }
