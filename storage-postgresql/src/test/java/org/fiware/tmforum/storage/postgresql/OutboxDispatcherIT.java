@@ -21,6 +21,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 import java.net.URI;
 import java.time.Duration;
@@ -51,6 +52,7 @@ import static org.mockito.Mockito.when;
 class OutboxDispatcherIT {
 
     private static final String CATALOG_ID = "urn:ngsi-ld:" + TestCatalog.TYPE + ":catalog-1";
+    private static final String OTHER_CATALOG_ID = "urn:ngsi-ld:" + TestCatalog.TYPE + ":catalog-2";
     private static final String HOLDER_ID = "urn:ngsi-ld:" + TestNotStoredHolder.TYPE + ":holder-1";
     private static final String RESOURCE_ID = "urn:ngsi-ld:" + TestResource.TYPE + ":resource-1";
     private static final String NAME = "catalog name";
@@ -66,6 +68,7 @@ class OutboxDispatcherIT {
             TestCatalog.TYPE, TestCatalog.class, TestNotStoredHolder.TYPE, TestNotStoredHolder.class));
     private static final Duration RETENTION = OutboxTestSupport.PROPERTIES.retention();
     private static final Duration YOUNGER_THAN_RETENTION = Duration.ofDays(1);
+    private static final Duration CONCURRENT_DELIVERY_TIMEOUT = Duration.ofSeconds(10);
     // the gauge is read a moment after the rows were inserted
     private static final long AGE_TOLERANCE_SECONDS = 60;
 
@@ -151,6 +154,28 @@ class OutboxDispatcherIT {
 
         assertEquals(1, dispatcher(HOLDERS, eventHandler).dispatchOnce().block(), "Only the holder row is owned.");
         assertEquals(0, outboxRows(HOLDER_ID), "The holder row should be delivered by its owner.");
+    }
+
+    @Test
+    void slowRowDoesNotHoldUpTheRestOfTheBatch() {
+        publisher.createWithEvent(catalog(NAME)).block();
+        publisher.createWithEvent(catalog(OTHER_CATALOG_ID, NAME)).block();
+        Sinks.Empty<Void> otherRowDelivered = Sinks.empty();
+        AtomicInteger deliveries = new AtomicInteger();
+        TMForumEventHandler blockingHandler = mock(TMForumEventHandler.class);
+        // the first delivery completes only once the second one ran, which a one-by-one dispatch never reaches
+        when(blockingHandler.handleCreateEvent(any(), anyLong(), any())).thenAnswer(invocation -> {
+            if (deliveries.getAndIncrement() == 0) {
+                return otherRowDelivered.asMono().timeout(CONCURRENT_DELIVERY_TIMEOUT);
+            }
+            otherRowDelivered.tryEmitEmpty();
+            return Mono.empty();
+        });
+
+        assertEquals(2, dispatcher(CATALOGS, blockingHandler).dispatchOnce().block(), "Both rows should be claimed.");
+
+        assertEquals(0, outboxRows(CATALOG_ID) + outboxRows(OTHER_CATALOG_ID),
+                "Both rows should be delivered while the first one was still waiting.");
     }
 
     static Stream<Arguments> leases() {
@@ -269,7 +294,11 @@ class OutboxDispatcherIT {
     }
 
     private static TestCatalog catalog(String name) {
-        TestCatalog catalog = new TestCatalog(CATALOG_ID);
+        return catalog(CATALOG_ID, name);
+    }
+
+    private static TestCatalog catalog(String id, String name) {
+        TestCatalog catalog = new TestCatalog(id);
         catalog.setName(name);
         return catalog;
     }

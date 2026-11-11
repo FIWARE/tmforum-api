@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -40,10 +41,12 @@ class NgsiLdEventHandlerTest {
 	private static final URI CALLBACK = URI.create("http://hub");
 	private static final URI NOTIFIED_SUBSCRIPTION = URI.create("urn:ngsi-ld:Subscription:notified");
 	private static final URI OTHER_SUBSCRIPTION = URI.create("urn:ngsi-ld:Subscription:other");
+	private static final String OTHER_TYPE = "other-entity";
 	private static final Instant DELETED_AT = Instant.parse("2026-01-01T00:00:00Z");
 
 	private NotificationSender notificationSender;
 	private TMForumEventHandler tmForumEventHandler;
+	private EntityVOMapper entityVOMapper;
 	private NgsiLdEventHandler eventHandler;
 
 	@BeforeEach
@@ -54,7 +57,7 @@ class NgsiLdEventHandlerTest {
 		when(eventMapper.getEntityClassMapping()).thenReturn(Map.of(CharacterizationEntity.TYPE,
 				new EventMapping(CharacterizationEntity.class, CharacterizationEntity.class)));
 		when(eventMapper.mapPayload(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
-		EntityVOMapper entityVOMapper = mock(EntityVOMapper.class);
+		entityVOMapper = mock(EntityVOMapper.class);
 		when(entityVOMapper.fromEntityVO(any(), eq(CharacterizationEntity.class)))
 				.thenAnswer(invocation -> Mono.just(new CharacterizationEntity(ENTITY_ID.toString())));
 		when(entityVOMapper.convertEntityToMap(any())).thenReturn(Map.of("id", ENTITY_ID.toString()));
@@ -77,6 +80,33 @@ class NgsiLdEventHandlerTest {
 		ArgumentCaptor<EventDetails> details = ArgumentCaptor.forClass(EventDetails.class);
 		verify(tmForumEventHandler).getSubscriptions(details.capture());
 		assertEquals(DELETE_EVENT_TYPE, details.getValue().eventType());
+	}
+
+	@ParameterizedTest(name = "notified type {0}")
+	@MethodSource("notifiedTypes")
+	void deletionWithoutTypeTakesTheTypeOfItsId(String notifiedType) {
+		EventMapper eventMapper = mock(EventMapper.class);
+		Map<String, EventMapping> mapping = new LinkedHashMap<>();
+		// listed first, so a fallback to the first mapped type would pick it
+		mapping.put(OTHER_TYPE, new EventMapping(CharacterizationEntity.class, CharacterizationEntity.class));
+		mapping.put(CharacterizationEntity.TYPE,
+				new EventMapping(CharacterizationEntity.class, CharacterizationEntity.class));
+		when(eventMapper.getEntityClassMapping()).thenReturn(mapping);
+		when(eventMapper.mapPayload(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+		when(tmForumEventHandler.getSubscriptions(any())).thenReturn(Mono.just(List.of(hub(NOTIFIED_SUBSCRIPTION))));
+		NotificationVO deletion = deletion();
+		deletion.getData().getFirst().setType(notifiedType);
+
+		new NgsiLdEventHandler(notificationSender, entityVOMapper, eventMapper, null, tmForumEventHandler)
+				.handle(deletion, subscription()).block();
+
+		ArgumentCaptor<EventDetails> details = ArgumentCaptor.forClass(EventDetails.class);
+		verify(tmForumEventHandler).getSubscriptions(details.capture());
+		assertEquals(DELETE_EVENT_TYPE, details.getValue().eventType());
+	}
+
+	private static Stream<Arguments> notifiedTypes() {
+		return Stream.of(Arguments.of(CharacterizationEntity.TYPE), Arguments.of((String) null));
 	}
 
 	private static Stream<Arguments> deleteHubs() {

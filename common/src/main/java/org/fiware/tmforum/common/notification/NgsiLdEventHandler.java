@@ -8,6 +8,7 @@ import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.ngsi.model.SubscriptionVO;
 import org.fiware.tmforum.common.mapping.EventMapping;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.checkers.ngsild.*;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import reactor.core.publisher.Flux;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -58,7 +60,10 @@ public class NgsiLdEventHandler extends EventHandler {
 														 List<String> selectedFields, URI listenerCallback, URI notifiedSubscription,
 														 Map<String, EventMapping> entityNameToEntityClassMapping) {
 		if (payload.getType() == null) {
-			payload.setType(entityNameToEntityClassMapping.keySet().iterator().next());
+			// a module maps several types, so the id names the type better than any key of the mapping
+			payload.setType(Optional.ofNullable(payload.getId()).flatMap(IdHelper::typeSegment)
+					.filter(entityNameToEntityClassMapping::containsKey)
+					.orElseGet(() -> entityNameToEntityClassMapping.keySet().iterator().next()));
 		}
 		EventDetails eventDetails = makeEventDetails(payload.getType(), eventTypeSuffix, eventTime);
 		EventMapping eventMapping = entityNameToEntityClassMapping.get(eventDetails.entityType());

@@ -11,8 +11,9 @@ import java.time.Duration;
  * Delivery is at least once: a row is deleted only after every hub acknowledged it, and a partly failed row is
  * redelivered to all of its hubs with the same {@code eventId}, so consumers deduplicate on it. There is no
  * per-entity order, each row backs off on its own; consumers order by {@code eventTime}, the row's creation time.
- * {@code lease} must exceed the time one batch can take (HTTP client read timeout x callbacks per batch), or another
- * instance claims the rows again while they are still being delivered.
+ * The rows of a batch, and the hubs of a row, are called concurrently, so one batch takes about as long as its
+ * slowest callback: {@code lease} must exceed the notification client's connect plus read timeout (Micronaut
+ * defaults: 30s and 10s), or another instance claims the rows again while they are still being delivered.
  */
 @ConfigurationProperties(OutboxProperties.PREFIX)
 public record OutboxProperties(

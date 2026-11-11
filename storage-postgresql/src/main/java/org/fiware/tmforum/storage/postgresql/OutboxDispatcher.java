@@ -124,8 +124,8 @@ public class OutboxDispatcher {
     }
 
     /**
-     * Claims one batch of due rows, delivers each and settles it: deleted when every hub acknowledged, otherwise
-     * due again after {@link OutboxBackoff}. Emits the number of claimed rows.
+     * Claims one batch of due rows, delivers them concurrently and settles each: deleted when every hub acknowledged,
+     * otherwise due again after {@link OutboxBackoff}. Emits the number of claimed rows.
      */
     public Mono<Integer> dispatchOnce() {
         return PostgresStatements.execute(connectionFactory, CLAIM, statement -> statement
@@ -136,7 +136,8 @@ public class OutboxDispatcher {
                 // finish the claim, and release its connection, before any hub is called
                 .collectList()
                 .flatMapMany(Flux::fromIterable)
-                .concatMap(row -> deliver(row)
+                // rows are independent and unordered, so a dead callback must not hold up the rest of the batch
+                .flatMap(row -> deliver(row)
                         .then(Mono.defer(() -> settle(SETTLE_DELIVERED, statement -> statement.bind(0, row.id()))))
                         .onErrorResume(failure -> {
                             reportFailedDelivery(row, failure);
@@ -144,7 +145,7 @@ public class OutboxDispatcher {
                             return settle(SETTLE_FAILED, statement -> statement.bind(0, row.id())
                                     .bind(1, (double) delay.toMillis()));
                         })
-                        .thenReturn(row))
+                        .thenReturn(row), properties.batchSize())
                 .count()
                 .map(Math::toIntExact);
     }

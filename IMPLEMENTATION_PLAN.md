@@ -321,8 +321,11 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     as `poll-interval * 2^min(attempts, MAX_BACKOFF_EXPONENT)`, then `min(..., max-backoff)`, where
     `MAX_BACKOFF_EXPONENT` is a named constant small enough that the product cannot overflow `Duration` or a
     PostgreSQL interval (e.g. 20). It is bound as milliseconds (`$delay * interval '1 millisecond'`); no exponent is
-    evaluated in SQL. `lease` must exceed the time one batch can take (HTTP client read timeout x callbacks per
-    batch); document that in `OutboxProperties`.
+    evaluated in SQL. The rows of a batch are delivered concurrently (bounded by `batch-size`; rows are
+    independent and unordered, see below), so one dead callback costs a batch one timeout, not one per row, and
+    healthy hubs are not held up behind it. `lease` must exceed the time one batch can take, i.e. the notification
+    client's connect plus read timeout (its callbacks are called in parallel too); document that in
+    `OutboxProperties`.
   - At-least-once: a row is deleted only after every callback acknowledged it. A partly failed row is redelivered
     to all its subscribers with the same `eventId` (consumers deduplicate on it).
   - No per-entity ordering, on purpose: each row backs off on its own, so a ChangeEvent can arrive before the
