@@ -37,6 +37,8 @@ import static org.fiware.tmforum.common.notification.EventConstants.*;
 @Bean
 public class TMForumEventHandler extends EventHandler {
 
+	public static final int SUBSCRIPTION_PAGE_SIZE = 100;
+
 	private final QueryParser queryParser;
 	private final SubscriptionQueryResolver subscriptionQueryResolver;
 	private final EntityReadRepository repository;
@@ -52,9 +54,17 @@ public class TMForumEventHandler extends EventHandler {
 
 	@Cacheable(CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME)
 	public Mono<List<TMForumSubscription>> getSubscriptions(EventDetails eventDetails) {
+		return findSubscriptions(eventDetails);
+	}
+
+	/**
+	 * Uncached lookup of the first {@value #SUBSCRIPTION_PAGE_SIZE} hubs taking an event. Outbox retries reuse one
+	 * event time, so a cached list would outlive hubs registered or deleted since the row's first attempt.
+	 */
+	public Mono<List<TMForumSubscription>> findSubscriptions(EventDetails eventDetails) {
 		return repository.findEntities(
 				DEFAULT_OFFSET,
-				100,
+				SUBSCRIPTION_PAGE_SIZE,
 				TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 				TMForumSubscription.class,
 				queryParser.toNgsiLdQuery(TMForumSubscription.class,
@@ -63,8 +73,9 @@ public class TMForumEventHandler extends EventHandler {
 	}
 
 	private <T> Mono<Void> handle(T entity, EventDetails eventDetails, TmForumEventChecker eventChecker) {
-		return notify(eventDetails, eventChecker, subscription -> createNotification(subscription.getCallback(),
-						eventDetails, entity, subscription.getFields(), UUID.randomUUID().toString()),
+		return notify(this::getSubscriptions, eventDetails, eventChecker,
+				subscription -> createNotification(subscription.getCallback(), eventDetails, entity,
+						subscription.getFields(), UUID.randomUUID().toString()),
 				notificationSender::sendNotifications);
 	}
 
@@ -72,14 +83,17 @@ public class TMForumEventHandler extends EventHandler {
 	private <T> Mono<Void> handleOutbox(T entity, EventDetails eventDetails, TmForumEventChecker eventChecker,
 										long outboxId) {
 		String eventId = outboxEventId(outboxId, eventDetails.eventType());
-		return notify(eventDetails, eventChecker, subscription -> createNotification(subscription.getCallback(),
-				eventDetails, entity, subscription.getFields(), eventId), notificationSender::deliverNotifications);
+		return notify(this::findSubscriptions, eventDetails, eventChecker,
+				subscription -> createNotification(subscription.getCallback(), eventDetails, entity,
+						subscription.getFields(), eventId),
+				notificationSender::deliverNotifications);
 	}
 
-	private Mono<Void> notify(EventDetails eventDetails, TmForumEventChecker eventChecker,
+	private Mono<Void> notify(Function<EventDetails, Mono<List<TMForumSubscription>>> lookup,
+							  EventDetails eventDetails, TmForumEventChecker eventChecker,
 							  Function<TMForumSubscription, TMForumNotification> toNotification,
 							  Function<List<TMForumNotification>, Mono<Void>> sender) {
-		return getSubscriptions(eventDetails)
+		return lookup.apply(eventDetails)
 				.map(subscriptions -> subscriptions.stream()
 						.filter(subscription -> eventChecker.wasFired(subscription.getQuery()))
 						.map(toNotification)
@@ -152,7 +166,8 @@ public class TMForumEventHandler extends EventHandler {
 			TmForumEventChecker eventChecker2 = new StateChangeTmForumEventChecker<>(newState, oldState);
 			Mono<Void> stateChangeMono = delivery.deliver(newState, eventDetails2, eventChecker2);
 
-			return attrUpdateMono.then(stateChangeMono);
+			// concurrent, so an outbox row takes one round of hub calls, not two (see OutboxProperties' lease)
+			return Mono.whenDelayError(attrUpdateMono, stateChangeMono);
 		} catch (EventHandlingException e) {
 			return Mono.empty();
 		}

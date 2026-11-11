@@ -248,7 +248,11 @@ the default here; ticket 9 makes the backend selectable and flips the default.
 - `TMForumEventHandler`: outbox overloads `handleCreateEvent`/`handleUpdateEvent`/`handleDeleteEvent` taking the
   outbox `created_at` as event time and a deterministic event id (`UUID.nameUUIDFromBytes(outboxId + eventType)`),
   so retries carry the same `eventId`. They go through `deliverNotifications`, so their `Mono` fails when any
-  delivery fails. The existing signatures keep their behaviour.
+  delivery fails. They look up hubs through the uncached `findSubscriptions`, not the cached `getSubscriptions`:
+  a row's retries share one event time, which is part of the cache key, so a cached hub list would outlive hubs
+  registered or deleted (on any instance) since the first attempt. `NgsiLdEventHandler`'s DeleteEvent filter uses
+  `findSubscriptions` too, since its key (the notification time) never repeats. The existing signatures keep their
+  behaviour.
 - DeleteEvents on PG (decided here) and the broker's DeleteEvent fix:
   - Before Step 6, no broker-originated DeleteEvent was ever delivered: `NgsiLdEventHandler.createNotification`
     mapped the domain object to its VO and `createEvent` then mapped that VO again, which every module's
@@ -323,9 +327,13 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     PostgreSQL interval (e.g. 20). It is bound as milliseconds (`$delay * interval '1 millisecond'`); no exponent is
     evaluated in SQL. The rows of a batch are delivered concurrently (bounded by `batch-size`; rows are
     independent and unordered, see below), so one dead callback costs a batch one timeout, not one per row, and
-    healthy hubs are not held up behind it. `lease` must exceed the time one batch can take, i.e. the notification
-    client's connect plus read timeout (its callbacks are called in parallel too); document that in
-    `OutboxProperties`.
+    healthy hubs are not held up behind it. An update row's AttributeValueChange and StateChange events are
+    delivered concurrently too. A row whose settle statement fails is logged and left to its lease; it never
+    cancels the rest of the batch. `lease` must exceed the time one batch can take: the hubs of one event are
+    called at most `NotificationSender.DELIVERY_CONCURRENCY` (16) at a time and at most
+    `TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE` (100) are looked up, so ceil(100 / 16) = 7 rounds of the
+    notification client's connect plus read timeout (Micronaut defaults 30s + 10s): 280s. The default lease is
+    `10m`; document the bound in `OutboxProperties`.
   - At-least-once: a row is deleted only after every callback acknowledged it. A partly failed row is redelivered
     to all its subscribers with the same `eventId` (consumers deduplicate on it).
   - No per-entity ordering, on purpose: each row backs off on its own, so a ChangeEvent can arrive before the

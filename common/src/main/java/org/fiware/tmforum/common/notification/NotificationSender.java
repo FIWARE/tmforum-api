@@ -23,7 +23,7 @@ import java.util.List;
 public class NotificationSender {
     private final HttpClient httpClient;
 
-    private static final int DELIVERY_CONCURRENCY = 16;
+    public static final int DELIVERY_CONCURRENCY = 16;
     private static final int DELIVERY_PREFETCH = 1;
     private static final int STATUS_CLASS_DIVISOR = 100;
     private static final int SUCCESS_STATUS_CLASS = 2;

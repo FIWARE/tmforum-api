@@ -4,7 +4,9 @@ import io.github.wistefan.mapping.UnmappedProperty;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import jakarta.inject.Inject;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.notification.EventMapper;
@@ -19,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -38,6 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,6 +73,7 @@ class OutboxDispatcherIT {
             TestCatalog.TYPE, TestCatalog.class, TestNotStoredHolder.TYPE, TestNotStoredHolder.class));
     private static final Duration RETENTION = OutboxTestSupport.PROPERTIES.retention();
     private static final Duration YOUNGER_THAN_RETENTION = Duration.ofDays(1);
+    private static final String SETTLE_FAILURE = "connection lost";
     private static final Duration CONCURRENT_DELIVERY_TIMEOUT = Duration.ofSeconds(10);
     // the gauge is read a moment after the rows were inserted
     private static final long AGE_TOLERANCE_SECONDS = 60;
@@ -178,6 +184,24 @@ class OutboxDispatcherIT {
                 "Both rows should be delivered while the first one was still waiting.");
     }
 
+    @Test
+    void failingSettlementDoesNotAbortTheBatch() {
+        publisher.createWithEvent(catalog(NAME)).block();
+        publisher.createWithEvent(catalog(OTHER_CATALOG_ID, NAME)).block();
+        AtomicInteger deliveries = new AtomicInteger();
+        TMForumEventHandler oneFailingHandler = mock(TMForumEventHandler.class);
+        when(oneFailingHandler.handleCreateEvent(any(), anyLong(), any())).thenAnswer(invocation ->
+                deliveries.getAndIncrement() == 0 ? Mono.error(new IllegalStateException("hub down")) : Mono.empty());
+        OutboxDispatcher dispatcher = new OutboxDispatcher(failingOn(OutboxDispatcher.SETTLE_FAILED), documentMapper,
+                new EventTypes(CATALOGS), EVENT_MAPPER, oneFailingHandler, OutboxTestSupport.PROPERTIES,
+                new SimpleMeterRegistry());
+
+        assertEquals(2, dispatcher.dispatchOnce().block(), "The batch should complete despite the failed settle.");
+
+        assertEquals(1, outboxRows(CATALOG_ID) + outboxRows(OTHER_CATALOG_ID),
+                "The delivered row should be deleted, the unsettled one left to its lease.");
+    }
+
     static Stream<Arguments> leases() {
         return Stream.of(
                 Arguments.of(OutboxTestSupport.PROPERTIES.lease(), 0),
@@ -260,6 +284,17 @@ class OutboxDispatcherIT {
                                         MeterRegistry meterRegistry) {
         return new OutboxDispatcher(connectionFactory, documentMapper, new EventTypes(types), EVENT_MAPPER, handler,
                 properties, meterRegistry);
+    }
+
+    // every statement runs on the real database, except the given one, which fails as on a lost connection
+    private ConnectionFactory failingOn(String sql) {
+        ConnectionFactory failing = mock(ConnectionFactory.class);
+        doAnswer(invocation -> Mono.from(connectionFactory.create()).map(connection -> {
+            Connection wrapped = mock(Connection.class, AdditionalAnswers.delegatesTo(connection));
+            doThrow(new R2dbcNonTransientResourceException(SETTLE_FAILURE)).when(wrapped).createStatement(sql);
+            return wrapped;
+        })).when(failing).create();
+        return failing;
     }
 
     private static TMForumEventHandler handler(Mono<Void> outcome) {

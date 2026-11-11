@@ -79,9 +79,9 @@ public class NgsiLdEventHandler extends EventHandler {
 	}
 
 	// matched by the hub's own NGSI-LD subscription, not its callback, which several hubs may share;
-	// getSubscriptions reads only the first page, so a hub beyond it loses the DeleteEvent (until ticket 7)
+	// findSubscriptions reads only the first page, so a hub beyond it loses the DeleteEvent (until ticket 7)
 	private Mono<Boolean> hubTakesEvent(EventDetails eventDetails, URI notifiedSubscription) {
-		return tmForumEventHandler.getSubscriptions(eventDetails)
+		return tmForumEventHandler.findSubscriptions(eventDetails)
 				.map(hubs -> hubs.stream().anyMatch(hub -> hub.getSubscription() != null
 						&& notifiedSubscription.equals(hub.getSubscription().getId())));
 	}

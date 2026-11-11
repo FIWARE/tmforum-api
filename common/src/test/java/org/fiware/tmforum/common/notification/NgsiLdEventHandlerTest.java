@@ -70,7 +70,7 @@ class NgsiLdEventHandlerTest {
 	@MethodSource("deleteHubs")
 	void deleteEventReachesOnlyHubsTakingDeleteEvents(String description, List<TMForumSubscription> deleteHubs,
 													   int expectedNotifications) {
-		when(tmForumEventHandler.getSubscriptions(any())).thenReturn(Mono.just(deleteHubs));
+		when(tmForumEventHandler.findSubscriptions(any())).thenReturn(Mono.just(deleteHubs));
 
 		eventHandler.handle(deletion(), subscription()).block();
 
@@ -78,7 +78,7 @@ class NgsiLdEventHandlerTest {
 		verify(notificationSender).sendNotifications(sent.capture());
 		assertEquals(expectedNotifications, sent.getValue().size());
 		ArgumentCaptor<EventDetails> details = ArgumentCaptor.forClass(EventDetails.class);
-		verify(tmForumEventHandler).getSubscriptions(details.capture());
+		verify(tmForumEventHandler).findSubscriptions(details.capture());
 		assertEquals(DELETE_EVENT_TYPE, details.getValue().eventType());
 	}
 
@@ -93,7 +93,7 @@ class NgsiLdEventHandlerTest {
 				new EventMapping(CharacterizationEntity.class, CharacterizationEntity.class));
 		when(eventMapper.getEntityClassMapping()).thenReturn(mapping);
 		when(eventMapper.mapPayload(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
-		when(tmForumEventHandler.getSubscriptions(any())).thenReturn(Mono.just(List.of(hub(NOTIFIED_SUBSCRIPTION))));
+		when(tmForumEventHandler.findSubscriptions(any())).thenReturn(Mono.just(List.of(hub(NOTIFIED_SUBSCRIPTION))));
 		NotificationVO deletion = deletion();
 		deletion.getData().getFirst().setType(notifiedType);
 
@@ -101,7 +101,7 @@ class NgsiLdEventHandlerTest {
 				.handle(deletion, subscription()).block();
 
 		ArgumentCaptor<EventDetails> details = ArgumentCaptor.forClass(EventDetails.class);
-		verify(tmForumEventHandler).getSubscriptions(details.capture());
+		verify(tmForumEventHandler).findSubscriptions(details.capture());
 		assertEquals(DELETE_EVENT_TYPE, details.getValue().eventType());
 	}
 

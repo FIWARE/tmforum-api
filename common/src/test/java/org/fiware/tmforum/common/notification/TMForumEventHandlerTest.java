@@ -14,6 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -21,13 +22,17 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -44,6 +49,7 @@ class TMForumEventHandlerTest {
 	private static final String DELETE_EVENT_TYPE = "CharacterizationEntityDeleteEvent";
 	private static final String ID_FIELD = "id";
 	private static final String NAME_FIELD = "name";
+	private static final String UPDATED_NAME = "updated-name";
 	private static final long OUTBOX_ID = 42L;
 	private static final Instant EVENT_TIME = Instant.parse("2026-01-01T00:00:00Z");
 	private static final URI CALLBACK = URI.create("http://hub");
@@ -81,7 +87,7 @@ class TMForumEventHandlerTest {
 	@MethodSource("deleteHubs")
 	void handleDeleteEventNotifiesTheDeleteHubsWhoseQueryMatchedTheOldState(String description, String query,
 																			  boolean expectNotified) {
-		doReturn(Mono.just(List.of(hub(query)))).when(eventHandler).getSubscriptions(any());
+		doReturn(Mono.just(List.of(hub(query)))).when(eventHandler).findSubscriptions(any());
 
 		eventHandler.handleDeleteEvent(oldState(), OUTBOX_ID, EVENT_TIME).block();
 
@@ -106,12 +112,12 @@ class TMForumEventHandlerTest {
 
 	@Test
 	void handleDeleteEventLooksUpTheHubsOfTheDeleteEventType() {
-		doReturn(Mono.just(List.of())).when(eventHandler).getSubscriptions(any());
+		doReturn(Mono.just(List.of())).when(eventHandler).findSubscriptions(any());
 
 		eventHandler.handleDeleteEvent(oldState(), OUTBOX_ID, EVENT_TIME).block();
 
 		ArgumentCaptor<EventDetails> details = ArgumentCaptor.forClass(EventDetails.class);
-		verify(eventHandler).getSubscriptions(details.capture());
+		verify(eventHandler).findSubscriptions(details.capture());
 		assertEquals(new EventDetails(CharacterizationEntity.TYPE, DELETE_EVENT_TYPE, EVENT_TIME, PAYLOAD_NAME),
 				details.getValue());
 	}
@@ -127,7 +133,7 @@ class TMForumEventHandlerTest {
 
 	@Test
 	void outboxEventIdIsStablePerRowAndEventType() {
-		doReturn(Mono.just(List.of(hub(null)))).when(eventHandler).getSubscriptions(any());
+		doReturn(Mono.just(List.of(hub(null)))).when(eventHandler).findSubscriptions(any());
 
 		eventHandler.handleDeleteEvent(oldState(), OUTBOX_ID, EVENT_TIME).block();
 		eventHandler.handleDeleteEvent(oldState(), OUTBOX_ID, EVENT_TIME).block();
@@ -138,6 +144,58 @@ class TMForumEventHandlerTest {
 				sent.getAllValues().get(1).getFirst().event().getEventId());
 		assertNotEquals(TMForumEventHandler.outboxEventId(OUTBOX_ID, DELETE_EVENT_TYPE),
 				TMForumEventHandler.outboxEventId(OUTBOX_ID + 1, DELETE_EVENT_TYPE));
+	}
+
+	static Stream<Arguments> outboxDeliveries() {
+		return Stream.of(
+				Arguments.of("create", (Function<TMForumEventHandler, Mono<Void>>) handler ->
+						handler.handleCreateEvent(oldState(), OUTBOX_ID, EVENT_TIME)),
+				Arguments.of("update", (Function<TMForumEventHandler, Mono<Void>>) handler ->
+						handler.handleUpdateEvent(newState(), oldState(), OUTBOX_ID, EVENT_TIME)),
+				Arguments.of("delete", (Function<TMForumEventHandler, Mono<Void>>) handler ->
+						handler.handleDeleteEvent(oldState(), OUTBOX_ID, EVENT_TIME)));
+	}
+
+	// outbox retries share one event time, so a cached hub list would outlive hub changes
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("outboxDeliveries")
+	void outboxDeliveryLooksUpTheHubsUncached(String description, Function<TMForumEventHandler, Mono<Void>> delivery) {
+		doReturn(Mono.just(List.of())).when(eventHandler).findSubscriptions(any());
+
+		delivery.apply(eventHandler).block();
+
+		verify(eventHandler, atLeastOnce()).findSubscriptions(any());
+		verify(eventHandler, never()).getSubscriptions(any());
+	}
+
+	@Test
+	void brokerDeliveryLooksUpTheHubsThroughTheCache() {
+		doReturn(Mono.just(List.of())).when(eventHandler).findSubscriptions(any());
+		when(notificationSender.sendNotifications(anyList())).thenReturn(Mono.empty());
+
+		eventHandler.handleCreateEvent(oldState()).block();
+
+		verify(eventHandler).getSubscriptions(any());
+	}
+
+	@Test
+	void updateDeliversBothChangeEventsConcurrently() {
+		AtomicBoolean stateChangeLookedUp = new AtomicBoolean();
+		// the AttributeValueChange lookup never completes, a sequential delivery would never reach the StateChange
+		doReturn(Mono.never(), Mono.just(List.of()).doOnSubscribe(subscription -> stateChangeLookedUp.set(true)))
+				.when(eventHandler).findSubscriptions(any());
+
+		Disposable delivery = eventHandler.handleUpdateEvent(newState(), oldState(), OUTBOX_ID, EVENT_TIME)
+				.subscribe();
+
+		assertTrue(stateChangeLookedUp.get(), "The StateChange event should not wait for the AttributeValueChange.");
+		delivery.dispose();
+	}
+
+	private static CharacterizationEntity newState() {
+		CharacterizationEntity newState = new CharacterizationEntity(ENTITY_ID);
+		newState.setName(UPDATED_NAME);
+		return newState;
 	}
 
 	private static CharacterizationEntity oldState() {

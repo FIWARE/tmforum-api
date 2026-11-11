@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,7 +67,7 @@ public class OutboxDispatcher {
             + " RETURNING id, event_kind, entity_type, new_state::text AS new_state, old_state::text AS old_state,"
             + " created_at, attempts";
     private static final String SETTLE_DELIVERED = "DELETE FROM " + QUALIFIED_OUTBOX_TABLE + " WHERE id = $1";
-    private static final String SETTLE_FAILED = "UPDATE " + QUALIFIED_OUTBOX_TABLE
+    static final String SETTLE_FAILED = "UPDATE " + QUALIFIED_OUTBOX_TABLE
             + " SET next_attempt_at = now() + $2::double precision" + MILLISECONDS + " WHERE id = $1";
     private static final String DISCARD_EXPIRED = "DELETE FROM " + QUALIFIED_OUTBOX_TABLE
             + " WHERE entity_type = ANY($1) AND created_at < now() - $2::double precision" + MILLISECONDS
@@ -137,15 +136,7 @@ public class OutboxDispatcher {
                 .collectList()
                 .flatMapMany(Flux::fromIterable)
                 // rows are independent and unordered, so a dead callback must not hold up the rest of the batch
-                .flatMap(row -> deliver(row)
-                        .then(Mono.defer(() -> settle(SETTLE_DELIVERED, statement -> statement.bind(0, row.id()))))
-                        .onErrorResume(failure -> {
-                            reportFailedDelivery(row, failure);
-                            Duration delay = backoff.delay(row.attempts());
-                            return settle(SETTLE_FAILED, statement -> statement.bind(0, row.id())
-                                    .bind(1, (double) delay.toMillis()));
-                        })
-                        .thenReturn(row), properties.batchSize())
+                .flatMap(row -> deliverAndSettle(row).thenReturn(row), properties.batchSize())
                 .count()
                 .map(Math::toIntExact);
     }
@@ -168,6 +159,25 @@ public class OutboxDispatcher {
                                     return row;
                                 }))
                         .then());
+    }
+
+    // a failing settle statement must not cancel the other rows of the batch; the lease covers its row
+    private Mono<Void> deliverAndSettle(ClaimedRow row) {
+        return deliver(row)
+                .then(Mono.just(true))
+                .onErrorResume(failure -> {
+                    reportFailedDelivery(row, failure);
+                    return Mono.just(false);
+                })
+                .flatMap(delivered -> delivered
+                        ? settle(SETTLE_DELIVERED, statement -> statement.bind(0, row.id()))
+                        : settle(SETTLE_FAILED, statement -> statement.bind(0, row.id())
+                                .bind(1, (double) backoff.delay(row.attempts()).toMillis())))
+                .onErrorResume(failure -> {
+                    LOGGER.warn("Was not able to settle outbox row {}, it is due again once its lease of {} expired.",
+                            row.id(), properties.lease(), failure);
+                    return Mono.empty();
+                });
     }
 
     private Mono<Void> deliver(ClaimedRow row) {
