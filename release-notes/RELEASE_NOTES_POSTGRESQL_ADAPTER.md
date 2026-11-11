@@ -110,3 +110,7 @@ the versioning columns `version`, `revision`, `is_current`, which keep their def
   check in `TMForumMapper` runs, and the create answers 201. It is unrelated to the storage backend. The case is
   `@Disabled` (`createResourceSpecificationWithInvalidRelationshipId400`) until a follow-up ticket fixes the mapping,
   so the software-management matrix jobs stay a usable signal.
+* `resource-order-management`'s `ResourceOrderApiIT#createResourceOrder201` fails on every backend, Orion-LD
+  included, and on `main` as well: the expected order comes from the generated example with `state` `"string"`,
+  which `TMForumMapper.mapResourceOrderState` maps to `null` because it is no `ResourceOrderState` value. It is
+  unrelated to the storage backend, and the module is not in the `test-brokers` matrix.
