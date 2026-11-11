@@ -36,7 +36,9 @@ interleave: the last one wins whole.
 
 Put this block in the `application-postgresql.yaml` of the API module. Both datasources must point at the same
 database. The `r2dbc:pool:` URL puts an `r2dbc-pool` connection pool in front of the driver. Without it, every
-statement opens its own connection.
+statement opens its own connection. Every module (main and test) keeps its own copy on purpose: Micronaut 5 fails on
+duplicate configuration resources, so a shared `application-postgresql.yaml` in this jar would clash with the
+module's own file.
 
 micronaut-r2dbc turns the kebab-case `options` keys into r2dbc-pool's camelCase options (`initial-size` becomes
 `initialSize`). r2dbc-pool reads durations with `Duration.parse`, so they must be ISO-8601 (`PT10S`, not `10s`).
@@ -66,6 +68,12 @@ flyway:
       schemas: tmforum
       create-schemas: true
       locations: classpath:db/migration/tmforum
+
+endpoints:
+  health:
+    # the postgresql readiness indicator covers the database
+    r2dbc:
+      enabled: false
 ```
 
 | Environment variable                       | Default     |
@@ -79,6 +87,20 @@ flyway:
 | `POSTGRES_POOL_MAX_SIZE`                   | `10`        |
 | `POSTGRES_POOL_MAX_ACQUIRE_TIME`           | `PT10S`     |
 | `POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME` | `PT10S`     |
+
+The modules leave the following properties at their code defaults (`OutboxProperties`, `PostgresReadinessIndicator`);
+set them only to deviate:
+
+| Property                                | Default | Meaning                                                    |
+|-----------------------------------------|---------|------------------------------------------------------------|
+| `tmforum.outbox.enabled`                | `true`  | runs the `OutboxDispatcher` (the test configs turn it off) |
+| `tmforum.outbox.poll-interval`          | `1s`    | delay between two dispatch rounds, base of the backoff     |
+| `tmforum.outbox.batch-size`             | `20`    | rows claimed per round                                     |
+| `tmforum.outbox.lease`                  | `10m`   | how long a claimed row stays invisible to other instances  |
+| `tmforum.outbox.max-backoff`            | `1h`    | upper bound of the retry delay                             |
+| `tmforum.outbox.retention`              | `7d`    | age after which an undelivered row is discarded            |
+| `tmforum.outbox.housekeeping-interval`  | `1m`    | delay between two retention and metrics runs               |
+| `endpoints.health.postgresql.timeout`   | `5s`    | time bound of the readiness `SELECT 1`                     |
 
 ## Tests
 

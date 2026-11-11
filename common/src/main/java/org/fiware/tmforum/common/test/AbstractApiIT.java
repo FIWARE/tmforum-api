@@ -5,16 +5,15 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import jakarta.inject.Inject;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.EntityListVO;
-import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,9 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public abstract class AbstractApiIT {
 
-    private final EntitiesApiClient entitiesApiClient;
-    private final GeneralProperties generalProperties;
     protected final ObjectMapper objectMapper;
+    private TestEntityCleaner testEntityCleaner;
 
     /**
      * Needs to return the type of the handled entities, to allow automated cleanup before each test.
@@ -39,39 +37,23 @@ public abstract class AbstractApiIT {
      */
     protected abstract String getEntityType();
 
+    /**
+     * The broker client and properties are unused since cleanup moved to {@link TestEntityCleaner}; the signature
+     * stays so the ITs need no change.
+     */
     protected AbstractApiIT(EntitiesApiClient entitiesApiClient,
                             ObjectMapper objectMapper, GeneralProperties generalProperties) {
-        this.entitiesApiClient = entitiesApiClient;
         this.objectMapper = objectMapper;
-        this.generalProperties = generalProperties;
+    }
+
+    @Inject
+    public void setTestEntityCleaner(TestEntityCleaner testEntityCleaner) {
+        this.testEntityCleaner = testEntityCleaner;
     }
 
     @BeforeEach
     public void cleanUp() {
-        EntityListVO entityVOS = entitiesApiClient.queryEntities(null,
-                null,
-                null,
-                getEntityType(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                1000,
-                0,
-                false,
-                null,
-                getLinkHeader(generalProperties.getContextUrl()))
-                .map(HttpResponse::body)
-                .block();
-        entityVOS.stream()
-                .filter(Objects::nonNull)
-                .map(EntityVO::getId)
-                .filter(Objects::nonNull)
-                .forEach(eId -> entitiesApiClient.removeEntityById(eId, null, null).block());
+        testEntityCleaner.deleteAll(getEntityType());
     }
 
     // Helper method to catch potential http exceptions and return the status code.
@@ -135,7 +117,6 @@ public abstract class AbstractApiIT {
     }
 
     protected String getLinkHeader(URL contextUrl) {
-        return String.format("<%s>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json",
-                contextUrl);
+        return String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, contextUrl);
     }
 }
