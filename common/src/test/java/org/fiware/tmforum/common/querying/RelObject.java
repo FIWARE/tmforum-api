@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class RelObject {
     private String name;
+    private String valueType;
 }
