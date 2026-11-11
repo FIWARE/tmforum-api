@@ -66,6 +66,12 @@ flyway:
       schemas: tmforum
       create-schemas: true
       locations: classpath:db/migration/tmforum
+
+endpoints:
+  health:
+    # the postgresql readiness indicator covers the database
+    r2dbc:
+      enabled: false
 ```
 
 | Environment variable                       | Default     |
@@ -79,6 +85,20 @@ flyway:
 | `POSTGRES_POOL_MAX_SIZE`                   | `10`        |
 | `POSTGRES_POOL_MAX_ACQUIRE_TIME`           | `PT10S`     |
 | `POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME` | `PT10S`     |
+
+The modules leave the following properties at their code defaults (`OutboxProperties`, `PostgresReadinessIndicator`);
+set them only to deviate:
+
+| Property                                | Default | Meaning                                                    |
+|-----------------------------------------|---------|------------------------------------------------------------|
+| `tmforum.outbox.enabled`                | `true`  | runs the `OutboxDispatcher` (the test configs turn it off) |
+| `tmforum.outbox.poll-interval`          | `1s`    | delay between two dispatch rounds, base of the backoff     |
+| `tmforum.outbox.batch-size`             | `20`    | rows claimed per round                                     |
+| `tmforum.outbox.lease`                  | `10m`   | how long a claimed row stays invisible to other instances  |
+| `tmforum.outbox.max-backoff`            | `1h`    | upper bound of the retry delay                             |
+| `tmforum.outbox.retention`              | `7d`    | age after which an undelivered row is discarded            |
+| `tmforum.outbox.housekeeping-interval`  | `1m`    | delay between two retention and metrics runs               |
+| `endpoints.health.postgresql.timeout`   | `5s`    | time bound of the readiness `SELECT 1`                     |
 
 ## Tests
 

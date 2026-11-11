@@ -1,10 +1,16 @@
 # PostgreSQL storage (Micronaut environment "postgresql"); the NGSI-LD broker is not used.
+# Outbox (tmforum.outbox.*) and readiness timeout keep their code defaults, see storage-postgresql/README.md.
 r2dbc:
   datasources:
     default:
       url: r2dbc:pool:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
       username: ${POSTGRES_USER:tmforum}
       password: ${POSTGRES_PASSWORD:tmforum}
+      options:
+        initial-size: ${POSTGRES_POOL_INITIAL_SIZE:2}
+        max-size: ${POSTGRES_POOL_MAX_SIZE:10}
+        max-acquire-time: ${POSTGRES_POOL_MAX_ACQUIRE_TIME:PT10S}
+        max-create-connection-time: ${POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME:PT10S}
 
 # migrates the schema over JDBC at startup; the data path is R2DBC only
 flyway:
@@ -18,20 +24,8 @@ flyway:
       create-schemas: true
       locations: classpath:db/migration/tmforum
 
-tmforum:
-  outbox:
-    enabled: true
-    poll-interval: 1s
-    batch-size: 20
-    lease: 10m
-    max-backoff: 1h
-    retention: 7d
-    housekeeping-interval: 1m
-
 endpoints:
   health:
-    postgresql:
-      timeout: 5s
     # the postgresql readiness indicator covers the database
     r2dbc:
       enabled: false

@@ -23,8 +23,6 @@ import java.util.Objects;
 public class NgsiLdTestEntityCleaner implements TestEntityCleaner {
 
 	private static final int QUERY_LIMIT = 1000;
-	private static final String LINK_HEADER_FORMAT =
-			"<%s>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json";
 
 	private final EntitiesApiClient entitiesApiClient;
 	private final GeneralProperties generalProperties;
@@ -47,7 +45,7 @@ public class NgsiLdTestEntityCleaner implements TestEntityCleaner {
 						0,
 						false,
 						null,
-						String.format(LINK_HEADER_FORMAT, generalProperties.getContextUrl()))
+						String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, generalProperties.getContextUrl()))
 				.map(HttpResponse::body)
 				.block();
 		entityVOS.stream()

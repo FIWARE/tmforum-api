@@ -20,6 +20,12 @@ public class CommonConstants {
 	public static final String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
 
 	/**
+	 * String template for the NGSI-LD Link header pointing at the JSON-LD context url
+	 */
+	public static final String JSON_LD_CONTEXT_LINK_TEMPLATE =
+			"<%s>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json";
+
+	/**
 	 * Name for the entities cache
 	 */
 	public static final String ENTITIES_CACHE_NAME = "entities";

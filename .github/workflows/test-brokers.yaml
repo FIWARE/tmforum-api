@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ customer-bill-management, customer-management, document-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog, service-inventory, quote ]
+        module: [ customer-bill-management, customer-management, document-management, party-catalog, party-role, product-catalog, product-inventory, product-ordering-management, resource-catalog, resource-function-activation, resource-inventory, service-catalog, service-inventory, quote, software-management, all-in-one ]
         # only test scorpio for speed up, orion is currently not really used with the tmforum
         broker: [ scorpio, orion-ld ]
         cache: [ in-memory, redis ]
@@ -60,7 +60,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models, all-in-one ]
+        # all-in-one runs in the it matrix: its PostgresStartupIT needs the k3s cluster
+        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models ]
     steps:
       - uses: actions/checkout@v2
 

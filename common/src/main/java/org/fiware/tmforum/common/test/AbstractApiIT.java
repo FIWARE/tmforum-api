@@ -7,6 +7,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import jakarta.inject.Inject;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -116,7 +117,6 @@ public abstract class AbstractApiIT {
     }
 
     protected String getLinkHeader(URL contextUrl) {
-        return String.format("<%s>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json",
-                contextUrl);
+        return String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, contextUrl);
     }
 }
