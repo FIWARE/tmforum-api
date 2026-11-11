@@ -29,8 +29,8 @@ public class PostgresDocumentMapper {
     }
 
     /**
-     * For {@code tmforum.entity.data}: drops {@link org.fiware.tmforum.storage.NotStored} fields and top-level empty
-     * objects, a create also empty lists.
+     * For {@code tmforum.entity.data}: drops {@link org.fiware.tmforum.storage.NotStored} fields and declared
+     * top-level empty values (see {@link DocumentMode}); extension values are written as they are.
      */
     public DocumentMapper storage() {
         return storage;

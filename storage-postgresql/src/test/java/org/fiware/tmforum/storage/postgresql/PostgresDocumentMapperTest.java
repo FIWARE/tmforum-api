@@ -194,8 +194,23 @@ class PostgresDocumentMapperTest {
 
         assertEquals(Set.of(NAME_PROPERTY, KEYWORDS_PROPERTY), Set.copyOf(document.propertyNames()));
         assertEquals(NAME, document.get(NAME_PROPERTY).stringValue());
-        assertTrue(document.get(KEYWORDS_PROPERTY).isArray());
-        assertTrue(document.get(KEYWORDS_PROPERTY).isEmpty());
+        assertTrue(document.get(KEYWORDS_PROPERTY).isNull(), "An emptied list is the merge's removal marker.");
+    }
+
+    @ParameterizedTest
+    @MethodSource("emptyExtensionValues")
+    void emptyExtensionValuesAreKept(DocumentMode mode, String emptyValue) {
+        TestCatalog catalog = catalog(c -> c.addAdditionalProperties(EXTENSION_KEY,
+                applicationMapper.readValue(emptyValue, Object.class)));
+
+        JsonNode document = document(documentMapper.storage(), catalog, mode);
+
+        assertEquals(applicationMapper.readTree(emptyValue), document.get(EXTENSION_KEY), document.toString());
+    }
+
+    static Stream<Arguments> emptyExtensionValues() {
+        return Stream.of(DocumentMode.values())
+                .flatMap(mode -> Stream.of(Arguments.of(mode, "[]"), Arguments.of(mode, "{}")));
     }
 
     @ParameterizedTest

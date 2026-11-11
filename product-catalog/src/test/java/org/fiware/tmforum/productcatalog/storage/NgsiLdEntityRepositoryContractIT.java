@@ -50,6 +50,7 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 		if (!generalProperties.isReplaceOnUpdate()) {
 			deviations.add(KnownDeviation.EMPTIED_LIST_BREAKS_READS);
 			deviations.add(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
+			deviations.add(KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED);
 		}
 		return deviations;
 	}

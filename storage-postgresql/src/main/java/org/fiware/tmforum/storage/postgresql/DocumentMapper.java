@@ -1,5 +1,7 @@
 package org.fiware.tmforum.storage.postgresql;
 
+import io.github.wistefan.mapping.UnmappedProperty;
+import org.fiware.tmforum.common.domain.Entity;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
@@ -10,6 +12,8 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Converts domain objects to jsonb documents and back with one derived mapper of {@link PostgresDocumentMapper}.
@@ -48,22 +52,37 @@ public final class DocumentMapper {
             objectNode.remove(TYPE_PROPERTY);
         }
         if (dropEmptyAttributes) {
-            // an update keeps an emptied list, the merge removes the stored one
-            removeEmptyAttributes(objectNode, mode == DocumentMode.FULL);
+            removeEmptyAttributes(objectNode, extensionNames(entity), mode);
         }
         NullCharacterValidator.validate(objectNode, operation);
         return mapper.writeValueAsString(objectNode);
     }
 
-    // the NGSI-LD adapter creates no attribute for an empty list or an object without values, so neither reads back
-    private static void removeEmptyAttributes(ObjectNode document, boolean includeLists) {
-        List<String> emptyAttributes = document.properties().stream()
-                .filter(attribute -> (attribute.getValue().isObject()
-                        || (includeLists && attribute.getValue().isArray()))
+    // the NGSI-LD adapter creates no attribute for an empty declared list or object, ignores an empty object on
+    // update and deletes the attribute of an emptied list; it keeps empty extension values, so those stay as they are
+    private static void removeEmptyAttributes(ObjectNode document, Set<String> extensionNames, DocumentMode mode) {
+        List<Map.Entry<String, JsonNode>> emptyAttributes = document.properties().stream()
+                .filter(attribute -> !extensionNames.contains(attribute.getKey()))
+                .filter(attribute -> (attribute.getValue().isObject() || attribute.getValue().isArray())
                         && attribute.getValue().isEmpty())
-                .map(Map.Entry::getKey)
                 .toList();
-        document.remove(emptyAttributes);
+        emptyAttributes.forEach(attribute -> {
+            if (mode == DocumentMode.CARRIED_ATTRIBUTES && attribute.getValue().isArray()) {
+                // a stored document never holds null, so the merge reads it as "remove this key"
+                document.putNull(attribute.getKey());
+            } else {
+                document.remove(attribute.getKey());
+            }
+        });
+    }
+
+    private static Set<String> extensionNames(Object entity) {
+        if (!(entity instanceof Entity domainEntity) || domainEntity.getAdditionalProperties() == null) {
+            return Set.of();
+        }
+        return domainEntity.getAdditionalProperties().stream()
+                .map(UnmappedProperty::getName)
+                .collect(Collectors.toSet());
     }
 
     /**

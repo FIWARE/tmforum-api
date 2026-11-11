@@ -48,6 +48,7 @@ class PostgresEntityRepositoryIT {
     private static final String NAME = "catalog name";
     private static final String UPDATED_NAME = "updated catalog name";
     private static final String DESCRIPTION = "catalog description";
+    private static final String EXTENSION_KEY = "customField";
     private static final List<String> STORED_KEYWORDS = List.of("stored");
     private static final List<String> FIRST_KEYWORDS = List.of("first-1", "first-2");
     private static final List<String> SECOND_KEYWORDS = List.of("second-1", "second-2", "second-3");
@@ -138,6 +139,22 @@ class PostgresEntityRepositoryIT {
         expected.setDescription(DESCRIPTION);
         assertEquals(expected, repository.get(stored.getId(), TestCatalog.class).block(),
                 "Carried attributes should replace the stored ones, an emptied list is removed, the others stay.");
+    }
+
+    @Test
+    void updateKeepsAnEmptiedExtensionList() {
+        TestCatalog stored = catalog(1);
+        stored.addAdditionalProperties(EXTENSION_KEY, STORED_KEYWORDS);
+        repository.createDomainEntity(stored).block();
+        TestCatalog patch = catalog(1);
+        patch.addAdditionalProperties(EXTENSION_KEY, List.of());
+
+        repository.updateDomainEntity(stored.getId().toString(), patch).block();
+
+        TestCatalog expected = catalog(1);
+        expected.addAdditionalProperties(EXTENSION_KEY, List.of());
+        assertEquals(expected, repository.get(stored.getId(), TestCatalog.class).block(),
+                "An emptied extension list is stored as [], like the NGSI-LD adapter stores it.");
     }
 
     @Test

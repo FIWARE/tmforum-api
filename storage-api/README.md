@@ -57,7 +57,9 @@ the stored one by datasetId (`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
 ## Update semantics
 
 `updateDomainEntity` writes only the attributes the entity carries. Null fields stay untouched, and an emptied list is
-cleared (it reads back absent or empty). A carried list replaces the stored one; on Orion-LD in append mode the broker
+cleared (it reads back absent or empty). A carried empty object keeps the stored one, and extension values,
+empty ones included, read back as sent (`KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED` on Orion-LD). A
+carried list replaces the stored one; on Orion-LD in append mode the broker
 merges it by datasetId instead (see the `updateDomainEntity` Javadoc). An absent id fails with NOT_FOUND and operation
 UPDATE. The NGSI-LD replace mode reports READ instead, which renders differently; ticket 6 has to decide this open
 parity question (see the `updateDomainEntity` Javadoc). The update never creates the entity and never completes
