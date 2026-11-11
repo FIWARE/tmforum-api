@@ -36,7 +36,9 @@ interleave: the last one wins whole.
 
 Put this block in the `application-postgresql.yaml` of the API module. Both datasources must point at the same
 database. The `r2dbc:pool:` URL puts an `r2dbc-pool` connection pool in front of the driver. Without it, every
-statement opens its own connection.
+statement opens its own connection. Every module (main and test) keeps its own copy on purpose: Micronaut 5 fails on
+duplicate configuration resources, so a shared `application-postgresql.yaml` in this jar would clash with the
+module's own file.
 
 micronaut-r2dbc turns the kebab-case `options` keys into r2dbc-pool's camelCase options (`initial-size` becomes
 `initialSize`). r2dbc-pool reads durations with `Duration.parse`, so they must be ISO-8601 (`PT10S`, not `10s`).

@@ -52,20 +52,20 @@ class PostgresReadinessIndicatorTest {
         assertEquals(expectedStatus, health.getStatus(), description);
     }
 
-    @ParameterizedTest(name = "unreachable database -> DOWN")
+    @ParameterizedTest(name = "{0} -> DOWN")
     @MethodSource("unreachableDatabases")
-    void reportsUnreachableDatabaseAsDown(Publisher<Connection> connections) {
+    void reportsUnreachableDatabaseAsDown(String description, Publisher<Connection> connections) {
         ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
         doReturn(connections).when(connectionFactory).create();
 
         HealthResult health = Mono.from(new PostgresReadinessIndicator(connectionFactory, TIMEOUT).getResult()).block();
 
-        assertEquals(HealthStatus.DOWN, health.getStatus());
+        assertEquals(HealthStatus.DOWN, health.getStatus(), description);
     }
 
     private static Stream<Arguments> unreachableDatabases() {
         return Stream.of(
-                Arguments.of(Mono.error(new IllegalStateException("connection refused"))),
-                Arguments.of(Flux.never()));
+                Arguments.of("connection refused", Mono.error(new IllegalStateException("connection refused"))),
+                Arguments.of("connection hangs past the timeout", Flux.never()));
     }
 }

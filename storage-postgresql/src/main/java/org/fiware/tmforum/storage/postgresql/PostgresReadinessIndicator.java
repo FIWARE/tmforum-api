@@ -2,7 +2,6 @@ package org.fiware.tmforum.storage.postgresql;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
-import io.micronaut.core.order.Ordered;
 import io.micronaut.health.HealthStatus;
 import io.micronaut.management.endpoint.health.HealthEndpoint;
 import io.micronaut.management.health.indicator.HealthIndicator;
@@ -48,10 +47,5 @@ public class PostgresReadinessIndicator implements HealthIndicator {
                 .then(Mono.fromCallable(() -> HealthResult.builder(NAME).status(HealthStatus.UP).build()))
                 .timeout(timeout)
                 .onErrorResume(e -> Mono.just(HealthResult.builder(NAME).status(HealthStatus.DOWN).exception(e).build()));
-    }
-
-    @Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
     }
 }
