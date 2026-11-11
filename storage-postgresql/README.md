@@ -112,4 +112,9 @@ password `tmforum`), next to the broker. `-Dbroker=postgresql` starts no broker,
 ```bash
 mvn verify -pl storage-postgresql                       # SchemaMigrationIT, PostgresEntityRepositoryIT, ...
 mvn verify -pl product-catalog -Dit.test=PostgresEntityRepositoryContractIT   # port contract on PostgreSQL
+mvn verify -pl product-catalog -Dbroker=postgresql      # the module's full IT suite on PostgreSQL
 ```
+
+With `-Dbroker=postgresql`, failsafe excludes the tag `not-on-postgresql` (`StorageTags` in `common`):
+`@RequiresQueryTranslation` (ticket 7), `@RequiresHubSupport` (tickets 1 and 7) and `@BrokerOnly` (never). The
+broker jobs exclude `@PostgresqlOnly` ITs the same way.
