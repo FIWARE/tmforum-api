@@ -24,19 +24,21 @@ public class PostgresDocumentMapper {
     private final DocumentMapper event;
 
     public PostgresDocumentMapper(ObjectMapper applicationMapper) {
-        this.storage = new DocumentMapper(derive(applicationMapper, true));
-        this.event = new DocumentMapper(derive(applicationMapper, false));
+        this.storage = new DocumentMapper(derive(applicationMapper, true), true);
+        this.event = new DocumentMapper(derive(applicationMapper, false), false);
     }
 
     /**
-     * For {@code tmforum.entity.data}: drops {@link org.fiware.tmforum.storage.NotStored} fields.
+     * For {@code tmforum.entity.data}: drops {@link org.fiware.tmforum.storage.NotStored} fields and top-level empty
+     * objects, a create also empty lists.
      */
     public DocumentMapper storage() {
         return storage;
     }
 
     /**
-     * For outbox states, which keep {@link org.fiware.tmforum.storage.NotStored} fields for the event payload.
+     * For outbox states, which keep {@link org.fiware.tmforum.storage.NotStored} fields and empty values for the
+     * event payload.
      */
     public DocumentMapper event() {
         return event;

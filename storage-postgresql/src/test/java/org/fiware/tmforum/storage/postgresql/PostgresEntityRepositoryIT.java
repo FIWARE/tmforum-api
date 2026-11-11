@@ -136,9 +136,8 @@ class PostgresEntityRepositoryIT {
         TestCatalog expected = catalog(1);
         expected.setName(UPDATED_NAME);
         expected.setDescription(DESCRIPTION);
-        expected.setKeywords(List.of());
         assertEquals(expected, repository.get(stored.getId(), TestCatalog.class).block(),
-                "Carried attributes should replace the stored ones, the others should stay.");
+                "Carried attributes should replace the stored ones, an emptied list is removed, the others stay.");
     }
 
     @Test

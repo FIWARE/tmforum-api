@@ -71,6 +71,7 @@ class PostgresDocumentMapperTest {
     private static final String EXTENSION_KEY = "customField";
     private static final String NAME_PROPERTY = "name";
     private static final String KEYWORDS_PROPERTY = "keywords";
+    private static final String VALID_FOR_PROPERTY = "validFor";
     private static final String BALANCE_PROPERTY = "balance";
     private static final String LAST_UPDATE_PROPERTY = "lastUpdate";
     private static final Instant LAST_UPDATE = Instant.parse("2026-11-10T08:15:30Z");
@@ -195,6 +196,31 @@ class PostgresDocumentMapperTest {
         assertEquals(NAME, document.get(NAME_PROPERTY).stringValue());
         assertTrue(document.get(KEYWORDS_PROPERTY).isArray());
         assertTrue(document.get(KEYWORDS_PROPERTY).isEmpty());
+    }
+
+    @ParameterizedTest
+    @MethodSource("emptyValues")
+    void emptyValuesAreDroppedOnlyFromTheStoredDocument(Function<PostgresDocumentMapper, DocumentMapper> variant,
+            DocumentMode mode, boolean listDropped, boolean objectDropped) {
+        DocumentMapper mapper = variant.apply(documentMapper);
+        TestCatalog catalog = new TestCatalog(CATALOG_ID);
+        catalog.setKeywords(List.of());
+        catalog.setValidFor(new TimePeriod());
+
+        JsonNode document = document(mapper, catalog, mode);
+
+        assertEquals(!listDropped, document.has(KEYWORDS_PROPERTY), document.toString());
+        assertEquals(!objectDropped, document.has(VALID_FOR_PROPERTY), document.toString());
+    }
+
+    static Stream<Arguments> emptyValues() {
+        Function<PostgresDocumentMapper, DocumentMapper> storage = PostgresDocumentMapper::storage;
+        Function<PostgresDocumentMapper, DocumentMapper> event = PostgresDocumentMapper::event;
+        return Stream.of(
+                Arguments.of(Named.of("storage", storage), DocumentMode.FULL, true, true),
+                Arguments.of(Named.of("storage", storage), DocumentMode.CARRIED_ATTRIBUTES, false, true),
+                Arguments.of(Named.of("event", event), DocumentMode.FULL, false, false),
+                Arguments.of(Named.of("event", event), DocumentMode.CARRIED_ATTRIBUTES, false, false));
     }
 
     @ParameterizedTest
