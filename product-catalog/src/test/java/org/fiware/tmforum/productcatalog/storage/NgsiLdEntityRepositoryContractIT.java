@@ -4,6 +4,7 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.EntityRepository;
@@ -20,6 +21,7 @@ import java.util.Set;
 /**
  * Runs the entity port contract against the NGSI-LD adapter and the broker of the IT profile.
  */
+@BrokerOnly
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryContractTest<Catalog, Category> {
 

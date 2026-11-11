@@ -18,6 +18,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.common.test.RequiresHubSupport;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Integration tests for the event subscription API endpoints of the Service Order Management API.
  */
+@RequiresHubSupport
 @MicronautTest(packages = { "org.fiware.tmforum.serviceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 @Requires(notEnv = "scorpio")
 // without, the test client will try to create an empty q subscription

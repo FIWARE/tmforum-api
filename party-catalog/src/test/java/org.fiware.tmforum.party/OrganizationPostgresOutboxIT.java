@@ -11,6 +11,7 @@ import org.fiware.party.model.OrganizationVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.PostgresqlOnly;
 import org.fiware.tmforum.party.domain.organization.Organization;
 import org.fiware.tmforum.storage.postgresql.EventKind;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * party-catalog maps {@code organization}, so deleting one on PostgreSQL enqueues exactly one DELETE outbox row.
  */
+@PostgresqlOnly
 @MicronautTest(packages = {"org.fiware.tmforum.party"}, environments = PostgresStorage.ENVIRONMENT,
 		contextBuilder = FirstMatchConfigContextBuilder.class)
 class OrganizationPostgresOutboxIT extends AbstractApiIT {

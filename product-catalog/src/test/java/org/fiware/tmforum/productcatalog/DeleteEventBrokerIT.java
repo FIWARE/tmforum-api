@@ -16,6 +16,7 @@ import org.fiware.productcatalog.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * as {@code AbstractSubscriptionApiController} creates them (FIWARE/context.Orion-LD#1307), and on Orion-LD not
  * evaluating the subscription's {@code q} (the hub query) against the deleted entity; both are unobserved so far.
  */
+@BrokerOnly
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 // hub registration fails on Scorpio, see EventSubscriptionApiIT; DeleteEvents come from the broker only
 @Requires(notEnv = {"scorpio", "postgresql"})

@@ -11,6 +11,7 @@ import org.fiware.partyRole.model.PartyRoleVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.PostgresqlOnly;
 import org.fiware.tmforum.partyrole.domain.PartyRole;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
 import org.fiware.tmforum.storage.postgresql.PostgresOutboxInspector;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * party-role maps no type to an event, so its writes on PostgreSQL never enqueue an outbox row.
  */
+@PostgresqlOnly
 @MicronautTest(packages = {"org.fiware.tmforum.partyRole"}, environments = PostgresStorage.ENVIRONMENT,
 		contextBuilder = FirstMatchConfigContextBuilder.class)
 class PartyRolePostgresOutboxIT extends AbstractApiIT {

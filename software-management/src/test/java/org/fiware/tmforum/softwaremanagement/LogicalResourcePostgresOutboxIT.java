@@ -11,6 +11,7 @@ import org.fiware.softwaremanagement.model.ResourceVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.PostgresqlOnly;
 import org.fiware.tmforum.resource.ResourceTypeRegistry;
 import org.fiware.tmforum.storage.postgresql.EventKind;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * software-management maps {@code logical-resource}, so its sub-type patch on PostgreSQL enqueues exactly one UPDATE outbox row.
  */
+@PostgresqlOnly
 @MicronautTest(packages = {"org.fiware.tmforum.softwaremanagement"}, environments = PostgresStorage.ENVIRONMENT,
 		contextBuilder = FirstMatchConfigContextBuilder.class)
 class LogicalResourcePostgresOutboxIT extends AbstractApiIT {

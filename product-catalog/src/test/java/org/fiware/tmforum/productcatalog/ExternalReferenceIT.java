@@ -48,6 +48,7 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.product.ProductOffering;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -267,6 +268,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	}
 
 	// references are read from their stored properties (ticket 88), so a GET must not fetch any referenced entity
+	@BrokerOnly
 	@Test
 	public void retrieveProductOfferingDoesNotFetchReferences() throws Exception {
 		// keep the external refs: a just-created local target sits in the entities cache, so resolving it would not

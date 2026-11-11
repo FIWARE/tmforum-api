@@ -14,6 +14,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.common.test.RequiresQueryTranslation;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -129,6 +130,7 @@ public class ListParameterValidationIT extends AbstractApiIT {
 	 * @param path    path of the queried collection
 	 * @param query   query string to append to the listing
 	 */
+	@RequiresQueryTranslation
 	@ParameterizedTest
 	@MethodSource("provideValidlyTypedParameters")
 	public void listAcceptsValidlyTypedParameters(String message, String path, String query) throws Exception {
