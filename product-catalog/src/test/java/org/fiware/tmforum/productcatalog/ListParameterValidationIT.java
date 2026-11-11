@@ -15,6 +15,7 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.RequiresQueryTranslation;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -51,6 +52,9 @@ public class ListParameterValidationIT extends AbstractApiIT {
 
 	/** Path of the productOfferingPrice collection, which carries the numeric attributes. */
 	private static final String PRODUCT_OFFERING_PRICE_PATH = "/productOfferingPrice";
+
+	/** Pagination parameters valid for their type. */
+	private static final String VALID_PAGINATION_QUERY = "?offset=0&limit=10";
 
 	private final HttpClient httpClient;
 
@@ -123,6 +127,18 @@ public class ListParameterValidationIT extends AbstractApiIT {
 	}
 
 	/**
+	 * Valid pagination parameters are answered normally. Kept apart from the filter cases, since every
+	 * storage supports paging.
+	 */
+	@Test
+	public void listAcceptsValidPaginationParameters() throws Exception {
+		HttpResponse<String> response = callAndCatch(() -> httpClient.toBlocking()
+				.exchange(HttpRequest.GET(PRODUCT_OFFERING_PATH + VALID_PAGINATION_QUERY), String.class));
+
+		assertEquals(HttpStatus.OK, response.getStatus(), "Valid pagination parameters should be accepted.");
+	}
+
+	/**
 	 * The rejection has to stay limited to the invalid values - everything that is valid for the
 	 * parameter's type still has to be answered normally.
 	 *
@@ -147,8 +163,6 @@ public class ListParameterValidationIT extends AbstractApiIT {
 	 */
 	private static Stream<Arguments> provideValidlyTypedParameters() {
 		return Stream.of(
-				Arguments.of("Valid pagination parameters should be accepted.", PRODUCT_OFFERING_PATH,
-						"?offset=0&limit=10"),
 				Arguments.of("Both boolean literals should be accepted.", PRODUCT_OFFERING_PATH, "?isBundle=true"),
 				Arguments.of("Both boolean literals should be accepted.", PRODUCT_OFFERING_PATH, "?isBundle=false"),
 				Arguments.of("A decimal number should be accepted.", PRODUCT_OFFERING_PRICE_PATH, "?percentage=1.5"),

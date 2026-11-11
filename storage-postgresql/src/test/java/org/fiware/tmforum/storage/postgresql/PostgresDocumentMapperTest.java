@@ -214,6 +214,36 @@ class PostgresDocumentMapperTest {
     }
 
     @ParameterizedTest
+    @MethodSource("emptyDeclaredValuesWithCollidingExtension")
+    void anEmptyDeclaredValueIsDroppedEvenWithAnExtensionOfTheSameName(DocumentMode mode, String declaredName,
+            String extensionValue) {
+        TestCatalog plain = emptyDeclaredValue(declaredName);
+        TestCatalog colliding = emptyDeclaredValue(declaredName);
+        colliding.addAdditionalProperties(declaredName, applicationMapper.readValue(extensionValue, Object.class));
+
+        assertEquals(document(documentMapper.storage(), plain, mode),
+                document(documentMapper.storage(), colliding, mode));
+    }
+
+    static Stream<Arguments> emptyDeclaredValuesWithCollidingExtension() {
+        return Stream.of(DocumentMode.values()).flatMap(mode -> Stream.of(
+                Arguments.of(mode, KEYWORDS_PROPERTY, "[]"),
+                Arguments.of(mode, KEYWORDS_PROPERTY, "[\"an extension keyword\"]"),
+                Arguments.of(mode, VALID_FOR_PROPERTY, "{}")));
+    }
+
+    private static TestCatalog emptyDeclaredValue(String declaredName) {
+        TestCatalog catalog = new TestCatalog(CATALOG_ID);
+        catalog.setName(NAME);
+        if (KEYWORDS_PROPERTY.equals(declaredName)) {
+            catalog.setKeywords(List.of());
+        } else {
+            catalog.setValidFor(new TimePeriod());
+        }
+        return catalog;
+    }
+
+    @ParameterizedTest
     @MethodSource("emptyValues")
     void emptyValuesAreDroppedOnlyFromTheStoredDocument(Function<PostgresDocumentMapper, DocumentMapper> variant,
             DocumentMode mode, boolean listDropped, boolean objectDropped) {

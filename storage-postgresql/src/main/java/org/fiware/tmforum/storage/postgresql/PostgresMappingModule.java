@@ -22,6 +22,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Stored-document format of domain entities: extension properties as top-level keys, {@code type} write-only, id
@@ -34,6 +36,7 @@ class PostgresMappingModule extends SimpleModule {
     static final String TYPE_PROPERTY = "type";
 
     private final boolean dropNotStored;
+    private final ConcurrentMap<Class<?>, Set<String>> declaredNamesByClass = new ConcurrentHashMap<>();
 
     /**
      * {@code dropNotStored} leaves {@link org.fiware.tmforum.storage.NotStored} fields out in both directions.
@@ -45,7 +48,15 @@ class PostgresMappingModule extends SimpleModule {
         setMixInAnnotation(Entity.class, EntityMixIn.class);
         setMixInAnnotation(ReferencedEntity.class, ReferencedEntityMixIn.class);
         setMixInAnnotation(TMForumSubscription.class, TMForumSubscriptionMixIn.class);
-        setSerializerModifier(new ExtensionPropertiesModifier());
+        setSerializerModifier(new ExtensionPropertiesModifier(declaredNamesByClass));
+    }
+
+    /**
+     * Keys of {@code entityClass} that never carry an extension entry. Filled when the mapper builds the class's
+     * serializer, so it is complete once an instance of the class was serialized; empty before.
+     */
+    Set<String> declaredNames(Class<?> entityClass) {
+        return declaredNamesByClass.getOrDefault(entityClass, Set.of());
     }
 
     @Override
@@ -100,6 +111,12 @@ class PostgresMappingModule extends SimpleModule {
      */
     private static final class ExtensionPropertiesModifier extends ValueSerializerModifier {
 
+        private final ConcurrentMap<Class<?>, Set<String>> declaredNamesByClass;
+
+        private ExtensionPropertiesModifier(ConcurrentMap<Class<?>, Set<String>> declaredNamesByClass) {
+            this.declaredNamesByClass = declaredNamesByClass;
+        }
+
         @Override
         public List<BeanPropertyWriter> changeProperties(SerializationConfig config,
                                                          BeanDescription.Supplier beanDesc,
@@ -127,6 +144,7 @@ class PostgresMappingModule extends SimpleModule {
                     .forEach(property -> declaredNames.add(property.getName()));
             // the read side never hands this key to the any-setter, so writing it would lose it silently
             declaredNames.add(Entity.ADDITIONAL_PROPERTIES_KEY);
+            declaredNamesByClass.put(beanDesc.getBeanClass(), Set.copyOf(declaredNames));
             properties.add(new ExtensionPropertiesWriter(additionalProperties, declaredNames));
             return properties;
         }

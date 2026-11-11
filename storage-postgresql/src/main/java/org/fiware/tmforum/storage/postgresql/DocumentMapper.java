@@ -24,10 +24,15 @@ public final class DocumentMapper {
     static final String TYPE_PROPERTY = PostgresMappingModule.TYPE_PROPERTY;
 
     private final ObjectMapper mapper;
+    private final PostgresMappingModule documentModule;
     private final boolean dropEmptyAttributes;
 
-    DocumentMapper(ObjectMapper mapper, boolean dropEmptyAttributes) {
+    /**
+     * {@code documentModule} is the module registered on {@code mapper}.
+     */
+    DocumentMapper(ObjectMapper mapper, PostgresMappingModule documentModule, boolean dropEmptyAttributes) {
         this.mapper = mapper;
+        this.documentModule = documentModule;
         this.dropEmptyAttributes = dropEmptyAttributes;
     }
 
@@ -76,12 +81,15 @@ public final class DocumentMapper {
         });
     }
 
-    private static Set<String> extensionNames(Object entity) {
+    // only the entries the serializer wrote: under a declared name the declared value is in the document
+    private Set<String> extensionNames(Object entity) {
         if (!(entity instanceof Entity domainEntity) || domainEntity.getAdditionalProperties() == null) {
             return Set.of();
         }
+        Set<String> declaredNames = documentModule.declaredNames(entity.getClass());
         return domainEntity.getAdditionalProperties().stream()
                 .map(UnmappedProperty::getName)
+                .filter(name -> !declaredNames.contains(name))
                 .collect(Collectors.toSet());
     }
 
