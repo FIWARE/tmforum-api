@@ -5,6 +5,7 @@ import com.google.common.base.CaseFormat;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.context.annotation.Bean;
+import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
@@ -133,10 +134,8 @@ public class TMForumEventHandler extends EventHandler {
 			EventDetails eventDetails = makeEventDetails(oldState, DELETE_EVENT_SUFFIX, eventTime);
 			TmForumEventChecker eventChecker = new DeleteTmForumEventChecker<>(subscriptionQueryResolver, oldState,
 					eventDetails.payloadName());
-			return Mono.fromCallable(() -> idOnly(oldState, eventDetails.entityType()))
-					.flatMap(payload -> handleOutbox(payload, eventDetails, eventChecker, outboxId))
-					// an unmapped type is no delivery failure, as in the create/update overloads
-					.onErrorResume(EventHandlingException.class, e -> Mono.empty());
+			return idOnly(oldState, eventDetails.entityType())
+					.flatMap(payload -> handleOutbox(payload, eventDetails, eventChecker, outboxId));
 		} catch (EventHandlingException e) {
 			return Mono.empty();
 		}
@@ -163,13 +162,14 @@ public class TMForumEventHandler extends EventHandler {
 		return new CreateTmForumEventChecker<>(subscriptionQueryResolver, entity, eventDetails.payloadName());
 	}
 
-	// the domain object the broker path builds from its deletion notification, which carries only id and type
-	private Object idOnly(Object oldState, String entityType) throws ReflectiveOperationException {
+	// built like the broker path builds it from its deletion notification, which carries only id and type
+	private Mono<?> idOnly(Object oldState, String entityType) {
 		EventMapping eventMapping = eventMapper.getEntityClassMapping().get(entityType);
 		if (eventMapping == null || !(oldState instanceof EntityWithId entity)) {
+			// an unmapped type is no delivery failure, as in the create/update overloads
 			throw new EventHandlingException();
 		}
-		return eventMapping.rawClass().getConstructor(String.class).newInstance(entity.getId().toString());
+		return entityVOMapper.fromEntityVO(new EntityVO().id(entity.getId()).type(entityType), eventMapping.rawClass());
 	}
 
 	private <T> EventDetails makeEventDetails(T entity, String eventSuffix, Instant eventTime) {

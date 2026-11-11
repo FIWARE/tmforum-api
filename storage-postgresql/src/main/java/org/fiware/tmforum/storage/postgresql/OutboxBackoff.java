@@ -28,4 +28,9 @@ final class OutboxBackoff {
             return max;
         }
     }
+
+    // true for exactly one attempt count per row: the first whose delay is the maximum
+    boolean firstAtMaximum(int attempts) {
+        return delay(attempts).equals(max) && (attempts <= 0 || !delay(attempts - 1).equals(max));
+    }
 }

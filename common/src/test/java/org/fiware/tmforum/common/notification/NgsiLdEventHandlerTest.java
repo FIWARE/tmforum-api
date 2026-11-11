@@ -7,6 +7,7 @@ import org.fiware.ngsi.model.KeyValuePairVO;
 import org.fiware.ngsi.model.NotificationParamsVO;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.ngsi.model.SubscriptionVO;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.rest.CharacterizationEntity;
@@ -37,7 +38,8 @@ class NgsiLdEventHandlerTest {
 	private static final String DELETE_EVENT_TYPE = "CharacterizationEntityDeleteEvent";
 	private static final String LISTENER_ENDPOINT_KEY = "Listener-Endpoint";
 	private static final URI CALLBACK = URI.create("http://hub");
-	private static final URI OTHER_CALLBACK = URI.create("http://other-hub");
+	private static final URI NOTIFIED_SUBSCRIPTION = URI.create("urn:ngsi-ld:Subscription:notified");
+	private static final URI OTHER_SUBSCRIPTION = URI.create("urn:ngsi-ld:Subscription:other");
 	private static final Instant DELETED_AT = Instant.parse("2026-01-01T00:00:00Z");
 
 	private NotificationSender notificationSender;
@@ -79,14 +81,17 @@ class NgsiLdEventHandlerTest {
 
 	private static Stream<Arguments> deleteHubs() {
 		return Stream.of(
-				Arguments.of("the notified hub takes DeleteEvents", List.of(hub(CALLBACK)), 1),
-				Arguments.of("only another hub takes DeleteEvents", List.of(hub(OTHER_CALLBACK)), 0),
+				Arguments.of("the notified hub takes DeleteEvents", List.of(hub(NOTIFIED_SUBSCRIPTION)), 1),
+				Arguments.of("only another hub on the same callback takes DeleteEvents",
+						List.of(hub(OTHER_SUBSCRIPTION)), 0),
 				Arguments.of("no hub takes DeleteEvents", List.of(), 0));
 	}
 
-	private static TMForumSubscription hub(URI callback) {
+	// every hub shares the notified callback, only its NGSI-LD subscription tells them apart
+	private static TMForumSubscription hub(URI ngsiLdSubscription) {
 		TMForumSubscription subscription = new TMForumSubscription("urn:ngsi-ld:tm-forum-subscription:hub");
-		subscription.setCallback(callback);
+		subscription.setCallback(CALLBACK);
+		subscription.setSubscription(new Subscription(ngsiLdSubscription.toString()));
 		return subscription;
 	}
 
@@ -97,7 +102,7 @@ class NgsiLdEventHandlerTest {
 	}
 
 	private static SubscriptionVO subscription() {
-		return new SubscriptionVO().notification(new NotificationParamsVO().endpoint(new EndpointVO()
+		return new SubscriptionVO().id(NOTIFIED_SUBSCRIPTION).notification(new NotificationParamsVO().endpoint(new EndpointVO()
 				.receiverInfo(List.of(new KeyValuePairVO().key(LISTENER_ENDPOINT_KEY).value(CALLBACK.toString())))));
 	}
 }

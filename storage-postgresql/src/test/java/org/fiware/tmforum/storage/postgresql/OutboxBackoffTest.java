@@ -18,6 +18,7 @@ class OutboxBackoffTest {
     private static final Duration UNLIMITED = Duration.ofSeconds(Long.MAX_VALUE);
     private static final Duration HUGE_BASE = Duration.ofSeconds(Long.MAX_VALUE / 2);
     private static final int ONE_HOUR_EXCEEDED = 12;
+    private static final int BELOW_ONE_HOUR = ONE_HOUR_EXCEEDED - 1;
 
     static Stream<Arguments> delays() {
         return Stream.of(
@@ -38,5 +39,21 @@ class OutboxBackoffTest {
     void delayGrowsExponentiallyUpToTheMaximum(Duration base, Duration max, int attempts, Duration expected) {
         assertEquals(expected, new OutboxBackoff(base, max).delay(attempts),
                 "The delay should be base * 2^min(attempts, cap), at most the maximum.");
+    }
+
+    static Stream<Arguments> maximumReached() {
+        return Stream.of(
+                Arguments.of(0, false),
+                Arguments.of(BELOW_ONE_HOUR, false),
+                Arguments.of(ONE_HOUR_EXCEEDED, true),
+                Arguments.of(ONE_HOUR_EXCEEDED + 1, false),
+                Arguments.of(Integer.MAX_VALUE, false));
+    }
+
+    @ParameterizedTest
+    @MethodSource("maximumReached")
+    void firstAtMaximumHoldsForExactlyOneAttemptCount(int attempts, boolean expected) {
+        assertEquals(expected, new OutboxBackoff(BASE, MAX).firstAtMaximum(attempts),
+                "Only the first attempt count whose delay is the maximum should report it.");
     }
 }

@@ -48,14 +48,14 @@ public class NgsiLdEventHandler extends EventHandler {
 								subscriptionVO.getWatchedAttributes() == null ? List.of() : new ArrayList<>(
 										subscriptionVO.getWatchedAttributes()),
 								URI.create(subscriptionVO.getNotification().getEndpoint().getReceiverInfo().get(0).getValue()),
-								eventMapper.getEntityClassMapping()))).toList();
+								subscriptionVO.getId(), eventMapper.getEntityClassMapping()))).toList();
 
 		return Flux.fromIterable(notifications).flatMap(x -> x).collectList()
 				.flatMap(notificationSender::sendNotifications);
 	}
 
 	private Mono<TMForumNotification> createNotification(EntityVO payload, String eventTypeSuffix, Instant eventTime,
-														 List<String> selectedFields, URI listenerCallback,
+														 List<String> selectedFields, URI listenerCallback, URI notifiedSubscription,
 														 Map<String, EventMapping> entityNameToEntityClassMapping) {
 		if (payload.getType() == null) {
 			payload.setType(entityNameToEntityClassMapping.keySet().iterator().next());
@@ -70,12 +70,14 @@ public class NgsiLdEventHandler extends EventHandler {
 			return notification;
 		}
 		// the broker notifies every subscription of a deletion, whatever the hub's eventType
-		return notification.filterWhen(n -> hubTakesEvent(eventDetails, listenerCallback));
+		return notification.filterWhen(n -> hubTakesEvent(eventDetails, notifiedSubscription));
 	}
 
-	private Mono<Boolean> hubTakesEvent(EventDetails eventDetails, URI listenerCallback) {
+	// matched by the hub's own NGSI-LD subscription, not its callback, which several hubs may share
+	private Mono<Boolean> hubTakesEvent(EventDetails eventDetails, URI notifiedSubscription) {
 		return tmForumEventHandler.getSubscriptions(eventDetails)
-				.map(hubs -> hubs.stream().anyMatch(hub -> listenerCallback.equals(hub.getCallback())));
+				.map(hubs -> hubs.stream().anyMatch(hub -> hub.getSubscription() != null
+						&& notifiedSubscription.equals(hub.getSubscription().getId())));
 	}
 
 	private EventDetails makeEventDetails(String entityType, String eventTypeSuffix, Instant eventTime) {

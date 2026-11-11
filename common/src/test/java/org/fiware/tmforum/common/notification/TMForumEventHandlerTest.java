@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.notification;
 
 import io.github.wistefan.mapping.EntityVOMapper;
+import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.querying.QueryParser;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -59,6 +61,8 @@ class TMForumEventHandlerTest {
 				new EventMapping(CharacterizationEntity.class, CharacterizationEntity.class)));
 		when(eventMapper.mapPayload(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 		EntityVOMapper entityVOMapper = mock(EntityVOMapper.class);
+		when(entityVOMapper.fromEntityVO(any(), eq(CharacterizationEntity.class))).thenAnswer(invocation ->
+				Mono.just(new CharacterizationEntity(invocation.<EntityVO>getArgument(0).getId().toString())));
 		// stands in for the VO's JSON: the fields the payload object carries
 		when(entityVOMapper.convertEntityToMap(any())).thenAnswer(invocation -> {
 			CharacterizationEntity entity = invocation.getArgument(0);

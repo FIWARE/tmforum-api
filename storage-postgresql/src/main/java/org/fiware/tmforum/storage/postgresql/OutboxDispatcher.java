@@ -139,7 +139,7 @@ public class OutboxDispatcher {
                 .concatMap(row -> deliver(row)
                         .then(Mono.defer(() -> settle(SETTLE_DELIVERED, statement -> statement.bind(0, row.id()))))
                         .onErrorResume(failure -> {
-                            LOGGER.debug("Delivery of outbox row {} failed, retrying later.", row.id(), failure);
+                            reportFailedDelivery(row, failure);
                             Duration delay = backoff.delay(row.attempts());
                             return settle(SETTLE_FAILED, statement -> statement.bind(0, row.id())
                                     .bind(1, (double) delay.toMillis()));
@@ -196,6 +196,17 @@ public class OutboxDispatcher {
 
     private Mono<Void> settle(String sql, Function<Statement, Statement> binder) {
         return PostgresStatements.execute(connectionFactory, sql, binder, Result::getRowsUpdated).then();
+    }
+
+    // every row fails until PG can look up hubs (ticket 7), so only a row reaching max-backoff gets one WARN
+    private void reportFailedDelivery(ClaimedRow row, Throwable failure) {
+        if (backoff.firstAtMaximum(row.attempts())) {
+            LOGGER.warn("Delivery of outbox row {} ({} of {}) failed {} times, retrying every {} until it is older"
+                            + " than the retention of {}.", row.id(), row.kind(), row.entityType(), row.attempts(),
+                    properties.maxBackoff(), properties.retention(), failure);
+        } else {
+            LOGGER.debug("Delivery of outbox row {} failed, retrying later.", row.id(), failure);
+        }
     }
 
     private void reportDiscarded(DiscardedRow row) {

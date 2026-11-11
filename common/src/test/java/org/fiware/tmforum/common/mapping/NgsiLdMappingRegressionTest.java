@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -91,6 +92,18 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 		assertEquals(pojo.getId(), entityVO.getId(), "The entity should keep the id.");
 		assertEquals(pojo.getType(), entityVO.getType(), "The entity should keep the type.");
 		assertEquals(status, mappedBack.getStatus(), "The property should survive the round trip.");
+	}
+
+	// the shape of a broker deletion notification, which the outbox DeleteEvent payload is built from as well
+	@Test
+	void mapsAnIdOnlyEntity() {
+		MyEntityPojo pojo = pojo("deleted", null);
+
+		MyEntityPojo mapped = entityVOMapper.fromEntityVO(new EntityVO().id(pojo.getId()).type(pojo.getType()),
+				MyEntityPojo.class).block();
+
+		assertEquals(pojo.getId(), mapped.getId(), "An id-only entity should map to the domain object with that id.");
+		assertNull(mapped.getStatus(), "An id-only entity should map no attribute.");
 	}
 
 	@ParameterizedTest

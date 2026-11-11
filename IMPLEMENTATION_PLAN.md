@@ -254,10 +254,12 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     mapped the domain object to its VO and `createEvent` then mapped that VO again, which every module's
     `mapPayload` rejects with a ClassCastException. Step 6 maps once (shared `EventHandler.createNotification`), so
     the broker now delivers DeleteEvents. Because the broker notifies every NGSI-LD subscription of the type of a
-    deletion, `NgsiLdEventHandler` keeps a DeleteEvent only when the hub behind the notified callback is among the
-    `getSubscriptions` result for `<Type>DeleteEvent`, so a hub that did not ask for DeleteEvents gets none. The
-    hub's query cannot be honoured on the broker (its deletion notification carries no state, only the id). Both
-    are broker behaviour changes, listed in the Step 8 release notes.
+    deletion, `NgsiLdEventHandler` keeps a DeleteEvent only when the hub owning the notified NGSI-LD subscription (matched
+    by subscription id, not callback, which several hubs may share) is among the `getSubscriptions` result for
+    `<Type>DeleteEvent`, so a hub that did not ask for DeleteEvents gets none. The hub's query cannot be honoured
+    on the broker (its deletion notification carries no state, only the id). Both are broker behaviour changes,
+    listed in the Step 8 release notes. Cost: one `getSubscriptions` broker query per notified subscription per
+    deletion (its cache key includes the event time, so it does not absorb them).
   - Broker today: `AbstractSubscriptionApiController` registers the NGSI-LD subscription with only `entities` and
     `q`, no event-type filter, and `NgsiLdEventHandler` fires `DeleteNgsiLdEventChecker` for every notification
     with `deletedAt`, so recipients and payload are whatever the broker's deletion notification gives. No IT pins
