@@ -277,7 +277,11 @@ the default here; ticket 9 makes the backend selectable and flips the default.
     hub none; the payload is id-only. It relies on Orion-LD sending a `deletedAt` notification to a subscription
     without `notificationTrigger` (seen on an Orion-LD 1.1 build in FIWARE/context.Orion-LD#1307, not yet on the
     1.9.0 in `k3s/orion-ld`); if the IT shows no notification, the subscriptions created in
-    `AbstractSubscriptionApiController` need `notificationTrigger` with `entityDeleted`. Suspected, unverified
+    `AbstractSubscriptionApiController` need `notificationTrigger` with `entityDeleted`. "Whatever its query" also
+    rests on Orion-LD not applying the NGSI-LD subscription's `q` (copied from the hub query) to the deleted
+    entity, also unobserved: the IT asserts the not-matching hub separately; if it gets no DeleteEvent, it moves to
+    the no-DeleteEvent set and the Step 8 recipient-difference note becomes "both backends honour the query".
+    Suspected, unverified
     (from code reading, confirm on Orion-LD before opening a follow-up ticket): a hub registered without
     `eventType` may be stored on Orion-LD without its multi-valued `eventTypes`/`entities`/`fields`, so
     `getSubscriptions` would never return it and it would get no TMForum event of any kind on the broker; the IT

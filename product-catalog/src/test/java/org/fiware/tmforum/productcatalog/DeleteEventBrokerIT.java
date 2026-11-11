@@ -37,7 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * and its notification carries no state to evaluate the query on. The PostgreSQL outbox also honours the query and
  * sends the same id-only payload ({@link #BROKER_DELETE_PAYLOAD_FIELDS}).
  * Relies on Orion-LD notifying a deletion ({@code deletedAt}) to a subscription without {@code notificationTrigger},
- * as {@code AbstractSubscriptionApiController} creates them (FIWARE/context.Orion-LD#1307).
+ * as {@code AbstractSubscriptionApiController} creates them (FIWARE/context.Orion-LD#1307), and on Orion-LD not
+ * evaluating the subscription's {@code q} (the hub query) against the deleted entity; both are unobserved so far.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 // hub registration fails on Scorpio, see EventSubscriptionApiIT; DeleteEvents come from the broker only
@@ -67,6 +68,9 @@ public class DeleteEventBrokerIT extends AbstractApiIT {
 			HUB_DELETE_NOT_MATCHING, "eventType=" + DELETE_EVENT + "&event.catalog.lifecycleStatus=retired");
 
 	private static final Set<String> HUBS_WITHOUT_DELETE_EVENTS = Set.of(HUB_CREATE_ONLY);
+	// its NGSI-LD subscription's q does not match the deleted catalog, so it only gets a DeleteEvent if the broker
+	// ignores q on deletion; not awaited, so the other hubs' results stay readable if it does not
+	private static final Set<String> HUBS_DEPENDING_ON_BROKER_QUERY = Set.of(HUB_DELETE_NOT_MATCHING);
 
 	private final CatalogApiTestClient catalogApiTestClient;
 	private final EventsSubscriptionApiTestClient hubApiTestClient;
@@ -112,6 +116,7 @@ public class DeleteEventBrokerIT extends AbstractApiIT {
 
 		await().atMost(DELIVERY_TIMEOUT).until(() -> HUB_QUERIES.keySet().stream()
 				.filter(hub -> !HUBS_WITHOUT_DELETE_EVENTS.contains(hub))
+				.filter(hub -> !HUBS_DEPENDING_ON_BROKER_QUERY.contains(hub))
 				.allMatch(hub -> !deleteEvents(hub).isEmpty()));
 		// later notifications would be duplicates or unwanted; give them the time to show up
 		Thread.sleep(QUIET_PERIOD.toMillis());
@@ -124,7 +129,12 @@ public class DeleteEventBrokerIT extends AbstractApiIT {
 				continue;
 			}
 			List<Map<String, Object>> events = deleteEvents(hub);
-			assertEquals(1, events.size(), String.format("Hub %s should get exactly one DeleteEvent.", hub));
+			String hint = HUBS_DEPENDING_ON_BROKER_QUERY.contains(hub)
+					? " None means Orion-LD applies the subscription's q on deletion: move the hub to "
+					+ "HUBS_WITHOUT_DELETE_EVENTS and correct the recipient difference in the plan (Steps 6 and 8)."
+					: "";
+			assertEquals(1, events.size(),
+					String.format("Hub %s should get exactly one DeleteEvent.%s", hub, hint));
 			Map<?, ?> catalog = (Map<?, ?>) ((Map<?, ?>) events.getFirst().get("event")).get("catalog");
 			assertEquals(BROKER_DELETE_PAYLOAD_FIELDS, catalog.keySet(),
 					String.format("Hub %s should get the id-only payload.", hub));

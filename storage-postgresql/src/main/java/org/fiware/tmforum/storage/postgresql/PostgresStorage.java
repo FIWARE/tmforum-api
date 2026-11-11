@@ -26,6 +26,9 @@ public final class PostgresStorage {
      */
     public static final String ENTITY_CURRENT_INDEX = "entity_current_idx";
 
+    /**
+     * Table of the transactional event outbox (V2 migration).
+     */
     public static final String OUTBOX_TABLE = "event_outbox";
 
     public static final String QUALIFIED_OUTBOX_TABLE = SCHEMA + "." + OUTBOX_TABLE;
