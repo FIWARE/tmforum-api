@@ -1,5 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement;
 
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import tools.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpResponse;
@@ -11,14 +12,15 @@ import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateExten
 import org.fiware.customerbillmanagement.api.ext.AppliedCustomerBillingRateExtensionApiTestSpec;
 import org.fiware.customerbillmanagement.model.*;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.EntityVO;
-import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.configuration.ApiExtensionProperties;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
+import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -45,12 +47,14 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 		AppliedCustomerBillingRateExtensionApiTestSpec {
 
 	private static final String BILL_ID = "urn:ngsi-ld:customer-bill:test-bill";
+	private static final String BILLING_ACCOUNT_TYPE = "billing-account";
 	private static final String BILLING_ACCOUNT_ID = "urn:ngsi-ld:billing-account:test-billing-account";
+	private static final URI SCHEMA_LOCATION = URI.create("my:uri");
 
 	private final AppliedCustomerBillingRateExtensionApiTestClient appliedCustomerBillingRateExtensionApiTestClient;
 	private final AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient;
 
-	private final EntitiesApiClient entitiesApiClient;
+	private final EntityRepository entityRepository;
 
 	private String message;
 	private AppliedCustomerBillingRateCreateVO appliedCustomerBillingRateCreateVO;
@@ -62,11 +66,23 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 	protected ExtendedAppliedCustomerBillingRateApiIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
 													  GeneralProperties generalProperties,
 													  AppliedCustomerBillingRateExtensionApiTestClient appliedCustomerBillingRateExtensionApiTestClient,
-													  AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient) {
+													  AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient,
+													  EntityRepository entityRepository) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.appliedCustomerBillingRateExtensionApiTestClient = appliedCustomerBillingRateExtensionApiTestClient;
 		this.appliedCustomerBillingRateApiTestClient = appliedCustomerBillingRateApiTestClient;
-		this.entitiesApiClient = entitiesApiClient;
+		this.entityRepository = entityRepository;
+	}
+
+	/**
+	 * Stand-in for the account module's BillingAccount, which this module does not depend on.
+	 */
+	@MappingEnabled(entityType = BILLING_ACCOUNT_TYPE)
+	public static class BillingAccountTarget extends EntityWithId {
+
+		public BillingAccountTarget(String id) {
+			super(BILLING_ACCOUNT_TYPE, id);
+		}
 	}
 
 	@MockBean(Clock.class)
@@ -81,32 +97,25 @@ public class ExtendedAppliedCustomerBillingRateApiIT extends AbstractApiIT imple
 
 	@BeforeEach
 	public void createRequiredReferences() {
+		deleteRequiredReferences();
+		CustomerBill bill = new CustomerBill(BILL_ID);
+		bill.setAtSchemaLocation(SCHEMA_LOCATION);
+		entityRepository.createDomainEntity(bill).block();
 
-		CustomerBillVO customerBillVO = CustomerBillVOTestExample.build().atSchemaLocation(null);
-		EntityVO billEntityVO = new EntityVO()
-				.atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
-				.id(URI.create(BILL_ID))
-				.type("customer-bill");
-		billEntityVO.setAdditionalProperties("atSchemaLocation", new PropertyVO().value("my:uri"));
-		entitiesApiClient.createEntity(billEntityVO, null).block();
-
-		EntityVO billingAccountEntityVO = new EntityVO()
-				.atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
-				.id(URI.create(BILLING_ACCOUNT_ID))
-				.type("billing-account");
-		billingAccountEntityVO.setAdditionalProperties("atSchemaLocation", new PropertyVO().value("my:uri"));
-		entitiesApiClient.createEntity(billingAccountEntityVO, null).block();
+		BillingAccountTarget billingAccount = new BillingAccountTarget(BILLING_ACCOUNT_ID);
+		billingAccount.setAtSchemaLocation(SCHEMA_LOCATION);
+		entityRepository.createDomainEntity(billingAccount).block();
 	}
 
 	@AfterEach
 	public void deleteRequiredReferences() {
 		try {
-			entitiesApiClient.removeEntityById(URI.create(BILL_ID), null, null).block();
+			entityRepository.deleteDomainEntity(URI.create(BILL_ID)).block();
 		} catch (Exception e) {
 			// noop - might fail if already removed
 		}
 		try {
-			entitiesApiClient.removeEntityById(URI.create(BILLING_ACCOUNT_ID), null, null).block();
+			entityRepository.deleteDomainEntity(URI.create(BILLING_ACCOUNT_ID)).block();
 		} catch (Exception e) {
 			// noop - might fail if already removed
 		}

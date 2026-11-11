@@ -1,7 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement;
 
 import tools.jackson.databind.ObjectMapper;
-import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -13,13 +12,13 @@ import org.fiware.customerbillmanagement.model.CustomerBillVO;
 import org.fiware.customerbillmanagement.model.CustomerBillVOTestExample;
 import org.fiware.customerbillmanagement.model.StateValueVO;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.domain.CustomerBill;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,8 +46,7 @@ import static org.mockito.Mockito.when;
 public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiTestSpec {
 
 	private final CustomerBillApiTestClient customerBillApiTestClient;
-	private final EntitiesApiClient entitiesApiClient;
-	private final JavaObjectMapper javaObjectMapper;
+	private final EntityRepository entityRepository;
 	private final TMForumMapper tmForumMapper;
 
 	private String message;
@@ -58,12 +56,11 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	private Clock clock = mock(Clock.class);
 
 	public CustomerBillApiIT(CustomerBillApiTestClient customerBillApiTestClient, EntitiesApiClient entitiesApiClient,
-							 JavaObjectMapper javaObjectMapper, TMForumMapper tmForumMapper, ObjectMapper objectMapper,
+							 EntityRepository entityRepository, TMForumMapper tmForumMapper, ObjectMapper objectMapper,
 							 GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.customerBillApiTestClient = customerBillApiTestClient;
-		this.entitiesApiClient = entitiesApiClient;
-		this.javaObjectMapper = javaObjectMapper;
+		this.entityRepository = entityRepository;
 		this.tmForumMapper = tmForumMapper;
 	}
 
@@ -83,8 +80,7 @@ public class CustomerBillApiIT extends AbstractApiIT implements CustomerBillApiT
 	}
 
 	private void createBill(CustomerBill customerBillVO) {
-		EntityVO entityVO = javaObjectMapper.toEntityVO(customerBillVO);
-		entitiesApiClient.createEntity(entityVO, null).block();
+		entityRepository.createDomainEntity(customerBillVO).block();
 	}
 
 	@Test
