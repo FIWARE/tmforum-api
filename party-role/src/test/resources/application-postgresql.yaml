@@ -1,0 +1,27 @@
+r2dbc:
+  datasources:
+    default:
+      url: r2dbc:pool:postgresql://localhost:5432/tmforum
+      username: tmforum
+      password: tmforum
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      url: jdbc:postgresql://localhost:5432/tmforum
+      user: tmforum
+      password: tmforum
+      schemas: tmforum
+      create-schemas: true
+      locations: classpath:db/migration/tmforum
+
+# ITs assert on tmforum.event_outbox directly; no dispatcher may drain it
+tmforum:
+  outbox:
+    enabled: false
+
+endpoints:
+  health:
+    r2dbc:
+      enabled: false

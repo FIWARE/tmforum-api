@@ -11,6 +11,7 @@ import io.micronaut.management.health.indicator.HealthIndicator;
 import io.micronaut.management.health.indicator.HealthResult;
 import io.micronaut.management.health.indicator.annotation.Readiness;
 import jakarta.inject.Singleton;
+import org.fiware.tmforum.common.CommonConstants;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +24,7 @@ import java.util.Map;
  */
 @Singleton
 @Requires(beans = {HealthEndpoint.class, NgsiLdBrokerHealthConfiguration.class})
+@Requires(notEnv = CommonConstants.POSTGRESQL_ENVIRONMENT)
 @Readiness
 public class NgsiLdBrokerReadinessIndicator implements HealthIndicator {
 
