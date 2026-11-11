@@ -45,7 +45,7 @@ the versioning columns `version`, `revision`, `is_current`, which keep their def
   create stores no empty list or object, and an update carrying an empty object keeps the stored one. Extension
   (unknown) properties are stored as sent, so an empty list or object reads back empty. The port contract pins all
   of this for both adapters. One difference: on Orion-LD a PATCH that empties an extension list makes it read back
-  as a map from the expanded attribute name to `[]`; PostgreSQL returns `[]`.
+  as a map from the expanded attribute name to `[]`; PostgreSQL and Scorpio return `[]`.
 
 ## TMForum events
 

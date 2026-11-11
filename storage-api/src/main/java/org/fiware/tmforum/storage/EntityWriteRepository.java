@@ -30,7 +30,8 @@ public interface EntityWriteRepository {
      * Writes only the attributes the entity carries, never a whole-document overwrite: null fields stay
      * untouched, an emptied list is cleared and reads back absent or empty, so callers must accept both. A carried
      * list replaces the stored one. A carried empty object leaves the stored one untouched; an emptied extension
-     * list reads back empty (Orion-LD defect, ticket 0: it reads back as a map from the expanded name to {@code []}).
+     * list reads back empty (Orion-LD append-mode defect, ticket 0: it reads back as a map from the expanded name
+     * to {@code []}).
      * Fails with {@link StorageErrorReason#NOT_FOUND} for an absent id and never creates or completes silently
      * (update-else-create callers rely on it), and with {@link StorageErrorReason#PARTIAL_UPDATE} when the
      * backend wrote only some attributes. Failures carry UPDATE, except the recorded NGSI-LD replace-mode

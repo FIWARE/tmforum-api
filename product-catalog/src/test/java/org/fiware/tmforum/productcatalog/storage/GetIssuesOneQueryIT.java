@@ -72,6 +72,15 @@ public class GetIssuesOneQueryIT extends AbstractApiIT {
 	public void getWithReferencesIssuesOneStatement() throws Exception {
 		Category category = new Category(UUID.randomUUID().toString());
 		entityRepository.createDomainEntity(category).block();
+		try {
+			assertOneStatementPerGet(category);
+		} finally {
+			// cleanUp only removes offerings
+			entityRepository.deleteDomainEntity(category.getId()).block();
+		}
+	}
+
+	private void assertOneStatementPerGet(Category category) throws Exception {
 		ProductOfferingCreateVO createVO = ProductOfferingCreateVOTestExample.build().atSchemaLocation(null)
 				.productSpecification(null)
 				.resourceCandidate(null)
