@@ -126,6 +126,7 @@
         </version.org.apache.maven.plugins.maven-javadoc-plugin>
         <version.com.google.code.findbugs.annotations>3.0.1u2</version.com.google.code.findbugs.annotations>
         <version.io.minio.minio>8.5.7</version.io.minio.minio>
+        <version.io.r2dbc.r2dbc-proxy>1.1.7.RELEASE</version.io.r2dbc.r2dbc-proxy>
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${project.artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
@@ -550,6 +551,9 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
+                        <!-- skips the ITs the storage under test cannot run yet, see common's StorageTags; a profile
+                             activated by the broker property would deactivate the activeByDefault integration-test profile -->
+                        <excludedGroups>not-on-${broker}</excludedGroups>
                         <!-- the test cluster runs Scorpio 5.0.3 (k3s/scorpio), which does not create attributes with
                              PATCH /attrs, so replaceOnUpdate has to stay disabled despite application-scorpio.yaml -->
                         <argLine>${failsafe.jacoco.args} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens

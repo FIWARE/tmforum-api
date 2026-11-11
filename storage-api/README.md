@@ -2,9 +2,10 @@
 
 The storage-neutral persistence port of the TMForum APIs. Controllers and services in `common` and in the API
 modules depend only on the types in `org.fiware.tmforum.storage`. A backend provides an adapter that implements
-them. Today the only adapter is the NGSI-LD one in `common`
-(`org.fiware.tmforum.common.repository.NgsiLdEntityRepository`). Ticket 6 adds PostgreSQL. Both backends are
-permanent, so the port is a public contract.
+them. There are two adapters: the NGSI-LD one in `common`
+(`org.fiware.tmforum.common.repository.NgsiLdEntityRepository`), the default, and the PostgreSQL one in
+[storage-postgresql](../storage-postgresql/README.md), active in the Micronaut environment `postgresql`. Both
+backends are permanent, so the port is a public contract.
 
 The Javadoc of the types is the contract. This file is only a map of it.
 
@@ -56,7 +57,9 @@ the stored one by datasetId (`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
 ## Update semantics
 
 `updateDomainEntity` writes only the attributes the entity carries. Null fields stay untouched, and an emptied list is
-cleared (it reads back absent or empty). A carried list replaces the stored one; on Orion-LD in append mode the broker
+cleared (it reads back absent or empty). A carried empty object keeps the stored one, and extension values,
+empty ones included, read back as sent (`KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED` on Orion-LD). A
+carried list replaces the stored one; on Orion-LD in append mode the broker
 merges it by datasetId instead (see the `updateDomainEntity` Javadoc). An absent id fails with NOT_FOUND and operation
 UPDATE. The NGSI-LD replace mode reports READ instead, which renders differently; ticket 6 has to decide this open
 parity question (see the `updateDomainEntity` Javadoc). The update never creates the entity and never completes

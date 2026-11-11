@@ -6,8 +6,8 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.EntityVO;
-import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.tmforum.resource.ResourceSpecification;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestClient;
 import org.fiware.productcatalog.api.ProductSpecificationApiTestSpec;
 import org.fiware.productcatalog.model.BundledProductSpecificationVOTestExample;
@@ -61,7 +61,7 @@ import static org.mockito.Mockito.when;
 public class ProductSpecificationApiIT extends AbstractApiIT implements ProductSpecificationApiTestSpec {
 
 	public final ProductSpecificationApiTestClient productSpecificationApiTestClient;
-	private final EntitiesApiClient entitiesApi;
+	private final EntityRepository entityRepository;
 	private String message;
 	private ProductSpecificationCreateVO productSpecificationCreateVO;
 	private ProductSpecificationUpdateVO productSpecificationUpdateVO;
@@ -71,10 +71,10 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
 	public ProductSpecificationApiIT(ProductSpecificationApiTestClient productSpecificationApiTestClient,
 									 EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
-									 GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
+									 GeneralProperties generalProperties, EntityRepository entityRepository) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productSpecificationApiTestClient = productSpecificationApiTestClient;
-		this.entitiesApi = entitiesApi;
+		this.entityRepository = entityRepository;
 	}
 
 	@MockBean(Clock.class)
@@ -498,30 +498,20 @@ public class ProductSpecificationApiIT extends AbstractApiIT implements ProductS
 
 		String resourceSpecId = "urn:ngsi-ld:resource-specification:test-spec";
 		try {
-			entitiesApi.removeEntityById(URI.create(resourceSpecId), null, null).block();
+			entityRepository.deleteDomainEntity(URI.create(resourceSpecId)).block();
 		} catch (Exception e) {
 			// ignore, just for cleanup
 			e.getMessage();
 		}
 
-		EntityVO resourceSpecEntity = new EntityVO()
-				.atContext("https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld")
-				.id(URI.create(resourceSpecId))
-				.type("resource-specification");
-
-		PropertyVO isBundle = new PropertyVO().value(false);
-		resourceSpecEntity.setAdditionalProperties("isBundle", isBundle);
-		PropertyVO lifecycleStatus = new PropertyVO().value("string");
-		resourceSpecEntity.setAdditionalProperties("lifecycleStatus", lifecycleStatus);
-		PropertyVO description = new PropertyVO().value("string");
-		resourceSpecEntity.setAdditionalProperties("description", description);
-		PropertyVO version = new PropertyVO().value("0.1.2");
-		resourceSpecEntity.setAdditionalProperties("version", version);
-		PropertyVO href = new PropertyVO().value(resourceSpecId);
-		resourceSpecEntity.setAdditionalProperties("href", href);
-		PropertyVO category = new PropertyVO().value("category");
-		resourceSpecEntity.setAdditionalProperties("category", category);
-		entitiesApi.createEntity(resourceSpecEntity, null).block();
+		ResourceSpecification resourceSpecification = new ResourceSpecification(resourceSpecId);
+		resourceSpecification.setIsBundle(false);
+		resourceSpecification.setLifecycleStatus("string");
+		resourceSpecification.setDescription("string");
+		resourceSpecification.setVersion("0.1.2");
+		resourceSpecification.setHref(URI.create(resourceSpecId));
+		resourceSpecification.setCategory("category");
+		entityRepository.createDomainEntity(resourceSpecification).block();
 
 		ResourceSpecificationRefVO rsrV = new ResourceSpecificationRefVO()
 				.atSchemaLocation(null)

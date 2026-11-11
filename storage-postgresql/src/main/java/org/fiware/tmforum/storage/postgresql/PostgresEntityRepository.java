@@ -57,15 +57,19 @@ public class PostgresEntityRepository implements EntityRepository {
     private static final String INSERT = "INSERT INTO " + QUALIFIED_ENTITY_TABLE
             + " (id, type, data, created_at, updated_at)"
             + " VALUES ($1, $2, $3::jsonb, COALESCE($4::timestamptz, now()), COALESCE($5::timestamptz, now()))";
-    // || replaces each carried top-level key; the patch never carries id or type
+    // || replaces each carried top-level key, the patch never carries id or type; an emptied declared list is null in
+    // the patch and removes its key, as the NGSI-LD adapter deletes the attribute
+    private static final String MERGED_DATA = "(data || $2::jsonb)"
+            + " - ARRAY(SELECT key FROM jsonb_each($2::jsonb) WHERE value = 'null'::jsonb)";
     private static final String UPDATE_CURRENT = "UPDATE " + QUALIFIED_ENTITY_TABLE
-            + " SET data = data || $2::jsonb, updated_at = now() WHERE id = $1 AND is_current RETURNING id";
+            + " SET data = " + MERGED_DATA + ", updated_at = now() WHERE id = $1 AND is_current RETURNING id";
     private static final String DELETE_CURRENT =
             "DELETE FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1 AND is_current";
     private static final String SELECT_CURRENT_FOR_UPDATE = "SELECT type, data::text AS data FROM "
             + QUALIFIED_ENTITY_TABLE + " WHERE id = $1 AND is_current FOR UPDATE";
     private static final String UPDATE_CURRENT_RETURNING_DATA = "UPDATE " + QUALIFIED_ENTITY_TABLE
-            + " SET data = data || $2::jsonb, updated_at = now() WHERE id = $1 AND is_current RETURNING data::text AS data";
+            + " SET data = " + MERGED_DATA + ", updated_at = now() WHERE id = $1 AND is_current"
+            + " RETURNING data::text AS data";
     private static final String DELETE_CURRENT_RETURNING = "DELETE FROM " + QUALIFIED_ENTITY_TABLE
             + " WHERE id = $1 AND is_current RETURNING type, data::text AS data";
     private static final String INSERT_OUTBOX_ROW = "INSERT INTO " + QUALIFIED_OUTBOX_TABLE

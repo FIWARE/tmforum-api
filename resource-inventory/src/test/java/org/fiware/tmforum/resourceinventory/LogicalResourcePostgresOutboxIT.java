@@ -11,6 +11,7 @@ import org.fiware.resourceinventory.model.ResourceVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.PostgresqlOnly;
 import org.fiware.tmforum.resource.ResourceTypeRegistry;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
 import org.fiware.tmforum.storage.postgresql.PostgresOutboxInspector;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * resource-inventory maps only {@code resource}, so a sub-type create and patch on PostgreSQL enqueue no outbox row.
  */
+@PostgresqlOnly
 @MicronautTest(packages = {"org.fiware.tmforum.resourceinventory"}, environments = PostgresStorage.ENVIRONMENT,
 		contextBuilder = FirstMatchConfigContextBuilder.class)
 class LogicalResourcePostgresOutboxIT extends AbstractApiIT {

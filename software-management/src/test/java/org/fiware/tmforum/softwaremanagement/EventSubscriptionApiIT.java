@@ -18,6 +18,7 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.test.AbstractApiIT;
+import org.fiware.tmforum.common.test.RequiresHubSupport;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Integration tests for the EventSubscription API in the Software Management module (TMF730).
  */
+@RequiresHubSupport
 @MicronautTest(packages = {"org.fiware.tmforum.softwaremanagement"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 /*
  * the test currently fails for scorpio -  {@link https://github.com/ScorpioBroker/ScorpioBroker/issues/456}

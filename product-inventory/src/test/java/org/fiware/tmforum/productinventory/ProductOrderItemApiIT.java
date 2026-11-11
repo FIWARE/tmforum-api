@@ -1,12 +1,12 @@
 package org.fiware.tmforum.productinventory;
 
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.EntityVO;
 import org.fiware.productinventory.api.ProductApiTestClient;
 import org.fiware.productinventory.model.ProductCreateVO;
 import org.fiware.productinventory.model.ProductCreateVOTestExample;
@@ -15,10 +15,12 @@ import org.fiware.productinventory.model.ProductUpdateVOTestExample;
 import org.fiware.productinventory.model.ProductVO;
 import org.fiware.productinventory.model.RelatedProductOrderItemVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.product.Product;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,8 +49,7 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 
 	static final String EXTERNAL_HOST = "external-tmf.example.org";
 
-	private static final String CORE_CONTEXT = "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld";
-	// product orders live in product-ordering-management, so the targets are written to the broker directly
+	// product orders live in product-ordering-management, so the targets are written through the storage port
 	private static final String PRODUCT_ORDER_TYPE = "product-order";
 	private static final String FIRST_ORDER_ID = "urn:ngsi-ld:product-order:order-item-api-it-1";
 	private static final String SECOND_ORDER_ID = "urn:ngsi-ld:product-order:order-item-api-it-2";
@@ -90,13 +91,24 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 	}
 
 	private final ProductApiTestClient productApiTestClient;
-	private final EntitiesApiClient entitiesApiClient;
+	private final EntityRepository entityRepository;
 
 	public ProductOrderItemApiIT(ProductApiTestClient productApiTestClient, EntitiesApiClient entitiesApiClient,
-			ObjectMapper objectMapper, GeneralProperties generalProperties) {
+			EntityRepository entityRepository, ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productApiTestClient = productApiTestClient;
-		this.entitiesApiClient = entitiesApiClient;
+		this.entityRepository = entityRepository;
+	}
+
+	/**
+	 * Stand-in for product-ordering-management's ProductOrder, which this module does not depend on.
+	 */
+	@MappingEnabled(entityType = PRODUCT_ORDER_TYPE)
+	public static class ProductOrderTarget extends EntityWithId {
+
+		public ProductOrderTarget(String id) {
+			super(PRODUCT_ORDER_TYPE, id);
+		}
 	}
 
 	@MockBean(TMForumEventHandler.class)
@@ -110,15 +122,14 @@ public class ProductOrderItemApiIT extends AbstractApiIT {
 	@BeforeEach
 	public void createProductOrders() {
 		removeProductOrders();
-		ORDER_IDS.forEach(orderId -> entitiesApiClient.createEntity(
-				new EntityVO().atContext(CORE_CONTEXT).id(URI.create(orderId)).type(PRODUCT_ORDER_TYPE), null).block());
+		ORDER_IDS.forEach(orderId -> entityRepository.createDomainEntity(new ProductOrderTarget(orderId)).block());
 	}
 
 	@AfterEach
 	public void removeProductOrders() {
 		ORDER_IDS.forEach(orderId -> {
 			try {
-				entitiesApiClient.removeEntityById(URI.create(orderId), null, null).block();
+				entityRepository.deleteDomainEntity(URI.create(orderId)).block();
 			} catch (Exception e) {
 				// noop - not there yet or already removed
 			}

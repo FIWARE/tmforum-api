@@ -47,4 +47,24 @@ public interface UpdateFixture<T> extends EntityFixture<T> {
      * Names of the entity's extension properties, empty when it has none.
      */
     Set<String> extensionNames(T entity);
+
+    /**
+     * Adds an extension (unknown) property to the entity and returns it.
+     */
+    T withExtension(T entity, String name, Object value);
+
+    /**
+     * Null when the entity has no extension of that name.
+     */
+    Object extensionValue(T entity, String name);
+
+    /**
+     * An update carrying only the object attribute, with no field set, so it serializes as an empty object.
+     */
+    T emptiedObject(URI id);
+
+    /**
+     * The object attribute; {@link #newEntity} sets it.
+     */
+    Object objectValue(T entity);
 }

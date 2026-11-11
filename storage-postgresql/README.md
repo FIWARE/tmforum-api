@@ -27,9 +27,12 @@ unversioned types, `revision` is monotonic per `id`. The partial unique index
 
 All columns are `NOT NULL`. The primary key is `(id, version)`.
 
-An update is one statement, `data = data || patch`. The patch holds only the attributes the entity carries (never
-`id` or `type`), and each one replaces its stored top-level value, so a carried list replaces the stored list. An
-emptied list is stored as `[]`. Nothing is read first, so two concurrent updates of the same attribute cannot
+An update is one statement, `data = (data || patch) - <keys of the emptied lists>`. The patch holds only the
+attributes the entity carries (never `id` or `type`), and each one replaces its stored top-level value, so a carried
+list replaces the stored list. For declared properties, an emptied list removes the attribute, and a create or
+update writes no top-level empty object (a create no empty list either), like the NGSI-LD adapter, which creates no
+attribute for them. Extension properties are written as sent, empty values included. Nothing
+is read first, so two concurrent updates of the same attribute cannot
 interleave: the last one wins whole.
 
 ## Configuration
@@ -110,4 +113,11 @@ password `tmforum`), next to the broker. `-Dbroker=postgresql` starts no broker,
 ```bash
 mvn verify -pl storage-postgresql                       # SchemaMigrationIT, PostgresEntityRepositoryIT, ...
 mvn verify -pl product-catalog -Dit.test=PostgresEntityRepositoryContractIT   # port contract on PostgreSQL
+mvn verify -pl product-catalog -Dbroker=postgresql      # the module's full IT suite on PostgreSQL
 ```
+
+With `-Dbroker=postgresql`, failsafe excludes the tag `not-on-postgresql` (`StorageTags` in `common`):
+`@RequiresQueryTranslation` (ticket 7), `@RequiresHubSupport` (tickets 1 and 7) and `@BrokerOnly` (never). The
+broker jobs exclude `@PostgresqlOnly` ITs the same way, so a `@PostgresqlOnly` IT picked with `-Dit.test` (e.g.
+`GetIssuesOneQueryIT` or the `*PostgresOutboxIT`s) also needs `-Dbroker=postgresql`; without it failsafe finds no
+test to run and fails.

@@ -159,7 +159,9 @@ the default here; ticket 9 makes the backend selectable and flips the default.
   `UPDATE tmforum.entity SET data = data || $2::jsonb, updated_at = now() WHERE id = $1 AND is_current RETURNING id`;
   0 rows -> `StorageException(UPDATE, NOT_FOUND)` (never creates). `$2` is the update-mode document from Step 2:
   only carried attributes, each replaces its stored top-level value (per-attribute replace, which covers both
-  broker strategies); an emptied list is written as `[]`. `id`/`type` keys are never overwritten (strip them from
+  broker strategies); an emptied list is written as `[]` (changed in Step 8 for broker parity: an emptied
+  declared list removes the key, a create stores no empty declared list/object and an update ignores an empty
+  declared object; extension values are stored as sent; pinned by the port contract). `id`/`type` keys are never overwritten (strip them from
   the patch document). The patch document goes through `NullCharacterValidator` (UPDATE) before the statement, so
   a PATCH carrying `\u0000` is a 400; add a PG IT for it next to the create case.
 - No `replaceOnUpdate`, no read-merge-write, no entity cache on this path (they stay for the broker adapter).

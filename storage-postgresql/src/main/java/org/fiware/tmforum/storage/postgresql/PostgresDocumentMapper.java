@@ -24,27 +24,31 @@ public class PostgresDocumentMapper {
     private final DocumentMapper event;
 
     public PostgresDocumentMapper(ObjectMapper applicationMapper) {
-        this.storage = new DocumentMapper(derive(applicationMapper, true));
-        this.event = new DocumentMapper(derive(applicationMapper, false));
+        PostgresMappingModule storageModule = new PostgresMappingModule(true);
+        PostgresMappingModule eventModule = new PostgresMappingModule(false);
+        this.storage = new DocumentMapper(derive(applicationMapper, storageModule), storageModule, true);
+        this.event = new DocumentMapper(derive(applicationMapper, eventModule), eventModule, false);
     }
 
     /**
-     * For {@code tmforum.entity.data}: drops {@link org.fiware.tmforum.storage.NotStored} fields.
+     * For {@code tmforum.entity.data}: drops {@link org.fiware.tmforum.storage.NotStored} fields and declared
+     * top-level empty values (see {@link DocumentMode}); extension values are written as they are.
      */
     public DocumentMapper storage() {
         return storage;
     }
 
     /**
-     * For outbox states, which keep {@link org.fiware.tmforum.storage.NotStored} fields for the event payload.
+     * For outbox states, which keep {@link org.fiware.tmforum.storage.NotStored} fields and empty values for the
+     * event payload.
      */
     public DocumentMapper event() {
         return event;
     }
 
-    private static ObjectMapper derive(ObjectMapper applicationMapper, boolean dropNotStored) {
+    private static ObjectMapper derive(ObjectMapper applicationMapper, PostgresMappingModule documentModule) {
         return applicationMapper.rebuild()
-                .addModule(new PostgresMappingModule(dropNotStored))
+                .addModule(documentModule)
                 .changeDefaultPropertyInclusion(inclusion -> DOCUMENT_INCLUSION)
                 // ISO-8601 strings, which ticket 7's jsonb filters and the ticket 8 migration rely on
                 .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)

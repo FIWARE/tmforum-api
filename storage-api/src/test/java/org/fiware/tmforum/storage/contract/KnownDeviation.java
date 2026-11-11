@@ -12,6 +12,14 @@ public enum KnownDeviation {
     EMPTIED_LIST_BREAKS_READS,
 
     /**
+     * An update that empties an extension list makes the extension read back as a map from the expanded attribute
+     * name (e.g. {@code https://uri=etsi=org/ngsi-ld/default-context/<name>}) to an empty list instead of an empty
+     * list. Observed on Orion-LD 1.9.0 in append mode. Scorpio 5.0.3 reads back {@code []} (its contract IT does
+     * not record this); replace mode is not run against a broker.
+     */
+    EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED,
+
+    /**
      * {@code findEntities} completes empty instead of emitting a page when the page holds no entity, also when
      * the offset is past the last match.
      */
