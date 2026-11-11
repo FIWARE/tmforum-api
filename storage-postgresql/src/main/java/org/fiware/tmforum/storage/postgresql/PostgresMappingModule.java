@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * Stored-document format of domain entities: extension properties as top-level keys, {@code type} write-only, id
@@ -53,10 +54,16 @@ class PostgresMappingModule extends SimpleModule {
 
     /**
      * Keys of {@code entityClass} that never carry an extension entry. Filled when the mapper builds the class's
-     * serializer, so it is complete once an instance of the class was serialized; empty before.
+     * serializer, so throws {@link IllegalStateException} until an instance of the class was serialized.
      */
     Set<String> declaredNames(Class<?> entityClass) {
-        return declaredNamesByClass.getOrDefault(entityClass, Set.of());
+        Set<String> declaredNames = declaredNamesByClass.get(entityClass);
+        if (declaredNames == null) {
+            throw new IllegalStateException(String.format(
+                    "No serializer of %s was built yet, serialize an instance before asking for its declared names.",
+                    entityClass.getName()));
+        }
+        return declaredNames;
     }
 
     @Override
@@ -130,6 +137,9 @@ class PostgresMappingModule extends SimpleModule {
                     .findFirst()
                     .orElse(null);
             if (additionalProperties == null) {
+                declaredNamesByClass.put(beanDesc.getBeanClass(), beanProperties.stream()
+                        .map(BeanPropertyWriter::getName)
+                        .collect(Collectors.toUnmodifiableSet()));
                 return beanProperties;
             }
             properties.remove(additionalProperties);

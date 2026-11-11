@@ -399,6 +399,12 @@ class PostgresDocumentMapperTest {
         assertNotNull(failure.getCause());
     }
 
+    @Test
+    void declaredNamesFailBeforeTheClassWasSerialized() {
+        assertThrows(IllegalStateException.class,
+                () -> new PostgresMappingModule(true).declaredNames(TestCatalog.class));
+    }
+
     private static JsonNode document(DocumentMapper mapper, Entity entity, DocumentMode mode) {
         return new ObjectMapper().readTree(mapper.toDocument(entity, mode, StorageOperation.CREATE));
     }

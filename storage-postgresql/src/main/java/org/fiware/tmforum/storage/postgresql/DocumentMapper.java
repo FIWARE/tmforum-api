@@ -57,6 +57,7 @@ public final class DocumentMapper {
             objectNode.remove(TYPE_PROPERTY);
         }
         if (dropEmptyAttributes) {
+            // after valueToTree: serializing the class is what records its declared names
             removeEmptyAttributes(objectNode, extensionNames(entity), mode);
         }
         NullCharacterValidator.validate(objectNode, operation);
