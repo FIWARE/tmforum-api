@@ -18,7 +18,8 @@ import java.time.Duration;
  * ceil(hubs / {@value NotificationSender#DELIVERY_CONCURRENCY}) x (connect + read timeout) of the notification
  * client. With at most {@value TMForumEventHandler#SUBSCRIPTION_PAGE_SIZE} hubs per event and Micronaut's defaults
  * (30s + 10s) that is 7 x 40s = 280s. {@code lease} must exceed it, or another instance claims the rows again while
- * they are still being delivered.
+ * they are still being delivered. A scheduled poll or housekeeping run still going after {@code lease} is cancelled
+ * and logged as failed.
  */
 @ConfigurationProperties(OutboxProperties.PREFIX)
 public record OutboxProperties(

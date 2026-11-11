@@ -69,7 +69,10 @@ public class NotificationSender {
                         ? Mono.<Void>empty()
                         : Mono.<Void>error(new NotificationDeliveryException(String.format(
                                 "Callback %s answered %s.", notification.callback(), response.getStatus()))))
-                .doOnError(e -> log.warn("Was not able to deliver notification {}.", notification, e));
+                // the caller retries and reports the failure, so a dead callback must not log a WARN per attempt
+                .doOnError(e -> log.debug("Was not able to deliver event {} ({}) to {}.",
+                        notification.event().getEventId(), notification.event().getEventType(),
+                        notification.callback(), e));
     }
 
     /**

@@ -118,9 +118,10 @@ public class OutboxDispatcher {
         runLogged(housekeeping(), housekeepingFailures, "clean up");
     }
 
-    // a database outage fails every run, so only the first failure of a streak (and the recovery) is a WARN
+    // a database outage fails every run, so only the first failure of a streak (and the recovery) is a WARN;
+    // a hung statement must not stop the fixed-delay schedule, and past the lease the claimed rows are free anyway
     private void runLogged(Mono<?> run, FailureStreak failures, String action) {
-        run.doOnSuccess(ignored -> {
+        run.timeout(properties.lease()).doOnSuccess(ignored -> {
             if (failures.succeeded()) {
                 LOGGER.warn("Was able to {} the event outbox again.", action);
             }
