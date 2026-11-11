@@ -43,8 +43,8 @@ public class IdHelper {
 	 * @throws IllegalArgumentException if the id has a type segment and the class has no MappingEnabled annotation
 	 */
 	public static boolean hasTypeSegmentOf(URI id, Class<?> entityClass) {
-		String[] parts = id.toString().split(":", ID_PARTS_UP_TO_TYPE + 1);
-		if (parts.length < ID_PARTS_UP_TO_TYPE) {
+		Optional<String> typeSegment = typeSegment(id);
+		if (typeSegment.isEmpty()) {
 			return false;
 		}
 		MappingEnabled mappingAnnotation = entityClass.getAnnotation(MappingEnabled.class);
@@ -52,7 +52,15 @@ public class IdHelper {
 			throw new IllegalArgumentException(
 					String.format("Class %s missing @MappingEnabled annotation", entityClass.getName()));
 		}
-		return Arrays.asList(mappingAnnotation.entityType()).contains(parts[TYPE_SEGMENT_INDEX]);
+		return Arrays.asList(mappingAnnotation.entityType()).contains(typeSegment.get());
+	}
+
+	/**
+	 * The {@code <type>} of an {@code urn:ngsi-ld:<type>:...} id; empty when the id has no such segment.
+	 */
+	public static Optional<String> typeSegment(URI id) {
+		String[] parts = id.toString().split(":", ID_PARTS_UP_TO_TYPE + 1);
+		return parts.length < ID_PARTS_UP_TO_TYPE ? Optional.empty() : Optional.of(parts[TYPE_SEGMENT_INDEX]);
 	}
 
 	/**

@@ -410,13 +410,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 		validateInternalRefs(resource);
 		stampLastUpdate(resource);
 
-		URI idUri = URI.create(id);
-		return repository.get(idUri, entityClass)
-				.switchIfEmpty(Mono.error(new TmForumException("No such resource exists.",
-						TmForumExceptionReason.NOT_FOUND)))
-				.flatMap(existing -> getCheckingMono(resource))
-				.flatMap(checked -> repository.updateDomainEntity(id, resource)
-						.then(repository.get(idUri, entityClass)))
+		return patch(id, resource, getCheckingMono(resource), (Class<Resource>) entityClass)
 				.map(this::mapResourceToVO)
 				.map(HttpResponse::ok);
 	}

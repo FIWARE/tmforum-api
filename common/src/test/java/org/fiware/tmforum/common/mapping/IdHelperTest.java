@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +44,21 @@ class IdHelperTest {
 	@MethodSource("ids")
 	void hasTypeSegmentOf(String id, boolean expected) {
 		assertEquals(expected, IdHelper.hasTypeSegmentOf(URI.create(id), Mapped.class));
+	}
+
+	static Stream<Arguments> typeSegments() {
+		return Stream.of(
+				Arguments.of("urn:ngsi-ld:" + TYPE + ":1", Optional.of(TYPE)),
+				Arguments.of("urn:ngsi-ld:" + TYPE + ":with:colons", Optional.of(TYPE)),
+				Arguments.of("urn:ngsi-ld:" + TYPE, Optional.of(TYPE)),
+				Arguments.of("urn:ngsi-ld", Optional.empty()),
+				Arguments.of("plain-id", Optional.empty()));
+	}
+
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("typeSegments")
+	void typeSegment(String id, Optional<String> expected) {
+		assertEquals(expected, IdHelper.typeSegment(URI.create(id)));
 	}
 
 	@Test

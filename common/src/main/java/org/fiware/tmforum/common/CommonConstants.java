@@ -34,4 +34,9 @@ public class CommonConstants {
 	 */
 	public static final String SUBSCRIPTIONS_CACHE_NAME = "subscriptions";
 
+	/**
+	 * Micronaut environment of the PostgreSQL storage; {@code common} beans that the adapter replaces exclude it.
+	 */
+	public static final String POSTGRESQL_ENVIRONMENT = "postgresql";
+
 }
