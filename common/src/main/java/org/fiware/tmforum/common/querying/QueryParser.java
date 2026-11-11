@@ -379,12 +379,14 @@ public class QueryParser {
     /**
      * Entities are persisted with NGSI-LD reserved names escaped (e.g. valueType -> tmfEscaped-valueType),
      * so filter and sort paths have to use the same escaped name. Only the trailing "id" of a relationship
-     * is left alone; nested "id" keys of structured properties are persisted escaped.
+     * and the top-level entity "id" are left alone; nested "id" keys of structured properties are persisted escaped.
      */
     private static List<String> escapePath(List<String> path, boolean isRel) {
         List<String> escaped = new ArrayList<>(path.stream().map(ReservedWordHandler::escapeReservedWords).toList());
         int last = path.size() - 1;
-        if (isRel && last >= 0 && "id".equals(path.get(last))) {
+        // a top-level "id" is the entity id and is never escaped
+        boolean entityId = last == 0;
+        if ((isRel || entityId) && last >= 0 && "id".equals(path.get(last))) {
             escaped.set(last, "id");
         }
         return escaped;

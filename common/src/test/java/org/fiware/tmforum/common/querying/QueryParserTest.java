@@ -295,6 +295,9 @@ class QueryParserTest {
 				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-color,-temperature")), "color;desc,temperature;desc", MyPojo.class),
 				// nested attribute path
 				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-sub.status")), "sub.status;desc", MyPojo.class),
+				// the entity id is never escaped
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("id")), "id", MyPojo.class),
+				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-id")), "id;desc", MyPojo.class),
 				// reserved names are escaped like in filters
 				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("sub.valueType")), "sub.tmfEscaped-valueType", MyPojo.class),
 				Arguments.of(Map.of(QueryParser.SORT_KEY, List.of("-rel.valueType")), "rel.tmfEscaped-valueType;desc", MyPojo.class),
