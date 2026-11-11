@@ -155,7 +155,7 @@ public class QueryParser {
         NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(path, queryClass);
         List<String> resolvedPath = new ArrayList<>(attribute.path().isEmpty()
                 ? path.stream().map(ReservedWordHandler::escapeReservedWords).toList()
-                : attribute.path());
+                : escapePath(attribute.path(), isRelationship(queryClass, attribute)));
 
         String first = resolvedPath.remove(0);
         String attrPath = first + String.join("", resolvedPath.stream().map(this::mapPathPart).toList());
@@ -337,14 +337,15 @@ public class QueryParser {
 
         String attrPath;
         if (isRel) {
-            attrPath = String.join(".", attribute.path());
+            attrPath = String.join(".", escapePath(attribute.path(), true));
             // remove .id, since it will be added in case of referenced entities
             if (attrPath.endsWith(".id")) {
                 attrPath = attrPath.substring(0, attrPath.length() - 3);
             }
         } else {
-            String first = attribute.path().remove(0);
-            attrPath = first + String.join("", attribute.path()
+            List<String> escapedPath = new ArrayList<>(escapePath(attribute.path(), false));
+            String first = escapedPath.remove(0);
+            attrPath = first + String.join("", escapedPath
                     .stream()
                     .map(this::mapPathPart)
                     .toList());
@@ -373,6 +374,22 @@ public class QueryParser {
             return queryPart;
         }
         return new QueryPart(queryPart.attribute(), NGSI_LD_NOT_EQUALS, matcher.group(1));
+    }
+
+    /**
+     * Entities are persisted with NGSI-LD reserved names escaped (e.g. valueType -> tmfEscaped-valueType),
+     * so filter and sort paths have to use the same escaped name. Only the trailing "id" of a relationship
+     * and the top-level entity "id" are left alone; nested "id" keys of structured properties are persisted escaped.
+     */
+    private static List<String> escapePath(List<String> path, boolean isRel) {
+        List<String> escaped = new ArrayList<>(path.stream().map(ReservedWordHandler::escapeReservedWords).toList());
+        int last = path.size() - 1;
+        // a top-level "id" is the entity id and is never escaped
+        boolean entityId = last == 0;
+        if ((isRel || entityId) && last >= 0 && "id".equals(path.get(last))) {
+            escaped.set(last, "id");
+        }
+        return escaped;
     }
 
     private String mapPathPart(String part) {
