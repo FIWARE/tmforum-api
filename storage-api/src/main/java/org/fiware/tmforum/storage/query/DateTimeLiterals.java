@@ -40,6 +40,7 @@ public final class DateTimeLiterals {
             .append(DateTimeFormatter.ISO_LOCAL_TIME));
     private static final DateTimeFormatter OFFSET_DATE_TIME = strict(new DateTimeFormatterBuilder()
             .append(LOCAL_DATE_TIME)
+            // As in ISO_OFFSET_DATE_TIME: lenient takes an hours-only offset ("+02") as well.
             .parseLenient()
             .appendOffsetId()
             .parseStrict());
@@ -52,8 +53,9 @@ public final class DateTimeLiterals {
     }
 
     /**
-     * Accepts an ISO-8601 date-time with offset or {@code Z}, a local date-time (read as UTC) and a date (start of
-     * day UTC), with a 4-digit year from 0001 and an offset within ±15:59. Empty for anything else.
+     * Accepts an ISO-8601 date-time with offset ({@code +HH}, {@code +HH:MM}, {@code +HH:MM:SS}) or {@code Z}, a
+     * local date-time (read as UTC) and a date (start of day UTC), with a 4-digit year from 0001 and an offset within
+     * ±15:59. Empty for anything else.
      */
     public static Optional<OffsetDateTime> parse(String literal) {
         return parseAnyForm(literal).filter(DateTimeLiterals::isInBindableRange);

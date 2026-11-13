@@ -3,8 +3,8 @@ package org.fiware.tmforum.storage.query;
 import java.util.Objects;
 
 /**
- * One sort criterion. {@code valueType} is always null for an undeclared (extension) attribute, since a sort has
- * no literal to infer a type from.
+ * One sort criterion. A null {@code valueType} means untyped: renderers order by the raw stored value. It is always
+ * null for an undeclared (extension) attribute, since a sort has no literal to infer a type from.
  */
 public record SortKey(AttributePath attribute, ValueType valueType, boolean descending) {
 
