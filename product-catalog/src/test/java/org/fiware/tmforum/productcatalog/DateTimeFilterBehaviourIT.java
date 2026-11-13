@@ -6,6 +6,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.fiware.productcatalog.api.ProductOfferingApiTestClient;
 import org.fiware.productcatalog.model.ProductOfferingCreateVO;
 import org.fiware.productcatalog.model.ProductOfferingCreateVOTestExample;
 import org.fiware.productcatalog.model.ProductOfferingVO;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -21,6 +23,7 @@ import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.storage.query.DateTimeLiterals;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,9 +53,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Characterises how the brokers compare a date-time filter or sort on {@code lastUpdate}: as instants or as the
- * stored strings. Seeds values with and without a fraction, so string and instant semantics give different results.
- * Input for the date-time gate of ticket 90; it pins what the brokers do today, not what they should do.
+ * Characterises how a date-time filter or sort on {@code lastUpdate} behaves on the brokers today: as instants or as
+ * the stored strings. The API path measures today's renderer and broker together, the renderer quoting the literal
+ * (a string in the NGSI-LD q grammar); the probe sends it unquoted (a date-time) straight to the broker.
+ * Seeds values with and without a fraction, so string and instant semantics give different results.
+ * Input for the date-time gate of ticket 90; it pins today's behaviour, not what it should be.
  */
 @Slf4j
 @BrokerOnly
@@ -72,13 +77,15 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 	private static final Instant EARLY = Instant.parse("2024-01-01T09:00:00Z");
 	private static final Instant EXACT = Instant.parse("2024-01-01T10:00:00Z");
 	private static final Instant FRACTION = Instant.parse("2024-01-01T10:00:00.500Z");
-	// creation order differs from both instant and string order, so a broker ignoring the sort is told apart
+	// creation order differs from both instant and string order, so neither can pass by accident
 	private static final List<Instant> SEEDS = List.of(EXACT, EARLY, FRACTION);
 
 	private final ProductOfferingApiTestClient productOfferingApiTestClient;
 	private final HttpClient httpClient;
 	private final EntitiesApiClient entitiesApiClient;
 	private final Environment environment;
+	private final String tenant;
+	private final String linkHeader;
 	private final Clock clock = mock(Clock.class);
 
 	/**
@@ -101,34 +108,37 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 	 * TMForum filter operators, with the outcome of a {@code compareTo(literal)} that matches.
 	 */
 	enum FilterOperator {
-		EQ(".eq", c -> c == 0),
-		GT(".gt", c -> c > 0),
-		GTE(".gte", c -> c >= 0),
-		LT(".lt", c -> c < 0),
-		LTE(".lte", c -> c <= 0);
+		EQ(".eq", "==", c -> c == 0),
+		GT(".gt", ">", c -> c > 0),
+		GTE(".gte", ">=", c -> c >= 0),
+		LT(".lt", "<", c -> c < 0),
+		LTE(".lte", "<=", c -> c <= 0);
 
 		private final String suffix;
+		private final String ngsiLdOperator;
 		private final IntPredicate matches;
 
-		FilterOperator(String suffix, IntPredicate matches) {
+		FilterOperator(String suffix, String ngsiLdOperator, IntPredicate matches) {
 			this.suffix = suffix;
+			this.ngsiLdOperator = ngsiLdOperator;
 			this.matches = matches;
 		}
 	}
 
 	/**
-	 * How a broker compares a date-time: by instant, lexically by the stored string, not at all (results in
-	 * creation order) or by failing the request.
+	 * How a broker compares a date-time: by instant, lexically by the stored string, never matching, not at all (the
+	 * sort direction changes nothing) or by failing the request.
 	 */
 	enum Semantics {
 		INSTANT,
 		STRING,
+		NONE,
 		IGNORED,
 		UNSUPPORTED
 	}
 
 	/**
-	 * What each broker does today, per literal form.
+	 * What each broker does today with the quoted literal the API sends, per literal form.
 	 */
 	private static final Map<String, Map<LiteralForm, Semantics>> OBSERVED_FILTER_SEMANTICS = Map.of(
 			ORION_LD_ENVIRONMENT, Map.of(
@@ -136,6 +146,22 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 					LiteralForm.OFFSET, Semantics.STRING,
 					LiteralForm.LOCAL, Semantics.STRING,
 					LiteralForm.DATE, Semantics.STRING),
+			SCORPIO_ENVIRONMENT, Map.of(
+					LiteralForm.ZULU, Semantics.STRING,
+					LiteralForm.OFFSET, Semantics.STRING,
+					LiteralForm.LOCAL, Semantics.STRING,
+					LiteralForm.DATE, Semantics.STRING));
+	/**
+	 * What each broker does with an unquoted literal sent straight to it, per literal form. The mapping stores
+	 * lastUpdate as a plain string, not a typed DateTime: Orion-LD 1.9.0 then matches nothing, Scorpio 5.0.3 still
+	 * compares the strings. The date-only literal precedes every seed either way, so it cannot tell the two apart.
+	 */
+	private static final Map<String, Map<LiteralForm, Semantics>> OBSERVED_UNQUOTED_FILTER_SEMANTICS = Map.of(
+			ORION_LD_ENVIRONMENT, Map.of(
+					LiteralForm.ZULU, Semantics.NONE,
+					LiteralForm.OFFSET, Semantics.NONE,
+					LiteralForm.LOCAL, Semantics.NONE,
+					LiteralForm.DATE, Semantics.NONE),
 			SCORPIO_ENVIRONMENT, Map.of(
 					LiteralForm.ZULU, Semantics.STRING,
 					LiteralForm.OFFSET, Semantics.STRING,
@@ -156,6 +182,8 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 		this.httpClient = httpClient;
 		this.entitiesApiClient = entitiesApiClient;
 		this.environment = environment;
+		this.tenant = generalProperties.getTenant();
+		this.linkHeader = String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, generalProperties.getContextUrl());
 	}
 
 	@MockBean(Clock.class)
@@ -187,10 +215,7 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 
 		assertEquals(HttpStatus.OK, response.getStatus(), query);
 		Set<String> observed = ids(response.body()).collect(Collectors.toSet());
-		Instant literalInstant = DateTimeLiterals.parse(form.literal).orElseThrow().toInstant();
-		Map<Semantics, Set<String>> expected = Map.of(
-				Semantics.INSTANT, matching(seeds, seed -> operator.matches.test(seed.instant().compareTo(literalInstant))),
-				Semantics.STRING, matching(seeds, seed -> operator.matches.test(seed.stored().compareTo(form.literal))));
+		Map<Semantics, Set<String>> expected = expectedMatches(seeds, form, operator);
 		log.info("Date-time filter on {}: {} {} -> {} (instant: {}, string: {})", broker(), form, operator,
 				names(seeds, observed), names(seeds, expected.get(Semantics.INSTANT)),
 				names(seeds, expected.get(Semantics.STRING)));
@@ -203,35 +228,69 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 				.flatMap(form -> Arrays.stream(FilterOperator.values()).map(operator -> Arguments.of(form, operator)));
 	}
 
-	@ParameterizedTest(name = "descending: {0}")
-	@MethodSource("sortCases")
-	public void sortOnLastUpdate(boolean descending) throws Exception {
+	/**
+	 * Sends the literal unquoted straight to the broker, bypassing the renderer: tells whether the broker can
+	 * compare instants at all.
+	 */
+	@ParameterizedTest(name = "{0} {1}")
+	@MethodSource("filterCases")
+	public void probeUnquotedFilterOnLastUpdate(LiteralForm form, FilterOperator operator) throws Exception {
 		Map<String, Seed> seeds = seed();
-		String sort = descending ? "-" + LAST_UPDATE : LAST_UPDATE;
+		String q = LAST_UPDATE + operator.ngsiLdOperator + form.literal;
+		Semantics expected = OBSERVED_UNQUOTED_FILTER_SEMANTICS.get(broker()).get(form);
 
-		HttpResponse<String> response = callAndCatch(() -> httpClient.toBlocking()
-				.exchange(HttpRequest.GET(PRODUCT_OFFERING_PATH + "?sort=" + sort), String.class));
-
-		if (OBSERVED_SORT_SEMANTICS.get(broker()) == Semantics.UNSUPPORTED) {
-			log.info("Date-time sort on {}: {} -> {}", broker(), sort, response.getStatus());
-			assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatus(), sort);
+		Set<String> observed;
+		try {
+			observed = entitiesApiClient.queryEntities(tenant, null, null, getEntityType(), null, q, null, null, null,
+							null, null, null, null, null, null, null, linkHeader)
+					.block().body().stream()
+					.map(entity -> entity.getId().toString())
+					.collect(Collectors.toSet());
+		} catch (HttpClientResponseException e) {
+			assertEquals(Semantics.UNSUPPORTED, expected, q + " failed with " + e.getStatus());
 			return;
 		}
-		assertEquals(HttpStatus.OK, response.getStatus(), sort);
-		List<String> observed = ids(response.body()).toList();
-		Map<Semantics, List<String>> expected = Map.of(
-				Semantics.INSTANT, sorted(seeds, Comparator.comparing(Seed::instant), descending),
-				Semantics.STRING, sorted(seeds, Comparator.comparing(Seed::stored), descending),
-				Semantics.IGNORED, List.copyOf(seeds.keySet()));
-		log.info("Date-time sort on {}: {} -> {} (instant: {}, string: {})", broker(), sort,
-				names(seeds, observed), names(seeds, expected.get(Semantics.INSTANT)),
-				names(seeds, expected.get(Semantics.STRING)));
-
-		assertEquals(expected.get(OBSERVED_SORT_SEMANTICS.get(broker())), observed, sort);
+		Map<Semantics, Set<String>> candidates = expectedMatches(seeds, form, operator);
+		assertEquals(candidates.get(expected), observed, q + " -> " + names(seeds, observed) + ", instant: "
+				+ names(seeds, candidates.get(Semantics.INSTANT)) + ", string: "
+				+ names(seeds, candidates.get(Semantics.STRING)));
 	}
 
-	private static Stream<Arguments> sortCases() {
-		return Stream.of(Arguments.of(false), Arguments.of(true));
+	@Test
+	public void sortOnLastUpdate() throws Exception {
+		Map<String, Seed> seeds = seed();
+		String ascendingSort = LAST_UPDATE;
+		String descendingSort = "-" + LAST_UPDATE;
+
+		HttpResponse<String> ascending = sortBy(ascendingSort);
+		HttpResponse<String> descending = sortBy(descendingSort);
+
+		Semantics semantics = OBSERVED_SORT_SEMANTICS.get(broker());
+		if (semantics == Semantics.UNSUPPORTED) {
+			assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ascending.getStatus(), ascendingSort);
+			assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, descending.getStatus(), descendingSort);
+			return;
+		}
+		assertEquals(HttpStatus.OK, ascending.getStatus(), ascendingSort);
+		assertEquals(HttpStatus.OK, descending.getStatus(), descendingSort);
+		List<String> ascendingIds = ids(ascending.body()).toList();
+		List<String> descendingIds = ids(descending.body()).toList();
+		if (semantics == Semantics.IGNORED) {
+			// the unsorted order is unspecified, so only pin that the sort is not applied
+			assertEquals(seeds.keySet(), Set.copyOf(ascendingIds), ascendingSort);
+			assertEquals(ascendingIds, descendingIds, "Both directions should answer alike.");
+			return;
+		}
+		Comparator<Seed> order = semantics == Semantics.INSTANT
+				? Comparator.comparing(Seed::instant)
+				: Comparator.comparing(Seed::stored);
+		assertEquals(sorted(seeds, order, false), ascendingIds, ascendingSort);
+		assertEquals(sorted(seeds, order, true), descendingIds, descendingSort);
+	}
+
+	private HttpResponse<String> sortBy(String sort) throws Exception {
+		return callAndCatch(() -> httpClient.toBlocking()
+				.exchange(HttpRequest.GET(PRODUCT_OFFERING_PATH + "?sort=" + sort), String.class));
 	}
 
 	/**
@@ -278,6 +337,15 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 				.filter(environment.getActiveNames()::contains)
 				.findFirst()
 				.orElseThrow(() -> new IllegalStateException("Runs only on a broker: " + environment.getActiveNames()));
+	}
+
+	private static Map<Semantics, Set<String>> expectedMatches(Map<String, Seed> seeds, LiteralForm form,
+																FilterOperator operator) {
+		Instant literalInstant = DateTimeLiterals.parse(form.literal).orElseThrow().toInstant();
+		return Map.of(
+				Semantics.NONE, Set.of(),
+				Semantics.INSTANT, matching(seeds, seed -> operator.matches.test(seed.instant().compareTo(literalInstant))),
+				Semantics.STRING, matching(seeds, seed -> operator.matches.test(seed.stored().compareTo(form.literal))));
 	}
 
 	private static Set<String> matching(Map<String, Seed> seeds, java.util.function.Predicate<Seed> predicate) {

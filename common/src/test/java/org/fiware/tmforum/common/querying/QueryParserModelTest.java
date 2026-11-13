@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,13 @@ class QueryParserModelTest {
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("1", "2"), "ext"))),
 				Arguments.of("ext=1,abc", MyPojo.class,
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("1", "abc"), "ext"))),
+				// only a plain NGSI-LD number is a NUMBER; Java-only number forms stay strings instead of a 400
+				Arguments.of("ext=+5", MyPojo.class,
+						filter(undeclared(EQUALS, ValueType.STRING, List.of("+5"), "ext"))),
+				Arguments.of("ext=.5", MyPojo.class,
+						filter(undeclared(EQUALS, ValueType.STRING, List.of(".5"), "ext"))),
+				Arguments.of("ext=NaN", MyPojo.class,
+						filter(undeclared(EQUALS, ValueType.STRING, List.of("NaN"), "ext"))),
 				Arguments.of("relatedParty.role=Owner", MyPojo.class,
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("Owner"), "relatedParty", "role"))),
 				// a regex is one opaque pattern, OR-ed patterns included
@@ -168,6 +176,14 @@ class QueryParserModelTest {
 	@Test
 	void testParseSortWithoutSort() {
 		assertEquals(List.of(), new QueryParser(new GeneralProperties()).parseSort(MyPojo.class, Map.of()));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@ValueSource(strings = {"-", "sub..status"})
+	void testParseSortRejectsBlankSegments(String sort) {
+		QueryParser qp = new QueryParser(new GeneralProperties());
+		assertThrows(QueryException.class,
+				() -> qp.parseSort(MyPojo.class, Map.of(QueryParser.SORT_KEY, List.of(sort))));
 	}
 
 	@ParameterizedTest(name = "{0}")
