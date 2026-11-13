@@ -24,7 +24,10 @@ class DateTimeLiteralsTest {
                 Arguments.of("2024-01-01T10:15:30+02:00", OffsetDateTime.of(2024, 1, 1, 10, 15, 30, 0, PLUS_TWO)),
                 Arguments.of("2024-01-01T10:15:30", OffsetDateTime.of(2024, 1, 1, 10, 15, 30, 0, ZoneOffset.UTC)),
                 Arguments.of("2024-01-01T10:15", OffsetDateTime.of(2024, 1, 1, 10, 15, 0, 0, ZoneOffset.UTC)),
-                Arguments.of("2024-01-01", OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)));
+                Arguments.of("2024-01-01", OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)),
+                Arguments.of("0001-01-01", OffsetDateTime.of(1, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)),
+                Arguments.of("9999-12-31T23:59:59-15:59",
+                        OffsetDateTime.of(9999, 12, 31, 23, 59, 59, 0, ZoneOffset.ofHoursMinutes(-15, -59))));
     }
 
     @ParameterizedTest
@@ -35,7 +38,9 @@ class DateTimeLiteralsTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", "now", "42", "true", "2024-13-01", "2024-01-01T25:00:00Z", "01.01.2024",
-            "2024-01-01 10:15:30", "2024-01-01T10:15:30+0200", "2024-01-01T10:15:30Z[Europe/Berlin]"})
+            "2024-01-01 10:15:30", "2024-01-01T10:15:30+0200", "2024-01-01T10:15:30Z[Europe/Berlin]",
+            "+10000-01-01", "-0001-01-01", "+2024-01-01", "0000-01-01", "24-01-01", "2024-1-1",
+            "2024-01-01T00:00+16:00", "2024-01-01T00:00+18:00", "2024-01-01T00:00-18:00"})
     void rejectsOtherLiterals(String literal) {
         assertEquals(Optional.empty(), DateTimeLiterals.parse(literal));
     }
