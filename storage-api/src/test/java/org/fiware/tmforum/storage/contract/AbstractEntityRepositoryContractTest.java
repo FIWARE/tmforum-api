@@ -52,6 +52,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final int LIST_LIMIT = 100;
     private static final String TARGET_NAME = "contract-reference-target";
     private static final String RENAMED_TARGET_NAME = "renamed-contract-reference-target";
+    private static final String EXTENSION_NAME = "contractExtension";
+    private static final String EXTENSION_ENTRY = "contract-extension-entry";
 
     private final List<URI> createdIds = new ArrayList<>();
 
@@ -83,6 +85,17 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     }
 
     enum AbsentId {UNKNOWN, OTHER_TYPE, NO_TYPE_SEGMENT}
+
+    // enum rather than Object arguments, which Micronaut's parameter resolver would try to inject as beans
+    enum EmptyValue {
+        LIST(List.of()), OBJECT(Map.of());
+
+        private final Object value;
+
+        EmptyValue(Object value) {
+            this.value = value;
+        }
+    }
 
     @AfterEach
     void deleteCreatedEntities() {
@@ -156,6 +169,76 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertTrue(list == null || list.isEmpty(), "An emptied list reads back absent or empty, but was " + list);
         assertEquals(fixture().mutableValue(created), fixture().mutableValue(read));
         assertEquals(fixture().untouchedValue(created), fixture().untouchedValue(read));
+    }
+
+    @Test
+    void updateKeepsTheStoredObjectWhenCarryingAnEmptyOne() {
+        T created = fixture().newEntity(fixture().newId());
+        URI id = create(fixture(), created);
+
+        repository().updateDomainEntity(id.toString(), fixture().emptiedObject(id)).block(TIMEOUT);
+
+        T read = read(id);
+        assertNotNull(fixture().objectValue(created));
+        assertEquals(fixture().objectValue(created), fixture().objectValue(read));
+        assertEquals(fixture().mutableValue(created), fixture().mutableValue(read));
+    }
+
+    @ParameterizedTest
+    @EnumSource(EmptyValue.class)
+    void anEmptyExtensionValueRoundTrips(EmptyValue empty) {
+        URI id = create(fixture(),
+                fixture().withExtension(fixture().newEntity(fixture().newId()), EXTENSION_NAME, empty.value));
+
+        assertEquals(empty.value, fixture().extensionValue(read(id), EXTENSION_NAME));
+    }
+
+    @Test
+    void updateKeepsAnEmptiedExtensionListAsEmpty() {
+        URI id = create(fixture(), fixture().withExtension(fixture().newEntity(fixture().newId()), EXTENSION_NAME,
+                List.of(EXTENSION_ENTRY)));
+
+        repository().updateDomainEntity(id.toString(),
+                fixture().withExtension(fixture().mutate(id), EXTENSION_NAME, List.of())).block(TIMEOUT);
+
+        Object read = fixture().extensionValue(read(id), EXTENSION_NAME);
+        if (knownDeviations().contains(KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED)) {
+            assertTrue(read instanceof Map<?, ?> expanded && expanded.size() == 1
+                            && List.of().equals(expanded.values().iterator().next()),
+                    "Expected a map to an empty list while "
+                            + KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED + " is recorded, but was " + read);
+            return;
+        }
+        assertEquals(List.of(), read);
+    }
+
+    @Test
+    void aDeclaredPropertyWinsOverAnExtensionOfTheSameName() {
+        T created = fixture().withExtensionNamedLikeTheMutableAttribute(fixture().newEntity(fixture().newId()));
+        URI id = create(fixture(), created);
+
+        assertDeclaredValueWon(fixture().mutableValue(created), read(id));
+    }
+
+    @Test
+    void anUpdatedDeclaredPropertyWinsOverAnExtensionOfTheSameName() {
+        URI id = create(fixture());
+        T mutation = fixture().withExtensionNamedLikeTheMutableAttribute(fixture().mutate(id));
+
+        repository().updateDomainEntity(id.toString(), mutation).block(TIMEOUT);
+
+        assertDeclaredValueWon(fixture().mutableValue(mutation), read(id));
+    }
+
+    private void assertDeclaredValueWon(Object declaredValue, T read) {
+        assertEquals(Set.of(), fixture().extensionNames(read));
+        if (knownDeviations().contains(KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY)) {
+            assertEquals(fixture().extensionValue(), fixture().mutableValue(read),
+                    "Expected the extension value while " + KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY
+                            + " is listed");
+            return;
+        }
+        assertEquals(declaredValue, fixture().mutableValue(read));
     }
 
     @Test

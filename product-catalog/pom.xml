@@ -30,11 +30,30 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+        <!-- PostgreSQL storage, active in the postgresql environment only -->
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>storage-postgresql</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
             <artifactId>storage-api</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <!-- counts the statements GetIssuesOneQueryIT sends to PostgreSQL -->
+        <dependency>
+            <groupId>io.r2dbc</groupId>
+            <artifactId>r2dbc-proxy</artifactId>
+            <version>${version.io.r2dbc.r2dbc-proxy}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

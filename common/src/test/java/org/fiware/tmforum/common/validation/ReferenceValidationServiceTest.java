@@ -6,29 +6,37 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.configuration.ReferenceProperties;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
+import org.fiware.tmforum.storage.StorageErrorReason;
+import org.fiware.tmforum.storage.StorageException;
+import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.StoredReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ReferenceValidationServiceTest {
@@ -82,6 +90,12 @@ class ReferenceValidationServiceTest {
 			String id = invocation.getArgument(0);
 			String type = STORED_ENTITIES.get(id);
 			return type == null ? Mono.empty() : Mono.just(new StoredReference(id, type));
+		});
+		when(referencesRepository.findReferences(anyCollection())).thenAnswer(invocation -> {
+			Collection<String> ids = invocation.getArgument(0);
+			return Flux.fromIterable(ids)
+					.filter(STORED_ENTITIES::containsKey)
+					.map(id -> new StoredReference(id, STORED_ENTITIES.get(id)));
 		});
 		meterRegistry = new SimpleMeterRegistry();
 		ReferenceProperties referenceProperties = new ReferenceProperties();
@@ -148,8 +162,7 @@ class ReferenceValidationServiceTest {
 	public void referencesWithAnIdThatIsNotAUriAreNotLookedUp(String description, TestRef ref, String scope) {
 		assertEquals(false, service.checkReferenceExists(List.of(ref)).block());
 
-		verify(referencesRepository, never()).referenceExists(anyString(), anyList());
-		verify(referencesRepository, never()).findReference(anyString());
+		verify(referencesRepository, never()).findReferences(anyCollection());
 		assertEquals(1, count(scope, ReferenceValidationService.RESULT_UNRESOLVED));
 	}
 
@@ -160,14 +173,54 @@ class ReferenceValidationServiceTest {
 				Arguments.of("reference without an id", NULL_ID, ReferenceValidationService.SCOPE_LOCAL));
 	}
 
-	@Test
-	public void externalReferencesAreOnlyLookedUpLocallyById() {
-		assertEquals(true, service.checkReferenceExists(List.of(CATEGORY_A, EXTERNAL_1)).block());
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("lookups")
+	public void eachListIsLookedUpWithOneCall(String description, List<TestRef> refs, Set<String> expectedIds) {
+		service.checkReferenceExists(refs).block();
 
-		verify(referencesRepository).referenceExists(eq(CATEGORY_A.id().toString()), anyList());
-		verify(referencesRepository, never()).referenceExists(eq(EXTERNAL_1.id().toString()), anyList());
-		verify(referencesRepository).findReference(EXTERNAL_1.id().toString());
-		verify(referencesRepository, never()).findReference(CATEGORY_A.id().toString());
+		verify(referencesRepository).findReferences(Set.copyOf(expectedIds));
+		verify(referencesRepository, never()).referenceExists(anyString(), anyList());
+		verify(referencesRepository, never()).findReference(anyString());
+	}
+
+	private static Stream<Arguments> lookups() {
+		return Stream.of(
+				Arguments.of("one local", List.of(CATEGORY_A), ids(CATEGORY_A)),
+				Arguments.of("local and missing", List.of(CATEGORY_A, MISSING_X, CATEGORY_B, WRONG_TYPE),
+						ids(CATEGORY_A, MISSING_X, CATEGORY_B, WRONG_TYPE)),
+				Arguments.of("local and external", List.of(CATEGORY_A, EXTERNAL_1, EXTERNAL_WRONG_TYPE),
+						ids(CATEGORY_A, EXTERNAL_1, EXTERNAL_WRONG_TYPE)),
+				Arguments.of("duplicates", List.of(CATEGORY_A, CATEGORY_A, EXTERNAL_ACCEPTED), ids(CATEGORY_A)),
+				Arguments.of("ids that are not URIs left out", Arrays.asList(NON_URI_ID, CATEGORY_A, NULL_ID, null,
+						EXTERNAL_NON_URI_ID), ids(CATEGORY_A)));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("listsWithoutLookup")
+	public void listWithoutResolvableIdIsNotLookedUp(String description, List<TestRef> refs) {
+		service.checkReferenceExists(refs).block();
+
+		verifyNoInteractions(referencesRepository);
+	}
+
+	private static Stream<Arguments> listsWithoutLookup() {
+		return Stream.of(
+				Arguments.of("null list", null),
+				Arguments.of("empty list", List.of()),
+				Arguments.of("only nulls", Arrays.asList(null, null)),
+				Arguments.of("only ids that are not URIs", List.of(NON_URI_ID, EXTERNAL_NON_URI_ID, NULL_ID)));
+	}
+
+	@Test
+	public void lookupFailurePropagates() {
+		StorageException failure = new StorageException(StorageOperation.READ, StorageErrorReason.UNAVAILABLE,
+				"storage down");
+		when(referencesRepository.findReferences(anyCollection())).thenReturn(Flux.error(failure));
+
+		Exception exception = assertThrows(Exception.class, () -> service.checkReferenceExists(List.of(CATEGORY_A))
+				.block());
+
+		assertSame(failure, exception);
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -222,6 +275,10 @@ class ReferenceValidationServiceTest {
 				.tag(ReferenceValidationService.RESULT_TAG, result)
 				.counter();
 		return counter == null ? 0 : counter.count();
+	}
+
+	private static Set<String> ids(TestRef... refs) {
+		return Arrays.stream(refs).map(ref -> ref.id().toString()).collect(Collectors.toSet());
 	}
 
 	private static TestRef categoryRef(String id) {

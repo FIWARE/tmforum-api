@@ -91,7 +91,7 @@ public abstract class NgsiLdBaseRepository {
 
 
 	protected String getLinkHeader() {
-		return String.format("<%s>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json", generalProperties.getContextUrl());
+		return String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, generalProperties.getContextUrl());
 	}
 
 	/**

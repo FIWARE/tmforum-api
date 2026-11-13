@@ -1,25 +1,15 @@
 package org.fiware.tmforum.servicecatalog;
 
-import io.github.wistefan.mapping.EntityVOMapper;
-import io.github.wistefan.mapping.JavaObjectMapper;
-import io.github.wistefan.mapping.annotations.AttributeGetter;
-import io.github.wistefan.mapping.annotations.AttributeSetter;
-import io.github.wistefan.mapping.annotations.AttributeType;
-import io.github.wistefan.mapping.annotations.EntityId;
-import io.github.wistefan.mapping.annotations.EntityType;
-import io.github.wistefan.mapping.annotations.MappingEnabled;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import lombok.Getter;
-import lombok.Setter;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.service.AssociationSpecificationRef;
 import org.fiware.tmforum.service.EntitySpecificationRelationship;
+import org.fiware.tmforum.servicecatalog.domain.ServiceSpecification;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -36,44 +26,33 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Pins that a broker keeps every field of an {@link EntitySpecificationRelationship}, including the nested
- * associationSpec, stored inline in the relationship, written and read with the production mappers.
+ * Pins that the storage keeps every field of an {@link EntitySpecificationRelationship}, including the nested
+ * associationSpec, stored inline in a {@link ServiceSpecification}, written and read through the storage port.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.servicecatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class EntitySpecificationRelationshipIT extends AbstractApiIT {
 
-	private static final String HOLDER_TYPE = "entity-spec-relationship-holder";
 	private static final String FIRST_SPECIFICATION_ID = "urn:ngsi-ld:service-specification:first";
 	private static final String SECOND_SPECIFICATION_ID = "urn:ngsi-ld:service-specification:second";
 	private static final String ASSOCIATION_ID = "urn:ngsi-ld:association-specification:a";
 	private static final Instant START = Instant.parse("2026-01-01T00:00:00Z");
 
-	private final EntitiesApiClient entitiesApiClient;
-	private final JavaObjectMapper javaObjectMapper;
-	private final EntityVOMapper entityVOMapper;
-	private final GeneralProperties generalProperties;
+	private final EntityRepository entityRepository;
 
-	public EntitySpecificationRelationshipIT(EntitiesApiClient entitiesApiClient, JavaObjectMapper javaObjectMapper,
-			EntityVOMapper entityVOMapper, ObjectMapper objectMapper, GeneralProperties generalProperties) {
+	public EntitySpecificationRelationshipIT(EntitiesApiClient entitiesApiClient, EntityRepository entityRepository,
+			ObjectMapper objectMapper, GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
-		this.entitiesApiClient = entitiesApiClient;
-		this.javaObjectMapper = javaObjectMapper;
-		this.entityVOMapper = entityVOMapper;
-		this.generalProperties = generalProperties;
+		this.entityRepository = entityRepository;
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("relationships")
-	public void everyFieldSurvivesTheBroker(String message, List<EntitySpecificationRelationship> relationships) {
-		Holder holder = new Holder("urn:ngsi-ld:" + HOLDER_TYPE + ":" + UUID.randomUUID());
-		holder.setEntitySpecRelationship(relationships);
-		entitiesApiClient.createEntity(javaObjectMapper.toEntityVO(holder), null).block();
+	public void everyFieldSurvivesTheStorage(String message, List<EntitySpecificationRelationship> relationships) {
+		ServiceSpecification specification = new ServiceSpecification(UUID.randomUUID().toString());
+		specification.setEntitySpecRelationship(relationships);
+		entityRepository.createDomainEntity(specification).block();
 
-		EntityVO stored = entitiesApiClient.retrieveEntityById(holder.getId(), null, null, null, null,
-						getLinkHeader(generalProperties.getContextUrl()))
-				.map(HttpResponse::body)
-				.block();
-		Holder read = entityVOMapper.fromEntityVO(stored, Holder.class).block();
+		ServiceSpecification read = entityRepository.get(specification.getId(), ServiceSpecification.class).block();
 
 		assertNotNull(read.getEntitySpecRelationship(), message);
 		// NGSI-LD does not guarantee the order of the instances of a multi-instance attribute
@@ -83,7 +62,7 @@ public class EntitySpecificationRelationshipIT extends AbstractApiIT {
 
 	@Override
 	protected String getEntityType() {
-		return HOLDER_TYPE;
+		return ServiceSpecification.TYPE_SERVICE_SPECIFICATION;
 	}
 
 	private static Stream<Arguments> relationships() {
@@ -120,25 +99,5 @@ public class EntitySpecificationRelationshipIT extends AbstractApiIT {
 		return relationships.stream()
 				.sorted(Comparator.comparing(EntitySpecificationRelationship::getId))
 				.toList();
-	}
-
-	/** Entity holding the relationships read from their properties, as ServiceSpecification will once Step 3 flips it. */
-	@MappingEnabled(entityType = HOLDER_TYPE)
-	public static class Holder {
-
-		@Getter(onMethod = @__({@EntityId}))
-		private final URI id;
-
-		@Getter(onMethod = @__({@EntityType}))
-		private final String type = HOLDER_TYPE;
-
-		@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship")}))
-		@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship",
-				fromProperties = true, targetClass = EntitySpecificationRelationship.class)}))
-		private List<EntitySpecificationRelationship> entitySpecRelationship;
-
-		public Holder(String id) {
-			this.id = URI.create(id);
-		}
 	}
 }

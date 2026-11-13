@@ -8,6 +8,7 @@ import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.ngsi.model.SubscriptionVO;
 import org.fiware.tmforum.common.mapping.EventMapping;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.checkers.ngsild.*;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import reactor.core.publisher.Flux;
@@ -18,6 +19,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -31,8 +34,12 @@ public class NgsiLdEventHandler extends EventHandler {
 			new DeleteNgsiLdEventChecker()
 	);
 
-	public NgsiLdEventHandler(NotificationSender notificationSender, EntityVOMapper entityVOMapper, EventMapper eventMapper, ObjectMapper objectMapper) {
+	private final TMForumEventHandler tmForumEventHandler;
+
+	public NgsiLdEventHandler(NotificationSender notificationSender, EntityVOMapper entityVOMapper, EventMapper eventMapper,
+							  ObjectMapper objectMapper, TMForumEventHandler tmForumEventHandler) {
 		super(notificationSender, entityVOMapper, eventMapper, objectMapper);
+		this.tmForumEventHandler = tmForumEventHandler;
 	}
 
 	public Mono<Void> handle(NotificationVO notificationVO, SubscriptionVO subscriptionVO) {
@@ -43,24 +50,40 @@ public class NgsiLdEventHandler extends EventHandler {
 								subscriptionVO.getWatchedAttributes() == null ? List.of() : new ArrayList<>(
 										subscriptionVO.getWatchedAttributes()),
 								URI.create(subscriptionVO.getNotification().getEndpoint().getReceiverInfo().get(0).getValue()),
-								eventMapper.getEntityClassMapping()))).toList();
+								subscriptionVO.getId(), eventMapper.getEntityClassMapping()))).toList();
 
 		return Flux.fromIterable(notifications).flatMap(x -> x).collectList()
 				.flatMap(notificationSender::sendNotifications);
 	}
 
 	private Mono<TMForumNotification> createNotification(EntityVO payload, String eventTypeSuffix, Instant eventTime,
-														 List<String> selectedFields, URI listenerCallback,
+														 List<String> selectedFields, URI listenerCallback, URI notifiedSubscription,
 														 Map<String, EventMapping> entityNameToEntityClassMapping) {
 		if (payload.getType() == null) {
-			payload.setType(entityNameToEntityClassMapping.keySet().iterator().next());
+			// a module maps several types, so the id names the type better than any key of the mapping
+			payload.setType(Optional.ofNullable(payload.getId()).flatMap(IdHelper::typeSegment)
+					.filter(entityNameToEntityClassMapping::containsKey)
+					.orElseGet(() -> entityNameToEntityClassMapping.keySet().iterator().next()));
 		}
 		EventDetails eventDetails = makeEventDetails(payload.getType(), eventTypeSuffix, eventTime);
 		EventMapping eventMapping = entityNameToEntityClassMapping.get(eventDetails.entityType());
-		return entityVOMapper.fromEntityVO(payload, eventMapping.rawClass())
-				.map(o -> eventMapper.mapPayload(o, eventMapping.rawClass()))
-				.map(entity -> new TMForumNotification(listenerCallback, createEvent(eventDetails, entity, (e) -> applyFieldsFilter(
-						e, selectedFields))));
+		// createEvent maps the domain object to its VO; mapping it here as well handed the mapper a VO
+		Mono<TMForumNotification> notification = entityVOMapper.fromEntityVO(payload, eventMapping.rawClass())
+				.map(entity -> createNotification(listenerCallback, eventDetails, entity, selectedFields,
+						UUID.randomUUID().toString()));
+		if (!EventConstants.DELETE_EVENT_SUFFIX.equals(eventTypeSuffix)) {
+			return notification;
+		}
+		// the broker notifies every subscription of a deletion, whatever the hub's eventType
+		return notification.filterWhen(n -> hubTakesEvent(eventDetails, notifiedSubscription));
+	}
+
+	// matched by the hub's own NGSI-LD subscription, not its callback, which several hubs may share;
+	// findSubscriptions reads only the first page, so a hub beyond it loses the DeleteEvent (until ticket 7)
+	private Mono<Boolean> hubTakesEvent(EventDetails eventDetails, URI notifiedSubscription) {
+		return tmForumEventHandler.findSubscriptions(eventDetails)
+				.map(hubs -> hubs.stream().anyMatch(hub -> hub.getSubscription() != null
+						&& notifiedSubscription.equals(hub.getSubscription().getId())));
 	}
 
 	private EventDetails makeEventDetails(String entityType, String eventTypeSuffix, Instant eventTime) {

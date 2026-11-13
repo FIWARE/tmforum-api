@@ -2,12 +2,12 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
-import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
@@ -17,7 +17,6 @@ import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -35,34 +34,10 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
 
     @Override
     public <T> Mono<T> get(URI id, Class<T> entityClass) {
-
-        String idString = id.toString();
-        String[] parts = idString.split(":", 4);
-
-
-        if (parts.length < 3) {
-            log.warn("Invalid NGSI-LD ID format, expected at least 3 parts: {}", idString);
+        if (!IdHelper.hasTypeSegmentOf(id, entityClass)) {
+            log.warn("Id {} has no type segment of {}.", id, entityClass.getSimpleName());
             return Mono.empty();
         }
-
-        String requestedType = parts[2];
-
-        // Extract entity type from MappingEnabled
-        MappingEnabled mappingAnnotation = entityClass.getAnnotation(MappingEnabled.class);
-
-        if (mappingAnnotation == null) {
-            throw new IllegalArgumentException(
-                    String.format("Class %s missing @MappingEnabled annotation", entityClass.getName()));
-        }
-
-        String[] classType = mappingAnnotation.entityType();
-
-        if (!Arrays.asList(classType).contains(requestedType)) {
-            log.warn("Entity {} has type {} but expected type was {}",
-                    id, requestedType, classType);
-            return Mono.empty();
-        }
-
         return retrieveEntityById(id)
                 .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
     }

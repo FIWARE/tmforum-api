@@ -71,4 +71,7 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - `*/src/main/resources/application*.yaml`: `micronaut.http.services.ngsi.*`, `micronaut.codec.json.additional-types`, `micronaut.caches.*`, `redis.caches.*.value-serializer`, `jackson.*`, `endpoints.*`.
 - `data-migrator/*/src/main/java/**/{UpdateWriter,LegacyLoader}.java`: build their own `ApplicationContext`.
 - `common/.../repository/{TmForumRepository,NgsiLdBaseRepository,BrokerBackedReferencesRepository}.java`: the concrete NGSI-LD storage, the NGSI-LD adapter behind the `storage-api` port; `product-catalog/.../storage/NgsiLdEntityRepositoryContractIT` runs the port contract against it.
+- `common/.../rest/AbstractApiController.java`: the only place TMForum events are fired (after `create`/`patch`, fire-and-forget through `TMForumEventHandler`).
+- `common/.../test/AbstractApiIT.java`: per-test cleanup goes through the broker's `EntitiesApiClient`; every API IT passes one to its constructor.
+- `findEntities` with a `query` is called outside list endpoints by `TMForumEventHandler.getSubscriptions` and `AbstractSubscriptionApiController` (duplicate hub check).
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.
