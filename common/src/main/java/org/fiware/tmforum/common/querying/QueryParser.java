@@ -406,7 +406,8 @@ public class QueryParser {
 
     /**
      * The type of an extension attribute is inferred from its combined value, before the value split, so
-     * {@code ext=1,2} stays a string comparison.
+     * {@code ext=1,2} stays a string comparison. A Java-only number form ({@code +5}, {@code NaN}, {@code 1d})
+     * is typed NUMBER and then fails the literal check with a 400, as before the model split.
      */
     private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
         List<String> path = new ArrayList<>(
@@ -417,11 +418,19 @@ public class QueryParser {
         if (Literals.BOOLEAN.matcher(queryPart.value()).matches()) {
             return new NgsiLdAttribute(path, QueryAttributeType.BOOLEAN);
         }
-        // trimmed, since a number's surrounding whitespace is dropped anyway
-        if (Literals.NUMBER.matcher(queryPart.value().trim()).matches()) {
+        if (isJavaNumber(queryPart.value())) {
             return new NgsiLdAttribute(path, QueryAttributeType.NUMBER);
         }
         return new NgsiLdAttribute(path, QueryAttributeType.STRING);
+    }
+
+    private static boolean isJavaNumber(String value) {
+        try {
+            Double.parseDouble(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     /**

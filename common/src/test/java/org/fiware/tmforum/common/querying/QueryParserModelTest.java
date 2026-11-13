@@ -87,13 +87,6 @@ class QueryParserModelTest {
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("1", "2"), "ext"))),
 				Arguments.of("ext=1,abc", MyPojo.class,
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("1", "abc"), "ext"))),
-				// only a plain NGSI-LD number is a NUMBER; Java-only number forms stay strings instead of a 400
-				Arguments.of("ext=+5", MyPojo.class,
-						filter(undeclared(EQUALS, ValueType.STRING, List.of("+5"), "ext"))),
-				Arguments.of("ext=.5", MyPojo.class,
-						filter(undeclared(EQUALS, ValueType.STRING, List.of(".5"), "ext"))),
-				Arguments.of("ext=NaN", MyPojo.class,
-						filter(undeclared(EQUALS, ValueType.STRING, List.of("NaN"), "ext"))),
 				Arguments.of("relatedParty.role=Owner", MyPojo.class,
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("Owner"), "relatedParty", "role"))),
 				// a regex is one opaque pattern, OR-ed patterns included
@@ -113,6 +106,13 @@ class QueryParserModelTest {
 				Arguments.of("createdAt=2024-01-01,2024-01-02", MyPojo.class,
 						filter(declared(EQUALS, ValueType.DATE_TIME, List.of("2024-01-01", "2024-01-02"), "createdAt"))),
 				// one literal that is no date-time keeps the whole comparison a string, no 400
+				Arguments.of("sub.since.gte=2024-01-01T00:00:00.500Z", MyPojo.class,
+						filter(declared(GREATER_THAN_EQUALS, ValueType.DATE_TIME, List.of("2024-01-01T00:00:00.500Z"),
+								"sub", "since"))),
+				Arguments.of("otherNamedSub.since=2024-01-01", MyPojo.class,
+						filter(declared(EQUALS, ValueType.DATE_TIME, List.of("2024-01-01"), "otherNamedSub", "since"))),
+				Arguments.of("sub.since=yesterday", MyPojo.class,
+						filter(declared(EQUALS, ValueType.STRING, List.of("yesterday"), "sub", "since"))),
 				Arguments.of("createdAt=2024-01-01,yesterday", MyPojo.class,
 						filter(declared(EQUALS, ValueType.STRING, List.of("2024-01-01", "yesterday"), "createdAt"))),
 				Arguments.of("createdAt.regex=2024.*", MyPojo.class,
@@ -160,6 +160,8 @@ class QueryParserModelTest {
 						new SortKey(path(true, "color"), ValueType.STRING, false))),
 				Arguments.of("-createdAt", MyPojo.class,
 						List.of(new SortKey(path(true, "createdAt"), ValueType.DATE_TIME, true))),
+				Arguments.of("-sub.since", MyPojo.class,
+						List.of(new SortKey(path(true, "sub", "since"), ValueType.DATE_TIME, true))),
 				Arguments.of("otherNamedSub.status", MyPojo.class,
 						List.of(new SortKey(path(true, "otherNamedSub", "status"), ValueType.STRING, false))),
 				// sort paths are kept as given, a relationship gets no "id"
@@ -202,6 +204,12 @@ class QueryParserModelTest {
 				Arguments.of("temperature=1,warm"),
 				Arguments.of("temperature.regex=5"),
 				Arguments.of("active.regex=true"),
+				// an extension in a Java-only number form is typed NUMBER and then fails the number literal check
+				Arguments.of("ext=+5"),
+				Arguments.of("ext=.5"),
+				Arguments.of("ext=1."),
+				Arguments.of("ext=NaN"),
+				Arguments.of("ext=1d"),
 				Arguments.of("status=,"),
 				Arguments.of("sub..status=a"));
 	}
