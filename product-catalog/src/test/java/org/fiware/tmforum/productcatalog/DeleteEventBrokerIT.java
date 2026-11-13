@@ -15,7 +15,7 @@ import org.fiware.productcatalog.model.EventSubscriptionInputVO;
 import org.fiware.productcatalog.model.EventSubscriptionVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.AbstractApiIT;
-import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.BrokerCallbackContextBuilder;
 import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.junit.jupiter.api.AfterEach;
@@ -37,12 +37,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * {@code <Type>DeleteEvent} get one, but whatever their query: the broker notifies every subscription of a deletion
  * and its notification carries no state to evaluate the query on. The PostgreSQL outbox also honours the query and
  * sends the same id-only payload ({@link #BROKER_DELETE_PAYLOAD_FIELDS}).
+ * The broker notifies the test server through {@link BrokerCallbackContextBuilder}'s callback host, as its own
+ * {@code localhost} is the k3s container.
  * Relies on Orion-LD notifying a deletion ({@code deletedAt}) to a subscription without {@code notificationTrigger},
  * as {@code AbstractSubscriptionApiController} creates them (FIWARE/context.Orion-LD#1307), and on Orion-LD not
- * evaluating the subscription's {@code q} (the hub query) against the deleted entity; both are unobserved so far.
+ * evaluating the subscription's {@code q} (the hub query) against the deleted entity; both hold on Orion-LD 1.9.0.
  */
 @BrokerOnly
-@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
+@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = BrokerCallbackContextBuilder.class)
 // hub registration fails on Scorpio, see EventSubscriptionApiIT; DeleteEvents come from the broker only
 @Requires(notEnv = {"scorpio", "postgresql"})
 // without, the test client will try to create an empty q subscription
