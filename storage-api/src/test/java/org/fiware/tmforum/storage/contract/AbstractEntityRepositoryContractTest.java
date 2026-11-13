@@ -5,12 +5,18 @@ import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -74,6 +80,13 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
      */
     protected Set<KnownDeviation> knownDeviations() {
         return Set.of();
+    }
+
+    /**
+     * False while the adapter rejects filters, which skips the filter cases.
+     */
+    protected boolean supportsFilters() {
+        return true;
     }
 
     /**
@@ -387,6 +400,32 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
         assertNotNull(page);
         assertEquals(List.of(own), idsOf(page));
+    }
+
+    // a comparison value is one literal, even when it holds TMForum's filter separators
+    @ParameterizedTest
+    @ValueSource(strings = {"a&b", "a,b", "a;b", "https://example.org/cb?a=1&b=2,3;c=4"})
+    void findEntitiesMatchesALiteralHoldingFilterSeparators(String literal) {
+        assumeTrue(supportsFilters(), "The adapter does not filter yet.");
+        URI match = create(fixture(), fixture().withMutableValue(fixture().newEntity(fixture().newId()), literal));
+        URI other = create(fixture());
+        Class<T> entityClass = fixture().entityClass();
+        Comparison equalsLiteral = new Comparison(new AttributePath(List.of(fixture().mutableAttribute()), true),
+                ComparisonOperator.EQUALS, ValueType.STRING, List.of(literal));
+
+        Mono<PagedResult<T>> result = repository().findEntities(FIRST_OFFSET, LIST_LIMIT, entityClass,
+                new EntityQuery(entityClass, equalsLiteral, List.of()), join(List.of(match, other)),
+                fixture().storedType());
+
+        if (knownDeviations().contains(KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES)) {
+            PagedResult<T> page = result.onErrorResume(StorageException.class, e -> Mono.empty()).block(TIMEOUT);
+            assertTrue(page == null || page.items().isEmpty(),
+                    "The literal matches now, drop " + KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES);
+            return;
+        }
+        PagedResult<T> page = result.block(TIMEOUT);
+        assertNotNull(page);
+        assertEquals(List.of(match), idsOf(page));
     }
 
     @Test

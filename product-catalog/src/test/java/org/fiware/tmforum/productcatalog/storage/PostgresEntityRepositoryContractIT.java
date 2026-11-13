@@ -36,6 +36,12 @@ public class PostgresEntityRepositoryContractIT extends AbstractEntityRepository
 		assertInstanceOf(PostgresEntityRepository.class, repository);
 	}
 
+	// the adapter rejects filters until step 5 of ticket 90
+	@Override
+	protected boolean supportsFilters() {
+		return false;
+	}
+
 	@Override
 	protected EntityRepository repository() {
 		return repository;

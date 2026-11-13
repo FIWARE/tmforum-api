@@ -46,8 +46,8 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 
     private static final String ANY_CALLBACK = "https://test.com";
     private static final String SEPARATOR_CALLBACK = "https://test.com/cb?a=1&b=2,3;c=4";
-    // "=" and ";" are NGSI-LD forbidden characters
-    private static final String SEPARATOR_CALLBACK_WITHOUT_FORBIDDEN_CHARACTERS = "https://test.com/cb?x&y,z|w";
+    // "=" and ";" are NGSI-LD forbidden characters; "|" cannot occur unencoded, java.net.URI rejects it
+    private static final String SEPARATOR_CALLBACK_WITHOUT_FORBIDDEN_CHARACTERS = "https://test.com/cb?x&y,z";
 
     public final EventsSubscriptionApiTestClient eventsSubscriptionApiTestClient;
     private EventSubscriptionInputVO eventSubscriptionInputVO;
@@ -145,7 +145,7 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
 
         HttpResponse<EventSubscriptionVO> registerResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));
-        assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), "The broker should accept the callback.");
+        assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), "The first registration of the callback should succeed.");
 
         HttpResponse<EventSubscriptionVO> duplicatedListenerRegisterResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));

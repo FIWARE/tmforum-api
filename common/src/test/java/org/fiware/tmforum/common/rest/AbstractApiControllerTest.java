@@ -9,9 +9,13 @@ import org.fiware.tmforum.common.querying.MyPojo;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.EntityRepository;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
 import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
 import org.fiware.tmforum.storage.query.SortKey;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -33,7 +37,9 @@ import static org.mockito.Mockito.when;
 class AbstractApiControllerTest {
 
 	private static final String LIST_TYPE = "my-pojo";
-	private static final String COLOR_FILTER = "color=Red";
+	private static final String COLOR_VALUE = "Red";
+	private static final String COLOR_FILTER = "color=" + COLOR_VALUE;
+	private static final AttributePath COLOR_PATH = new AttributePath(List.of("color"), true);
 	private static final String COLOR_SORT = "sort=-color";
 
 	private static class TestController extends AbstractApiController<MyPojo> {
@@ -137,10 +143,9 @@ class AbstractApiControllerTest {
 
 	@ParameterizedTest
 	@MethodSource("provideListQueries")
-	public void listPassesTheParsedFilterAndSortToTheRepository(String queryString) {
-		QueryParser queryParser = new QueryParser(new GeneralProperties());
+	public void listPassesTheParsedFilterAndSortToTheRepository(String queryString, EntityQuery expected) {
 		EntityRepository repository = mock(EntityRepository.class);
-		TestController controller = new TestController(queryParser, repository);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
 		when(repository.findEntities(any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, 10, null)));
 
@@ -148,18 +153,33 @@ class AbstractApiControllerTest {
 			controller.list(0, 10, LIST_TYPE, MyPojo.class).block();
 		});
 
-		QueryFilter filter = queryString.contains(COLOR_FILTER) ? queryParser.parse(MyPojo.class, queryString).filter() : null;
-		List<SortKey> sort = queryParser.parseSort(MyPojo.class, HttpRequest.GET("/resource?" + queryString)
-				.getParameters().asMap());
-		EntityQuery expected = filter == null && sort.isEmpty() ? null : new EntityQuery(MyPojo.class, filter, sort);
 		verify(repository).findEntities(any(), any(), eq(MyPojo.class), eq(expected), any(), eq(LIST_TYPE));
 	}
 
+	@ParameterizedTest
+	@MethodSource("provideListQueries")
+	public void listPolymorphicPassesTheParsedFilterAndSortToTheRepository(String queryString, EntityQuery expected) {
+		EntityRepository repository = mock(EntityRepository.class);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
+		when(repository.findEntitiesPolymorphic(any(), any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, 10, null)));
+
+		ServerRequestContext.with(HttpRequest.GET("/resource?" + queryString), () -> {
+			controller.listPolymorphic(0, 10, LIST_TYPE, MyPojo.class, type -> MyPojo.class).block();
+		});
+
+		verify(repository).findEntitiesPolymorphic(any(), any(), eq(LIST_TYPE), eq(expected), any(), any());
+	}
+
 	private static Stream<Arguments> provideListQueries() {
+		QueryFilter colorFilter = new Comparison(COLOR_PATH, ComparisonOperator.EQUALS, ValueType.STRING,
+				List.of(COLOR_VALUE));
+		SortKey colorSort = new SortKey(COLOR_PATH, ValueType.STRING, true);
 		return Stream.of(
-				Arguments.of("fields=color"),
-				Arguments.of(COLOR_FILTER),
-				Arguments.of(COLOR_SORT),
-				Arguments.of(COLOR_FILTER + "&" + COLOR_SORT));
+				Arguments.of("fields=color", null),
+				Arguments.of(COLOR_FILTER, new EntityQuery(MyPojo.class, colorFilter, List.of())),
+				Arguments.of(COLOR_SORT, new EntityQuery(MyPojo.class, null, List.of(colorSort))),
+				Arguments.of(COLOR_FILTER + "&" + COLOR_SORT,
+						new EntityQuery(MyPojo.class, colorFilter, List.of(colorSort))));
 	}
 }

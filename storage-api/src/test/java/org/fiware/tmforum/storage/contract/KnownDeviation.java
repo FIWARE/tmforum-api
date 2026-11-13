@@ -40,6 +40,13 @@ public enum KnownDeviation {
     REFERENCE_LIST_UPDATE_MERGES,
 
     /**
+     * An equality filter whose string literal holds {@code &} or {@code ;} matches nothing, even the entity storing
+     * exactly that literal, and one holding {@code ,} without those fails the list (the broker answers 500).
+     * Observed on Scorpio 5.0.3, Orion-LD 1.9.0 matches; pending acceptance (ticket 0).
+     */
+    SEPARATOR_IN_LITERAL_NEVER_MATCHES,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL
