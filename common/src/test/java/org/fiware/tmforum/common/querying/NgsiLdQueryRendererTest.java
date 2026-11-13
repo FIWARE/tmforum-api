@@ -154,6 +154,9 @@ class NgsiLdQueryRendererTest {
 				Arguments.of("tmfEscaped-createdAt;desc", DEFAULTS,
 						List.of(new SortKey(path(true, "createdAt"), ValueType.DATE_TIME, true))),
 				Arguments.of("unknown", DEFAULTS, List.of(new SortKey(path(false, "unknown"), null, false))),
+				// the orderBy keeps addressing an undeclared key by its translated name
+				Arguments.of("atSchemaLocation;desc", DEFAULTS,
+						List.of(new SortKey(path(false, "@schemaLocation"), null, true))),
 				Arguments.of(null, DEFAULTS, List.of()));
 	}
 

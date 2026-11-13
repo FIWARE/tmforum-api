@@ -26,12 +26,16 @@ import org.fiware.tmforum.storage.query.SortKey;
 import org.fiware.tmforum.storage.query.ValueType;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -78,7 +82,7 @@ public class QueryParser {
             "@baseType", "atBaseType",
             "@schemaLocation", "atSchemaLocation");
 
-    private static List<String> translateJsonLdReservedTokens(List<String> pathParts) {
+    static List<String> translateJsonLdReservedTokens(List<String> pathParts) {
         return pathParts.stream()
                 .map(p -> JSON_LD_RESERVED_TO_ENTITY_FIELD.getOrDefault(p, p))
                 .toList();
@@ -154,12 +158,13 @@ public class QueryParser {
         boolean descending = sortField.startsWith(SORT_DESCENDING_PREFIX);
         String attributeName = descending ? sortField.substring(SORT_DESCENDING_PREFIX.length()) : sortField;
 
-        // unlike in filters, an undeclared sort path keeps its translated names, as the orderBy always did
-        List<String> path = translateJsonLdReservedTokens(Arrays.asList(attributeName.split(PATH_SEPARATOR_REGEX)));
+        List<String> rawPath = Arrays.asList(attributeName.split(PATH_SEPARATOR_REGEX));
+        List<String> path = translateJsonLdReservedTokens(rawPath);
         requireNonBlankSegments(sortField, path);
         NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(path, queryClass);
         if (attribute.path().isEmpty()) {
-            return new SortKey(new AttributePath(path, false), null, descending);
+            // as in filters, an extension attribute is stored under the names the client sent
+            return new SortKey(new AttributePath(rawPath, false), null, descending);
         }
         ValueType valueType = isDateTime(queryClass, path) ? ValueType.DATE_TIME : toValueType(attribute.type());
         return new SortKey(new AttributePath(path, true), valueType, descending);
@@ -378,7 +383,7 @@ public class QueryParser {
         if (setter.isEmpty() || getter.isEmpty()) {
             return Optional.empty();
         }
-        Class<?> returnType = getter.get().getReturnType();
+        Class<?> returnType = elementClass(getter.get().getGenericReturnType());
         if (path.size() == 1) {
             return Optional.of(returnType);
         }
@@ -389,19 +394,39 @@ public class QueryParser {
     private static Optional<Class<?>> resolvePlainLeafClass(Class<?> tClass, List<String> path) {
         Class<?> currentClass = tClass;
         for (String segment : path) {
-            Optional<Class<?>> getterReturn = getGetterMethodByName(currentClass, segment).findAny()
-                    .map(Method::getReturnType);
+            Optional<Type> getterReturn = getGetterMethodByName(currentClass, segment).findAny()
+                    .map(Method::getGenericReturnType);
             if (getterReturn.isPresent()) {
-                currentClass = getterReturn.get();
+                currentClass = elementClass(getterReturn.get());
                 continue;
             }
             try {
-                currentClass = currentClass.getField(segment).getType();
+                currentClass = elementClass(currentClass.getField(segment).getGenericType());
             } catch (NoSuchFieldException e) {
                 return Optional.empty();
             }
         }
         return Optional.of(currentClass);
+    }
+
+    /**
+     * The class a path segment continues in: the element class of a collection or array, else the raw class.
+     * An unresolvable type variable or wildcard gives {@code Object}, which is never a date-time.
+     */
+    private static Class<?> elementClass(Type type) {
+        if (type instanceof Class<?> clazz) {
+            return clazz.isArray() ? clazz.getComponentType() : clazz;
+        }
+        if (type instanceof GenericArrayType arrayType) {
+            return elementClass(arrayType.getGenericComponentType());
+        }
+        if (type instanceof ParameterizedType parameterized && parameterized.getRawType() instanceof Class<?> raw) {
+            if (Collection.class.isAssignableFrom(raw)) {
+                return elementClass(parameterized.getActualTypeArguments()[0]);
+            }
+            return raw;
+        }
+        return Object.class;
     }
 
     /**

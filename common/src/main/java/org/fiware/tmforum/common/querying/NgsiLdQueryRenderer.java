@@ -93,7 +93,10 @@ public class NgsiLdQueryRenderer {
 	}
 
 	private String renderSortKey(Class<?> queryClass, SortKey sortKey) {
-		NgsiLdAttribute attribute = toNgsiLdAttribute(queryClass, sortKey.attribute());
+		AttributePath path = sortKey.attribute();
+		// the orderBy has always addressed an undeclared key by its translated names (@type -> atType)
+		NgsiLdAttribute attribute = toNgsiLdAttribute(queryClass, path.declared() ? path
+				: new AttributePath(QueryParser.translateJsonLdReservedTokens(path.segments()), false));
 		List<String> resolvedPath = new ArrayList<>(sortKey.attribute().declared()
 				? escapePath(attribute.path(), QueryParser.isRelationship(queryClass, attribute))
 				: attribute.path());

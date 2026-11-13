@@ -111,6 +111,11 @@ class QueryParserModelTest {
 								"sub", "since"))),
 				Arguments.of("otherNamedSub.since=2024-01-01", MyPojo.class,
 						filter(declared(EQUALS, ValueType.DATE_TIME, List.of("2024-01-01"), "otherNamedSub", "since"))),
+				Arguments.of("sub.history.lt=2024-01-01T00:00:00Z", MyPojo.class,
+						filter(declared(LESS_THAN, ValueType.DATE_TIME, List.of("2024-01-01T00:00:00Z"),
+								"sub", "history"))),
+				Arguments.of("sub.milestones=2024-01-01", MyPojo.class,
+						filter(declared(EQUALS, ValueType.DATE_TIME, List.of("2024-01-01"), "sub", "milestones"))),
 				Arguments.of("sub.since=yesterday", MyPojo.class,
 						filter(declared(EQUALS, ValueType.STRING, List.of("yesterday"), "sub", "since"))),
 				Arguments.of("createdAt=2024-01-01,yesterday", MyPojo.class,
@@ -169,9 +174,13 @@ class QueryParserModelTest {
 						List.of(new SortKey(path(true, "rel"), ValueType.STRING, false))),
 				Arguments.of("-@type", MyEntityPojo.class,
 						List.of(new SortKey(path(true, "atType"), ValueType.STRING, true))),
-				// an undeclared sort key is untyped
+				Arguments.of("sub.milestones", MyPojo.class,
+						List.of(new SortKey(path(true, "sub", "milestones"), ValueType.DATE_TIME, false))),
+				// an undeclared sort key is untyped and keeps the names the client sent, as in a filter
 				Arguments.of("unknown", MyPojo.class,
 						List.of(new SortKey(path(false, "unknown"), null, false))),
+				Arguments.of("-@schemaLocation", MyPojo.class,
+						List.of(new SortKey(path(false, "@schemaLocation"), null, true))),
 				Arguments.of("", MyPojo.class, List.of()));
 	}
 
