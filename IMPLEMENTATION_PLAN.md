@@ -14,11 +14,11 @@ Ground rules for every step:
 
 ### Step 1: Backend-neutral query model in `storage-api`
 Add the package `org.fiware.tmforum.storage.query` in `storage-api/src/main/java`. It holds plain Java records and enums with no dependencies, because the enforcer bans `io.github.wistefan`, `io.micronaut` and `org.fiware.tmforum` there:
-- `ValueType` {`STRING`, `NUMBER`, `BOOLEAN`}. It is the neutral twin of the mapping library's `QueryAttributeType`, which `storage-api` must not see.
+- `ValueType` {`STRING`, `NUMBER`, `BOOLEAN`, `DATE_TIME`}. The first three are the neutral twins of the mapping library's `QueryAttributeType`, which `storage-api` must not see. `DATE_TIME` has no twin there (the library reports dates as `STRING`); it exists because byte order of ISO strings is wrong across precisions and offsets (`…00.500Z` < `…00Z`, since `.` < `Z`).
 - `ComparisonOperator` {`EQUALS`, `GREATER_THAN`, `GREATER_THAN_EQUALS`, `LESS_THAN`, `LESS_THAN_EQUALS`, `REGEX`}. There is no not-equals: the regex not-equals rewrite is an NGSI-LD renderer optimisation (Step 2).
 - `AttributePath(List<String> segments, boolean declared)`. The segments are the TMForum path after JSON-LD reserved-token translation (`@type` → `atType`, ...). `declared == false` marks a free-form extension attribute.
-- `QueryFilter`, a sealed interface with `Comparison(AttributePath attribute, ComparisonOperator operator, ValueType valueType, List<String> values)` (values OR-ed, already validated and trimmed for their type), `AllOf(List<QueryFilter>)` and `AnyOf(List<QueryFilter>)`.
-- `SortKey(AttributePath attribute, ValueType valueType, boolean descending)`.
+- `QueryFilter`, a sealed interface with `Comparison(AttributePath attribute, ComparisonOperator operator, ValueType valueType, List<String> values)` (values OR-ed, already validated and trimmed for their type; a `REGEX` comparison carries exactly one pattern, see Step 2), `AllOf(List<QueryFilter>)` and `AnyOf(List<QueryFilter>)`.
+- `SortKey(AttributePath attribute, ValueType valueType, boolean descending)`. `valueType` is null for an undeclared (extension) attribute: a sort has no literal to infer a type from.
 - `EntityQuery(Class<?> queryClass, QueryFilter filter, List<SortKey> sort)`. `filter` may be null, and `sort` is empty when there is no sort. `queryClass` is the class paths were resolved against; the NGSI-LD renderer needs it for `findEntitiesPolymorphic`, which has no entity class.
 
 The compact constructors reject null or empty lists where they make no sense, and copy lists immutably. Records give `equals`/`hashCode`, which matters if a call ever becomes a cache key.
@@ -26,19 +26,25 @@ The compact constructors reject null or empty lists where they make no sense, an
 Do not change the port yet. Add a unit test in `storage-api/src/test/java/.../query/` (parameterized) for the constructor invariants.
 Acceptance: `mvn -pl storage-api verify` passes, enforcer included.
 
-### Step 2: Split `QueryParser` into parse and NGSI-LD render (no behaviour change)
+### Step 2: Split `QueryParser` into parse and NGSI-LD render (no NGSI-LD output change)
 In `common/src/main/java/org/fiware/tmforum/common/querying/`:
 - **Front half, `QueryParser`.** Add `ParsedQuery parse(Class<?> queryClass, String queryString)` returning `ParsedQuery(String ids, String types, QueryFilter filter)`, and `List<SortKey> parseSort(Class<?> queryClass, Map<String, List<String>> parameters)`. The parse moves here unchanged:
   - well-known-parameter removal and the AND(`&`)/OR(`;`) split, including the "combining is not supported" `QueryException`;
   - `parseParameter`/operator detection, OR-grouping per attribute and operator (`combineParts`), and `,`-value splitting (never for `.regex`);
   - JSON-LD reserved-token translation, the `id`/`type` shortcuts into `ids`/`types`, and attribute type resolution through `JavaObjectMapper.getNGSIAttributePath`. An empty path means `declared = false`, with the type inferred from the literal as in today's `getPathToAdditionalAttributes`;
   - all validation (`validateOperator`, the boolean/number literal checks), so both backends answer the same 400s.
+- **Semantics the front half fixes** (so the renderers cannot drift apart):
+  - *Date-time.* When the resolved path ends at a declared field of a date-time Java type (`Instant`, `OffsetDateTime`, `ZonedDateTime`, `Date`), the type is `DATE_TIME`, resolved from the getter's return type, not from `QueryAttributeType`. Its literals must parse as ISO-8601 date-time with offset or `Z`; anything else is a 400 on every backend. This 400 is the one deliberate behaviour change of this step: add a `QueryParserTest` case and a release-notes line (Step 7). `.regex` on a date-time stays allowed, matches the stored string and skips the date check. The NGSI-LD renderer renders `DATE_TIME` exactly like `STRING`, so its `q` output is unchanged.
+  - *Regex OR.* `combineParts` keeps joining OR-ed regex values with `,`, and regex values are never split. So `a.regex=x;a.regex=y` stays one literal pattern `x,y` on every backend, as on the brokers today. A `REGEX` comparison therefore always has exactly one value. Do not change this here.
+  - *Separators inside a value.* The front half does not interpret `ngsildOrQueryValue` or `;` inside a string value: the model carries it as one literal. The NGSI-LD renderer keeps `encodeStringValue`'s split, so the output stays byte-identical. With the default `ngsildOrQueryValue` (`,`) nothing differs, because the front half has already split on `,`. With a deployment that sets it to `|`, though, `name=a|b` matches `a` or `b` on the brokers and only the literal `a|b` on PostgreSQL. Record this as a `KnownDeviation` (Step 6) and in the release notes (Step 7).
+  - *Relationship without `.id`.* A filter path that is exactly a relationship attribute (`productSpecification=urn:...`, `isRelationship` on a one-segment path) gets `id` appended, so the model always points at the referenced id. The NGSI-LD renderer strips a trailing `.id` on relationships anyway, so its output is unchanged, and the JSONB renderer needs no relationship flag. Sort paths are not normalised, because today's `orderBy` keeps them as given.
+  - *Undeclared sort keys* get `valueType == null` (see Step 1).
 - **Back half, new `NgsiLdQueryRenderer` (`@Singleton`, takes `GeneralProperties`).** It provides `String renderFilter(EntityQuery)` and `String renderOrderBy(EntityQuery)`. Everything NGSI-LD moves here: the NGSI path through `getNGSIAttributePath`, `isRelationship`, `escapePath`/reserved-word escaping, the `.id` stripping for relationships, `mapPathPart` (`useDotSeperator`), `encodeValue`/`encodeStringValue`, `includeAttributeInList`/`encloseQuery`/`ngsildOrQueryKey`/`ngsildOrQueryValue`, the operator symbols (`Operator.getNgsiLdOperator`), the `;desc` suffix and `applyRegexNotEqualsOptimization`.
 - Keep `toNgsiLdQuery(...)` and `toOrderBy(...)` for now as thin façades (`parse` + render, still returning `QueryParams`), so no caller changes in this step.
 - **Pitfall: output order.** Today's OR grouping uses `Collectors.toMap` (HashMap iteration order), and the `QueryParserTest` expectations depend on it (e.g. `color==\"Red\"|(status...)`). Keep the same grouping so every existing `QueryParserTest` case stays byte-identical. Do not "fix" the order here.
 - Tests:
   - `QueryParserTest` stays unchanged and green.
-  - Add `QueryParserModelTest`, parameterized TMForum string → expected `EntityQuery`/`ParsedQuery`, covering reserved tokens, extension attributes, regex with `,`, and the 400 cases.
+  - Add `QueryParserModelTest`, parameterized TMForum string → expected `EntityQuery`/`ParsedQuery`, covering reserved tokens, extension attributes, regex with `,` and with `;`-OR, `DATE_TIME` resolution (and its 400), relationship `id` normalisation, undeclared sort keys, and the 400 cases.
   - Add `NgsiLdQueryRenderer` tests over hand-built models for every `GeneralProperties` combination already covered by `QueryParserTest`.
 
 Acceptance: `mvn -pl common -am test` is green, and the NGSI-LD output of every existing test case is unchanged.
@@ -79,11 +85,12 @@ Suggested shape (the step agent may refine it, but must keep bind parameters and
   - `STRING`: `jsonb_typeof(v.value) = 'string'`, then `v.value #>> '{}' = ANY($m::text[])` for equality, or `(v.value #>> '{}') COLLATE "C" <op> ANY($m::text[])` for ordering. `COLLATE "C"` gives byte order, the closest match to the brokers.
   - `NUMBER`: `jsonb_typeof(v.value) = 'number' AND (v.value)::numeric <op> ANY($m::numeric[])`.
   - `BOOLEAN`: `v.value = ANY(...)` over `to_jsonb` booleans.
-  - `REGEX`: `jsonb_typeof(v.value) = 'string' AND (v.value #>> '{}') ~ $m`. PostgreSQL ARE supports lookahead, so the not-equals idiom `^(?!X$).*$` works natively. Multiple OR-ed regex values become an OR of patterns.
+  - `DATE_TIME`: `jsonb_typeof(v.value) = 'string' AND (v.value #>> '{}')::timestamptz <op> ANY($m::timestamptz[])`, with the literals parsed to `OffsetDateTime` in Java and bound. Declared date fields are written by Jackson as ISO-8601, so the cast cannot fail on stored data. Equality compares instants, so `…00Z` equals `…00.000Z` and `…01:00+01:00`.
+  - `REGEX`: `jsonb_typeof(v.value) = 'string' AND (v.value #>> '{}') ~ $m`. PostgreSQL ARE supports lookahead, so the not-equals idiom `^(?!X$).*$` works natively. There is exactly one pattern per comparison (Step 2).
   - `AllOf`/`AnyOf` become parenthesised `AND`/`OR`.
-- **Sort.** Render `ORDER BY <expr> ASC|DESC` per key, with `<expr>` = `jsonb_path_query_first(data, $k::jsonpath)`, typed as above (`#>> '{}' COLLATE "C"` for strings, `::numeric` for numbers when `jsonb_typeof = 'number'`). Always append `created_at, id` as a tiebreaker so paging stays stable. Choose the NULLS placement to match the brokers once Step 7 observes them, defaulting to `NULLS LAST`.
+- **Sort.** Render `ORDER BY <expr> ASC|DESC` per key, with `<expr>` = `jsonb_path_query_first(data, $k::jsonpath)`, typed as above (`#>> '{}' COLLATE "C"` for strings, `::numeric` for numbers when `jsonb_typeof = 'number'`, `::timestamptz` for `DATE_TIME`). A key with `valueType == null` (undeclared) orders by the raw `jsonb` value, which PostgreSQL orders across types with a defined rule; if the brokers order such keys differently, record a deviation in Step 6. Always append `created_at, id` as a tiebreaker so paging stays stable. Choose the NULLS placement to match the brokers once Step 7 observes them, defaulting to `NULLS LAST`.
 - Put SQL fragments in named constants and reuse no magic strings.
-- Tests: `JsonbQueryRendererTest` (parameterized: model → expected SQL plus bindings) for every operator × value type, AND/OR nesting, nested paths, extension attributes, quoting of segments containing `"`/`.`/`\`, and sort. Add a renderer-level `PostgresQueryRenderingIT` in `storage-postgresql/src/test` that executes the fragments against the k3s PostgreSQL over seeded raw documents (scalars, arrays, nested arrays, missing keys, mixed types). Check the document-level semantics there, independent of the domain mapping.
+- Tests: `JsonbQueryRendererTest` (parameterized: model → expected SQL plus bindings) for every operator × value type, AND/OR nesting, nested paths, extension attributes, quoting of segments containing `"`/`.`/`\`, `DATE_TIME` (sub-second vs whole-second, `Z` vs offset), and sort, including an undeclared sort key. Add a renderer-level `PostgresQueryRenderingIT` in `storage-postgresql/src/test` that executes the fragments against the k3s PostgreSQL over seeded raw documents (scalars, arrays, nested arrays, missing keys, mixed types). Check the document-level semantics there, independent of the domain mapping.
 
 Acceptance: `mvn verify -pl storage-postgresql` is green.
 
@@ -103,13 +110,13 @@ Acceptance: `mvn verify -pl storage-postgresql` is green, and `mvn verify -pl pr
   - Build the `EntityQuery` directly from model types, because `storage-api` cannot see `QueryParser`.
 - Add cases to `AbstractEntityRepositoryContractTest`, parameterized where possible:
   - equality, multi-value OR, `AllOf`/`AnyOf`;
-  - `gt`/`gte`/`lt`/`lte` on numbers and on ISO date-time strings;
+  - `gt`/`gte`/`lt`/`lte` on numbers and on `DATE_TIME`. Seed stored values with and without a fraction (`…00Z`, `…00.500Z`) and use a literal with an offset (`+01:00`), so a byte-order comparison cannot pass;
   - regex, including the not-equals idiom;
   - nested path, reference id in a reference list, extension attribute;
   - sort ascending/descending, multi-key, paging stability across pages under a sort;
   - `totalCount` with a filter, an empty page past the last match with a filter, and polymorphic filter plus sort.
 - Implement the fixture parts in `product-catalog/src/test/.../storage/NgsiLdEntityRepositoryContractIT` and `PostgresEntityRepositoryContractIT`.
-- Record each backend difference you observe as a new `KnownDeviation` with a precise Javadoc (backend and version observed), asserting today's behaviour as the existing entries do. Candidate areas: sort placement of missing attributes, string collation, numeric-vs-string comparisons, regex dialect (Scorpio POSIX without lookahead, unless `optimizeRegexNotEquals`).
+- Record each backend difference you observe as a new `KnownDeviation` with a precise Javadoc (backend and version observed), asserting today's behaviour as the existing entries do. Candidate areas: sort placement of missing attributes, string collation, numeric-vs-string comparisons, regex dialect (Scorpio POSIX without lookahead, unless `optimizeRegexNotEquals`), `DATE_TIME` equality across precisions (instant on PostgreSQL, possibly string on a broker), the order of undeclared sort keys, and the `ngsildOrQueryValue` split inside a value (Step 2; known in advance, so add it in any case).
 
 Acceptance: `mvn verify -pl product-catalog -Dit.test='*ContractIT'` is green on `-Dbroker=orion-ld`, `scorpio` and `postgresql`.
 
@@ -118,14 +125,14 @@ Acceptance: `mvn verify -pl product-catalog -Dit.test='*ContractIT'` is green on
 - Remove the ticket-7 part of `@RequiresHubSupport`: drop `@Tag(StorageTags.TICKET_7)` and reword the Javadoc to "until ticket 1". Hub registration still creates an NGSI-LD subscription until ticket 1 lands.
 - The existing API ITs barely filter or sort. Add an API-level `ListQueryIT` in `product-catalog/src/test/...` (extends `AbstractApiIT`, runs on every backend). It seeds a representative volume through the API (a named constant, e.g. a few hundred product offerings with varied `lifecycleStatus`, `version`, `lastUpdate`, `isBundle`, `validFor`, related parties and one extension attribute via `@schemaLocation`, as the existing extension ITs do). Then it asserts filtered, sorted and paged results plus the pagination headers (`X-Total-Count` etc.) against expectations computed in the test:
   - equality, multi-value, `;` OR and `&` AND;
-  - `.gt/.gte/.lt/.lte` on numbers and dates;
+  - `.gt/.gte/.lt/.lte` on numbers and dates, with `lastUpdate` seeded as a mix of whole-second and sub-second instants and literals in `Z` and offset form;
   - `.regex` and the not-equals idiom;
-  - nested paths (`validFor.startDateTime`, `relatedParty.role`), `@type`, extension attributes;
+  - nested paths (`validFor.startDateTime`, `relatedParty.role`), `@type`, extension attributes, and a relationship filter both with and without `.id` (`productSpecification=urn:...`);
   - `sort` with `-` descending, and paging through a sorted, filtered result without duplicates or gaps.
 - Add one polymorphic case with a filter (TMF730 sub-types, e.g. software-management `ResourceSpecification`).
 - Run the list and hub-adjacent ITs of product-catalog, software-management and resource-catalog on `-Dbroker=postgresql`, `orion-ld` and `scorpio` (`-Dcache=in-memory` and `redis`). Fix parity gaps in the renderer. Record each accepted deviation in `KnownDeviation` (contract level) and in `release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md`.
 - Docs:
-  - `release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md`: replace "No list filters or sorting" in *Interim limits*, update the hub bullet (only ticket 1 remains), and add a short "Query translation" section on the semantics and accepted deviations.
+  - `release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md`: replace "No list filters or sorting" in *Interim limits*, update the hub bullet (only ticket 1 remains), and add a short "Query translation" section on the semantics (instant comparison for date-time attributes, one regex pattern per attribute) and the accepted deviations. Also note the new 400 for a non-ISO date-time literal on every backend.
   - `storage-postgresql/README.md`: Tests section (tags), plus a short note that filters are jsonpath/`EXISTS` without indexes (decision 12).
   - `AGENTS.md`: the model package, `NgsiLdQueryRenderer`, `JsonbQueryRenderer`.
 - Comments: resolve or reword `NgsiLdEventHandler`'s "(until ticket 7)" comment. Optionally filter `findSubscriptions` by the hub's `subscription` id so a hub beyond the first page is not missed, but only if this is cheap and both backends support it; otherwise reword the comment without the ticket reference.
