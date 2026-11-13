@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * Attribute addressed by a filter or sort, as TMForum bean property names (after reserved-token translation, e.g.
  * {@code @type} to {@code atType}). Each renderer maps them to its own storage layout. {@code declared} is false
- * for a free-form extension attribute.
+ * for a free-form extension attribute, whose segments are the untranslated names the client sent.
  */
 public record AttributePath(List<String> segments, boolean declared) {
 
