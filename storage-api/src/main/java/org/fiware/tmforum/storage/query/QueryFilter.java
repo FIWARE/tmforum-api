@@ -2,6 +2,7 @@ package org.fiware.tmforum.storage.query;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Filter tree of an {@link EntityQuery}.
@@ -9,12 +10,17 @@ import java.util.Objects;
 public sealed interface QueryFilter {
 
     /**
-     * Matches when the attribute compares true against any of the OR-ed values. Each value is one exact literal,
-     * already validated for {@code valueType}, that no renderer splits further. A {@code REGEX} comparison carries
-     * exactly one pattern and is always of type {@code STRING}.
+     * Matches when the attribute compares true against any of the OR-ed values. Each value is one exact literal
+     * that no renderer splits further and that must be a valid literal of {@code valueType}. A {@code REGEX}
+     * comparison carries exactly one pattern and is always of type {@code STRING}; a {@code BOOLEAN} one only
+     * supports {@code EQUALS}.
      */
     record Comparison(AttributePath attribute, ComparisonOperator operator, ValueType valueType, List<String> values)
             implements QueryFilter {
+
+        // the literal grammars the TMForum filter parser validates against
+        private static final Pattern NUMBER_LITERAL = Pattern.compile("-?(0|[1-9]\\d*)(\\.\\d+)?([eE][-+]?\\d+)?");
+        private static final Pattern BOOLEAN_LITERAL = Pattern.compile("true|false");
 
         public Comparison {
             Objects.requireNonNull(attribute, "attribute");
@@ -28,6 +34,22 @@ public sealed interface QueryFilter {
                 if (valueType != ValueType.STRING) {
                     throw new IllegalArgumentException("A regex comparison must be of type STRING, was " + valueType);
                 }
+            }
+            if (valueType == ValueType.BOOLEAN && operator != ComparisonOperator.EQUALS) {
+                throw new IllegalArgumentException("A boolean comparison only supports EQUALS, was " + operator);
+            }
+            values.forEach(value -> requireLiteralOf(valueType, value));
+        }
+
+        private static void requireLiteralOf(ValueType valueType, String value) {
+            boolean valid = switch (valueType) {
+                case STRING -> true;
+                case NUMBER -> NUMBER_LITERAL.matcher(value).matches();
+                case BOOLEAN -> BOOLEAN_LITERAL.matcher(value).matches();
+                case DATE_TIME -> DateTimeLiterals.parse(value).isPresent();
+            };
+            if (!valid) {
+                throw new IllegalArgumentException(value + " is not a valid " + valueType + " literal.");
             }
         }
     }

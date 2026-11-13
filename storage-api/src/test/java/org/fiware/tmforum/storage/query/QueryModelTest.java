@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -115,12 +116,54 @@ class QueryModelTest {
         assertDoesNotThrow(construction, description);
     }
 
+    private static final Map<ValueType, List<String>> VALID_LITERALS = Map.of(
+            ValueType.STRING, List.of("a", "", "1", "true"),
+            ValueType.NUMBER, List.of("0", "-1", "1.5", "2e10", "-3.2E-4"),
+            ValueType.BOOLEAN, List.of("true", "false"),
+            ValueType.DATE_TIME, List.of("2024-01-01T00:00:00Z", "2024-01-01T00:00:00.500+01:00",
+                    "2024-01-01T00:00:00", "2024-01-01"));
+
+    static Stream<Arguments> validLiterals() {
+        return VALID_LITERALS.entrySet().stream().map(entry -> Arguments.of(entry.getKey(), entry.getValue()));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("validLiterals")
+    void acceptsSeveralValidLiteralsOfTheType(ValueType valueType, List<String> values) {
+        assertEquals(values, new Comparison(NAME, ComparisonOperator.EQUALS, valueType, values).values());
+    }
+
+    @ParameterizedTest(name = "{0} {1}")
+    @MethodSource("invalidLiterals")
+    void rejectsLiteralNotOfTheType(ValueType valueType, String literal) {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Comparison(NAME, ComparisonOperator.EQUALS, valueType, List.of(literal)));
+    }
+
+    static Stream<Arguments> invalidLiterals() {
+        return Stream.of(
+                Arguments.of(ValueType.NUMBER, "abc"),
+                Arguments.of(ValueType.NUMBER, "01"),
+                Arguments.of(ValueType.NUMBER, " 1"),
+                Arguments.of(ValueType.NUMBER, "1,2"),
+                Arguments.of(ValueType.BOOLEAN, "TRUE"),
+                Arguments.of(ValueType.BOOLEAN, "yes"),
+                Arguments.of(ValueType.DATE_TIME, "abc"),
+                Arguments.of(ValueType.DATE_TIME, "2024-13-01"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ComparisonOperator.class, mode = EnumSource.Mode.EXCLUDE, names = {"EQUALS", "REGEX"})
+    void rejectsOrderingOnBooleans(ComparisonOperator operator) {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Comparison(NAME, operator, ValueType.BOOLEAN, List.of("true")));
+    }
+
     @ParameterizedTest
     @EnumSource(value = ComparisonOperator.class, mode = EnumSource.Mode.EXCLUDE, names = "REGEX")
-    void nonRegexComparisonsTakeSeveralValuesOfAnyType(ComparisonOperator operator) {
-        for (ValueType valueType : ValueType.values()) {
-            List<String> values = List.of("a", "b");
-            assertEquals(values, new Comparison(NAME, operator, valueType, values).values());
+    void orderedTypesTakeEveryNonRegexOperator(ComparisonOperator operator) {
+        for (ValueType valueType : List.of(ValueType.STRING, ValueType.NUMBER, ValueType.DATE_TIME)) {
+            assertDoesNotThrow(() -> new Comparison(NAME, operator, valueType, VALID_LITERALS.get(valueType)));
         }
     }
 
