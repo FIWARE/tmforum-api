@@ -2,7 +2,6 @@ package org.fiware.tmforum.storage.query;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 /**
  * Filter tree of an {@link EntityQuery}.
@@ -17,10 +16,6 @@ public sealed interface QueryFilter {
      */
     record Comparison(AttributePath attribute, ComparisonOperator operator, ValueType valueType, List<String> values)
             implements QueryFilter {
-
-        // the literal grammars the TMForum filter parser validates against
-        private static final Pattern NUMBER_LITERAL = Pattern.compile("-?(0|[1-9]\\d*)(\\.\\d+)?([eE][-+]?\\d+)?");
-        private static final Pattern BOOLEAN_LITERAL = Pattern.compile("true|false");
 
         public Comparison {
             Objects.requireNonNull(attribute, "attribute");
@@ -38,18 +33,10 @@ public sealed interface QueryFilter {
             if (valueType == ValueType.BOOLEAN && operator != ComparisonOperator.EQUALS) {
                 throw new IllegalArgumentException("A boolean comparison only supports EQUALS, was " + operator);
             }
-            values.forEach(value -> requireLiteralOf(valueType, value));
-        }
-
-        private static void requireLiteralOf(ValueType valueType, String value) {
-            boolean valid = switch (valueType) {
-                case STRING -> true;
-                case NUMBER -> NUMBER_LITERAL.matcher(value).matches();
-                case BOOLEAN -> BOOLEAN_LITERAL.matcher(value).matches();
-                case DATE_TIME -> DateTimeLiterals.parse(value).isPresent();
-            };
-            if (!valid) {
-                throw new IllegalArgumentException(value + " is not a valid " + valueType + " literal.");
+            for (String value : values) {
+                if (!Literals.isLiteralOf(valueType, value)) {
+                    throw new IllegalArgumentException(value + " is not a valid " + valueType + " literal.");
+                }
             }
         }
     }

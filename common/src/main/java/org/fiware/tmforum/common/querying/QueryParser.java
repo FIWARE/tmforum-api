@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
+import org.fiware.tmforum.storage.query.Literals;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -86,12 +87,6 @@ public class QueryParser {
     private static final String SORT_DESCENDING_PREFIX = "-";
 
     /**
-     * Boolean literals of the NGSI-LD query language. The brokers only accept them lower-case,
-     * e.g. "True" is not a boolean but an unquoted string and breaks the query.
-     */
-    private static final Pattern BOOLEAN_LITERAL_PATTERN = Pattern.compile("true|false");
-
-    /**
      * The operators comparing by order, as opposed to the ones comparing by equality. They require
      * the compared values to have an order, which booleans do not.
      */
@@ -100,14 +95,6 @@ public class QueryParser {
             GREATER_THAN_EQUALS.getNgsiLdOperator(),
             LESS_THAN.getNgsiLdOperator(),
             LESS_THAN_EQUALS.getNgsiLdOperator());
-
-    /**
-     * Number literals of the NGSI-LD query language, which follow the JSON number syntax. Java's
-     * {@link Double#parseDouble} is deliberately not used for the check: it also accepts "NaN",
-     * "Infinity", "1d" and hex floats like "0x1p1", none of which are valid in a query.
-     */
-    private static final Pattern NUMBER_LITERAL_PATTERN =
-            Pattern.compile("-?(0|[1-9]\\d*)(\\.\\d+)?([eE][-+]?\\d+)?");
 
     // NGSI-LD's native "not equal" operator, used to rewrite the `.regex` "not equal" idiom below
     private static final String NGSI_LD_NOT_EQUALS = "!=";
@@ -437,8 +424,8 @@ public class QueryParser {
     private String encodeValue(String attribute, String value, QueryAttributeType type) {
         return switch (type) {
             case STRING -> encodeStringValue(value);
-            case BOOLEAN -> validateLiteral(attribute, value, BOOLEAN_LITERAL_PATTERN, "boolean");
-            case NUMBER -> validateLiteral(attribute, value, NUMBER_LITERAL_PATTERN, "number");
+            case BOOLEAN -> validateLiteral(attribute, value, Literals.BOOLEAN, "boolean");
+            case NUMBER -> validateLiteral(attribute, value, Literals.NUMBER, "number");
         };
     }
 
