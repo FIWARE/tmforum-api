@@ -123,8 +123,8 @@ class NgsiLdQueryRendererTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orValueSeparatorQueries")
 	void testOrValueSeparatorInsideValue(String expected, GeneralProperties properties) {
-		assertEquals(new QueryParams(null, null, expected),
-				new QueryParser(properties).toNgsiLdQuery(MyPojo.class, "color=a|b"));
+		QueryFilter filter = new QueryParser(properties).parse(MyPojo.class, "color=a|b").filter();
+		assertEquals(expected, new NgsiLdQueryRenderer(properties).renderFilter(new EntityQuery(MyPojo.class, filter, List.of())));
 	}
 
 	private static Stream<Arguments> orValueSeparatorQueries() {

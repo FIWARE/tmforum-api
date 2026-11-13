@@ -351,7 +351,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         List<URI> ids = createListed();
 
         PagedResult<T> page = repository().findEntities(offset, limit, fixture().entityClass(), null, join(ids),
-                fixture().storedType(), null).block(TIMEOUT);
+                fixture().storedType()).block(TIMEOUT);
 
         if (expectedSize == 0 && knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
             assertNull(page, "An empty page is emitted now, drop " + KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
@@ -371,7 +371,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         List<URI> requested = createListed().subList(0, PAGE_SIZE);
 
         PagedResult<T> page = repository().findEntities(FIRST_OFFSET, LIST_LIMIT, fixture().entityClass(), null,
-                join(requested), fixture().storedType(), null).block(TIMEOUT);
+                join(requested), fixture().storedType()).block(TIMEOUT);
 
         assertNotNull(page);
         assertEquals(Set.copyOf(requested), Set.copyOf(idsOf(page)));
@@ -383,7 +383,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         URI other = create(otherFixture());
 
         PagedResult<T> page = repository().findEntities(FIRST_OFFSET, LIST_LIMIT, fixture().entityClass(), null,
-                join(List.of(own, other)), fixture().storedType(), null).block(TIMEOUT);
+                join(List.of(own, other)), fixture().storedType()).block(TIMEOUT);
 
         assertNotNull(page);
         assertEquals(List.of(own), idsOf(page));
@@ -441,7 +441,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 fixture().storedType(), fixture().entityClass(),
                 otherFixture().storedType(), otherFixture().entityClass());
         return repository().findEntitiesPolymorphic(offset, LIST_LIMIT,
-                String.join(LIST_SEPARATOR, classes.keySet()), null, join(ids), null, classes::get);
+                String.join(LIST_SEPARATOR, classes.keySet()), null, join(ids), classes::get);
     }
 
     private static List<Object> itemsOf(Mono<PagedResult<Object>> result) {

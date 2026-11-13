@@ -4,10 +4,15 @@ import io.github.wistefan.mapping.EntityVOMapper;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.EventMapping;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
 import org.fiware.tmforum.common.rest.CharacterizationEntity;
 import org.fiware.tmforum.storage.EntityReadRepository;
+import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,6 +61,7 @@ class TMForumEventHandlerTest {
 
 	private NotificationSender notificationSender;
 	private EventMapper eventMapper;
+	private EntityReadRepository repository;
 	private TMForumEventHandler eventHandler;
 
 	@BeforeEach
@@ -79,8 +85,9 @@ class TMForumEventHandlerTest {
 			}
 			return map;
 		});
-		eventHandler = spy(new TMForumEventHandler(mock(QueryParser.class), new SubscriptionQueryResolver(),
-				notificationSender, entityVOMapper, mock(EntityReadRepository.class), eventMapper, null));
+		repository = mock(EntityReadRepository.class);
+		eventHandler = spy(new TMForumEventHandler(new SubscriptionQueryResolver(), notificationSender, entityVOMapper,
+				repository, eventMapper, null));
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -108,6 +115,26 @@ class TMForumEventHandlerTest {
 				Arguments.of("hub without query", null, true),
 				Arguments.of("hub query matching the old state", PAYLOAD_NAME + ".name=" + ENTITY_NAME, true),
 				Arguments.of("hub query not matching the old state", PAYLOAD_NAME + ".name=other", false));
+	}
+
+	@Test
+	void findSubscriptionsFiltersTheHubsByEntityTypeAndEventType() {
+		EventDetails details = new EventDetails(CharacterizationEntity.TYPE, DELETE_EVENT_TYPE, EVENT_TIME, PAYLOAD_NAME);
+		when(repository.findEntities(any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE, null)));
+
+		eventHandler.findSubscriptions(details).block();
+
+		EntityQuery expected = new EntityQuery(TMForumSubscription.class, new QueryFilter.AllOf(List.of(
+				contains("entities", CharacterizationEntity.TYPE),
+				contains("eventTypes", DELETE_EVENT_TYPE))), List.of());
+		verify(repository).findEntities(any(), eq(TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE),
+				eq(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION), eq(TMForumSubscription.class), eq(expected));
+	}
+
+	private static QueryFilter contains(String attribute, String value) {
+		return new QueryFilter.Comparison(new AttributePath(List.of(attribute), true), ComparisonOperator.EQUALS,
+				ValueType.STRING, List.of(value));
 	}
 
 	@Test

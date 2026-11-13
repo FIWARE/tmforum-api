@@ -13,12 +13,15 @@ import org.fiware.tmforum.common.filter.PaginationFilter;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.notification.EntityEventPublisher;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
-import org.fiware.tmforum.common.querying.QueryParams;
+import org.fiware.tmforum.common.querying.ParsedQuery;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.SortKey;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.common.validation.ReferencedEntity;
 import reactor.core.publisher.Mono;
@@ -113,25 +116,38 @@ public abstract class AbstractApiController<T> {
 		}
 	}
 
+	// the storage arguments of a list call; a null query means unfiltered and unordered
+	private record ListRequest(EntityQuery query, String ids, String types) {
+	}
+
+	private ListRequest toListRequest(Optional<HttpRequest<Object>> optionalHttpRequest, Class<?> queryClass,
+			String defaultTypes) {
+		if (optionalHttpRequest.isEmpty()) {
+			log.warn("The original request is not available, no filters will be applied.");
+			return new ListRequest(null, null, defaultTypes);
+		}
+		HttpRequest<Object> theRequest = optionalHttpRequest.get();
+		validatePaginationParameters(theRequest);
+		Map<String, List<String>> parameters = theRequest.getParameters().asMap();
+		// resolve the sort before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
+		List<SortKey> sort = queryParser.parseSort(queryClass, parameters);
+		ParsedQuery parsedQuery = null;
+		if (QueryParser.hasFilter(parameters)) {
+			log.debug("A filter is included in the request.");
+			parsedQuery = queryParser.parse(queryClass, theRequest.getUri().getQuery());
+		}
+		QueryFilter filter = parsedQuery == null ? null : parsedQuery.filter();
+		EntityQuery query = filter == null && sort.isEmpty() ? null : new EntityQuery(queryClass, filter, sort);
+		if (parsedQuery == null) {
+			return new ListRequest(query, null, defaultTypes);
+		}
+		return new ListRequest(query, parsedQuery.ids(), Optional.ofNullable(parsedQuery.types()).orElse(defaultTypes));
+	}
+
 	protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
-		QueryParams queryParams = null;
-		String orderBy = null;
-		if (optionalHttpRequest.isEmpty()) {
-			log.warn("The original request is not available, no filters will be applied.");
-		} else {
-			HttpRequest<Object> theRequest = optionalHttpRequest.get();
-			validatePaginationParameters(theRequest);
-			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
-			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
-			orderBy = queryParser.toOrderBy(entityClass, parameters);
-			if (QueryParser.hasFilter(parameters)) {
-				log.debug("A filter is included in the request.");
-				String queryString = theRequest.getUri().getQuery();
-				queryParams = queryParser.toNgsiLdQuery(entityClass, queryString);
-			}
-		}
+		ListRequest listRequest = toListRequest(optionalHttpRequest, entityClass, type);
 		offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
 		limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
 
@@ -141,11 +157,7 @@ public abstract class AbstractApiController<T> {
 		}
 
 		return repository
-				.findEntities(offset, limit, entityClass,
-						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
-						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
-						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(type),
-						orderBy)
+				.findEntities(offset, limit, entityClass, listRequest.query(), listRequest.ids(), listRequest.types())
 				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {
 					theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, pagedResult.offset())
 							.setAttribute(PaginationFilter.LIMIT_ATTR, pagedResult.limit())
@@ -174,22 +186,7 @@ public abstract class AbstractApiController<T> {
 			Class<R> queryClass, Function<String, Class<? extends R>> typeToClass) {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
-		QueryParams queryParams = null;
-		String orderBy = null;
-		if (optionalHttpRequest.isEmpty()) {
-			log.warn("The original request is not available, no filters will be applied.");
-		} else {
-			HttpRequest<Object> theRequest = optionalHttpRequest.get();
-			validatePaginationParameters(theRequest);
-			Map<String, List<String>> parameters = theRequest.getParameters().asMap();
-			// resolve orderBy before hasFilter, which mutates parameters by removing well-known keys (incl. sort)
-			orderBy = queryParser.toOrderBy(queryClass, parameters);
-			if (QueryParser.hasFilter(parameters)) {
-				log.debug("A filter is included in the request.");
-				String queryString = theRequest.getUri().getQuery();
-				queryParams = queryParser.toNgsiLdQuery(queryClass, queryString);
-			}
-		}
+		ListRequest listRequest = toListRequest(optionalHttpRequest, queryClass, types);
 		offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
 		limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
 
@@ -199,11 +196,7 @@ public abstract class AbstractApiController<T> {
 		}
 
 		return repository
-				.findEntitiesPolymorphic(offset, limit,
-						Optional.ofNullable(queryParams).map(QueryParams::type).orElse(types),
-						Optional.ofNullable(queryParams).map(QueryParams::query).orElse(null),
-						Optional.ofNullable(queryParams).map(QueryParams::id).orElse(null),
-						orderBy,
+				.findEntitiesPolymorphic(offset, limit, listRequest.types(), listRequest.query(), listRequest.ids(),
 						typeToClass)
 				.doOnNext(pagedResult -> optionalHttpRequest.ifPresent(theRequest -> {
 					theRequest.setAttribute(PaginationFilter.OFFSET_ATTR, pagedResult.offset())

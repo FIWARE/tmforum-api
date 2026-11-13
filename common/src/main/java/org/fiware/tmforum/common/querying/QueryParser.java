@@ -16,7 +16,6 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.DateTimeLiterals;
-import org.fiware.tmforum.storage.query.EntityQuery;
 import org.fiware.tmforum.storage.query.Literals;
 import org.fiware.tmforum.storage.query.QueryFilter;
 import org.fiware.tmforum.storage.query.QueryFilter.AllOf;
@@ -89,8 +88,6 @@ public class QueryParser {
     }
 
     protected final GeneralProperties generalProperties;
-    // only for the transitional toNgsiLdQuery/toOrderBy facades
-    private final NgsiLdQueryRenderer ngsiLdQueryRenderer;
 
     // Keys for the "well-known" fields
     public static final String OFFSET_KEY = "offset";
@@ -127,20 +124,11 @@ public class QueryParser {
 
     public QueryParser(GeneralProperties generalProperties) {
         this.generalProperties = generalProperties;
-        this.ngsiLdQueryRenderer = new NgsiLdQueryRenderer(generalProperties);
     }
 
     /**
-     * Translates the TMForum {@code sort} query parameter (comma-separated list of properties,
-     * optionally prefixed with "-" for descending, e.g. {@code sort=name,-billDate}) into NGSI-LD's
-     * {@code orderBy}, or {@code null} if no {@code sort} was requested.
-     */
-    public String toOrderBy(Class<?> queryClass, Map<String, List<String>> parameters) {
-        return ngsiLdQueryRenderer.renderOrderBy(new EntityQuery(queryClass, null, parseSort(queryClass, parameters)));
-    }
-
-    /**
-     * Parses the TMForum {@code sort} parameter; empty if none was requested.
+     * Parses the TMForum {@code sort} parameter (comma-separated properties, each optionally prefixed with "-" for
+     * descending, e.g. {@code sort=name,-billDate}); empty if none was requested.
      */
     public List<SortKey> parseSort(Class<?> queryClass, Map<String, List<String>> parameters) {
         List<String> sortValues = parameters.get(SORT_KEY);
@@ -195,15 +183,6 @@ public class QueryParser {
         // not part of the query
         parameters.removeAll(wellKnownParams);
         return String.join(TMFORUM_AND, parameters);
-    }
-
-    /**
-     * Transitional facade: {@link #parse} rendered by {@link NgsiLdQueryRenderer}.
-     */
-    public QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {
-        ParsedQuery parsedQuery = parse(queryClass, queryString);
-        String query = ngsiLdQueryRenderer.renderFilter(new EntityQuery(queryClass, parsedQuery.filter(), List.of()));
-        return new QueryParams(parsedQuery.ids(), parsedQuery.types(), query);
     }
 
     /**

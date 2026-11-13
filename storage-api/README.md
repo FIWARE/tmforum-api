@@ -65,8 +65,8 @@ UPDATE. The NGSI-LD replace mode reports READ instead, which renders differently
 parity question (see the `updateDomainEntity` Javadoc). The update never creates the entity and never completes
 silently.
 
-`query` and `orderBy` are still `QueryParser` output (NGSI-LD q syntax). A second adapter has to translate that
-syntax until ticket 7 adds a neutral query model.
+The list methods take an `EntityQuery` (`org.fiware.tmforum.storage.query`): a backend-neutral filter tree and sort
+keys, which each adapter renders into its own query language.
 
 ## Adding an adapter
 

@@ -20,7 +20,6 @@ import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
-import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
@@ -32,18 +31,26 @@ import org.fiware.tmforum.common.repository.SubscriptionRepository;
 import org.fiware.tmforum.common.validation.ReferenceValidationService;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.ValueType;
 import reactor.core.publisher.Mono;
 import tools.jackson.core.JacksonException;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 public abstract class AbstractSubscriptionApiController extends AbstractApiController<TMForumSubscription> {
 	private static final String RECEIVER_INFO_LISTENER_ENDPOINT = "Listener-Endpoint";
+	private static final String CALLBACK_ATTRIBUTE = "callback";
+	private static final int SAME_CALLBACK_PAGE_SIZE = 100;
 
 	private final Map<String, String> eventGroupToEntityNameMapping;
 	private final GeneralProperties generalProperties;
@@ -82,17 +89,29 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 				.then(create(Mono.just(tmForumSubscription), TMForumSubscription.class));
 	}
 
+	// rawQuery is compared in Java: its stored form differs per backend (escaped on NGSI-LD), and hubs sharing one
+	// callback are few
 	private Mono<Void> assureNotExistingTMForumSubscription(TMForumSubscription subscription) {
-		// rawQuery is stored escaped (see TMForumSubscription.getEscapedRawQuery), so the value
-		// compared against here must be escaped the same way to actually match.
-		String query = String.format(queryParser.toNgsiLdQuery(TMForumSubscription.class, "callback=%s&rawQuery=%s").query(),
-				subscription.getCallback(), ForbiddenCharacterEscaper.escape(subscription.getRawQuery()));
+		// built directly, since parsing would split a callback's query string on its separators
+		EntityQuery sameCallback = new EntityQuery(TMForumSubscription.class,
+				new QueryFilter.Comparison(new AttributePath(List.of(CALLBACK_ATTRIBUTE), true),
+						ComparisonOperator.EQUALS, ValueType.STRING, List.of(subscription.getCallback().toString())),
+				List.of());
 
-		return repository.findEntities(CommonConstants.DEFAULT_OFFSET, 1, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
-						TMForumSubscription.class, query)
-				.map(PagedResult::items)
-				.flatMap(list -> list.isEmpty() ? Mono.empty() :
-						Mono.error(new TmForumException("Such subscription already exists.", TmForumExceptionReason.CONFLICT)));
+		return findSameCallback(sameCallback, CommonConstants.DEFAULT_OFFSET)
+				.expand(page -> page.items().size() < SAME_CALLBACK_PAGE_SIZE ? Mono.empty() :
+						findSameCallback(sameCallback, page.offset() + SAME_CALLBACK_PAGE_SIZE))
+				.flatMapIterable(PagedResult::items)
+				.any(existing -> Objects.equals(existing.getRawQuery(), subscription.getRawQuery()))
+				.flatMap(exists -> exists ?
+						Mono.<Void>error(new TmForumException("Such subscription already exists.",
+								TmForumExceptionReason.CONFLICT)) :
+						Mono.<Void>empty());
+	}
+
+	private Mono<PagedResult<TMForumSubscription>> findSameCallback(EntityQuery sameCallback, int offset) {
+		return repository.findEntities(offset, SAME_CALLBACK_PAGE_SIZE, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
+				TMForumSubscription.class, sameCallback);
 	}
 
 	protected TMForumSubscription buildSubscription(String callback, String query, List<String> eventGroups) {

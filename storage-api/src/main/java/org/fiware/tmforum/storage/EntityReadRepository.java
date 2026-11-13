@@ -1,5 +1,6 @@
 package org.fiware.tmforum.storage;
 
+import org.fiware.tmforum.storage.query.EntityQuery;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -9,9 +10,6 @@ import java.util.function.Function;
  * Read side of the entity port. Failures are {@link StorageException}s with {@link StorageOperation#READ} for
  * {@code get} and {@link StorageOperation#LIST} for the {@code findEntities*} methods, also when a nested read
  * fails.
- * <p>
- * {@code query} and {@code orderBy} are {@code QueryParser} output (NGSI-LD q syntax). That coupling is
- * transitional until a neutral query model exists (ticket 7).
  */
 public interface EntityReadRepository {
 
@@ -32,33 +30,34 @@ public interface EntityReadRepository {
 
     /**
      * Values within {@code ids} and within {@code types} are comma-separated and OR-ed; the two filters and
-     * {@code query} are AND-ed. {@code types} is required (NGSI-LD brokers reject a query without a type or
-     * other filter); a null {@code ids}, {@code query} or {@code orderBy} means unrestricted or unordered.
+     * {@code query}'s filter are AND-ed, and {@code query}'s sort orders the result. {@code types} is required
+     * (NGSI-LD brokers reject a query without a type or other filter); a null {@code ids} or {@code query} means
+     * unrestricted and unordered.
      * Always emits a page, an empty one when nothing matches or the offset is past the last match, because the
      * controllers set the pagination headers from it.
      * <p>
      * Known NGSI-LD adapter defect, not a contract rule (ticket 0): an empty page completes empty instead.
      */
     <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
-                                          String query, String ids, String types, String orderBy);
+                                          EntityQuery query, String ids, String types);
 
     /**
-     * Entities of {@code entityType} matching {@code query}, unordered; the full overload without ids or orderBy.
+     * Entities of {@code entityType} matching {@code query}; the full overload without ids.
      */
     default <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, String entityType,
-                                                  Class<T> entityClass, String query) {
-        return findEntities(offset, limit, entityClass, query, null, entityType, null);
+                                                  Class<T> entityClass, EntityQuery query) {
+        return findEntities(offset, limit, entityClass, query, null, entityType);
     }
 
     /**
      * Lists several types in one paged result, mapping each entity to the class {@code typeToClass} returns for
-     * its stored type. {@code ids}, {@code types} and {@code query} filter and the result pages as in
+     * its stored type. {@code ids}, {@code types} and {@code query} filter, sort and page as in
      * {@code findEntities}.
      * <p>
      * Known NGSI-LD adapter defect, not a contract rule (ticket 0): Orion-LD rejects several ids together with
      * several types, so such a call fails with (LIST, UNKNOWN).
      */
-    <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types, String query,
-                                                     String ids, String orderBy,
+    <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
+                                                     EntityQuery query, String ids,
                                                      Function<String, Class<? extends T>> typeToClass);
 }

@@ -240,8 +240,8 @@ class PostgresEntityRepositoryIT {
         IntStream.rangeClosed(1, CATALOG_COUNT).forEach(number -> repository.createDomainEntity(catalog(number))
                 .block());
 
-        PagedResult<TestCatalog> page = repository.findEntities(offset, limit, TestCatalog.class, null, ids, types,
-                null).block();
+        PagedResult<TestCatalog> page = repository.findEntities(offset, limit, TestCatalog.class, null, ids, types)
+                .block();
 
         assertEquals(expectedNumbers.stream().map(PostgresEntityRepositoryIT::catalog).toList(), page.items(),
                 "The page should hold the expected entities in creation order.");
@@ -258,7 +258,7 @@ class PostgresEntityRepositoryIT {
                 TestResource.TYPE, TestResource.class, TestLogicalResource.TYPE, TestLogicalResource.class);
 
         PagedResult<TestResource> page = repository.<TestResource>findEntitiesPolymorphic(null, null,
-                TestResource.TYPE + "," + TestLogicalResource.TYPE, null, null, null, classes::get).block();
+                TestResource.TYPE + "," + TestLogicalResource.TYPE, null, null, classes::get).block();
 
         assertEquals(List.of(resource, logicalResource), page.items(), "Each row should be read as its own type.");
         assertEquals(TestLogicalResource.class, page.items().get(1).getClass(), "The sub-type should be kept.");
@@ -278,7 +278,7 @@ class PostgresEntityRepositoryIT {
                         imported.getId().toString()),
                 "The given timestamps should be stored.");
         assertEquals(List.of(imported, created),
-                repository.findEntities(null, null, TestCatalog.class, null, null, TestCatalog.TYPE, null)
+                repository.findEntities(null, null, TestCatalog.class, null, null, TestCatalog.TYPE)
                         .block().items(),
                 "An imported entity should list by its original creation time.");
     }

@@ -9,6 +9,9 @@ import org.fiware.tmforum.common.querying.MyPojo;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.EntityRepository;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.SortKey;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -29,6 +32,10 @@ import static org.mockito.Mockito.when;
 
 class AbstractApiControllerTest {
 
+	private static final String LIST_TYPE = "my-pojo";
+	private static final String COLOR_FILTER = "color=Red";
+	private static final String COLOR_SORT = "sort=-color";
+
 	private static class TestController extends AbstractApiController<MyPojo> {
 		TestController(QueryParser queryParser, EntityRepository repository) {
 			super(queryParser, null, repository, null);
@@ -39,7 +46,7 @@ class AbstractApiControllerTest {
 	public void listPolymorphicForwardsTheIdFilterToTheRepository() {
 		// Regression test: listPolymorphic used to only forward "type" and "query" from the
 		// parsed request to the repository, silently dropping any ?id= filter - even though it
-		// was correctly parsed into QueryParams.id(). The non-polymorphic list() already forwarded
+		// was correctly parsed into ParsedQuery.ids(). The non-polymorphic list() already forwarded
 		// it; listPolymorphic must do the same.
 		GeneralProperties properties = new GeneralProperties();
 		QueryParser queryParser = new QueryParser(properties);
@@ -49,7 +56,7 @@ class AbstractApiControllerTest {
 		String requestedId = "urn:ngsi-ld:software-specification:0e2d5c4a-cf51-43cf-a510-dff06f62f4a3";
 		HttpRequest<?> request = HttpRequest.GET("/resourceSpecification?id=" + requestedId + "&fields=lifecycleStatus");
 
-		when(repository.findEntitiesPolymorphic(any(), any(), any(), any(), any(), any(), any()))
+		when(repository.findEntitiesPolymorphic(any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, 10, null)));
 
 		ServerRequestContext.with(request, () -> {
@@ -57,7 +64,7 @@ class AbstractApiControllerTest {
 					type -> MyPojo.class).block();
 		});
 
-		verify(repository).findEntitiesPolymorphic(any(), any(), any(), any(), eq(requestedId), any(), any());
+		verify(repository).findEntitiesPolymorphic(any(), any(), any(), any(), eq(requestedId), any());
 	}
 
 	/**
@@ -118,13 +125,41 @@ class AbstractApiControllerTest {
 		EntityRepository repository = mock(EntityRepository.class);
 		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
 		HttpRequest<?> request = HttpRequest.GET("/resource?offset=10&limit=5");
-		when(repository.findEntities(any(), any(), any(), any(), any(), any(), any()))
+		when(repository.findEntities(any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 10, 5, null)));
 
 		ServerRequestContext.with(request, () -> {
 			controller.list(10, 5, null, MyPojo.class).block();
 		});
 
-		verify(repository).findEntities(eq(10), eq(5), any(), any(), any(), any(), any());
+		verify(repository).findEntities(eq(10), eq(5), any(), any(), any(), any());
+	}
+
+	@ParameterizedTest
+	@MethodSource("provideListQueries")
+	public void listPassesTheParsedFilterAndSortToTheRepository(String queryString) {
+		QueryParser queryParser = new QueryParser(new GeneralProperties());
+		EntityRepository repository = mock(EntityRepository.class);
+		TestController controller = new TestController(queryParser, repository);
+		when(repository.findEntities(any(), any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, 10, null)));
+
+		ServerRequestContext.with(HttpRequest.GET("/resource?" + queryString), () -> {
+			controller.list(0, 10, LIST_TYPE, MyPojo.class).block();
+		});
+
+		QueryFilter filter = queryString.contains(COLOR_FILTER) ? queryParser.parse(MyPojo.class, queryString).filter() : null;
+		List<SortKey> sort = queryParser.parseSort(MyPojo.class, HttpRequest.GET("/resource?" + queryString)
+				.getParameters().asMap());
+		EntityQuery expected = filter == null && sort.isEmpty() ? null : new EntityQuery(MyPojo.class, filter, sort);
+		verify(repository).findEntities(any(), any(), eq(MyPojo.class), eq(expected), any(), eq(LIST_TYPE));
+	}
+
+	private static Stream<Arguments> provideListQueries() {
+		return Stream.of(
+				Arguments.of("fields=color"),
+				Arguments.of(COLOR_FILTER),
+				Arguments.of(COLOR_SORT),
+				Arguments.of(COLOR_FILTER + "&" + COLOR_SORT));
 	}
 }

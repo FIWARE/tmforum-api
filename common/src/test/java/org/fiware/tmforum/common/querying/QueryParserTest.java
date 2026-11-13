@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.querying;
 
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
+import org.fiware.tmforum.storage.query.EntityQuery;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -27,7 +28,7 @@ class QueryParserTest {
 		properties.setIncludeAttributeInList(true);
 		properties.setUseDotSeperator(false);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
 				"The query should have been properly translated.");
 	}
@@ -42,7 +43,7 @@ class QueryParserTest {
 		properties.setIncludeAttributeInList(false);
 		properties.setUseDotSeperator(false);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
 				"The query should have been properly translated.");
 	}
@@ -57,7 +58,7 @@ class QueryParserTest {
 		properties.setIncludeAttributeInList(false);
 		properties.setUseDotSeperator(true);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
 				"The query should have been properly translated.");
 	}
@@ -149,7 +150,7 @@ class QueryParserTest {
 		properties.setIncludeAttributeInList(false);
 		properties.setUseDotSeperator(false);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery),
 				"Reserved names have to be escaped like they are when the entity is persisted.");
 	}
@@ -178,7 +179,7 @@ class QueryParserTest {
 		properties.setIncludeAttributeInList(false);
 		properties.setUseDotSeperator(true);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery));
 	}
 
@@ -198,7 +199,7 @@ class QueryParserTest {
 		properties.setIncludeAttributeInList(false);
 		properties.setUseDotSeperator(false);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
 				"The query should have been properly translated.");
 	}
@@ -231,7 +232,7 @@ class QueryParserTest {
 		properties.setIncludeAttributeInList(true);
 		properties.setUseDotSeperator(false);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(targetClass, tmForumQuery),
 				"JSON-LD reserved token query should translate to the persisted attribute name.");
 	}
@@ -277,7 +278,7 @@ class QueryParserTest {
 		GeneralProperties properties = new GeneralProperties();
 		properties.setUseDotSeperator(true);
 
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(expectedOrderBy, qp.toOrderBy(targetClass, parameters),
 				"The sort parameter should have been properly translated to orderBy.");
 	}
@@ -309,7 +310,7 @@ class QueryParserTest {
 	@Test
 	public void testSortToOrderByReturnsNullWhenSortValueIsBlank() {
 		GeneralProperties properties = new GeneralProperties();
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertNull(qp.toOrderBy(MyPojo.class, Map.of(QueryParser.SORT_KEY, List.of(""))),
 				"A blank sort value should not produce an orderBy.");
 	}
@@ -325,7 +326,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("invalidTypedValueQueries")
 	public void testInvalidTypedValuesAreRejected(String message, String tmForumQuery) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
 		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -360,7 +361,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("orderedBooleanQueries")
 	public void testOrderingOperatorsAreRejectedForBooleans(String message, String tmForumQuery) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
 		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -387,7 +388,7 @@ class QueryParserTest {
 	@MethodSource("orderedNonBooleanQueries")
 	public void testOrderingOperatorsAreKeptForOrderedTypes(String message, String tmForumQuery,
 			QueryParams ngsiLdQuery) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -414,7 +415,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("validTypedValueQueries")
 	public void testValidTypedValuesAreTranslated(String message, String tmForumQuery, QueryParams ngsiLdQuery) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -429,7 +430,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("regexQueries")
 	public void testRegexQueries(String message, String tmForumQuery, QueryParams ngsiLdQuery) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -455,7 +456,7 @@ class QueryParserTest {
 	public void testRegexNotEqualsOptimizationCanBeDisabled() {
 		GeneralProperties properties = new GeneralProperties();
 		properties.setOptimizeRegexNotEquals(false);
-		QueryParser qp = new QueryParser(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertEquals(new QueryParams(null, null, "relatedParty.role~=\"^(?!seller$).*$\""),
 				qp.toNgsiLdQuery(MyPojo.class, "relatedParty.role.regex=^(?!seller$).*$"),
 				"With the optimization disabled, the idiom must be forwarded as a pattern match.");
@@ -471,7 +472,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("regexOnNonStringQueries")
 	public void testRegexIsRejectedForNonStringTypes(String message, String tmForumQuery) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
 		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -502,5 +503,30 @@ class QueryParserTest {
 				// can never conflict with the declared type and stay a plain string
 				Arguments.of("An unknown attribute should not be type-checked.", "unknownAttribute=my-non-int",
 						new QueryParams(null, null, "unknownAttribute==\"my-non-int\"")));
+	}
+
+	// the expected translation of a TMForum query: ids, types and the rendered NGSI-LD q
+	record QueryParams(String id, String type, String query) {
+	}
+
+	// parses with QueryParser and renders with NgsiLdQueryRenderer, as the NGSI-LD list path does
+	private static class NgsiLdTranslator {
+		private final QueryParser parser;
+		private final NgsiLdQueryRenderer renderer;
+
+		NgsiLdTranslator(GeneralProperties properties) {
+			this.parser = new QueryParser(properties);
+			this.renderer = new NgsiLdQueryRenderer(properties);
+		}
+
+		QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {
+			ParsedQuery parsedQuery = parser.parse(queryClass, queryString);
+			String query = renderer.renderFilter(new EntityQuery(queryClass, parsedQuery.filter(), List.of()));
+			return new QueryParams(parsedQuery.ids(), parsedQuery.types(), query);
+		}
+
+		String toOrderBy(Class<?> queryClass, Map<String, List<String>> parameters) {
+			return renderer.renderOrderBy(new EntityQuery(queryClass, null, parser.parseSort(queryClass, parameters)));
+		}
 	}
 }
