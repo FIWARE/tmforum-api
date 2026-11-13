@@ -13,6 +13,8 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest.TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -78,6 +80,42 @@ public abstract class AbstractReferenceReadRepositoryContractTest<T> {
 
         assertNull(repository().findReference(id).block(TIMEOUT));
         assertNull(repository().referenceExists(id, List.of(fixture().storedType())).block(TIMEOUT));
+    }
+
+    enum Lookup {NONE, UNKNOWN_ONLY, ONE, MIXED_WITH_UNKNOWN, DUPLICATES}
+
+    @ParameterizedTest
+    @EnumSource(Lookup.class)
+    void findReferencesEmitsEachExistingIdOnce(Lookup lookup) {
+        String first = create().toString();
+        String second = create().toString();
+        String unknown = fixture().newId().toString();
+        List<String> ids = switch (lookup) {
+            case NONE -> List.of();
+            case UNKNOWN_ONLY -> List.of(unknown);
+            case ONE -> List.of(first);
+            case MIXED_WITH_UNKNOWN -> List.of(unknown, first, second);
+            case DUPLICATES -> List.of(second, first, second, first);
+        };
+        Set<StoredReference> expected = ids.stream()
+                .filter(id -> !id.equals(unknown))
+                .map(id -> new StoredReference(id, fixture().storedType()))
+                .collect(Collectors.toSet());
+
+        List<StoredReference> found = repository().findReferences(ids).collectList().block(TIMEOUT);
+
+        assertEquals(expected, Set.copyOf(found));
+        assertEquals(expected.size(), found.size(), "Each existing id is emitted once.");
+    }
+
+    @Test
+    void findReferencesSkipsDeletedEntities() {
+        URI deleted = create();
+        String kept = create().toString();
+        writeRepository().deleteDomainEntity(deleted).block(TIMEOUT);
+
+        assertEquals(List.of(new StoredReference(kept, fixture().storedType())),
+                repository().findReferences(List.of(deleted.toString(), kept)).collectList().block(TIMEOUT));
     }
 
     private URI create() {

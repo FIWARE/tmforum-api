@@ -1,7 +1,6 @@
 package org.fiware.tmforum.customerbillmanagement;
 
 import tools.jackson.databind.ObjectMapper;
-import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.annotation.MockBean;
@@ -14,7 +13,6 @@ import org.fiware.customerbillmanagement.model.BillRefVOTestExample;
 import org.fiware.customerbillmanagement.model.BillingAccountRefVOTestExample;
 import org.fiware.customerbillmanagement.model.ProductRefVOTestExample;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
@@ -22,6 +20,7 @@ import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.customerbillmanagement.configuration.ApiExtensionProperties;
 import org.fiware.tmforum.customerbillmanagement.domain.AppliedCustomerBillingRate;
+import org.fiware.tmforum.storage.EntityRepository;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,8 +48,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 		AppliedCustomerBillingRateApiTestSpec {
 
 	private final AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient;
-	private final EntitiesApiClient entitiesApiClient;
-	private final JavaObjectMapper javaObjectMapper;
+	private final EntityRepository entityRepository;
 	private final TMForumMapper tmForumMapper;
 
 	private String message;
@@ -62,12 +60,10 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	protected AppliedCustomerBillingRateApiIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
 			GeneralProperties generalProperties,
 			AppliedCustomerBillingRateApiTestClient appliedCustomerBillingRateApiTestClient,
-			EntitiesApiClient entitiesApiClient1, JavaObjectMapper javaObjectMapper,
-			TMForumMapper tmForumMapper) {
+			EntityRepository entityRepository, TMForumMapper tmForumMapper) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.appliedCustomerBillingRateApiTestClient = appliedCustomerBillingRateApiTestClient;
-		this.entitiesApiClient = entitiesApiClient1;
-		this.javaObjectMapper = javaObjectMapper;
+		this.entityRepository = entityRepository;
 		this.tmForumMapper = tmForumMapper;
 	}
 
@@ -94,8 +90,7 @@ public class AppliedCustomerBillingRateApiIT extends AbstractApiIT implements
 	}
 
 	private void createBill(AppliedCustomerBillingRate appliedCustomerBillingRateVO) {
-		EntityVO entityVO = javaObjectMapper.toEntityVO(appliedCustomerBillingRateVO);
-		entitiesApiClient.createEntity(entityVO, null).block();
+		entityRepository.createDomainEntity(appliedCustomerBillingRateVO).block();
 	}
 
 	@Test

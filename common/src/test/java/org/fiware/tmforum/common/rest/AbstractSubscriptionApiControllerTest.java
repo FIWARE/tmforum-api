@@ -6,6 +6,8 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
+import org.fiware.tmforum.common.notification.DirectEntityEventPublisher;
+import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.SubscriptionRepository;
 import org.fiware.tmforum.storage.EntityRepository;
@@ -33,6 +35,7 @@ class AbstractSubscriptionApiControllerTest {
 		TestSubscriptionController(QueryParser queryParser, EntityRepository repository, GeneralProperties generalProperties) {
 			super(queryParser, null, repository, Map.of(), null, null, generalProperties,
 					mock(EntityVOMapper.class), mock(SubscriptionMapper.class));
+			setEventPublisher(new DirectEntityEventPublisher(repository, mock(TMForumEventHandler.class)));
 		}
 	}
 

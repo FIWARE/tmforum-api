@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import io.github.wistefan.mapping.EntitiesRepository;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.core.io.socket.SocketUtils;
@@ -29,11 +30,13 @@ import tools.jackson.databind.JacksonModule;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -57,6 +60,8 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 	@Inject
 	private EntityVOMapper entityVOMapper;
 	@Inject
+	private EntitiesRepository entitiesRepository;
+	@Inject
 	private JavaObjectMapper javaObjectMapper;
 	@Inject
 	private EntitiesApiClient entitiesApiClient;
@@ -71,6 +76,7 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 				"micronaut.server.port", String.valueOf(port),
 				"micronaut.http.services.ngsi.url", "http://localhost:" + port,
 				"micronaut.http.services.ngsi.path", NGSI_PATH,
+				"mapping.context-url", "http://localhost:" + port + StubContextController.CONTEXT_PATH,
 				"micronaut.codec.json.additional-types", LD_JSON,
 				"jackson.serialization-inclusion", "non_null");
 	}
@@ -86,6 +92,18 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 		assertEquals(pojo.getId(), entityVO.getId(), "The entity should keep the id.");
 		assertEquals(pojo.getType(), entityVO.getType(), "The entity should keep the type.");
 		assertEquals(status, mappedBack.getStatus(), "The property should survive the round trip.");
+	}
+
+	// the shape of a broker deletion notification, which the outbox DeleteEvent payload is built from as well
+	@Test
+	void mapsAnIdOnlyEntity() {
+		MyEntityPojo pojo = pojo("deleted", null);
+
+		MyEntityPojo mapped = entityVOMapper.fromEntityVO(new EntityVO().id(pojo.getId()).type(pojo.getType()),
+				MyEntityPojo.class).block();
+
+		assertEquals(pojo.getId(), mapped.getId(), "An id-only entity should map to the domain object with that id.");
+		assertNull(mapped.getStatus(), "An id-only entity should map no attribute.");
 	}
 
 	@ParameterizedTest
@@ -116,9 +134,21 @@ class NgsiLdMappingRegressionTest implements TestPropertyProvider {
 	}
 
 	@Test
-	void injectsTheTolerantMapper() {
-		assertInstanceOf(TolerantEntityVOMapper.class, entityVOMapper,
-				"TolerantEntityVOMapper should replace the library's EntityVOMapper bean.");
+	void injectsTheInlineReferencesRepository() {
+		assertInstanceOf(InlineReferencesEntitiesRepository.class, entitiesRepository,
+				"References should be read inline, never resolved against the broker.");
+	}
+
+	// the read path relies on the injected compactor resolving mapping.context-url, not only the NGSI-LD prefixes
+	@Test
+	void compactsSubAttributesExpandedUnderTheConfiguredContext() {
+		InlineReferencesEntitiesRepositoryTest.Parent parent = entityVOMapper.fromEntityVO(
+						InlineReferencesEntitiesRepositoryTest.parentWithExpandedInlineChildren(), InlineReferencesEntitiesRepositoryTest.Parent.class)
+				.block();
+
+		assertEquals(List.of(InlineReferencesEntitiesRepositoryTest.REMOTE_NAME, InlineReferencesEntitiesRepositoryTest.REMOTE_NAME),
+				parent.getInlineChildren().stream().map(InlineReferencesEntitiesRepositoryTest.Child::getName).toList(),
+				"The injected mapper should compact sub-attribute names against mapping.context-url.");
 	}
 
 	@Test

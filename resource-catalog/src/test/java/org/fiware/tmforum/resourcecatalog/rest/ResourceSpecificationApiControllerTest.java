@@ -33,8 +33,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Pins the error response of the sub-type spec patch, which updates through the repository without the call-site
- * mapping, so every failed write answers 502.
+ * Pins the error response of the sub-type spec patch, which goes through {@code AbstractApiController.patch} and so
+ * answers a failed write like every other patch.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.resourcecatalog"}, environments = "in-memory",
 		contextBuilder = FirstMatchConfigContextBuilder.class)
@@ -56,18 +56,20 @@ class ResourceSpecificationApiControllerTest {
 		return mock(EntitiesApiClient.class);
 	}
 
-	/** The broker's answer to the update, a status or (null) no answer at all. */
+	/** The broker's answer to the update, a status or (null) no answer at all, and the expected response status. */
 	enum Failure {
-		BAD_REQUEST(HttpStatus.BAD_REQUEST),
-		NOT_FOUND(HttpStatus.NOT_FOUND),
-		CONFLICT(HttpStatus.CONFLICT),
-		INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR),
-		NO_ANSWER(null);
+		BAD_REQUEST(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST),
+		NOT_FOUND(HttpStatus.NOT_FOUND, HttpStatus.INTERNAL_SERVER_ERROR),
+		CONFLICT(HttpStatus.CONFLICT, HttpStatus.CONFLICT),
+		INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR),
+		NO_ANSWER(null, HttpStatus.BAD_GATEWAY);
 
 		private final HttpStatus status;
+		private final HttpStatus expected;
 
-		Failure(HttpStatus status) {
+		Failure(HttpStatus status, HttpStatus expected) {
 			this.status = status;
+			this.expected = expected;
 		}
 
 		Throwable exception() {
@@ -78,7 +80,7 @@ class ResourceSpecificationApiControllerTest {
 
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(Failure.class)
-	void subTypePatchFailsUncaught(Failure failure) {
+	void subTypePatchFailsLikeEveryPatch(Failure failure) {
 		String id = "urn:ngsi-ld:" + LogicalResourceSpecification.TYPE_LOGICAL_RESOURCE_SPECIFICATION + ":"
 				+ UUID.randomUUID();
 		EntityVO stored = javaObjectMapper.toEntityVO(new LogicalResourceSpecification(id));
@@ -92,9 +94,8 @@ class ResourceSpecificationApiControllerTest {
 						Argument.of(String.class), Argument.of(ErrorDetails.class)));
 
 		ErrorDetails details = exception.getResponse().getBody(ErrorDetails.class).orElseThrow();
-		assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatus(), "Unexpected status.");
-		assertEquals(HttpStatus.BAD_GATEWAY.toString(), details.code(), "Unexpected error code.");
-		assertEquals("Context broker is not reachable.", details.message(), "Unexpected error message.");
+		assertEquals(failure.expected, exception.getStatus(), "Unexpected status.");
+		assertEquals(failure.expected.toString(), details.code(), "Unexpected error code.");
 		verify(entitiesApiClient, atLeastOnce()).updateEntity(any(), any(), any(), any());
 	}
 }

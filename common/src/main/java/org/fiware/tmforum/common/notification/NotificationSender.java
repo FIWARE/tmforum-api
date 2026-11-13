@@ -12,6 +12,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.HttpClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -21,6 +22,11 @@ import java.util.List;
 @Slf4j
 public class NotificationSender {
     private final HttpClient httpClient;
+
+    public static final int DELIVERY_CONCURRENCY = 16;
+    private static final int DELIVERY_PREFETCH = 1;
+    private static final int STATUS_CLASS_DIVISOR = 100;
+    private static final int SUCCESS_STATUS_CLASS = 2;
 
     private static final RetryRegistry RETRY_REGISTRY = RetryRegistry.of(RetryConfig.custom()
             .maxAttempts(10)
@@ -45,5 +51,36 @@ public class NotificationSender {
                             .subscribe();
                 });
         return Mono.empty();
+    }
+
+    /**
+     * One attempt per callback, all of them made even if one fails. Completes when every callback answered 2xx and
+     * errors otherwise; retrying is the caller's job (the outbox backoff).
+     */
+    public Mono<Void> deliverNotifications(List<TMForumNotification> notifications) {
+        return Flux.fromIterable(notifications)
+                .flatMapDelayError(this::deliver, DELIVERY_CONCURRENCY, DELIVERY_PREFETCH)
+                .then();
+    }
+
+    private Mono<Void> deliver(TMForumNotification notification) {
+        return sendToClient(notification)
+                .flatMap(response -> response.getStatus().getCode() / STATUS_CLASS_DIVISOR == SUCCESS_STATUS_CLASS
+                        ? Mono.<Void>empty()
+                        : Mono.<Void>error(new NotificationDeliveryException(String.format(
+                                "Callback %s answered %s.", notification.callback(), response.getStatus()))))
+                // the caller retries and reports the failure, so a dead callback must not log a WARN per attempt
+                .doOnError(e -> log.debug("Was not able to deliver event {} ({}) to {}.",
+                        notification.event().getEventId(), notification.event().getEventType(),
+                        notification.callback(), e));
+    }
+
+    /**
+     * A callback did not acknowledge a notification.
+     */
+    public static class NotificationDeliveryException extends RuntimeException {
+        public NotificationDeliveryException(String message) {
+            super(message);
+        }
     }
 }

@@ -2,9 +2,10 @@
 
 The storage-neutral persistence port of the TMForum APIs. Controllers and services in `common` and in the API
 modules depend only on the types in `org.fiware.tmforum.storage`. A backend provides an adapter that implements
-them. Today the only adapter is the NGSI-LD one in `common`
-(`org.fiware.tmforum.common.repository.NgsiLdEntityRepository`). Ticket 6 adds PostgreSQL. Both backends are
-permanent, so the port is a public contract.
+them. There are two adapters: the NGSI-LD one in `common`
+(`org.fiware.tmforum.common.repository.NgsiLdEntityRepository`), the default, and the PostgreSQL one in
+[storage-postgresql](../storage-postgresql/README.md), active in the Micronaut environment `postgresql`. Both
+backends are permanent, so the port is a public contract.
 
 The Javadoc of the types is the contract. This file is only a map of it.
 
@@ -15,7 +16,7 @@ The Javadoc of the types is the contract. This file is only a map of it.
 | `EntityReadRepository`    | `get`, `findEntities`, `findEntitiesPolymorphic` (paged in a `PagedResult`) |
 | `EntityWriteRepository`   | `createDomainEntity`, `updateDomainEntity`, `deleteDomainEntity`           |
 | `EntityRepository`        | both of the above, what most controllers inject                            |
-| `ReferenceReadRepository` | `referenceExists`/`findReference`, returning a neutral `StoredReference`   |
+| `ReferenceReadRepository` | `referenceExists`/`findReference`/`findReferences`, returning `StoredReference` |
 
 Inject the narrowest interface you need. ArchUnit fails the build in three cases. In `common`'s
 `StorageBoundaryTest`, code outside the adapter package references one of the four concrete adapter classes, or
@@ -24,6 +25,10 @@ API-module code (outside `common`) references a concrete class of `common.reposi
 itself is not NGSI-free: subscriptions, notifications, mapping and caching use NGSI-LD types on purpose.
 
 NGSI-LD subscriptions (`SubscriptionRepository` in `common`) are broker-only and are not part of the port.
+
+`ReferenceValidationService` checks all references of one list with a single `findReferences` call. Its default
+fans out to `findReference`, which is what the NGSI-LD adapter uses. The PostgreSQL adapter overrides it with one
+query.
 
 ## Errors
 
@@ -34,12 +39,31 @@ PARTIAL_UPDATE, UNAVAILABLE, UNKNOWN). The one exception is `get` for a class th
 response at the call site or in `StorageExceptionHandler`. The cause is kept for logging only, and the response
 depends on (operation, reason) alone.
 
+## References
+
+A reference (a `RefEntity` and its subclasses, any relationship target) is stored inline as the writer sent it,
+the extra fields of subclasses included, and returned exactly as written. No adapter resolves a reference on read:
+a field the writer omitted stays absent, and creating, renaming or deleting the target changes nothing. List order
+is not part of the rule (NGSI-LD does not define the order of attribute instances), but every written entry comes
+back once. An update replaces only the reference attributes it carries. One exception: customer-bill
+`FinancialAccountRef.accountBalance` is not stored yet and reads back absent. Its encoding is an open decision, and
+the guard test in `all-in-one` exempts that getter by name until it is made.
+
+The contract cases `createdReferencesRoundTripIntact`, `updateKeepsUntouchedReferences` and
+`getDoesNotResolveReferences` pin this. An adapter has to supply a `ReferenceFixture` through `referenceFixture()`
+to run them; ticket 6 has to pass them. On Orion-LD in append mode an update merges a carried reference list into
+the stored one by datasetId (`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
+
 ## Update semantics
 
-`updateDomainEntity` writes only the attributes the entity carries. Null fields stay untouched, and an emptied list
-is cleared (it reads back absent or empty). An absent id fails with NOT_FOUND and operation UPDATE. The NGSI-LD
-replace mode reports READ instead, which renders differently; ticket 6 has to decide this open parity question (see
-the `updateDomainEntity` Javadoc). The update never creates the entity and never completes silently.
+`updateDomainEntity` writes only the attributes the entity carries. Null fields stay untouched, and an emptied list is
+cleared (it reads back absent or empty). A carried empty object keeps the stored one, and extension values,
+empty ones included, read back as sent (`KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED` on Orion-LD). A
+carried list replaces the stored one; on Orion-LD in append mode the broker
+merges it by datasetId instead (see the `updateDomainEntity` Javadoc). An absent id fails with NOT_FOUND and operation
+UPDATE. The NGSI-LD replace mode reports READ instead, which renders differently; ticket 6 has to decide this open
+parity question (see the `updateDomainEntity` Javadoc). The update never creates the entity and never completes
+silently.
 
 `query` and `orderBy` are still `QueryParser` output (NGSI-LD q syntax). A second adapter has to translate that
 syntax until ticket 7 adds a neutral query model.
@@ -51,9 +75,10 @@ syntax until ticket 7 adds a neutral query model.
    except the synchronous `IllegalArgumentException` of `get` described under *Errors*.
 3. Run the contract against the live backend: depend on the `storage-api` test-jar (`<type>test-jar</type>`,
    scope `test`), then extend `AbstractEntityRepositoryContractTest` and
-   `AbstractReferenceReadRepositoryContractTest`. `product-catalog`'s `NgsiLd*ContractIT` show how. A backend
-   that cannot meet a rule yet declares it in `knownDeviations()`. The affected cases then assert today's
-   behaviour, so a fix fails the case instead of passing silently.
+   `AbstractReferenceReadRepositoryContractTest`, and supply a `ReferenceFixture` through `referenceFixture()`.
+   `product-catalog`'s `NgsiLd*ContractIT` show how. A backend that cannot meet a rule yet declares it in
+   `knownDeviations()`. The affected cases then assert today's behaviour, so a fix fails the case instead of
+   passing silently.
 4. Select the adapter per deployment through a Micronaut profile/`@Requires` (ticket 6), so exactly one
    implementation of each interface is in the context. `NgsiLdEntityRepository` is also the only
    `SubscriptionRepository` bean, and every subscription controller requires one through its `@Inject` setter.

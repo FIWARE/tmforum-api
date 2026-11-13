@@ -29,7 +29,7 @@ public class SoftwareSpecification extends SoftwareResourceSpecification {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "softwareSupportPackage") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "softwareSupportPackage", targetClass = SoftwareSupportPackageRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "softwareSupportPackage", fromProperties = true, targetClass = SoftwareSupportPackageRef.class) }))
 	private SoftwareSupportPackageRef softwareSupportPackage;
 
 	/**

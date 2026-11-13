@@ -19,6 +19,11 @@ public interface EntityReadRepository {
      * Empty, not an error, when the id is unknown, has no type segment ({@code urn:ngsi-ld:<type>:...}) or its
      * type segment is not a type the class is persisted as (today the class's MappingEnabled entity types).
      * Every adapter checks the id's type segment, not the stored type.
+     * <p>
+     * References are returned exactly as written and never resolved: a field the writer omitted stays absent, and
+     * the target's existence or current state does not change the result. A reference list may come back in another
+     * order, but with every written entry exactly once. Exception: customer-bill {@code FinancialAccountRef}'s
+     * {@code accountBalance} is not stored yet (its encoding is an open decision), so it reads back absent.
      *
      * @throws IllegalArgumentException synchronously, if the backend cannot persist {@code entityClass}; checked
      *                                  only after the id has a type segment, so a malformed id is always empty

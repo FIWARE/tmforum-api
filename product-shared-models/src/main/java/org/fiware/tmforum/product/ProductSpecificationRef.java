@@ -30,7 +30,7 @@ public class ProductSpecificationRef extends RefEntity {
     @Getter(onMethod = @__({
             @AttributeGetter(value = AttributeType.PROPERTY, targetName = "targetProductSchema", embedProperty = true)}))
     @Setter(onMethod = @__({
-            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetProductSchema", fromProperties = true)}))
+            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetProductSchema", fromProperties = true, targetClass = TargetProductSchema.class)}))
     private TargetProductSchema targetProductSchema;
 
     public ProductSpecificationRef(@JsonProperty("id") String id) {

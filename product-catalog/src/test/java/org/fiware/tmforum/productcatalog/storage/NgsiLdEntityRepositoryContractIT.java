@@ -4,20 +4,24 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
+import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest;
 import org.fiware.tmforum.storage.contract.EntityFixture;
 import org.fiware.tmforum.storage.contract.KnownDeviation;
+import org.fiware.tmforum.storage.contract.ReferenceFixture;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * Runs the entity port contract against the NGSI-LD adapter and the broker of the IT profile.
  */
+@BrokerOnly
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryContractTest<Catalog, Category> {
 
@@ -37,13 +41,16 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	// the NGSI-LD defects recorded on the port Javadoc; the broker is chosen by the IT environment
 	@Override
 	protected Set<KnownDeviation> knownDeviations() {
-		Set<KnownDeviation> deviations = EnumSet.of(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
+		Set<KnownDeviation> deviations = EnumSet.of(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY,
+				KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY);
 		if (!environment.getActiveNames().contains(ORION_LD_ENVIRONMENT)) {
 			return deviations;
 		}
 		deviations.add(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL);
 		if (!generalProperties.isReplaceOnUpdate()) {
 			deviations.add(KnownDeviation.EMPTIED_LIST_BREAKS_READS);
+			deviations.add(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
+			deviations.add(KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED);
 		}
 		return deviations;
 	}
@@ -61,5 +68,10 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	@Override
 	protected EntityFixture<Category> otherFixture() {
 		return new CategoryFixture();
+	}
+
+	@Override
+	protected Optional<ReferenceFixture<?>> referenceFixture() {
+		return Optional.of(new ProductOfferingReferenceFixture());
 	}
 }

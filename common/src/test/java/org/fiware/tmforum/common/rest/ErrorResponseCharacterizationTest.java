@@ -282,27 +282,36 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		assertResponse(expected, HttpRequest.GET(ENTITIES + "/" + newEntityId()));
 	}
 
+	// references are read from their stored properties (ticket 88), so the related entity is never retrieved
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
-	void listFailsOnTheRelationshipResolution(Failure failure) {
-		EntityVO stored = storedWithRelated(newEntityId());
+	void listDoesNotResolveTheRelationship(Failure failure) {
+		String relatedId = newRelatedId();
 		EntityListVO entities = new EntityListVO();
-		entities.add(stored);
+		entities.add(storedWithRelated(newEntityId(), relatedId));
 		broker.answer("queryEntities", args -> Mono.just(HttpResponse.ok(entities)));
 		broker.answer("retrieveEntityById", args -> failure.mono());
 
-		assertResponse(listFailed(), HttpRequest.GET(ENTITIES));
+		assertReadsRelated(relatedId, HttpRequest.GET(ENTITIES));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
-	void retrieveFailsOnTheRelationshipResolution(Failure failure) {
+	void retrieveDoesNotResolveTheRelationship(Failure failure) {
 		String id = newEntityId();
-		EntityVO stored = storedWithRelated(id);
+		String relatedId = newRelatedId();
+		EntityVO stored = storedWithRelated(id, relatedId);
 		broker.answer("retrieveEntityById", args -> id.equals(args[0].toString())
 				? Mono.just(HttpResponse.ok(stored)) : failure.mono());
 
-		assertResponse(caInternal(), HttpRequest.GET(ENTITIES + "/" + id));
+		assertReadsRelated(relatedId, HttpRequest.GET(ENTITIES + "/" + id));
+	}
+
+	private void assertReadsRelated(String relatedId, HttpRequest<?> read) {
+		HttpResponse<String[]> response = httpClient.toBlocking().exchange(read, String[].class);
+
+		assertEquals(HttpStatus.OK, response.getStatus(), "The read should succeed without the related entity.");
+		assertEquals(List.of(relatedId), List.of(response.body()), "The relationship should read back as stored.");
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
@@ -427,9 +436,9 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		return "urn:ngsi-ld:" + TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION + ":" + UUID.randomUUID();
 	}
 
-	private EntityVO storedWithRelated(String id) {
+	private EntityVO storedWithRelated(String id, String relatedId) {
 		CharacterizationEntity entity = new CharacterizationEntity(id);
-		entity.setRelated(List.of(new CharacterizationRelated(newRelatedId())));
+		entity.setRelated(List.of(new CharacterizationRelated(relatedId)));
 		return javaObjectMapper.toEntityVO(entity);
 	}
 

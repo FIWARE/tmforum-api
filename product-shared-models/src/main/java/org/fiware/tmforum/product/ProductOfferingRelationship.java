@@ -34,7 +34,7 @@ public class ProductOfferingRelationship extends RefEntity {
     @Getter(onMethod = @__({
             @AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor", embedProperty = true)}))
     @Setter(onMethod = @__({
-            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor", fromProperties = true)}))
+            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor", fromProperties = true, targetClass = TimePeriod.class)}))
     private TimePeriod validFor;
 
     public ProductOfferingRelationship(@JsonProperty("id") String id) {

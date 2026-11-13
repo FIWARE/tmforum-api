@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.RefEntity;
+import org.fiware.tmforum.storage.NotStored;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
@@ -25,6 +26,7 @@ public class FinancialAccountRef extends RefEntity {
             @AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance", embedProperty = true)}))
     @Setter(onMethod = @__({
             @AttributeSetter(value = AttributeType.PROPERTY_LIST, targetName = "accountBalance", fromProperties = true, targetClass = AccountBalance.class)}))
+    @NotStored
     private List<AccountBalance> accountBalance;
 
     @Override
