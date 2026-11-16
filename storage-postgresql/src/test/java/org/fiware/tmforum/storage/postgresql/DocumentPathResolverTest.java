@@ -12,10 +12,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Declared query paths name bean properties; the jsonpath needs the keys the storage document mapper writes.
@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 @MicronautTest(environments = PostgresStorage.ENVIRONMENT, startApplication = false)
 @Property(name = "flyway.datasources.default.enabled", value = "false")
 class DocumentPathResolverTest {
+
+    private static final int CLIENT_CHOSEN_SEGMENTS = 100;
 
     @Inject
     private PostgresDocumentMapper documentMapper;
@@ -56,10 +58,14 @@ class DocumentPathResolverTest {
     }
 
     @Test
-    void cachesPerClassAndPath() {
+    void cachesPerTypeNotPerClientSegment() {
         DocumentPathResolver resolver = new DocumentPathResolver(documentMapper.storage());
-        AttributePath path = new AttributePath(List.of("children", "value"), true);
+        resolver.resolve(PathRoot.class, new AttributePath(List.of("children", "value"), true));
+        int typesAfterFirstPath = resolver.introspectedTypes();
 
-        assertSame(resolver.resolve(PathRoot.class, path), resolver.resolve(PathRoot.class, path));
+        IntStream.range(0, CLIENT_CHOSEN_SEGMENTS).forEach(i -> resolver.resolve(PathRoot.class,
+                new AttributePath(List.of("children", "unknown" + i, "value" + i), true)));
+
+        assertEquals(typesAfterFirstPath, resolver.introspectedTypes());
     }
 }

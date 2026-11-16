@@ -140,7 +140,12 @@ class PostgresQueryRenderingIT {
                                 string("name", ComparisonOperator.REGEX, "a"))),
                         List.of(D1, D2)),
                 Arguments.of("extension string", extension("customField", ValueType.STRING, "x"), List.of(D5)),
-                Arguments.of("extension number", extension("customField", ValueType.NUMBER, "5"), List.of(D6)));
+                Arguments.of("extension number", extension("customField", ValueType.NUMBER, "5"), List.of(D6)),
+                // the renderer's numeric limits are the database's: the largest literals it accepts still bind
+                Arguments.of("largest integer digits", number("count", ComparisonOperator.LESS_THAN, "1e131071"),
+                        List.of(D1, D2)),
+                Arguments.of("most fraction digits", number("count", ComparisonOperator.GREATER_THAN, "1e-16383"),
+                        List.of(D1, D2)));
     }
 
     @ParameterizedTest(name = "{0}")

@@ -10,11 +10,14 @@ import tools.jackson.databind.introspect.BeanPropertyDefinition;
 import tools.jackson.databind.introspect.ClassIntrospector;
 import tools.jackson.databind.util.ClassUtil;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -27,9 +30,11 @@ import java.util.concurrent.ConcurrentMap;
 final class DocumentPathResolver {
 
     private static final List<String> GETTER_PREFIXES = List.of("get", "is");
+    private static final TypeProperties NO_PROPERTIES = new TypeProperties(Map.of(), Map.of(), Map.of());
 
     private final ObjectMapper mapper;
-    private final ConcurrentMap<Resolution, List<String>> resolved = new ConcurrentHashMap<>();
+    // keyed by type only, never by segment: segments can be client-chosen, the types are bounded by the domain model
+    private final ConcurrentMap<JavaType, TypeProperties> introspected = new ConcurrentHashMap<>();
 
     DocumentPathResolver(DocumentMapper documentMapper) {
         this.mapper = documentMapper.objectMapper();
@@ -42,27 +47,39 @@ final class DocumentPathResolver {
         if (!path.declared()) {
             return path.segments();
         }
-        return resolved.computeIfAbsent(new Resolution(queryClass, path.segments()), this::walk);
-    }
-
-    private List<String> walk(Resolution resolution) {
         List<String> keys = new ArrayList<>();
-        JavaType current = mapper.constructType(resolution.queryClass());
-        for (String segment : resolution.segments()) {
-            Optional<BeanPropertyDefinition> property = Optional.ofNullable(current).flatMap(type -> find(type, segment));
-            keys.add(property.map(BeanPropertyDefinition::getName).orElse(segment));
-            current = property.map(found -> elementType(found.getPrimaryType())).orElse(null);
+        JavaType current = mapper.constructType(queryClass);
+        for (String segment : path.segments()) {
+            Optional<Property> property = Optional.ofNullable(current).flatMap(type -> properties(type).find(segment));
+            keys.add(property.map(Property::key).orElse(segment));
+            current = property.map(Property::elementType).orElse(null);
         }
         return List.copyOf(keys);
     }
 
-    private Optional<BeanPropertyDefinition> find(JavaType type, String segment) {
+    /**
+     * Number of types introspected so far, for tests.
+     */
+    int introspectedTypes() {
+        return introspected.size();
+    }
+
+    private TypeProperties properties(JavaType type) {
+        return introspected.computeIfAbsent(type, this::introspect);
+    }
+
+    private TypeProperties introspect(JavaType type) {
         if (ClassUtil.isJDKClass(type.getRawClass()) || type.isPrimitive()) {
-            return Optional.empty();
+            return NO_PROPERTIES;
         }
-        List<BeanPropertyDefinition> properties = serializedProperties(type);
-        return named(properties, segment)
-                .or(() -> bridgeTarget(type.getRawClass(), segment).flatMap(target -> named(properties, target)));
+        Map<String, Property> byBeanName = new HashMap<>();
+        Map<String, Property> byKey = new HashMap<>();
+        for (BeanPropertyDefinition definition : serializedProperties(type)) {
+            Property property = new Property(definition.getName(), elementType(definition.getPrimaryType()));
+            byBeanName.putIfAbsent(definition.getInternalName(), property);
+            byKey.putIfAbsent(definition.getName(), property);
+        }
+        return new TypeProperties(Map.copyOf(byBeanName), Map.copyOf(byKey), bridgeTargets(type.getRawClass()));
     }
 
     private List<BeanPropertyDefinition> serializedProperties(JavaType type) {
@@ -73,22 +90,17 @@ final class DocumentPathResolver {
         return description.findProperties().stream().filter(BeanPropertyDefinition::couldSerialize).toList();
     }
 
-    // a segment is a bean name; a key only matches if no bean name does
-    private static Optional<BeanPropertyDefinition> named(List<BeanPropertyDefinition> properties, String name) {
-        return properties.stream().filter(property -> property.getInternalName().equals(name)).findFirst()
-                .or(() -> properties.stream().filter(property -> property.getName().equals(name)).findFirst());
-    }
-
-    // a getter the document does not serialize, which tells the mapping library which property holds its value
-    private static Optional<String> bridgeTarget(Class<?> type, String segment) {
-        String suffix = segment.substring(0, 1).toUpperCase(Locale.ROOT) + segment.substring(1);
-        return Arrays.stream(type.getMethods())
-                .filter(method -> method.getParameterCount() == 0 && !Modifier.isStatic(method.getModifiers()))
-                .filter(method -> GETTER_PREFIXES.stream().anyMatch(prefix -> method.getName().equals(prefix + suffix)))
-                .map(method -> method.getAnnotation(AttributeGetter.class))
-                .filter(getter -> getter != null && !getter.targetName().isEmpty())
-                .map(AttributeGetter::targetName)
-                .findFirst();
+    // getters the document does not serialize, which tell the mapping library which property holds their value
+    private static Map<String, String> bridgeTargets(Class<?> type) {
+        Map<String, String> targets = new HashMap<>();
+        for (Method method : type.getMethods()) {
+            AttributeGetter getter = method.getAnnotation(AttributeGetter.class);
+            if (getter != null && !getter.targetName().isEmpty() && method.getParameterCount() == 0
+                    && !Modifier.isStatic(method.getModifiers())) {
+                targets.putIfAbsent(method.getName(), getter.targetName());
+            }
+        }
+        return Map.copyOf(targets);
     }
 
     // lists and arrays are walked through to their elements, like the lax jsonpath does
@@ -96,6 +108,27 @@ final class DocumentPathResolver {
         return type.isCollectionLikeType() || type.isArrayType() ? type.getContentType() : type;
     }
 
-    private record Resolution(Class<?> queryClass, List<String> segments) {
+    private record Property(String key, JavaType elementType) {
+    }
+
+    private record TypeProperties(Map<String, Property> byBeanName, Map<String, Property> byKey,
+                                  Map<String, String> bridgeTargetsByGetter) {
+
+        // a segment is a bean name; a key only matches if no bean name does
+        Optional<Property> find(String segment) {
+            return named(segment).or(() -> bridgeTarget(segment).flatMap(this::named));
+        }
+
+        private Optional<Property> named(String name) {
+            return Optional.ofNullable(byBeanName.get(name)).or(() -> Optional.ofNullable(byKey.get(name)));
+        }
+
+        private Optional<String> bridgeTarget(String segment) {
+            String suffix = segment.substring(0, 1).toUpperCase(Locale.ROOT) + segment.substring(1);
+            return GETTER_PREFIXES.stream()
+                    .map(prefix -> bridgeTargetsByGetter.get(prefix + suffix))
+                    .filter(Objects::nonNull)
+                    .findFirst();
+        }
     }
 }

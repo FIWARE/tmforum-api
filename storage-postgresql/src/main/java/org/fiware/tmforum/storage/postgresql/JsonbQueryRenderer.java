@@ -1,5 +1,6 @@
 package org.fiware.tmforum.storage.postgresql;
 
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -60,6 +61,16 @@ final class JsonbQueryRenderer {
     private static final char FIRST_PRINTABLE = ' ';
     private static final String UNICODE_ESCAPE = "\\u%04x";
 
+    // PostgreSQL's numeric limits; a literal beyond them fails the whole statement (SQLSTATE 22003)
+    private static final long MAX_NUMERIC_INTEGER_DIGITS = 131_072;
+    private static final int MAX_NUMERIC_FRACTION_DIGITS = 16_383;
+    private static final String NUMBER_OUT_OF_RANGE = "Value '%s' of '%s' is outside the supported number range.";
+    // neither jsonpath nor text input takes a NUL, and NullCharacterValidator keeps it out of every document
+    private static final String NUL_IN_QUERY = "Filter or sort on '%s' contains the NUL character ("
+            + NullCharacterValidator.NUL_ESCAPED + "), which no stored value can hold.";
+    private static final String NUL = String.valueOf(NullCharacterValidator.NUL);
+    private static final String PATH_SEPARATOR = ".";
+
     private final DocumentPathResolver pathResolver;
 
     JsonbQueryRenderer(DocumentPathResolver pathResolver) {
@@ -68,6 +79,8 @@ final class JsonbQueryRenderer {
 
     /**
      * The condition on a row, {@link #NO_FILTER} without a filter. Its parameters start at {@code firstParameter}.
+     *
+     * @throws QueryException for a NUL character or a number PostgreSQL cannot compare
      */
     SqlFragment filter(EntityQuery query, int firstParameter) {
         if (query.filter() == null) {
@@ -80,11 +93,14 @@ final class JsonbQueryRenderer {
 
     /**
      * The ORDER BY clause, ending in the creation-order tiebreaker. Its parameters start at {@code firstParameter}.
+     *
+     * @throws QueryException for a NUL character in a sort key
      */
     SqlFragment orderBy(EntityQuery query, int firstParameter) {
         Parameters parameters = new Parameters(firstParameter);
         List<String> keys = new ArrayList<>();
         for (SortKey key : query.sort()) {
+            rejectNul(key.attribute(), List.of());
             String value = String.format(FIRST_VALUE, parameters.add(jsonPath(query.queryClass(), key.attribute())));
             keys.add(sortValue(key.valueType(), value) + (key.descending() ? DESCENDING : ASCENDING));
         }
@@ -107,6 +123,7 @@ final class JsonbQueryRenderer {
     }
 
     private String comparison(Class<?> queryClass, QueryFilter.Comparison comparison, Parameters parameters) {
+        rejectNul(comparison.attribute(), comparison.values());
         String path = parameters.add(jsonPath(queryClass, comparison.attribute()));
         return String.format(MATCH_ANY_VALUE, path, predicate(comparison, parameters));
     }
@@ -122,10 +139,36 @@ final class JsonbQueryRenderer {
             case STRING, DATE_TIME -> compareToAny(textValue(MATCHED_VALUE), comparison.operator(),
                     parameters.add(values.toArray(String[]::new)), TEXT_TYPE);
             case NUMBER -> compareToAny(String.format(NUMBER_VALUE, MATCHED_VALUE), comparison.operator(),
-                    parameters.add(values.stream().map(BigDecimal::new).toArray(BigDecimal[]::new)), NUMBER_TYPE);
+                    parameters.add(values.stream().map(value -> number(comparison.attribute(), value))
+                            .toArray(BigDecimal[]::new)), NUMBER_TYPE);
             case BOOLEAN -> compareToAny(String.format(BOOLEAN_VALUE, MATCHED_VALUE), comparison.operator(),
                     parameters.add(values.stream().map(Boolean::valueOf).toArray(Boolean[]::new)), BOOLEAN_TYPE);
         };
+    }
+
+    private static BigDecimal number(AttributePath attribute, String literal) {
+        try {
+            // trailing zeros do not change the value but count against the fraction digits
+            BigDecimal number = new BigDecimal(literal).stripTrailingZeros();
+            if ((long) number.precision() - number.scale() <= MAX_NUMERIC_INTEGER_DIGITS
+                    && number.scale() <= MAX_NUMERIC_FRACTION_DIGITS) {
+                return number;
+            }
+        } catch (NumberFormatException | ArithmeticException e) {
+            // an exponent beyond the int range of BigDecimal
+        }
+        throw new QueryException(String.format(NUMBER_OUT_OF_RANGE, literal, name(attribute)));
+    }
+
+    private static void rejectNul(AttributePath attribute, List<String> values) {
+        if (attribute.segments().stream().anyMatch(segment -> segment.contains(NUL))
+                || values.stream().anyMatch(value -> value.contains(NUL))) {
+            throw new QueryException(String.format(NUL_IN_QUERY, name(attribute)));
+        }
+    }
+
+    private static String name(AttributePath attribute) {
+        return String.join(PATH_SEPARATOR, attribute.segments()).replace(NUL, NullCharacterValidator.NUL_ESCAPED);
     }
 
     private static String compareToAny(String value, ComparisonOperator operator, String parameter, String type) {

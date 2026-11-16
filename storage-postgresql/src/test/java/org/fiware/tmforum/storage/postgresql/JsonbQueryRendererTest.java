@@ -3,6 +3,7 @@ package org.fiware.tmforum.storage.postgresql;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.postgresql.QueryTestTypes.PathRoot;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Pins the SQL and bindings per operator, value type, nesting and sort. Semantics are checked in
@@ -59,6 +61,9 @@ class JsonbQueryRendererTest {
     private static final String COUNT_PATH = "$.\"count\"[*]";
     private static final String ACTIVE_PATH = "$.\"active\"[*]";
     private static final String LAST_UPDATE_PATH = "$.\"lastUpdate\"[*]";
+    private static final String NUL = "\u0000";
+    // more fraction digits than PostgreSQL's numeric holds, all of them trailing zeros
+    private static final String ONE_WITH_LONG_ZERO_FRACTION = "1." + "0".repeat(20_000);
 
     @Inject
     private PostgresDocumentMapper documentMapper;
@@ -173,6 +178,71 @@ class JsonbQueryRendererTest {
                         List.of(sortKey("otherNamedSub.value", ValueType.STRING, false)),
                         "ORDER BY " + text(String.format(FIRST, "$3")) + " ASC NULLS LAST, " + TIEBREAKER,
                         List.of("$.\"otherNamedSub\"[*].\"tmfValue\"[*]")));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("numberLimits")
+    void bindsNumbersWithinPostgresqlLimits(String literal, BigDecimal expected) {
+        SqlFragment fragment = renderer.filter(new EntityQuery(PathRoot.class,
+                comparison("count", ComparisonOperator.EQUALS, ValueType.NUMBER, literal), List.of()), FIRST_PARAMETER);
+
+        assertEquals(List.of(COUNT_PATH, List.of(expected)), comparable(fragment.bindings()));
+    }
+
+    static Stream<Arguments> numberLimits() {
+        return Stream.of(
+                Arguments.of("1e131071", new BigDecimal("1e131071")),
+                Arguments.of("1e-16383", new BigDecimal("1e-16383")),
+                Arguments.of("0e999999", BigDecimal.ZERO),
+                Arguments.of("2.50", new BigDecimal("2.5")),
+                Arguments.of(ONE_WITH_LONG_ZERO_FRACTION, BigDecimal.ONE));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unrenderableFilters")
+    void rejectsFiltersPostgresqlCannotRun(String description, QueryFilter filter) {
+        EntityQuery query = new EntityQuery(PathRoot.class, filter, List.of());
+
+        assertThrows(QueryException.class, () -> renderer.filter(query, FIRST_PARAMETER));
+    }
+
+    static Stream<Arguments> unrenderableFilters() {
+        return Stream.of(
+                Arguments.of("exponent beyond BigDecimal",
+                        comparison("count", ComparisonOperator.GREATER_THAN, ValueType.NUMBER, "1e2147483648")),
+                Arguments.of("exponent beyond int after stripping zeros",
+                        comparison("count", ComparisonOperator.GREATER_THAN, ValueType.NUMBER, "100e2147483647")),
+                Arguments.of("integer digits beyond numeric",
+                        comparison("count", ComparisonOperator.GREATER_THAN, ValueType.NUMBER, "1e131072")),
+                Arguments.of("huge exponent within BigDecimal",
+                        comparison("count", ComparisonOperator.GREATER_THAN, ValueType.NUMBER, "1e999999")),
+                Arguments.of("fraction digits beyond numeric",
+                        comparison("count", ComparisonOperator.GREATER_THAN, ValueType.NUMBER, "1.5e-16383")),
+                Arguments.of("NUL in an extension segment", undeclared(List.of("a" + NUL + "b"), "x")),
+                Arguments.of("NUL in a declared segment",
+                        comparison("name" + NUL, ComparisonOperator.EQUALS, ValueType.STRING, "x")),
+                Arguments.of("NUL in a string value",
+                        comparison("name", ComparisonOperator.LESS_THAN, ValueType.STRING, "a" + NUL)),
+                Arguments.of("NUL in a regex",
+                        comparison("name", ComparisonOperator.REGEX, ValueType.STRING, "^(?!a" + NUL + "$).*$")),
+                Arguments.of("NUL nested in AND",
+                        new AllOf(List.of(comparison("count", ComparisonOperator.EQUALS, ValueType.NUMBER, "1"),
+                                undeclared(List.of(NUL), "x")))));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unrenderableSorts")
+    void rejectsSortsPostgresqlCannotRun(String description, SortKey key) {
+        EntityQuery query = new EntityQuery(PathRoot.class, null, List.of(key));
+
+        assertThrows(QueryException.class, () -> renderer.orderBy(query, FIRST_PARAMETER));
+    }
+
+    static Stream<Arguments> unrenderableSorts() {
+        return Stream.of(
+                Arguments.of("NUL in a declared key", sortKey("name" + NUL, ValueType.STRING, false)),
+                Arguments.of("NUL in an undeclared key",
+                        new SortKey(new AttributePath(List.of("custom" + NUL), false), null, true)));
     }
 
     @ParameterizedTest(name = "first parameter {0}")
