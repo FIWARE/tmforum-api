@@ -16,7 +16,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -402,10 +401,19 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         assertEquals(List.of(own), idsOf(page));
     }
 
+    // the flag pins SEPARATOR_IN_LITERAL_NEVER_MATCHES per literal: the list fails instead of returning empty
+    static Stream<Arguments> literalsHoldingFilterSeparators() {
+        return Stream.of(
+                Arguments.of("a&b", false),
+                Arguments.of("a,b", true),
+                Arguments.of("a;b", false),
+                Arguments.of("https://example.org/cb?a=1&b=2,3;c=4", false));
+    }
+
     // a comparison value is one literal, even when it holds TMForum's filter separators
     @ParameterizedTest
-    @ValueSource(strings = {"a&b", "a,b", "a;b", "https://example.org/cb?a=1&b=2,3;c=4"})
-    void findEntitiesMatchesALiteralHoldingFilterSeparators(String literal) {
+    @MethodSource("literalsHoldingFilterSeparators")
+    void findEntitiesMatchesALiteralHoldingFilterSeparators(String literal, boolean deviationFailsTheList) {
         assumeTrue(supportsFilters(), "The adapter does not filter yet.");
         URI match = create(fixture(), fixture().withMutableValue(fixture().newEntity(fixture().newId()), literal));
         URI other = create(fixture());
@@ -418,9 +426,19 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 fixture().storedType());
 
         if (knownDeviations().contains(KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES)) {
-            PagedResult<T> page = result.onErrorResume(StorageException.class, e -> Mono.empty()).block(TIMEOUT);
-            assertTrue(page == null || page.items().isEmpty(),
-                    "The literal matches now, drop " + KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES);
+            String changed = "The backend behaves differently now, revisit "
+                    + KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES;
+            if (deviationFailsTheList) {
+                assertThrows(StorageException.class, () -> result.block(TIMEOUT), changed);
+                return;
+            }
+            PagedResult<T> page = result.block(TIMEOUT);
+            if (knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
+                assertNull(page, changed);
+                return;
+            }
+            assertNotNull(page, changed);
+            assertTrue(page.items().isEmpty(), changed);
             return;
         }
         PagedResult<T> page = result.block(TIMEOUT);

@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.fiware.tmforum.common.rest.AbstractSubscriptionApiController.SAME_CALLBACK_PAGE_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +50,6 @@ class AbstractSubscriptionApiControllerTest {
 	private static final String RAW_QUERY = "type=product&fields=name";
 	private static final String OTHER_RAW_QUERY = "type=product&fields=id";
 	private static final String PAST_THE_CHECK = "past the duplicate check";
-	private static final int SAME_CALLBACK_PAGE_SIZE = 100;
 
 	private static class TestSubscriptionController extends AbstractSubscriptionApiController {
 		TestSubscriptionController(QueryParser queryParser, EntityRepository repository, GeneralProperties generalProperties) {

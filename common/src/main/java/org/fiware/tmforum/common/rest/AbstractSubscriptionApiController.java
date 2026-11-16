@@ -50,7 +50,7 @@ import java.util.UUID;
 public abstract class AbstractSubscriptionApiController extends AbstractApiController<TMForumSubscription> {
 	private static final String RECEIVER_INFO_LISTENER_ENDPOINT = "Listener-Endpoint";
 	private static final String CALLBACK_ATTRIBUTE = "callback";
-	private static final int SAME_CALLBACK_PAGE_SIZE = 100;
+	static final int SAME_CALLBACK_PAGE_SIZE = 100;
 
 	private final Map<String, String> eventGroupToEntityNameMapping;
 	private final GeneralProperties generalProperties;
