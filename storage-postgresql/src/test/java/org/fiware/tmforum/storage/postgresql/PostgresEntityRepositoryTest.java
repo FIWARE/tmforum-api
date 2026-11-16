@@ -28,13 +28,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -44,6 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -223,8 +227,28 @@ class PostgresEntityRepositoryTest {
     void unrenderableQueryFailsBeforeAnyStatement(QueryFilter filter) {
         EntityQuery query = new EntityQuery(TestCatalog.class, filter, List.of());
 
-        assertThrows(QueryException.class, () -> repository.findEntities(OFFSET, LIMIT, TestCatalog.class, query,
-                null, TestCatalog.TYPE).block(), "A query PostgreSQL can not run is the client's error.");
+        Mono<?> list = assertDoesNotThrow(() -> repository.findEntities(OFFSET, LIMIT, TestCatalog.class, query,
+                null, TestCatalog.TYPE), "Rendering should fail as an error signal, not on assembly.");
+        assertThrows(QueryException.class, list::block, "A query PostgreSQL can not run is the client's error.");
+        verifyNoInteractions(connectionFactory);
+    }
+
+    @Test
+    void introspectionFailureIsAStorageError() {
+        ObjectMapper failingMapper = mock(ObjectMapper.class);
+        doThrow(new IllegalStateException(DRIVER_MESSAGE)).when(failingMapper).constructType(any(Type.class));
+        DocumentMapper failingDocuments = mock(DocumentMapper.class);
+        doReturn(failingMapper).when(failingDocuments).objectMapper();
+        PostgresDocumentMapper documentMapper = mock(PostgresDocumentMapper.class);
+        doReturn(failingDocuments).when(documentMapper).storage();
+        PostgresEntityRepository failingRepository = new PostgresEntityRepository(connectionFactory, documentMapper);
+        EntityQuery query = new EntityQuery(TestCatalog.class, NAME_FILTER, List.of());
+
+        Mono<?> list = assertDoesNotThrow(() -> failingRepository.findEntities(OFFSET, LIMIT, TestCatalog.class,
+                query, null, TestCatalog.TYPE), "Rendering should fail as an error signal, not on assembly.");
+        StorageException failure = assertThrows(StorageException.class, list::block,
+                "A rendering failure should be mapped like any other list failure.");
+        assertEquals(StorageOperation.LIST, failure.operation(), "The failed operation should be reported.");
         verifyNoInteractions(connectionFactory);
     }
 

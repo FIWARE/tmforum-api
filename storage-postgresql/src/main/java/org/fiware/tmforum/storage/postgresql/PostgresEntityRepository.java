@@ -78,7 +78,6 @@ public class PostgresEntityRepository implements EntityRepository {
     private static final String TYPE_PREDICATE = " WHERE is_current AND type = ANY($1)";
     private static final String ID_PREDICATE = " AND id = ANY($2)";
     private static final String LIST_COLUMNS = "SELECT type, data::text AS data, count(*) OVER () AS total_count FROM ";
-    private static final String DEFAULT_ORDER = " ORDER BY created_at, id";
     private static final String ORDER_SEPARATOR = " ";
     private static final String FILTER_SEPARATOR = " AND ";
     private static final String PAGE = " LIMIT $%d OFFSET $%d";
@@ -290,25 +289,26 @@ public class PostgresEntityRepository implements EntityRepository {
             return Mono.error(new StorageException(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
                     TYPES_REQUIRED));
         }
-        ListStatements statements;
-        try {
-            statements = listStatements(typeList, split(ids), query);
-        } catch (QueryException e) {
-            return Mono.error(e);
-        }
+        // deferred so a rendering failure is an error signal, mapped like any other
+        return Mono.defer(() -> listPage(offset, limit, listStatements(typeList, split(ids), query), query,
+                        typeToClass))
+                .onErrorMap(failure -> PostgresFailures.queryFailure(StorageOperation.LIST, LIST_FAILED, failure));
+    }
+
+    private <T> Mono<PagedResult<T>> listPage(Integer offset, Integer limit, ListStatements statements,
+                                              EntityQuery query, Function<String, Class<? extends T>> typeToClass) {
         // one connection for the pattern check, the page and the count
         return Mono.usingWhen(connectionFactory.create(),
-                        connection -> compilePatterns(connection, query)
-                                .then(PostgresStatements.execute(connection, statements.page(),
-                                                statement -> bindPage(statement, statements, offset, limit),
-                                                result -> result.map(ListedRow::of))
-                                        .collectList())
-                                .flatMap(rows -> totalCount(connection, statements, rows, offset, limit)
-                                        .map(totalCount -> new PagedResult<T>(
-                                                rows.stream().map(row -> this.<T>toEntity(row, typeToClass)).toList(),
-                                                offset, limit, totalCount))),
-                        Connection::close)
-                .onErrorMap(failure -> PostgresFailures.queryFailure(StorageOperation.LIST, LIST_FAILED, failure));
+                connection -> compilePatterns(connection, query)
+                        .then(PostgresStatements.execute(connection, statements.page(),
+                                        statement -> bindPage(statement, statements, offset, limit),
+                                        result -> result.map(ListedRow::of))
+                                .collectList())
+                        .flatMap(rows -> totalCount(connection, statements, rows, offset, limit)
+                                .map(totalCount -> new PagedResult<T>(
+                                        rows.stream().map(row -> this.<T>toEntity(row, typeToClass)).toList(),
+                                        offset, limit, totalCount))),
+                Connection::close);
     }
 
     // $1 holds the types, $2 the ids if any, then the filter's and the order's parameters, then LIMIT and OFFSET
@@ -326,13 +326,9 @@ public class PostgresEntityRepository implements EntityRepository {
             predicate += FILTER_SEPARATOR + filter.sql();
         }
         List<Object> predicateBindings = List.copyOf(bindings);
-        String order = DEFAULT_ORDER;
-        if (query != null) {
-            SqlFragment orderBy = renderer.orderBy(query, bindings.size() + 1);
-            bindings.addAll(orderBy.bindings());
-            order = ORDER_SEPARATOR + orderBy.sql();
-        }
-        String page = LIST_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate + order
+        SqlFragment orderBy = renderer.orderBy(query, bindings.size() + 1);
+        bindings.addAll(orderBy.bindings());
+        String page = LIST_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate + ORDER_SEPARATOR + orderBy.sql()
                 + String.format(PAGE, bindings.size() + 1, bindings.size() + 2);
         return new ListStatements(page, bindings, COUNT_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate,
                 predicateBindings);
