@@ -37,6 +37,13 @@ public final class DocumentMapper {
     }
 
     /**
+     * The mapper that writes the documents, for resolving query paths to their keys.
+     */
+    ObjectMapper objectMapper() {
+        return mapper;
+    }
+
+    /**
      * The document text to bind as jsonb. Throws {@link StorageException} with {@code operation}: INVALID_DATA for
      * a {@code \u0000} in a key or string, UNKNOWN if the object cannot be serialized.
      */
