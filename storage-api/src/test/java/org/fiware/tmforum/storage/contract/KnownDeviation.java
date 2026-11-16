@@ -50,6 +50,14 @@ public enum KnownDeviation {
     SEPARATOR_IN_LITERAL_NEVER_MATCHES,
 
     /**
+     * An equality filter on a list of plain values only matches a list of one element: the mapping stores a longer
+     * list as one attribute instance per element (datasetIds), which the broker's {@code q} does not reach. A hub
+     * taking several entity types or event types is thus never found by the hub lookup. Observed on Orion-LD 1.9.0
+     * ({@code HubLookupIT}), Scorpio 5.0.3 and PostgreSQL match any element; pending acceptance (ticket 0).
+     */
+    MULTI_ELEMENT_LIST_NEVER_MATCHES,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL

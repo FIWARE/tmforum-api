@@ -4,6 +4,7 @@ import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcTimeoutException;
 import io.r2dbc.spi.R2dbcTransientResourceException;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
@@ -19,6 +20,8 @@ import java.util.concurrent.TimeoutException;
 final class PostgresFailures {
 
     static final String UNIQUE_VIOLATION = "23505";
+    // a pattern PostgreSQL's regular expressions (ARE) do not compile
+    static final String INVALID_REGULAR_EXPRESSION = "2201B";
     // NUL in the document: 22P05 for an escaped \u0000 in jsonb, 22021 for a raw NUL byte in a text parameter
     static final Set<String> INVALID_CHARACTER_STATES = Set.of("22P05", "22021");
     // connection_exception, insufficient_resources, and 57P01-57P05 (shutdown, cannot connect now, ...)
@@ -35,6 +38,24 @@ final class PostgresFailures {
             return storageException;
         }
         return new StorageException(operation, reasonOf(failure), message, failure);
+    }
+
+    /**
+     * As {@link #failure}, for a statement running a client's query: a {@link QueryException} passes unchanged, and a
+     * pattern PostgreSQL rejects becomes one, so that the client gets a 400 as from the brokers.
+     */
+    static RuntimeException queryFailure(StorageOperation operation, String message, Throwable failure) {
+        if (failure instanceof QueryException queryException) {
+            return queryException;
+        }
+        if (isInvalidPattern(failure)) {
+            return new QueryException(failure.getMessage());
+        }
+        return failure(operation, message, failure);
+    }
+
+    static boolean isInvalidPattern(Throwable failure) {
+        return sqlStateOf(failure).filter(INVALID_REGULAR_EXPRESSION::equals).isPresent();
     }
 
     /**

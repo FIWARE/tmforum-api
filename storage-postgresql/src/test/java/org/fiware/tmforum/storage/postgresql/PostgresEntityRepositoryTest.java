@@ -8,6 +8,7 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcTimeoutException;
 import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
@@ -37,11 +39,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -59,6 +63,16 @@ class PostgresEntityRepositoryTest {
     private static final QueryFilter NAME_FILTER = new QueryFilter.Comparison(NAME, ComparisonOperator.EQUALS,
             ValueType.STRING, List.of("catalog"));
     private static final List<SortKey> NAME_SORT = List.of(new SortKey(NAME, ValueType.STRING, false));
+    private static final QueryFilter NAME_REGEX = new QueryFilter.Comparison(NAME, ComparisonOperator.REGEX,
+            ValueType.STRING, List.of("("));
+    private static final AttributePath PRICE = new AttributePath(List.of("price", "value"), true);
+    private static final String INVALID_REGULAR_EXPRESSION_STATE = "2201B";
+    private static final String OUT_OF_RANGE_NUMBER = "1e200000";
+    // types, ids, the filter's path and values, the sort's path
+    private static final int LIMIT_INDEX = 5;
+    private static final int OFFSET_INDEX = 6;
+    private static final String FILTERED_PAGE_SUFFIX = " LIMIT $6 OFFSET $7";
+    private static final int PAST_THE_END = 20;
     private static final int OFFSET = 0;
     private static final int LIMIT = 10;
     private static final long NO_ROWS = 0L;
@@ -178,23 +192,72 @@ class PostgresEntityRepositoryTest {
         verifyNoInteractions(connectionFactory);
     }
 
-    static Stream<Arguments> unsupportedListArguments() {
+    static Stream<Arguments> invalidPatternQueries() {
         return Stream.of(
-                Arguments.of(Named.of("filter", new EntityQuery(TestCatalog.class, NAME_FILTER, List.of()))),
-                Arguments.of(Named.of("sort", new EntityQuery(TestCatalog.class, null, NAME_SORT))),
-                Arguments.of(Named.of("filter and sort", new EntityQuery(TestCatalog.class, NAME_FILTER, NAME_SORT))));
+                Arguments.of(Named.of("pattern compiled up front", new EntityQuery(TestCatalog.class, NAME_REGEX,
+                        List.of()))),
+                Arguments.of(Named.of("failing page", new EntityQuery(TestCatalog.class, NAME_FILTER, NAME_SORT))));
     }
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("unsupportedListArguments")
-    void filteredListIsRejected(EntityQuery query) {
-        StorageException exception = assertStorageFailure(repository.findEntities(OFFSET, LIMIT, TestCatalog.class,
-                query, null, TestCatalog.TYPE));
+    @MethodSource("invalidPatternQueries")
+    void invalidPatternIsAQueryException(EntityQuery query) {
+        doReturn(Mono.error(new R2dbcBadGrammarException(DRIVER_MESSAGE, INVALID_REGULAR_EXPRESSION_STATE)))
+                .when(statement).execute();
 
-        assertEquals(StorageOperation.LIST, exception.operation(), "The failed operation should be reported.");
-        assertEquals(PostgresEntityRepository.LIST_NOT_SUPPORTED, exception.getMessage(),
-                "The interim limitation should be named.");
+        assertThrows(QueryException.class, () -> repository.findEntities(OFFSET, LIMIT, TestCatalog.class, query,
+                null, TestCatalog.TYPE).block(), "A pattern PostgreSQL rejects is the client's error.");
+        verify(connection).close();
+    }
+
+    static Stream<Arguments> unrenderableQueries() {
+        return Stream.of(
+                Arguments.of(Named.of("NUL in a value", new QueryFilter.Comparison(NAME, ComparisonOperator.EQUALS,
+                        ValueType.STRING, List.of(NUL)))),
+                Arguments.of(Named.of("number out of range", new QueryFilter.Comparison(PRICE,
+                        ComparisonOperator.EQUALS, ValueType.NUMBER, List.of(OUT_OF_RANGE_NUMBER)))));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unrenderableQueries")
+    void unrenderableQueryFailsBeforeAnyStatement(QueryFilter filter) {
+        EntityQuery query = new EntityQuery(TestCatalog.class, filter, List.of());
+
+        assertThrows(QueryException.class, () -> repository.findEntities(OFFSET, LIMIT, TestCatalog.class, query,
+                null, TestCatalog.TYPE).block(), "A query PostgreSQL can not run is the client's error.");
         verifyNoInteractions(connectionFactory);
+    }
+
+    @Test
+    void filteredPageNumbersPagingAfterIdsAndQuery() {
+        doReturn(Flux.empty()).when(statement).execute();
+        EntityQuery query = new EntityQuery(TestCatalog.class, NAME_FILTER, NAME_SORT);
+
+        repository.findEntities(OFFSET, LIMIT, TestCatalog.class, query, CATALOG_ID, TestCatalog.TYPE).block();
+
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(connection).createStatement(sql.capture());
+        assertTrue(sql.getValue().endsWith(FILTERED_PAGE_SUFFIX),
+                "LIMIT and OFFSET should follow the parameters of the ids, the filter and the sort: " + sql.getValue());
+        verify(statement).bind(LIMIT_INDEX, LIMIT);
+        verify(statement).bind(OFFSET_INDEX, OFFSET);
+    }
+
+    @Test
+    void countPastTheEndKeepsTheFilter() {
+        doReturn(Flux.empty()).when(statement).execute();
+        EntityQuery query = new EntityQuery(TestCatalog.class, NAME_FILTER, NAME_SORT);
+
+        repository.findEntities(PAST_THE_END, LIMIT, TestCatalog.class, query, null, TestCatalog.TYPE).block();
+
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(connection, times(2)).createStatement(sql.capture());
+        String page = sql.getAllValues().getFirst();
+        String count = sql.getAllValues().getLast();
+        String pagePredicate = page.substring(page.indexOf(" WHERE "), page.indexOf(" ORDER BY "));
+        assertTrue(count.endsWith(pagePredicate), "The count should use the page's predicate: " + count);
+        assertTrue(pagePredicate.contains("is_current"), "Only current rows should count: " + pagePredicate);
+        verify(connection).close();
     }
 
     static Stream<String> unreadableIds() {

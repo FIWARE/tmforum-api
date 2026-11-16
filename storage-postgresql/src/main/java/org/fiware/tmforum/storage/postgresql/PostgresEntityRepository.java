@@ -10,6 +10,7 @@ import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Singleton;
 import org.fiware.tmforum.common.domain.EntityWithId;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
@@ -23,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -34,15 +36,13 @@ import static org.fiware.tmforum.storage.postgresql.PostgresStorage.QUALIFIED_OU
 
 /**
  * PostgreSQL adapter of the entity port: one row per entity in {@code tmforum.entity}, the domain object as jsonb.
- * Lists support ids, types and paging only; a query or an order fails until ticket 7.
+ * Lists and counts only see current rows; their filter and sort are rendered by {@link JsonbQueryRenderer}.
  */
 @Singleton
 @Primary
 @Requires(env = PostgresStorage.ENVIRONMENT)
 public class PostgresEntityRepository implements EntityRepository {
 
-    static final String LIST_NOT_SUPPORTED =
-            "Filtering or ordering a list is not supported by the PostgreSQL backend before ticket 7.";
     static final String TYPES_REQUIRED = "Listing entities requires at least one type.";
     private static final String LIST_FAILED = "Was not able to list entities.";
     private static final String LIST_SEPARATOR = ",";
@@ -78,19 +78,25 @@ public class PostgresEntityRepository implements EntityRepository {
     private static final String TYPE_PREDICATE = " WHERE is_current AND type = ANY($1)";
     private static final String ID_PREDICATE = " AND id = ANY($2)";
     private static final String LIST_COLUMNS = "SELECT type, data::text AS data, count(*) OVER () AS total_count FROM ";
-    private static final String LIST_ORDER = " ORDER BY created_at, id";
+    private static final String DEFAULT_ORDER = " ORDER BY created_at, id";
+    private static final String ORDER_SEPARATOR = " ";
+    private static final String FILTER_SEPARATOR = " AND ";
+    private static final String PAGE = " LIMIT $%d OFFSET $%d";
     private static final String COUNT_COLUMNS = "SELECT count(*) AS total_count FROM ";
-    private static final int TYPES_INDEX = 0;
-    private static final int IDS_INDEX = 1;
+    // compiles the pattern whether or not any row would reach it
+    private static final String COMPILE_PATTERN = "SELECT '' ~ $1";
+    private static final String INVALID_PATTERN = "'%s' is not a valid regular expression: %s";
 
     private final ConnectionFactory connectionFactory;
     private final DocumentMapper documents;
     private final DocumentMapper eventDocuments;
+    private final JsonbQueryRenderer renderer;
 
     public PostgresEntityRepository(ConnectionFactory connectionFactory, PostgresDocumentMapper documentMapper) {
         this.connectionFactory = connectionFactory;
         this.documents = documentMapper.storage();
         this.eventDocuments = documentMapper.event();
+        this.renderer = new JsonbQueryRenderer(new DocumentPathResolver(documents));
     }
 
     @Override
@@ -279,47 +285,99 @@ public class PostgresEntityRepository implements EntityRepository {
 
     private <T> Mono<PagedResult<T>> list(Integer offset, Integer limit, String types, EntityQuery query,
                                           String ids, Function<String, Class<? extends T>> typeToClass) {
-        if (query != null && (query.filter() != null || !query.sort().isEmpty())) {
-            return Mono.error(new StorageException(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
-                    LIST_NOT_SUPPORTED));
-        }
         String[] typeList = split(types);
         if (typeList == null || typeList.length == 0) {
             return Mono.error(new StorageException(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
                     TYPES_REQUIRED));
         }
-        String[] idList = split(ids);
-        int limitIndex = idList == null ? IDS_INDEX : IDS_INDEX + 1;
-        // a null LIMIT or OFFSET means no limit or no offset
-        String sql = LIST_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate(idList) + LIST_ORDER
-                + " LIMIT $" + (limitIndex + 1) + " OFFSET $" + (limitIndex + 2);
-        return execute(sql, statement -> {
-            bindPredicate(statement, typeList, idList);
-            bindNullable(statement, limitIndex, limit, Integer.class);
-            return bindNullable(statement, limitIndex + 1, offset, Integer.class);
-        }, result -> result.map(ListedRow::of))
-                .collectList()
-                .flatMap(rows -> totalCount(rows, offset, limit, typeList, idList)
-                        .map(totalCount -> new PagedResult<T>(
-                                rows.stream().map(row -> this.<T>toEntity(row, typeToClass)).toList(),
-                                offset, limit, totalCount)))
-                .onErrorMap(failure -> PostgresFailures.failure(StorageOperation.LIST, LIST_FAILED, failure));
+        ListStatements statements;
+        try {
+            statements = listStatements(typeList, split(ids), query);
+        } catch (QueryException e) {
+            return Mono.error(e);
+        }
+        // one connection for the pattern check, the page and the count
+        return Mono.usingWhen(connectionFactory.create(),
+                        connection -> compilePatterns(connection, query)
+                                .then(PostgresStatements.execute(connection, statements.page(),
+                                                statement -> bindPage(statement, statements, offset, limit),
+                                                result -> result.map(ListedRow::of))
+                                        .collectList())
+                                .flatMap(rows -> totalCount(connection, statements, rows, offset, limit)
+                                        .map(totalCount -> new PagedResult<T>(
+                                                rows.stream().map(row -> this.<T>toEntity(row, typeToClass)).toList(),
+                                                offset, limit, totalCount))),
+                        Connection::close)
+                .onErrorMap(failure -> PostgresFailures.queryFailure(StorageOperation.LIST, LIST_FAILED, failure));
+    }
+
+    // $1 holds the types, $2 the ids if any, then the filter's and the order's parameters, then LIMIT and OFFSET
+    private ListStatements listStatements(String[] typeList, String[] idList, EntityQuery query) {
+        List<Object> bindings = new ArrayList<>();
+        bindings.add(typeList);
+        String predicate = TYPE_PREDICATE;
+        if (idList != null) {
+            bindings.add(idList);
+            predicate += ID_PREDICATE;
+        }
+        if (query != null && query.filter() != null) {
+            SqlFragment filter = renderer.filter(query, bindings.size() + 1);
+            bindings.addAll(filter.bindings());
+            predicate += FILTER_SEPARATOR + filter.sql();
+        }
+        List<Object> predicateBindings = List.copyOf(bindings);
+        String order = DEFAULT_ORDER;
+        if (query != null) {
+            SqlFragment orderBy = renderer.orderBy(query, bindings.size() + 1);
+            bindings.addAll(orderBy.bindings());
+            order = ORDER_SEPARATOR + orderBy.sql();
+        }
+        String page = LIST_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate + order
+                + String.format(PAGE, bindings.size() + 1, bindings.size() + 2);
+        return new ListStatements(page, bindings, COUNT_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate,
+                predicateBindings);
+    }
+
+    // an invalid pattern is the client's error, and must be one even when no row reaches it
+    private static Mono<Void> compilePatterns(Connection connection, EntityQuery query) {
+        return Flux.fromIterable(RegexPatterns.of(query))
+                .concatMap(pattern -> PostgresStatements.execute(connection, COMPILE_PATTERN,
+                                statement -> statement.bind(0, pattern), Result::getRowsUpdated)
+                        .onErrorMap(PostgresFailures::isInvalidPattern,
+                                failure -> new QueryException(String.format(INVALID_PATTERN, pattern,
+                                        failure.getMessage()))))
+                .then();
     }
 
     // an empty page has no window count; past the last match or with limit 0 the real count is still owed
-    private Mono<Integer> totalCount(List<ListedRow> rows, Integer offset, Integer limit, String[] typeList,
-                                     String[] idList) {
+    private Mono<Integer> totalCount(Connection connection, ListStatements statements, List<ListedRow> rows,
+                                     Integer offset, Integer limit) {
         if (!rows.isEmpty()) {
             return Mono.just(Math.toIntExact(rows.getFirst().totalCount()));
         }
         if ((offset == null || offset <= 0) && (limit == null || limit > 0)) {
             return Mono.just(0);
         }
-        return execute(COUNT_COLUMNS + QUALIFIED_ENTITY_TABLE + predicate(idList),
-                statement -> bindPredicate(statement, typeList, idList),
-                result -> result.map(row -> row.get(TOTAL_COUNT_COLUMN, Long.class)))
+        return PostgresStatements.execute(connection, statements.count(),
+                        statement -> bindAll(statement, statements.countBindings()),
+                        result -> result.map(row -> row.get(TOTAL_COUNT_COLUMN, Long.class)))
                 .next()
                 .map(Math::toIntExact);
+    }
+
+    // a null LIMIT or OFFSET means no limit or no offset
+    private static Statement bindPage(Statement statement, ListStatements statements, Integer offset, Integer limit) {
+        int limitIndex = statements.pageBindings().size();
+        bindAll(statement, statements.pageBindings());
+        bindNullable(statement, limitIndex, limit, Integer.class);
+        return bindNullable(statement, limitIndex + 1, offset, Integer.class);
+    }
+
+    private static Statement bindAll(Statement statement, List<Object> bindings) {
+        for (int i = 0; i < bindings.size(); i++) {
+            statement.bind(i, bindings.get(i));
+        }
+        return statement;
     }
 
     private <T> T toEntity(ListedRow row, Function<String, Class<? extends T>> typeToClass) {
@@ -334,16 +392,6 @@ public class PostgresEntityRepository implements EntityRepository {
     private <R> Flux<R> execute(String sql, Function<Statement, Statement> binder,
                                 Function<Result, Publisher<R>> resultMapper) {
         return PostgresStatements.execute(connectionFactory, sql, binder, resultMapper);
-    }
-
-    // parameter $1 holds the types, $2 the ids if any
-    private static String predicate(String[] idList) {
-        return idList == null ? TYPE_PREDICATE : TYPE_PREDICATE + ID_PREDICATE;
-    }
-
-    private static Statement bindPredicate(Statement statement, String[] typeList, String[] idList) {
-        statement.bind(TYPES_INDEX, typeList);
-        return idList == null ? statement : statement.bind(IDS_INDEX, idList);
     }
 
     private static <V> Statement bindNullable(Statement statement, int index, V value, Class<V> type) {
@@ -374,6 +422,10 @@ public class PostgresEntityRepository implements EntityRepository {
         static StoredRow of(Readable row) {
             return new StoredRow(row.get(TYPE_COLUMN, String.class), row.get(DATA_COLUMN, String.class));
         }
+    }
+
+    // the count shares the page's predicate and its parameters, without the order and the paging
+    private record ListStatements(String page, List<Object> pageBindings, String count, List<Object> countBindings) {
     }
 
     private record ListedRow(String type, String data, long totalCount) {

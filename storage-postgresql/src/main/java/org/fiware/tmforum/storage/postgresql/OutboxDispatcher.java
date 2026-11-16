@@ -223,7 +223,8 @@ public class OutboxDispatcher {
         return PostgresStatements.execute(connectionFactory, sql, binder, Result::getRowsUpdated).then();
     }
 
-    // every row fails until PG can look up hubs (ticket 7), so only a row reaching its longest delay gets one WARN
+    // a hub that is down fails every row it takes until it is back, so only a row reaching its longest delay gets
+    // one WARN instead of one per attempt
     private void reportFailedDelivery(ClaimedRow row, Throwable failure) {
         if (backoff.firstAtLongestDelay(row.attempts())) {
             LOGGER.warn("Delivery of outbox row {} ({} of {}) failed {} times, retrying every {} until it is older"
