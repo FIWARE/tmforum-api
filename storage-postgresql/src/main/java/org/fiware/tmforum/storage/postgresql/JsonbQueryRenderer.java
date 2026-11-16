@@ -92,14 +92,16 @@ final class JsonbQueryRenderer {
     }
 
     /**
-     * The ORDER BY clause, ending in the creation-order tiebreaker. Its parameters start at {@code firstParameter}.
+     * The ORDER BY clause, ending in the creation-order tiebreaker, which alone orders a null query. Its parameters
+     * start at {@code firstParameter}.
      *
      * @throws QueryException for a NUL character in a sort key
      */
     SqlFragment orderBy(EntityQuery query, int firstParameter) {
         Parameters parameters = new Parameters(firstParameter);
         List<String> keys = new ArrayList<>();
-        for (SortKey key : query.sort()) {
+        List<SortKey> sort = query == null ? List.of() : query.sort();
+        for (SortKey key : sort) {
             rejectNul(key.attribute(), List.of());
             String value = String.format(FIRST_VALUE, parameters.add(jsonPath(query.queryClass(), key.attribute())));
             keys.add(sortValue(key.valueType(), value) + (key.descending() ? DESCENDING : ASCENDING));

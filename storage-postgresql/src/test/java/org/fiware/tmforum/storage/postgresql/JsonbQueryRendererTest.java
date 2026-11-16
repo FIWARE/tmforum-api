@@ -15,6 +15,7 @@ import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
 import org.fiware.tmforum.storage.query.SortKey;
 import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -251,6 +252,11 @@ class JsonbQueryRendererTest {
         SqlFragment fragment = renderer.filter(new EntityQuery(PathRoot.class, null, List.of()), firstParameter);
 
         assertEquals(new SqlFragment(JsonbQueryRenderer.NO_FILTER, List.of()), fragment);
+    }
+
+    @Test
+    void ordersANullQueryByTheTiebreakerOnly() {
+        assertEquals(new SqlFragment("ORDER BY " + TIEBREAKER, List.of()), renderer.orderBy(null, FIRST_PARAMETER));
     }
 
     static Stream<Integer> noFilters() {
