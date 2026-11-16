@@ -71,6 +71,8 @@ class PostgresEntityRepositoryTest {
             ValueType.STRING, List.of("("));
     private static final AttributePath PRICE = new AttributePath(List.of("price", "value"), true);
     private static final String INVALID_REGULAR_EXPRESSION_STATE = "2201B";
+    private static final String COMPILE_PATTERN = "SELECT '' ~ $1";
+    private static final String LIST_STATEMENT_PREFIX = "SELECT type, data::text";
     private static final String OUT_OF_RANGE_NUMBER = "1e200000";
     // types, ids, the filter's path and values, the sort's path
     private static final int LIMIT_INDEX = 5;
@@ -199,18 +201,24 @@ class PostgresEntityRepositoryTest {
     static Stream<Arguments> invalidPatternQueries() {
         return Stream.of(
                 Arguments.of(Named.of("pattern compiled up front", new EntityQuery(TestCatalog.class, NAME_REGEX,
-                        List.of()))),
-                Arguments.of(Named.of("failing page", new EntityQuery(TestCatalog.class, NAME_FILTER, NAME_SORT))));
+                        List.of())), COMPILE_PATTERN),
+                Arguments.of(Named.of("failing page", new EntityQuery(TestCatalog.class, NAME_FILTER, NAME_SORT)),
+                        LIST_STATEMENT_PREFIX));
     }
 
+    // The first statement fails, so it must be the only one: an up-front failure never reaches the page.
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidPatternQueries")
-    void invalidPatternIsAQueryException(EntityQuery query) {
+    void invalidPatternIsAQueryException(EntityQuery query, String failingStatementPrefix) {
         doReturn(Mono.error(new R2dbcBadGrammarException(DRIVER_MESSAGE, INVALID_REGULAR_EXPRESSION_STATE)))
                 .when(statement).execute();
 
         assertThrows(QueryException.class, () -> repository.findEntities(OFFSET, LIMIT, TestCatalog.class, query,
                 null, TestCatalog.TYPE).block(), "A pattern PostgreSQL rejects is the client's error.");
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(connection).createStatement(sql.capture());
+        assertTrue(sql.getValue().startsWith(failingStatementPrefix),
+                "The rejected pattern should fail the expected statement: " + sql.getValue());
         verify(connection).close();
     }
 
