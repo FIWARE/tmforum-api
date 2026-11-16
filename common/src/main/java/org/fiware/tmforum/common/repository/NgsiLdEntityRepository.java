@@ -9,10 +9,12 @@ import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
+import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
+import org.fiware.tmforum.storage.query.EntityQuery;
 import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
@@ -26,10 +28,14 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
 
     private static final String LIST_FAILED = "Was not able to list entities.";
 
+    private final NgsiLdQueryRenderer queryRenderer;
+
     public NgsiLdEntityRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
                                   SubscriptionsApiClient subscriptionsApi, EntityVOMapper entityVOMapper,
-                                  NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper) {
+                                  NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper,
+                                  NgsiLdQueryRenderer queryRenderer) {
         super(generalProperties, entitiesApi, subscriptionsApi, javaObjectMapper, ngsiMapper, entityVOMapper);
+        this.queryRenderer = queryRenderer;
     }
 
     @Override
@@ -44,14 +50,14 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
 
     @Override
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
-                                          String query, String ids, String types, String orderBy) {
+                                          EntityQuery query, String ids, String types) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         ids,
                         null,
                         types,
                         null,
-                        query,
-                        orderBy,
+                        renderFilter(query),
+                        renderOrderBy(query),
                         null,
                         null,
                         null,
@@ -78,14 +84,14 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
      */
     @Override
     public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
-                                          String query, String ids, String orderBy, Function<String, Class<? extends T>> typeToClass) {
+                                          EntityQuery query, String ids, Function<String, Class<? extends T>> typeToClass) {
         return entitiesApi.queryEntities(generalProperties.getTenant(),
                         ids,
                         null,
                         types,
                         null,
-                        query,
-                        orderBy,
+                        renderFilter(query),
+                        renderOrderBy(query),
                         null,
                         null,
                         null,
@@ -99,6 +105,14 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
                 .flatMap(response -> zipToPolymorphicList(response.body() != null ? response.body().stream() : Stream.empty(), typeToClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
                 .onErrorMap(NgsiLdEntityRepository::listFailure);
+    }
+
+    private String renderFilter(EntityQuery query) {
+        return query == null ? null : queryRenderer.renderFilter(query);
+    }
+
+    private String renderOrderBy(EntityQuery query) {
+        return query == null ? null : queryRenderer.renderOrderBy(query);
     }
 
     // wraps every failure, a nested READ from relationship resolution included, so that a list always renders alike

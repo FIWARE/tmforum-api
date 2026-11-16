@@ -5,6 +5,11 @@ import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -74,6 +79,13 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
      */
     protected Set<KnownDeviation> knownDeviations() {
         return Set.of();
+    }
+
+    /**
+     * False while the adapter rejects filters, which skips the filter cases.
+     */
+    protected boolean supportsFilters() {
+        return true;
     }
 
     /**
@@ -351,7 +363,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         List<URI> ids = createListed();
 
         PagedResult<T> page = repository().findEntities(offset, limit, fixture().entityClass(), null, join(ids),
-                fixture().storedType(), null).block(TIMEOUT);
+                fixture().storedType()).block(TIMEOUT);
 
         if (expectedSize == 0 && knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
             assertNull(page, "An empty page is emitted now, drop " + KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
@@ -371,7 +383,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         List<URI> requested = createListed().subList(0, PAGE_SIZE);
 
         PagedResult<T> page = repository().findEntities(FIRST_OFFSET, LIST_LIMIT, fixture().entityClass(), null,
-                join(requested), fixture().storedType(), null).block(TIMEOUT);
+                join(requested), fixture().storedType()).block(TIMEOUT);
 
         assertNotNull(page);
         assertEquals(Set.copyOf(requested), Set.copyOf(idsOf(page)));
@@ -383,10 +395,55 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         URI other = create(otherFixture());
 
         PagedResult<T> page = repository().findEntities(FIRST_OFFSET, LIST_LIMIT, fixture().entityClass(), null,
-                join(List.of(own, other)), fixture().storedType(), null).block(TIMEOUT);
+                join(List.of(own, other)), fixture().storedType()).block(TIMEOUT);
 
         assertNotNull(page);
         assertEquals(List.of(own), idsOf(page));
+    }
+
+    // the flag pins SEPARATOR_IN_LITERAL_NEVER_MATCHES per literal: the list fails instead of returning empty
+    static Stream<Arguments> literalsHoldingFilterSeparators() {
+        return Stream.of(
+                Arguments.of("a&b", false),
+                Arguments.of("a,b", true),
+                Arguments.of("a;b", false),
+                Arguments.of("https://example.org/cb?a=1&b=2,3;c=4", false));
+    }
+
+    // a comparison value is one literal, even when it holds TMForum's filter separators
+    @ParameterizedTest
+    @MethodSource("literalsHoldingFilterSeparators")
+    void findEntitiesMatchesALiteralHoldingFilterSeparators(String literal, boolean deviationFailsTheList) {
+        assumeTrue(supportsFilters(), "The adapter does not filter yet.");
+        URI match = create(fixture(), fixture().withMutableValue(fixture().newEntity(fixture().newId()), literal));
+        URI other = create(fixture());
+        Class<T> entityClass = fixture().entityClass();
+        Comparison equalsLiteral = new Comparison(new AttributePath(List.of(fixture().mutableAttribute()), true),
+                ComparisonOperator.EQUALS, ValueType.STRING, List.of(literal));
+
+        Mono<PagedResult<T>> result = repository().findEntities(FIRST_OFFSET, LIST_LIMIT, entityClass,
+                new EntityQuery(entityClass, equalsLiteral, List.of()), join(List.of(match, other)),
+                fixture().storedType());
+
+        if (knownDeviations().contains(KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES)) {
+            String changed = "The backend behaves differently now, revisit "
+                    + KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES;
+            if (deviationFailsTheList) {
+                assertThrows(StorageException.class, () -> result.block(TIMEOUT), changed);
+                return;
+            }
+            PagedResult<T> page = result.block(TIMEOUT);
+            if (knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
+                assertNull(page, changed);
+                return;
+            }
+            assertNotNull(page, changed);
+            assertTrue(page.items().isEmpty(), changed);
+            return;
+        }
+        PagedResult<T> page = result.block(TIMEOUT);
+        assertNotNull(page);
+        assertEquals(List.of(match), idsOf(page));
     }
 
     @Test
@@ -441,7 +498,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 fixture().storedType(), fixture().entityClass(),
                 otherFixture().storedType(), otherFixture().entityClass());
         return repository().findEntitiesPolymorphic(offset, LIST_LIMIT,
-                String.join(LIST_SEPARATOR, classes.keySet()), null, join(ids), null, classes::get);
+                String.join(LIST_SEPARATOR, classes.keySet()), null, join(ids), classes::get);
     }
 
     private static List<Object> itemsOf(Mono<PagedResult<Object>> result) {

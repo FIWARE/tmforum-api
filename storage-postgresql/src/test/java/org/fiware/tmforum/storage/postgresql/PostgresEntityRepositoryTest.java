@@ -12,6 +12,12 @@ import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestCatalog;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.SortKey;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
@@ -23,6 +29,7 @@ import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -48,8 +55,10 @@ class PostgresEntityRepositoryTest {
     private static final String UNDEFINED_TABLE_STATE = "42P01";
     private static final String NUL_IN_JSONB_STATE = "22P05";
     private static final String NUL = "\u0000";
-    private static final String QUERY = "name==catalog";
-    private static final String ORDER_BY = "name";
+    private static final AttributePath NAME = new AttributePath(List.of("name"), true);
+    private static final QueryFilter NAME_FILTER = new QueryFilter.Comparison(NAME, ComparisonOperator.EQUALS,
+            ValueType.STRING, List.of("catalog"));
+    private static final List<SortKey> NAME_SORT = List.of(new SortKey(NAME, ValueType.STRING, false));
     private static final int OFFSET = 0;
     private static final int LIMIT = 10;
     private static final long NO_ROWS = 0L;
@@ -81,9 +90,9 @@ class PostgresEntityRepositoryTest {
         Function<PostgresEntityRepository, Mono<?>> delete = repository -> repository.deleteDomainEntity(
                 URI.create(CATALOG_ID));
         Function<PostgresEntityRepository, Mono<?>> list = repository -> repository.findEntities(OFFSET, LIMIT,
-                TestCatalog.class, null, null, TestCatalog.TYPE, null);
+                TestCatalog.class, null, null, TestCatalog.TYPE);
         Function<PostgresEntityRepository, Mono<?>> listPolymorphic = repository -> repository
-                .findEntitiesPolymorphic(OFFSET, LIMIT, TestCatalog.TYPE, null, CATALOG_ID, null,
+                .findEntitiesPolymorphic(OFFSET, LIMIT, TestCatalog.TYPE, null, CATALOG_ID,
                         type -> TestCatalog.class);
         return Stream.of(
                 Arguments.of(Named.of("get", get), new R2dbcNonTransientResourceException(DRIVER_MESSAGE),
@@ -171,16 +180,16 @@ class PostgresEntityRepositoryTest {
 
     static Stream<Arguments> unsupportedListArguments() {
         return Stream.of(
-                Arguments.of(Named.of("query", QUERY), null),
-                Arguments.of(null, Named.of("orderBy", ORDER_BY)),
-                Arguments.of(Named.of("query", QUERY), Named.of("orderBy", ORDER_BY)));
+                Arguments.of(Named.of("filter", new EntityQuery(TestCatalog.class, NAME_FILTER, List.of()))),
+                Arguments.of(Named.of("sort", new EntityQuery(TestCatalog.class, null, NAME_SORT))),
+                Arguments.of(Named.of("filter and sort", new EntityQuery(TestCatalog.class, NAME_FILTER, NAME_SORT))));
     }
 
-    @ParameterizedTest(name = "{0} {1}")
+    @ParameterizedTest(name = "{0}")
     @MethodSource("unsupportedListArguments")
-    void filteredListIsRejected(String query, String orderBy) {
+    void filteredListIsRejected(EntityQuery query) {
         StorageException exception = assertStorageFailure(repository.findEntities(OFFSET, LIMIT, TestCatalog.class,
-                query, null, TestCatalog.TYPE, orderBy));
+                query, null, TestCatalog.TYPE));
 
         assertEquals(StorageOperation.LIST, exception.operation(), "The failed operation should be reported.");
         assertEquals(PostgresEntityRepository.LIST_NOT_SUPPORTED, exception.getMessage(),

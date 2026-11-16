@@ -16,6 +16,7 @@ import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
+import org.fiware.tmforum.storage.query.EntityQuery;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -107,15 +108,15 @@ public class PostgresEntityRepository implements EntityRepository {
 
     @Override
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
-                                                 String query, String ids, String types, String orderBy) {
-        return list(offset, limit, types, query, ids, orderBy, type -> entityClass);
+                                                 EntityQuery query, String ids, String types) {
+        return list(offset, limit, types, query, ids, type -> entityClass);
     }
 
     @Override
     public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
-                                                            String query, String ids, String orderBy,
+                                                            EntityQuery query, String ids,
                                                             Function<String, Class<? extends T>> typeToClass) {
-        return list(offset, limit, types, query, ids, orderBy, typeToClass);
+        return list(offset, limit, types, query, ids, typeToClass);
     }
 
     @Override
@@ -276,9 +277,9 @@ public class PostgresEntityRepository implements EntityRepository {
         return bindNullable(statement, 4, updatedAt, Instant.class);
     }
 
-    private <T> Mono<PagedResult<T>> list(Integer offset, Integer limit, String types, String query, String ids,
-                                          String orderBy, Function<String, Class<? extends T>> typeToClass) {
-        if (isPresent(query) || isPresent(orderBy)) {
+    private <T> Mono<PagedResult<T>> list(Integer offset, Integer limit, String types, EntityQuery query,
+                                          String ids, Function<String, Class<? extends T>> typeToClass) {
+        if (query != null && (query.filter() != null || !query.sort().isEmpty())) {
             return Mono.error(new StorageException(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
                     LIST_NOT_SUPPORTED));
         }

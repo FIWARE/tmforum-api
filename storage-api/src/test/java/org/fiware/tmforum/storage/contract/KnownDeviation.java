@@ -40,6 +40,16 @@ public enum KnownDeviation {
     REFERENCE_LIST_UPDATE_MERGES,
 
     /**
+     * An equality filter whose string literal holds {@code &} or {@code ;} matches nothing, even the entity storing
+     * exactly that literal, and one holding {@code ,} without those fails the list (the broker answers 500).
+     * Observed on Scorpio 5.0.3 for {@code Catalog.name}, Orion-LD 1.9.0 matches; pending acceptance (ticket 0).
+     * Derived, not observed (the hub API ITs do not run on Scorpio): the hub duplicate check puts the unescaped
+     * callback into the same kind of filter, so a callback holding {@code ,} is expected to fail the registration
+     * and one holding {@code &} or {@code ;} to register twice without a 409.
+     */
+    SEPARATOR_IN_LITERAL_NEVER_MATCHES,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL
