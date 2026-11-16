@@ -74,6 +74,9 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final String BETA = "beta";
     private static final String GAMMA = "gamma";
     private static final List<String> WORDS = List.of(ALPHA, BETA, ALPHABET);
+    private static final String CAPITAL_BETA = "Beta";
+    // byte order puts the capital first (Beta < alpha < beta), a linguistic collation puts it after alpha
+    private static final List<String> CASE_DIFFERING_WORDS = List.of(CAPITAL_BETA, ALPHA, BETA);
     // inside BETA and ALPHABET, at the start of neither ALPHA nor ALPHABET
     private static final String UNANCHORED_PATTERN = "bet";
     // creation order differs from both sort orders
@@ -82,6 +85,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final List<Integer> NUMBERS = List.of(2, 10, 3);
     private static final String NUMBER_LITERAL = "3";
     private static final String HIGH_NUMBER_LITERAL = "5";
+    // the string seed is under a NUMBER filter on the same key, as when an extension is typed by its literal
+    private static final List<Object> NUMBERS_AND_A_STRING = List.of(2, 10, ALPHA, 3);
     private static final List<Integer> TIED_NUMBERS = List.of(2, 1, 2, 1, 2);
     // creation order differs from every sort order the sort cases ask for
     private static final List<Map.Entry<String, Integer>> NAMED_AND_NUMBERED = List.of(
@@ -561,9 +566,12 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         STRING_IN_A_SINGLE_ELEMENT_LIST(Attribute.STRING_LIST, STRING_LISTS, ComparisonOperator.EQUALS,
                 List.of(GAMMA), Set.of(1)),
         EXTENSION_EQUALS(Attribute.EXTENSION, List.of(ALPHA, BETA), ComparisonOperator.EQUALS, List.of(BETA),
-                Set.of(1));
+                Set.of(1)),
+        EXTENSION_NUMBER_GREATER_THAN(Attribute.EXTENSION, ValueType.NUMBER, NUMBERS_AND_A_STRING,
+                ComparisonOperator.GREATER_THAN, List.of(NUMBER_LITERAL), Set.of(1));
 
         private final Attribute attribute;
+        private final ValueType valueType;
         private final List<?> seeds;
         private final ComparisonOperator operator;
         private final List<String> literals;
@@ -573,7 +581,13 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
         FilterCase(Attribute attribute, List<?> seeds, ComparisonOperator operator, List<String> literals,
                    Set<Integer> matches, KnownDeviation... deviations) {
+            this(attribute, attribute.valueType(), seeds, operator, literals, matches, deviations);
+        }
+
+        FilterCase(Attribute attribute, ValueType valueType, List<?> seeds, ComparisonOperator operator,
+                   List<String> literals, Set<Integer> matches, KnownDeviation... deviations) {
             this.attribute = attribute;
+            this.valueType = valueType;
             this.seeds = seeds;
             this.operator = operator;
             this.literals = literals;
@@ -597,7 +611,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 .map(seed -> create(queries, queries.newEntity(queries.newId(), Map.of(filterCase.attribute, seed))))
                 .toList();
         Comparison comparison = new Comparison(queries.path(filterCase.attribute), filterCase.operator,
-                filterCase.attribute.valueType(), filterCase.literals);
+                filterCase.valueType, filterCase.literals);
         Set<KnownDeviation> deviations = filterCase.deviations.stream()
                 .filter(knownDeviations()::contains)
                 .collect(Collectors.toSet());
@@ -614,6 +628,26 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 .collect(Collectors.toSet());
 
         assertEquals(expected, Set.copyOf(findIds(queries, comparison, List.of(), ids, FIRST_OFFSET, LIST_LIMIT)));
+    }
+
+    @Test
+    void findEntitiesComparesStringsInByteOrder() {
+        assertStringsCompareInByteOrder(queryFixture(Attribute.STRING));
+    }
+
+    private <Q> void assertStringsCompareInByteOrder(QueryFixture<Q> queries) {
+        Map<String, URI> idsByValue = new HashMap<>();
+        CASE_DIFFERING_WORDS.forEach(value -> idsByValue.put(value,
+                create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.STRING, value)))));
+        Comparison greaterThanAlpha = new Comparison(queries.path(Attribute.STRING), ComparisonOperator.GREATER_THAN,
+                ValueType.STRING, List.of(ALPHA));
+        Set<String> greater = knownDeviations().contains(KnownDeviation.STRING_COMPARISON_IS_LINGUISTIC)
+                ? Set.of(CAPITAL_BETA, BETA)
+                : Set.of(BETA);
+
+        assertEquals(greater.stream().map(idsByValue::get).collect(Collectors.toSet()),
+                Set.copyOf(findIds(queries, greaterThanAlpha, List.of(), List.copyOf(idsByValue.values()),
+                        FIRST_OFFSET, LIST_LIMIT)));
     }
 
     // MULTI_ELEMENT_LIST_NEVER_MATCHES hides the elements of a longer list from every filter

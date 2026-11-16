@@ -51,6 +51,7 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 			deviations.add(KnownDeviation.VALUE_LIST_FAILS);
 			deviations.add(KnownDeviation.ANY_OF_FAILS_OR_MATCHES_NOTHING);
 			deviations.add(KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES);
+			deviations.add(KnownDeviation.STRING_COMPARISON_IS_LINGUISTIC);
 			return deviations;
 		}
 		deviations.add(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL);

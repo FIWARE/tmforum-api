@@ -62,29 +62,32 @@ public enum KnownDeviation {
     /**
      * An equality filter with several values fails with (LIST, UNKNOWN). Orion-LD 1.9.0 rejects (400) the orion-ld
      * profile's {@code attr==("a";"b")} ({@code ngsildOrQueryValue: ";"}, {@code encloseQuery: true}) but accepts
-     * {@code attr=="a","b"}; Scorpio 5.0.3 fails (500) on the scorpio profile's {@code attr=="a","b"}. Pending
-     * acceptance (ticket 0).
+     * {@code attr=="a","b"}; Scorpio 5.0.3 fails (500) on the scorpio profile's {@code attr=="a","b"}. Not proposed
+     * for acceptance: a defect of the shipped NGSI-LD profiles (main and test), which Step 7 fixes.
      */
     VALUE_LIST_FAILS,
 
     /**
      * {@code AnyOf} matches like {@code AllOf}: the orion-ld profile ({@code ngsildOrQueryKey: ";"}) joins its
-     * filters with {@code ;}, NGSI-LD's AND. Observed on Orion-LD 1.9.0, which ORs them with {@code |}. Pending
-     * acceptance (ticket 0).
+     * filters with {@code ;}, NGSI-LD's AND. Observed on Orion-LD 1.9.0, which ORs them with {@code |}. Not
+     * proposed for acceptance: a silent wrong result caused by the shipped orion-ld profile (main and test), which
+     * Step 7 fixes.
      */
     ANY_OF_MATCHES_AS_ALL_OF,
 
     /**
      * {@code AnyOf} breaks: the scorpio profile ({@code ngsildOrQueryKey: ","}) joins its filters with {@code ,},
      * which Scorpio 5.0.3 does not read as OR. Over comparisons the list fails with (LIST, UNKNOWN) (500), over
-     * {@code AllOf} groups it matches nothing. Scorpio ORs with {@code |}. Pending acceptance (ticket 0).
+     * {@code AllOf} groups it matches nothing. Scorpio ORs with {@code |}. Not proposed for acceptance: a defect of
+     * the shipped scorpio profile (main and test), which Step 7 fixes.
      */
     ANY_OF_FAILS_OR_MATCHES_NOTHING,
 
     /**
      * A regex filter fails with (LIST, UNKNOWN): the renderer quotes the pattern, which Orion-LD 1.9.0
      * rejects (400), while it accepts it unquoted. The not-equals idiom still works where
-     * {@code optimizeRegexNotEquals} rewrites it to {@code !=}. Pending acceptance (ticket 0).
+     * {@code optimizeRegexNotEquals} rewrites it to {@code !=}. Not proposed for acceptance: a defect of the
+     * NGSI-LD renderer, which Step 7 fixes.
      */
     REGEX_FAILS,
 
@@ -95,6 +98,13 @@ public enum KnownDeviation {
      * rewrites it to {@code !=}. Pending acceptance (ticket 0).
      */
     ANCHORED_REGEX_NEVER_MATCHES,
+
+    /**
+     * A string comparison ({@code gt}, {@code lt}, ...) follows a linguistic collation instead of byte order, so
+     * {@code "Beta"} is greater than {@code "alpha"}. Observed on Scorpio 5.0.3; Orion-LD 1.9.0 and PostgreSQL 18
+     * compare bytes. Pending acceptance (ticket 0).
+     */
+    STRING_COMPARISON_IS_LINGUISTIC,
 
     /**
      * A list with a sort fails with (LIST, UNKNOWN): Orion-LD 1.9.0 rejects {@code orderBy} without

@@ -41,6 +41,9 @@ class SubscriptionQueryFixture implements QueryFixture<TMForumSubscription> {
 
 	@Override
 	public AttributePath path(Attribute attribute) {
+		if (attribute != Attribute.STRING_LIST) {
+			throw new IllegalArgumentException("Hubs hold no " + attribute);
+		}
 		return ENTITIES;
 	}
 

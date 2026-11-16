@@ -32,7 +32,7 @@ public interface QueryFixture<T> extends EntityFixture<T> {
         REFERENCE_ID(ValueType.STRING),
         /** A list of plain strings; takes a {@code List<String>}. */
         STRING_LIST(ValueType.STRING),
-        /** An extension (undeclared) property; takes a {@code String}. */
+        /** An extension (undeclared) property; takes a {@code String} or an {@code Integer}. */
         EXTENSION(ValueType.STRING);
 
         private final ValueType valueType;
