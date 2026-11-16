@@ -42,7 +42,9 @@ public enum KnownDeviation {
     /**
      * An equality filter whose string literal holds {@code &} or {@code ;} matches nothing, even the entity storing
      * exactly that literal, and one holding {@code ,} without those fails the list (the broker answers 500).
-     * Observed on Scorpio 5.0.3, Orion-LD 1.9.0 matches; pending acceptance (ticket 0).
+     * Through the hub duplicate check, a callback holding {@code ,} fails the registration and one holding
+     * {@code &} or {@code ;} registers twice without a 409. Observed on Scorpio 5.0.3, Orion-LD 1.9.0 matches;
+     * pending acceptance (ticket 0).
      */
     SEPARATOR_IN_LITERAL_NEVER_MATCHES,
 
