@@ -90,7 +90,8 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	}
 
 	// rawQuery is compared in Java: its stored form differs per backend (escaped on NGSI-LD), and hubs sharing one
-	// callback are few
+	// callback are few. The pages are unsorted, since Orion-LD 1.9.0 rejects orderBy (501) and Scorpio 5.0.3 ignores
+	// it, so the check is exact only while the matches fit one page of SAME_CALLBACK_PAGE_SIZE.
 	private Mono<Void> assureNotExistingTMForumSubscription(TMForumSubscription subscription) {
 		// built directly, since parsing would split a callback's query string on its separators
 		EntityQuery sameCallback = new EntityQuery(TMForumSubscription.class,
