@@ -3,6 +3,7 @@ package org.fiware.tmforum.productcatalog;
 import io.micronaut.context.env.Environment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.notification.EventDetails;
@@ -20,6 +21,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Looks up the hubs of an event on every backend, PostgreSQL included, while the hub API ITs are still excluded
@@ -87,9 +90,18 @@ public class HubLookupIT extends AbstractApiIT {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.entityRepository = entityRepository;
 		this.eventHandler = eventHandler;
-		this.knownDeviations = environment.getActiveNames().contains(ORION_LD_ENVIRONMENT)
-				? Set.of(KnownDeviation.MULTI_ELEMENT_LIST_NEVER_MATCHES)
-				: Set.of();
+		this.knownDeviations = knownDeviations(environment.getActiveNames());
+	}
+
+	private static Set<KnownDeviation> knownDeviations(Set<String> activeEnvironments) {
+		Set<KnownDeviation> deviations = EnumSet.noneOf(KnownDeviation.class);
+		if (!activeEnvironments.contains(CommonConstants.POSTGRESQL_ENVIRONMENT)) {
+			deviations.add(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
+		}
+		if (activeEnvironments.contains(ORION_LD_ENVIRONMENT)) {
+			deviations.add(KnownDeviation.MULTI_ELEMENT_LIST_NEVER_MATCHES);
+		}
+		return deviations;
 	}
 
 	@Override
@@ -117,9 +129,15 @@ public class HubLookupIT extends AbstractApiIT {
 			entityRepository.createDomainEntity(hub.subscription()).block();
 		}
 
-		// the brokers complete empty without a match (KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)
-		List<TMForumSubscription> found = Optional.ofNullable(eventHandler.findSubscriptions(
-				new EventDetails(entityType, eventType, EVENT_TIME, PAYLOAD_NAME)).block()).orElse(List.of());
+		List<TMForumSubscription> page = eventHandler.findSubscriptions(
+				new EventDetails(entityType, eventType, EVENT_TIME, PAYLOAD_NAME)).block();
+		List<TMForumSubscription> found;
+		if (knownDeviations.contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
+			found = Optional.ofNullable(page).orElse(List.of());
+		} else {
+			assertNotNull(page, "A page is always emitted, an empty one included.");
+			found = page;
+		}
 
 		assertEquals(ids(foundToday(expectedHubs)), found.stream().map(TMForumSubscription::getId).collect(Collectors.toSet()),
 				"Only hubs whose entities and eventTypes both hold the event's values should be found.");
