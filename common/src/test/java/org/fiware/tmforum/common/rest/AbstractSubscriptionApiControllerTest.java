@@ -9,6 +9,7 @@ import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.DirectEntityEventPublisher;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
+import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.repository.SubscriptionRepository;
 import org.fiware.tmforum.storage.EntityRepository;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import reactor.core.publisher.Mono;
 
@@ -95,6 +97,27 @@ class AbstractSubscriptionApiControllerTest {
 						new QueryFilter.Comparison(new AttributePath(List.of("callback"), true),
 								ComparisonOperator.EQUALS, ValueType.STRING, List.of(CALLBACK)),
 						List.of())));
+	}
+
+	@Test
+	public void theDuplicateCheckRendersTheCallbackAsOneQuotedNgsiLdLiteral() {
+		EntityRepository repository = mock(EntityRepository.class);
+		SubscriptionRepository subscriptionRepository = mock(SubscriptionRepository.class);
+		GeneralProperties properties = new GeneralProperties();
+		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(properties), repository,
+				properties);
+		controller.setSubscriptionRepository(subscriptionRepository);
+		when(subscriptionRepository.createSubscription(any(), any()))
+				.thenReturn(Mono.error(new IllegalStateException(PAST_THE_CHECK)));
+		when(repository.findEntities(any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), CommonConstants.DEFAULT_OFFSET, SAME_CALLBACK_PAGE_SIZE,
+						null)));
+
+		assertThrows(RuntimeException.class, () -> controller.create(hub(RAW_QUERY)).block());
+
+		ArgumentCaptor<EntityQuery> query = ArgumentCaptor.forClass(EntityQuery.class);
+		verify(repository).findEntities(any(), any(), any(), any(), query.capture());
+		assertEquals("callback==\"" + CALLBACK + "\"", new NgsiLdQueryRenderer(properties).renderFilter(query.getValue()));
 	}
 
 	private static Stream<Arguments> existingHubs() {

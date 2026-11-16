@@ -2,8 +2,11 @@ package org.fiware.tmforum.common.notification;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import org.fiware.ngsi.model.EntityVO;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.EventMapping;
+import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
+import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
 import org.fiware.tmforum.common.rest.CharacterizationEntity;
 import org.fiware.tmforum.storage.EntityReadRepository;
@@ -130,6 +133,27 @@ class TMForumEventHandlerTest {
 				contains("eventTypes", DELETE_EVENT_TYPE))), List.of());
 		verify(repository).findEntities(any(), eq(TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE),
 				eq(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION), eq(TMForumSubscription.class), eq(expected));
+	}
+
+	@Test
+	void findSubscriptionsRendersTheSameNgsiLdQueryAsTheParsedHubLookup() {
+		EventDetails details = new EventDetails(CharacterizationEntity.TYPE, DELETE_EVENT_TYPE, EVENT_TIME, PAYLOAD_NAME);
+		when(repository.findEntities(any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE, null)));
+
+		eventHandler.findSubscriptions(details).block();
+
+		ArgumentCaptor<EntityQuery> query = ArgumentCaptor.forClass(EntityQuery.class);
+		verify(repository).findEntities(any(), any(), any(), any(), query.capture());
+		GeneralProperties properties = new GeneralProperties();
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
+		// the hub lookup built this filter through the parser before the port took the model
+		QueryFilter parsed = new QueryParser(properties).parse(TMForumSubscription.class,
+				String.format("entities=%s&eventTypes=%s", CharacterizationEntity.TYPE, DELETE_EVENT_TYPE)).filter();
+		String rendered = renderer.renderFilter(query.getValue());
+		assertEquals(String.format("entities==\"%s\";eventTypes==\"%s\"", CharacterizationEntity.TYPE, DELETE_EVENT_TYPE),
+				rendered);
+		assertEquals(renderer.renderFilter(new EntityQuery(TMForumSubscription.class, parsed, List.of())), rendered);
 	}
 
 	private static QueryFilter contains(String attribute, String value) {
