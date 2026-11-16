@@ -11,10 +11,12 @@ import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest;
 import org.fiware.tmforum.storage.contract.EntityFixture;
 import org.fiware.tmforum.storage.contract.KnownDeviation;
+import org.fiware.tmforum.storage.contract.QueryFixture;
 import org.fiware.tmforum.storage.contract.ReferenceFixture;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -45,9 +47,18 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 				KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY);
 		if (!environment.getActiveNames().contains(ORION_LD_ENVIRONMENT)) {
 			deviations.add(KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES);
+			deviations.add(KnownDeviation.SORT_IS_IGNORED);
+			deviations.add(KnownDeviation.VALUE_LIST_FAILS);
+			deviations.add(KnownDeviation.ANY_OF_FAILS_OR_MATCHES_NOTHING);
+			deviations.add(KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES);
 			return deviations;
 		}
 		deviations.add(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL);
+		deviations.add(KnownDeviation.MULTI_ELEMENT_LIST_NEVER_MATCHES);
+		deviations.add(KnownDeviation.SORT_FAILS);
+		deviations.add(KnownDeviation.VALUE_LIST_FAILS);
+		deviations.add(KnownDeviation.ANY_OF_MATCHES_AS_ALL_OF);
+		deviations.add(KnownDeviation.REGEX_FAILS);
 		if (!generalProperties.isReplaceOnUpdate()) {
 			deviations.add(KnownDeviation.EMPTIED_LIST_BREAKS_READS);
 			deviations.add(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
@@ -69,6 +80,11 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	@Override
 	protected EntityFixture<Category> otherFixture() {
 		return new CategoryFixture();
+	}
+
+	@Override
+	protected List<QueryFixture<?>> queryFixtures() {
+		return List.of(new ProductOfferingPriceQueryFixture(), new SubscriptionQueryFixture());
 	}
 
 	@Override

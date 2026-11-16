@@ -58,6 +58,54 @@ public enum KnownDeviation {
     MULTI_ELEMENT_LIST_NEVER_MATCHES,
 
     /**
+     * An equality filter with several values fails with (LIST, UNKNOWN). Orion-LD 1.9.0 rejects (400) the orion-ld
+     * profile's {@code attr==("a";"b")} ({@code ngsildOrQueryValue: ";"}, {@code encloseQuery: true}) but accepts
+     * {@code attr=="a","b"}; Scorpio 5.0.3 fails (500) on the scorpio profile's {@code attr=="a","b"}. Pending
+     * acceptance (ticket 0).
+     */
+    VALUE_LIST_FAILS,
+
+    /**
+     * {@code AnyOf} matches like {@code AllOf}: the orion-ld profile ({@code ngsildOrQueryKey: ";"}) joins its
+     * filters with {@code ;}, NGSI-LD's AND. Observed on Orion-LD 1.9.0, which ORs them with {@code |}. Pending
+     * acceptance (ticket 0).
+     */
+    ANY_OF_MATCHES_AS_ALL_OF,
+
+    /**
+     * {@code AnyOf} breaks: the scorpio profile ({@code ngsildOrQueryKey: ","}) joins its filters with {@code ,},
+     * which Scorpio 5.0.3 does not read as OR. Over comparisons the list fails with (LIST, UNKNOWN) (500), over
+     * {@code AllOf} groups it matches nothing. Scorpio ORs with {@code |}. Pending acceptance (ticket 0).
+     */
+    ANY_OF_FAILS_OR_MATCHES_NOTHING,
+
+    /**
+     * A regex filter fails with (LIST, UNKNOWN): the renderer quotes the pattern, which Orion-LD 1.9.0
+     * rejects (400), while it accepts it unquoted. The not-equals idiom still works where
+     * {@code optimizeRegexNotEquals} rewrites it to {@code !=}. Pending acceptance (ticket 0).
+     */
+    REGEX_FAILS,
+
+    /**
+     * A regex anchored with {@code ^} or {@code $} matches nothing, while an unanchored one matches. Observed on
+     * Scorpio 5.0.3, quoted and unquoted. The not-equals idiom still works where {@code optimizeRegexNotEquals}
+     * rewrites it to {@code !=}. Pending acceptance (ticket 0).
+     */
+    ANCHORED_REGEX_NEVER_MATCHES,
+
+    /**
+     * A list with a sort fails with (LIST, UNKNOWN): Orion-LD 1.9.0 rejects {@code orderBy} without
+     * {@code local=true} (501). Pending acceptance (ticket 0).
+     */
+    SORT_FAILS,
+
+    /**
+     * A list with a sort comes back in the order it would have without one, whatever the keys and directions.
+     * Observed on Scorpio 5.0.3. Pending acceptance (ticket 0).
+     */
+    SORT_IS_IGNORED,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL

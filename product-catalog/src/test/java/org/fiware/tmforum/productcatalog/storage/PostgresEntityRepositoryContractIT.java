@@ -7,12 +7,14 @@ import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest;
 import org.fiware.tmforum.storage.contract.EntityFixture;
+import org.fiware.tmforum.storage.contract.QueryFixture;
 import org.fiware.tmforum.storage.contract.ReferenceFixture;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
 import org.fiware.tmforum.storage.postgresql.PostgresEntityRepository;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -36,12 +38,6 @@ public class PostgresEntityRepositoryContractIT extends AbstractEntityRepository
 		assertInstanceOf(PostgresEntityRepository.class, repository);
 	}
 
-	// the adapter rejects filters until step 5 of ticket 90
-	@Override
-	protected boolean supportsFilters() {
-		return false;
-	}
-
 	@Override
 	protected EntityRepository repository() {
 		return repository;
@@ -55,6 +51,11 @@ public class PostgresEntityRepositoryContractIT extends AbstractEntityRepository
 	@Override
 	protected EntityFixture<Category> otherFixture() {
 		return new CategoryFixture();
+	}
+
+	@Override
+	protected List<QueryFixture<?>> queryFixtures() {
+		return List.of(new ProductOfferingPriceQueryFixture(), new SubscriptionQueryFixture());
 	}
 
 	@Override
