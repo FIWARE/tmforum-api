@@ -21,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -73,6 +74,10 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final String BETA = "beta";
     private static final String GAMMA = "gamma";
     private static final List<String> WORDS = List.of(ALPHA, BETA, ALPHABET);
+    // inside BETA and ALPHABET, at the start of neither ALPHA nor ALPHABET
+    private static final String UNANCHORED_PATTERN = "bet";
+    // creation order differs from both sort orders
+    private static final List<String> EXTENSION_SORT_SEEDS = List.of(BETA, GAMMA, ALPHA);
     // string order ("10" < "2" < "3") differs from numeric order
     private static final List<Integer> NUMBERS = List.of(2, 10, 3);
     private static final String NUMBER_LITERAL = "3";
@@ -541,6 +546,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 List.of(Boolean.TRUE.toString()), Set.of(0)),
         REGEX(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^" + ALPHA), Set.of(0, 2),
                 KnownDeviation.REGEX_FAILS, KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES),
+        REGEX_UNANCHORED(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of(UNANCHORED_PATTERN),
+                Set.of(1, 2), KnownDeviation.REGEX_FAILS),
         REGEX_NOT_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^(?!" + ALPHA + "$).*$"),
                 Set.of(1, 2)),
         NESTED_STRING_EQUALS(Attribute.NESTED_STRING, List.of(ALPHA, BETA), ComparisonOperator.EQUALS,
@@ -830,13 +837,40 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     }
 
     @Test
+    void findEntitiesPolymorphicFilters() {
+        assertPolymorphicFilter(queryFixture(Attribute.STRING, Attribute.NUMBER));
+    }
+
+    // without a sort, so the brokers that fail or ignore one still verify the filter
+    private <Q> void assertPolymorphicFilter(QueryFixture<Q> queries) {
+        String name = UUID.randomUUID().toString();
+        List<URI> matches = createPolymorphicSeeds(queries, name);
+
+        List<URI> actual = findPolymorphic(queries, new EntityQuery(queries.entityClass(), nameIs(queries, name),
+                List.of())).block(TIMEOUT);
+
+        assertNotNull(actual);
+        assertEquals(matches.size(), actual.size(), "Only the matches are listed: " + actual);
+        assertEquals(Set.copyOf(matches), Set.copyOf(actual));
+    }
+
+    @Test
     void findEntitiesPolymorphicFiltersAndSorts() {
         assertPolymorphicFilterAndSort(queryFixture(Attribute.STRING, Attribute.NUMBER));
     }
 
-    // no ids, which SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL would reject: unique names keep other entities out
     private <Q> void assertPolymorphicFilterAndSort(QueryFixture<Q> queries) {
         String name = UUID.randomUUID().toString();
+        List<URI> lowAndHigh = createPolymorphicSeeds(queries, name);
+        EntityQuery query = new EntityQuery(queries.entityClass(), nameIs(queries, name),
+                List.of(sortKey(queries, Attribute.NUMBER, true)));
+
+        assertOrder(lowAndHigh.reversed(), () -> findPolymorphic(queries, query));
+    }
+
+    // two matches (low, then high number), a near miss of the class and an entity of the other class; no ids,
+    // which SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL would reject, so the unique name keeps other entities out
+    private <Q> List<URI> createPolymorphicSeeds(QueryFixture<Q> queries, String name) {
         URI low = create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.STRING, name,
                 Attribute.NUMBER, NUMBERS.get(0))));
         URI high = create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.STRING, name,
@@ -844,16 +878,55 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.STRING, name + BETA,
                 Attribute.NUMBER, NUMBERS.get(2))));
         create(otherFixture());
-        EntityQuery query = new EntityQuery(queries.entityClass(), nameIs(queries, name),
-                List.of(sortKey(queries, Attribute.NUMBER, true)));
+        return List.of(low, high);
+    }
+
+    private <Q> Mono<List<URI>> findPolymorphic(QueryFixture<Q> queries, EntityQuery query) {
         Map<String, Class<?>> classes = Map.of(
                 queries.storedType(), queries.entityClass(),
                 otherFixture().storedType(), otherFixture().entityClass());
-
-        assertOrder(List.of(high, low),
-                () -> repository().findEntitiesPolymorphic(FIRST_OFFSET, LIST_LIMIT,
+        return repository().findEntitiesPolymorphic(FIRST_OFFSET, LIST_LIMIT,
                         String.join(LIST_SEPARATOR, classes.keySet()), query, null, classes::get)
-                        .map(page -> page.items().stream().map(item -> idOf(queries, item)).toList()));
+                .map(page -> page.items().stream().map(item -> idOf(queries, item)).toList());
+    }
+
+    // pins PostgreSQL's NULLS LAST in both directions; the brokers fail or ignore every sort (pending Step 7)
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void findEntitiesSortsAnEntityWithoutTheKeyLast(boolean descending) {
+        assertMissingKeySortsLast(queryFixture(Attribute.NUMBER), descending);
+    }
+
+    // created first, so a creation-order tiebreak would list the entity without the key first
+    private <Q> void assertMissingKeySortsLast(QueryFixture<Q> queries, boolean descending) {
+        URI missing = create(queries, queries.newEntity(queries.newId()));
+        URI low = create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.NUMBER, NUMBERS.get(0))));
+        URI high = create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.NUMBER, NUMBERS.get(1))));
+        List<URI> ids = List.of(missing, low, high);
+        List<SortKey> sort = List.of(sortKey(queries, Attribute.NUMBER, descending));
+        List<URI> expected = descending ? List.of(high, low, missing) : List.of(low, high, missing);
+
+        assertOrder(expected, () -> find(queries, null, sort, ids, FIRST_OFFSET, LIST_LIMIT)
+                .map(page -> idsOf(queries, page.items())));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void findEntitiesSortsOnAnExtension(boolean descending) {
+        assertSortedOnExtension(queryFixture(Attribute.EXTENSION), descending);
+    }
+
+    private <Q> void assertSortedOnExtension(QueryFixture<Q> queries, boolean descending) {
+        Map<String, URI> idsByValue = new HashMap<>();
+        EXTENSION_SORT_SEEDS.forEach(value -> idsByValue.put(value,
+                create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.EXTENSION, value)))));
+        // an undeclared key has no value type, as the parser leaves it
+        List<SortKey> sort = List.of(new SortKey(queries.path(Attribute.EXTENSION), null, descending));
+        List<String> order = descending ? List.of(GAMMA, BETA, ALPHA) : List.of(ALPHA, BETA, GAMMA);
+
+        assertOrder(order.stream().map(idsByValue::get).toList(),
+                () -> find(queries, null, sort, List.copyOf(idsByValue.values()), FIRST_OFFSET, LIST_LIMIT)
+                        .map(page -> idsOf(queries, page.items())));
     }
 
     // a sort the backend fails or ignores is asserted as such

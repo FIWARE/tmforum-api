@@ -50,10 +50,12 @@ public enum KnownDeviation {
     SEPARATOR_IN_LITERAL_NEVER_MATCHES,
 
     /**
-     * An equality filter on a list of plain values only matches a list of one element: the mapping stores a longer
-     * list as one attribute instance per element (datasetIds), which the broker's {@code q} does not reach. A hub
-     * taking several entity types or event types is thus never found by the hub lookup. Observed by {@code HubLookupIT}
-     * on Orion-LD 1.9.0; Scorpio 5.0.3 and PostgreSQL 18 match any element there. Pending acceptance (ticket 0).
+     * An equality filter on a list, of plain values or of references by their id, only matches a list of one
+     * element: the mapping stores a longer list as one attribute instance per element (datasetIds), which the
+     * broker's {@code q} does not reach. A hub taking several entity types or event types is thus never found by the
+     * hub lookup. Observed on Orion-LD 1.9.0 by {@code HubLookupIT} (plain values) and by the contract's
+     * reference-id and string-list filter cases; Scorpio 5.0.3 and PostgreSQL 18 match any element. Pending
+     * acceptance (ticket 0).
      */
     MULTI_ELEMENT_LIST_NEVER_MATCHES,
 
@@ -87,7 +89,8 @@ public enum KnownDeviation {
     REGEX_FAILS,
 
     /**
-     * A regex anchored with {@code ^} or {@code $} matches nothing, while an unanchored one matches. Observed on
+     * A regex anchored with {@code ^} or {@code $} matches nothing, while an unanchored one matches (the contract's
+     * {@code REGEX_UNANCHORED} case). Observed on
      * Scorpio 5.0.3, quoted and unquoted. The not-equals idiom still works where {@code optimizeRegexNotEquals}
      * rewrites it to {@code !=}. Pending acceptance (ticket 0).
      */
