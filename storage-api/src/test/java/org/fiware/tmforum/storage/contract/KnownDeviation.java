@@ -108,13 +108,16 @@ public enum KnownDeviation {
 
     /**
      * A list with a sort fails with (LIST, UNKNOWN): Orion-LD 1.9.0 rejects {@code orderBy} without
-     * {@code local=true} (501). Pending acceptance (ticket 0).
+     * {@code local=true} (501), which the adapter never sends. Not proposed for acceptance: a defect of the NGSI-LD
+     * adapter, which Step 7 fixes. With {@code local=true} Orion-LD 1.9.0 sorts on one attribute only and takes the
+     * direction from {@code reverse=true}, not from {@code ;desc}; what remains after the fix is listed then.
      */
     SORT_FAILS,
 
     /**
      * A list with a sort comes back in the order it would have without one, whatever the keys and directions.
-     * Observed on Scorpio 5.0.3. Pending acceptance (ticket 0).
+     * Observed on Scorpio 5.0.3, which has no {@code orderBy} parameter and always orders by creation, so no
+     * request change helps. Pending acceptance (ticket 0).
      */
     SORT_IS_IGNORED,
 
