@@ -167,8 +167,8 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 					LiteralForm.OFFSET, Semantics.STRING,
 					LiteralForm.LOCAL, Semantics.STRING,
 					LiteralForm.DATE, Semantics.STRING));
-	// Orion-LD 1.9.0 takes orderBy only with local=true (LocalOrderByFilter) and then ignores it unless it runs
-	// with ORIONLD_EXPERIMENTAL; Scorpio 5.0.3 answers in creation order whatever the direction.
+	// Orion-LD 1.9.0 takes orderBy only with local=true (LocalOrderByFilter) and then ignores it (ORIONLD_EXPERIMENTAL
+	// untested); Scorpio 5.0.3 answers in creation order whatever the direction.
 	// Both pin KnownDeviation.SORT_IS_IGNORED, pending acceptance (ticket 0), not a contract.
 	private static final Map<String, Semantics> OBSERVED_SORT_SEMANTICS = Map.of(
 			ORION_LD_ENVIRONMENT, Semantics.IGNORED,

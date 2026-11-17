@@ -85,9 +85,9 @@ public enum KnownDeviation {
     /**
      * A list with a sort comes back in the order it would have without one, whatever the keys and directions.
      * Observed on Scorpio 5.0.3, which has no {@code orderBy} parameter and always orders by creation, and on
-     * Orion-LD 1.9.0, which takes {@code orderBy} only with {@code local=true} and then ignores it unless it runs
-     * with {@code ORIONLD_EXPERIMENTAL} (one key, descending only via {@code reverse=true}). Pending acceptance
-     * (ticket 0).
+     * Orion-LD 1.9.0, which takes {@code orderBy} only with {@code local=true} and then ignores it. Experimental mode
+     * ({@code ORIONLD_EXPERIMENTAL}) was not tested; per its docs it sorts on one key only, descending only via
+     * {@code reverse=true}. Pending acceptance (ticket 0).
      */
     SORT_IS_IGNORED,
 

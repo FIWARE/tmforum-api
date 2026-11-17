@@ -101,8 +101,10 @@ the `jsonb` document; every user value is a bound parameter.
     characters as syntax, quoted or not. Before, the pattern was forwarded quoted, and Scorpio answered some of
     them.
   * A sorted broker query now carries `local=true`, without which Orion-LD rejects `orderBy`. A `sort` therefore
-    answers 200 instead of 500 on Orion-LD, but the result stays unsorted there, as on Scorpio, unless Orion-LD
-    runs with `ORIONLD_EXPERIMENTAL`.
+    answers 200 instead of 500 on Orion-LD, but the result stays unsorted there, as on Scorpio. Only unsorted
+    results were observed. `ORIONLD_EXPERIMENTAL` was not tested; per Orion-LD's docs it sorts on the first key
+    only, with the direction from `reverse=true` rather than `;desc`, so `-name` or `name,version` would still
+    come back in the wrong order.
 * **No accepted deviations yet.** The backend differences observed while testing are pending acceptance in ticket 0
   and are listed here once accepted.
 
