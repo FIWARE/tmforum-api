@@ -1,0 +1,75 @@
+# Implementation Plan: TMForum - DB Backend - Entity versioning
+
+## Overview
+This plan gets the PostgreSQL schema ready for entity versioning and adds the one behaviour the ticket asks for, reference version semantics. Ticket 6 already created `version`/`revision`/`is_current`, `PRIMARY KEY (id, version)` and `entity_current_idx`, and every read, update and delete already filters `AND is_current`. Two things are missing. The `version` column is never filled, so it is always `''`. And no reference check looks at a `*Ref`'s `version`. No API surface is added. `PATCH` keeps updating in place, and both backends behave the same.
+
+**Decisions taken by this plan** (the step agents apply them, they do not reopen them):
+- A type is *versionable* when its domain class implements a new marker interface `VersionedEntity` (`String getVersion()`). The 18 classes listed in the ticket implement it, and Lombok already generates the getter. A `version` that is null or comes from any other class is stored as `''`. A key found in the document is not used, because an extension property called `version` on a non-versionable type would otherwise fill the column.
+- A `*Ref` is *version-pinned* when its `version` is non-null and non-empty. A pinned ref resolves only if the target's current version equals it exactly (case-sensitive, no trimming). An unpinned ref resolves whatever version the target has.
+- A pinned ref whose target type has no version (the target's version is `''`) is a mismatch and is rejected. Examples are `ConnectionPointRef`, `ResourceFunctionRef`, `ServiceLevelSpecificationRef` and `ConstraintRef`. Both backends do the same, so this is not a deviation.
+- Only `LOCAL`-scope references are version-checked. External references (ticket 4 policy) keep their current handling, including the type check when an external id names a local entity. Their version is never compared.
+- A version mismatch is reported through the existing `NonExistentReferenceException` path (HTTP 400). The message is separate (`Reference version mismatch: ...`), and the reference counts as `unresolved` in the `tmforum.references` metric.
+- `revision` and `is_current` are left to their column defaults (`1`, `true`). They are not bound in the `INSERT`. Tests check the stored values.
+
+## Steps
+
+### Step 1: Fill the `version` column on every PostgreSQL write
+Write the TMForum `version` label into `tmforum.entity.version` on create, import and update. Before this step it always stays `''`.
+
+- **`common/src/main/java/org/fiware/tmforum/common/domain/VersionedEntity.java`** (new): a marker interface `String getVersion()` with a one-line Javadoc. It marks the entity types whose `version` labels a stored row.
+- Add `implements VersionedEntity` to the 18 domain classes. Do not change their fields or annotations: `agreement/.../domain/{Agreement,AgreementSpecification}.java`, `document-management/.../domain/DocumentSpecification.java`, `product-catalog/.../domain/Catalog.java`, `product-shared-models/.../product/{Category,ProductOffering,ProductOfferingPrice,ProductSpecification,Quote}.java`, `resource-catalog/.../domain/ResourceCatalog.java`, `resource-shared-models/.../resource/{ResourceCandidate,ResourceCategory,ResourceSpecification}.java`, `service-catalog/.../domain/ServiceCatalog.java`, `service-shared-models/.../service/{ServiceCandidate,ServiceCategory,ServiceSpecification}.java`, `usage-management/.../domain/UsageSpecification.java`. Confirm the list with `grep -rl 'targetName = "version"' --include=*.java . | grep -v Ref.java | grep -v /target/`.
+- **`storage-postgresql/.../PostgresEntityRepository.java`**:
+  - `INSERT` gets a `version` column and parameter. `bindInsert` binds `versionOf(entity)`, a private static helper that returns `VersionedEntity.getVersion()` or `""` when the entity is not versioned or the version is null. Name the constant (for example `UNVERSIONED = ""`). This covers `createDomainEntity`, `importDomainEntity` (migration) and `createWithEvent`.
+  - `UPDATE_CURRENT` and `UPDATE_CURRENT_RETURNING_DATA` get `version = COALESCE($3, version)`. The patch binds its own `getVersion()` when it is a non-null `VersionedEntity`, otherwise a typed null (`bindNullable(..., String.class)`). An update that does not carry `version` leaves the column alone. A carried `version` moves the column with `data`, in place on the same row, and that changes the primary key, which PostgreSQL allows.
+  - Do not add a `version` predicate to reads. They stay `WHERE id = $1 AND is_current`.
+- **Tests** (`storage-postgresql/src/test/...`):
+  - In `DocumentTestEntities`, add a versioned test entity that implements `VersionedEntity`.
+  - `PostgresEntityRepositoryIT` gets a parameterized case over (versioned with version, versioned with null version, unversioned). After create or import, read the row's `version`, `revision` and `is_current` directly with SQL and expect (`label`/`''`/`''`, `1`, `true`).
+  - Cases for update: an update that carries a new version moves the column, an update without version keeps it, and there is still exactly one current row per id.
+  - `PostgresEntityRepositoryTest`: unit-level checks of the bound parameters if that file already covers statements this way.
+  - `SchemaMigrationIT` already confirms the DDL. Leave it unchanged.
+- **Acceptance:** `mvn test -pl storage-postgresql -am` passes, as does `mvn verify -pl storage-postgresql` (its ITs). The full build compiles (`mvn clean install -DskipTests -DskipITs`).
+
+### Step 2: Carry the target's current version in `StoredReference`, filled by both adapters
+Give the reference port the target's current `version`, so validation can compare a reference's version with it.
+
+- **`storage-api/.../StoredReference.java`**: change it to `record StoredReference(String id, String type, String version)`. Update the Javadoc: `version` is the current version label, `''` for an unversioned type, never null. A compact constructor maps null to `''`. Update every `new StoredReference(` caller. There are about 12, in main and test code (`grep -rn "new StoredReference(" --include=*.java . | grep -v /target/`). Do not keep a 2-argument constructor, so the compiler catches any adapter that forgets the version.
+- **`storage-postgresql/.../PostgresReferencesRepository.java`**: `SELECT id, type, version ... WHERE id = ANY($1) AND is_current`, and map the new `VERSION_COLUMN`.
+- **`common/.../repository/BrokerBackedReferencesRepository.java`**: in `findReference`, read the `version` property from the retrieved `EntityVO` (`getAdditionalProperties()`, a `PropertyVO` value, `toString`). It is `''` when the property is absent. `retrieveEntityById` already returns the full entity through the 2 s entities cache, so no extra round trip happens. Check in an IT which compacted key the broker returns for `version` (Orion-LD and Scorpio, with the core context link header). If the key is escaped like other reserved names, use the same escaping helper the repositories already use.
+- **Contract** (`storage-api/src/test/.../contract/`):
+  - Add `VersionFixture<T> extends EntityFixture<T>` with `T withVersion(URI id, String version)`. Implement it in `product-catalog/src/test/.../storage/CatalogFixture.java` (Catalog is versionable).
+  - In `AbstractReferenceReadRepositoryContractTest`, add a parameterized case where an entity created with version `v` is reported by `findReference` and `findReferences` with version `v`, and an entity created without one is reported with `''`. Also add a case that updates the version and then expects `findReference` to report the new version. Skip these cases (`assumeTrue`) when the fixture is not a `VersionFixture`, following how `referenceFixture()` is optional.
+  - `findReferenceReturnsIdAndStoredType` asserts the full record, version included.
+  - Both `{NgsiLd,Postgres}ReferenceReadRepositoryContractIT` in `product-catalog/src/test/.../storage/` pick the new cases up.
+- **Acceptance:** `mvn test -pl storage-api,common,storage-postgresql -am` passes. `mvn integration-test -pl product-catalog -Dit.test='*ReferenceReadRepositoryContractIT' -DskipTests` passes on the default broker, with `-Dbroker=scorpio`, and with `-Dbroker=postgresql`.
+
+### Step 3: Enforce reference version semantics in `ReferenceValidationService`
+Reject a local `*Ref` whose explicit `version` differs from the target's current version, and accept a `*Ref` with no version whatever the target's version is.
+
+- **`common/.../validation/ReferencedEntity.java`**: add `@JsonIgnore default String getReferenceVersion() { return null; }`. Its one-line Javadoc says a null or empty version pins nothing.
+- Override it (`@JsonIgnore @Override public String getReferenceVersion() { return getVersion(); }`) in the 14 `*Ref` classes that have a `version` field. That is 13 type names, and `ResourceSpecificationRef` exists twice: `common/.../domain/ConstraintRef.java`, `product-catalog/.../domain/ResourceSpecificationRef.java`, `product-shared-models/.../product/{CategoryRef,ProductOfferingPriceRef,ProductSpecificationRef}.java`, `resource-function-activation/.../domain/{ConnectionPointRef,ResourceFunctionRef}.java`, `resource-shared-models/.../resource/{ResourceCandidateRef,ResourceCategoryRef,ResourceSpecificationRef}.java`, `service-shared-models/.../service/{ServiceCandidateRef,ServiceCategoryRef,ServiceLevelSpecificationRef,ServiceSpecificationRef}.java`. `@JsonIgnore` keeps the getter out of both the stored document and the NGSI-LD mapping, like `getReferenceHref`. Check that a stored document of one such ref has no `referenceVersion` key.
+- **`ReferenceValidationService`**:
+  - `storedTypes` becomes a lookup keyed by id that returns the whole `StoredReference` (`collectMap(StoredReference::id, Function.identity())`).
+  - In `resolves`, the `LOCAL` branch also requires `versionMatches(ref, stored)`: the result is true when the ref version is null or empty, otherwise `refVersion.equals(stored.version())`. The `EXTERNAL` branch is unchanged.
+  - `getCheckingMono` keeps a single `NonExistentReferenceException`. It lists missing references as today and adds version mismatches as `id (version x, current y)` under a `Reference version mismatch:` prefix. To do this, `findUnresolved` (or a private variant) has to keep why each reference failed. Keep the public signatures. Use named format constants, not inline literals.
+  - Update the class and method Javadoc (one line each) to state the version rule.
+- **Tests**: `common/src/test/.../validation/ReferenceValidationServiceTest.java` gets parameterized cases (`@MethodSource`) for: ref version null, `""`, equal, different, case-different, a pinned ref against a target whose version is `''`, a pinned external ref (not version-checked), and a list with one mismatch among valid refs (exactly that ref is unresolved, there is one lookup, and the metric records `local`/`unresolved`). Use a test `ReferencedEntity` that carries a version.
+- **Guard**: add a test that fails when a `RefEntity` subclass with a `getVersion()` getter does not override `getReferenceVersion()`. Put it next to `all-in-one/src/test/java/org/fiware/tmforum/RelationshipsReadFromPropertiesTest.java`, which already scans every `RefEntity` subclass, and reuse its class scan.
+- **Acceptance:** `mvn test -pl common -am` passes, and `mvn test` passes for the modules that own the touched `*Ref` classes and for `all-in-one`.
+
+### Step 4: Integration tests on both backends, existing-IT audit, documentation
+Prove the acceptance criteria end to end on Orion-LD, Scorpio and PostgreSQL, and document that the schema is ready for versioning.
+
+- **New IT** `product-catalog/src/test/java/org/fiware/tmforum/productcatalog/ReferenceVersionIT.java`. Model it on `ExternalReferenceIT` (`extends AbstractApiIT`, `@MicronautTest(packages = "org.fiware.tmforum.productcatalog", contextBuilder = FirstMatchConfigContextBuilder.class)`). Use a parameterized test over a ProductSpecification with version `1.0` and a ProductOffering that references it through `productSpecification`:
+  - ref version absent → 201; ref version `1.0` → 201; ref version `2.0` → 400;
+  - the same three on `PATCH /productOffering/{id}` → 200/200/400;
+  - after `PATCH` sets the specification's version to `2.0`, a ref pinned to `1.0` → 400, a ref pinned to `2.0` → 201, and an unpinned ref → 201. This shows `PATCH` updates in place and the ref follows the current version;
+  - the specification `GET` still returns one entity with the new version. No version-specific endpoint or query parameter exists.
+  - Add one case for a pinned ref whose target type is unversioned. Use a `CategoryRef` → Category with no `version` set, and expect 400 when the ref carries a version and 201 without one.
+- **Audit the existing ITs**. Run the IT suites of the modules whose `*Ref` classes changed: `product-catalog`, `product-ordering-management`, `product-inventory`, `quote`, `resource-catalog`, `resource-function-activation`, `resource-inventory`, `service-catalog`, `service-inventory`, `agreement`, `all-in-one`. A test that now fails because its test data pins a version that differs from the target's, for example a generated example builder setting `version = "string"`, must be fixed in the test data: either align the version or drop it. Never weaken the rule. List every adjusted test in the PR description.
+- **Docs**:
+  - In the `## Schema` section of `storage-postgresql/README.md`, write: `version` holds the TMForum label of `VersionedEntity` types (`''` otherwise) and is updated in place by `PATCH`; `revision` is always `1` and `is_current` always `true`; the table is ready for versioning, and keeping superseded versions is a future, PostgreSQL-only extension that needs no migration.
+  - In the `## References` section of `storage-api/README.md`, add a short paragraph on `StoredReference.version` and the pin rule.
+  - New `release-notes/RELEASE_NOTES_ENTITY_VERSIONING.md`, in the style of the existing ones: the reference version rule, the 400 on mismatch, an unchanged API, the same behaviour on both backends, and the list of out-of-scope items from the ticket.
+  - `AGENTS.md`: one line under Key Conventions about `VersionedEntity` and `getReferenceVersion()`.
+- **Acceptance:** `mvn integration-test -pl product-catalog -Dit.test=ReferenceVersionIT -DskipTests` passes with the default broker, `-Dbroker=scorpio` and `-Dbroker=postgresql`. The audited modules' ITs pass on the default broker and on `-Dbroker=postgresql`. `mvn spotbugs:spotbugs` reports nothing new.

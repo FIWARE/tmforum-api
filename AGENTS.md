@@ -76,4 +76,5 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - `common/.../test/AbstractApiIT.java`: per-test cleanup goes through the broker's `EntitiesApiClient`; every API IT passes one to its constructor.
 - `common/.../querying/QueryParser.java`: TMForum filter parsing (front half) and NGSI-LD rendering (back half), being split by ticket 90; `common/.../test/{StorageTags,RequiresQueryTranslation,RequiresHubSupport}.java` gate ITs per backend (`-Dbroker=postgresql` excludes `not-on-postgresql`).
 - `findEntities` with a `query` is called outside list endpoints by `TMForumEventHandler.getSubscriptions` and `AbstractSubscriptionApiController` (duplicate hub check).
+- `storage-postgresql/src/main/resources/db/migration/tmforum/V1__entity.sql`: `tmforum.entity` with the versioning columns (`version`, `revision`, `is_current`, PK `(id, version)`, `entity_current_idx`); ticket 93 fills `version` and checks `*Ref` versions in `ReferenceValidationService`, but superseded versions are never kept (`revision` 1, `is_current` true).
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.
