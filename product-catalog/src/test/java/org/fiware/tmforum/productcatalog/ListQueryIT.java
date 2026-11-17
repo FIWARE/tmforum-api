@@ -205,6 +205,10 @@ public class ListQueryIT extends AbstractApiIT {
 				filterCase(eq("@type", "BundledProductOffering"), o -> o.atType().equals("BundledProductOffering")),
 				filterCase(eq("name.regex", "-0[0-4]"), o -> Pattern.compile("-0[0-4]").matcher(o.name()).find()),
 				filterCase(eq("lifecycleStatus.regex", "^(?!Active$).*$"), o -> !o.lifecycleStatus().equals("Active")),
+				// patterns the broker's q could lex as a number or a date-time
+				filterCase(eq("version.regex", "2.0"), o -> Pattern.compile("2.0").matcher(o.version()).find()),
+				filterCase(eq("validFor.startDateTime.regex", "2025-03-05"),
+						o -> o.storedValidForStart().contains("2025-03-05")),
 				filterCase(eq("validFor.startDateTime.gte", "2025-03-05T00:00:00Z"),
 						o -> o.storedValidForStart().compareTo("2025-03-05T00:00:00Z") >= 0),
 				filterCase(eq("validFor.startDateTime.lt", "2025-03-03T12:00:00Z"),

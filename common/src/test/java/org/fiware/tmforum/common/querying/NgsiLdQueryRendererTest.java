@@ -119,6 +119,19 @@ class NgsiLdQueryRendererTest {
 				// a space and "=" are no q syntax inside a pattern either
 				Arguments.of("color~=o w=x", DEFAULTS, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("o w=x"), "color")),
+				// Orion-LD lexes a date-like term as a DateTime (and crashes on an invalid one); "\-" keeps it a RegExp
+				Arguments.of("color~=2024\\-01", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("2024-01"), "color")),
+				Arguments.of("color~=2024\\-01-01T10:00:00Z", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("2024-01-01T10:00:00Z"), "color")),
+				Arguments.of("color~=\\-12", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("-12"), "color")),
+				Arguments.of("color~=2.0", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("2.0"), "color")),
+				Arguments.of("color~=x2024-01", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("x2024-01"), "color")),
+				Arguments.of("color~=[0-9]{4}-01", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("[0-9]{4}-01"), "color")),
 				// deliberate change: the not-equals idiom keeps its value as one literal instead of splitting it
 				Arguments.of("color!=\"a,b\"", DEFAULTS, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("^(?!a,b$).*$"), "color")),

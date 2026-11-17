@@ -59,6 +59,15 @@ public class NgsiLdQueryRenderer {
 	 */
 	private static final Pattern REGEX_QUERY_SYNTAX = Pattern.compile("[|,;()\"'<>!]");
 
+	/**
+	 * A pattern Orion-LD 1.9.0 may lex as a DateTime instead of a RegExp: only {@code 0-9.+-:TZ} and spaces, with a
+	 * {@code -}. A valid date then fails the query, an invalid one ({@code 2024-01}) crashes the broker.
+	 */
+	private static final Pattern DATE_TIME_LIKE_REGEX = Pattern.compile("[0-9.+\\-:TZ ]*-[0-9.+\\-:TZ ]*");
+	private static final String HYPHEN = "-";
+	// a literal hyphen in every regex dialect involved, and a character that keeps the term a RegExp in Orion-LD
+	private static final String ESCAPED_HYPHEN = Matcher.quoteReplacement("\\-");
+
 	private final GeneralProperties generalProperties;
 
 	/**
@@ -142,6 +151,9 @@ public class NgsiLdQueryRenderer {
 			throw new QueryException(String.format(
 					"The regex %s cannot be sent to the NGSI-LD broker: it holds one of |,;()\"'<>! which its query language reads as syntax.",
 					pattern));
+		}
+		if (DATE_TIME_LIKE_REGEX.matcher(pattern).matches()) {
+			return pattern.replaceFirst(HYPHEN, ESCAPED_HYPHEN);
 		}
 		return pattern;
 	}

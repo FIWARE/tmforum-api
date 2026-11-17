@@ -89,6 +89,10 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final List<String> EQUATIONS = List.of("a=b", "ab");
     private static final List<String> BRACKETED_WORDS = List.of("a[b]", "ab");
     private static final List<String> QUOTED_WORDS = List.of("say \"hi\"", "say hi");
+    // seeds for patterns the q lexer could read as another literal; each pattern matches the first two seeds only
+    private static final List<String> NUMBER_LIKE_WORDS = List.of("2.0", "2x0", "20");
+    private static final List<String> BOOLEAN_LIKE_WORDS = List.of("true", "untrue", "false");
+    private static final List<String> DATE_LIKE_WORDS = List.of("2024-01-01T10:00:00Z", "x2024-01-01", "2024-02-01");
     // creation order differs from both sort orders
     private static final List<String> EXTENSION_SORT_SEEDS = List.of(BETA, GAMMA, ALPHA);
     // string order ("10" < "2" < "3") differs from numeric order
@@ -101,6 +105,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     // creation order differs from every sort order the sort cases ask for
     private static final List<Map.Entry<String, Integer>> NAMED_AND_NUMBERED = List.of(
             Map.entry(BETA, 2), Map.entry(ALPHA, 10), Map.entry(GAMMA, 3), Map.entry(ALPHA, 1));
+    private static final List<Map.Entry<Integer, Boolean>> NUMBERED_AND_FLAGGED = List.of(
+            Map.entry(2, true), Map.entry(10, true), Map.entry(10, false), Map.entry(2, false));
     private static final URI REFERENCE_A = URI.create("urn:ngsi-ld:contract-reference:a");
     private static final URI REFERENCE_B = URI.create("urn:ngsi-ld:contract-reference:b");
     private static final URI REFERENCE_C = URI.create("urn:ngsi-ld:contract-reference:c");
@@ -583,6 +589,14 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 List.of("a\\[b\\]"), Set.of(0)),
         REGEX_HOLDING_A_QUOTE(Attribute.STRING, QUOTED_WORDS, ComparisonOperator.REGEX, List.of("y \"h"), Set.of(0),
                 KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
+        REGEX_LIKE_A_NUMBER(Attribute.STRING, NUMBER_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2.0"),
+                Set.of(0, 1)),
+        REGEX_LIKE_A_BOOLEAN(Attribute.STRING, BOOLEAN_LIKE_WORDS, ComparisonOperator.REGEX,
+                List.of(Boolean.TRUE.toString()), Set.of(0, 1)),
+        REGEX_LIKE_A_DATE(Attribute.STRING, DATE_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2024-01-01"),
+                Set.of(0, 1)),
+        REGEX_LIKE_AN_INVALID_DATE(Attribute.STRING, DATE_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2024-01"),
+                Set.of(0, 1)),
         NESTED_STRING_EQUALS(Attribute.NESTED_STRING, List.of(ALPHA, BETA), ComparisonOperator.EQUALS,
                 List.of(BETA), Set.of(1)),
         REFERENCE_ID_IN_A_LONGER_LIST(Attribute.REFERENCE_ID, REFERENCE_LISTS, ComparisonOperator.EQUALS,
@@ -777,6 +791,47 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         };
 
         assertEquals(compositeCase.matches.stream().map(ids::get).collect(Collectors.toSet()),
+                Set.copyOf(findIds(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT)));
+    }
+
+    // indexes of NUMBERED_AND_FLAGGED
+    enum NumberAndBooleanCase {
+        ALL_OF(Set.of(1)),
+        ANY_OF(Set.of(0, 1, 2));
+
+        private final Set<Integer> matches;
+
+        NumberAndBooleanCase(Set<Integer> matches) {
+            this.matches = matches;
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(NumberAndBooleanCase.class)
+    void findEntitiesCombinesNumberAndBooleanFilters(NumberAndBooleanCase numberAndBooleanCase) {
+        assertNumberAndBooleanFilterMatches(queryFixture(Attribute.NUMBER, Attribute.BOOLEAN), numberAndBooleanCase);
+    }
+
+    private <Q> void assertNumberAndBooleanFilterMatches(QueryFixture<Q> queries,
+                                                         NumberAndBooleanCase numberAndBooleanCase) {
+        List<URI> ids = NUMBERED_AND_FLAGGED.stream()
+                .map(seed -> create(queries, queries.newEntity(queries.newId(),
+                        Map.of(Attribute.NUMBER, seed.getKey(), Attribute.BOOLEAN, seed.getValue()))))
+                .toList();
+        List<QueryFilter> comparisons = List.of(numberIs(queries, ComparisonOperator.GREATER_THAN, NUMBER_LITERAL),
+                new Comparison(queries.path(Attribute.BOOLEAN), ComparisonOperator.EQUALS, ValueType.BOOLEAN,
+                        List.of(Boolean.TRUE.toString())));
+        QueryFilter filter = switch (numberAndBooleanCase) {
+            case ALL_OF -> new AllOf(comparisons);
+            case ANY_OF -> new AnyOf(comparisons);
+        };
+
+        if (knownDeviations().contains(KnownDeviation.NUMBER_AND_BOOLEAN_FILTER_FAILS)) {
+            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
+                    () -> find(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT));
+            return;
+        }
+        assertEquals(numberAndBooleanCase.matches.stream().map(ids::get).collect(Collectors.toSet()),
                 Set.copyOf(findIds(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT)));
     }
 

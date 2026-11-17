@@ -94,8 +94,15 @@ the `jsonb` document; every user value is a bound parameter.
   filters as `|`-joined comparisons, and a regex pattern unquoted. Before, Orion-LD failed on multi-value filters
   and regexes and ANDed `;` filters, and Scorpio failed on OR filters. A deployment that sets
   `includeAttributeInList=true` now joins the comparisons of one filter with `ngsildOrQueryKey` instead of
-  `ngsildOrQueryValue`. A sorted broker query now carries `local=true`, without which Orion-LD rejects `orderBy`,
-  so a `sort` no longer answers 500 there.
+  `ngsildOrQueryValue`. A date-like regex pattern (`2024-01`) is sent with an escaped `-`, which Orion-LD would
+  otherwise read as a date-time and fail on or crash.
+* **Changed on the brokers,** visible to clients:
+  * A regex holding any of `|,;()"'<>!` now answers 400 on both brokers, because their `q` language reads these
+    characters as syntax, quoted or not. Before, the pattern was forwarded quoted, and Scorpio answered some of
+    them.
+  * A sorted broker query now carries `local=true`, without which Orion-LD rejects `orderBy`. A `sort` therefore
+    answers 200 instead of 500 on Orion-LD, but the result stays unsorted there, as on Scorpio, unless Orion-LD
+    runs with `ORIONLD_EXPERIMENTAL`.
 * **No accepted deviations yet.** The backend differences observed while testing are pending acceptance in ticket 0
   and are listed here once accepted.
 
