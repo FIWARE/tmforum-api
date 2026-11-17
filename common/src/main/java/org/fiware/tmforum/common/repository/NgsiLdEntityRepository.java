@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
@@ -51,7 +52,8 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
     @Override
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           EntityQuery query, String ids, String types) {
-        return entitiesApi.queryEntities(generalProperties.getTenant(),
+        // deferred, so that a filter the renderer rejects arrives as an error signal like every other list failure
+        return Mono.defer(() -> entitiesApi.queryEntities(generalProperties.getTenant(),
                         ids,
                         null,
                         types,
@@ -67,7 +69,7 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
                         offset,
                         true,
                         null,
-                        getLinkHeader())
+                        getLinkHeader()))
                 .flatMap(response -> zipToList(response.body() != null ? response.body().stream() : Stream.empty(), entityClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
                 .onErrorMap(NgsiLdEntityRepository::listFailure);
@@ -85,7 +87,8 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
     @Override
     public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
                                           EntityQuery query, String ids, Function<String, Class<? extends T>> typeToClass) {
-        return entitiesApi.queryEntities(generalProperties.getTenant(),
+        // deferred, so that a filter the renderer rejects arrives as an error signal like every other list failure
+        return Mono.defer(() -> entitiesApi.queryEntities(generalProperties.getTenant(),
                         ids,
                         null,
                         types,
@@ -101,7 +104,7 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
                         offset,
                         true,
                         null,
-                        getLinkHeader())
+                        getLinkHeader()))
                 .flatMap(response -> zipToPolymorphicList(response.body() != null ? response.body().stream() : Stream.empty(), typeToClass)
                         .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
                 .onErrorMap(NgsiLdEntityRepository::listFailure);
@@ -115,8 +118,12 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
         return query == null ? null : queryRenderer.renderOrderBy(query);
     }
 
-    // wraps every failure, a nested READ from relationship resolution included, so that a list always renders alike
-    private static StorageException listFailure(Throwable failure) {
+    // wraps every failure, a nested READ from relationship resolution included, so that a list always renders alike;
+    // a filter rejected as the client's error stays a QueryException (400), as on PostgreSQL
+    private static Throwable listFailure(Throwable failure) {
+        if (failure instanceof QueryException) {
+            return failure;
+        }
         log.warn(LIST_FAILED, failure);
         return new StorageException(StorageOperation.LIST, BrokerFailures.unknownOrUnavailable(failure), LIST_FAILED,
                 failure);

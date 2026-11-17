@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
@@ -437,29 +438,26 @@ class QueryParserTest {
 	private static Stream<Arguments> regexQueries() {
 		return Stream.of(
 				Arguments.of("A plain regex is forwarded as a broker-side pattern match.", "color.regex=bl.e",
-						new QueryParams(null, null, "color~=\"bl.e\"")),
+						new QueryParams(null, null, "color~=bl.e")),
 				Arguments.of("The not-equal idiom is optimized into a native != comparison.",
 						"relatedParty.role.regex=^(?!seller$).*$",
 						new QueryParams(null, null, "relatedParty.role!=\"seller\"")),
-				Arguments.of("A comma inside a regex pattern must not be split into OR'd values.",
-						"color.regex=a,b", new QueryParams(null, null, "color~=\"a,b\"")),
 				// the symbolic form ("*=") must not crash - it is not a valid regex on its own
 				Arguments.of("The symbolic operator form should work as well.", "color*=bl.e",
-						new QueryParams(null, null, "color~=\"bl.e\"")));
+						new QueryParams(null, null, "color~=bl.e")));
 	}
 
 	/**
-	 * The not-equal idiom optimization can be disabled, in which case the idiom is forwarded as a
-	 * genuine pattern match - which relies on the broker's regex engine supporting lookahead.
+	 * The not-equal idiom optimization can be disabled. The idiom is then a genuine pattern whose parentheses
+	 * NGSI-LD's q reads as syntax, so it is rejected, as is a comma inside a pattern.
 	 */
-	@Test
-	public void testRegexNotEqualsOptimizationCanBeDisabled() {
+	@ParameterizedTest
+	@ValueSource(strings = {"relatedParty.role.regex=^(?!seller$).*$", "color.regex=a,b"})
+	public void testRegexHoldingQuerySyntaxIsRejected(String tmForumQuery) {
 		GeneralProperties properties = new GeneralProperties();
 		properties.setOptimizeRegexNotEquals(false);
 		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
-		assertEquals(new QueryParams(null, null, "relatedParty.role~=\"^(?!seller$).*$\""),
-				qp.toNgsiLdQuery(MyPojo.class, "relatedParty.role.regex=^(?!seller$).*$"),
-				"With the optimization disabled, the idiom must be forwarded as a pattern match.");
+		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery));
 	}
 
 	/**

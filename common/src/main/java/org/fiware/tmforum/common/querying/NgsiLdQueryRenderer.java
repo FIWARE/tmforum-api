@@ -7,6 +7,7 @@ import io.github.wistefan.mapping.ReservedWordHandler;
 import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -51,6 +52,27 @@ public class NgsiLdQueryRenderer {
 	 * POSIX regex doesn't).
 	 */
 	private static final Pattern NOT_EQUALS_REGEX_IDIOM = Pattern.compile("^\\^\\(\\?!(.+?)\\$\\)\\.\\*\\$$");
+
+	/**
+	 * Characters NGSI-LD's {@code q} reads as syntax inside a pattern, quoted or not. On Orion-LD 1.9.0 or Scorpio 5.0.3
+	 * each one fails the query or silently changes it ({@code a|b} reads as "matches a, or attribute b exists").
+	 */
+	private static final Pattern REGEX_QUERY_SYNTAX = Pattern.compile("[|,;()\"'<>!]");
+
+	/**
+	 * A pattern Orion-LD 1.9.0 may lex as a DateTime instead of a RegExp: only {@code 0-9.+-:TZ} and spaces, with a
+	 * {@code -}. A valid date then fails the query, an invalid one ({@code 2024-01}) crashes the broker.
+	 */
+	private static final Pattern DATE_TIME_LIKE_REGEX = Pattern.compile("[0-9.+\\-:TZ ]*-[0-9.+\\-:TZ ]*");
+	private static final String HYPHEN = "-";
+	// a literal hyphen in every regex dialect involved, and a character that keeps the term a RegExp in Orion-LD
+	private static final String ESCAPED_HYPHEN = Matcher.quoteReplacement("\\-");
+	/**
+	 * A colon between two ASCII word characters ({@code 10:00}, {@code b:c}): Scorpio 5.0.3 then silently matches
+	 * nothing, while {@code \:} (a literal colon in every regex dialect involved) matches on both brokers.
+	 */
+	private static final Pattern WORD_COLON_WORD = Pattern.compile("(?<=\\w):(?=\\w)");
+	private static final String ESCAPED_COLON = Matcher.quoteReplacement("\\:");
 
 	private final GeneralProperties generalProperties;
 
@@ -113,13 +135,14 @@ public class NgsiLdQueryRenderer {
 		List<String> values = comparison.values();
 		ValueType valueType = comparison.valueType();
 		if (comparison.operator() == ComparisonOperator.REGEX) {
-			// a regex pattern is opaque and quoted as a whole
 			Matcher notEquals = NOT_EQUALS_REGEX_IDIOM.matcher(values.getFirst());
 			if (generalProperties.isOptimizeRegexNotEquals() && notEquals.matches()) {
 				operator = NGSI_LD_NOT_EQUALS;
 				values = List.of(notEquals.group(1));
+				valueType = ValueType.STRING;
+			} else {
+				return attrPath + operator + toRegExp(values.getFirst());
 			}
-			valueType = ValueType.STRING;
 		}
 
 		ValueType encodingType = valueType;
@@ -127,18 +150,32 @@ public class NgsiLdQueryRenderer {
 		return renderValues(attrPath + operator, encodedValues);
 	}
 
+	// NGSI-LD's RegExp is unquoted: Orion-LD rejects a quoted pattern, Scorpio takes both
+	private static String toRegExp(String pattern) {
+		// rejecting is better than a q that silently matches other entities
+		if (REGEX_QUERY_SYNTAX.matcher(pattern).find()) {
+			throw new QueryException(String.format(
+					"The regex %s cannot be sent to the NGSI-LD broker: it holds one of |,;()\"'<>! which its query language reads as syntax.",
+					pattern));
+		}
+		String regExp = DATE_TIME_LIKE_REGEX.matcher(pattern).matches()
+				? pattern.replaceFirst(HYPHEN, ESCAPED_HYPHEN)
+				: pattern;
+		return WORD_COLON_WORD.matcher(regExp).replaceAll(ESCAPED_COLON);
+	}
+
 	private String renderValues(String attributeAndOperator, List<String> encodedValues) {
 		if (encodedValues.size() == 1) {
 			return attributeAndOperator + encodedValues.getFirst();
 		}
-		String orValue = generalProperties.getNgsildOrQueryValue();
 		if (generalProperties.getIncludeAttributeInList()) {
+			// each element is a whole comparison, so they are OR-ed like filters
 			String query = encodedValues.stream()
 					.map(value -> attributeAndOperator + value)
-					.collect(Collectors.joining(orValue));
+					.collect(Collectors.joining(generalProperties.getNgsildOrQueryKey()));
 			return generalProperties.getEncloseQuery() ? "(" + query + ")" : query;
 		}
-		String valueList = String.join(orValue, encodedValues);
+		String valueList = String.join(generalProperties.getNgsildOrQueryValue(), encodedValues);
 		return generalProperties.getEncloseQuery()
 				? attributeAndOperator + "(" + valueList + ")"
 				: attributeAndOperator + valueList;

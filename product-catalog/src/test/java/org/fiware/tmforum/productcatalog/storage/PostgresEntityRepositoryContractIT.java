@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productcatalog.storage;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
@@ -36,6 +37,11 @@ public class PostgresEntityRepositoryContractIT extends AbstractEntityRepository
 	@Test
 	void repositoryUnderTestIsThePostgresAdapter() {
 		assertInstanceOf(PostgresEntityRepository.class, repository);
+	}
+
+	@Override
+	protected boolean isClientQueryError(Throwable failure) {
+		return failure instanceof QueryException;
 	}
 
 	@Override

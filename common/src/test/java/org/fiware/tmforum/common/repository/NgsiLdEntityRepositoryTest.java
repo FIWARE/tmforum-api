@@ -4,6 +4,7 @@ import io.micronaut.http.HttpResponse;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
@@ -19,14 +20,18 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class NgsiLdEntityRepositoryTest {
@@ -91,6 +96,33 @@ class NgsiLdEntityRepositoryTest {
 				Arguments.of(new EntityQuery(Object.class, null, byColorDescending), null, "color;desc"),
 				Arguments.of(new EntityQuery(Object.class, isRed, byColorDescending), "color==\"Red\"",
 						"color;desc"));
+	}
+
+	@ParameterizedTest
+	@MethodSource("listCalls")
+	public void aRejectedFilterArrivesAsQueryExceptionSignal(
+			BiFunction<NgsiLdEntityRepository, EntityQuery, Mono<?>> listCall) {
+		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null, null,
+				null, null, new NgsiLdQueryRenderer(properties));
+		QueryFilter alternation = new QueryFilter.Comparison(new AttributePath(List.of("color"), false),
+				ComparisonOperator.REGEX, ValueType.STRING, List.of("a|b"));
+
+		Mono<?> list = assertDoesNotThrow(
+				() -> listCall.apply(repositoryWithClient, new EntityQuery(Object.class, alternation, List.of())),
+				"A rejected filter has to be an error signal of the Mono, not a synchronous throw.");
+
+		assertThrows(QueryException.class, list::block,
+				"A rejected filter is the client's error, not a StorageException.");
+		verifyNoInteractions(entitiesApi);
+	}
+
+	private static Stream<Arguments> listCalls() {
+		BiFunction<NgsiLdEntityRepository, EntityQuery, Mono<?>> plain =
+				(repo, query) -> repo.findEntities(0, 10, Object.class, query, null, "test");
+		BiFunction<NgsiLdEntityRepository, EntityQuery, Mono<?>> polymorphic =
+				(repo, query) -> repo.findEntitiesPolymorphic(0, 10, "test", query, null, type -> Object.class);
+		return Stream.of(Arguments.of(plain), Arguments.of(polymorphic));
 	}
 
 	@Test

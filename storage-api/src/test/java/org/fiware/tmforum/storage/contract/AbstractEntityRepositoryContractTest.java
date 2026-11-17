@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -79,6 +80,20 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final List<String> CASE_DIFFERING_WORDS = List.of(CAPITAL_BETA, ALPHA, BETA);
     // inside BETA and ALPHABET, at the start of neither ALPHA nor ALPHABET
     private static final String UNANCHORED_PATTERN = "bet";
+    // each branch matches one word only: "eta" BETA, "lphab" ALPHABET
+    private static final String ALTERNATION_PATTERN = "eta|lphab";
+    // matches ALPHABET only, while the bare UNANCHORED_PATTERN also matches BETA
+    private static final String GROUP_PATTERN = "a(" + UNANCHORED_PATTERN + ")";
+    // seeds for patterns holding characters that look like q syntax; each pattern matches the first seed only
+    private static final List<String> SPACED_WORDS = List.of("two words", "twowords");
+    private static final List<String> EQUATIONS = List.of("a=b", "ab");
+    private static final List<String> BRACKETED_WORDS = List.of("a[b]", "ab");
+    private static final List<String> QUOTED_WORDS = List.of("say \"hi\"", "say hi");
+    // seeds for patterns the q lexer could read as another literal; each pattern matches the first two seeds only
+    private static final List<String> NUMBER_LIKE_WORDS = List.of("2.0", "2x0", "20");
+    private static final List<String> BOOLEAN_LIKE_WORDS = List.of("true", "untrue", "false");
+    private static final List<String> DATE_LIKE_WORDS = List.of("2024-01-01T10:00:00Z", "x2024-01-01", "2024-02-01");
+    private static final List<String> TIME_LIKE_WORDS = List.of("T10:00:00Z 25:61:00", "xT10:00:00 25:61:00", "10:00:01");
     // creation order differs from both sort orders
     private static final List<String> EXTENSION_SORT_SEEDS = List.of(BETA, GAMMA, ALPHA);
     // string order ("10" < "2" < "3") differs from numeric order
@@ -91,6 +106,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     // creation order differs from every sort order the sort cases ask for
     private static final List<Map.Entry<String, Integer>> NAMED_AND_NUMBERED = List.of(
             Map.entry(BETA, 2), Map.entry(ALPHA, 10), Map.entry(GAMMA, 3), Map.entry(ALPHA, 1));
+    private static final List<Map.Entry<Integer, Boolean>> NUMBERED_AND_FLAGGED = List.of(
+            Map.entry(2, true), Map.entry(10, true), Map.entry(10, false), Map.entry(2, false));
     private static final URI REFERENCE_A = URI.create("urn:ngsi-ld:contract-reference:a");
     private static final URI REFERENCE_B = URI.create("urn:ngsi-ld:contract-reference:b");
     private static final URI REFERENCE_C = URI.create("urn:ngsi-ld:contract-reference:c");
@@ -123,6 +140,11 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     protected Set<KnownDeviation> knownDeviations() {
         return Set.of();
     }
+
+    /**
+     * Whether a list failure is the client's bad query (a 400), as opposed to a storage failure or a bug.
+     */
+    protected abstract boolean isClientQueryError(Throwable failure);
 
     /**
      * Fixtures for the query, sort and paging cases; a case runs on the first one holding its attributes and skips
@@ -535,11 +557,10 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     enum FilterCase {
         STRING_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.EQUALS, List.of(BETA), Set.of(1)),
         STRING_EQUALS_ANY_VALUE(Attribute.STRING, WORDS, ComparisonOperator.EQUALS, List.of(ALPHA, ALPHABET),
-                Set.of(0, 2), KnownDeviation.VALUE_LIST_FAILS),
+                Set.of(0, 2)),
         NUMBER_EQUALS(Attribute.NUMBER, NUMBERS, ComparisonOperator.EQUALS, List.of(NUMBER_LITERAL), Set.of(2)),
         NUMBER_EQUALS_ANY_VALUE(Attribute.NUMBER, NUMBERS, ComparisonOperator.EQUALS,
-                List.of(String.valueOf(NUMBERS.get(0)), String.valueOf(NUMBERS.get(1))), Set.of(0, 1),
-                KnownDeviation.VALUE_LIST_FAILS),
+                List.of(String.valueOf(NUMBERS.get(0)), String.valueOf(NUMBERS.get(1))), Set.of(0, 1)),
         NUMBER_GREATER_THAN(Attribute.NUMBER, NUMBERS, ComparisonOperator.GREATER_THAN, List.of(NUMBER_LITERAL),
                 Set.of(1)),
         NUMBER_GREATER_THAN_EQUALS(Attribute.NUMBER, NUMBERS, ComparisonOperator.GREATER_THAN_EQUALS,
@@ -550,11 +571,37 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         BOOLEAN_EQUALS(Attribute.BOOLEAN, List.of(true, false), ComparisonOperator.EQUALS,
                 List.of(Boolean.TRUE.toString()), Set.of(0)),
         REGEX(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^" + ALPHA), Set.of(0, 2),
-                KnownDeviation.REGEX_FAILS, KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES),
+                KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES),
         REGEX_UNANCHORED(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of(UNANCHORED_PATTERN),
-                Set.of(1, 2), KnownDeviation.REGEX_FAILS),
+                Set.of(1, 2)),
         REGEX_NOT_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^(?!" + ALPHA + "$).*$"),
                 Set.of(1, 2)),
+        REGEX_ALTERNATION(Attribute.STRING, WORDS, ComparisonOperator.REGEX,
+                List.of(ALTERNATION_PATTERN), Set.of(1, 2),
+                KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
+        REGEX_GROUP(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of(GROUP_PATTERN),
+                Set.of(2), KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
+        REGEX_HOLDING_A_SPACE(Attribute.STRING, SPACED_WORDS, ComparisonOperator.REGEX, List.of("o w"), Set.of(0)),
+        REGEX_HOLDING_AN_EQUALS_SIGN(Attribute.STRING, EQUATIONS, ComparisonOperator.REGEX, List.of("a=b"),
+                Set.of(0)),
+        REGEX_HOLDING_ESCAPED_BRACKETS(Attribute.STRING, BRACKETED_WORDS, ComparisonOperator.REGEX,
+                List.of("a\\[b\\]"), Set.of(0)),
+        REGEX_HOLDING_A_QUOTE(Attribute.STRING, QUOTED_WORDS, ComparisonOperator.REGEX, List.of("y \"h"), Set.of(0),
+                KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
+        REGEX_LIKE_A_NUMBER(Attribute.STRING, NUMBER_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2.0"),
+                Set.of(0, 1)),
+        REGEX_LIKE_A_BOOLEAN(Attribute.STRING, BOOLEAN_LIKE_WORDS, ComparisonOperator.REGEX,
+                List.of(Boolean.TRUE.toString()), Set.of(0, 1)),
+        REGEX_LIKE_A_DATE(Attribute.STRING, DATE_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2024-01-01"),
+                Set.of(0, 1)),
+        REGEX_LIKE_AN_INVALID_DATE(Attribute.STRING, DATE_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2024-01"),
+                Set.of(0, 1)),
+        REGEX_LIKE_A_TIME(Attribute.STRING, TIME_LIKE_WORDS, ComparisonOperator.REGEX, List.of("10:00:00"),
+                Set.of(0, 1)),
+        REGEX_LIKE_AN_INVALID_TIME(Attribute.STRING, TIME_LIKE_WORDS, ComparisonOperator.REGEX, List.of("25:61:00"),
+                Set.of(0, 1)),
+        REGEX_LIKE_A_PREFIXED_TIME(Attribute.STRING, TIME_LIKE_WORDS, ComparisonOperator.REGEX, List.of("T10:00"),
+                Set.of(0, 1)),
         NESTED_STRING_EQUALS(Attribute.NESTED_STRING, List.of(ALPHA, BETA), ComparisonOperator.EQUALS,
                 List.of(BETA), Set.of(1)),
         REFERENCE_ID_IN_A_LONGER_LIST(Attribute.REFERENCE_ID, REFERENCE_LISTS, ComparisonOperator.EQUALS,
@@ -576,7 +623,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         private final ComparisonOperator operator;
         private final List<String> literals;
         private final Set<Integer> matches;
-        // a deviation in FAILING_FILTERS fails the list, any other one makes it match nothing
+        // each one makes the filter match nothing
         private final Set<KnownDeviation> deviations;
 
         FilterCase(Attribute attribute, List<?> seeds, ComparisonOperator operator, List<String> literals,
@@ -596,10 +643,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         }
     }
 
-    // the filter deviations under which the list fails with (LIST, UNKNOWN)
-    private static final Set<KnownDeviation> FAILING_FILTERS = Set.of(KnownDeviation.VALUE_LIST_FAILS,
-            KnownDeviation.REGEX_FAILS);
-
     @ParameterizedTest
     @EnumSource(FilterCase.class)
     void findEntitiesFilters(FilterCase filterCase) {
@@ -612,16 +655,17 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 .toList();
         Comparison comparison = new Comparison(queries.path(filterCase.attribute), filterCase.operator,
                 filterCase.valueType, filterCase.literals);
-        Set<KnownDeviation> deviations = filterCase.deviations.stream()
-                .filter(knownDeviations()::contains)
-                .collect(Collectors.toSet());
-        if (deviations.stream().anyMatch(FAILING_FILTERS::contains)) {
-            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
-                    () -> find(queries, comparison, List.of(), ids, FIRST_OFFSET, LIST_LIMIT));
+        boolean deviates = filterCase.deviations.stream().anyMatch(knownDeviations()::contains);
+        if (deviates && filterCase.deviations.contains(KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED)) {
+            Mono<PagedResult<Q>> rejected = assertDoesNotThrow(
+                    () -> find(queries, comparison, List.of(), ids, FIRST_OFFSET, LIST_LIMIT),
+                    "A rejected filter is an error signal of the Mono, not a synchronous throw.");
+            RuntimeException failure = assertThrows(RuntimeException.class, () -> rejected.block(TIMEOUT),
+                    "The pattern is accepted now, drop " + KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED);
+            assertTrue(isClientQueryError(failure), "Expected the client's query error, but was " + failure);
             return;
         }
-        // any other deviation of the case leaves the filter matching nothing
-        Set<Integer> matches = deviations.isEmpty() ? filterCase.matches : Set.of();
+        Set<Integer> matches = deviates ? Set.of() : filterCase.matches;
         Set<URI> expected = matches.stream()
                 .filter(match -> reachable(filterCase.attribute, filterCase.seeds.get(match)))
                 .map(ids::get)
@@ -718,22 +762,16 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 List.copyOf(seeds.keySet()), FIRST_OFFSET, LIST_LIMIT)));
     }
 
-    // indexes of NAMED_AND_NUMBERED, also as matched under ANY_OF_MATCHES_AS_ALL_OF and ANY_OF_FAILS_OR_MATCHES_NOTHING
+    // indexes of NAMED_AND_NUMBERED
     enum CompositeCase {
-        ALL_OF(Set.of(1), Set.of(1), Optional.of(Set.of(1))),
-        ANY_OF(Set.of(1, 3), Set.of(1), Optional.empty()),
-        ANY_OF_ALL_OFS(Set.of(0, 3), Set.of(), Optional.of(Set.of()));
+        ALL_OF(Set.of(1)),
+        ANY_OF(Set.of(1, 3)),
+        ANY_OF_ALL_OFS(Set.of(0, 3));
 
         private final Set<Integer> matches;
-        private final Set<Integer> matchesAsAllOf;
-        // empty if the list fails with (LIST, UNKNOWN)
-        private final Optional<Set<Integer>> matchesUnderFailingAnyOf;
 
-        CompositeCase(Set<Integer> matches, Set<Integer> matchesAsAllOf,
-                      Optional<Set<Integer>> matchesUnderFailingAnyOf) {
+        CompositeCase(Set<Integer> matches) {
             this.matches = matches;
-            this.matchesAsAllOf = matchesAsAllOf;
-            this.matchesUnderFailingAnyOf = matchesUnderFailingAnyOf;
         }
     }
 
@@ -757,19 +795,48 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                             numberIs(queries, ComparisonOperator.LESS_THAN, HIGH_NUMBER_LITERAL)))));
         };
 
-        Set<Integer> matches = compositeCase.matches;
-        if (knownDeviations().contains(KnownDeviation.ANY_OF_MATCHES_AS_ALL_OF)) {
-            matches = compositeCase.matchesAsAllOf;
+        assertEquals(compositeCase.matches.stream().map(ids::get).collect(Collectors.toSet()),
+                Set.copyOf(findIds(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT)));
+    }
+
+    // indexes of NUMBERED_AND_FLAGGED
+    enum NumberAndBooleanCase {
+        ALL_OF(Set.of(1)),
+        ANY_OF(Set.of(0, 1, 2));
+
+        private final Set<Integer> matches;
+
+        NumberAndBooleanCase(Set<Integer> matches) {
+            this.matches = matches;
         }
-        if (knownDeviations().contains(KnownDeviation.ANY_OF_FAILS_OR_MATCHES_NOTHING)) {
-            if (compositeCase.matchesUnderFailingAnyOf.isEmpty()) {
-                assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
-                        () -> find(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT));
-                return;
-            }
-            matches = compositeCase.matchesUnderFailingAnyOf.get();
+    }
+
+    @ParameterizedTest
+    @EnumSource(NumberAndBooleanCase.class)
+    void findEntitiesCombinesNumberAndBooleanFilters(NumberAndBooleanCase numberAndBooleanCase) {
+        assertNumberAndBooleanFilterMatches(queryFixture(Attribute.NUMBER, Attribute.BOOLEAN), numberAndBooleanCase);
+    }
+
+    private <Q> void assertNumberAndBooleanFilterMatches(QueryFixture<Q> queries,
+                                                         NumberAndBooleanCase numberAndBooleanCase) {
+        List<URI> ids = NUMBERED_AND_FLAGGED.stream()
+                .map(seed -> create(queries, queries.newEntity(queries.newId(),
+                        Map.of(Attribute.NUMBER, seed.getKey(), Attribute.BOOLEAN, seed.getValue()))))
+                .toList();
+        List<QueryFilter> comparisons = List.of(numberIs(queries, ComparisonOperator.GREATER_THAN, NUMBER_LITERAL),
+                new Comparison(queries.path(Attribute.BOOLEAN), ComparisonOperator.EQUALS, ValueType.BOOLEAN,
+                        List.of(Boolean.TRUE.toString())));
+        QueryFilter filter = switch (numberAndBooleanCase) {
+            case ALL_OF -> new AllOf(comparisons);
+            case ANY_OF -> new AnyOf(comparisons);
+        };
+
+        if (knownDeviations().contains(KnownDeviation.NUMBER_AND_BOOLEAN_FILTER_FAILS)) {
+            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
+                    () -> find(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT));
+            return;
         }
-        assertEquals(matches.stream().map(ids::get).collect(Collectors.toSet()),
+        assertEquals(numberAndBooleanCase.matches.stream().map(ids::get).collect(Collectors.toSet()),
                 Set.copyOf(findIds(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT)));
     }
 
@@ -822,11 +889,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.NUMBER, number))), number));
         List<URI> ids = List.copyOf(numbers.keySet());
         List<SortKey> sort = List.of(sortKey(queries, Attribute.NUMBER, false));
-        if (knownDeviations().contains(KnownDeviation.SORT_FAILS)) {
-            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
-                    () -> find(queries, null, sort, ids, FIRST_OFFSET, PAGE_SIZE));
-            return;
-        }
 
         List<URI> paged = new ArrayList<>();
         for (int offset = FIRST_OFFSET; offset < ids.size(); offset += PAGE_SIZE) {
@@ -963,12 +1025,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                         .map(page -> idsOf(queries, page.items())));
     }
 
-    // a sort the backend fails or ignores is asserted as such
+    // a sort the backend ignores is asserted as such
     private void assertOrder(List<URI> expected, Supplier<Mono<List<URI>>> call) {
-        if (knownDeviations().contains(KnownDeviation.SORT_FAILS)) {
-            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN, call::get);
-            return;
-        }
         List<URI> actual = call.get().block(TIMEOUT);
         assertNotNull(actual);
         if (knownDeviations().contains(KnownDeviation.SORT_IS_IGNORED)) {

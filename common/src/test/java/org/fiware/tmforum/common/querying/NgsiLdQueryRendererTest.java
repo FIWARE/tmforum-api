@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.querying;
 
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -21,6 +22,7 @@ import static org.fiware.tmforum.storage.query.ComparisonOperator.EQUALS;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.GREATER_THAN;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.REGEX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Renders hand-built models with every broker dialect {@link QueryParserTest} covers.
@@ -40,6 +42,8 @@ class NgsiLdQueryRendererTest {
 	private static final GeneralProperties PLAIN = properties(false, COMMA, false, false);
 	private static final GeneralProperties PLAIN_DOT = properties(false, COMMA, false, true);
 	private static final GeneralProperties DEFAULTS = new GeneralProperties();
+	// the shipped orion-ld and scorpio profiles: both brokers take "|" between whole comparisons
+	private static final GeneralProperties BROKER_PROFILE = brokerProfile();
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("filters")
@@ -56,6 +60,10 @@ class NgsiLdQueryRendererTest {
 						MyPojo.class, new AnyOf(List.of(red, activeOrStarted))),
 				Arguments.of("(status==\"Active\"|status==\"Started\");color==\"Red\"", ENCLOSED_ATTRIBUTE_IN_LIST,
 						MyPojo.class, new AllOf(List.of(activeOrStarted, red))),
+				Arguments.of("color==\"Red\"|(status==\"Active\"|status==\"Started\")", BROKER_PROFILE,
+						MyPojo.class, new AnyOf(List.of(red, activeOrStarted))),
+				Arguments.of("(temperature==1|temperature==2)", BROKER_PROFILE, MyPojo.class,
+						declared(EQUALS, ValueType.NUMBER, List.of("1", "2"), "temperature")),
 				Arguments.of("color==\"Red\"|status==(\"Active\"|\"Started\")", ENCLOSED,
 						MyPojo.class, new AnyOf(List.of(red, activeOrStarted))),
 				Arguments.of("status==\"Active\",\"Started\";color==\"Red\"", PLAIN,
@@ -98,23 +106,71 @@ class NgsiLdQueryRendererTest {
 						undeclared(EQUALS, ValueType.NUMBER, List.of("1"), "ext")),
 				Arguments.of("tmfEscaped-createdAt>\"2024-01-01T00:00:00Z\"", DEFAULTS, MyPojo.class,
 						declared(GREATER_THAN, ValueType.DATE_TIME, List.of("2024-01-01T00:00:00Z"), "createdAt")),
-				Arguments.of("color~=\"bl.e\"", DEFAULTS, MyPojo.class,
+				Arguments.of("color~=bl.e", DEFAULTS, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("bl.e"), "color")),
 				// a model value is one exact literal, whatever separators it contains
 				Arguments.of("color==\"" + ALL_SEPARATORS + "\"", DEFAULTS, MyPojo.class,
 						declared(EQUALS, ValueType.STRING, List.of(ALL_SEPARATORS), "color")),
 				Arguments.of("color==\"" + ALL_SEPARATORS + "\"", ENCLOSED_ATTRIBUTE_IN_LIST, MyPojo.class,
 						declared(EQUALS, ValueType.STRING, List.of(ALL_SEPARATORS), "color")),
-				Arguments.of("color~=\"" + ALL_SEPARATORS + "\"", ENCLOSED, MyPojo.class,
-						declared(REGEX, ValueType.STRING, List.of(ALL_SEPARATORS), "color")),
+				// "&" and "[]" are no q syntax, so they pass through unquoted
+				Arguments.of("color~=[ab]&c", ENCLOSED, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("[ab]&c"), "color")),
+				// a space and "=" are no q syntax inside a pattern either
+				Arguments.of("color~=o w=x", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("o w=x"), "color")),
+				// Orion-LD lexes a date-like term as a DateTime (and crashes on an invalid one); "\-" keeps it a RegExp
+				Arguments.of("color~=2024\\-01", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("2024-01"), "color")),
+				Arguments.of("color~=2024\\-01-01T10\\:00\\:00Z", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("2024-01-01T10:00:00Z"), "color")),
+				Arguments.of("color~=\\-12", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("-12"), "color")),
+				Arguments.of("color~=2.0", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("2.0"), "color")),
+				// Scorpio matches nothing for a ":" between word characters; "\:" matches on both brokers
+				Arguments.of("color~=25\\:61\\:00", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("25:61:00"), "color")),
+				Arguments.of("color~=T10\\:00", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("T10:00"), "color")),
+				Arguments.of("color~=b_\\:c", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("b_:c"), "color")),
+				Arguments.of("color~=:a: a\\:b \\d:\\d [[:digit:]]", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of(":a: a\\:b \\d:\\d [[:digit:]]"), "color")),
+				Arguments.of("color~=x2024-01", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("x2024-01"), "color")),
+				Arguments.of("color~=[0-9]{4}-01", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("[0-9]{4}-01"), "color")),
 				// deliberate change: the not-equals idiom keeps its value as one literal instead of splitting it
 				Arguments.of("color!=\"a,b\"", DEFAULTS, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("^(?!a,b$).*$"), "color")),
 				Arguments.of("color!=\"a|b\"", ENCLOSED_ATTRIBUTE_IN_LIST, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("^(?!a|b$).*$"), "color")),
-				Arguments.of("color~=\"^(?!a,b$).*$\"", withoutRegexOptimization(), MyPojo.class,
-						declared(REGEX, ValueType.STRING, List.of("^(?!a,b$).*$"), "color")),
 				Arguments.of(null, DEFAULTS, MyPojo.class, null));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("regexesHoldingQuerySyntax")
+	void testRegexHoldingQuerySyntaxIsRejected(String pattern, GeneralProperties properties) {
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
+		EntityQuery query = new EntityQuery(MyPojo.class,
+				declared(REGEX, ValueType.STRING, List.of(pattern), "color"), List.of());
+		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
+	}
+
+	private static Stream<Arguments> regexesHoldingQuerySyntax() {
+		return Stream.of(
+				Arguments.of("alpha|beta", BROKER_PROFILE),
+				Arguments.of("a(bet)", BROKER_PROFILE),
+				Arguments.of("a,b", DEFAULTS),
+				Arguments.of("a;b", DEFAULTS),
+				Arguments.of("y \"h", BROKER_PROFILE),
+				Arguments.of("it's", BROKER_PROFILE),
+				Arguments.of("a<b", DEFAULTS),
+				Arguments.of("a>b", DEFAULTS),
+				Arguments.of("a!b", DEFAULTS),
+				Arguments.of(ALL_SEPARATORS, ENCLOSED),
+				Arguments.of("^(?!a$).*$", withoutRegexOptimization()));
 	}
 
 	/**
@@ -168,6 +224,12 @@ class NgsiLdQueryRendererTest {
 		properties.setNgsildOrQueryValue(orSeparator);
 		properties.setIncludeAttributeInList(includeAttributeInList);
 		properties.setUseDotSeperator(useDotSeparator);
+		return properties;
+	}
+
+	private static GeneralProperties brokerProfile() {
+		GeneralProperties properties = properties(true, COMMA, true, true);
+		properties.setNgsildOrQueryKey(PIPE);
 		return properties;
 	}
 

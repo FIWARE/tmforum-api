@@ -167,12 +167,11 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 					LiteralForm.OFFSET, Semantics.STRING,
 					LiteralForm.LOCAL, Semantics.STRING,
 					LiteralForm.DATE, Semantics.STRING));
-	// Orion-LD 1.9.0 rejects orderBy without local=true (501), which the API passes on as a 500;
-	// Scorpio 5.0.3 answers in creation order whatever the direction.
-	// Both pin a known defect, not a contract: a human still has to decide on fixing broker sort (ticket 90),
-	// and a fix such as sending local=true turns this red on purpose; update the entry then.
+	// Orion-LD 1.9.0 takes orderBy only with local=true (LocalOrderByFilter) and then ignores it (ORIONLD_EXPERIMENTAL
+	// untested); Scorpio 5.0.3 answers in creation order whatever the direction.
+	// Both pin KnownDeviation.SORT_IS_IGNORED, pending acceptance (ticket 0), not a contract.
 	private static final Map<String, Semantics> OBSERVED_SORT_SEMANTICS = Map.of(
-			ORION_LD_ENVIRONMENT, Semantics.UNSUPPORTED,
+			ORION_LD_ENVIRONMENT, Semantics.IGNORED,
 			SCORPIO_ENVIRONMENT, Semantics.IGNORED);
 
 	public DateTimeFilterBehaviourIT(ProductOfferingApiTestClient productOfferingApiTestClient,
@@ -268,12 +267,6 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 		HttpResponse<String> descending = sortBy(descendingSort);
 
 		Semantics semantics = OBSERVED_SORT_SEMANTICS.get(broker());
-		if (semantics == Semantics.UNSUPPORTED) {
-			String knownDefect = " still fails with a 500; if broker sort was fixed, update OBSERVED_SORT_SEMANTICS.";
-			assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ascending.getStatus(), ascendingSort + knownDefect);
-			assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, descending.getStatus(), descendingSort + knownDefect);
-			return;
-		}
 		assertEquals(HttpStatus.OK, ascending.getStatus(), ascendingSort);
 		assertEquals(HttpStatus.OK, descending.getStatus(), descendingSort);
 		List<String> ascendingIds = ids(ascending.body()).toList();

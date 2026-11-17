@@ -50,8 +50,8 @@ public class GeneralProperties {
 	private Boolean encloseQuery=false;
 
 	/**
-	 * Whether to include the attribute name in each list object or not
-	 * E.g. (status==\"Active\",\"Started\") or (status==\"Active\",status==\"Started\")
+	 * Whether to include the attribute name in each list object or not, joined with {@link #ngsildOrQueryKey} then
+	 * E.g. (status==\"Active\",\"Started\") or (status==\"Active\"|status==\"Started\")
 	 */
 	private Boolean includeAttributeInList=false;
 
