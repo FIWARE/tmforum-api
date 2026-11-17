@@ -54,10 +54,10 @@ public class NgsiLdQueryRenderer {
 	private static final Pattern NOT_EQUALS_REGEX_IDIOM = Pattern.compile("^\\^\\(\\?!(.+?)\\$\\)\\.\\*\\$$");
 
 	/**
-	 * Characters NGSI-LD's {@code q} reads as syntax even inside an unquoted pattern, and that quoting does not
-	 * protect either: Orion-LD 1.9.0 and Scorpio 5.0.3 read {@code a|b} as "matches a, or attribute b exists".
+	 * Characters NGSI-LD's {@code q} reads as syntax inside a pattern, quoted or not. On Orion-LD 1.9.0 or Scorpio 5.0.3
+	 * each one fails the query or silently changes it ({@code a|b} reads as "matches a, or attribute b exists").
 	 */
-	private static final Pattern REGEX_QUERY_SYNTAX = Pattern.compile("[|,;()]");
+	private static final Pattern REGEX_QUERY_SYNTAX = Pattern.compile("[|,;()\"'<>!]");
 
 	private final GeneralProperties generalProperties;
 
@@ -140,7 +140,7 @@ public class NgsiLdQueryRenderer {
 		// rejecting is better than a q that silently matches other entities
 		if (REGEX_QUERY_SYNTAX.matcher(pattern).find()) {
 			throw new QueryException(String.format(
-					"The regex %s cannot be sent to the NGSI-LD broker: it holds one of |,;() which its query language reads as syntax.",
+					"The regex %s cannot be sent to the NGSI-LD broker: it holds one of |,;()\"'<>! which its query language reads as syntax.",
 					pattern));
 		}
 		return pattern;

@@ -3,6 +3,7 @@ package org.fiware.tmforum.productcatalog.storage;
 import io.micronaut.context.env.Environment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.product.Category;
@@ -60,6 +61,11 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 			deviations.add(KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED);
 		}
 		return deviations;
+	}
+
+	@Override
+	protected boolean isClientQueryError(Throwable failure) {
+		return failure instanceof QueryException;
 	}
 
 	@Override

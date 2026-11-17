@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -83,6 +84,11 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final String ALTERNATION_PATTERN = "eta|lphab";
     // matches ALPHABET only, while the bare UNANCHORED_PATTERN also matches BETA
     private static final String GROUP_PATTERN = "a(" + UNANCHORED_PATTERN + ")";
+    // seeds for patterns holding characters that look like q syntax; each pattern matches the first seed only
+    private static final List<String> SPACED_WORDS = List.of("two words", "twowords");
+    private static final List<String> EQUATIONS = List.of("a=b", "ab");
+    private static final List<String> BRACKETED_WORDS = List.of("a[b]", "ab");
+    private static final List<String> QUOTED_WORDS = List.of("say \"hi\"", "say hi");
     // creation order differs from both sort orders
     private static final List<String> EXTENSION_SORT_SEEDS = List.of(BETA, GAMMA, ALPHA);
     // string order ("10" < "2" < "3") differs from numeric order
@@ -126,6 +132,13 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
      */
     protected Set<KnownDeviation> knownDeviations() {
         return Set.of();
+    }
+
+    /**
+     * Whether a list failure is the client's bad query (a 400), as opposed to a storage failure.
+     */
+    protected boolean isClientQueryError(Throwable failure) {
+        return !(failure instanceof StorageException);
     }
 
     /**
@@ -563,6 +576,13 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
         REGEX_GROUP(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of(GROUP_PATTERN),
                 Set.of(2), KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
+        REGEX_HOLDING_A_SPACE(Attribute.STRING, SPACED_WORDS, ComparisonOperator.REGEX, List.of("o w"), Set.of(0)),
+        REGEX_HOLDING_AN_EQUALS_SIGN(Attribute.STRING, EQUATIONS, ComparisonOperator.REGEX, List.of("a=b"),
+                Set.of(0)),
+        REGEX_HOLDING_ESCAPED_BRACKETS(Attribute.STRING, BRACKETED_WORDS, ComparisonOperator.REGEX,
+                List.of("a\\[b\\]"), Set.of(0)),
+        REGEX_HOLDING_A_QUOTE(Attribute.STRING, QUOTED_WORDS, ComparisonOperator.REGEX, List.of("y \"h"), Set.of(0),
+                KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
         NESTED_STRING_EQUALS(Attribute.NESTED_STRING, List.of(ALPHA, BETA), ComparisonOperator.EQUALS,
                 List.of(BETA), Set.of(1)),
         REFERENCE_ID_IN_A_LONGER_LIST(Attribute.REFERENCE_ID, REFERENCE_LISTS, ComparisonOperator.EQUALS,
@@ -618,9 +638,12 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 filterCase.valueType, filterCase.literals);
         boolean deviates = filterCase.deviations.stream().anyMatch(knownDeviations()::contains);
         if (deviates && filterCase.deviations.contains(KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED)) {
-            assertThrows(RuntimeException.class,
-                    () -> findIds(queries, comparison, List.of(), ids, FIRST_OFFSET, LIST_LIMIT),
+            Mono<PagedResult<Q>> rejected = assertDoesNotThrow(
+                    () -> find(queries, comparison, List.of(), ids, FIRST_OFFSET, LIST_LIMIT),
+                    "A rejected filter is an error signal of the Mono, not a synchronous throw.");
+            RuntimeException failure = assertThrows(RuntimeException.class, () -> rejected.block(TIMEOUT),
                     "The pattern is accepted now, drop " + KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED);
+            assertTrue(isClientQueryError(failure), "Expected the client's query error, but was " + failure);
             return;
         }
         Set<Integer> matches = deviates ? Set.of() : filterCase.matches;

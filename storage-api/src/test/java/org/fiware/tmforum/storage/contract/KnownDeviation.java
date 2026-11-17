@@ -68,10 +68,10 @@ public enum KnownDeviation {
     ANCHORED_REGEX_NEVER_MATCHES,
 
     /**
-     * A regex holding {@code |}, {@code ,}, {@code ;}, {@code (} or {@code )} (an alternation or a group) fails the
-     * list instead of matching: the NGSI-LD renderer rejects it with a 400, because Orion-LD 1.9.0 and Scorpio 5.0.3
-     * read these characters as {@code q} syntax, quoted or not ({@code a|b} becomes "matches a, or attribute b
-     * exists"; a group answers 400 on Orion-LD and matches nothing on Scorpio). Pending acceptance (ticket 0).
+     * A regex holding any of {@code |,;()"'<>!} (an alternation or a group, among others) fails the list instead of
+     * matching: the NGSI-LD renderer rejects it with a 400, because Orion-LD 1.9.0 or Scorpio 5.0.3 reads each one as
+     * {@code q} syntax, quoted or not, and fails the query or changes it ({@code a|b} becomes "matches a, or attribute
+     * b exists"; {@code "} is dropped on Scorpio, {@code '} is a 500 there). Pending acceptance (ticket 0).
      */
     REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED,
 

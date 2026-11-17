@@ -216,6 +216,28 @@ public class ListQueryIT extends AbstractApiIT {
 	}
 
 	/**
+	 * A regex holding |,;() is rejected with a 400 on the brokers, whose q reads those characters as syntax
+	 * (KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED, pending acceptance (ticket 0)); PostgreSQL matches it.
+	 */
+	@ParameterizedTest(name = "name.regex={0}")
+	@ValueSource(strings = {"-00[1-3]|-01[0-2]", "-0(0|1)7"})
+	public void filterOnRegexHoldingQuerySyntax(String pattern) throws Exception {
+		String query = eq("name.regex", pattern);
+		HttpResponse<String> response = list(PRODUCT_OFFERING_PATH, query + "&limit=" + ALL);
+
+		if (!environment.getActiveNames().contains(POSTGRESQL_ENVIRONMENT)) {
+			assertEquals(HttpStatus.BAD_REQUEST, response.getStatus(),
+					"The broker takes the pattern now, drop REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED.");
+			return;
+		}
+		assertEquals(HttpStatus.OK, response.getStatus(), query);
+		Pattern compiled = Pattern.compile(pattern);
+		List<String> expected = offerings.stream().filter(o -> compiled.matcher(o.name()).find())
+				.map(Offering::id).sorted().toList();
+		assertEquals(expected, ids(response).stream().sorted().toList(), query);
+	}
+
+	/**
 	 * A number and a boolean comparison in one filter. Scorpio fails it (KnownDeviation.NUMBER_AND_BOOLEAN_FILTER_FAILS,
 	 * pending acceptance (ticket 0)), so there the case pins the 500.
 	 */

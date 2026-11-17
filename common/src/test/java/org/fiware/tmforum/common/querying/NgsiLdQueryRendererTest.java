@@ -116,6 +116,9 @@ class NgsiLdQueryRendererTest {
 				// "&" and "[]" are no q syntax, so they pass through unquoted
 				Arguments.of("color~=[ab]&c", ENCLOSED, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("[ab]&c"), "color")),
+				// a space and "=" are no q syntax inside a pattern either
+				Arguments.of("color~=o w=x", DEFAULTS, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("o w=x"), "color")),
 				// deliberate change: the not-equals idiom keeps its value as one literal instead of splitting it
 				Arguments.of("color!=\"a,b\"", DEFAULTS, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("^(?!a,b$).*$"), "color")),
@@ -139,6 +142,11 @@ class NgsiLdQueryRendererTest {
 				Arguments.of("a(bet)", BROKER_PROFILE),
 				Arguments.of("a,b", DEFAULTS),
 				Arguments.of("a;b", DEFAULTS),
+				Arguments.of("y \"h", BROKER_PROFILE),
+				Arguments.of("it's", BROKER_PROFILE),
+				Arguments.of("a<b", DEFAULTS),
+				Arguments.of("a>b", DEFAULTS),
+				Arguments.of("a!b", DEFAULTS),
 				Arguments.of(ALL_SEPARATORS, ENCLOSED),
 				Arguments.of("^(?!a$).*$", withoutRegexOptimization()));
 	}
