@@ -84,6 +84,13 @@ public enum KnownDeviation {
     SORT_IS_IGNORED,
 
     /**
+     * A filter holding a number and a boolean comparison, AND-ed or OR-ed, fails the list: the broker answers 500
+     * ("ARRAY types boolean and jsonb cannot be matched") whatever the order, parentheses or quoting. Observed on
+     * Scorpio 5.0.3 by {@code ListQueryIT}; Orion-LD 1.9.0 and PostgreSQL 18 answer it. Pending acceptance (ticket 0).
+     */
+    NUMBER_AND_BOOLEAN_FILTER_FAILS,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL
