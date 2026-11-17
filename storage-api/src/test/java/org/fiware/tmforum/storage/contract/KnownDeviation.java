@@ -68,6 +68,14 @@ public enum KnownDeviation {
     ANCHORED_REGEX_NEVER_MATCHES,
 
     /**
+     * A regex holding {@code |}, {@code ,}, {@code ;}, {@code (} or {@code )} (an alternation or a group) fails the
+     * list instead of matching: the NGSI-LD renderer rejects it with a 400, because Orion-LD 1.9.0 and Scorpio 5.0.3
+     * read these characters as {@code q} syntax, quoted or not ({@code a|b} becomes "matches a, or attribute b
+     * exists"; a group answers 400 on Orion-LD and matches nothing on Scorpio). Pending acceptance (ticket 0).
+     */
+    REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED,
+
+    /**
      * A string comparison ({@code gt}, {@code lt}, ...) follows a linguistic collation instead of byte order, so
      * {@code "Beta"} is greater than {@code "alpha"}. Observed on Scorpio 5.0.3; Orion-LD 1.9.0 and PostgreSQL 18
      * compare bytes. Pending acceptance (ticket 0).

@@ -79,6 +79,10 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final List<String> CASE_DIFFERING_WORDS = List.of(CAPITAL_BETA, ALPHA, BETA);
     // inside BETA and ALPHABET, at the start of neither ALPHA nor ALPHABET
     private static final String UNANCHORED_PATTERN = "bet";
+    // each branch matches one word only: "eta" BETA, "lphab" ALPHABET
+    private static final String ALTERNATION_PATTERN = "eta|lphab";
+    // matches ALPHABET only, while the bare UNANCHORED_PATTERN also matches BETA
+    private static final String GROUP_PATTERN = "a(" + UNANCHORED_PATTERN + ")";
     // creation order differs from both sort orders
     private static final List<String> EXTENSION_SORT_SEEDS = List.of(BETA, GAMMA, ALPHA);
     // string order ("10" < "2" < "3") differs from numeric order
@@ -554,6 +558,11 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 Set.of(1, 2)),
         REGEX_NOT_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^(?!" + ALPHA + "$).*$"),
                 Set.of(1, 2)),
+        REGEX_ALTERNATION(Attribute.STRING, WORDS, ComparisonOperator.REGEX,
+                List.of(ALTERNATION_PATTERN), Set.of(1, 2),
+                KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
+        REGEX_GROUP(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of(GROUP_PATTERN),
+                Set.of(2), KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),
         NESTED_STRING_EQUALS(Attribute.NESTED_STRING, List.of(ALPHA, BETA), ComparisonOperator.EQUALS,
                 List.of(BETA), Set.of(1)),
         REFERENCE_ID_IN_A_LONGER_LIST(Attribute.REFERENCE_ID, REFERENCE_LISTS, ComparisonOperator.EQUALS,
@@ -608,6 +617,12 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         Comparison comparison = new Comparison(queries.path(filterCase.attribute), filterCase.operator,
                 filterCase.valueType, filterCase.literals);
         boolean deviates = filterCase.deviations.stream().anyMatch(knownDeviations()::contains);
+        if (deviates && filterCase.deviations.contains(KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED)) {
+            assertThrows(RuntimeException.class,
+                    () -> findIds(queries, comparison, List.of(), ids, FIRST_OFFSET, LIST_LIMIT),
+                    "The pattern is accepted now, drop " + KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED);
+            return;
+        }
         Set<Integer> matches = deviates ? Set.of() : filterCase.matches;
         Set<URI> expected = matches.stream()
                 .filter(match -> reachable(filterCase.attribute, filterCase.seeds.get(match)))

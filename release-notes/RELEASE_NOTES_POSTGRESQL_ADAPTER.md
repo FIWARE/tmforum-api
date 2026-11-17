@@ -85,13 +85,17 @@ backend-neutral model (`storage-api`'s `query` package) and rendered either to N
 * **Date-times compare as strings** on every backend, because both brokers do: `lastUpdate.gt=2024-01-01T10:00:00Z`
   compares the stored ISO string in byte order. A literal with an offset, a fraction or only a date therefore
   compares by its characters, not by the instant it denotes, as on the brokers.
-* **Regex:** one pattern per attribute; an invalid pattern answers 400 on PostgreSQL as on the brokers.
+* **Regex:** one pattern per attribute; an invalid pattern answers 400 on PostgreSQL as on the brokers. The brokers
+  cannot express an alternation or a group (see below).
 * **Several values in one filter** (`ngsildOrQueryValue`, `,` by default) are OR-ed on every backend.
 * **Sort** keeps the TMForum key order and direction. On PostgreSQL ties are broken by creation and id, so paging
   through a sorted result neither repeats nor skips an entity.
 * **Fixed on the brokers:** the shipped `orion-ld` and `scorpio` profiles now render several values and `;` (OR)
   filters as `|`-joined comparisons, and a regex pattern unquoted. Before, Orion-LD failed on multi-value filters
-  and regexes and ANDed `;` filters, and Scorpio failed on OR filters. A sorted broker query now carries
+  and regexes and ANDed `;` filters, and Scorpio failed on OR filters. A regex holding `|`, `,`, `;`, `(` or `)`
+  answers 400 on the brokers, because their `q` reads these characters as syntax, quoted or not; before, it matched
+  the wrong entities or none. A deployment that sets `includeAttributeInList=true` now joins the comparisons of
+  one filter with `ngsildOrQueryKey` instead of `ngsildOrQueryValue`. A sorted broker query now carries
   `local=true`, without which Orion-LD rejects `orderBy`, so a `sort` no longer answers 500 there.
 * **No accepted deviations yet.** The backend differences observed while testing are pending acceptance in ticket 0
   and are listed here once accepted.

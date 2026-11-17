@@ -7,6 +7,7 @@ import io.github.wistefan.mapping.ReservedWordHandler;
 import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -51,6 +52,12 @@ public class NgsiLdQueryRenderer {
 	 * POSIX regex doesn't).
 	 */
 	private static final Pattern NOT_EQUALS_REGEX_IDIOM = Pattern.compile("^\\^\\(\\?!(.+?)\\$\\)\\.\\*\\$$");
+
+	/**
+	 * Characters NGSI-LD's {@code q} reads as syntax even inside an unquoted pattern, and that quoting does not
+	 * protect either: Orion-LD 1.9.0 and Scorpio 5.0.3 read {@code a|b} as "matches a, or attribute b exists".
+	 */
+	private static final Pattern REGEX_QUERY_SYNTAX = Pattern.compile("[|,;()]");
 
 	private final GeneralProperties generalProperties;
 
@@ -119,14 +126,24 @@ public class NgsiLdQueryRenderer {
 				values = List.of(notEquals.group(1));
 				valueType = ValueType.STRING;
 			} else {
-				// NGSI-LD's RegExp is unquoted: Orion-LD rejects a quoted pattern, Scorpio takes both
-				return attrPath + operator + values.getFirst();
+				return attrPath + operator + toRegExp(values.getFirst());
 			}
 		}
 
 		ValueType encodingType = valueType;
 		List<String> encodedValues = values.stream().map(value -> encodeValue(value, encodingType)).toList();
 		return renderValues(attrPath + operator, encodedValues);
+	}
+
+	// NGSI-LD's RegExp is unquoted: Orion-LD rejects a quoted pattern, Scorpio takes both
+	private static String toRegExp(String pattern) {
+		// rejecting is better than a q that silently matches other entities
+		if (REGEX_QUERY_SYNTAX.matcher(pattern).find()) {
+			throw new QueryException(String.format(
+					"The regex %s cannot be sent to the NGSI-LD broker: it holds one of |,;() which its query language reads as syntax.",
+					pattern));
+		}
+		return pattern;
 	}
 
 	private String renderValues(String attributeAndOperator, List<String> encodedValues) {

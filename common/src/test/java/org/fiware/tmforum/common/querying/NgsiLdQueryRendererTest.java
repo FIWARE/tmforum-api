@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.querying;
 
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -21,6 +22,7 @@ import static org.fiware.tmforum.storage.query.ComparisonOperator.EQUALS;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.GREATER_THAN;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.REGEX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Renders hand-built models with every broker dialect {@link QueryParserTest} covers.
@@ -111,16 +113,34 @@ class NgsiLdQueryRendererTest {
 						declared(EQUALS, ValueType.STRING, List.of(ALL_SEPARATORS), "color")),
 				Arguments.of("color==\"" + ALL_SEPARATORS + "\"", ENCLOSED_ATTRIBUTE_IN_LIST, MyPojo.class,
 						declared(EQUALS, ValueType.STRING, List.of(ALL_SEPARATORS), "color")),
-				Arguments.of("color~=" + ALL_SEPARATORS, ENCLOSED, MyPojo.class,
-						declared(REGEX, ValueType.STRING, List.of(ALL_SEPARATORS), "color")),
+				// "&" and "[]" are no q syntax, so they pass through unquoted
+				Arguments.of("color~=[ab]&c", ENCLOSED, MyPojo.class,
+						declared(REGEX, ValueType.STRING, List.of("[ab]&c"), "color")),
 				// deliberate change: the not-equals idiom keeps its value as one literal instead of splitting it
 				Arguments.of("color!=\"a,b\"", DEFAULTS, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("^(?!a,b$).*$"), "color")),
 				Arguments.of("color!=\"a|b\"", ENCLOSED_ATTRIBUTE_IN_LIST, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("^(?!a|b$).*$"), "color")),
-				Arguments.of("color~=^(?!a,b$).*$", withoutRegexOptimization(), MyPojo.class,
-						declared(REGEX, ValueType.STRING, List.of("^(?!a,b$).*$"), "color")),
 				Arguments.of(null, DEFAULTS, MyPojo.class, null));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("regexesHoldingQuerySyntax")
+	void testRegexHoldingQuerySyntaxIsRejected(String pattern, GeneralProperties properties) {
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
+		EntityQuery query = new EntityQuery(MyPojo.class,
+				declared(REGEX, ValueType.STRING, List.of(pattern), "color"), List.of());
+		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
+	}
+
+	private static Stream<Arguments> regexesHoldingQuerySyntax() {
+		return Stream.of(
+				Arguments.of("alpha|beta", BROKER_PROFILE),
+				Arguments.of("a(bet)", BROKER_PROFILE),
+				Arguments.of("a,b", DEFAULTS),
+				Arguments.of("a;b", DEFAULTS),
+				Arguments.of(ALL_SEPARATORS, ENCLOSED),
+				Arguments.of("^(?!a$).*$", withoutRegexOptimization()));
 	}
 
 	/**
