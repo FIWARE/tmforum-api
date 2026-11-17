@@ -437,15 +437,15 @@ class QueryParserTest {
 	private static Stream<Arguments> regexQueries() {
 		return Stream.of(
 				Arguments.of("A plain regex is forwarded as a broker-side pattern match.", "color.regex=bl.e",
-						new QueryParams(null, null, "color~=\"bl.e\"")),
+						new QueryParams(null, null, "color~=bl.e")),
 				Arguments.of("The not-equal idiom is optimized into a native != comparison.",
 						"relatedParty.role.regex=^(?!seller$).*$",
 						new QueryParams(null, null, "relatedParty.role!=\"seller\"")),
 				Arguments.of("A comma inside a regex pattern must not be split into OR'd values.",
-						"color.regex=a,b", new QueryParams(null, null, "color~=\"a,b\"")),
+						"color.regex=a,b", new QueryParams(null, null, "color~=a,b")),
 				// the symbolic form ("*=") must not crash - it is not a valid regex on its own
 				Arguments.of("The symbolic operator form should work as well.", "color*=bl.e",
-						new QueryParams(null, null, "color~=\"bl.e\"")));
+						new QueryParams(null, null, "color~=bl.e")));
 	}
 
 	/**
@@ -457,7 +457,7 @@ class QueryParserTest {
 		GeneralProperties properties = new GeneralProperties();
 		properties.setOptimizeRegexNotEquals(false);
 		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
-		assertEquals(new QueryParams(null, null, "relatedParty.role~=\"^(?!seller$).*$\""),
+		assertEquals(new QueryParams(null, null, "relatedParty.role~=^(?!seller$).*$"),
 				qp.toNgsiLdQuery(MyPojo.class, "relatedParty.role.regex=^(?!seller$).*$"),
 				"With the optimization disabled, the idiom must be forwarded as a pattern match.");
 	}

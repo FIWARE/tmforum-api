@@ -113,13 +113,15 @@ public class NgsiLdQueryRenderer {
 		List<String> values = comparison.values();
 		ValueType valueType = comparison.valueType();
 		if (comparison.operator() == ComparisonOperator.REGEX) {
-			// a regex pattern is opaque and quoted as a whole
 			Matcher notEquals = NOT_EQUALS_REGEX_IDIOM.matcher(values.getFirst());
 			if (generalProperties.isOptimizeRegexNotEquals() && notEquals.matches()) {
 				operator = NGSI_LD_NOT_EQUALS;
 				values = List.of(notEquals.group(1));
+				valueType = ValueType.STRING;
+			} else {
+				// NGSI-LD's RegExp is unquoted: Orion-LD rejects a quoted pattern, Scorpio takes both
+				return attrPath + operator + values.getFirst();
 			}
-			valueType = ValueType.STRING;
 		}
 
 		ValueType encodingType = valueType;
@@ -131,14 +133,14 @@ public class NgsiLdQueryRenderer {
 		if (encodedValues.size() == 1) {
 			return attributeAndOperator + encodedValues.getFirst();
 		}
-		String orValue = generalProperties.getNgsildOrQueryValue();
 		if (generalProperties.getIncludeAttributeInList()) {
+			// each element is a whole comparison, so they are OR-ed like filters
 			String query = encodedValues.stream()
 					.map(value -> attributeAndOperator + value)
-					.collect(Collectors.joining(orValue));
+					.collect(Collectors.joining(generalProperties.getNgsildOrQueryKey()));
 			return generalProperties.getEncloseQuery() ? "(" + query + ")" : query;
 		}
-		String valueList = String.join(orValue, encodedValues);
+		String valueList = String.join(generalProperties.getNgsildOrQueryValue(), encodedValues);
 		return generalProperties.getEncloseQuery()
 				? attributeAndOperator + "(" + valueList + ")"
 				: attributeAndOperator + valueList;

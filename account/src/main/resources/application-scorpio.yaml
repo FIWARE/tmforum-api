@@ -1,6 +1,7 @@
 general:
   ngsildOrQueryValue: ","
-  ngsildOrQueryKey: ","
-  encloseQuery: false
+  ngsildOrQueryKey: "|"
+  encloseQuery: true
+  includeAttributeInList: true
   replaceOnUpdate: true
   countHeader: NGSILD-Results-Count
