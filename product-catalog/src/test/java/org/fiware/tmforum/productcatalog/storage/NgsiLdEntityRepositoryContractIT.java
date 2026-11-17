@@ -48,18 +48,12 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 		if (!environment.getActiveNames().contains(ORION_LD_ENVIRONMENT)) {
 			deviations.add(KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES);
 			deviations.add(KnownDeviation.SORT_IS_IGNORED);
-			deviations.add(KnownDeviation.VALUE_LIST_FAILS);
-			deviations.add(KnownDeviation.ANY_OF_FAILS_OR_MATCHES_NOTHING);
 			deviations.add(KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES);
 			deviations.add(KnownDeviation.STRING_COMPARISON_IS_LINGUISTIC);
 			return deviations;
 		}
 		deviations.add(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL);
 		deviations.add(KnownDeviation.MULTI_ELEMENT_LIST_NEVER_MATCHES);
-		deviations.add(KnownDeviation.SORT_FAILS);
-		deviations.add(KnownDeviation.VALUE_LIST_FAILS);
-		deviations.add(KnownDeviation.ANY_OF_MATCHES_AS_ALL_OF);
-		deviations.add(KnownDeviation.REGEX_FAILS);
 		if (!generalProperties.isReplaceOnUpdate()) {
 			deviations.add(KnownDeviation.EMPTIED_LIST_BREAKS_READS);
 			deviations.add(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);

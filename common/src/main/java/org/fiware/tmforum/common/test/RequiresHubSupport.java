@@ -8,13 +8,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A hub registration/deletion or event delivery test: skipped on PostgreSQL until both ticket 1 (no NGSI-LD
- * subscription for a hub) and ticket 7 (the hub query and the subscription lookup) have landed.
+ * A hub registration/deletion or event delivery test: skipped on PostgreSQL until ticket 1, since registering a hub
+ * still creates an NGSI-LD subscription.
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Tag(StorageTags.NOT_ON_POSTGRESQL)
 @Tag(StorageTags.TICKET_1)
-@Tag(StorageTags.TICKET_7)
 public @interface RequiresHubSupport {
 }
