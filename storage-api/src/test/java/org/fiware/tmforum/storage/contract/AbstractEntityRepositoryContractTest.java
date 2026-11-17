@@ -93,6 +93,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private static final List<String> NUMBER_LIKE_WORDS = List.of("2.0", "2x0", "20");
     private static final List<String> BOOLEAN_LIKE_WORDS = List.of("true", "untrue", "false");
     private static final List<String> DATE_LIKE_WORDS = List.of("2024-01-01T10:00:00Z", "x2024-01-01", "2024-02-01");
+    private static final List<String> TIME_LIKE_WORDS = List.of("T10:00:00Z 25:61:00", "xT10:00:00 25:61:00", "10:00:01");
     // creation order differs from both sort orders
     private static final List<String> EXTENSION_SORT_SEEDS = List.of(BETA, GAMMA, ALPHA);
     // string order ("10" < "2" < "3") differs from numeric order
@@ -141,11 +142,9 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     }
 
     /**
-     * Whether a list failure is the client's bad query (a 400), as opposed to a storage failure.
+     * Whether a list failure is the client's bad query (a 400), as opposed to a storage failure or a bug.
      */
-    protected boolean isClientQueryError(Throwable failure) {
-        return !(failure instanceof StorageException);
-    }
+    protected abstract boolean isClientQueryError(Throwable failure);
 
     /**
      * Fixtures for the query, sort and paging cases; a case runs on the first one holding its attributes and skips
@@ -596,6 +595,12 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         REGEX_LIKE_A_DATE(Attribute.STRING, DATE_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2024-01-01"),
                 Set.of(0, 1)),
         REGEX_LIKE_AN_INVALID_DATE(Attribute.STRING, DATE_LIKE_WORDS, ComparisonOperator.REGEX, List.of("2024-01"),
+                Set.of(0, 1)),
+        REGEX_LIKE_A_TIME(Attribute.STRING, TIME_LIKE_WORDS, ComparisonOperator.REGEX, List.of("10:00:00"),
+                Set.of(0, 1)),
+        REGEX_LIKE_AN_INVALID_TIME(Attribute.STRING, TIME_LIKE_WORDS, ComparisonOperator.REGEX, List.of("25:61:00"),
+                Set.of(0, 1)),
+        REGEX_LIKE_A_PREFIXED_TIME(Attribute.STRING, TIME_LIKE_WORDS, ComparisonOperator.REGEX, List.of("T10:00"),
                 Set.of(0, 1)),
         NESTED_STRING_EQUALS(Attribute.NESTED_STRING, List.of(ALPHA, BETA), ComparisonOperator.EQUALS,
                 List.of(BETA), Set.of(1)),

@@ -67,6 +67,12 @@ public class NgsiLdQueryRenderer {
 	private static final String HYPHEN = "-";
 	// a literal hyphen in every regex dialect involved, and a character that keeps the term a RegExp in Orion-LD
 	private static final String ESCAPED_HYPHEN = Matcher.quoteReplacement("\\-");
+	/**
+	 * A colon between two ASCII word characters ({@code 10:00}, {@code b:c}): Scorpio 5.0.3 then silently matches
+	 * nothing, while {@code \:} (a literal colon in every regex dialect involved) matches on both brokers.
+	 */
+	private static final Pattern WORD_COLON_WORD = Pattern.compile("(?<=\\w):(?=\\w)");
+	private static final String ESCAPED_COLON = Matcher.quoteReplacement("\\:");
 
 	private final GeneralProperties generalProperties;
 
@@ -152,10 +158,10 @@ public class NgsiLdQueryRenderer {
 					"The regex %s cannot be sent to the NGSI-LD broker: it holds one of |,;()\"'<>! which its query language reads as syntax.",
 					pattern));
 		}
-		if (DATE_TIME_LIKE_REGEX.matcher(pattern).matches()) {
-			return pattern.replaceFirst(HYPHEN, ESCAPED_HYPHEN);
-		}
-		return pattern;
+		String regExp = DATE_TIME_LIKE_REGEX.matcher(pattern).matches()
+				? pattern.replaceFirst(HYPHEN, ESCAPED_HYPHEN)
+				: pattern;
+		return WORD_COLON_WORD.matcher(regExp).replaceAll(ESCAPED_COLON);
 	}
 
 	private String renderValues(String attributeAndOperator, List<String> encodedValues) {
