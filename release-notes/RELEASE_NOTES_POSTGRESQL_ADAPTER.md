@@ -90,10 +90,11 @@ backend-neutral model (`storage-api`'s `query` package) and rendered either to N
 * **Sort** keeps the TMForum key order and direction. On PostgreSQL ties are broken by creation and id, so paging
   through a sorted result neither repeats nor skips an entity.
 * **Fixed on the brokers:** the shipped `orion-ld` and `scorpio` profiles now render several values and `;` (OR)
-  filters as `|`-joined comparisons, a regex pattern unquoted, and a sorted broker query with `local=true`. Before,
-  Orion-LD failed on multi-value filters, regexes and every `sort`, and Scorpio failed on OR filters.
-* **No accepted deviations yet.** The backend differences observed while testing (e.g. Scorpio 5.0.3 ignoring
-  `sort`) are pending acceptance in ticket 0 and are listed here once accepted.
+  filters as `|`-joined comparisons, and a regex pattern unquoted. Before, Orion-LD failed on multi-value filters
+  and regexes and ANDed `;` filters, and Scorpio failed on OR filters. A sorted broker query now carries
+  `local=true`, without which Orion-LD rejects `orderBy`, so a `sort` no longer answers 500 there.
+* **No accepted deviations yet.** The backend differences observed while testing are pending acceptance in ticket 0
+  and are listed here once accepted.
 
 ## Interim limits (until ticket 1)
 
