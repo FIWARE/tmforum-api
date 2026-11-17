@@ -5,6 +5,8 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Readable;
 import jakarta.inject.Inject;
+import org.fiware.tmforum.common.domain.Money;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.StorageErrorReason;
@@ -13,11 +15,21 @@ import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestCatalog;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestLogicalResource;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestResource;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.QueryFilter.AllOf;
+import org.fiware.tmforum.storage.query.QueryFilter.AnyOf;
+import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
+import org.fiware.tmforum.storage.query.SortKey;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -37,7 +49,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Get, create, update, delete and unfiltered list of the PostgreSQL repository against the k3s PostgreSQL.
+ * Get, create, update, delete and list (filtered, sorted and paged) of the PostgreSQL repository against the k3s
+ * PostgreSQL.
  */
 @MicronautTest(environments = PostgresStorage.ENVIRONMENT)
 class PostgresEntityRepositoryIT {
@@ -62,6 +75,26 @@ class PostgresEntityRepositoryIT {
     private static final int PAGE_SIZE = 2;
     private static final Instant IMPORTED_CREATED_AT = Instant.parse("2020-01-02T03:04:05.123456Z");
     private static final Instant IMPORTED_UPDATED_AT = Instant.parse("2021-06-07T08:09:10.654321Z");
+
+    // seeded by seedQueryCatalogs, numbered in creation order; upper case sorts first in byte order
+    private static final List<String> QUERY_NAMES = List.of("alpha", "Bravo", "charlie", "delta");
+    private static final List<List<String>> QUERY_KEYWORDS =
+            List.of(List.of("a", "shared"), List.of("b"), List.of("shared"), List.of("d"));
+    // the fourth catalog has no price
+    private static final List<Float> QUERY_PRICES = List.of(10f, 2.5f, 30f);
+    private static final String PRICE_UNIT = "EUR";
+    private static final String NAME_ATTRIBUTE = "name";
+    private static final String KEYWORDS_ATTRIBUTE = "keywords";
+    private static final String PRICE_ATTRIBUTE = "price.tmfValue";
+    private static final String INVALID_PATTERN = "(";
+    private static final int PAST_THE_END = 10;
+    private static final String NON_CURRENT_VERSION = "previous";
+    private static final String NON_CURRENT_NAME = "previous name";
+    private static final String INSERT_NON_CURRENT = "INSERT INTO " + QUALIFIED_ENTITY_TABLE
+            + " (id, version, is_current, type, data)"
+            + " SELECT id, $2, false, type, data || jsonb_build_object('name', $3::text) FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1";
+    private static final String RESOURCE_NAME = "resource";
+    private static final String LOGICAL_RESOURCE_NAME = "logical resource";
 
     @Inject
     private PostgresEntityRepository repository;
@@ -240,8 +273,8 @@ class PostgresEntityRepositoryIT {
         IntStream.rangeClosed(1, CATALOG_COUNT).forEach(number -> repository.createDomainEntity(catalog(number))
                 .block());
 
-        PagedResult<TestCatalog> page = repository.findEntities(offset, limit, TestCatalog.class, null, ids, types,
-                null).block();
+        PagedResult<TestCatalog> page = repository.findEntities(offset, limit, TestCatalog.class, null, ids, types)
+                .block();
 
         assertEquals(expectedNumbers.stream().map(PostgresEntityRepositoryIT::catalog).toList(), page.items(),
                 "The page should hold the expected entities in creation order.");
@@ -258,7 +291,7 @@ class PostgresEntityRepositoryIT {
                 TestResource.TYPE, TestResource.class, TestLogicalResource.TYPE, TestLogicalResource.class);
 
         PagedResult<TestResource> page = repository.<TestResource>findEntitiesPolymorphic(null, null,
-                TestResource.TYPE + "," + TestLogicalResource.TYPE, null, null, null, classes::get).block();
+                TestResource.TYPE + "," + TestLogicalResource.TYPE, null, null, classes::get).block();
 
         assertEquals(List.of(resource, logicalResource), page.items(), "Each row should be read as its own type.");
         assertEquals(TestLogicalResource.class, page.items().get(1).getClass(), "The sub-type should be kept.");
@@ -278,9 +311,207 @@ class PostgresEntityRepositoryIT {
                         imported.getId().toString()),
                 "The given timestamps should be stored.");
         assertEquals(List.of(imported, created),
-                repository.findEntities(null, null, TestCatalog.class, null, null, TestCatalog.TYPE, null)
+                repository.findEntities(null, null, TestCatalog.class, null, null, TestCatalog.TYPE)
                         .block().items(),
                 "An imported entity should list by its original creation time.");
+    }
+
+    static Stream<Arguments> filters() {
+        return Stream.of(
+                Arguments.of("equals", string(NAME_ATTRIBUTE, ComparisonOperator.EQUALS, "alpha"), List.of(1)),
+                Arguments.of("any of several values",
+                        string(NAME_ATTRIBUTE, ComparisonOperator.EQUALS, "alpha", "charlie"), List.of(1, 3)),
+                Arguments.of("any list element", string(KEYWORDS_ATTRIBUTE, ComparisonOperator.EQUALS, "shared"),
+                        List.of(1, 3)),
+                Arguments.of("regex", string(NAME_ATTRIBUTE, ComparisonOperator.REGEX, "^[a-c]"), List.of(1, 3)),
+                Arguments.of("regex not-equals idiom",
+                        string(NAME_ATTRIBUTE, ComparisonOperator.REGEX, "^(?!alpha$).*$"), List.of(2, 3, 4)),
+                Arguments.of("nested number", number(ComparisonOperator.GREATER_THAN, "5"), List.of(1, 3)),
+                Arguments.of("and", new AllOf(List.of(string(KEYWORDS_ATTRIBUTE, ComparisonOperator.EQUALS, "shared"),
+                        number(ComparisonOperator.GREATER_THAN, "15"))), List.of(3)),
+                Arguments.of("or", new AnyOf(List.of(string(NAME_ATTRIBUTE, ComparisonOperator.EQUALS, "delta"),
+                        number(ComparisonOperator.LESS_THAN, "5"))), List.of(2, 4)),
+                Arguments.of("no match", string(NAME_ATTRIBUTE, ComparisonOperator.EQUALS, "echo"), List.of()));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("filters")
+    void listIsFiltered(String description, QueryFilter filter, List<Integer> expectedNumbers) {
+        List<TestCatalog> catalogs = seedQueryCatalogs();
+
+        PagedResult<TestCatalog> page = listCatalogs(null, null, new EntityQuery(TestCatalog.class, filter,
+                List.of()));
+
+        assertEquals(numbered(catalogs, expectedNumbers), page.items(),
+                "Only matches should be listed, in creation order.");
+        assertEquals(expectedNumbers.size(), page.totalCount(), "The total count should cover the matches only.");
+    }
+
+    static Stream<Arguments> sorts() {
+        QueryFilter shared = string(KEYWORDS_ATTRIBUTE, ComparisonOperator.EQUALS, "shared");
+        return Stream.of(
+                Arguments.of("string ascending, byte order", null, sortKey(NAME_ATTRIBUTE, ValueType.STRING, false),
+                        List.of(2, 1, 3, 4)),
+                Arguments.of("string descending", null, sortKey(NAME_ATTRIBUTE, ValueType.STRING, true),
+                        List.of(4, 3, 1, 2)),
+                Arguments.of("number ascending, missing last", null, sortKey(PRICE_ATTRIBUTE, ValueType.NUMBER, false),
+                        List.of(2, 1, 3, 4)),
+                Arguments.of("number descending, missing last", null,
+                        sortKey(PRICE_ATTRIBUTE, ValueType.NUMBER, true), List.of(3, 1, 2, 4)),
+                Arguments.of("filtered and sorted", shared, sortKey(PRICE_ATTRIBUTE, ValueType.NUMBER, true),
+                        List.of(3, 1)));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("sorts")
+    void listIsSorted(String description, QueryFilter filter, SortKey sortKey, List<Integer> expectedNumbers) {
+        List<TestCatalog> catalogs = seedQueryCatalogs();
+
+        PagedResult<TestCatalog> page = listCatalogs(null, null, new EntityQuery(TestCatalog.class, filter,
+                List.of(sortKey)));
+
+        assertEquals(numbered(catalogs, expectedNumbers), page.items(), "The matches should be in sort order.");
+    }
+
+    static Stream<Arguments> filteredPages() {
+        // offset, limit, expected catalog numbers; three catalogs have a price, sorted 2, 1, 3
+        return Stream.of(
+                Arguments.of(0, PAGE_SIZE, List.of(2, 1)),
+                Arguments.of(PAGE_SIZE, PAGE_SIZE, List.of(3)),
+                Arguments.of(1, 1, List.of(1)),
+                Arguments.of(PAST_THE_END, PAGE_SIZE, List.of()),
+                Arguments.of(0, 0, List.of()),
+                Arguments.of(null, 0, List.of()));
+    }
+
+    @ParameterizedTest(name = "offset {0}, limit {1}")
+    @MethodSource("filteredPages")
+    void filteredListIsPagedAndCountsEveryMatch(Integer offset, Integer limit, List<Integer> expectedNumbers) {
+        List<TestCatalog> catalogs = seedQueryCatalogs();
+        EntityQuery query = new EntityQuery(TestCatalog.class, number(ComparisonOperator.GREATER_THAN, "0"),
+                List.of(sortKey(PRICE_ATTRIBUTE, ValueType.NUMBER, false)));
+
+        PagedResult<TestCatalog> page = listCatalogs(offset, limit, query);
+
+        assertEquals(numbered(catalogs, expectedNumbers), page.items(), "The page should hold the expected matches.");
+        assertEquals(QUERY_PRICES.size(), page.totalCount(), "The total count should cover all matches.");
+    }
+
+    @Test
+    void filteredListKeepsTheIds() {
+        List<TestCatalog> catalogs = seedQueryCatalogs();
+        EntityQuery query = new EntityQuery(TestCatalog.class,
+                string(KEYWORDS_ATTRIBUTE, ComparisonOperator.EQUALS, "shared"), List.of());
+
+        PagedResult<TestCatalog> page = repository.findEntities(null, null, TestCatalog.class, query,
+                String.join(",", catalogId(2), catalogId(3)), TestCatalog.TYPE).block();
+
+        assertEquals(numbered(catalogs, List.of(3)), page.items(), "Ids and filter should both apply.");
+        assertEquals(1, page.totalCount(), "The total count should cover ids and filter.");
+    }
+
+    static Stream<Arguments> polymorphicFilters() {
+        return Stream.of(
+                Arguments.of(string(NAME_ATTRIBUTE, ComparisonOperator.EQUALS, LOGICAL_RESOURCE_NAME), List.of(1)),
+                Arguments.of(string(NAME_ATTRIBUTE, ComparisonOperator.REGEX, "resource$"), List.of(0, 1)));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("polymorphicFilters")
+    void polymorphicListIsFiltered(QueryFilter filter, List<Integer> expectedIndexes) {
+        TestResource resource = new TestResource(RESOURCE_ID);
+        resource.setName(RESOURCE_NAME);
+        TestLogicalResource logicalResource = new TestLogicalResource(LOGICAL_RESOURCE_ID);
+        logicalResource.setName(LOGICAL_RESOURCE_NAME);
+        repository.createDomainEntity(resource).block();
+        repository.createDomainEntity(logicalResource).block();
+        List<TestResource> resources = List.of(resource, logicalResource);
+        Map<String, Class<? extends TestResource>> classes = Map.of(
+                TestResource.TYPE, TestResource.class, TestLogicalResource.TYPE, TestLogicalResource.class);
+
+        PagedResult<TestResource> page = repository.<TestResource>findEntitiesPolymorphic(null, null,
+                TestResource.TYPE + "," + TestLogicalResource.TYPE, new EntityQuery(TestResource.class, filter,
+                        List.of()), null, classes::get).block();
+
+        assertEquals(expectedIndexes.stream().map(resources::get).toList(), page.items(),
+                "Each type should be filtered and read as its own type.");
+    }
+
+    @ParameterizedTest(name = "seeded: {0}")
+    @ValueSource(booleans = {false, true})
+    void invalidPatternIsAQueryExceptionWhateverTheData(boolean seeded) {
+        if (seeded) {
+            seedQueryCatalogs();
+        }
+        EntityQuery query = new EntityQuery(TestCatalog.class,
+                string(NAME_ATTRIBUTE, ComparisonOperator.REGEX, INVALID_PATTERN), List.of());
+
+        assertThrows(QueryException.class, () -> listCatalogs(0, PAGE_SIZE, query),
+                "A pattern PostgreSQL rejects should be the client's error, even when no row reaches it.");
+    }
+
+    @Test
+    void nonCurrentRowIsNeitherListedNorCounted() {
+        TestCatalog current = catalog(1);
+        current.setName(NAME);
+        repository.createDomainEntity(current).block();
+        query(INSERT_NON_CURRENT, row -> row, current.getId().toString(), NON_CURRENT_VERSION, NON_CURRENT_NAME);
+        EntityQuery previousName = new EntityQuery(TestCatalog.class,
+                string(NAME_ATTRIBUTE, ComparisonOperator.EQUALS, NON_CURRENT_NAME), List.of());
+
+        assertEquals(List.of(current), listCatalogs(null, null, null).items(), "Only the current row should list.");
+        assertEquals(1, listCatalogs(PAST_THE_END, PAGE_SIZE, null).totalCount(),
+                "Only the current row should count.");
+        assertEquals(List.of(), listCatalogs(null, null, previousName).items(),
+                "A non-current row should not match a filter.");
+        assertEquals(0, listCatalogs(PAST_THE_END, PAGE_SIZE, previousName).totalCount(),
+                "A non-current row should not be counted by a filter.");
+    }
+
+    private PagedResult<TestCatalog> listCatalogs(Integer offset, Integer limit, EntityQuery query) {
+        return repository.findEntities(offset, limit, TestCatalog.class, query, null, TestCatalog.TYPE).block();
+    }
+
+    private List<TestCatalog> seedQueryCatalogs() {
+        List<TestCatalog> catalogs = IntStream.range(0, QUERY_NAMES.size()).mapToObj(index -> {
+            TestCatalog catalog = catalog(index + 1);
+            catalog.setName(QUERY_NAMES.get(index));
+            catalog.setKeywords(QUERY_KEYWORDS.get(index));
+            if (index < QUERY_PRICES.size()) {
+                Money price = new Money();
+                price.setUnit(PRICE_UNIT);
+                price.setTmfValue(QUERY_PRICES.get(index));
+                catalog.setPrice(price);
+            }
+            return catalog;
+        }).toList();
+        catalogs.forEach(catalog -> repository.createDomainEntity(catalog).block());
+        return catalogs;
+    }
+
+    private static List<TestCatalog> numbered(List<TestCatalog> catalogs, List<Integer> numbers) {
+        return numbers.stream().map(number -> catalogs.get(number - 1)).toList();
+    }
+
+    private static Comparison string(String path, ComparisonOperator operator, String... values) {
+        return comparison(path, operator, ValueType.STRING, values);
+    }
+
+    private static Comparison number(ComparisonOperator operator, String value) {
+        return comparison(PRICE_ATTRIBUTE, operator, ValueType.NUMBER, value);
+    }
+
+    private static Comparison comparison(String path, ComparisonOperator operator, ValueType valueType,
+                                         String... values) {
+        return new Comparison(attribute(path), operator, valueType, List.of(values));
+    }
+
+    private static SortKey sortKey(String path, ValueType valueType, boolean descending) {
+        return new SortKey(attribute(path), valueType, descending);
+    }
+
+    private static AttributePath attribute(String path) {
+        return new AttributePath(List.of(path.split("\\.")), true);
     }
 
     private static TestCatalog withKeywords(List<String> keywords) {

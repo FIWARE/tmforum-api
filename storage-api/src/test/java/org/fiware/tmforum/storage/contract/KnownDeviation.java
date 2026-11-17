@@ -40,6 +40,66 @@ public enum KnownDeviation {
     REFERENCE_LIST_UPDATE_MERGES,
 
     /**
+     * An equality filter whose string literal holds {@code &} or {@code ;} matches nothing, even the entity storing
+     * exactly that literal, and one holding {@code ,} without those fails the list (the broker answers 500).
+     * Observed on Scorpio 5.0.3 for {@code Catalog.name}, Orion-LD 1.9.0 matches; pending acceptance (ticket 0).
+     * Derived, not observed (the hub API ITs do not run on Scorpio): the hub duplicate check puts the unescaped
+     * callback into the same kind of filter, so a callback holding {@code ,} is expected to fail the registration
+     * and one holding {@code &} or {@code ;} to register twice without a 409.
+     */
+    SEPARATOR_IN_LITERAL_NEVER_MATCHES,
+
+    /**
+     * An equality filter on a list, of plain values or of references by their id, only matches a list of one
+     * element: the mapping stores a longer list as one attribute instance per element (datasetIds), which the
+     * broker's {@code q} does not reach. A hub taking several entity types or event types is thus never found by the
+     * hub lookup. Observed on Orion-LD 1.9.0 by {@code HubLookupIT} (plain values) and by the contract's
+     * reference-id and string-list filter cases; Scorpio 5.0.3 and PostgreSQL 18 match any element. Pending
+     * acceptance (ticket 0).
+     */
+    MULTI_ELEMENT_LIST_NEVER_MATCHES,
+
+    /**
+     * A regex anchored with {@code ^} or {@code $} matches nothing, while an unanchored one matches (the contract's
+     * {@code REGEX_UNANCHORED} case). Observed on
+     * Scorpio 5.0.3, quoted and unquoted. The not-equals idiom still works where {@code optimizeRegexNotEquals}
+     * rewrites it to {@code !=}. Pending acceptance (ticket 0).
+     */
+    ANCHORED_REGEX_NEVER_MATCHES,
+
+    /**
+     * A regex holding any of {@code |,;()"'<>!} (an alternation or a group, among others) fails the list instead of
+     * matching: the NGSI-LD renderer rejects it with a 400, because Orion-LD 1.9.0 or Scorpio 5.0.3 reads each one as
+     * {@code q} syntax, quoted or not, and fails the query or changes it ({@code a|b} becomes "matches a, or attribute
+     * b exists"; {@code "} is dropped on Scorpio, {@code '} is a 500 there). Pending acceptance (ticket 0).
+     */
+    REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED,
+
+    /**
+     * A string comparison ({@code gt}, {@code lt}, ...) follows a linguistic collation instead of byte order, so
+     * {@code "Beta"} is greater than {@code "alpha"}. Observed on Scorpio 5.0.3; Orion-LD 1.9.0 and PostgreSQL 18
+     * compare bytes. Pending acceptance (ticket 0).
+     */
+    STRING_COMPARISON_IS_LINGUISTIC,
+
+    /**
+     * A list with a sort comes back in the order it would have without one, whatever the keys and directions.
+     * Observed on Scorpio 5.0.3, which has no {@code orderBy} parameter and always orders by creation, and on
+     * Orion-LD 1.9.0, which takes {@code orderBy} only with {@code local=true} and then ignores it. Experimental mode
+     * ({@code ORIONLD_EXPERIMENTAL}) was not tested; per its docs it sorts on one key only, descending only via
+     * {@code reverse=true}. Pending acceptance (ticket 0).
+     */
+    SORT_IS_IGNORED,
+
+    /**
+     * A filter holding a number and a boolean comparison, AND-ed or OR-ed, fails the list: the broker answers 500
+     * ("ARRAY types boolean and jsonb cannot be matched") whatever the order, parentheses or quoting. Observed on
+     * Scorpio 5.0.3, on declared and on extension numbers; Orion-LD 1.9.0 and PostgreSQL 18 answer it. Pending
+     * acceptance (ticket 0).
+     */
+    NUMBER_AND_BOOLEAN_FILTER_FAILS,
+
+    /**
      * {@code findEntitiesPolymorphic} with several ids and several types fails with (LIST, UNKNOWN).
      */
     SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL

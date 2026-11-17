@@ -6,6 +6,7 @@ import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcPermissionDeniedException;
 import io.r2dbc.spi.R2dbcTimeoutException;
 import io.r2dbc.spi.R2dbcTransientResourceException;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class PostgresFailuresTest {
@@ -106,5 +108,36 @@ class PostgresFailuresTest {
 
         assertSame(original, PostgresFailures.failure(StorageOperation.LIST, MESSAGE, original),
                 "A storage exception should not be wrapped again.");
+    }
+
+    static Stream<Arguments> queryFailures() {
+        return Stream.of(
+                Arguments.of(Named.of("invalid pattern",
+                        new R2dbcBadGrammarException(DRIVER_MESSAGE, PostgresFailures.INVALID_REGULAR_EXPRESSION)),
+                        QueryException.class),
+                Arguments.of(Named.of("wrapped invalid pattern", new IllegalStateException(
+                        new R2dbcBadGrammarException(DRIVER_MESSAGE, PostgresFailures.INVALID_REGULAR_EXPRESSION))),
+                        QueryException.class),
+                Arguments.of(Named.of("query exception", new QueryException(MESSAGE)), QueryException.class),
+                Arguments.of(Named.of("other state", new R2dbcBadGrammarException(DRIVER_MESSAGE,
+                        UNDEFINED_TABLE_STATE)), StorageException.class),
+                Arguments.of(Named.of("unavailable", new R2dbcTimeoutException(DRIVER_MESSAGE)),
+                        StorageException.class));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("queryFailures")
+    void queryFailureIsTheClientsOnlyForAnInvalidPattern(Throwable failure,
+                                                         Class<? extends RuntimeException> expected) {
+        assertInstanceOf(expected, PostgresFailures.queryFailure(StorageOperation.LIST, MESSAGE, failure),
+                "Only an invalid pattern should become the client's error.");
+    }
+
+    @Test
+    void queryExceptionPassesUnchanged() {
+        QueryException original = new QueryException(MESSAGE);
+
+        assertSame(original, PostgresFailures.queryFailure(StorageOperation.LIST, MESSAGE, original),
+                "A query exception should not be wrapped.");
     }
 }

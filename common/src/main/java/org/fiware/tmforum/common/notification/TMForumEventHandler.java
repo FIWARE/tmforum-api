@@ -16,11 +16,14 @@ import org.fiware.tmforum.common.notification.checkers.tmforum.CreateTmForumEven
 import org.fiware.tmforum.common.notification.checkers.tmforum.DeleteTmForumEventChecker;
 import org.fiware.tmforum.common.notification.checkers.tmforum.StateChangeTmForumEventChecker;
 import org.fiware.tmforum.common.notification.checkers.tmforum.TmForumEventChecker;
-import org.fiware.tmforum.common.querying.QueryParams;
-import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQueryResolver;
 import org.fiware.tmforum.storage.EntityReadRepository;
 import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 import reactor.core.publisher.Mono;
 
@@ -39,15 +42,16 @@ public class TMForumEventHandler extends EventHandler {
 
 	public static final int SUBSCRIPTION_PAGE_SIZE = 100;
 
-	private final QueryParser queryParser;
+	private static final String ENTITIES_ATTRIBUTE = "entities";
+	private static final String EVENT_TYPES_ATTRIBUTE = "eventTypes";
+
 	private final SubscriptionQueryResolver subscriptionQueryResolver;
 	private final EntityReadRepository repository;
 
-	public TMForumEventHandler(QueryParser queryParser, SubscriptionQueryResolver subscriptionQueryResolver,
+	public TMForumEventHandler(SubscriptionQueryResolver subscriptionQueryResolver,
 							   NotificationSender notificationSender, EntityVOMapper entityVOMapper,
 							   EntityReadRepository repository, EventMapper eventMapper, ObjectMapper objectMapper) {
 		super(notificationSender, entityVOMapper, eventMapper, objectMapper);
-		this.queryParser = queryParser;
 		this.subscriptionQueryResolver = subscriptionQueryResolver;
 		this.repository = repository;
 	}
@@ -67,9 +71,20 @@ public class TMForumEventHandler extends EventHandler {
 				SUBSCRIPTION_PAGE_SIZE,
 				TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 				TMForumSubscription.class,
-				queryParser.toNgsiLdQuery(TMForumSubscription.class,
-						String.format("entities=%s&eventTypes=%s", eventDetails.entityType(), eventDetails.eventType())).query()
+				subscriptionsTaking(eventDetails)
 		).map(PagedResult::items);
+	}
+
+	private static EntityQuery subscriptionsTaking(EventDetails eventDetails) {
+		QueryFilter filter = new QueryFilter.AllOf(List.of(
+				listContains(ENTITIES_ATTRIBUTE, eventDetails.entityType()),
+				listContains(EVENT_TYPES_ATTRIBUTE, eventDetails.eventType())));
+		return new EntityQuery(TMForumSubscription.class, filter, List.of());
+	}
+
+	private static QueryFilter listContains(String attribute, String value) {
+		return new QueryFilter.Comparison(new AttributePath(List.of(attribute), true), ComparisonOperator.EQUALS,
+				ValueType.STRING, List.of(value));
 	}
 
 	private <T> Mono<Void> handle(T entity, EventDetails eventDetails, TmForumEventChecker eventChecker) {

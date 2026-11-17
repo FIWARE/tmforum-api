@@ -42,10 +42,12 @@ final class PostgresStatements {
 
     /**
      * Runs one statement on a connection the caller owns, e.g. inside {@link #inTransaction}.
+     * The statement is created on subscription, so a chain never prepares a statement an earlier step fails.
      */
     static <R> Flux<R> execute(Connection connection, String sql, Function<Statement, Statement> binder,
                                Function<Result, Publisher<R>> resultMapper) {
-        return Flux.from(binder.apply(connection.createStatement(sql)).execute()).flatMap(resultMapper);
+        return Flux.defer(() -> Flux.from(binder.apply(connection.createStatement(sql)).execute()))
+                .flatMap(resultMapper);
     }
 
     // the original failure is what the caller reports, a failing rollback must not replace it

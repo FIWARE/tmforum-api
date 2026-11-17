@@ -35,6 +35,11 @@ attribute for them. Extension properties are written as sent, empty values inclu
 is read first, so two concurrent updates of the same attribute cannot
 interleave: the last one wins whole.
 
+A list is one `SELECT ... WHERE is_current AND type = ANY(...)` with the TMForum filter rendered by
+`JsonbQueryRenderer`: each comparison is an `EXISTS` over the values a jsonpath selects, with every literal bound
+as a parameter, and `ORDER BY` the sort keys, then `created_at, id`. There are no indexes for filters
+or sorts yet, so a filtered list scans every current row of its types.
+
 ## Configuration
 
 Put this block in the `application-postgresql.yaml` of the API module. Both datasources must point at the same
@@ -117,7 +122,7 @@ mvn verify -pl product-catalog -Dbroker=postgresql      # the module's full IT s
 ```
 
 With `-Dbroker=postgresql`, failsafe excludes the tag `not-on-postgresql` (`StorageTags` in `common`):
-`@RequiresQueryTranslation` (ticket 7), `@RequiresHubSupport` (tickets 1 and 7) and `@BrokerOnly` (never). The
+`@RequiresHubSupport` (ticket 1) and `@BrokerOnly` (never). The
 broker jobs exclude `@PostgresqlOnly` ITs the same way, so a `@PostgresqlOnly` IT picked with `-Dit.test` (e.g.
 `GetIssuesOneQueryIT` or the `*PostgresOutboxIT`s) also needs `-Dbroker=postgresql`; without it failsafe finds no
 test to run and fails.

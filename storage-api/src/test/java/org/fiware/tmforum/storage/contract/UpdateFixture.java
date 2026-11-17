@@ -67,4 +67,14 @@ public interface UpdateFixture<T> extends EntityFixture<T> {
      * The object attribute; {@link #newEntity} sets it.
      */
     Object objectValue(T entity);
+
+    /**
+     * Declared name of the mutable attribute, which must be a string.
+     */
+    String mutableAttribute();
+
+    /**
+     * Sets the mutable attribute and returns the entity.
+     */
+    T withMutableValue(T entity, String value);
 }

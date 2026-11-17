@@ -1,18 +1,21 @@
 package org.fiware.tmforum.productcatalog.storage;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.product.Category;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest;
 import org.fiware.tmforum.storage.contract.EntityFixture;
+import org.fiware.tmforum.storage.contract.QueryFixture;
 import org.fiware.tmforum.storage.contract.ReferenceFixture;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
 import org.fiware.tmforum.storage.postgresql.PostgresEntityRepository;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -37,6 +40,11 @@ public class PostgresEntityRepositoryContractIT extends AbstractEntityRepository
 	}
 
 	@Override
+	protected boolean isClientQueryError(Throwable failure) {
+		return failure instanceof QueryException;
+	}
+
+	@Override
 	protected EntityRepository repository() {
 		return repository;
 	}
@@ -49,6 +57,11 @@ public class PostgresEntityRepositoryContractIT extends AbstractEntityRepository
 	@Override
 	protected EntityFixture<Category> otherFixture() {
 		return new CategoryFixture();
+	}
+
+	@Override
+	protected List<QueryFixture<?>> queryFixtures() {
+		return List.of(new ProductOfferingPriceQueryFixture(), new SubscriptionQueryFixture());
 	}
 
 	@Override

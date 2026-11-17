@@ -133,4 +133,15 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 	private static RelatedParty relatedParty() {
 		return new RelatedParty(String.format(PARTY_ID_FORMAT, UUID.randomUUID()));
 	}
+
+	@Override
+	public String mutableAttribute() {
+		return NAME_ATTRIBUTE;
+	}
+
+	@Override
+	public Catalog withMutableValue(Catalog catalog, String value) {
+		catalog.setName(value);
+		return catalog;
+	}
 }

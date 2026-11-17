@@ -24,6 +24,7 @@ common/                    shared base code (all modules depend on it)
   .../common/exception/    ExceptionHandler implementations
   .../common/health/       readiness/liveness indicators (@Client(id="ngsihealth"))
   .../common/mapping/      UnknownPreservingBase (VO base class), FieldCleaningSerializer and TmForumMappingModule (Jackson 3 modules)
+  .../common/querying/     QueryParser (TMForum filter/sort -> NGSI-LD q/orderBy), SubscriptionQueryResolver (in-memory hub filter)
   .../common/validation/   ReferenceValidationService (referential integrity on create/update), ReferencedEntity
   .../common/test/         AbstractApiIT, TestServerHostConfigurer, FirstMatchConfigContextBuilder (test helpers in main code)
 storage-api/               backend-neutral storage port (EntityRepository, EntityReadRepository, ReferenceReadRepository, StoredReference);
@@ -73,5 +74,6 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - `common/.../repository/{TmForumRepository,NgsiLdBaseRepository,BrokerBackedReferencesRepository}.java`: the concrete NGSI-LD storage, the NGSI-LD adapter behind the `storage-api` port; `product-catalog/.../storage/NgsiLdEntityRepositoryContractIT` runs the port contract against it.
 - `common/.../rest/AbstractApiController.java`: the only place TMForum events are fired (after `create`/`patch`, fire-and-forget through `TMForumEventHandler`).
 - `common/.../test/AbstractApiIT.java`: per-test cleanup goes through the broker's `EntitiesApiClient`; every API IT passes one to its constructor.
+- `common/.../querying/QueryParser.java`: TMForum filter parsing (front half) and NGSI-LD rendering (back half), being split by ticket 90; `common/.../test/{StorageTags,RequiresQueryTranslation,RequiresHubSupport}.java` gate ITs per backend (`-Dbroker=postgresql` excludes `not-on-postgresql`).
 - `findEntities` with a `query` is called outside list endpoints by `TMForumEventHandler.getSubscriptions` and `AbstractSubscriptionApiController` (duplicate hub check).
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.

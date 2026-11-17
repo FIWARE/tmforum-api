@@ -8,7 +8,7 @@ The TMForum APIs can store their entities in PostgreSQL 18 instead of an NGSI-LD
 The NGSI-LD adapter stays the default; ticket 9 makes the backend a regular setting and flips the default.
 
 A PostgreSQL deployment needs no context broker for entity storage. It still needs one for TMForum hub
-registration until ticket 1 lands (see [Interim limits](#interim-limits-until-tickets-1-and-7)).
+registration until ticket 1 lands (see [Interim limits](#interim-limits-until-ticket-1)).
 
 ## Enabling it
 
@@ -76,13 +76,42 @@ the versioning columns `version`, `revision`, `is_current`, which keep their def
   software-management now fires an update event on every backend, the broker included. The resource-inventory and
   resource-catalog sub-types still fire no events, because their `EventMapper`s do not map them.
 
-## Interim limits (until tickets 1 and 7)
+## Query translation
 
-* **No list filters or sorting.** `GET /<resource>` supports `offset`, `limit`, `fields` and the total count, but a
-  filter or `sort` answers 500 until ticket 7 translates queries to `jsonb`.
-* **No TMForum hubs.** Registering a hub (`POST /hub`) needs a broker until ticket 1, because it also creates an
-  NGSI-LD subscription, and its duplicate check needs ticket 7. Looking up the hubs of an event also needs ticket 7,
-  so the outbox keeps retrying such events until retention discards them.
+List filters, `sort` and paging work on PostgreSQL. The TMForum filter is parsed once into a backend-neutral model
+(`storage-api`'s `query` package) and rendered either to NGSI-LD `q`/`orderBy` or to a SQL `WHERE`/`ORDER BY` over
+the `jsonb` document; every user value is a bound parameter.
+
+* **Date-times compare as strings** on every backend, because both brokers do: `lastUpdate.gt=2024-01-01T10:00:00Z`
+  compares the stored ISO string in byte order. A literal with an offset, a fraction or only a date therefore
+  compares by its characters, not by the instant it denotes, as on the brokers.
+* **Regex:** one pattern per attribute, matched with PostgreSQL's regex dialect; an invalid pattern answers 400 on
+  PostgreSQL as on the brokers.
+* **Several values in one filter** (`ngsildOrQueryValue`, `,` by default) are OR-ed on every backend.
+* **Sort on PostgreSQL** keeps the TMForum key order and direction, and breaks ties by creation and id, so paging
+  through a sorted result neither repeats nor skips an entity.
+* **Fixed on the brokers:** the shipped `orion-ld` and `scorpio` profiles now render several values and `;` (OR)
+  filters as `|`-joined comparisons, and a regex pattern unquoted. Before, Orion-LD failed on multi-value filters
+  and regexes and ANDed `;` filters, and Scorpio failed on OR filters. A deployment that sets
+  `includeAttributeInList=true` now joins the comparisons of one filter with `ngsildOrQueryKey` instead of
+  `ngsildOrQueryValue`. A date-like regex pattern (`2024-01`) is sent with an escaped `-`, which Orion-LD would
+  otherwise read as a date-time and fail on or crash.
+* **Changed on the brokers,** visible to clients:
+  * A regex holding any of `|,;()"'<>!` now answers 400 on both brokers, because their `q` language reads these
+    characters as syntax, quoted or not. Before, the pattern was forwarded quoted, and Scorpio answered some of
+    them.
+  * A sorted broker query now carries `local=true`, without which Orion-LD rejects `orderBy`. A `sort` therefore
+    answers 200 instead of 500 on Orion-LD, but the result stays unsorted there, as on Scorpio. Only unsorted
+    results were observed. `ORIONLD_EXPERIMENTAL` was not tested; per Orion-LD's docs it sorts on the first key
+    only, with the direction from `reverse=true` rather than `;desc`, so `-name` or `name,version` would still
+    come back in the wrong order.
+* **No accepted deviations yet.** The backend differences observed while testing are pending acceptance in ticket 0
+  and are listed here once accepted.
+
+## Interim limits (until ticket 1)
+
+* **No TMForum hub registration.** Registering a hub (`POST /hub`) needs a broker until ticket 1, because it also
+  creates an NGSI-LD subscription. Looking up the hubs of an event works on PostgreSQL.
 
 ## Tests and CI
 
@@ -93,9 +122,8 @@ the versioning columns `version`, `revision`, `is_current`, which keep their def
 * `test-brokers.yaml` runs the matrix {scorpio, orion-ld, postgresql} x {in-memory, redis}.
 * ITs the storage under test cannot run yet carry a JUnit tag, and failsafe excludes `not-on-${broker}`
   (`common`'s `StorageTags`):
-  * `@RequiresQueryTranslation` (list filters): lifted with ticket 7.
-  * `@RequiresHubSupport` (hub registration/deletion and event delivery through the API): lifted when both
-    tickets 1 and 7 have landed.
+  * `@RequiresHubSupport` (hub registration/deletion and event delivery through the API): lifted when ticket 1
+    has landed.
   * `@BrokerOnly` (NGSI-LD adapter, NGSI-LD subscriptions, `DeleteEventBrokerIT`): never runs on PostgreSQL.
   * `@PostgresqlOnly` (PostgreSQL-pinned ITs such as the outbox and one-query ITs): runs only with
     `-Dbroker=postgresql`.
