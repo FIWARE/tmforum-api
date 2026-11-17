@@ -11,6 +11,7 @@ import org.reactivestreams.Publisher;
 /**
  * Adds {@code local=true} to every broker query carrying an {@code orderBy}: Orion-LD rejects {@code orderBy} without
  * it (501), and {@code EntitiesApiClient} has no such parameter. Without context-source registrations it changes nothing.
+ * Orion-LD 1.9.0 then sorts only in experimental mode; otherwise it ignores the sort like Scorpio.
  */
 @Filter(serviceId = "ngsi")
 public class LocalOrderByFilter implements HttpClientFilter {

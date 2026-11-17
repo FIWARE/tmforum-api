@@ -42,7 +42,7 @@ public class AppliedCustomerBillingRateListQueryIT extends AbstractApiIT {
 	private static final String NAME_FORMAT = "rate-%02d";
 	private static final String PATH = "/appliedCustomerBillingRate";
 	private static final int ALL = 100;
-	private static final String SCORPIO_ENVIRONMENT = "scorpio";
+	private static final String POSTGRESQL_ENVIRONMENT = "postgresql";
 
 	private final EntityRepository entityRepository;
 	private final HttpClient httpClient;
@@ -85,8 +85,8 @@ public class AppliedCustomerBillingRateListQueryIT extends AbstractApiIT {
 
 		assertEquals(HttpStatus.OK, response.getStatus());
 		List<String> observed = ids(response);
-		if (environment.getActiveNames().contains(SCORPIO_ENVIRONMENT)) {
-			// Scorpio 5.0.3 ignores orderBy (KnownDeviation.SORT_IS_IGNORED, pending acceptance (ticket 0))
+		if (!environment.getActiveNames().contains(POSTGRESQL_ENVIRONMENT)) {
+			// both brokers ignore orderBy (KnownDeviation.SORT_IS_IGNORED, pending acceptance (ticket 0))
 			assertEquals(Set.copyOf(allIds()), Set.copyOf(observed));
 			return;
 		}

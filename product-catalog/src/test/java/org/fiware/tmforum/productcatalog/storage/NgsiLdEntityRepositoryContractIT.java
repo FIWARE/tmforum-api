@@ -44,10 +44,9 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	@Override
 	protected Set<KnownDeviation> knownDeviations() {
 		Set<KnownDeviation> deviations = EnumSet.of(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY,
-				KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY);
+				KnownDeviation.EXTENSION_OVERRIDES_DECLARED_PROPERTY, KnownDeviation.SORT_IS_IGNORED);
 		if (!environment.getActiveNames().contains(ORION_LD_ENVIRONMENT)) {
 			deviations.add(KnownDeviation.SEPARATOR_IN_LITERAL_NEVER_MATCHES);
-			deviations.add(KnownDeviation.SORT_IS_IGNORED);
 			deviations.add(KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES);
 			deviations.add(KnownDeviation.STRING_COMPARISON_IS_LINGUISTIC);
 			return deviations;

@@ -60,38 +60,6 @@ public enum KnownDeviation {
     MULTI_ELEMENT_LIST_NEVER_MATCHES,
 
     /**
-     * An equality filter with several values fails with (LIST, UNKNOWN). Orion-LD 1.9.0 rejects (400) the orion-ld
-     * profile's {@code attr==("a";"b")} ({@code ngsildOrQueryValue: ";"}, {@code encloseQuery: true}) but accepts
-     * {@code attr=="a","b"}; Scorpio 5.0.3 fails (500) on the scorpio profile's {@code attr=="a","b"}. Not proposed
-     * for acceptance: a defect of the shipped NGSI-LD profiles (main and test), which Step 7 fixes.
-     */
-    VALUE_LIST_FAILS,
-
-    /**
-     * {@code AnyOf} matches like {@code AllOf}: the orion-ld profile ({@code ngsildOrQueryKey: ";"}) joins its
-     * filters with {@code ;}, NGSI-LD's AND. Observed on Orion-LD 1.9.0, which ORs them with {@code |}. Not
-     * proposed for acceptance: a silent wrong result caused by the shipped orion-ld profile (main and test), which
-     * Step 7 fixes.
-     */
-    ANY_OF_MATCHES_AS_ALL_OF,
-
-    /**
-     * {@code AnyOf} breaks: the scorpio profile ({@code ngsildOrQueryKey: ","}) joins its filters with {@code ,},
-     * which Scorpio 5.0.3 does not read as OR. Over comparisons the list fails with (LIST, UNKNOWN) (500), over
-     * {@code AllOf} groups it matches nothing. Scorpio ORs with {@code |}. Not proposed for acceptance: a defect of
-     * the shipped scorpio profile (main and test), which Step 7 fixes.
-     */
-    ANY_OF_FAILS_OR_MATCHES_NOTHING,
-
-    /**
-     * A regex filter fails with (LIST, UNKNOWN): the renderer quotes the pattern, which Orion-LD 1.9.0
-     * rejects (400), while it accepts it unquoted. The not-equals idiom still works where
-     * {@code optimizeRegexNotEquals} rewrites it to {@code !=}. Not proposed for acceptance: a defect of the
-     * NGSI-LD renderer, which Step 7 fixes.
-     */
-    REGEX_FAILS,
-
-    /**
      * A regex anchored with {@code ^} or {@code $} matches nothing, while an unanchored one matches (the contract's
      * {@code REGEX_UNANCHORED} case). Observed on
      * Scorpio 5.0.3, quoted and unquoted. The not-equals idiom still works where {@code optimizeRegexNotEquals}
@@ -107,17 +75,11 @@ public enum KnownDeviation {
     STRING_COMPARISON_IS_LINGUISTIC,
 
     /**
-     * A list with a sort fails with (LIST, UNKNOWN): Orion-LD 1.9.0 rejects {@code orderBy} without
-     * {@code local=true} (501), which the adapter never sends. Not proposed for acceptance: a defect of the NGSI-LD
-     * adapter, which Step 7 fixes. With {@code local=true} Orion-LD 1.9.0 sorts on one attribute only and takes the
-     * direction from {@code reverse=true}, not from {@code ;desc}; what remains after the fix is listed then.
-     */
-    SORT_FAILS,
-
-    /**
      * A list with a sort comes back in the order it would have without one, whatever the keys and directions.
-     * Observed on Scorpio 5.0.3, which has no {@code orderBy} parameter and always orders by creation, so no
-     * request change helps. Pending acceptance (ticket 0).
+     * Observed on Scorpio 5.0.3, which has no {@code orderBy} parameter and always orders by creation, and on
+     * Orion-LD 1.9.0, which takes {@code orderBy} only with {@code local=true} and then ignores it unless it runs
+     * with {@code ORIONLD_EXPERIMENTAL} (one key, descending only via {@code reverse=true}). Pending acceptance
+     * (ticket 0).
      */
     SORT_IS_IGNORED,
 

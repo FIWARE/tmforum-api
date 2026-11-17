@@ -98,7 +98,7 @@ public class ListQueryIT extends AbstractApiIT {
 	private static final String NAME_FORMAT = "offering-%03d";
 	private static final String TOTAL_COUNT_HEADER = "X-Total-Count";
 	private static final String RESULT_COUNT_HEADER = "X-Result-Count";
-	private static final String SCORPIO_ENVIRONMENT = "scorpio";
+	private static final String POSTGRESQL_ENVIRONMENT = "postgresql";
 
 	// seeded once for the class; the cleanup of the next IT class removes them
 	private static List<Offering> offerings;
@@ -376,9 +376,9 @@ public class ListQueryIT extends AbstractApiIT {
 		return offerings.stream().map(Offering::id).toList();
 	}
 
-	// Scorpio 5.0.3 ignores orderBy (KnownDeviation.SORT_IS_IGNORED, pending acceptance (ticket 0))
+	// both brokers ignore orderBy (KnownDeviation.SORT_IS_IGNORED, pending acceptance (ticket 0))
 	private boolean sortIgnored() {
-		return environment.getActiveNames().contains(SCORPIO_ENVIRONMENT);
+		return !environment.getActiveNames().contains(POSTGRESQL_ENVIRONMENT);
 	}
 
 	private static boolean compares(String operator, int comparison) {

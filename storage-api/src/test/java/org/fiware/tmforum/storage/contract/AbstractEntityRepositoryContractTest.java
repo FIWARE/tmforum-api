@@ -535,11 +535,10 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     enum FilterCase {
         STRING_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.EQUALS, List.of(BETA), Set.of(1)),
         STRING_EQUALS_ANY_VALUE(Attribute.STRING, WORDS, ComparisonOperator.EQUALS, List.of(ALPHA, ALPHABET),
-                Set.of(0, 2), KnownDeviation.VALUE_LIST_FAILS),
+                Set.of(0, 2)),
         NUMBER_EQUALS(Attribute.NUMBER, NUMBERS, ComparisonOperator.EQUALS, List.of(NUMBER_LITERAL), Set.of(2)),
         NUMBER_EQUALS_ANY_VALUE(Attribute.NUMBER, NUMBERS, ComparisonOperator.EQUALS,
-                List.of(String.valueOf(NUMBERS.get(0)), String.valueOf(NUMBERS.get(1))), Set.of(0, 1),
-                KnownDeviation.VALUE_LIST_FAILS),
+                List.of(String.valueOf(NUMBERS.get(0)), String.valueOf(NUMBERS.get(1))), Set.of(0, 1)),
         NUMBER_GREATER_THAN(Attribute.NUMBER, NUMBERS, ComparisonOperator.GREATER_THAN, List.of(NUMBER_LITERAL),
                 Set.of(1)),
         NUMBER_GREATER_THAN_EQUALS(Attribute.NUMBER, NUMBERS, ComparisonOperator.GREATER_THAN_EQUALS,
@@ -550,9 +549,9 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         BOOLEAN_EQUALS(Attribute.BOOLEAN, List.of(true, false), ComparisonOperator.EQUALS,
                 List.of(Boolean.TRUE.toString()), Set.of(0)),
         REGEX(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^" + ALPHA), Set.of(0, 2),
-                KnownDeviation.REGEX_FAILS, KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES),
+                KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES),
         REGEX_UNANCHORED(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of(UNANCHORED_PATTERN),
-                Set.of(1, 2), KnownDeviation.REGEX_FAILS),
+                Set.of(1, 2)),
         REGEX_NOT_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^(?!" + ALPHA + "$).*$"),
                 Set.of(1, 2)),
         NESTED_STRING_EQUALS(Attribute.NESTED_STRING, List.of(ALPHA, BETA), ComparisonOperator.EQUALS,
@@ -576,7 +575,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         private final ComparisonOperator operator;
         private final List<String> literals;
         private final Set<Integer> matches;
-        // a deviation in FAILING_FILTERS fails the list, any other one makes it match nothing
+        // each one makes the filter match nothing
         private final Set<KnownDeviation> deviations;
 
         FilterCase(Attribute attribute, List<?> seeds, ComparisonOperator operator, List<String> literals,
@@ -596,10 +595,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         }
     }
 
-    // the filter deviations under which the list fails with (LIST, UNKNOWN)
-    private static final Set<KnownDeviation> FAILING_FILTERS = Set.of(KnownDeviation.VALUE_LIST_FAILS,
-            KnownDeviation.REGEX_FAILS);
-
     @ParameterizedTest
     @EnumSource(FilterCase.class)
     void findEntitiesFilters(FilterCase filterCase) {
@@ -612,16 +607,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 .toList();
         Comparison comparison = new Comparison(queries.path(filterCase.attribute), filterCase.operator,
                 filterCase.valueType, filterCase.literals);
-        Set<KnownDeviation> deviations = filterCase.deviations.stream()
-                .filter(knownDeviations()::contains)
-                .collect(Collectors.toSet());
-        if (deviations.stream().anyMatch(FAILING_FILTERS::contains)) {
-            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
-                    () -> find(queries, comparison, List.of(), ids, FIRST_OFFSET, LIST_LIMIT));
-            return;
-        }
-        // any other deviation of the case leaves the filter matching nothing
-        Set<Integer> matches = deviations.isEmpty() ? filterCase.matches : Set.of();
+        boolean deviates = filterCase.deviations.stream().anyMatch(knownDeviations()::contains);
+        Set<Integer> matches = deviates ? Set.of() : filterCase.matches;
         Set<URI> expected = matches.stream()
                 .filter(match -> reachable(filterCase.attribute, filterCase.seeds.get(match)))
                 .map(ids::get)
@@ -718,22 +705,16 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 List.copyOf(seeds.keySet()), FIRST_OFFSET, LIST_LIMIT)));
     }
 
-    // indexes of NAMED_AND_NUMBERED, also as matched under ANY_OF_MATCHES_AS_ALL_OF and ANY_OF_FAILS_OR_MATCHES_NOTHING
+    // indexes of NAMED_AND_NUMBERED
     enum CompositeCase {
-        ALL_OF(Set.of(1), Set.of(1), Optional.of(Set.of(1))),
-        ANY_OF(Set.of(1, 3), Set.of(1), Optional.empty()),
-        ANY_OF_ALL_OFS(Set.of(0, 3), Set.of(), Optional.of(Set.of()));
+        ALL_OF(Set.of(1)),
+        ANY_OF(Set.of(1, 3)),
+        ANY_OF_ALL_OFS(Set.of(0, 3));
 
         private final Set<Integer> matches;
-        private final Set<Integer> matchesAsAllOf;
-        // empty if the list fails with (LIST, UNKNOWN)
-        private final Optional<Set<Integer>> matchesUnderFailingAnyOf;
 
-        CompositeCase(Set<Integer> matches, Set<Integer> matchesAsAllOf,
-                      Optional<Set<Integer>> matchesUnderFailingAnyOf) {
+        CompositeCase(Set<Integer> matches) {
             this.matches = matches;
-            this.matchesAsAllOf = matchesAsAllOf;
-            this.matchesUnderFailingAnyOf = matchesUnderFailingAnyOf;
         }
     }
 
@@ -757,19 +738,7 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                             numberIs(queries, ComparisonOperator.LESS_THAN, HIGH_NUMBER_LITERAL)))));
         };
 
-        Set<Integer> matches = compositeCase.matches;
-        if (knownDeviations().contains(KnownDeviation.ANY_OF_MATCHES_AS_ALL_OF)) {
-            matches = compositeCase.matchesAsAllOf;
-        }
-        if (knownDeviations().contains(KnownDeviation.ANY_OF_FAILS_OR_MATCHES_NOTHING)) {
-            if (compositeCase.matchesUnderFailingAnyOf.isEmpty()) {
-                assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
-                        () -> find(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT));
-                return;
-            }
-            matches = compositeCase.matchesUnderFailingAnyOf.get();
-        }
-        assertEquals(matches.stream().map(ids::get).collect(Collectors.toSet()),
+        assertEquals(compositeCase.matches.stream().map(ids::get).collect(Collectors.toSet()),
                 Set.copyOf(findIds(queries, filter, List.of(), ids, FIRST_OFFSET, LIST_LIMIT)));
     }
 
@@ -822,11 +791,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 create(queries, queries.newEntity(queries.newId(), Map.of(Attribute.NUMBER, number))), number));
         List<URI> ids = List.copyOf(numbers.keySet());
         List<SortKey> sort = List.of(sortKey(queries, Attribute.NUMBER, false));
-        if (knownDeviations().contains(KnownDeviation.SORT_FAILS)) {
-            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN,
-                    () -> find(queries, null, sort, ids, FIRST_OFFSET, PAGE_SIZE));
-            return;
-        }
 
         List<URI> paged = new ArrayList<>();
         for (int offset = FIRST_OFFSET; offset < ids.size(); offset += PAGE_SIZE) {
@@ -963,12 +927,8 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                         .map(page -> idsOf(queries, page.items())));
     }
 
-    // a sort the backend fails or ignores is asserted as such
+    // a sort the backend ignores is asserted as such
     private void assertOrder(List<URI> expected, Supplier<Mono<List<URI>>> call) {
-        if (knownDeviations().contains(KnownDeviation.SORT_FAILS)) {
-            assertFailure(StorageOperation.LIST, StorageErrorReason.UNKNOWN, call::get);
-            return;
-        }
         List<URI> actual = call.get().block(TIMEOUT);
         assertNotNull(actual);
         if (knownDeviations().contains(KnownDeviation.SORT_IS_IGNORED)) {
