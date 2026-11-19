@@ -5,6 +5,9 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Result;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.productcatalog.api.CatalogApiTestClient;
 import org.fiware.productcatalog.api.EventsSubscriptionApiTestClient;
@@ -19,11 +22,14 @@ import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.test.PostgresqlOnly;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.EntityRepository;
+import org.fiware.tmforum.storage.postgresql.OutboxProperties;
 import org.fiware.tmforum.storage.postgresql.PostgresStorage;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import reactor.core.publisher.Flux;
 import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
@@ -46,12 +52,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, environments = PostgresStorage.ENVIRONMENT,
 		contextBuilder = FirstMatchConfigContextBuilder.class)
 @Property(name = RecordingHubController.ENABLED_PROPERTY, value = "true")
+// the module's test config turns the dispatcher off for the outbox ITs; this IT needs it to deliver
+@Property(name = OutboxProperties.ENABLED_PROPERTY, value = "true")
 public class HubEventDeliveryIT extends AbstractApiIT {
 
 	private static final String EVENT_TYPE_KEY = "eventType";
 	private static final String EVENT_TYPE_QUERY = "eventType=";
 	private static final Duration DELIVERY_TIMEOUT = Duration.ofSeconds(20);
 	private static final Duration QUIET_PERIOD = Duration.ofSeconds(5);
+	private static final String CLEAR_OUTBOX = "DELETE FROM " + PostgresStorage.QUALIFIED_OUTBOX_TABLE;
 
 	/**
 	 * The registered hubs, each taking one event type; {@link #OTHER_ENTITY} must never get a catalog event.
@@ -77,11 +86,13 @@ public class HubEventDeliveryIT extends AbstractApiIT {
 	private final RecordingHubController hubs;
 	private final EmbeddedServer server;
 	private final EntityRepository entityRepository;
+	private final ConnectionFactory connectionFactory;
 	private final List<String> hubIds = new ArrayList<>();
 
 	public HubEventDeliveryIT(CatalogApiTestClient catalogApiTestClient,
 							  EventsSubscriptionApiTestClient hubApiTestClient, RecordingHubController hubs,
 							  EmbeddedServer server, EntityRepository entityRepository,
+							  ConnectionFactory connectionFactory,
 							  EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
 							  GeneralProperties generalProperties) {
 		super(entitiesApiClient, objectMapper, generalProperties);
@@ -90,11 +101,25 @@ public class HubEventDeliveryIT extends AbstractApiIT {
 		this.hubs = hubs;
 		this.server = server;
 		this.entityRepository = entityRepository;
+		this.connectionFactory = connectionFactory;
 	}
 
 	@Override
 	protected String getEntityType() {
 		return Catalog.TYPE_CATALOG;
+	}
+
+	/**
+	 * Earlier ITs leave outbox rows of other types behind (e.g. category creates), which the dispatcher would deliver
+	 * ahead of, and next to, this test's events.
+	 */
+	@BeforeEach
+	public void clearOutbox() {
+		Flux.usingWhen(connectionFactory.create(),
+						connection -> Flux.from(connection.createStatement(CLEAR_OUTBOX).execute())
+								.flatMap(Result::getRowsUpdated),
+						Connection::close)
+				.blockLast();
 	}
 
 	@AfterEach
