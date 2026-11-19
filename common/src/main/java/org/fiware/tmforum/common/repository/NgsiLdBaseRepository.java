@@ -15,7 +15,6 @@ import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
@@ -25,15 +24,10 @@ import org.fiware.ngsi.model.PropertyTypeVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
-import org.fiware.ngsi.model.SubscriptionVO;
 import org.fiware.ngsi.model.UpdateResultVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
-import org.fiware.tmforum.common.exception.DeletionException;
-import org.fiware.tmforum.common.exception.DeletionExceptionReason;
-import org.fiware.tmforum.common.exception.NgsiLdRepositoryException;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
@@ -55,7 +49,7 @@ import java.util.stream.Stream;
 
 /**
  * Base-Repository implementation for using the NGSI-LD API as a storage backend. Supports caching and asynchronous
- * retrieval of entities and subscriptions.
+ * retrieval of entities.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -71,7 +65,6 @@ public abstract class NgsiLdBaseRepository {
 
 	protected final GeneralProperties generalProperties;
 	protected final EntitiesApiClient entitiesApi;
-	protected final SubscriptionsApiClient subscriptionsApi;
 	protected final JavaObjectMapper javaObjectMapper;
 	protected final NGSIMapper ngsiMapper;
 	protected final EntityVOMapper entityVOMapper;
@@ -107,17 +100,6 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	/**
-	 * Create a subscription at the broker and cache it.
-	 *
-	 * @param subscriptionVO the subscription to be created
-	 * @param ngsiLDTenant   tenant the subscription belongs to
-	 * @return completable with the result
-	 */
-	public Mono<Void> createSubscription(SubscriptionVO subscriptionVO, String ngsiLDTenant) {
-		return subscriptionsApi.createSubscription(subscriptionVO, ngsiLDTenant).then();
-	}
-
-	/**
 	 * Retrieve entity from the broker or from the cache if they are available there.
 	 *
 	 * @param entityId id of the entity
@@ -126,14 +108,6 @@ public abstract class NgsiLdBaseRepository {
 	@Cacheable(CommonConstants.ENTITIES_CACHE_NAME)
 	public Mono<EntityVO> retrieveEntityById(URI entityId) {
 		return asyncRetrieveEntityById(entityId, generalProperties.getTenant(), null, null, null, getLinkHeader());
-	}
-
-	@Cacheable(CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
-	public Mono<SubscriptionVO> retrieveSubscriptionById(URI subscriptionId) {
-		return subscriptionsApi
-				.retrieveSubscriptionById(subscriptionId)
-				.map(HttpResponse::body)
-				.onErrorResume(this::handleClientSubscriptionException);
 	}
 
 	/**
@@ -386,39 +360,6 @@ public abstract class NgsiLdBaseRepository {
 	}
 
 	/**
-	 * Delete a domain subscription
-	 *
-	 * @param tmForumSubscriptionId id of the tm-forum-subscription to delete the related ngsild-subscription
-	 * @return an empty mono
-	 */
-	public Mono<Void> deleteDomainSubscriptionByTmForumSubscription(URI tmForumSubscriptionId) {
-		return retrieveEntityById(tmForumSubscriptionId)
-				.flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, TMForumSubscription.class))
-				.flatMap(tmForumSubscription ->
-						deleteDomainSubscription(tmForumSubscription.getSubscription().getId()));
-	}
-
-	/**
-	 * Delete a domain subscription
-	 *
-	 * @param subscriptionId id of the ngsild-subscription to be deleted
-	 * @return an empty mono
-	 */
-	@CacheInvalidate(value = CommonConstants.SUBSCRIPTIONS_CACHE_NAME)
-	public Mono<Void> deleteDomainSubscription(URI subscriptionId) {
-		return subscriptionsApi.removeSubscription(subscriptionId)
-				.onErrorResume(t -> {
-					if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
-						throw new DeletionException(String.format("Was not able to delete %s, since it does not exist.",
-								subscriptionId), DeletionExceptionReason.NOT_FOUND);
-					}
-					throw new DeletionException(String.format("Was not able to delete %s.", subscriptionId),
-							t, DeletionExceptionReason.UNKNOWN);
-				})
-				.then();
-	}
-
-	/**
 	 * Helper method for combining a stream of entities to a single mono.
 	 *
 	 * @param entityVOStream stream of entities
@@ -483,13 +424,6 @@ public abstract class NgsiLdBaseRepository {
 		}
 		throw new StorageException(StorageOperation.READ, BrokerFailures.unknownOrUnavailable(e),
 				BrokerFailures.BROKER_CALL_FAILED, e);
-	}
-
-	private Mono<SubscriptionVO> handleClientSubscriptionException(Throwable e) {
-		if (e instanceof HttpClientResponseException httpException && httpException.getStatus().equals(HttpStatus.NOT_FOUND)) {
-			return Mono.empty();
-		}
-		throw new NgsiLdRepositoryException("Was not able to successfully call the broker.", Optional.of(e));
 	}
 
 }
