@@ -63,6 +63,7 @@ public class ReferenceVersionIT extends AbstractApiIT {
 	private static final String LOWER_CASE_VERSION = "v1";
 	private static final String NO_VERSION = "";
 	private static final String INVALID_RELATIONSHIP_MESSAGE = "At least one of the references does not exist";
+	private static final String VERSION_MISMATCH_MESSAGE = "Reference version mismatch";
 
 	private final ProductOfferingApiTestClient productOfferingApiTestClient;
 	private final ProductSpecificationApiTestClient productSpecificationApiTestClient;
@@ -246,6 +247,8 @@ public class ReferenceVersionIT extends AbstractApiIT {
 				.orElseThrow(() -> new AssertionError("Error details should be provided."));
 		assertTrue(details.message().startsWith(INVALID_RELATIONSHIP_MESSAGE),
 				"The request should fail on the reference, not something else: " + details.message());
+		assertTrue(details.message().contains(VERSION_MISMATCH_MESSAGE),
+				"The reference should be rejected for its version, not as missing: " + details.message());
 	}
 
 	private ProductOfferingCreateVO productOfferingCreate() {

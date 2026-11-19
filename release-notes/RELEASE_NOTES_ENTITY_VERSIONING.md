@@ -16,10 +16,11 @@ The PostgreSQL `tmforum.entity` table already had the columns for versioning (`v
   reference resolves only when it equals the target's current version exactly (case-sensitive, no trimming). An
   unpinned reference resolves whatever version the target has.
 * **400 on mismatch.** A pinned reference whose target has a different version is rejected like a missing one, on
-  create and on `PATCH`: HTTP `400` with `At least one of the references does not exist`. The underlying
-  `NonExistentReferenceException` lists the mismatching references after a `Reference version mismatch:` prefix,
-  each with its pinned version and either the target's current version or a note that the target is unversioned, and
-  the reference counts as `unresolved` in the `tmforum.references` metric.
+  create and on `PATCH`: HTTP `400` with `At least one of the references does not exist`. The error message now
+  also carries the reason of the `NonExistentReferenceException`, for missing references as well as mismatches. It
+  lists the mismatching references after a `Reference version mismatch:` prefix, each with its pinned version and
+  either the target's current version or a note that the target is unversioned. The reference counts as `unresolved`
+  in the `tmforum.references` metric.
 * **Unversioned targets.** Only types implementing
   [VersionedEntity](../common/src/main/java/org/fiware/tmforum/common/domain/VersionedEntity.java) have a version:
   the 18 versioned TMForum resources (agreement, catalog, category, product offering, product specification, quote,

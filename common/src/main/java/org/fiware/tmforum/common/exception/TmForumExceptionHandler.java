@@ -16,6 +16,8 @@ import jakarta.inject.Singleton;
 @Slf4j
 public class TmForumExceptionHandler implements ExceptionHandler<TmForumException, HttpResponse<ErrorDetails>> {
 
+    private static final String REFERENCE_CAUSE_FORMAT = "%s - %s";
+
     @Override
     public HttpResponse<ErrorDetails> handle(HttpRequest request, TmForumException exception) {
         log.debug("Got TMForum  Exception:", exception);
@@ -27,7 +29,7 @@ public class TmForumExceptionHandler implements ExceptionHandler<TmForumExceptio
                     null));
             case INVALID_RELATIONSHIP -> HttpResponse.status(HttpStatus.BAD_REQUEST).body(new ErrorDetails(HttpStatus.BAD_REQUEST.toString(),
                     HttpStatus.BAD_REQUEST.getReason(),
-                    String.format("At least one of the references does not exist - %s", exception.getMessage()),
+                    String.format("At least one of the references does not exist - %s", withReferenceCause(exception)),
                     HttpStatus.BAD_REQUEST.toString(),
                     null));
             case INVALID_DATA -> HttpResponse.status(HttpStatus.BAD_REQUEST).body(new ErrorDetails(HttpStatus.BAD_REQUEST.toString(),
@@ -46,5 +48,15 @@ public class TmForumExceptionHandler implements ExceptionHandler<TmForumExceptio
                     HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                     null));
         };
+    }
+
+    // controllers wrap the validation failure in their own message; keep the unresolved references visible
+    private static String withReferenceCause(TmForumException exception) {
+        for (Throwable cause = exception.getCause(); cause != null; cause = cause.getCause()) {
+            if (cause instanceof NonExistentReferenceException) {
+                return String.format(REFERENCE_CAUSE_FORMAT, exception.getMessage(), cause.getMessage());
+            }
+        }
+        return exception.getMessage();
     }
 }

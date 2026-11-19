@@ -15,6 +15,7 @@ import org.fiware.resourcecatalog.model.ResourceSpecificationCreateVOTestExample
 import org.fiware.resourcecatalog.model.ResourceSpecificationRefVO;
 import org.fiware.resourcecatalog.model.ResourceSpecificationVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
@@ -48,6 +49,7 @@ public class ResourceSpecificationVersionIT extends AbstractApiIT {
 	private static final String CURRENT_VERSION = "1.0";
 	private static final String OTHER_VERSION = "2.0";
 	private static final String LIFECYCLE_STATUS = "created";
+	private static final String VERSION_MISMATCH_MESSAGE = "Reference version mismatch";
 
 	private final ResourceCandidateApiTestClient resourceCandidateApiTestClient;
 	private final ResourceSpecificationApiTestClient resourceSpecificationApiTestClient;
@@ -102,6 +104,12 @@ public class ResourceSpecificationVersionIT extends AbstractApiIT {
 		HttpResponse<ResourceCandidateVO> response = callAndCatch(
 				() -> resourceCandidateApiTestClient.createResourceCandidate(null, createVO));
 		assertEquals(expectedStatus, response.getStatus(), message);
+		if (expectedStatus == HttpStatus.BAD_REQUEST) {
+			ErrorDetails details = response.getBody(ErrorDetails.class)
+					.orElseThrow(() -> new AssertionError("Error details should be provided."));
+			assertTrue(details.message().contains(VERSION_MISMATCH_MESSAGE),
+					"The request should fail on the reference version: " + details.message());
+		}
 	}
 
 	private String createLogicalSpecification() throws Exception {
