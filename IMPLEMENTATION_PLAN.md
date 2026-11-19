@@ -72,10 +72,12 @@ Make `NgsiLdEventHandler` broker-only, and let `AbstractSubscriptionApiControlle
     `@RouteCondition` (micronaut-http, since 4.0) with an expression that is false when the broker path is not wired.
     First check that Micronaut 5.2.3's expression context can evaluate it, for example through the environment's
     active names via `ctx[...]`. If it cannot, fall back to returning `HttpResponse.notFound()` from the method when
-    `!brokerNotifications()`, and record the choice in a one-line comment. The fallback still matches the route and
-    binds `@Body NotificationVO` first, so on PostgreSQL an empty or invalid body gets 400/415, not 404; if the
-    fallback is used, state that limitation in the comment and in the PR. Either way the broker branch stays
-    unchanged.
+    `!brokerNotifications()`, as the first statement, before `readNotificationFromJSON`, so a malformed payload gets 404
+    rather than the wrapped `JacksonException`; record the choice in a one-line comment. The method binds
+    `@NonNull @Body String payload` with `@Consumes("application/json;charset=utf-8")`, so the fallback route still
+    matches and any non-empty JSON-typed body (valid JSON or not) reaches the 404; only an empty body (400, `@NonNull`)
+    or a non-JSON Content-Type (415) misses it. If the fallback is used, state exactly that limitation in the comment
+    and in the PR. Either way the broker branch stays unchanged.
 - All 18 module `rest/EventSubscriptionApiController.java` (account, agreement, customer-bill-management,
   customer-management, party-catalog, product-catalog, product-inventory, product-ordering-management, quote,
   resource-catalog, resource-function-activation, resource-inventory, resource-order-management, service-catalog,
@@ -90,10 +92,12 @@ Make `NgsiLdEventHandler` broker-only, and let `AbstractSubscriptionApiControlle
     repository only in the broker case, that the PostgreSQL case stores the `TMForumSubscription` with
     `getSubscription() == null`, and that the broker case still builds the NGSI-LD subscription;
   - a route test (next to `ErrorResponseCharacterizationTest`, reusing `CharacterizationSubscriptionController` or a
-    small test subclass): `POST /callback` with a valid `NotificationVO` body gives 404 under the `postgresql`
-    environment and is routed to the controller under the default environment. The valid body makes the test check
-    the gating, not body binding. With `@RouteCondition`, add a case with an invalid body that must also give 404
-    under `postgresql`;
+    small test subclass): `POST /callback` with a non-empty `application/json;charset=utf-8` body (a valid
+    `NotificationVO`) gives 404 under the `postgresql` environment and is routed to the controller under the default
+    environment. The non-empty body and matching Content-Type keep the test on the gating, clear of the `@NonNull`
+    (400) and `@Consumes` (415) checks; the valid JSON lets the default-environment case get past
+    `readNotificationFromJSON`. Add a non-JSON payload case that must also give 404 under `postgresql` (both
+    approaches). With `@RouteCondition`, also add an empty-body and a wrong-Content-Type case that must give 404 there;
   - `NgsiLdEventHandlerTest` stays as it is.
 - `StoragePortWiringTest` (or a sibling `NotificationWiringTest`): assert `NgsiLdEventHandler` is present by default and
   absent under `postgresql`. `TMForumEventHandler` must be present in both.
@@ -141,8 +145,8 @@ Acceptance: only comments change in the YAML files, and the PostgreSQL contexts 
   `subscription`. Use a `@ParameterizedTest` over the hub/event cases. Broker delivery is already pinned by
   `DeleteEventBrokerIT`.
 - `all-in-one/src/test/.../PostgresStartupIT`: add an assertion that `POST /callback` with a valid `NotificationVO`
-  body under a module basepath gives 404, which checks the real wiring of all controllers (the valid body keeps the
-  check on the gating, not on body binding).
+  body and `application/json;charset=utf-8` under a module basepath gives 404, which checks the real wiring of all
+  controllers (a non-empty body with the consumed Content-Type keeps the check clear of the 400/415 binding errors).
 - Run the full 6-way IT matrix (`-Dbroker=orion-ld|scorpio|postgresql`, `-Dcache=in-memory|redis`) for `common`,
   `product-catalog` and at least two more hub modules (for example `party-catalog`, `service-inventory`), and the
   all-in-one job (`.github/workflows/test-brokers.yaml`). Delegate the runs and report only failures. Fix what
