@@ -29,4 +29,10 @@ public class ResourceFunctionRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(ResourceFunction.TYPE_RESOURCE_FUNCTION));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

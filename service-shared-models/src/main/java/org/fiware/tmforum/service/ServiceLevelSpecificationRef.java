@@ -37,4 +37,10 @@ public class ServiceLevelSpecificationRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of("service-level-specification"));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }
