@@ -63,4 +63,4 @@ to `2.0`, a reference pinned to `1.0` is rejected and one pinned to `2.0` is acc
   pinned reference to a category without version, case sensitivity, and an external reference to a local entity.
 * `resource-catalog` `ResourceSpecificationVersionIT`: a `logical-resource-specification` sub-type is versioned.
 
-Both pass on Orion-LD, Scorpio and PostgreSQL.
+Both pass on Orion-LD. They have not yet been run on Scorpio or PostgreSQL.
