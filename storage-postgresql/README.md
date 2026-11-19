@@ -126,7 +126,6 @@ mvn verify -pl product-catalog -Dbroker=postgresql      # the module's full IT s
 ```
 
 With `-Dbroker=postgresql`, failsafe excludes the tag `not-on-postgresql` (`StorageTags` in `common`):
-`@RequiresHubSupport` (ticket 1) and `@BrokerOnly` (never). The
-broker jobs exclude `@PostgresqlOnly` ITs the same way, so a `@PostgresqlOnly` IT picked with `-Dit.test` (e.g.
-`GetIssuesOneQueryIT` or the `*PostgresOutboxIT`s) also needs `-Dbroker=postgresql`; without it failsafe finds no
-test to run and fails.
+`@BrokerOnly`. The broker jobs exclude `@PostgresqlOnly` ITs the same way, so a `@PostgresqlOnly` IT picked with
+`-Dit.test` (e.g. `GetIssuesOneQueryIT` or the `*PostgresOutboxIT`s) also needs `-Dbroker=postgresql`; without it
+failsafe finds no test to run and fails.

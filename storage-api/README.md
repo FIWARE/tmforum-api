@@ -86,10 +86,8 @@ keys, which each adapter renders into its own query language.
    `knownDeviations()`. The affected cases then assert today's behaviour, so a fix fails the case instead of
    passing silently.
 4. Select the adapter per deployment through a Micronaut profile/`@Requires` (ticket 6), so exactly one
-   implementation of each interface is in the context. `NgsiLdEntityRepository` is also the only
-   `SubscriptionRepository` bean, and every subscription controller requires one through its `@Inject` setter.
-   A profile that switches the NGSI-LD adapter off must still supply a `SubscriptionRepository`, or ticket 1 must
-   split it out of `NgsiLdEntityRepository` first. Without one, every module with a subscription controller fails
-   at startup.
+   implementation of each interface is in the context. NGSI-LD subscriptions are not part of the port: the
+   `SubscriptionRepository` (`NgsiLdSubscriptionRepository`) is broker-only, and the subscription controllers
+   take it as optional, so a backend without a broker needs none.
 
 The known deviations of the NGSI-LD adapter are listed in `KnownDeviation` and in the port Javadoc.
