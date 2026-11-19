@@ -28,4 +28,10 @@ public class ConstraintRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(getAtReferredType()));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

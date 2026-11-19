@@ -34,4 +34,9 @@ public class CategoryRef extends RefEntity {
         return new ArrayList<>(List.of(Category.TYPE_CATEGORY));
     }
 
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

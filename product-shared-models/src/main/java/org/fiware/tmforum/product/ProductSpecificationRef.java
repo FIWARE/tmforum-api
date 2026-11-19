@@ -42,4 +42,10 @@ public class ProductSpecificationRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(TYPE_PRODUCT_SPECIFICATION));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }
