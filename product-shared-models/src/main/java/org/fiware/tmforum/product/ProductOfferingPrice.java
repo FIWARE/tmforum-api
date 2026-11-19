@@ -1,6 +1,7 @@
 package org.fiware.tmforum.product;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.ConstraintRef;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @MappingEnabled(entityType = ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE)
 @EqualsAndHashCode(callSuper = true)
-public class ProductOfferingPrice extends EntityWithId {
+public class ProductOfferingPrice extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_PRODUCT_OFFERING_PRICE = "product-offering-price";
 

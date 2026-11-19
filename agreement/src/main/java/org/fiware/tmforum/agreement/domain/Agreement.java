@@ -1,6 +1,7 @@
 package org.fiware.tmforum.agreement.domain;
 
 import java.net.URI;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import java.time.Instant;
 import java.util.List;
 
@@ -20,7 +21,7 @@ import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Agreement.TYPE_AGREEMENT)
-public class Agreement extends EntityWithId {
+public class Agreement extends EntityWithId implements VersionedEntity {
 	public static final String TYPE_AGREEMENT = "agreement";
 
 	public Agreement(String id) {

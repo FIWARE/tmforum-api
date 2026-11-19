@@ -1,6 +1,7 @@
 package org.fiware.tmforum.resource;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ResourceSpecification.TYPE_RESOURCE_SPECIFICATION)
-public class ResourceSpecification extends EntityWithId {
+public class ResourceSpecification extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_RESOURCE_SPECIFICATION = "resource-specification";
 

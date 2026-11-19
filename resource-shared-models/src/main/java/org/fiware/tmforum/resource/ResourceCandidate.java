@@ -1,6 +1,7 @@
 package org.fiware.tmforum.resource;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ResourceCandidate.TYPE_RESOURCE_CANDIDATE)
-public class ResourceCandidate extends EntityWithId {
+public class ResourceCandidate extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_RESOURCE_CANDIDATE = "resource-candidate";
 
