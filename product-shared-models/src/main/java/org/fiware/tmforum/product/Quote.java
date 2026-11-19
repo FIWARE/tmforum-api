@@ -2,6 +2,7 @@ package org.fiware.tmforum.product;
 
 
 import io.github.wistefan.mapping.annotations.AttributeGetter;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
@@ -17,7 +18,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Quote.TYPE_QUOTE)
-public class Quote extends EntityWithId {
+public class Quote extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_QUOTE = "quote";
 

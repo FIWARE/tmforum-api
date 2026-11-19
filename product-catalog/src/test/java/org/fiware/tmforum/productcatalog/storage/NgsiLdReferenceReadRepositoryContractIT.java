@@ -8,6 +8,9 @@ import org.fiware.tmforum.storage.EntityWriteRepository;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
 import org.fiware.tmforum.storage.contract.AbstractReferenceReadRepositoryContractTest;
 import org.fiware.tmforum.storage.contract.EntityFixture;
+import org.fiware.tmforum.storage.contract.UnversionedFixture;
+
+import java.util.Optional;
 
 /**
  * Runs the reference port contract against the NGSI-LD adapter and the broker of the IT profile.
@@ -38,5 +41,10 @@ public class NgsiLdReferenceReadRepositoryContractIT extends AbstractReferenceRe
 	@Override
 	protected EntityFixture<Catalog> fixture() {
 		return new CatalogFixture();
+	}
+
+	@Override
+	protected Optional<UnversionedFixture<?>> unversionedFixture() {
+		return Optional.of(new ProductFixture());
 	}
 }

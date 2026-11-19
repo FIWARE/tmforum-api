@@ -32,4 +32,12 @@ public interface ReferencedEntity {
 	default URI getReferenceHref() {
 		return null;
 	}
+
+	/**
+	 * Version the reference pins its target to. Null or empty pins nothing.
+	 */
+	@JsonIgnore
+	default String getReferenceVersion() {
+		return null;
+	}
 }

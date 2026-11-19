@@ -10,6 +10,7 @@ import io.r2dbc.spi.Result;
 import io.r2dbc.spi.Statement;
 import jakarta.inject.Singleton;
 import org.fiware.tmforum.common.domain.EntityWithId;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.storage.EntityRepository;
@@ -51,26 +52,31 @@ public class PostgresEntityRepository implements EntityRepository {
     private static final String TYPE_COLUMN = "type";
     private static final String DATA_COLUMN = "data";
     private static final String TOTAL_COUNT_COLUMN = "total_count";
+    // the version column of every row whose type has no version, or whose version is not set
+    static final String UNVERSIONED = "";
 
     private static final String SELECT_CURRENT =
             "SELECT data::text AS data FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1 AND is_current";
     // created_at and updated_at fall back to their column default (now()) when bound null
     private static final String INSERT = "INSERT INTO " + QUALIFIED_ENTITY_TABLE
-            + " (id, type, data, created_at, updated_at)"
-            + " VALUES ($1, $2, $3::jsonb, COALESCE($4::timestamptz, now()), COALESCE($5::timestamptz, now()))";
+            + " (id, type, data, created_at, updated_at, version)"
+            + " VALUES ($1, $2, $3::jsonb, COALESCE($4::timestamptz, now()), COALESCE($5::timestamptz, now()), $6)";
     // || replaces each carried top-level key, the patch never carries id or type; an emptied declared list is null in
     // the patch and removes its key, as the NGSI-LD adapter deletes the attribute
     private static final String MERGED_DATA = "(data || $2::jsonb)"
             + " - ARRAY(SELECT key FROM jsonb_each($2::jsonb) WHERE value = 'null'::jsonb)";
+    // a patch without a version keeps the stored one; a carried version moves the row's key in place
+    private static final String MERGED_VERSION = "version = COALESCE($3, version)";
     private static final String UPDATE_CURRENT = "UPDATE " + QUALIFIED_ENTITY_TABLE
-            + " SET data = " + MERGED_DATA + ", updated_at = now() WHERE id = $1 AND is_current RETURNING id";
+            + " SET data = " + MERGED_DATA + ", " + MERGED_VERSION + ", updated_at = now()"
+            + " WHERE id = $1 AND is_current RETURNING id";
     private static final String DELETE_CURRENT =
             "DELETE FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1 AND is_current";
     private static final String SELECT_CURRENT_FOR_UPDATE = "SELECT type, data::text AS data FROM "
             + QUALIFIED_ENTITY_TABLE + " WHERE id = $1 AND is_current FOR UPDATE";
     private static final String UPDATE_CURRENT_RETURNING_DATA = "UPDATE " + QUALIFIED_ENTITY_TABLE
-            + " SET data = " + MERGED_DATA + ", updated_at = now() WHERE id = $1 AND is_current"
-            + " RETURNING data::text AS data";
+            + " SET data = " + MERGED_DATA + ", " + MERGED_VERSION + ", updated_at = now()"
+            + " WHERE id = $1 AND is_current RETURNING data::text AS data";
     private static final String DELETE_CURRENT_RETURNING = "DELETE FROM " + QUALIFIED_ENTITY_TABLE
             + " WHERE id = $1 AND is_current RETURNING type, data::text AS data";
     private static final String INSERT_OUTBOX_ROW = "INSERT INTO " + QUALIFIED_OUTBOX_TABLE
@@ -146,7 +152,7 @@ public class PostgresEntityRepository implements EntityRepository {
         return Mono.fromCallable(() -> documents.toDocument(domainEntity, DocumentMode.CARRIED_ATTRIBUTES,
                         StorageOperation.UPDATE))
                 .flatMapMany(patch -> execute(UPDATE_CURRENT,
-                        statement -> statement.bind(0, id).bind(1, Json.of(patch)),
+                        statement -> bindUpdate(statement, id, patch, domainEntity),
                         result -> result.map(row -> row.get(ID_COLUMN, String.class))))
                 .count()
                 .onErrorMap(failure -> PostgresFailures.failure(StorageOperation.UPDATE,
@@ -207,7 +213,7 @@ public class PostgresEntityRepository implements EntityRepository {
                                 .switchIfEmpty(Mono.error(() -> notFound(StorageOperation.UPDATE, id)))
                                 .flatMap(oldRow -> PostgresStatements.execute(connection,
                                                 UPDATE_CURRENT_RETURNING_DATA,
-                                                statement -> statement.bind(0, id).bind(1, Json.of(patchDocument)),
+                                                statement -> bindUpdate(statement, id, patchDocument, patch),
                                                 result -> result.map(row -> row.get(DATA_COLUMN, String.class)))
                                         .next()
                                         .flatMap(newData -> (recordsEvents.test(oldRow.type())
@@ -279,7 +285,19 @@ public class PostgresEntityRepository implements EntityRepository {
                                         Instant updatedAt) {
         statement.bind(0, entity.getId().toString()).bind(1, entity.getType()).bind(2, Json.of(document));
         bindNullable(statement, 3, createdAt, Instant.class);
-        return bindNullable(statement, 4, updatedAt, Instant.class);
+        bindNullable(statement, 4, updatedAt, Instant.class);
+        String version = versionOf(entity);
+        return statement.bind(5, version == null ? UNVERSIONED : version);
+    }
+
+    private static Statement bindUpdate(Statement statement, String id, String patchDocument, Object patch) {
+        statement.bind(0, id).bind(1, Json.of(patchDocument));
+        return bindNullable(statement, 2, versionOf(patch), String.class);
+    }
+
+    // null when the type has no version or the entity does not carry one
+    private static String versionOf(Object entity) {
+        return entity instanceof VersionedEntity versioned ? versioned.getVersion() : null;
     }
 
     private <T> Mono<PagedResult<T>> list(Integer offset, Integer limit, String types, EntityQuery query,

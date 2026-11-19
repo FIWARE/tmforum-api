@@ -39,4 +39,10 @@ public class ResourceCategoryRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(ResourceCategory.TYPE_RESOURCE_CATEGORY));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

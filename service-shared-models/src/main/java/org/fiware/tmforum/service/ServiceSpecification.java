@@ -1,6 +1,7 @@
 package org.fiware.tmforum.servicecatalog.domain;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
@@ -25,7 +26,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ServiceSpecification.TYPE_SERVICE_SPECIFICATION)
-public class ServiceSpecification extends EntityWithId {
+public class ServiceSpecification extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_SERVICE_SPECIFICATION = "service-specification";
 

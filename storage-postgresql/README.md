@@ -9,10 +9,14 @@ uses R2DBC. Flyway migrates the schema over JDBC at startup, and nothing else us
 Flyway owns the schema `tmforum`: it creates it and keeps its history table (`tmforum.flyway_schema_history`)
 there. The migrations are in `src/main/resources/db/migration/tmforum`.
 
-`tmforum.entity` holds one row per entity. `data` is the domain object as JSON. `version`, `revision` and
-`is_current` are reserved for versioning and keep their defaults (`''`, `1`, `true`) for now: `version` is `''` for
-unversioned types, `revision` is monotonic per `id`. The partial unique index
+`tmforum.entity` holds one row per entity. `data` is the domain object as JSON. `version` holds the TMForum
+`version` label of a `VersionedEntity` type (`''` when unset, and always `''` for any other type). A `PATCH` updates it
+in place, in the same row. Rows written before entity versioning are backfilled by
+`V3__entity_version_backfill.sql`. `revision` is always `1` and `is_current` always `true`. The partial unique index
 `entity_current_idx` allows only one current row per `id`.
+
+The table is ready for versioning: keeping superseded versions (a new row per version, `is_current` moved, `revision`
+monotonic per `id`) is a future, PostgreSQL-only extension that needs no migration.
 
 | Column       | Type          | Default |
 |--------------|---------------|---------|

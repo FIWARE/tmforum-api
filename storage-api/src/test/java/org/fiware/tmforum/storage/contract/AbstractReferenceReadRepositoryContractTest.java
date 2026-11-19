@@ -13,12 +13,14 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.fiware.tmforum.storage.contract.AbstractEntityRepositoryContractTest.TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * The {@link ReferenceReadRepository} contract from its Javadoc, run by every adapter against its live backend;
@@ -27,6 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 public abstract class AbstractReferenceReadRepositoryContractTest<T> {
 
     private static final String OTHER_TYPE = "contract-test-other-type";
+    private static final String NO_VERSION = "";
+    private static final String VERSION = "1.0";
+    private static final String UPDATED_VERSION = "2.0";
 
     private final List<URI> createdIds = new ArrayList<>();
 
@@ -38,6 +43,13 @@ public abstract class AbstractReferenceReadRepositoryContractTest<T> {
     protected abstract EntityWriteRepository writeRepository();
 
     protected abstract EntityFixture<T> fixture();
+
+    /**
+     * Entities of a type that is not versionable for the extension-version case, which skips when empty.
+     */
+    protected Optional<UnversionedFixture<?>> unversionedFixture() {
+        return Optional.empty();
+    }
 
     enum AcceptedTypes {OWN, OWN_AMONG_OTHERS, OTHERS_ONLY, NONE}
 
@@ -60,7 +72,7 @@ public abstract class AbstractReferenceReadRepositoryContractTest<T> {
             case NONE -> List.of();
         };
         StoredReference expected = types.contains(fixture().storedType())
-                ? new StoredReference(id.toString(), fixture().storedType())
+                ? new StoredReference(id.toString(), fixture().storedType(), NO_VERSION)
                 : null;
 
         assertEquals(expected, repository().referenceExists(id.toString(), types).block(TIMEOUT));
@@ -70,7 +82,7 @@ public abstract class AbstractReferenceReadRepositoryContractTest<T> {
     void findReferenceReturnsIdAndStoredType() {
         URI id = create();
 
-        assertEquals(new StoredReference(id.toString(), fixture().storedType()),
+        assertEquals(new StoredReference(id.toString(), fixture().storedType(), NO_VERSION),
                 repository().findReference(id.toString()).block(TIMEOUT));
     }
 
@@ -99,7 +111,7 @@ public abstract class AbstractReferenceReadRepositoryContractTest<T> {
         };
         Set<StoredReference> expected = ids.stream()
                 .filter(id -> !id.equals(unknown))
-                .map(id -> new StoredReference(id, fixture().storedType()))
+                .map(id -> new StoredReference(id, fixture().storedType(), NO_VERSION))
                 .collect(Collectors.toSet());
 
         List<StoredReference> found = repository().findReferences(ids).collectList().block(TIMEOUT);
@@ -114,15 +126,76 @@ public abstract class AbstractReferenceReadRepositoryContractTest<T> {
         String kept = create().toString();
         writeRepository().deleteDomainEntity(deleted).block(TIMEOUT);
 
-        assertEquals(List.of(new StoredReference(kept, fixture().storedType())),
+        assertEquals(List.of(new StoredReference(kept, fixture().storedType(), NO_VERSION)),
                 repository().findReferences(List.of(deleted.toString(), kept)).collectList().block(TIMEOUT));
+    }
+
+    enum CreatedVersion {
+        LABELLED(VERSION), NONE(NO_VERSION);
+
+        private final String expected;
+
+        CreatedVersion(String expected) {
+            this.expected = expected;
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(CreatedVersion.class)
+    void referencesReportTheStoredVersion(CreatedVersion createdVersion) {
+        VersionFixture<T> versions = versionFixture();
+        URI id = versions.newId();
+        create(id, createdVersion == CreatedVersion.LABELLED
+                ? versions.withVersion(id, VERSION)
+                : versions.newEntity(id));
+        StoredReference expected = new StoredReference(id.toString(), versions.storedType(), createdVersion.expected);
+
+        assertEquals(expected, repository().findReference(id.toString()).block(TIMEOUT));
+        assertEquals(List.of(expected),
+                repository().findReferences(List.of(id.toString())).collectList().block(TIMEOUT));
+    }
+
+    @Test
+    void findReferenceReportsTheUpdatedVersion() {
+        VersionFixture<T> versions = versionFixture();
+        URI id = versions.newId();
+        create(id, versions.withVersion(id, VERSION));
+        writeRepository().updateDomainEntity(id.toString(), versions.withVersion(id, UPDATED_VERSION)).block(TIMEOUT);
+
+        assertEquals(new StoredReference(id.toString(), versions.storedType(), UPDATED_VERSION),
+                repository().findReference(id.toString()).block(TIMEOUT));
+    }
+
+    // an extension must not make a type versionable, otherwise a pinned reference would resolve on one backend only
+    @Test
+    void extensionVersionOfAnUnversionedTypeIsNotReported() {
+        Optional<UnversionedFixture<?>> unversioned = unversionedFixture();
+        assumeTrue(unversioned.isPresent(), "The adapter provides no unversioned fixture.");
+        UnversionedFixture<?> fixture = unversioned.get();
+        URI id = fixture.newId();
+        create(id, fixture.withExtensionVersion(id, VERSION));
+        StoredReference expected = new StoredReference(id.toString(), fixture.storedType(), NO_VERSION);
+
+        assertEquals(expected, repository().findReference(id.toString()).block(TIMEOUT));
+        assertEquals(List.of(expected),
+                repository().findReferences(List.of(id.toString())).collectList().block(TIMEOUT));
+    }
+
+    @SuppressWarnings("unchecked")
+    private VersionFixture<T> versionFixture() {
+        assumeTrue(fixture() instanceof VersionFixture, "The fixture's class is not versionable.");
+        return (VersionFixture<T>) fixture();
     }
 
     private URI create() {
         T entity = fixture().newEntity(fixture().newId());
         URI id = fixture().id(entity);
+        create(id, entity);
+        return id;
+    }
+
+    private void create(URI id, Object entity) {
         createdIds.add(id);
         writeRepository().createDomainEntity(entity).block(TIMEOUT);
-        return id;
     }
 }

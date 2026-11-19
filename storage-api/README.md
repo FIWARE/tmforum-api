@@ -54,6 +54,12 @@ The contract cases `createdReferencesRoundTripIntact`, `updateKeepsUntouchedRefe
 to run them; ticket 6 has to pass them. On Orion-LD in append mode an update merges a carried reference list into
 the stored one by datasetId (`KnownDeviation.REFERENCE_LIST_UPDATE_MERGES`).
 
+`StoredReference.version` is the target's current version label. It is `''` unless the stored type is in
+`VersionedEntity.VERSIONED_TYPES`, on every adapter, so an extension property called `version` on any other type is
+ignored. `ReferenceValidationService` uses it for the pin rule: a reference with a non-empty `version` resolves only
+when it equals the target's current version exactly, and one without a version resolves whatever the target's
+version is. A pinned reference to a target whose version is `''` is rejected.
+
 ## Update semantics
 
 `updateDomainEntity` writes only the attributes the entity carries. Null fields stay untouched, and an emptied list is

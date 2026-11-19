@@ -1,6 +1,7 @@
 package org.fiware.tmforum.usagemanagement.domain;
 
 import java.net.URI;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import java.time.Instant;
 import java.util.List;
 
@@ -23,7 +24,7 @@ import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = UsageSpecification.TYPE_USP)
-public class UsageSpecification extends EntityWithId {
+public class UsageSpecification extends EntityWithId implements VersionedEntity {
 	public static final String TYPE_USP = "usageSpecification";
 
 	public UsageSpecification(String id) {

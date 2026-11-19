@@ -1,6 +1,7 @@
 package org.fiware.tmforum.productcatalog.domain;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Catalog.TYPE_CATALOG)
-public class Catalog extends EntityWithId {
+public class Catalog extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_CATALOG = "catalog";
 

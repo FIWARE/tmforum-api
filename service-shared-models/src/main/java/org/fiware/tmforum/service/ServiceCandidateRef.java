@@ -37,4 +37,10 @@ public class ServiceCandidateRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(ServiceCandidate.TYPE_SERVICE_CANDIDATE));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

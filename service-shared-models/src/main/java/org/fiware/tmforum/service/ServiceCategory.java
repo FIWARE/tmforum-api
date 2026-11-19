@@ -1,6 +1,7 @@
 package org.fiware.tmforum.service;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ServiceCategory.TYPE_SERVICE_CATEGORY)
-public class ServiceCategory extends EntityWithId {
+public class ServiceCategory extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_SERVICE_CATEGORY = "service-category";
 
