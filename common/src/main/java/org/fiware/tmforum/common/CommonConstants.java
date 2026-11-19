@@ -36,7 +36,7 @@ public class CommonConstants {
 	public static final String TMFORUM_SUBSCRIPTIONS_CACHE_NAME = "tmforum-subscriptions";
 
 	/**
-	 * Name for the subscriptions cache
+	 * Name for the NGSI-LD subscriptions cache; broker-only, unused on postgresql
 	 */
 	public static final String SUBSCRIPTIONS_CACHE_NAME = "subscriptions";
 
