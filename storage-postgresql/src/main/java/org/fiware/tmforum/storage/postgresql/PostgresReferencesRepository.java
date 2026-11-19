@@ -26,9 +26,10 @@ public class PostgresReferencesRepository implements ReferenceReadRepository {
     private static final String LOOKUP_FAILED = "Was not able to look up the referenced entities %s.";
 
     private static final String SELECT_REFERENCES =
-            "SELECT id, type FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = ANY($1) AND is_current";
+            "SELECT id, type, version FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = ANY($1) AND is_current";
     private static final String ID_COLUMN = "id";
     private static final String TYPE_COLUMN = "type";
+    private static final String VERSION_COLUMN = "version";
 
     private final ConnectionFactory connectionFactory;
 
@@ -56,7 +57,7 @@ public class PostgresReferencesRepository implements ReferenceReadRepository {
         return PostgresStatements.execute(connectionFactory, SELECT_REFERENCES,
                         statement -> statement.bind(0, idArray),
                         result -> result.map(row -> new StoredReference(row.get(ID_COLUMN, String.class),
-                                row.get(TYPE_COLUMN, String.class))))
+                                row.get(TYPE_COLUMN, String.class), row.get(VERSION_COLUMN, String.class))))
                 .onErrorMap(failure -> PostgresFailures.failure(StorageOperation.READ,
                         String.format(LOOKUP_FAILED, ids), failure));
     }

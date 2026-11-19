@@ -49,14 +49,14 @@ class PostgresReferencesRepositoryIT {
                 "The postgresql environment should select the PostgreSQL adapter.");
     }
 
-    // versioning is inert today, but a non-current row must never count as an existing entity
+    // a non-current row must never count as an existing entity, and the version reported is the current one
     @Test
     void onlyCurrentRowsAreFound() {
         execute(INSERT_VERSION, CURRENT_ID, OLD_VERSION, false, TestCatalog.TYPE, EMPTY_DOCUMENT);
         execute(INSERT_VERSION, CURRENT_ID, NEW_VERSION, true, TestCatalog.TYPE, EMPTY_DOCUMENT);
         execute(INSERT_VERSION, SUPERSEDED_ID, OLD_VERSION, false, TestCatalog.TYPE, EMPTY_DOCUMENT);
 
-        assertEquals(List.of(new StoredReference(CURRENT_ID, TestCatalog.TYPE)),
+        assertEquals(List.of(new StoredReference(CURRENT_ID, TestCatalog.TYPE, NEW_VERSION)),
                 port.findReferences(List.of(CURRENT_ID, SUPERSEDED_ID)).collectList().block(),
                 "One reference per current row, none for an id without one.");
     }

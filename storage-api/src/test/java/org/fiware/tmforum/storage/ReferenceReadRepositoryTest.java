@@ -22,6 +22,7 @@ class ReferenceReadRepositoryTest {
     private static final String EXISTING_1 = "urn:ngsi-ld:category:1";
     private static final String EXISTING_2 = "urn:ngsi-ld:category:2";
     private static final String MISSING = "urn:ngsi-ld:category:missing";
+    private static final String NO_VERSION = "";
 
     private final List<String> lookedUp = new ArrayList<>();
     private final Map<String, String> stored = Map.of(EXISTING_1, TYPE, EXISTING_2, TYPE);
@@ -35,7 +36,7 @@ class ReferenceReadRepositoryTest {
         @Override
         public Mono<StoredReference> findReference(String id) {
             lookedUp.add(id);
-            return Mono.justOrEmpty(stored.get(id)).map(type -> new StoredReference(id, type));
+            return Mono.justOrEmpty(stored.get(id)).map(type -> new StoredReference(id, type, NO_VERSION));
         }
     };
 
@@ -45,7 +46,8 @@ class ReferenceReadRepositoryTest {
                 .collect(Collectors.toSet())
                 .block(TIMEOUT);
 
-        assertEquals(Set.of(new StoredReference(EXISTING_1, TYPE), new StoredReference(EXISTING_2, TYPE)), found);
+        assertEquals(Set.of(new StoredReference(EXISTING_1, TYPE, NO_VERSION),
+                new StoredReference(EXISTING_2, TYPE, NO_VERSION)), found);
         assertEquals(List.of(EXISTING_1, MISSING, EXISTING_2), lookedUp, "Each distinct id is looked up once.");
     }
 
