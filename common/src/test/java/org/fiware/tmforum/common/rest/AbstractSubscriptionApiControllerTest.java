@@ -8,6 +8,9 @@ import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.DirectEntityEventPublisher;
+import org.fiware.tmforum.common.notification.EntityEventPublisher;
+import org.fiware.tmforum.common.notification.EventConstants;
+import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
 import org.fiware.tmforum.common.querying.QueryParser;
@@ -36,12 +39,16 @@ import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.rest.AbstractSubscriptionApiController.SAME_CALLBACK_PAGE_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,11 +59,19 @@ class AbstractSubscriptionApiControllerTest {
 	private static final String RAW_QUERY = "type=product&fields=name";
 	private static final String OTHER_RAW_QUERY = "type=product&fields=id";
 	private static final String PAST_THE_CHECK = "past the duplicate check";
+	private static final String EVENT_GROUP = EventConstants.EVENT_GROUP_CATALOG;
+	private static final String ENTITY_TYPE = "product-catalog";
+	private static final URI SUBSCRIPTION_ID = URI.create("urn:ngsi-ld:tm-forum-subscription:1");
 
 	private static class TestSubscriptionController extends AbstractSubscriptionApiController {
 		TestSubscriptionController(QueryParser queryParser, EntityRepository repository, GeneralProperties generalProperties) {
-			super(queryParser, null, repository, Map.of(), null, null, generalProperties,
-					mock(EntityVOMapper.class), mock(SubscriptionMapper.class, RETURNS_DEEP_STUBS));
+			this(queryParser, repository, generalProperties, mock(NgsiLdEventHandler.class));
+		}
+
+		TestSubscriptionController(QueryParser queryParser, EntityRepository repository,
+				GeneralProperties generalProperties, NgsiLdEventHandler ngsiLdEventHandler) {
+			super(queryParser, null, repository, Map.of(EVENT_GROUP, ENTITY_TYPE), null, ngsiLdEventHandler,
+					generalProperties, mock(EntityVOMapper.class), mock(SubscriptionMapper.class, RETURNS_DEEP_STUBS));
 			setEventPublisher(new DirectEntityEventPublisher(repository, mock(TMForumEventHandler.class)));
 		}
 	}
@@ -163,5 +178,76 @@ class AbstractSubscriptionApiControllerTest {
 		InOrder order = inOrder(subscriptionRepository, repository);
 		order.verify(subscriptionRepository).deleteDomainSubscriptionByTmForumSubscription(id);
 		order.verify(repository).deleteDomainEntity(id);
+	}
+
+	/** Broker: both NGSI-LD collaborators wired. PostgreSQL: neither is. */
+	private static Stream<Arguments> backends() {
+		return Stream.of(Arguments.of("broker", true), Arguments.of("postgresql", false));
+	}
+
+	private record Backend(TestSubscriptionController controller, EntityEventPublisher publisher,
+			SubscriptionRepository subscriptionRepository) {
+	}
+
+	private static Backend backend(boolean broker) {
+		EntityRepository repository = mock(EntityRepository.class);
+		GeneralProperties properties = new GeneralProperties();
+		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(properties), repository,
+				properties, broker ? mock(NgsiLdEventHandler.class) : null);
+		SubscriptionRepository subscriptionRepository = mock(SubscriptionRepository.class);
+		controller.setSubscriptionRepository(broker ? subscriptionRepository : null);
+		EntityEventPublisher publisher = mock(EntityEventPublisher.class);
+		controller.setEventPublisher(publisher);
+
+		when(repository.findEntities(any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), CommonConstants.DEFAULT_OFFSET, SAME_CALLBACK_PAGE_SIZE,
+						null)));
+		when(subscriptionRepository.createSubscription(any(), any())).thenReturn(Mono.empty());
+		when(subscriptionRepository.deleteDomainSubscriptionByTmForumSubscription(any())).thenReturn(Mono.empty());
+		when(publisher.createWithEvent(any())).thenReturn(Mono.empty());
+		when(publisher.deleteWithEvent(any())).thenReturn(Mono.empty());
+		return new Backend(controller, publisher, subscriptionRepository);
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("backends")
+	public void buildSubscriptionAddsTheNgsiLdSubscriptionOnlyOnTheBroker(String description, boolean broker) {
+		TMForumSubscription subscription = backend(broker).controller()
+				.buildSubscription(CALLBACK, null, List.of(EVENT_GROUP));
+
+		assertEquals(List.of(ENTITY_TYPE), subscription.getEntities(), description);
+		if (broker) {
+			assertNotNull(subscription.getSubscription(), description);
+			assertEquals(ENTITY_TYPE, subscription.getSubscription().getEntities().getFirst().getType(), description);
+		} else {
+			assertNull(subscription.getSubscription(), description);
+		}
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("backends")
+	public void createRegistersAtTheBrokerOnlyOnTheBroker(String description, boolean broker) {
+		Backend backend = backend(broker);
+		TMForumSubscription subscription = backend.controller().buildSubscription(CALLBACK, null, List.of(EVENT_GROUP));
+
+		backend.controller().create(subscription).block();
+
+		verify(backend.subscriptionRepository(), broker ? times(1) : never()).createSubscription(any(), any());
+		ArgumentCaptor<TMForumSubscription> stored = ArgumentCaptor.forClass(TMForumSubscription.class);
+		verify(backend.publisher()).createWithEvent(stored.capture());
+		assertEquals(subscription, stored.getValue(), description);
+		assertEquals(broker, stored.getValue().getSubscription() != null, description);
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("backends")
+	public void deleteRemovesTheBrokerSubscriptionOnlyOnTheBroker(String description, boolean broker) {
+		Backend backend = backend(broker);
+
+		backend.controller().delete(SUBSCRIPTION_ID.toString()).block();
+
+		verify(backend.subscriptionRepository(), broker ? times(1) : never())
+				.deleteDomainSubscriptionByTmForumSubscription(SUBSCRIPTION_ID);
+		verify(backend.publisher()).deleteWithEvent(SUBSCRIPTION_ID);
 	}
 }

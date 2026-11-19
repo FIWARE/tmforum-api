@@ -4,6 +4,8 @@ import tools.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Requires;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.ngsi.model.SubscriptionVO;
@@ -26,6 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Bean
+@Requires(notEnv = CommonConstants.POSTGRESQL_ENVIRONMENT)
 public class NgsiLdEventHandler extends EventHandler {
 	private static final List<NgsiLdEventChecker> NGSI_LD_EVENT_CHECKERS = List.of(
 			new CreateNgsiLdEventChecker(),
