@@ -1,6 +1,7 @@
 package org.fiware.tmforum.product;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ProductSpecification.TYPE_PRODUCT_SPECIFICATION)
-public class ProductSpecification extends EntityWithId {
+public class ProductSpecification extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_PRODUCT_SPECIFICATION = "product-specification";
 

@@ -5,6 +5,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.Readable;
 import jakarta.inject.Inject;
+import org.fiware.tmforum.common.domain.EntityWithId;
 import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.EntityRepository;
@@ -15,6 +16,7 @@ import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestCatalog;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestLogicalResource;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestResource;
+import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestVersionedCatalog;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -37,6 +39,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -70,7 +73,7 @@ class PostgresEntityRepositoryIT {
     private static final String NUL = "\u0000";
     private static final String UNKNOWN_TYPE = "unknown-type";
     private static final List<String> TEST_TYPES =
-            List.of(TestCatalog.TYPE, TestResource.TYPE, TestLogicalResource.TYPE);
+            List.of(TestCatalog.TYPE, TestResource.TYPE, TestLogicalResource.TYPE, TestVersionedCatalog.TYPE);
     private static final int CATALOG_COUNT = 3;
     private static final int PAGE_SIZE = 2;
     private static final Instant IMPORTED_CREATED_AT = Instant.parse("2020-01-02T03:04:05.123456Z");
@@ -94,6 +97,13 @@ class PostgresEntityRepositoryIT {
             + " (id, version, is_current, type, data)"
             + " SELECT id, $2, false, type, data || jsonb_build_object('name', $3::text) FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1";
     private static final String RESOURCE_NAME = "resource";
+    private static final String VERSIONED_ID = "urn:ngsi-ld:" + TestVersionedCatalog.TYPE + ":versioned-1";
+    private static final String FIRST_VERSION = "1.0";
+    private static final String SECOND_VERSION = "2.0";
+    private static final String VERSION_ATTRIBUTE = "version";
+    private static final long INITIAL_REVISION = 1L;
+    private static final String SELECT_VERSION_COLUMNS =
+            "SELECT version, revision, is_current FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1";
     private static final String LOGICAL_RESOURCE_NAME = "logical resource";
 
     @Inject
@@ -512,6 +522,106 @@ class PostgresEntityRepositoryIT {
 
     private static AttributePath attribute(String path) {
         return new AttributePath(List.of(path.split("\\.")), true);
+    }
+
+    // the three ways an entity is first written
+    static Stream<Arguments> writePaths() {
+        return Stream.of(
+                Arguments.of("createDomainEntity", (BiFunction<PostgresEntityRepository, Object, Mono<Void>>)
+                        PostgresEntityRepository::createDomainEntity),
+                Arguments.of("createWithEvent", (BiFunction<PostgresEntityRepository, Object, Mono<Void>>)
+                        (repository, entity) -> repository.createWithEvent(entity, type -> true)),
+                Arguments.of("importDomainEntity", (BiFunction<PostgresEntityRepository, Object, Mono<Void>>)
+                        (repository, entity) -> repository.importDomainEntity(entity, IMPORTED_CREATED_AT,
+                                IMPORTED_UPDATED_AT)));
+    }
+
+    static Stream<Arguments> versionColumnCases() {
+        TestCatalog unversionedWithExtension = catalog(1);
+        unversionedWithExtension.addAdditionalProperties(VERSION_ATTRIBUTE, FIRST_VERSION);
+        Stream<Arguments> entities = Stream.of(
+                Arguments.of("versioned", versioned(FIRST_VERSION), FIRST_VERSION),
+                Arguments.of("versioned without version", versioned(null), PostgresEntityRepository.UNVERSIONED),
+                Arguments.of("unversioned with an extension version", unversionedWithExtension,
+                        PostgresEntityRepository.UNVERSIONED));
+        List<Arguments> paths = writePaths().toList();
+        return entities.flatMap(entity -> paths.stream().map(path -> Arguments.of(entity.get()[0], path.get()[0],
+                entity.get()[1], path.get()[1], entity.get()[2])));
+    }
+
+    @ParameterizedTest(name = "{0} through {1}")
+    @MethodSource("versionColumnCases")
+    void writeFillsTheVersionColumns(String description, String path, EntityWithId entity,
+                                     BiFunction<PostgresEntityRepository, Object, Mono<Void>> write,
+                                     String expectedVersion) {
+        write.apply(repository, entity).block();
+
+        assertEquals(List.of(new VersionColumns(expectedVersion, INITIAL_REVISION, true)),
+                versionColumns(entity.getId()),
+                "The row should carry the entity's version, the first revision and be current.");
+    }
+
+    static Stream<Arguments> versionUpdates() {
+        BiFunction<PostgresEntityRepository, TestVersionedCatalog, Mono<?>> update =
+                (repository, patch) -> repository.updateDomainEntity(VERSIONED_ID, patch);
+        BiFunction<PostgresEntityRepository, TestVersionedCatalog, Mono<?>> updateWithEvent =
+                (repository, patch) -> repository.updateWithEvent(VERSIONED_ID, patch, TestVersionedCatalog.class,
+                        type -> true);
+        return Stream.of(
+                Arguments.of("updateDomainEntity", update, SECOND_VERSION, SECOND_VERSION),
+                Arguments.of("updateDomainEntity", update, null, FIRST_VERSION),
+                Arguments.of("updateWithEvent", updateWithEvent, SECOND_VERSION, SECOND_VERSION),
+                Arguments.of("updateWithEvent", updateWithEvent, null, FIRST_VERSION));
+    }
+
+    @ParameterizedTest(name = "{0} carrying version {2}")
+    @MethodSource("versionUpdates")
+    void updateMovesTheVersionOnlyWhenItCarriesOne(String path,
+                                                   BiFunction<PostgresEntityRepository, TestVersionedCatalog,
+                                                           Mono<?>> update,
+                                                   String patchVersion, String expectedVersion) {
+        repository.createDomainEntity(versioned(FIRST_VERSION)).block();
+        TestVersionedCatalog patch = versioned(patchVersion);
+        patch.setName(UPDATED_NAME);
+
+        update.apply(repository, patch).block();
+
+        assertEquals(List.of(new VersionColumns(expectedVersion, INITIAL_REVISION, true)),
+                versionColumns(URI.create(VERSIONED_ID)),
+                "The single current row should hold the expected version.");
+        TestVersionedCatalog stored = repository.get(URI.create(VERSIONED_ID), TestVersionedCatalog.class).block();
+        assertEquals(expectedVersion, stored.getVersion(), "The document's version should match the column.");
+        assertEquals(UPDATED_NAME, stored.getName(), "The update should be applied.");
+    }
+
+    // with version bound the primary key (id, version) admits the second row; only entity_current_idx rejects it
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("writePaths")
+    void sameIdWithAnotherVersionConflicts(String path,
+                                           BiFunction<PostgresEntityRepository, Object, Mono<Void>> write) {
+        write.apply(repository, versioned(FIRST_VERSION)).block();
+
+        StorageException failure = assertThrows(StorageException.class,
+                () -> write.apply(repository, versioned(SECOND_VERSION)).block(), "The second write should fail.");
+
+        assertEquals(StorageErrorReason.CONFLICT, failure.reason(), "An existing id should be a conflict.");
+        assertEquals(List.of(new VersionColumns(FIRST_VERSION, INITIAL_REVISION, true)),
+                versionColumns(URI.create(VERSIONED_ID)), "The first row should be the only one of the id.");
+    }
+
+    private List<VersionColumns> versionColumns(URI id) {
+        return query(SELECT_VERSION_COLUMNS, row -> new VersionColumns(row.get("version", String.class),
+                row.get("revision", Long.class), row.get("is_current", Boolean.class)), id.toString());
+    }
+
+    private static TestVersionedCatalog versioned(String version) {
+        TestVersionedCatalog catalog = new TestVersionedCatalog(VERSIONED_ID);
+        catalog.setName(NAME);
+        catalog.setVersion(version);
+        return catalog;
+    }
+
+    private record VersionColumns(String version, long revision, boolean current) {
     }
 
     private static TestCatalog withKeywords(List<String> keywords) {

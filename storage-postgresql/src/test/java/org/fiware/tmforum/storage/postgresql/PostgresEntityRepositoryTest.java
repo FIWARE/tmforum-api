@@ -13,6 +13,7 @@ import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestCatalog;
+import org.fiware.tmforum.storage.postgresql.DocumentTestEntities.TestVersionedCatalog;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -34,6 +35,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -82,6 +84,13 @@ class PostgresEntityRepositoryTest {
     private static final int OFFSET = 0;
     private static final int LIMIT = 10;
     private static final long NO_ROWS = 0L;
+    private static final String VERSIONED_ID = "urn:ngsi-ld:" + TestVersionedCatalog.TYPE + ":catalog-1";
+    private static final String VERSION = "1.0";
+    private static final String VERSION_ATTRIBUTE = "version";
+    // id, type, data, created_at, updated_at, version
+    private static final int INSERT_VERSION_INDEX = 5;
+    // id, patch, version
+    private static final int UPDATE_VERSION_INDEX = 2;
 
     private ConnectionFactory connectionFactory;
     private Connection connection;
@@ -290,6 +299,49 @@ class PostgresEntityRepositoryTest {
         assertTrue(count.endsWith(pagePredicate), "The count should use the page's predicate: " + count);
         assertTrue(pagePredicate.contains("is_current"), "Only current rows should count: " + pagePredicate);
         verify(connection).close();
+    }
+
+    static Stream<Arguments> boundVersions() {
+        TestCatalog unversioned = new TestCatalog(CATALOG_ID);
+        unversioned.addAdditionalProperties(VERSION_ATTRIBUTE, VERSION);
+        Function<Object, Function<PostgresEntityRepository, Mono<?>>> create =
+                entity -> repository -> repository.createDomainEntity(entity);
+        Function<Object, Function<PostgresEntityRepository, Mono<?>>> update =
+                entity -> repository -> repository.updateDomainEntity(CATALOG_ID, entity);
+        Consumer<Statement> insertsVersion = statement -> verify(statement)
+                .bind(INSERT_VERSION_INDEX, VERSION);
+        Consumer<Statement> insertsUnversioned = statement -> verify(statement)
+                .bind(INSERT_VERSION_INDEX, PostgresEntityRepository.UNVERSIONED);
+        Consumer<Statement> updatesVersion = statement -> verify(statement)
+                .bind(UPDATE_VERSION_INDEX, VERSION);
+        Consumer<Statement> keepsVersion = statement -> verify(statement)
+                .bindNull(UPDATE_VERSION_INDEX, String.class);
+        return Stream.of(
+                Arguments.of("create versioned", create.apply(versioned(VERSION)), insertsVersion),
+                Arguments.of("create without version", create.apply(versioned(null)), insertsUnversioned),
+                Arguments.of("create unversioned", create.apply(unversioned), insertsUnversioned),
+                Arguments.of("update versioned", update.apply(versioned(VERSION)), updatesVersion),
+                Arguments.of("update without version", update.apply(versioned(null)), keepsVersion),
+                Arguments.of("update unversioned", update.apply(unversioned), keepsVersion));
+    }
+
+    // an extension property called version must not label the row of an unversioned type
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("boundVersions")
+    void versionIsBoundOnlyForVersionedEntities(String description, Function<PostgresEntityRepository, Mono<?>> write,
+                                                Consumer<Statement> verification) {
+        doReturn(Flux.empty()).when(statement).execute();
+
+        // an update that matches no row fails; only its bindings matter here
+        write.apply(repository).onErrorComplete().block();
+
+        verification.accept(statement);
+    }
+
+    private static TestVersionedCatalog versioned(String version) {
+        TestVersionedCatalog catalog = new TestVersionedCatalog(VERSIONED_ID);
+        catalog.setVersion(version);
+        return catalog;
     }
 
     static Stream<String> unreadableIds() {

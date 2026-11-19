@@ -12,6 +12,7 @@ import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.domain.RefEntity;
 import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import org.fiware.tmforum.storage.NotStored;
 
 import java.net.URI;
@@ -101,6 +102,24 @@ final class DocumentTestEntities {
         private String value;
 
         public TestLogicalResource(String id) {
+            super(TYPE, id);
+        }
+    }
+
+    // like the TMForum catalogs and specifications, whose version labels the stored row
+    @Getter
+    @Setter
+    @ToString(callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    @MappingEnabled(entityType = TestVersionedCatalog.TYPE)
+    public static class TestVersionedCatalog extends EntityWithId implements VersionedEntity {
+
+        static final String TYPE = "test-versioned-catalog";
+
+        private String name;
+        private String version;
+
+        public TestVersionedCatalog(String id) {
             super(TYPE, id);
         }
     }

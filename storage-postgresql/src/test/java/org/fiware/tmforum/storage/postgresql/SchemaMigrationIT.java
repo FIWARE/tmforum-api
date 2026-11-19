@@ -12,6 +12,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -22,6 +25,7 @@ import static org.fiware.tmforum.storage.postgresql.PostgresStorage.ENTITY_TABLE
 import static org.fiware.tmforum.storage.postgresql.PostgresStorage.QUALIFIED_ENTITY_TABLE;
 import static org.fiware.tmforum.storage.postgresql.PostgresStorage.SCHEMA;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Verifies the Flyway migration against the k3s PostgreSQL: the entity table matches the ticket's schema exactly.
@@ -33,6 +37,13 @@ class SchemaMigrationIT {
     private static final String INITIAL_VERSION = "1";
     private static final String PRIMARY_KEY_INDEX = ENTITY_TABLE + "_pkey";
     private static final String NOT_NULL = "NO";
+    private static final String BACKFILL_MIGRATION = "/db/migration/tmforum/V3__entity_version_backfill.sql";
+    private static final String BACKFILL_LABEL = "backfilled-1.0";
+    private static final String UNVERSIONED = "";
+    private static final String INSERT_UNVERSIONED_ROW = "INSERT INTO " + QUALIFIED_ENTITY_TABLE
+            + " (id, type, data) VALUES ($1, $2, jsonb_build_object('version', $3::text))";
+    private static final String SELECT_VERSION = "SELECT version FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1";
+    private static final String DELETE_ROW = "DELETE FROM " + QUALIFIED_ENTITY_TABLE + " WHERE id = $1";
 
     @Inject
     private ConnectionFactory connectionFactory;
@@ -124,6 +135,37 @@ class SchemaMigrationIT {
 
         assertEquals(List.of(ENTITY_CURRENT_INDEX, PRIMARY_KEY_INDEX), indexes.stream().sorted().toList(),
                 "Only the primary key and " + ENTITY_CURRENT_INDEX + " should exist.");
+    }
+
+    static Stream<Arguments> backfilledRows() {
+        // type, version column after the backfill
+        return Stream.of(
+                Arguments.of("catalog", BACKFILL_LABEL),
+                Arguments.of("logical-resource-specification", BACKFILL_LABEL),
+                Arguments.of("individual", UNVERSIONED));
+    }
+
+    // rows written before versioning have version '' and the label only in data
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("backfilledRows")
+    void backfillCopiesTheLabelOfVersionableTypesOnly(String type, String expectedVersion) throws IOException {
+        String id = "urn:ngsi-ld:" + type + ":backfill";
+        query(INSERT_UNVERSIONED_ROW, row -> row, id, type, BACKFILL_LABEL);
+        try {
+            query(backfillStatement(), row -> row);
+
+            assertEquals(List.of(expectedVersion), query(SELECT_VERSION, row -> row.get("version", String.class), id),
+                    "Only a versionable type should take the version from its document.");
+        } finally {
+            query(DELETE_ROW, row -> row, id);
+        }
+    }
+
+    private static String backfillStatement() throws IOException {
+        try (InputStream migration = SchemaMigrationIT.class.getResourceAsStream(BACKFILL_MIGRATION)) {
+            assertNotNull(migration, BACKFILL_MIGRATION + " should be on the classpath.");
+            return new String(migration.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     private <T> List<T> query(String sql, Function<Readable, T> rowMapper, Object... bindings) {
