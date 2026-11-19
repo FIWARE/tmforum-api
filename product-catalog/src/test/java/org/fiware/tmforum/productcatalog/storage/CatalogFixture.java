@@ -5,6 +5,7 @@ import org.fiware.tmforum.common.domain.RelatedParty;
 import org.fiware.tmforum.common.domain.TimePeriod;
 import org.fiware.tmforum.productcatalog.domain.Catalog;
 import org.fiware.tmforum.storage.contract.UpdateFixture;
+import org.fiware.tmforum.storage.contract.VersionFixture;
 
 import java.net.URI;
 import java.time.Instant;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
  * {@code relatedParty} is the list, which reads back from its properties, so no referenced party has to exist, and
  * {@code validFor} is the object.
  */
-class CatalogFixture implements UpdateFixture<Catalog> {
+class CatalogFixture implements UpdateFixture<Catalog>, VersionFixture<Catalog> {
 
 	private static final String NAME = "contract-catalog";
 	private static final String MUTATED_NAME = "mutated-contract-catalog";
@@ -48,6 +49,13 @@ class CatalogFixture implements UpdateFixture<Catalog> {
 		TimePeriod validFor = new TimePeriod();
 		validFor.setStartDateTime(VALID_FROM);
 		catalog.setValidFor(validFor);
+		return catalog;
+	}
+
+	@Override
+	public Catalog withVersion(URI id, String version) {
+		Catalog catalog = newEntity(id);
+		catalog.setVersion(version);
 		return catalog;
 	}
 

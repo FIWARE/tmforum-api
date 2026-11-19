@@ -43,6 +43,7 @@ class ReferenceValidationServiceTest {
 
 	private static final String CATEGORY_TYPE = "category";
 	private static final String OFFERING_TYPE = "product-offering";
+	private static final String NO_VERSION = "";
 
 	private static final TestRef CATEGORY_A = categoryRef("urn:ngsi-ld:category:a");
 	private static final TestRef CATEGORY_B = categoryRef("urn:ngsi-ld:category:b");
@@ -84,18 +85,20 @@ class ReferenceValidationServiceTest {
 			String id = invocation.getArgument(0);
 			String type = STORED_ENTITIES.get(id);
 			List<String> acceptedTypes = invocation.getArgument(1);
-			return type != null && acceptedTypes.contains(type) ? Mono.just(new StoredReference(id, type)) : Mono.empty();
+			return type != null && acceptedTypes.contains(type)
+					? Mono.just(new StoredReference(id, type, NO_VERSION))
+					: Mono.empty();
 		});
 		when(referencesRepository.findReference(anyString())).thenAnswer(invocation -> {
 			String id = invocation.getArgument(0);
 			String type = STORED_ENTITIES.get(id);
-			return type == null ? Mono.empty() : Mono.just(new StoredReference(id, type));
+			return type == null ? Mono.empty() : Mono.just(new StoredReference(id, type, NO_VERSION));
 		});
 		when(referencesRepository.findReferences(anyCollection())).thenAnswer(invocation -> {
 			Collection<String> ids = invocation.getArgument(0);
 			return Flux.fromIterable(ids)
 					.filter(STORED_ENTITIES::containsKey)
-					.map(id -> new StoredReference(id, STORED_ENTITIES.get(id)));
+					.map(id -> new StoredReference(id, STORED_ENTITIES.get(id), NO_VERSION));
 		});
 		meterRegistry = new SimpleMeterRegistry();
 		ReferenceProperties referenceProperties = new ReferenceProperties();
