@@ -42,6 +42,7 @@ public class ReferenceValidationService {
     private static final String MISSING_FORMAT = "References do not exist: %s";
     private static final String VERSION_MISMATCH_FORMAT = "Reference version mismatch: %s";
     private static final String MISMATCH_ENTRY_FORMAT = "%s (version %s, current %s)";
+    private static final String UNVERSIONED_MISMATCH_ENTRY_FORMAT = "%s (version %s, target is unversioned)";
     private static final String MESSAGE_SEPARATOR = "; ";
 
     private final ReferenceReadRepository referencesRepository;
@@ -127,8 +128,7 @@ public class ReferenceValidationService {
                 .toList();
         List<String> mismatched = failures.stream()
                 .filter(failure -> failure.resolution() == Resolution.VERSION_MISMATCH)
-                .map(failure -> String.format(MISMATCH_ENTRY_FORMAT, failure.reference().getEntityId(),
-                        failure.reference().getReferenceVersion(), failure.stored().version()))
+                .map(ReferenceValidationService::mismatchEntry)
                 .toList();
         List<String> parts = new ArrayList<>();
         if (!missing.isEmpty()) {
@@ -138,6 +138,16 @@ public class ReferenceValidationService {
             parts.add(String.format(VERSION_MISMATCH_FORMAT, mismatched));
         }
         return String.join(MESSAGE_SEPARATOR, parts);
+    }
+
+    private static String mismatchEntry(Failure<?> failure) {
+        String current = failure.stored().version();
+        if (current.isEmpty()) {
+            return String.format(UNVERSIONED_MISMATCH_ENTRY_FORMAT, failure.reference().getEntityId(),
+                    failure.reference().getReferenceVersion());
+        }
+        return String.format(MISMATCH_ENTRY_FORMAT, failure.reference().getEntityId(),
+                failure.reference().getReferenceVersion(), current);
     }
 
     // one lookup for all ids of the list that can resolve, keyed by id

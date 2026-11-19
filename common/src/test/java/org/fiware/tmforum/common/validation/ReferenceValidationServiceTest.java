@@ -350,7 +350,7 @@ class ReferenceValidationServiceTest {
 								OTHER_VERSION, CURRENT_VERSION)),
 				Arguments.of("pinned against an unversioned target", List.of(pinnedRef(CATEGORY_A.id(),
 								CURRENT_VERSION)),
-						String.format("Reference version mismatch: [%s (version %s, current )]", CATEGORY_A.id(),
+						String.format("Reference version mismatch: [%s (version %s, target is unversioned)]", CATEGORY_A.id(),
 								CURRENT_VERSION)),
 				Arguments.of("missing and mismatch", List.of(pinnedRef(VERSIONED_ID, OTHER_VERSION), MISSING_X),
 						String.format("References do not exist: [%s]; Reference version mismatch: "
