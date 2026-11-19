@@ -88,7 +88,9 @@ public class GetIssuesOneQueryIT extends AbstractApiIT {
 				.serviceLevelAgreement(null)
 				.category(List.of(CategoryRefVOTestExample.build().atSchemaLocation(null)
 						.id(category.getId().toString())
-						.href(category.getId())));
+						.href(category.getId())
+						// the example's placeholder version would pin the unversioned category
+						.version(null)));
 		HttpResponse<ProductOfferingVO> created = callAndCatch(
 				() -> productOfferingApiTestClient.createProductOffering(null, createVO));
 		assertEquals(HttpStatus.CREATED, created.getStatus(), "The offering should have been created.");
