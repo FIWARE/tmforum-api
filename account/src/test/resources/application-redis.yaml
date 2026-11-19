@@ -6,6 +6,7 @@ redis:
       expire-after-write: 2s
       expire-after-access: 2s
       value-serializer: io.github.wistefan.mapping.EntityVOSerializer
+    # broker-only: NGSI-LD subscriptions (NgsiLdSubscriptionRepository), unused on postgresql
     subscriptions:
       expire-after-write: 10s
       expire-after-access: 10s
