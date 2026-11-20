@@ -32,7 +32,8 @@ release note.
   listener invocation writes the same value. The flag describes the broker's data: the PostgreSQL write path ignores
   the escaped getters, so the value is harmless there. Each command asserts the flag still equals `--source-escaped`
   when it finishes and fails otherwise. Data written while the flag was `false` is stored plain, and decoding it would
-  be lossy (`%`, `+`).
+  be lossy (`%`, `+`). The flag is JVM-wide and a shared test context never re-creates `GeneralProperties`, so every
+  test that sets it to `false` restores `true` in an `@AfterEach`.
 - **Configuration is passed programmatically** (`ApplicationContext.builder().environments(..).properties(..)`), like
   `UpdateWriter`. The module ships no `application*.yaml`: Micronaut 5 fails on duplicate configuration resources,
   and `all-in-one`'s files are already on the classpath.
@@ -85,7 +86,9 @@ The plan delivers the tooling, runbook and an in-cluster rollback rehearsal (Ste
   - the contexts start with the expected environments and properties (no network: verify the built configuration);
   - the escaper flag survives a late `GeneralProperties` creation, parameterized over `--source-escaped`
     `true`/`false`: build both contexts, then resolve `GeneralProperties` (and a bean injecting it) in the source and
-    then the target context, and assert after each that `ForbiddenCharacterEscaper` still matches the option.
+    then the target context, and assert after each that `ForbiddenCharacterEscaper` still matches the option. An
+    `@AfterEach` restores `ForbiddenCharacterEscaper.setEnabled(true)` (as
+    `ForbiddenCharacterEscapingConfigurerTest.resetToDefault` does), so the `false` case cannot leak.
 - **Acceptance.** `mvn -pl data-migrator/postgresql-migrator -am package -DskipITs` builds and the unit tests pass. No
   existing module changes behaviour.
 
@@ -131,7 +134,8 @@ The plan delivers the tooling, runbook and an in-cluster rollback rehearsal (Ste
     - the unescaped values;
     - with `--source-escaped=false` (a separate parameterized run over a broker seeded with plain values), a hub
       whose `query`/`rawQuery` contain `%`, `+` and `%3D` is stored byte-for-byte unchanged; this fails if the flag
-      flips to `true` mid-run;
+      flips to `true` mid-run. `ImportIT` restores `ForbiddenCharacterEscaper.setEnabled(true)` in an `@AfterEach`,
+      so no later IT in the same failsafe JVM seeds hubs unescaped;
     - no `tmfEscaped-` key;
     - the id-only reference stored as id-only.
 - **Acceptance.** The import reproduces every seeded entity in `tmforum.entity` and fires no outbox row
