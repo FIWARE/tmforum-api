@@ -7,8 +7,9 @@ The TMForum APIs can store their entities in PostgreSQL 18 instead of an NGSI-LD
 [storage-api](../storage-api/README.md) with R2DBC (non-blocking) and migrates its schema with Flyway at startup.
 The NGSI-LD adapter stays the default; ticket 9 makes the backend a regular setting and flips the default.
 
-A PostgreSQL deployment needs no context broker for entity storage. It still needs one for TMForum hub
-registration until ticket 1 lands (see [Interim limits](#interim-limits-until-ticket-1)).
+A PostgreSQL deployment needs no context broker. Hub registration (`POST /hub`, `DELETE /hub/{id}`) and TMForum
+event delivery work without one: the hub is stored as a TMForum subscription with no NGSI-LD subscription, and the
+event outbox delivers its events (see [Notifications](#notifications)).
 
 ## Enabling it
 
@@ -108,10 +109,13 @@ the `jsonb` document; every user value is a bound parameter.
 * **No accepted deviations yet.** The backend differences observed while testing are pending acceptance in ticket 0
   and are listed here once accepted.
 
-## Interim limits (until ticket 1)
+## Notifications
 
-* **No TMForum hub registration.** Registering a hub (`POST /hub`) needs a broker until ticket 1, because it also
-  creates an NGSI-LD subscription. Looking up the hubs of an event works on PostgreSQL.
+* **TMForum hubs work on both backends.** On PostgreSQL, `POST /hub` stores the listener only, and the event outbox
+  delivers its create, change and delete events. On the broker, nothing changes.
+* **The NGSI-LD notification path is broker-only.** NGSI-LD subscriptions and the `POST /callback` route the broker
+  notifies are not wired on PostgreSQL, so `POST /callback` answers 404 there. The `subscriptions` cache is unused on
+  PostgreSQL.
 
 ## Tests and CI
 
@@ -120,10 +124,8 @@ the `jsonb` document; every user value is a bound parameter.
   `mvn verify -pl product-catalog -Dbroker=postgresql -Dcache=redis`.
 * The port contract ITs run against PostgreSQL in every job and against NGSI-LD in the broker jobs.
 * `test-brokers.yaml` runs the matrix {scorpio, orion-ld, postgresql} x {in-memory, redis}.
-* ITs the storage under test cannot run yet carry a JUnit tag, and failsafe excludes `not-on-${broker}`
+* ITs the storage under test cannot run carry a JUnit tag, and failsafe excludes `not-on-${broker}`
   (`common`'s `StorageTags`):
-  * `@RequiresHubSupport` (hub registration/deletion and event delivery through the API): lifted when ticket 1
-    has landed.
   * `@BrokerOnly` (NGSI-LD adapter, NGSI-LD subscriptions, `DeleteEventBrokerIT`): never runs on PostgreSQL.
   * `@PostgresqlOnly` (PostgreSQL-pinned ITs such as the outbox and one-query ITs): runs only with
     `-Dbroker=postgresql`.

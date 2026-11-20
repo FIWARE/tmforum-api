@@ -42,7 +42,7 @@ class NgsiLdEntityRepositoryTest {
 	@BeforeEach
 	public void setUp() {
 		properties = new GeneralProperties();
-		repository = new NgsiLdEntityRepository(properties, null, null, null, null, null, null);
+		repository = new NgsiLdEntityRepository(properties, null, null, null, null, null);
 	}
 
 	@Test
@@ -51,7 +51,7 @@ class NgsiLdEntityRepositoryTest {
 		// "id" query param to null, silently dropping any ?id= filter on polymorphic list
 		// endpoints (e.g. resourceSpecification, which spans several NGSI-LD types).
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null, null, null, null,
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null, null, null,
 				new NgsiLdQueryRenderer(properties));
 		String requestedId = "urn:ngsi-ld:software-specification:0e2d5c4a-cf51-43cf-a510-dff06f62f4a3";
 
@@ -72,7 +72,7 @@ class NgsiLdEntityRepositoryTest {
 	@MethodSource("queries")
 	public void findEntitiesRendersTheQueryForTheBroker(EntityQuery query, String expectedQ, String expectedOrderBy) {
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null, null,
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null,
 				null, null, new NgsiLdQueryRenderer(properties));
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any()))
@@ -103,7 +103,7 @@ class NgsiLdEntityRepositoryTest {
 	public void aRejectedFilterArrivesAsQueryExceptionSignal(
 			BiFunction<NgsiLdEntityRepository, EntityQuery, Mono<?>> listCall) {
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null, null,
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null,
 				null, null, new NgsiLdQueryRenderer(properties));
 		QueryFilter alternation = new QueryFilter.Comparison(new AttributePath(List.of("color"), false),
 				ComparisonOperator.REGEX, ValueType.STRING, List.of("a|b"));

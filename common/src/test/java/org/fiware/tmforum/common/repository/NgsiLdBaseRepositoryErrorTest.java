@@ -52,7 +52,7 @@ class NgsiLdBaseRepositoryErrorTest {
 		when(javaObjectMapper.toEntityVO(any(), any(NgsiLdWriteOperation.class))).thenReturn(entityVO);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new NgsiLdEntityRepository(new GeneralProperties(), entitiesApi, null, null, ngsiMapper,
+		repository = new NgsiLdEntityRepository(new GeneralProperties(), entitiesApi, null, ngsiMapper,
 				javaObjectMapper, null);
 	}
 

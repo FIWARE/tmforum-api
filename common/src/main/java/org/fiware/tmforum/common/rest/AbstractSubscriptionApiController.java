@@ -3,10 +3,12 @@ package org.fiware.tmforum.common.rest;
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.cache.annotation.CacheInvalidate;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Consumes;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.RouteCondition;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
@@ -51,18 +53,24 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	private static final String RECEIVER_INFO_LISTENER_ENDPOINT = "Listener-Endpoint";
 	private static final String CALLBACK_ATTRIBUTE = "callback";
 	static final int SAME_CALLBACK_PAGE_SIZE = 100;
+	// false on PostgreSQL, where the NGSI-LD path is not wired, so the router answers its normal 404
+	private static final String BROKER_NOTIFICATIONS_CONDITION =
+			"#{ !ctx[T(io.micronaut.context.env.Environment)].getActiveNames().contains('"
+					+ CommonConstants.POSTGRESQL_ENVIRONMENT + "') }";
 
 	private final Map<String, String> eventGroupToEntityNameMapping;
 	private final GeneralProperties generalProperties;
 	protected final EntityVOMapper entityVOMapper;
+	@Nullable
 	private final NgsiLdEventHandler ngsiLdEventHandler;
 	private final SubscriptionMapper subscriptionMapper;
+	@Nullable
 	private SubscriptionRepository subscriptionRepository;
 
 	public AbstractSubscriptionApiController(
 			QueryParser queryParser, ReferenceValidationService validationService, EntityRepository repository,
 			Map<String, String> eventGroupToEntityNameMapping,
-			TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
+			TMForumEventHandler tmForumEventHandler, @Nullable NgsiLdEventHandler ngsiLdEventHandler,
 			GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
 		super(queryParser, validationService, repository, tmForumEventHandler);
 		this.eventGroupToEntityNameMapping = eventGroupToEntityNameMapping;
@@ -72,14 +80,25 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 		this.subscriptionMapper = subscriptionMapper;
 	}
 
-	/** Setter-injected so the module constructors stay port-only; the broker notification path stays out of the port. */
+	/**
+	 * Setter-injected so the module constructors stay port-only; the broker notification path stays out of the port.
+	 * Null on PostgreSQL, where the NGSI-LD path is not wired.
+	 */
 	@Inject
-	public void setSubscriptionRepository(SubscriptionRepository subscriptionRepository) {
+	public void setSubscriptionRepository(@Nullable SubscriptionRepository subscriptionRepository) {
 		this.subscriptionRepository = subscriptionRepository;
+	}
+
+	private boolean brokerNotifications() {
+		return subscriptionRepository != null && ngsiLdEventHandler != null;
 	}
 
 	@CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
 	protected Mono<TMForumSubscription> create(TMForumSubscription tmForumSubscription) {
+		if (!brokerNotifications()) {
+			return assureNotExistingTMForumSubscription(tmForumSubscription)
+					.then(create(Mono.just(tmForumSubscription), TMForumSubscription.class));
+		}
 		return assureNotExistingTMForumSubscription(tmForumSubscription)
 				.then(Mono.defer(() -> subscriptionRepository.createSubscription(
 						subscriptionMapper
@@ -135,7 +154,9 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 		tmForumSubscription.setQuery(subscriptionQuery.getQuery());
 		tmForumSubscription.setCallback(URI.create(callback));
 		tmForumSubscription.setFields(subscriptionQuery.getFields());
-		tmForumSubscription.setSubscription(buildNgsiLdSubscription(callback, subscriptionQuery, entities));
+		if (brokerNotifications()) {
+			tmForumSubscription.setSubscription(buildNgsiLdSubscription(callback, subscriptionQuery, entities));
+		}
 		return tmForumSubscription;
 	}
 
@@ -166,6 +187,9 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	@Override
 	@CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
 	protected Mono<HttpResponse<Object>> delete(String id) {
+		if (!brokerNotifications()) {
+			return super.delete(id);
+		}
 		return subscriptionRepository.deleteDomainSubscriptionByTmForumSubscription(URI.create(id))
 				.then(super.delete(id));
 	}
@@ -179,6 +203,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	}
 
 	@Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)
+	@RouteCondition(BROKER_NOTIFICATIONS_CONDITION)
 	@Consumes({"application/json;charset=utf-8"})
 	public Mono<HttpResponse<Void>> callback(@NonNull @Body String payload) {
 		log.warn("Callback for NGSI-LD subscription: {}", payload);

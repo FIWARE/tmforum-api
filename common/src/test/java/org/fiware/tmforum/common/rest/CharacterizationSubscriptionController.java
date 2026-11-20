@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.rest;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
@@ -36,7 +37,7 @@ public class CharacterizationSubscriptionController extends AbstractSubscription
 
 	public CharacterizationSubscriptionController(QueryParser queryParser,
 			ReferenceValidationService validationService, EntityRepository repository,
-			TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
+			TMForumEventHandler tmForumEventHandler, @Nullable NgsiLdEventHandler ngsiLdEventHandler,
 			GeneralProperties generalProperties, EntityVOMapper entityVOMapper,
 			SubscriptionMapper subscriptionMapper) {
 		super(queryParser, validationService, repository, Map.of(EVENT_GROUP, CharacterizationEntity.TYPE),

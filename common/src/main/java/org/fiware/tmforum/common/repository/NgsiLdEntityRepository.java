@@ -5,7 +5,6 @@ import io.github.wistefan.mapping.JavaObjectMapper;
 import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -25,17 +24,16 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
-public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements EntityRepository, SubscriptionRepository {
+public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements EntityRepository {
 
     private static final String LIST_FAILED = "Was not able to list entities.";
 
     private final NgsiLdQueryRenderer queryRenderer;
 
     public NgsiLdEntityRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
-                                  SubscriptionsApiClient subscriptionsApi, EntityVOMapper entityVOMapper,
-                                  NGSIMapper ngsiMapper, JavaObjectMapper javaObjectMapper,
-                                  NgsiLdQueryRenderer queryRenderer) {
-        super(generalProperties, entitiesApi, subscriptionsApi, javaObjectMapper, ngsiMapper, entityVOMapper);
+                                  EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper,
+                                  JavaObjectMapper javaObjectMapper, NgsiLdQueryRenderer queryRenderer) {
+        super(generalProperties, entitiesApi, javaObjectMapper, ngsiMapper, entityVOMapper);
         this.queryRenderer = queryRenderer;
     }
 
