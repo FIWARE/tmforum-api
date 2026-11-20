@@ -73,6 +73,7 @@ class MigrationContextsTest {
 		Map<String, Object> properties = contexts.sourceProperties();
 		assertEquals(BROKER_URL, properties.get(MigrationContexts.NGSI_URL_PROPERTY));
 		assertEquals(TENANT, properties.get(MigrationContexts.TENANT_PROPERTY));
+		assertEquals(brokerType == BrokerType.SCORPIO, properties.get(MigrationContexts.REPLACE_ON_UPDATE_PROPERTY));
 		assertSharedProperties(properties, true);
 	}
 
@@ -128,6 +129,8 @@ class MigrationContextsTest {
 
 		assertEquals(Set.copyOf(contexts.sourceEnvironments()), ownEnvironments(contexts.source()));
 		assertEquals(Set.copyOf(contexts.targetEnvironments()), ownEnvironments(contexts.target()));
+		assertEquals(brokerType == BrokerType.SCORPIO,
+				contexts.source().getBean(GeneralProperties.class).isReplaceOnUpdate());
 	}
 
 	@ParameterizedTest

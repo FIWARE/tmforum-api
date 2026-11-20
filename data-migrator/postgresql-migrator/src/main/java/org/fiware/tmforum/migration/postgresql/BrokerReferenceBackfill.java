@@ -3,8 +3,6 @@ package org.fiware.tmforum.migration.postgresql;
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.github.wistefan.mapping.NgsiLdWriteOperation;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
@@ -12,7 +10,6 @@ import org.fiware.ngsi.model.GeoPropertyVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.DatasetIdRewrite;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.Entry;
@@ -48,12 +45,13 @@ import java.util.TreeMap;
  * into the PostgreSQL document form, so {@link ReferenceFiller} applies the rule of the PostgreSQL backfill to the same
  * keys. Only changed attributes are written, through the NGSI-LD adapter's {@code updateDomainEntity}.
  * <p>
- * Without {@code replaceOnUpdate} the broker appends, which replaces stored instances by datasetId. An attribute whose
- * stored datasetIds differ from the written ones (the old {@code productOrderItem} format) is therefore replaced as a
- * whole: on Orion-LD it is deleted first and restored from its read value if the write then fails; on Scorpio, whose
- * attribute delete is broken in 5.0.3, Update Attributes replaces all its instances. Each write is a normal broker
- * update: it moves {@code modifiedAt} and notifies the broker's own subscriptions. Not transactional; a re-run is a
- * no-op.
+ * Scorpio runs with {@code replaceOnUpdate} ({@link MigrationContexts} pins it), so {@code updateDomainEntity} replaces
+ * every instance itself. Orion-LD appends, which replaces stored instances by datasetId only, so an attribute whose
+ * stored datasetIds differ from the written ones (a single reference stored with a datasetId, which the mapping writes
+ * as the default instance; the old {@code productOrderItem} format) is deleted first and, if a later delete or the
+ * write fails, restored from its read value; the value is logged before the delete for a manual restore. Each write
+ * is a normal broker update: it moves {@code modifiedAt} and notifies the broker's own subscriptions. Not
+ * transactional; a re-run is a no-op.
  */
 @Slf4j
 class BrokerReferenceBackfill {
@@ -69,8 +67,6 @@ class BrokerReferenceBackfill {
 	private final JavaObjectMapper javaObjectMapper;
 	private final DocumentMapper documents;
 	private final boolean replaceOnUpdate;
-	private final boolean replaceByUpdateAttributes;
-	private final NGSIMapper ngsiMapper;
 	private final EntityTypeRegistry registry;
 	private final int pageSize;
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
@@ -78,15 +74,19 @@ class BrokerReferenceBackfill {
 
 	BrokerReferenceBackfill(ApplicationContext sourceContext, ReferenceBackfillCatalog catalog,
 			EntityTypeRegistry registry, int pageSize) {
-		this.source = new BrokerSource(sourceContext);
-		this.repository = sourceContext.getBean(NgsiLdEntityRepository.class);
+		this(sourceContext, new BrokerSource(sourceContext), sourceContext.getBean(NgsiLdEntityRepository.class),
+				catalog, registry, pageSize);
+	}
+
+	// the broker calls are passed in, so tests can fail them
+	BrokerReferenceBackfill(ApplicationContext sourceContext, BrokerSource source, NgsiLdEntityRepository repository,
+			ReferenceBackfillCatalog catalog, EntityTypeRegistry registry, int pageSize) {
+		this.source = source;
+		this.repository = repository;
 		this.javaObjectMapper = sourceContext.getBean(JavaObjectMapper.class);
 		// the PostgreSQL document form only, so the catalog keys apply; nothing is written to a database
 		this.documents = new PostgresDocumentMapper(sourceContext.getBean(ObjectMapper.class)).storage();
 		this.replaceOnUpdate = sourceContext.getBean(GeneralProperties.class).isReplaceOnUpdate();
-		this.replaceByUpdateAttributes = sourceContext.getEnvironment().getActiveNames()
-				.contains(BrokerType.SCORPIO.getEnvironment());
-		this.ngsiMapper = sourceContext.getBean(NGSIMapper.class);
 		this.registry = registry;
 		this.pageSize = pageSize;
 		this.attributes = attributes(catalog);
@@ -318,18 +318,25 @@ class BrokerReferenceBackfill {
 		}
 		if (!dryRun) {
 			URI id = owner.entity().getId();
-			if (replaceByUpdateAttributes && !replaced.isEmpty()) {
-				writeReplacing(id, owner, replaced.keySet(), domainClass);
-			} else {
-				Object finalUpdate = owner.changes().size() == planned
-						? update
-						: partial(owner, owner.changes(), domainClass);
-				replaced.keySet().forEach(attribute -> source.deleteAttribute(id, attribute.name));
-				try {
-					repository.updateDomainEntity(id.toString(), finalUpdate).block();
-				} catch (RuntimeException e) {
-					throw restore(owner, replaced, domainClass, e);
-				}
+			Object finalUpdate = owner.changes().size() == planned
+					? update
+					: partial(owner, owner.changes(), domainClass);
+			Map<Attribute, JsonNode> deleted = new LinkedHashMap<>();
+			try {
+				replaced.forEach((attribute, value) -> {
+					log.info("Replacing {} of {}, read value: {}", attribute.name, id, value);
+					try {
+						source.deleteAttribute(id, attribute.name);
+					} catch (RuntimeException e) {
+						// a timed-out delete may still have happened, so the value is kept for a manual check
+						throw new IllegalStateException(String.format("%s; if %s is gone, its read value was %s",
+								message(e), attribute.name, value), e);
+					}
+					deleted.put(attribute, value);
+				});
+				repository.updateDomainEntity(id.toString(), finalUpdate).block();
+			} catch (RuntimeException e) {
+				throw restore(owner, deleted, domainClass, e);
 			}
 		}
 		owner.changes().forEach((attribute, value) -> {
@@ -340,25 +347,8 @@ class BrokerReferenceBackfill {
 		});
 	}
 
-	// Update Attributes replaces every instance of an attribute the entity already has; the others are appended
-	private void writeReplacing(URI id, Owner owner, Set<Attribute> replaced, Class<?> domainClass) {
-		Map<Attribute, JsonNode> replacing = new LinkedHashMap<>(owner.changes());
-		replacing.keySet().retainAll(replaced);
-		Map<Attribute, JsonNode> appended = new LinkedHashMap<>(owner.changes());
-		appended.keySet().removeAll(replaced);
-		EntityVO replacement = javaObjectMapper.toEntityVO(partial(owner, replacing, domainClass),
-				NgsiLdWriteOperation.UPDATE);
-		HttpResponse<?> response = repository.updateAttributes(id, ngsiMapper.map(replacement)).block();
-		if (response != null && response.getStatus() == HttpStatus.MULTI_STATUS) {
-			throw new IllegalStateException(String.format("The broker did not replace %s: %s",
-					names(replacing), response.getBody(String.class).orElse("no details given")));
-		}
-		if (!appended.isEmpty()) {
-			repository.updateDomainEntity(id.toString(), partial(owner, appended, domainClass)).block();
-		}
-	}
-
-	// rewrites what the failed write deleted, from the read values, so a failure does not lose data
+	// rewrites only what was actually deleted, from the read values; re-appending an undeleted attribute would
+	// add new-datasetId instances next to the old ones
 	private RuntimeException restore(Owner owner, Map<Attribute, JsonNode> deleted, Class<?> domainClass,
 			RuntimeException failure) {
 		if (deleted.isEmpty()) {
@@ -367,12 +357,12 @@ class BrokerReferenceBackfill {
 		try {
 			repository.updateDomainEntity(owner.entity().getId().toString(), partial(owner, deleted, domainClass))
 					.block();
-			return new IllegalStateException(String.format("write failed, the deleted attributes %s were restored: %s",
+			return new IllegalStateException(String.format("backfill failed, the deleted attributes %s were restored: %s",
 					names(deleted), message(failure)), failure);
 		} catch (RuntimeException restoreFailure) {
 			failure.addSuppressed(restoreFailure);
 			return new IllegalStateException(String.format(
-					"write failed and restoring the deleted attributes failed too, restore them by hand from %s: %s",
+					"backfill failed and restoring the deleted attributes failed too, restore them by hand from %s: %s",
 					deletedValues(deleted), message(failure)), failure);
 		}
 	}

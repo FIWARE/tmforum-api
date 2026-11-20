@@ -24,6 +24,8 @@ public class MigrationContexts implements AutoCloseable {
 	static final String NGSI_URL_PROPERTY = "micronaut.http.services.ngsi.url";
 	static final String TENANT_PROPERTY = "general.tenant";
 	static final String ESCAPE_PROPERTY = "general.escape-forbidden-characters";
+	// pinned per broker, not left to all-in-one's yaml: the broker backfill relies on it to replace attribute instances
+	static final String REPLACE_ON_UPDATE_PROPERTY = "general.replace-on-update";
 	static final String SERIALIZATION_INCLUSION_PROPERTY = "jackson.serialization-inclusion";
 	// Micronaut's NON_EMPTY default would drop empty values and lists of migrated entities
 	static final String SERIALIZATION_INCLUSION = "non_null";
@@ -160,6 +162,7 @@ public class MigrationContexts implements AutoCloseable {
 	Map<String, Object> sourceProperties() {
 		Map<String, Object> properties = sharedProperties();
 		properties.put(NGSI_URL_PROPERTY, brokerUrl);
+		properties.put(REPLACE_ON_UPDATE_PROPERTY, brokerType == BrokerType.SCORPIO);
 		if (tenant != null) {
 			properties.put(TENANT_PROPERTY, tenant);
 		}
