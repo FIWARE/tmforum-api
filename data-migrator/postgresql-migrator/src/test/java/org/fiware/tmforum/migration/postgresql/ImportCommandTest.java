@@ -40,6 +40,7 @@ class ImportCommandTest {
 	private static final String PLAIN = ImportEntities.PLAIN_TYPE;
 	private static final String GIVEN_VERSION = "2.1";
 	private static final String UNMAPPED_TYPE = "Subscription";
+	private static final String ESCAPER_DRIFT = "The forbidden-character escaper is false, but --source-escaped is true.";
 	private static final int PAGE_SIZE = 2;
 	private static final Instant CREATED_AT = Instant.parse("2024-01-02T03:04:05Z");
 	private static final Instant MODIFIED_AT = Instant.parse("2025-06-07T08:09:10Z");
@@ -187,6 +188,20 @@ class ImportCommandTest {
 		assertTrue(target.written.isEmpty());
 		assertEquals(2, report.type(VERSIONED).written);
 		assertEquals(2, report.type(VERSIONED).seededVersion);
+	}
+
+	@Test
+	void failsAndNamesTheCauseWhenTheEscaperFlagDrifted() {
+		source.add(PLAIN, 1, null);
+
+		ImportReport report = run(options(false, false, false), PLAIN);
+		report.escaperDrift(ESCAPER_DRIFT);
+
+		assertFalse(report.succeeded());
+		String printed = print(report);
+		assertTrue(printed.contains("ERROR " + ESCAPER_DRIFT));
+		assertTrue(printed.contains("Import FAILED."));
+		assertFalse(printed.contains("Import succeeded."));
 	}
 
 	@Test

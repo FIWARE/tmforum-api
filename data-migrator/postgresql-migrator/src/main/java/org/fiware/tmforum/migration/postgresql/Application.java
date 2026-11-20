@@ -59,8 +59,12 @@ public class Application implements Runnable {
 			contexts.start();
 			ImportReport report = new ImportCommand(new BrokerSource(contexts.source()),
 					new PostgresTarget(contexts.target()), registry, options).run(resolvedTypes);
+			try {
+				contexts.verifyEscaperFlag();
+			} catch (IllegalStateException e) {
+				report.escaperDrift(e.getMessage());
+			}
 			report.print(spec.commandLine().getOut());
-			contexts.verifyEscaperFlag();
 			return report.succeeded() ? ExitCode.OK : ExitCode.SOFTWARE;
 		}
 	}

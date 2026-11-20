@@ -9,7 +9,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Per-type outcome of an import run; the run succeeded when no type has a failure or an error.
+ * Per-type outcome of an import run; the run succeeded when no type has a failure or an error and the escaper flag
+ * did not drift.
  */
 class ImportReport {
 
@@ -20,6 +21,7 @@ class ImportReport {
 	private final Map<String, TypeReport> types = new LinkedHashMap<>();
 	private final Set<String> unmappedTypes = new TreeSet<>();
 	private String typeListingFailure;
+	private String escaperDrift;
 	private boolean aborted;
 
 	ImportReport(boolean dryRun) {
@@ -38,12 +40,16 @@ class ImportReport {
 		typeListingFailure = message;
 	}
 
+	void escaperDrift(String message) {
+		escaperDrift = message;
+	}
+
 	void abort() {
 		aborted = true;
 	}
 
 	boolean succeeded() {
-		return !aborted && types.values().stream().allMatch(TypeReport::succeeded);
+		return !aborted && escaperDrift == null && types.values().stream().allMatch(TypeReport::succeeded);
 	}
 
 	Set<String> unmappedTypes() {
@@ -62,6 +68,9 @@ class ImportReport {
 				errors.add(type.type + ": " + type.error);
 			}
 		});
+		if (escaperDrift != null) {
+			errors.add(escaperDrift);
+		}
 		errors.forEach(error -> out.println("ERROR " + error));
 		if (typeListingFailure != null) {
 			out.println("Was not able to list the broker's types: " + typeListingFailure);

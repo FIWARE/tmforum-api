@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,12 +34,18 @@ class BrokerSource implements EntitySource {
 	private static final String ACCEPT_HEADER = "Accept";
 	private static final String JSON = "application/json";
 	private static final int HTTP_OK = 200;
+	static final String READ_TIMEOUT_PROPERTY = "micronaut.http.services.ngsi.read-timeout";
+	static final String CONNECT_TIMEOUT_PROPERTY = "micronaut.http.services.ngsi.connect-timeout";
+	// used when the ngsi service configures none; the read timeout is Micronaut's client default
+	static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(10);
+	static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(10);
 
 	private final EntitiesApiClient entitiesApi;
 	private final EntityVOMapper entityVOMapper;
 	private final GeneralProperties generalProperties;
 	private final String brokerUrl;
-	private final HttpClient httpClient = HttpClient.newHttpClient();
+	private final Duration readTimeout;
+	private final HttpClient httpClient;
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
 	BrokerSource(ApplicationContext source) {
@@ -46,6 +53,12 @@ class BrokerSource implements EntitySource {
 		this.entityVOMapper = source.getBean(EntityVOMapper.class);
 		this.generalProperties = source.getBean(GeneralProperties.class);
 		this.brokerUrl = source.getRequiredProperty(MigrationContexts.NGSI_URL_PROPERTY, String.class);
+		// the type listing bypasses the ngsi client, so it takes over its timeouts to not hang on a silent broker
+		this.readTimeout = source.getProperty(READ_TIMEOUT_PROPERTY, Duration.class).orElse(DEFAULT_READ_TIMEOUT);
+		this.httpClient = HttpClient.newBuilder()
+				.connectTimeout(source.getProperty(CONNECT_TIMEOUT_PROPERTY, Duration.class)
+						.orElse(DEFAULT_CONNECT_TIMEOUT))
+				.build();
 	}
 
 	@Override
@@ -74,6 +87,7 @@ class BrokerSource implements EntitySource {
 		HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(brokerUrl + TYPES_PATH))
 				.header(ACCEPT_HEADER, JSON)
 				.header(LINK_HEADER, linkHeader())
+				.timeout(readTimeout)
 				.GET();
 		if (generalProperties.getTenant() != null) {
 			request.header(TENANT_HEADER, generalProperties.getTenant());
