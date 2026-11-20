@@ -91,6 +91,18 @@ public class MigrationContexts implements AutoCloseable {
 	void start(Map<String, Object> targetOverrides) {
 		rejectInheritedEnvironments();
 		source = builder(sourceEnvironments(), sourceProperties()).start();
+		startTargetContext(targetOverrides);
+	}
+
+	/**
+	 * Starts the target context only, for commands that work on PostgreSQL alone; {@link #source()} stays unavailable.
+	 */
+	public void startTarget() {
+		rejectInheritedEnvironments();
+		startTargetContext(Map.of());
+	}
+
+	private void startTargetContext(Map<String, Object> targetOverrides) {
 		Map<String, Object> targetProperties = new HashMap<>(targetProperties());
 		targetProperties.putAll(targetOverrides);
 		target = builder(targetEnvironments(), targetProperties).start();
@@ -112,7 +124,7 @@ public class MigrationContexts implements AutoCloseable {
 
 	/**
 	 * Fails when the escaper flag no longer matches {@code --source-escaped}, i.e. data was read with the wrong
-	 * decoding. Every command calls it when it finishes.
+	 * decoding. Every command that maps broker data calls it when it finishes.
 	 */
 	public void verifyEscaperFlag() {
 		if (ForbiddenCharacterEscaper.isEnabled() != sourceEscaped) {

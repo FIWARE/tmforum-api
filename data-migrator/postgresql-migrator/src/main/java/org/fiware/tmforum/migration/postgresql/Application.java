@@ -1,5 +1,6 @@
 package org.fiware.tmforum.migration.postgresql;
 
+import io.r2dbc.spi.ConnectionFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExitCode;
@@ -9,8 +10,11 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
 
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Moves a broker-backed deployment onto PostgreSQL and backfills inline references on either backend.
@@ -22,7 +26,13 @@ public class Application implements Runnable {
 
 	private static final String DRY_RUN_DESCRIPTION = "Report what would change without writing.";
 	private static final String DEFAULT_PAGE_SIZE = "100";
+	private static final String TARGET_POSTGRESQL = "postgresql";
+	private static final String TARGET_BROKER = "broker";
 	private static final String NOT_IMPLEMENTED = "The '%s' command is not implemented yet.";
+	static final String BACKFILL_SKIPPED_FAILED_IMPORT = "Reference backfill skipped: the import failed.";
+	// the backfill fills from the stored targets, and a dry-run import stored none
+	static final String BACKFILL_SKIPPED_DRY_RUN =
+			"Reference backfill skipped on a dry run: nothing was imported to fill from.";
 
 	@Spec
 	CommandSpec spec;
@@ -45,7 +55,9 @@ public class Application implements Runnable {
 					description = "Entities per broker request; Orion-LD caps it at 1000.") int pageSize,
 			@Option(names = "--resume", description = "Continue an earlier import: accept a non-empty target and skip "
 					+ "ids that are already stored.") boolean resume,
-			@Option(names = "--fail-fast", description = "Stop at the first failure.") boolean failFast) {
+			@Option(names = "--fail-fast", description = "Stop at the first failure.") boolean failFast,
+			@Option(names = "--backfill-references", description = "After a successful import, run "
+					+ "backfill-references --target " + TARGET_POSTGRESQL + "; skipped on a dry run.") boolean backfillReferences) {
 		ImportOptions options;
 		Set<String> resolvedTypes;
 		EntityTypeRegistry registry = EntityTypeRegistry.scan();
@@ -59,20 +71,75 @@ public class Application implements Runnable {
 			contexts.start();
 			ImportReport report = new ImportCommand(new BrokerSource(contexts.source()),
 					new PostgresTarget(contexts.target()), registry, options).run(resolvedTypes);
-			try {
-				contexts.verifyEscaperFlag();
-			} catch (IllegalStateException e) {
-				report.escaperDrift(e.getMessage());
-			}
-			report.print(spec.commandLine().getOut());
-			return report.succeeded() ? ExitCode.OK : ExitCode.SOFTWARE;
+			recordEscaperDrift(contexts, report::escaperDrift);
+			Supplier<ReferenceBackfillReport> backfill = backfillReferences
+					? () -> runPostgresBackfill(contexts, dryRun)
+					: null;
+			return importThenBackfill(report, backfill, dryRun, spec.commandLine().getOut());
 		}
+	}
+
+	/**
+	 * Prints the import report, then runs and prints the backfill when one is requested ({@code backfill} non-null),
+	 * the import succeeded and it is not a dry run. Returns the exit code of both.
+	 */
+	static int importThenBackfill(ImportReport report, Supplier<ReferenceBackfillReport> backfill, boolean dryRun,
+			PrintWriter out) {
+		report.print(out);
+		if (backfill == null) {
+			return exitCode(report.succeeded());
+		}
+		if (!report.succeeded()) {
+			out.println(BACKFILL_SKIPPED_FAILED_IMPORT);
+			out.flush();
+			return ExitCode.SOFTWARE;
+		}
+		if (dryRun) {
+			out.println(BACKFILL_SKIPPED_DRY_RUN);
+			out.flush();
+			return ExitCode.OK;
+		}
+		ReferenceBackfillReport backfillReport = backfill.get();
+		backfillReport.print(out);
+		return exitCode(backfillReport.succeeded());
 	}
 
 	@Command(name = "backfill-references", description = "Fill absent fields of stored references from their targets.")
 	int backfillReferences(@Mixin MigrationContexts contexts,
+			@Option(names = "--target", required = true,
+					description = "Store to backfill: " + TARGET_POSTGRESQL + " or " + TARGET_BROKER + ".") String target,
 			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun) {
-		return notImplemented("backfill-references");
+		if (TARGET_BROKER.equals(target)) {
+			return notImplemented("backfill-references --target " + TARGET_BROKER);
+		}
+		if (!TARGET_POSTGRESQL.equals(target)) {
+			throw new ParameterException(spec.commandLine(), String.format(
+					"Unknown --target '%s', expected %s or %s.", target, TARGET_POSTGRESQL, TARGET_BROKER));
+		}
+		try (contexts) {
+			contexts.startTarget();
+			ReferenceBackfillReport report = runPostgresBackfill(contexts, dryRun);
+			report.print(spec.commandLine().getOut());
+			return exitCode(report.succeeded());
+		}
+	}
+
+	// pure SQL that decodes nothing, so no escaper check: a PostgreSQL-only run never sets the flag
+	private static ReferenceBackfillReport runPostgresBackfill(MigrationContexts contexts, boolean dryRun) {
+		return new PostgresReferenceBackfill(
+				contexts.target().getBean(ConnectionFactory.class), ReferenceBackfillCatalog.load()).run(dryRun);
+	}
+
+	private static void recordEscaperDrift(MigrationContexts contexts, Consumer<String> report) {
+		try {
+			contexts.verifyEscaperFlag();
+		} catch (IllegalStateException e) {
+			report.accept(e.getMessage());
+		}
+	}
+
+	private static int exitCode(boolean succeeded) {
+		return succeeded ? ExitCode.OK : ExitCode.SOFTWARE;
 	}
 
 	@Command(name = "verify", description = "Compare the broker and PostgreSQL entity by entity.")
