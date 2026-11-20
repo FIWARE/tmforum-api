@@ -1,14 +1,15 @@
 package org.fiware.tmforum.migration.postgresql;
 
 import io.r2dbc.spi.ConnectionFactory;
+import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillReport.AttributeResult;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -45,6 +46,7 @@ class PostgresReferenceBackfillIT {
 	private static final String SPECIFICATION_TYPE = "product-specification";
 	private static final String[] SEEDED_TYPES = {OFFERING_TYPE, RESOURCE_CANDIDATE_TYPE, CATEGORY_TYPE,
 			SPECIFICATION_TYPE};
+	private static final String SOURCE_ESCAPED_OPTION = "--source-escaped=";
 	private static final String SINGLE_LABEL = OFFERING_TYPE + ".resourceCandidate";
 	private static final String LIST_LABEL = OFFERING_TYPE + ".category";
 	// long before the run, so a touched updated_at shows
@@ -153,6 +155,8 @@ class PostgresReferenceBackfillIT {
 	@BeforeEach
 	@AfterEach
 	void clear() throws SQLException {
+		// the flag is JVM-wide, a false case must not leak into later tests
+		ForbiddenCharacterEscaper.setEnabled(true);
 		try (Connection connection = connection();
 			 PreparedStatement deleteTypes = connection.prepareStatement(DELETE_TYPES);
 			 Statement deleteOutbox = connection.createStatement()) {
@@ -197,17 +201,20 @@ class PostgresReferenceBackfillIT {
 		}
 	}
 
-	@Test
-	void backfillCommandRunsAgainstTheDatabase() throws SQLException {
+	// --source-escaped describes broker data; the PostgreSQL-only backfill must accept either value
+	@ParameterizedTest(name = "source escaped={0}")
+	@ValueSource(booleans = {true, false})
+	void backfillCommandRunsAgainstTheDatabase(boolean sourceEscaped) throws SQLException {
 		String owner = """
 				{"id": "{O}", "resourceCandidate": {"id": "{RC}"}}""";
 		seed(owner);
+		String escapedOption = SOURCE_ESCAPED_OPTION + sourceEscaped;
 
-		String dryRunOut = runCommand("--dry-run");
+		String dryRunOut = runCommand(escapedOption, "--dry-run");
 		assertTrue(dryRunOut.contains(SINGLE_LABEL), dryRunOut);
 		assertEquals(json(owner), row(OFFERING).data(), "A dry run must not write.");
 
-		runCommand();
+		runCommand(escapedOption);
 		assertEquals("candidate", row(OFFERING).data().path("resourceCandidate").path("name").asString());
 	}
 

@@ -3,11 +3,17 @@ package org.fiware.tmforum.migration.postgresql;
 import org.fiware.tmforum.migration.postgresql.PostgresReferenceBackfill.EntryStatements;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.Entry;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.FillableField;
+import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.ConnectionFactoryMetadata;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -23,6 +29,7 @@ class PostgresReferenceBackfillTest {
 	private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 	private static final Pattern PLACEHOLDER = Pattern.compile("\\$(\\d+)");
 	private static final int BINDING_COUNT = 4;
+	private static final String FAILING_FACTORY_NAME = "failing";
 
 	private static final List<String> OWNER_TYPES = List.of("owner-type-a", "owner-type-b");
 	private static final String ATTRIBUTE = "someReference";
@@ -119,6 +126,28 @@ class PostgresReferenceBackfillTest {
 
 		assertEquals(catalog.entries().stream().filter(entry -> !entry.fillableFields().isEmpty()).count(),
 				PostgresReferenceBackfill.statements(catalog).size());
+	}
+
+	@ParameterizedTest(name = "message={0}")
+	@NullSource
+	@ValueSource(strings = "connection refused")
+	void reportsAFailureEvenWithoutAMessage(String message) {
+		ConnectionFactory failing = new ConnectionFactory() {
+			@Override
+			public Publisher<? extends Connection> create() {
+				return Mono.error(new IllegalStateException(message));
+			}
+
+			@Override
+			public ConnectionFactoryMetadata getMetadata() {
+				return () -> FAILING_FACTORY_NAME;
+			}
+		};
+
+		ReferenceBackfillReport report = new PostgresReferenceBackfill(failing, ReferenceBackfillCatalog.load())
+				.run(false);
+
+		assertFalse(report.succeeded());
 	}
 
 	private static Entry entry(boolean list, List<String> ownerTypes, String attribute, List<FillableField> fields) {

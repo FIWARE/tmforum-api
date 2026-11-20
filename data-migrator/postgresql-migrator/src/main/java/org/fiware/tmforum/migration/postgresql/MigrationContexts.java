@@ -124,7 +124,7 @@ public class MigrationContexts implements AutoCloseable {
 
 	/**
 	 * Fails when the escaper flag no longer matches {@code --source-escaped}, i.e. data was read with the wrong
-	 * decoding. Every command calls it when it finishes.
+	 * decoding. Every command that maps broker data calls it when it finishes.
 	 */
 	public void verifyEscaperFlag() {
 		if (ForbiddenCharacterEscaper.isEnabled() != sourceEscaped) {

@@ -77,7 +77,7 @@ class ApplicationTest {
 			backfillRuns.incrementAndGet();
 			ReferenceBackfillReport report = new ReferenceBackfillReport(false);
 			if (!succeeded) {
-				report.fail("broken");
+				report.fail(new IllegalStateException("broken"));
 			}
 			return report;
 		};

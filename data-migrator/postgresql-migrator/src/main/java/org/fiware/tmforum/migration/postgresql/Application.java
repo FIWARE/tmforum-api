@@ -124,11 +124,10 @@ public class Application implements Runnable {
 		}
 	}
 
+	// pure SQL that decodes nothing, so no escaper check: a PostgreSQL-only run never sets the flag
 	private static ReferenceBackfillReport runPostgresBackfill(MigrationContexts contexts, boolean dryRun) {
-		ReferenceBackfillReport report = new PostgresReferenceBackfill(
+		return new PostgresReferenceBackfill(
 				contexts.target().getBean(ConnectionFactory.class), ReferenceBackfillCatalog.load()).run(dryRun);
-		recordEscaperDrift(contexts, report::escaperDrift);
-		return report;
 	}
 
 	private static void recordEscaperDrift(MigrationContexts contexts, Consumer<String> report) {

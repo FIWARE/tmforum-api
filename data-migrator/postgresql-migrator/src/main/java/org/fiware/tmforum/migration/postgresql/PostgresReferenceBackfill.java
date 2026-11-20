@@ -134,7 +134,7 @@ class PostgresReferenceBackfill {
 					PostgresReferenceBackfill::rollbackAndClose).block();
 			report.add(results == null ? List.of() : results);
 		} catch (RuntimeException e) {
-			report.fail(e.getMessage());
+			report.fail(e);
 		}
 		return report;
 	}

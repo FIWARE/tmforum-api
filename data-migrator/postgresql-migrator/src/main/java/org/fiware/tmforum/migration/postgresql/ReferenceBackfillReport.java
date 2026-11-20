@@ -3,9 +3,10 @@ package org.fiware.tmforum.migration.postgresql;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Per-attribute outcome of a reference backfill; it succeeded when nothing failed and the escaper flag did not drift.
+ * Per-attribute outcome of a reference backfill; it succeeded when nothing failed.
  * A failed run is rolled back as a whole, so it carries no attribute rows.
  */
 class ReferenceBackfillReport {
@@ -15,7 +16,6 @@ class ReferenceBackfillReport {
 	private final boolean dryRun;
 	private final List<AttributeResult> attributes = new ArrayList<>();
 	private String failure;
-	private String escaperDrift;
 
 	ReferenceBackfillReport(boolean dryRun) {
 		this.dryRun = dryRun;
@@ -35,16 +35,13 @@ class ReferenceBackfillReport {
 		attributes.addAll(results);
 	}
 
-	void fail(String message) {
-		failure = message;
-	}
-
-	void escaperDrift(String message) {
-		escaperDrift = message;
+	// an exception may carry no message, and a null failure would read as success
+	void fail(Exception cause) {
+		failure = Objects.requireNonNullElse(cause.getMessage(), cause.getClass().getName());
 	}
 
 	boolean succeeded() {
-		return failure == null && escaperDrift == null;
+		return failure == null;
 	}
 
 	List<AttributeResult> attributes() {
@@ -58,9 +55,6 @@ class ReferenceBackfillReport {
 				result.missingTargets(), result.changedEntities()));
 		if (failure != null) {
 			out.println("ERROR rolled back, nothing written: " + failure);
-		}
-		if (escaperDrift != null) {
-			out.println("ERROR " + escaperDrift);
 		}
 		out.println(succeeded() ? "Reference backfill succeeded." : "Reference backfill FAILED.");
 		out.flush();
