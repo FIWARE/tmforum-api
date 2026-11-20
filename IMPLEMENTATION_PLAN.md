@@ -24,10 +24,15 @@ release note.
   untouched.
 - **No events.** `importDomainEntity` writes no outbox row (only `createWithEvent` does), so a bulk import fires no
   TMForum notification. The target context sets `tmforum.outbox.enabled=false`.
-- **`ForbiddenCharacterEscaper` has a static flag.** Both contexts' `ForbiddenCharacterEscapingConfigurer`s write it.
-  After both contexts start, the migrator sets it explicitly to the source's
-  `general.escape-forbidden-characters` (CLI option, default `true`). Data written while the flag was `false` is stored
-  plain, and decoding it would be lossy (`%`, `+`).
+- **`ForbiddenCharacterEscaper` has a static flag**, written by each context's `ForbiddenCharacterEscapingConfigurer`
+  (a `BeanCreatedEventListener<GeneralProperties>`). `GeneralProperties` is created lazily, the first time a bean
+  that injects it is resolved, so the listener can fire in either context at any point of a run, and setting the
+  flag once after startup does not stick. Instead, `MigrationContexts` passes the same
+  `general.escape-forbidden-characters=<--source-escaped>` (CLI option, default `true`) to **both** contexts, so every
+  listener invocation writes the same value. The flag describes the broker's data: the PostgreSQL write path ignores
+  the escaped getters, so the value is harmless there. Each command asserts the flag still equals `--source-escaped`
+  when it finishes and fails otherwise. Data written while the flag was `false` is stored plain, and decoding it would
+  be lossy (`%`, `+`).
 - **Configuration is passed programmatically** (`ApplicationContext.builder().environments(..).properties(..)`), like
   `UpdateWriter`. The module ships no `application*.yaml`: Micronaut 5 fails on duplicate configuration resources,
   and `all-in-one`'s files are already on the classpath.
@@ -65,9 +70,10 @@ The plan delivers the tooling, runbook and an in-cluster rollback rehearsal (Ste
   Fixed properties:
   - outbox off;
   - `jackson.serialization-inclusion=non_null` and `write-dates-as-timestamps=false`, as `UpdateWriter` sets them;
-  - `mapping.strictRelationships=false`.
+  - `mapping.strictRelationships=false`;
+  - `general.escape-forbidden-characters=<--source-escaped>` in **both** contexts (Overview).
 
-  Flyway runs in the target context, so the schema exists. It then applies the escaper rule from the Overview.
+  Flyway runs in the target context, so the schema exists.
 - **`EntityTypeRegistry`.** Maps each stored NGSI-LD type to its domain class. It scans `org.fiware.tmforum` for
   `@MappingEnabled(entityType=...)` with classgraph (already used by `update-writer`). An ambiguous type fails fast
   unless it has an explicit override entry. It also reports which source types it cannot map (e.g. NGSI-LD
@@ -76,7 +82,10 @@ The plan delivers the tooling, runbook and an in-cluster rollback rehearsal (Ste
   - the registry resolves every `VersionedEntity.VERSIONED_TYPES` entry and every `TYPE_*` constant of the
     `@MappingEnabled` classes;
   - an ambiguous type fails;
-  - the contexts start with the expected environments and properties (no network: verify the built configuration).
+  - the contexts start with the expected environments and properties (no network: verify the built configuration);
+  - the escaper flag survives a late `GeneralProperties` creation, parameterized over `--source-escaped`
+    `true`/`false`: build both contexts, then resolve `GeneralProperties` (and a bean injecting it) in the source and
+    then the target context, and assert after each that `ForbiddenCharacterEscaper` still matches the option.
 - **Acceptance.** `mvn -pl data-migrator/postgresql-migrator -am package -DskipITs` builds and the unit tests pass. No
   existing module changes behaviour.
 
@@ -120,6 +129,9 @@ The plan delivers the tooling, runbook and an in-cluster rollback rehearsal (Ste
     It then runs `import` and asserts:
     - rows, `version` and timestamps;
     - the unescaped values;
+    - with `--source-escaped=false` (a separate parameterized run over a broker seeded with plain values), a hub
+      whose `query`/`rawQuery` contain `%`, `+` and `%3D` is stored byte-for-byte unchanged; this fails if the flag
+      flips to `true` mid-run;
     - no `tmfEscaped-` key;
     - the id-only reference stored as id-only.
 - **Acceptance.** The import reproduces every seeded entity in `tmforum.entity` and fires no outbox row
