@@ -2,6 +2,7 @@ package org.fiware.tmforum.migration.postgresql;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.context.env.Environment;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import picocli.CommandLine.Option;
@@ -9,6 +10,7 @@ import picocli.CommandLine.Option;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 /**
  * The broker-backed source and the PostgreSQL target {@link ApplicationContext}, configured from the CLI options.
@@ -70,11 +72,16 @@ public class MigrationContexts implements AutoCloseable {
 	@Option(names = "--pg-password", defaultValue = "${env:POSTGRES_PASSWORD:-tmforum}")
 	String pgPassword;
 
+	// Micronaut prepends these to every context's environments, deduceEnvironment(false) notwithstanding
+	UnaryOperator<String> environmentVariables = System::getenv;
+
 	private ApplicationContext source;
 	private ApplicationContext target;
 
 	/**
 	 * Starts both contexts; the target runs the Flyway migrations, so it needs the database.
+	 * Fails when {@code micronaut.environments} or {@code MICRONAUT_ENVIRONMENTS} is set, as that would leak into
+	 * both contexts.
 	 */
 	public void start() {
 		start(Map.of());
@@ -82,6 +89,7 @@ public class MigrationContexts implements AutoCloseable {
 
 	// targetOverrides lets tests start the target without a database
 	void start(Map<String, Object> targetOverrides) {
+		rejectInheritedEnvironments();
 		source = builder(sourceEnvironments(), sourceProperties()).start();
 		Map<String, Object> targetProperties = new HashMap<>(targetProperties());
 		targetProperties.putAll(targetOverrides);
@@ -163,10 +171,28 @@ public class MigrationContexts implements AutoCloseable {
 		return properties;
 	}
 
-	// no deduction, so a cloud or test environment cannot pull in other configuration
+	private void rejectInheritedEnvironments() {
+		String property = System.getProperty(Environment.ENVIRONMENTS_PROPERTY);
+		String variable = environmentVariables.apply(Environment.ENVIRONMENTS_ENV);
+		if (isSet(property) || isSet(variable)) {
+			throw new IllegalStateException(String.format(
+					"Unset %s (\"%s\") and %s (\"%s\"): the migrator sets the environments of its broker and "
+							+ "PostgreSQL contexts itself.",
+					Environment.ENVIRONMENTS_PROPERTY, property, Environment.ENVIRONMENTS_ENV, variable));
+		}
+	}
+
+	private static boolean isSet(String value) {
+		return value != null && !value.isBlank();
+	}
+
+	// no deduction, so a cloud or test environment cannot pull in other configuration; micronaut.environments is
+	// covered by neither switch and is rejected in start. Micronaut still adds k8s/cloud whenever
+	// KUBERNETES_SERVICE_HOST is set, which is harmless: no configuration or bean here targets them.
 	private static ApplicationContextBuilder builder(List<String> environments, Map<String, Object> properties) {
 		return ApplicationContext.builder()
 				.deduceEnvironment(false)
+				.deduceCloudEnvironment(false)
 				.environments(environments.toArray(String[]::new))
 				.properties(properties);
 	}

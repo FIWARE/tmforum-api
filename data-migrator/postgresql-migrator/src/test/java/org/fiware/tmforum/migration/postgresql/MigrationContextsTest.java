@@ -1,6 +1,7 @@
 package org.fiware.tmforum.migration.postgresql;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
@@ -8,12 +9,15 @@ import org.fiware.tmforum.common.validation.ReferenceClassifier;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,7 +35,17 @@ class MigrationContextsTest {
 	// the tests start the target without a database
 	private static final Map<String, Object> NO_DATABASE = Map.of(MigrationContexts.FLYWAY_ENABLED_PROPERTY, false);
 
+	// Micronaut adds these from KUBERNETES_SERVICE_HOST regardless of the builder's deduction switches
+	private static final Set<String> PLATFORM_ENVIRONMENTS = Set.of(Environment.KUBERNETES, Environment.CLOUD);
+
 	private MigrationContexts contexts;
+
+	// the context's active environments, without the platform names Micronaut adds on Kubernetes
+	static Set<String> ownEnvironments(ApplicationContext context) {
+		Set<String> names = new HashSet<>(context.getEnvironment().getActiveNames());
+		names.removeAll(PLATFORM_ENVIRONMENTS);
+		return names;
+	}
 
 	@AfterEach
 	void closeAndResetEscaper() {
@@ -39,6 +53,7 @@ class MigrationContextsTest {
 			contexts.close();
 		}
 		ForbiddenCharacterEscaper.setEnabled(true);
+		System.clearProperty(Environment.ENVIRONMENTS_PROPERTY);
 	}
 
 	private static MigrationContexts parse(String... args) {
@@ -103,6 +118,30 @@ class MigrationContextsTest {
 			assertEquals(sourceEscaped, ForbiddenCharacterEscaper.isEnabled());
 		}
 		contexts.verifyEscaperFlag();
+	}
+
+	@ParameterizedTest
+	@EnumSource(BrokerType.class)
+	void contextsRunOnlyTheirOwnEnvironments(BrokerType brokerType) {
+		contexts = parse("--broker-type", brokerType.getEnvironment());
+		contexts.start(NO_DATABASE);
+
+		assertEquals(Set.copyOf(contexts.sourceEnvironments()), ownEnvironments(contexts.source()));
+		assertEquals(Set.copyOf(contexts.targetEnvironments()), ownEnvironments(contexts.target()));
+	}
+
+	@ParameterizedTest
+	@CsvSource(value = {"in-memory,orion-ld;", ";postgresql", "scorpio;in-memory"}, delimiter = ';')
+	void startRejectsInheritedEnvironments(String systemProperty, String environmentVariable) {
+		if (systemProperty != null) {
+			System.setProperty(Environment.ENVIRONMENTS_PROPERTY, systemProperty);
+		}
+		contexts = parse();
+		contexts.environmentVariables = name -> Environment.ENVIRONMENTS_ENV.equals(name) ? environmentVariable : null;
+
+		assertThrows(IllegalStateException.class, () -> contexts.start(NO_DATABASE));
+		assertThrows(IllegalStateException.class, contexts::source);
+		assertThrows(IllegalStateException.class, contexts::target);
 	}
 
 	@ParameterizedTest

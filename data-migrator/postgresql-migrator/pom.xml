@@ -16,6 +16,11 @@
 
     <properties>
         <exec.mainClass>org.fiware.tmforum.migration.postgresql.Application</exec.mainClass>
+        <!-- the root pom resolves these against project.parent.basedir, which is data-migrator here -->
+        <tmforum.root.dir>${project.basedir}/../..</tmforum.root.dir>
+        <k3s.manifests.dir>${tmforum.root.dir}/k3s</k3s.manifests.dir>
+        <jacoco.mergeDir>${tmforum.root.dir}/</jacoco.mergeDir>
+        <jacoco.reportFolder>${tmforum.root.dir}/target/jacoco/${project.artifactId}</jacoco.reportFolder>
     </properties>
 
     <dependencies>
@@ -93,6 +98,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!-- the root argLine without -Dmicronaut.environments, which MigrationContexts rejects: each
+                         context sets its own environments -->
+                    <argLine>${failsafe.jacoco.args} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                        java.base/java.time=ALL-UNNAMED -Dgeneral.replace-on-update=false
+                    </argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>io.kokuwa.maven</groupId>
