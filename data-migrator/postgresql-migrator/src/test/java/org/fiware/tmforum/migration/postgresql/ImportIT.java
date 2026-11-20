@@ -56,6 +56,8 @@ class ImportIT {
 
 	private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/tmforum";
 	private static final String DB_CREDENTIAL = "tmforum";
+	/** Set by the failsafe configuration from the build's {@code -Dbroker}. */
+	private static final String BROKER_PROPERTY = "broker";
 	private static final String SELECT_ROW =
 			"SELECT version, revision, is_current, data::text, created_at, updated_at FROM tmforum.entity WHERE id = ?";
 	private static final String DELETE_TYPE = "DELETE FROM tmforum.entity WHERE type = ?";
@@ -188,7 +190,7 @@ class ImportIT {
 
 	private void startSeedContexts(boolean sourceEscaped) throws SQLException {
 		seedContexts = new MigrationContexts();
-		new CommandLine(seedContexts).parseArgs(sourceEscapedOption(sourceEscaped));
+		new CommandLine(seedContexts).parseArgs(brokerTypeOption(), sourceEscapedOption(sourceEscaped));
 		seedContexts.start();
 		deleteSeededBrokerEntities();
 		clearTarget();
@@ -206,7 +208,8 @@ class ImportIT {
 	}
 
 	private void runImport(boolean sourceEscaped, String... types) {
-		String[] args = {"import", sourceEscapedOption(sourceEscaped), "--types", String.join(",", types)};
+		String[] args = {"import", brokerTypeOption(), sourceEscapedOption(sourceEscaped), "--types",
+				String.join(",", types)};
 		StringWriter out = new StringWriter();
 		StringWriter err = new StringWriter();
 		int exitCode = new CommandLine(new Application())
@@ -286,6 +289,10 @@ class ImportIT {
 
 	private static Set<String> fieldNames(JsonNode node) {
 		return new TreeSet<>(node.propertyNames());
+	}
+
+	private static String brokerTypeOption() {
+		return "--broker-type=" + System.getProperty(BROKER_PROPERTY, BrokerType.ORION_LD.getEnvironment());
 	}
 
 	private static String sourceEscapedOption(boolean sourceEscaped) {
