@@ -104,6 +104,10 @@
                     <argLine>${failsafe.jacoco.args} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
                         java.base/java.time=ALL-UNNAMED -Dgeneral.replace-on-update=false
                     </argLine>
+                    <!-- ImportIT reads it as its broker type, so the source context matches the cluster's broker -->
+                    <systemPropertyVariables>
+                        <broker>${broker}</broker>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
