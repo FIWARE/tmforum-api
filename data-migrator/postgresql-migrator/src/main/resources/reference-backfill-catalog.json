@@ -1,0 +1,1342 @@
+{
+  "entries": [
+    {
+      "ownerClass": "org.fiware.tmforum.account.domain.BillingAccount",
+      "ownerTypes": [
+        "billing-account"
+      ],
+      "attribute": "financialAccount",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.account.domain.FinancialAccountRef",
+      "fillableFields": [
+        {
+          "referenceKey": "accountBalance",
+          "targetKey": "accountBalance"
+        },
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.account.domain.PartyAccount",
+      "ownerTypes": [
+        "party-account"
+      ],
+      "attribute": "financialAccount",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.account.domain.FinancialAccountRef",
+      "fillableFields": [
+        {
+          "referenceKey": "accountBalance",
+          "targetKey": "accountBalance"
+        },
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.account.domain.SettlementAccount",
+      "ownerTypes": [
+        "settlement-account"
+      ],
+      "attribute": "financialAccount",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.account.domain.FinancialAccountRef",
+      "fillableFields": [
+        {
+          "referenceKey": "accountBalance",
+          "targetKey": "accountBalance"
+        },
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.agreement.domain.Agreement",
+      "ownerTypes": [
+        "agreement"
+      ],
+      "attribute": "associatedAgreement",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.AgreementRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.agreement.domain.Agreement",
+      "ownerTypes": [
+        "agreement"
+      ],
+      "attribute": "engagedParty",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.RelatedParty",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.agreement.domain.AgreementSpecification",
+      "ownerTypes": [
+        "agreementSpecification"
+      ],
+      "attribute": "relatedParty",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.RelatedParty",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.agreement.domain.AgreementSpecification",
+      "ownerTypes": [
+        "agreementSpecification"
+      ],
+      "attribute": "specificationRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.agreement.domain.AgreementSpecificationRelationship",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand",
+      "ownerTypes": [
+        "customer-bill-on-demand"
+      ],
+      "attribute": "billingAccount",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.common.domain.BillingAccountRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand",
+      "ownerTypes": [
+        "customer-bill-on-demand"
+      ],
+      "attribute": "customerBill",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.customerbillmanagement.domain.CustomerBillRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.customerbillmanagement.domain.CustomerBillOnDemand",
+      "ownerTypes": [
+        "customer-bill-on-demand"
+      ],
+      "attribute": "relatedParty",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.common.domain.RelatedParty",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.customermanagement.domain.Customer",
+      "ownerTypes": [
+        "customer"
+      ],
+      "attribute": "agreement",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.AgreementRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.customermanagement.domain.Customer",
+      "ownerTypes": [
+        "customer"
+      ],
+      "attribute": "engagedParty",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.common.domain.RelatedParty",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.documentmanagement.domain.DocumentSpecification",
+      "ownerTypes": [
+        "document-specification"
+      ],
+      "attribute": "constraint",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.ConstraintRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.documentmanagement.domain.DocumentSpecification",
+      "ownerTypes": [
+        "document-specification"
+      ],
+      "attribute": "entitySpecRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.EntitySpecificationRelationship",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.party.domain.organization.Organization",
+      "ownerTypes": [
+        "organization"
+      ],
+      "attribute": "organizationChildRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.party.domain.organization.OrganizationChildRelationship",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.party.domain.organization.Organization",
+      "ownerTypes": [
+        "organization"
+      ],
+      "attribute": "organizationParentRelationship",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.party.domain.organization.OrganizationParentRelationship",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.partyrole.domain.PartyRole",
+      "ownerTypes": [
+        "party-role"
+      ],
+      "attribute": "account",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.customer.AccountRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.partyrole.domain.PartyRole",
+      "ownerTypes": [
+        "party-role"
+      ],
+      "attribute": "agreement",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.AgreementRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.partyrole.domain.PartyRole",
+      "ownerTypes": [
+        "party-role"
+      ],
+      "attribute": "engagedParty",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.common.domain.RelatedParty",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.partyrole.domain.PartyRole",
+      "ownerTypes": [
+        "party-role"
+      ],
+      "attribute": "paymentMethod",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.customer.PaymentMethodRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.Category",
+      "ownerTypes": [
+        "category"
+      ],
+      "attribute": "parentId",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.product.CategoryRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.Category",
+      "ownerTypes": [
+        "category"
+      ],
+      "attribute": "productOffering",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.ProductOfferingRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.Category",
+      "ownerTypes": [
+        "category"
+      ],
+      "attribute": "subCategory",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.CategoryRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "agreement",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.AgreementRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "bundledProductOffering",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.BundleProductOffering",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "lifecycleStatus",
+          "targetKey": "lifecycleStatus"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "category",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.CategoryRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "channel",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.ChannelRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "marketSegment",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.MarketSegmentRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "place",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.PlaceRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "productOfferingPrice",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.ProductOfferingPriceRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "productOfferingRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.ProductOfferingRelationship",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "validFor",
+          "targetKey": "validFor"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "resourceCandidate",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceCandidateRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "serviceCandidate",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.service.ServiceCandidateRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOffering",
+      "ownerTypes": [
+        "product-offering"
+      ],
+      "attribute": "serviceLevelAgreement",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.product.SLARef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOfferingPrice",
+      "ownerTypes": [
+        "product-offering-price"
+      ],
+      "attribute": "constraint",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.ConstraintRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOfferingPrice",
+      "ownerTypes": [
+        "product-offering-price"
+      ],
+      "attribute": "place",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.PlaceRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductOfferingPrice",
+      "ownerTypes": [
+        "product-offering-price"
+      ],
+      "attribute": "popRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.ProductOfferingPriceRelationship",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductSpecification",
+      "ownerTypes": [
+        "product-specification"
+      ],
+      "attribute": "bundledProductSpecification",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.BundleProductSpecification",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "lifecycleStatus",
+          "targetKey": "lifecycleStatus"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductSpecification",
+      "ownerTypes": [
+        "product-specification"
+      ],
+      "attribute": "resourceSpecification",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.ProductSpecification",
+      "ownerTypes": [
+        "product-specification"
+      ],
+      "attribute": "serviceSpecification",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.ServiceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.Quote",
+      "ownerTypes": [
+        "quote"
+      ],
+      "attribute": "agreement",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.AgreementRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.Quote",
+      "ownerTypes": [
+        "quote"
+      ],
+      "attribute": "billingAccount",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.BillingAccountRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.product.Quote",
+      "ownerTypes": [
+        "quote"
+      ],
+      "attribute": "productOfferingQualification",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.product.ProductOfferingQualificationRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.productordering.domain.ProductOrder",
+      "ownerTypes": [
+        "product-order"
+      ],
+      "attribute": "agreement",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.AgreementRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.Resource",
+      "ownerTypes": [
+        "api-resource",
+        "hosting-platform-requirement",
+        "installed-software",
+        "logical-resource",
+        "physical-resource",
+        "resource",
+        "software-resource",
+        "software-support-package"
+      ],
+      "attribute": "place",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.PlaceRefInRole",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.Resource",
+      "ownerTypes": [
+        "api-resource",
+        "hosting-platform-requirement",
+        "installed-software",
+        "logical-resource",
+        "physical-resource",
+        "resource",
+        "software-resource",
+        "software-support-package"
+      ],
+      "attribute": "resourceSpecification",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.ResourceCandidate",
+      "ownerTypes": [
+        "resource-candidate"
+      ],
+      "attribute": "category",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceCategoryRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.ResourceCandidate",
+      "ownerTypes": [
+        "resource-candidate"
+      ],
+      "attribute": "resourceSpecification",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.ResourceCategory",
+      "ownerTypes": [
+        "resource-category"
+      ],
+      "attribute": "category",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceCategoryRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.ResourceCategory",
+      "ownerTypes": [
+        "resource-category"
+      ],
+      "attribute": "parentId",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceCategoryRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.ResourceCategory",
+      "ownerTypes": [
+        "resource-category"
+      ],
+      "attribute": "resourceCandidate",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceCandidateRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resource.SoftwareSpecification",
+      "ownerTypes": [
+        "software-specification"
+      ],
+      "attribute": "softwareSupportPackage",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.SoftwareSupportPackageRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcecatalog.domain.ResourceCatalog",
+      "ownerTypes": [
+        "resource-catalog"
+      ],
+      "attribute": "category",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceCategoryRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Heal",
+      "ownerTypes": [
+        "heal"
+      ],
+      "attribute": "healPolicy",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.HealPolicyRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Heal",
+      "ownerTypes": [
+        "heal"
+      ],
+      "attribute": "resourceFunction",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.ResourceFunctionRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Migrate",
+      "ownerTypes": [
+        "migrate"
+      ],
+      "attribute": "addConnectionPoint",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.ConnectionPointRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Migrate",
+      "ownerTypes": [
+        "migrate"
+      ],
+      "attribute": "place",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.common.domain.PlaceRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Migrate",
+      "ownerTypes": [
+        "migrate"
+      ],
+      "attribute": "removeConnectionPoint",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.ConnectionPointRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Migrate",
+      "ownerTypes": [
+        "migrate"
+      ],
+      "attribute": "resourceFunction",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.ResourceFunctionRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.ResourceFunction",
+      "ownerTypes": [
+        "resource-function"
+      ],
+      "attribute": "connectionPoint",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.ConnectionPointRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.ResourceFunction",
+      "ownerTypes": [
+        "resource-function"
+      ],
+      "attribute": "place",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.PlaceRefInRole",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.ResourceFunction",
+      "ownerTypes": [
+        "resource-function"
+      ],
+      "attribute": "resourceSpecification",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.ResourceFunction",
+      "ownerTypes": [
+        "resource-function"
+      ],
+      "attribute": "schedule",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ScheduleRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Scale",
+      "ownerTypes": [
+        "scale"
+      ],
+      "attribute": "resourceFunction",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.ResourceFunctionRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.resourcefunction.domain.Scale",
+      "ownerTypes": [
+        "scale"
+      ],
+      "attribute": "schedule",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ScheduleRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.service.ServiceCandidate",
+      "ownerTypes": [
+        "service-candidate"
+      ],
+      "attribute": "category",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.ServiceCategoryRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.service.ServiceCandidate",
+      "ownerTypes": [
+        "service-candidate"
+      ],
+      "attribute": "serviceSpecification",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.service.ServiceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.service.ServiceCategory",
+      "ownerTypes": [
+        "service-category"
+      ],
+      "attribute": "category",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.ServiceCategoryRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.service.ServiceCategory",
+      "ownerTypes": [
+        "service-category"
+      ],
+      "attribute": "parentId",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.service.ServiceCategoryRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.service.ServiceCategory",
+      "ownerTypes": [
+        "service-category"
+      ],
+      "attribute": "serviceCandidate",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.ServiceCandidateRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.servicecatalog.domain.ServiceCatalog",
+      "ownerTypes": [
+        "service-catalog"
+      ],
+      "attribute": "category",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.ServiceCategoryRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.servicecatalog.domain.ServiceCatalog",
+      "ownerTypes": [
+        "service-catalog"
+      ],
+      "attribute": "relatedParty",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.RelatedParty",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.servicecatalog.domain.ServiceSpecification",
+      "ownerTypes": [
+        "service-specification"
+      ],
+      "attribute": "entitySpecRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.EntitySpecificationRelationship",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.servicecatalog.domain.ServiceSpecification",
+      "ownerTypes": [
+        "service-specification"
+      ],
+      "attribute": "resourceSpecification",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.servicecatalog.domain.ServiceSpecification",
+      "ownerTypes": [
+        "service-specification"
+      ],
+      "attribute": "serviceLevelSpecification",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.ServiceLevelSpecificationRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.servicecatalog.domain.ServiceSpecification",
+      "ownerTypes": [
+        "service-specification"
+      ],
+      "attribute": "serviceSpecRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.ServiceSpecificationRelationship",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.serviceinventory.domain.Service",
+      "ownerTypes": [
+        "service"
+      ],
+      "attribute": "serviceSpecification",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.service.ServiceSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        },
+        {
+          "referenceKey": "version",
+          "targetKey": "version"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.serviceinventory.domain.Service",
+      "ownerTypes": [
+        "service"
+      ],
+      "attribute": "supportingResource",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.resource.ResourceRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.usagemanagement.domain.Usage",
+      "ownerTypes": [
+        "usage"
+      ],
+      "attribute": "usageSpecification",
+      "list": false,
+      "referenceClass": "org.fiware.tmforum.usagemanagement.domain.UsageSpecificationRef",
+      "fillableFields": [
+        {
+          "referenceKey": "href",
+          "targetKey": "href"
+        },
+        {
+          "referenceKey": "name",
+          "targetKey": "name"
+        }
+      ]
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.usagemanagement.domain.UsageSpecification",
+      "ownerTypes": [
+        "usageSpecification"
+      ],
+      "attribute": "constraint",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.common.domain.ConstraintRef",
+      "fillableFields": []
+    },
+    {
+      "ownerClass": "org.fiware.tmforum.usagemanagement.domain.UsageSpecification",
+      "ownerTypes": [
+        "usageSpecification"
+      ],
+      "attribute": "entitySpecRelationship",
+      "list": true,
+      "referenceClass": "org.fiware.tmforum.service.EntitySpecificationRelationship",
+      "fillableFields": []
+    }
+  ],
+  "excluded": [
+    {
+      "declaringClass": "org.fiware.tmforum.resourcefunction.domain.EndpointRef",
+      "attribute": "connectionPoint",
+      "referenceClass": "org.fiware.tmforum.resourcefunction.domain.ConnectionPointRef",
+      "reason": "Embedded in Connection.endpoint inside ResourceGraph.connection, a plain property value without @AttributeSetter; pre-88 resolution only covered top-level relationship attributes, so the payload was never filled."
+    },
+    {
+      "declaringClass": "org.fiware.tmforum.service.EntitySpecificationRelationship",
+      "attribute": "associationSpec",
+      "referenceClass": "org.fiware.tmforum.service.AssociationSpecificationRef",
+      "reason": "Embedded in the entitySpecRelationship lists of ServiceSpecification, DocumentSpecification and UsageSpecification, which are catalog entries themselves (fromProperties = true only since ticket 88). EntitySpecificationRelationship has no @MappingEnabled, so pre-88 resolution of the parent either built an id-only object (TolerantEntityVOMapper.idOnly, missing target) or failed in fromEntityVO with \"Mapping is not enabled\" (existing target); the nested associationSpec was never mapped, so its payload was never filled."
+    }
+  ],
+  "datasetIdRewrites": [
+    {
+      "ownerClass": "org.fiware.tmforum.product.Product",
+      "ownerTypes": [
+        "product"
+      ],
+      "attribute": "productOrderItem",
+      "referenceClass": "org.fiware.tmforum.product.RelatedProductOrderItemRef"
+    }
+  ]
+}
