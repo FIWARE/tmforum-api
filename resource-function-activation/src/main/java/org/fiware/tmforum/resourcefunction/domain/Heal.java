@@ -50,11 +50,11 @@ public class Heal extends EntityWithId {
     private List<Characteristic> additionalParms;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "healPolicy")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "healPolicy", targetClass = HealPolicyRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "healPolicy", fromProperties = true, targetClass = HealPolicyRef.class)}))
     private HealPolicyRef healPolicy;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceFunction")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceFunction", targetClass = ResourceFunctionRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceFunction", fromProperties = true, targetClass = ResourceFunctionRef.class)}))
     private ResourceFunctionRef resourceFunction;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "state")}))

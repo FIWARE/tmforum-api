@@ -1,6 +1,7 @@
 package org.fiware.tmforum.documentmanagement.domain;
 
 import io.github.wistefan.mapping.annotations.AttributeGetter;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
@@ -22,7 +23,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = DocumentSpecification.TYPE_DOCUMENT_SPECIFICATION)
-public class DocumentSpecification extends EntityWithId {
+public class DocumentSpecification extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_DOCUMENT_SPECIFICATION = "document-specification";
 
@@ -63,11 +64,11 @@ public class DocumentSpecification extends EntityWithId {
     private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", targetClass = ConstraintRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", targetClass = ConstraintRef.class, fromProperties = true)}))
     private List<ConstraintRef> constraint;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class, fromProperties = true)}))
     private List<EntitySpecificationRelationship> entitySpecRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic")}))

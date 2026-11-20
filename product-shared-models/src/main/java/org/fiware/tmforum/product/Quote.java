@@ -2,6 +2,7 @@ package org.fiware.tmforum.product;
 
 
 import io.github.wistefan.mapping.annotations.AttributeGetter;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
@@ -17,7 +18,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Quote.TYPE_QUOTE)
-public class Quote extends EntityWithId {
+public class Quote extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_QUOTE = "quote";
 
@@ -66,7 +67,7 @@ public class Quote extends EntityWithId {
 	private String version;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", fromProperties = true, targetClass = AgreementRef.class)}))
 	private List<AgreementRef> agreement;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "authorization")}))
@@ -74,7 +75,7 @@ public class Quote extends EntityWithId {
 	private List<Authorization> authorization;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "billingAccount")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "billingAccount", targetClass = BillingAccountRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "billingAccount", fromProperties = true, targetClass = BillingAccountRef.class)}))
 	private List<BillingAccountRef> billingAccount;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "contactMedium")}))
@@ -86,7 +87,7 @@ public class Quote extends EntityWithId {
 	private List<Note> note;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingQualification")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingQualification", targetClass = ProductOfferingQualificationRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOfferingQualification", fromProperties = true, targetClass = ProductOfferingQualificationRef.class)}))
 	private List<ProductOfferingQualificationRef> productOfferingQualification;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "quoteItem")}))

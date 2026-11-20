@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubscriptionApiTestSpec {
 
     private static final String ANY_CALLBACK = "https://test.com";
+    private static final String SEPARATOR_CALLBACK = "https://test.com/cb?a=1&b=2,3;c=4";
+    // "=" and ";" are NGSI-LD forbidden characters; "|" cannot occur unencoded, java.net.URI rejects it
+    private static final String SEPARATOR_CALLBACK_WITHOUT_FORBIDDEN_CHARACTERS = "https://test.com/cb?x&y,z";
 
     public final EventsSubscriptionApiTestClient eventsSubscriptionApiTestClient;
     private EventSubscriptionInputVO eventSubscriptionInputVO;
@@ -126,13 +130,20 @@ public class EventSubscriptionApiIT extends AbstractApiIT implements EventsSubsc
     @Test
     @Override
     public void registerListener409() throws Exception {
+        registerListener409(ANY_CALLBACK);
+    }
+
+    // the duplicate check must match a callback that holds TMForum's filter separators as one literal
+    @ParameterizedTest
+    @ValueSource(strings = {SEPARATOR_CALLBACK, SEPARATOR_CALLBACK_WITHOUT_FORBIDDEN_CHARACTERS})
+    public void registerListener409(String callback) throws Exception {
         eventSubscriptionInputVO = EventSubscriptionInputVOTestExample.build()
                 .query("eventType=CatalogCreateEvent")
-                .callback(ANY_CALLBACK);
+                .callback(callback);
 
         HttpResponse<EventSubscriptionVO> registerResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));
-        assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), message);
+        assertEquals(HttpStatus.CREATED, registerResponse.getStatus(), "The first registration of the callback should succeed.");
 
         HttpResponse<EventSubscriptionVO> duplicatedListenerRegisterResponse =
                 callAndCatch(() -> eventsSubscriptionApiTestClient.registerListener(null, eventSubscriptionInputVO));

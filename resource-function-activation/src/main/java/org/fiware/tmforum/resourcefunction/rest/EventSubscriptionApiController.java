@@ -2,6 +2,7 @@ package org.fiware.tmforum.resourcefunction.rest;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,7 @@ public class EventSubscriptionApiController extends AbstractSubscriptionApiContr
 
 	public EventSubscriptionApiController(QueryParser queryParser, ReferenceValidationService validationService,
 										  EntityRepository repository, TMForumMapper tmForumMapper,
-										  TMForumEventHandler tmForumEventHandler, NgsiLdEventHandler ngsiLdEventHandler,
+										  TMForumEventHandler tmForumEventHandler, @Nullable NgsiLdEventHandler ngsiLdEventHandler,
 										  GeneralProperties generalProperties, EntityVOMapper entityVOMapper, SubscriptionMapper subscriptionMapper) {
 		super(queryParser, validationService, repository, EVENT_GROUP_TO_ENTITY_NAME_MAPPING, tmForumEventHandler, ngsiLdEventHandler,
 				generalProperties, entityVOMapper, subscriptionMapper);

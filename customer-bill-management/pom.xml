@@ -34,6 +34,11 @@
         </dependency>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
+            <artifactId>storage-postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
             <artifactId>customer-shared-models</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>

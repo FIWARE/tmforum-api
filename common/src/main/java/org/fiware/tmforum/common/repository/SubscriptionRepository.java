@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 /**
- * Broker-only notification path, its errors stay broker-specific.
+ * Broker-only port of the NGSI-LD notification path, absent on PostgreSQL; its errors stay broker-specific.
  */
 public interface SubscriptionRepository {
 

@@ -35,4 +35,10 @@ public class ProductOfferingPriceRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

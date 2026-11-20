@@ -5,38 +5,60 @@ import io.github.wistefan.mapping.NgsiLdAttribute;
 import io.github.wistefan.mapping.QueryAttributeType;
 import io.github.wistefan.mapping.ReservedWordHandler;
 import io.github.wistefan.mapping.annotations.AttributeGetter;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
+import io.github.wistefan.mapping.annotations.MappingEnabled;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
 import io.micronaut.context.annotation.Bean;
-import lombok.RequiredArgsConstructor;
+import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.DateTimeLiterals;
+import org.fiware.tmforum.storage.query.Literals;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.QueryFilter.AllOf;
+import org.fiware.tmforum.storage.query.QueryFilter.AnyOf;
+import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
+import org.fiware.tmforum.storage.query.SortKey;
+import org.fiware.tmforum.storage.query.ValueType;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.github.wistefan.mapping.JavaObjectMapper.getGetterMethodByName;
+import static io.github.wistefan.mapping.JavaObjectMapper.getSetterMethodByName;
 import static org.fiware.tmforum.common.querying.Operator.GREATER_THAN;
 import static org.fiware.tmforum.common.querying.Operator.GREATER_THAN_EQUALS;
 import static org.fiware.tmforum.common.querying.Operator.LESS_THAN;
 import static org.fiware.tmforum.common.querying.Operator.LESS_THAN_EQUALS;
 import static org.fiware.tmforum.common.querying.Operator.REGEX;
 
+/**
+ * Parses TMForum filter and sort parameters into the backend-neutral query model, including all validation, so
+ * every backend answers the same 400s. {@link NgsiLdQueryRenderer} renders the model for the brokers.
+ */
 @Slf4j
 @Bean
-@RequiredArgsConstructor
 public class QueryParser {
 
     /**
@@ -59,7 +81,7 @@ public class QueryParser {
             "@baseType", "atBaseType",
             "@schemaLocation", "atSchemaLocation");
 
-    private static List<String> translateJsonLdReservedTokens(List<String> pathParts) {
+    static List<String> translateJsonLdReservedTokens(List<String> pathParts) {
         return pathParts.stream()
                 .map(p -> JSON_LD_RESERVED_TO_ENTITY_FIELD.getOrDefault(p, p))
                 .toList();
@@ -73,8 +95,6 @@ public class QueryParser {
     public static final String FIELDS_KEY = "fields";
     public static final String SORT_KEY = "sort";
 
-    public static final String NGSI_LD_AND = ";";
-
     // the "," in tm-forum values is an or
     public static final String TMFORUM_OR_VALUE = ",";
 
@@ -85,11 +105,9 @@ public class QueryParser {
     // TMForum marks a sort field as descending by prefixing it with "-", e.g. sort=name,-billDate
     private static final String SORT_DESCENDING_PREFIX = "-";
 
-    /**
-     * Boolean literals of the NGSI-LD query language. The brokers only accept them lower-case,
-     * e.g. "True" is not a boolean but an unquoted string and breaks the query.
-     */
-    private static final Pattern BOOLEAN_LITERAL_PATTERN = Pattern.compile("true|false");
+    private static final String PATH_SEPARATOR_REGEX = "\\.";
+    private static final String ID = "id";
+    private static final String TYPE = "type";
 
     /**
      * The operators comparing by order, as opposed to the ones comparing by equality. They require
@@ -101,66 +119,43 @@ public class QueryParser {
             LESS_THAN.getNgsiLdOperator(),
             LESS_THAN_EQUALS.getNgsiLdOperator());
 
-    /**
-     * Number literals of the NGSI-LD query language, which follow the JSON number syntax. Java's
-     * {@link Double#parseDouble} is deliberately not used for the check: it also accepts "NaN",
-     * "Infinity", "1d" and hex floats like "0x1p1", none of which are valid in a query.
-     */
-    private static final Pattern NUMBER_LITERAL_PATTERN =
-            Pattern.compile("-?(0|[1-9]\\d*)(\\.\\d+)?([eE][-+]?\\d+)?");
+    private static final Set<Class<?>> DATE_TIME_CLASSES = Set.of(
+            Instant.class, OffsetDateTime.class, ZonedDateTime.class, Date.class);
 
-    // NGSI-LD's native "not equal" operator, used to rewrite the `.regex` "not equal" idiom below
-    private static final String NGSI_LD_NOT_EQUALS = "!=";
-
-    /**
-     * Idiom used to express "not equal to X" via a negative-lookahead regex: {@code ^(?!X$).*$}. When
-     * {@link GeneralProperties#isOptimizeRegexNotEquals()} is enabled, a {@code .regex} filter matching
-     * this idiom is rewritten to NGSI-LD's native {@code !=} instead of forwarding a broker-side pattern
-     * match, since not every broker's regex engine supports lookahead (e.g. Scorpio's PostgreSQL-backed
-     * POSIX regex doesn't).
-     */
-    private static final Pattern NOT_EQUALS_REGEX_IDIOM = Pattern.compile("^\\^\\(\\?!(.+?)\\$\\)\\.\\*\\$$");
-
-    // NGSI-LD's orderBy suffixes a field with ";desc" to sort descending; omitting it means ascending
-    private static final String ORDER_BY_DESCENDING_SUFFIX = ";desc";
-
-    /**
-     * Translates the TMForum {@code sort} query parameter (comma-separated list of properties,
-     * optionally prefixed with "-" for descending, e.g. {@code sort=name,-billDate}) into the
-     * NGSI-LD {@code orderBy} syntax (comma-separated list of "property;direction" pairs, direction
-     * defaulting to ascending when omitted, e.g. {@code orderBy=name,billDate;desc}).
-     *
-     * @param queryClass class used to resolve the sorted attributes to their NGSI-LD path
-     * @param parameters the request's query parameters
-     * @return the NGSI-LD {@code orderBy} value, or {@code null} if no {@code sort} was requested
-     */
-    public String toOrderBy(Class<?> queryClass, Map<String, List<String>> parameters) {
-        List<String> sortValues = parameters.get(SORT_KEY);
-        if (sortValues == null || sortValues.isEmpty()) {
-            return null;
-        }
-        String orderBy = sortValues.stream()
-                .flatMap(value -> Arrays.stream(value.split(TMFORUM_OR_VALUE)))
-                .filter(sortField -> !sortField.isBlank())
-                .map(sortField -> toOrderByPart(queryClass, sortField))
-                .collect(Collectors.joining(TMFORUM_OR_VALUE));
-        return orderBy.isBlank() ? null : orderBy;
+    public QueryParser(GeneralProperties generalProperties) {
+        this.generalProperties = generalProperties;
     }
 
-    private String toOrderByPart(Class<?> queryClass, String sortField) {
+    /**
+     * Parses the TMForum {@code sort} parameter (comma-separated properties, each optionally prefixed with "-" for
+     * descending, e.g. {@code sort=name,-billDate}); empty if none was requested.
+     */
+    public List<SortKey> parseSort(Class<?> queryClass, Map<String, List<String>> parameters) {
+        List<String> sortValues = parameters.get(SORT_KEY);
+        if (sortValues == null || sortValues.isEmpty()) {
+            return List.of();
+        }
+        return sortValues.stream()
+                .flatMap(value -> Arrays.stream(value.split(TMFORUM_OR_VALUE)))
+                .filter(sortField -> !sortField.isBlank())
+                .map(sortField -> toSortKey(queryClass, sortField))
+                .toList();
+    }
+
+    private static SortKey toSortKey(Class<?> queryClass, String sortField) {
         boolean descending = sortField.startsWith(SORT_DESCENDING_PREFIX);
-        String attributeName = descending ? sortField.substring(1) : sortField;
+        String attributeName = descending ? sortField.substring(SORT_DESCENDING_PREFIX.length()) : sortField;
 
-        List<String> path = translateJsonLdReservedTokens(Arrays.asList(attributeName.split("\\.")));
+        List<String> rawPath = Arrays.asList(attributeName.split(PATH_SEPARATOR_REGEX));
+        List<String> path = translateJsonLdReservedTokens(rawPath);
+        requireNonBlankSegments(sortField, path);
         NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(path, queryClass);
-        List<String> resolvedPath = new ArrayList<>(attribute.path().isEmpty()
-                ? path.stream().map(ReservedWordHandler::escapeReservedWords).toList()
-                : escapePath(attribute.path(), isRelationship(queryClass, attribute)));
-
-        String first = resolvedPath.remove(0);
-        String attrPath = first + String.join("", resolvedPath.stream().map(this::mapPathPart).toList());
-
-        return descending ? attrPath + ORDER_BY_DESCENDING_SUFFIX : attrPath;
+        if (attribute.path().isEmpty()) {
+            // as in filters, an extension attribute is stored under the names the client sent
+            return new SortKey(new AttributePath(rawPath, false), null, descending);
+        }
+        ValueType valueType = isDateTime(queryClass, path) ? ValueType.DATE_TIME : toValueType(attribute.type());
+        return new SortKey(new AttributePath(path, true), valueType, descending);
     }
 
     public static boolean hasFilter(Map<String, List<String>> values) {
@@ -190,7 +185,11 @@ public class QueryParser {
         return String.join(TMFORUM_AND, parameters);
     }
 
-    public QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {
+    /**
+     * Parses a TMForum filter query string. Throws {@link QueryException} for anything the backends must answer
+     * with a 400.
+     */
+    public ParsedQuery parse(Class<?> queryClass, String queryString) {
         queryString = removeWellKnownParameters(queryString);
 
         List<String> parameters;
@@ -214,7 +213,7 @@ public class QueryParser {
                 .stream()
                 .map(this::parseParameter);
 
-        // collect the or values to single entries if they use the same key
+        // collect the or values to single entries if they use the same key; the HashMap order is the output order
         if (logicalOperator == LogicalOperator.OR) {
             Map<String, List<QueryPart>> collectedParts = queryPartsStream.collect(
                     Collectors.toMap(QueryPart::attribute, qp -> new ArrayList<>(List.of(qp)),
@@ -227,86 +226,221 @@ public class QueryParser {
         }
         List<String> ids = new ArrayList<>();
         List<String> types = new ArrayList<>();
-        // translate the attributes
-        Stream<String> queryStrings = queryPartsStream.map(qp -> {
-                    List<String> path = translateJsonLdReservedTokens(
-                            Arrays.asList(qp.attribute().split("\\.")));
-                    NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(
-                            path,
-                            queryClass);
-                    if (attribute.path().isEmpty()) {
-                        log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
-                        attribute = getPathToAdditionalAttributes(qp);
-                    }
-                    if (attribute.path().size() == 1 && attribute.path().contains("id")) {
-                        ids.add(qp.value());
-                        return null;
-                    }
-                    if (attribute.path().size() == 1 && attribute.path().contains("type")) {
-                        types.add(qp.value());
-                        return null;
-                    }
+        List<QueryFilter> comparisons = queryPartsStream
+                .map(qp -> toComparison(queryClass, qp, ids, types))
+                .flatMap(Optional::stream)
+                .toList();
 
-                    QueryPart queryPart = applyRegexNotEqualsOptimization(
-                            getQueryPart(attribute, qp, isRelationship(queryClass, attribute)));
-                    return toQueryString(queryPart, attribute.type());
-                })
-                .filter(Objects::nonNull);
-
-
-        String ngsidOrKey = generalProperties.getNgsildOrQueryKey();
-        String query = switch (logicalOperator) {
-            case AND -> queryStrings.collect(Collectors.joining(NGSI_LD_AND));
-            case OR -> queryStrings.collect(Collectors.joining(ngsidOrKey));
-        };
-
-        String idList = null;
-        if (!ids.isEmpty()) {
-            idList = String.join(",", ids);
-        }
-        String typeList = null;
-        if (!types.isEmpty()) {
-            typeList = String.join(",", types);
-        }
-        if (query.isEmpty()) {
-            query = null;
-        }
-        return new QueryParams(idList, typeList, query);
+        return new ParsedQuery(joinOrNull(ids), joinOrNull(types), combine(logicalOperator, comparisons));
     }
 
+    @Nullable
+    private static String joinOrNull(List<String> values) {
+        return values.isEmpty() ? null : String.join(TMFORUM_OR_VALUE, values);
+    }
+
+    @Nullable
+    private static QueryFilter combine(LogicalOperator logicalOperator, List<QueryFilter> filters) {
+        if (filters.isEmpty()) {
+            return null;
+        }
+        if (filters.size() == 1) {
+            return filters.getFirst();
+        }
+        return switch (logicalOperator) {
+            case AND -> new AllOf(filters);
+            case OR -> new AnyOf(filters);
+        };
+    }
+
+    /**
+     * Resolves and validates one (combined) query part. The {@code id}/{@code type} shortcuts go to the given
+     * lists instead of becoming a comparison.
+     */
+    private Optional<QueryFilter> toComparison(Class<?> queryClass, QueryPart qp, List<String> ids,
+                                               List<String> types) {
+        List<String> rawPath = Arrays.asList(qp.attribute().split(PATH_SEPARATOR_REGEX));
+        List<String> path = translateJsonLdReservedTokens(rawPath);
+        requireNonBlankSegments(qp.attribute(), path);
+        NgsiLdAttribute attribute = JavaObjectMapper.getNGSIAttributePath(path, queryClass);
+        boolean declared = !attribute.path().isEmpty();
+        if (!declared) {
+            log.info("Attribute {} does not have a path in the base class. Get path to additional attributes.", qp.attribute());
+            attribute = getPathToAdditionalAttributes(qp);
+            // an extension attribute is stored under the names the client sent, not under the Entity fields
+            path = rawPath;
+        }
+        if (attribute.path().size() == 1 && attribute.path().contains(ID)) {
+            ids.add(qp.value());
+            return Optional.empty();
+        }
+        if (attribute.path().size() == 1 && attribute.path().contains(TYPE)) {
+            types.add(qp.value());
+            return Optional.empty();
+        }
+
+        validateOperator(qp, attribute.type());
+        Operator operator = Operator.ofNgsiLdOperator(qp.operator());
+        List<String> values = toValues(qp, operator, attribute.type());
+        ValueType valueType = toValueType(attribute.type());
+        if (declared && operator != REGEX && valueType == ValueType.STRING && isDateTime(queryClass, path)
+                && values.stream().allMatch(value -> DateTimeLiterals.parse(value).isPresent())) {
+            valueType = ValueType.DATE_TIME;
+        }
+        if (declared && path.size() == 1 && isRelationship(queryClass, attribute)) {
+            // the model always points at the referenced entity's id
+            path = Stream.concat(path.stream(), Stream.of(ID)).toList();
+        }
+        return Optional.of(new Comparison(new AttributePath(path, declared), operator.getComparisonOperator(),
+                valueType, values));
+    }
+
+    /**
+     * Splits the (combined) value into exact literals: on {@code ,}, and for strings also on the configured
+     * {@code ngsildOrQueryValue}. A regex is never split. Numbers and booleans are trimmed and validated.
+     */
+    private List<String> toValues(QueryPart qp, Operator operator, QueryAttributeType type) {
+        if (operator == REGEX) {
+            return List.of(qp.value());
+        }
+        Stream<String> values = Arrays.stream(qp.value().split(TMFORUM_OR_VALUE));
+        List<String> literals = switch (type) {
+            case STRING -> values
+                    .flatMap(value -> Arrays.stream(value.split(Pattern.quote(generalProperties.getNgsildOrQueryValue()))))
+                    .toList();
+            case BOOLEAN -> values.map(value -> validateLiteral(qp.attribute(), value, Literals.BOOLEAN, "boolean"))
+                    .toList();
+            case NUMBER -> values.map(value -> validateLiteral(qp.attribute(), value, Literals.NUMBER, "number"))
+                    .toList();
+        };
+        if (literals.isEmpty()) {
+            throw new QueryException(String.format("%s has no value to compare with.", qp.attribute()));
+        }
+        return literals;
+    }
+
+    private static void requireNonBlankSegments(String attribute, List<String> path) {
+        if (path.stream().anyMatch(String::isBlank)) {
+            throw new QueryException(String.format("%s is not a valid attribute path.", attribute));
+        }
+    }
+
+    private static ValueType toValueType(QueryAttributeType type) {
+        return switch (type) {
+            case STRING -> ValueType.STRING;
+            case NUMBER -> ValueType.NUMBER;
+            case BOOLEAN -> ValueType.BOOLEAN;
+        };
+    }
+
+    /**
+     * Whether the path ends at a declared field of a date-time Java type. Walks the getters the same way
+     * {@link JavaObjectMapper#getNGSIAttributePath} does, since the mapping library reports dates as strings.
+     */
+    private static boolean isDateTime(Class<?> queryClass, List<String> path) {
+        return resolveLeafClass(queryClass, path)
+                .filter(leaf -> DATE_TIME_CLASSES.stream().anyMatch(dateTime -> dateTime.isAssignableFrom(leaf)))
+                .isPresent();
+    }
+
+    private static Optional<Class<?>> resolveLeafClass(Class<?> tClass, List<String> path) {
+        String current = path.getFirst();
+        if (current.equals(ID)) {
+            return Optional.empty();
+        }
+        if (!tClass.isAnnotationPresent(MappingEnabled.class)) {
+            return resolvePlainLeafClass(tClass, path);
+        }
+        Optional<AttributeSetter> setter = getSetterMethodByName(tClass, current)
+                .flatMap(m -> Arrays.stream(m.getAnnotations()))
+                .filter(AttributeSetter.class::isInstance)
+                .map(AttributeSetter.class::cast)
+                .findFirst();
+        Optional<Method> getter = getGetterMethodByName(tClass, current)
+                .filter(m -> Arrays.stream(m.getAnnotations()).anyMatch(AttributeGetter.class::isInstance))
+                .findFirst();
+        if (setter.isEmpty() || getter.isEmpty()) {
+            return Optional.empty();
+        }
+        Class<?> returnType = elementClass(getter.get().getGenericReturnType());
+        if (path.size() == 1) {
+            return Optional.of(returnType);
+        }
+        Class<?> targetClass = setter.get().targetClass() != Object.class ? setter.get().targetClass() : returnType;
+        return resolveLeafClass(targetClass, path.subList(1, path.size()));
+    }
+
+    private static Optional<Class<?>> resolvePlainLeafClass(Class<?> tClass, List<String> path) {
+        Class<?> currentClass = tClass;
+        for (String segment : path) {
+            Optional<Type> getterReturn = getGetterMethodByName(currentClass, segment).findAny()
+                    .map(Method::getGenericReturnType);
+            if (getterReturn.isPresent()) {
+                currentClass = elementClass(getterReturn.get());
+                continue;
+            }
+            try {
+                currentClass = elementClass(currentClass.getField(segment).getGenericType());
+            } catch (NoSuchFieldException e) {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(currentClass);
+    }
+
+    /**
+     * The class a path segment continues in: the element class of a collection or array, else the raw class.
+     * An unresolvable type variable or wildcard gives {@code Object}, which is never a date-time.
+     */
+    private static Class<?> elementClass(Type type) {
+        if (type instanceof Class<?> clazz) {
+            return clazz.isArray() ? clazz.getComponentType() : clazz;
+        }
+        if (type instanceof GenericArrayType arrayType) {
+            return elementClass(arrayType.getGenericComponentType());
+        }
+        if (type instanceof ParameterizedType parameterized && parameterized.getRawType() instanceof Class<?> raw) {
+            if (Collection.class.isAssignableFrom(raw)) {
+                return elementClass(parameterized.getActualTypeArguments()[0]);
+            }
+            return raw;
+        }
+        return Object.class;
+    }
+
+    /**
+     * The type of an extension attribute is inferred from its combined value, before the value split, so
+     * {@code ext=1,2} stays a string comparison. A Java-only number form ({@code +5}, {@code NaN}, {@code 1d})
+     * is typed NUMBER and then fails the literal check with a 400, as before the model split.
+     */
     private NgsiLdAttribute getPathToAdditionalAttributes(QueryPart queryPart) {
         List<String> path = new ArrayList<>(
-                Arrays.stream(queryPart.attribute().split("\\."))
+                Arrays.stream(queryPart.attribute().split(PATH_SEPARATOR_REGEX))
                         .map(ReservedWordHandler::escapeReservedWords)
                         .toList());
 
-        if (isBoolean(queryPart.value())) {
+        if (Literals.BOOLEAN.matcher(queryPart.value()).matches()) {
             return new NgsiLdAttribute(path, QueryAttributeType.BOOLEAN);
         }
-        if (isNumber(queryPart.value())) {
+        if (isJavaNumber(queryPart.value())) {
             return new NgsiLdAttribute(path, QueryAttributeType.NUMBER);
         }
         return new NgsiLdAttribute(path, QueryAttributeType.STRING);
-
     }
 
-    private static boolean isNumber(String theValue) {
+    private static boolean isJavaNumber(String value) {
         try {
-            Double.parseDouble(theValue);
+            Double.parseDouble(value);
             return true;
         } catch (NumberFormatException e) {
             return false;
         }
     }
 
-    private static boolean isBoolean(String theValue) {
-        if (theValue.equals("true") || theValue.equals("false")) {
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
+    /**
+     * Whether the attribute's first NGSI-LD path segment is a relationship on the query class.
+     */
+    static boolean isRelationship(Class<?> queryClass, NgsiLdAttribute attribute) {
         log.debug("Is relationship? {}", attribute);
 
         Optional<Annotation> relevantAnnotation = getGetterMethodByName(queryClass, attribute.path().get(0))
@@ -329,81 +463,12 @@ public class QueryParser {
         }).get();
     }
 
-    private QueryPart getQueryPart(NgsiLdAttribute attribute, QueryPart qp, boolean isRel) {
-        // The query part will depend on the type of query
-        // if the query is to a relationship subproperties will be joined with .
-        // if the query is to a property with structured values the path will be
-        // added between brackets
-
-        String attrPath;
-        if (isRel) {
-            attrPath = String.join(".", escapePath(attribute.path(), true));
-            // remove .id, since it will be added in case of referenced entities
-            if (attrPath.endsWith(".id")) {
-                attrPath = attrPath.substring(0, attrPath.length() - 3);
-            }
-        } else {
-            List<String> escapedPath = new ArrayList<>(escapePath(attribute.path(), false));
-            String first = escapedPath.remove(0);
-            attrPath = first + String.join("", escapedPath
-                    .stream()
-                    .map(this::mapPathPart)
-                    .toList());
-        }
-
-        return new QueryPart(
-                attrPath,
-                qp.operator(),
-                qp.value());
-    }
-
-    /**
-     * When {@code queryPart} came from a {@code .regex} filter whose value matches the "not equal"
-     * idiom {@code ^(?!X$).*$}, rewrites it to NGSI-LD's native {@code !=} comparison instead of the
-     * pattern-match operator {@code ~=}. Controlled by {@link GeneralProperties#isOptimizeRegexNotEquals()}.
-     *
-     * @param queryPart the query part to (maybe) rewrite
-     * @return the rewritten query part, or the original one unchanged if it doesn't apply
-     */
-    private QueryPart applyRegexNotEqualsOptimization(QueryPart queryPart) {
-        if (!queryPart.operator().equals(REGEX.getNgsiLdOperator()) || !generalProperties.isOptimizeRegexNotEquals()) {
-            return queryPart;
-        }
-        Matcher matcher = NOT_EQUALS_REGEX_IDIOM.matcher(queryPart.value());
-        if (!matcher.matches()) {
-            return queryPart;
-        }
-        return new QueryPart(queryPart.attribute(), NGSI_LD_NOT_EQUALS, matcher.group(1));
-    }
-
-    /**
-     * Entities are persisted with NGSI-LD reserved names escaped (e.g. valueType -> tmfEscaped-valueType),
-     * so filter and sort paths have to use the same escaped name. Only the trailing "id" of a relationship
-     * and the top-level entity "id" are left alone; nested "id" keys of structured properties are persisted escaped.
-     */
-    private static List<String> escapePath(List<String> path, boolean isRel) {
-        List<String> escaped = new ArrayList<>(path.stream().map(ReservedWordHandler::escapeReservedWords).toList());
-        int last = path.size() - 1;
-        // a top-level "id" is the entity id and is never escaped
-        boolean entityId = last == 0;
-        if ((isRel || entityId) && last >= 0 && "id".equals(path.get(last))) {
-            escaped.set(last, "id");
-        }
-        return escaped;
-    }
-
-    private String mapPathPart(String part) {
-        if (generalProperties.getUseDotSeperator()) {
-            return "." + part;
-        } else {
-            return "[" + part + "]";
-        }
-    }
-
     /**
      * Rejects the ordering operators ({@code .gt}, {@code .gte}, {@code .lt}, {@code .lte}) for
      * boolean attributes, since there is no order to compare two booleans by. Brokers do not handle
      * such a query gracefully - Orion-LD 1.9.0 terminates on it - so it must not be forwarded.
+     * Checked against the mapping library's type, which reports dates as strings, so {@code .regex} stays
+     * allowed on them.
      *
      * @param queryPart          the query part to check
      * @param queryAttributeType type of the queried attribute on the queried class
@@ -422,27 +487,6 @@ public class QueryParser {
     }
 
     /**
-     * Encodes a single filter value for the NGSI-LD query language, according to the type the
-     * attribute has on the queried class. Only string values are quoted - boolean and number values
-     * are literals in the query language and therefore have to be passed through unquoted, which
-     * makes them part of the query's grammar: a value that is not a valid literal produces a query
-     * the broker rejects. Such values are rejected here instead, so the caller gets a 400 explaining
-     * the invalid parameter, rather than a 500 from the failed broker call.
-     *
-     * @param attribute name of the queried attribute, only used for the error message
-     * @param value     the value to encode
-     * @param type      type of the attribute on the queried class
-     * @return the encoded value, ready to be concatenated into the NGSI-LD query
-     */
-    private String encodeValue(String attribute, String value, QueryAttributeType type) {
-        return switch (type) {
-            case STRING -> encodeStringValue(value);
-            case BOOLEAN -> validateLiteral(attribute, value, BOOLEAN_LITERAL_PATTERN, "boolean");
-            case NUMBER -> validateLiteral(attribute, value, NUMBER_LITERAL_PATTERN, "number");
-        };
-    }
-
-    /**
      * @param attribute name of the queried attribute, only used for the error message
      * @param value     the value to check
      * @param pattern   literal syntax the value has to comply with
@@ -457,32 +501,6 @@ public class QueryParser {
                     String.format("%s is not a valid %s value for attribute %s.", value, typeName, attribute));
         }
         return trimmedValue;
-    }
-
-    private String encodeStringValue(String value) {
-        String ngsildOrValue = generalProperties.getNgsildOrQueryValue();
-        if (value.contains(ngsildOrValue)) {
-            // remove the beginning ( and ending )
-            // String noBraces = value.substring(1, value.length() - 1);
-            String format = "(%s)";
-
-            if (!generalProperties.getEncloseQuery()) {
-                format = "%s";
-            }
-
-            return String.format(format, Arrays.stream(value.split(String.format("\\%s", ngsildOrValue)))
-                    .map(v -> String.format("\"%s\"", v))
-                    .collect(Collectors.joining(ngsildOrValue)));
-
-        } else if (value.contains(NGSI_LD_AND)) {
-            // remove the beginning ( and ending )
-            //String noBraces = value.substring(1, value.length() - 1);
-            return String.format("(%s)", Arrays.stream(value.split(String.format("\\%s", NGSI_LD_AND)))
-                    .map(v -> String.format("\"%s\"", v))
-                    .collect(Collectors.joining(NGSI_LD_AND)));
-        } else {
-            return String.format("\"%s\"", value);
-        }
     }
 
     private List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
@@ -505,50 +523,6 @@ public class QueryParser {
                     return new QueryPart(attribute, entry.getKey(), value);
                 })
                 .collect(Collectors.toList());
-    }
-
-    private String toQueryString(QueryPart queryPart, QueryAttributeType queryAttributeType) {
-
-        validateOperator(queryPart, queryAttributeType);
-
-        // a regex pattern may legitimately contain a "," - it must not be split into OR'd values
-        boolean isRegex = queryPart.operator().equals(REGEX.getNgsiLdOperator());
-        if (!isRegex && queryPart.value().contains(TMFORUM_OR_VALUE)) {
-            String theQuery = "";
-            List<String> encodedValues = new ArrayList<>(Arrays.stream(queryPart.value().split(TMFORUM_OR_VALUE))
-                    .map(v -> encodeValue(queryPart.attribute(), v, queryAttributeType))
-                    .toList());
-
-            if (generalProperties.getIncludeAttributeInList()) {
-                theQuery = encodedValues
-                        .stream()
-                        .map(v -> String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), v))
-                        .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue()));
-                if (generalProperties.getEncloseQuery()) {
-                    return "(" + theQuery + ")";
-                }
-            } else {
-                if (generalProperties.getEncloseQuery()) {
-                    return String.format("%s%s(%s)", queryPart.attribute(), queryPart.operator(), encodedValues
-                            .stream()
-                            .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
-                } else {
-                    return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(), encodedValues
-                            .stream()
-                            .collect(Collectors.joining(generalProperties.getNgsildOrQueryValue())));
-                }
-            }
-
-            return theQuery;
-        }
-
-        // a regex pattern is opaque - it must not go through encodeStringValue's own OR/AND splitting
-        if (isRegex) {
-            return String.format("%s%s\"%s\"", queryPart.attribute(), queryPart.operator(), queryPart.value());
-        }
-
-        return String.format("%s%s%s", queryPart.attribute(), queryPart.operator(),
-                encodeValue(queryPart.attribute(), queryPart.value(), queryAttributeType));
     }
 
     private QueryPart paramsToQueryPart(String parameter, Operator operator) {

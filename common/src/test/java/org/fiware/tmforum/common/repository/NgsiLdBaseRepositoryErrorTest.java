@@ -52,8 +52,8 @@ class NgsiLdBaseRepositoryErrorTest {
 		when(javaObjectMapper.toEntityVO(any(), any(NgsiLdWriteOperation.class))).thenReturn(entityVO);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new NgsiLdEntityRepository(new GeneralProperties(), entitiesApi, null, null, ngsiMapper,
-				javaObjectMapper);
+		repository = new NgsiLdEntityRepository(new GeneralProperties(), entitiesApi, null, ngsiMapper,
+				javaObjectMapper, null);
 	}
 
 	@ParameterizedTest(name = "{0} failing with {1}")
@@ -116,8 +116,8 @@ class NgsiLdBaseRepositoryErrorTest {
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(failure));
 		Function<NgsiLdEntityRepository, Mono<?>> list = listMethod.equals("findEntities")
-				? r -> r.findEntities(0, 10, Object.class, null, null, "test", null)
-				: r -> r.findEntitiesPolymorphic(0, 10, "test", null, null, null, type -> Object.class);
+				? r -> r.findEntities(0, 10, Object.class, null, null, "test")
+				: r -> r.findEntitiesPolymorphic(0, 10, "test", null, null, type -> Object.class);
 
 		assertStorageException(StorageOperation.LIST, expectedReason, LIST_FAILED,
 				() -> list.apply(repository).block());

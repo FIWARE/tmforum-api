@@ -1,5 +1,6 @@
 package org.fiware.tmforum.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -14,14 +15,22 @@ import io.github.wistefan.mapping.annotations.DatasetId;
 import io.github.wistefan.mapping.annotations.RelationshipObject;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @EqualsAndHashCode(callSuper = true)
 public class RelatedProductOrderItemRef extends Entity implements ReferencedEntity {
 
-	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.PROPERTY, targetName = "productOrderHref", fromProperties = true, targetClass = URI.class) }))
+	// not encoded, and URLEncoder always escapes '~', so no encoded orderItemId equals this fallback
+	private static final String NO_ORDER_ITEM_ID = "~none";
+
+	// the relationship object: written through getEntityId and read through the String constructor. The accessors
+	// serve the VO mapping and the plain-JSON form wherever the ref is embedded as a value (e.g. ProductRefOrValue)
+	@Getter
+	@Setter
 	private URI productOrderId;
 
 	@Getter(onMethod = @__({
@@ -55,15 +64,39 @@ public class RelatedProductOrderItemRef extends Entity implements ReferencedEnti
 					legacyNames = { "@referredType" }) }))
 	private String atReferredType;
 
+	public RelatedProductOrderItemRef() {
+	}
+
+	/** Used by the NGSI-LD mapping to build the ref from its relationship object, the product order id. */
+	public RelatedProductOrderItemRef(String productOrderId) {
+		this.productOrderId = URI.create(productOrderId);
+	}
+
 	@Override public List<String> getReferencedTypes() {
 		return new ArrayList<>(List.of("product-order"));
 	}
 
 	@RelationshipObject
-	@DatasetId
 	@Override
 	public URI getEntityId() {
 		return productOrderId;
+	}
+
+	/** The productOrderHref classifies the referenced order as local or external, like {@link RefEntity#getHref()}. */
+	@JsonIgnore
+	@Override
+	public URI getReferenceHref() {
+		return productOrderHref;
+	}
+
+	/** Includes the orderItemId, so that several items of one product order stay distinct instances. */
+	@JsonIgnore
+	@DatasetId
+	public URI getDatasetId() {
+		String orderItem = Optional.ofNullable(orderItemId)
+				.map(itemId -> URLEncoder.encode(itemId, StandardCharsets.UTF_8))
+				.orElse(NO_ORDER_ITEM_ID);
+		return URI.create(String.format("%s:%s", productOrderId, orderItem));
 	}
 
 }

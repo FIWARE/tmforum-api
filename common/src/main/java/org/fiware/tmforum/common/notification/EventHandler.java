@@ -7,6 +7,7 @@ import org.fiware.tmforum.common.domain.subscription.Event;
 import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.rest.AbstractSubscriptionApiController;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,16 +23,30 @@ public abstract class EventHandler {
 	protected final ObjectMapper objectMapper;
 
 	protected <T> Event createEvent(EventDetails eventDetails, T entity, Function entityFilter) {
+		return createEvent(eventDetails, entity, entityFilter, UUID.randomUUID().toString());
+	}
+
+	protected <T> Event createEvent(EventDetails eventDetails, T entity, Function entityFilter, String eventId) {
 		Event event = new Event();
 
 		event.setEventType(eventDetails.eventType());
-		event.setEventId(UUID.randomUUID().toString());
+		event.setEventId(eventId);
 
 		EventMapping eventMapping = eventMapper.getEntityClassMapping().get(eventDetails.entityType());
 		event.setEvent(Map.of(eventDetails.payloadName(), entityFilter.apply(eventMapper.mapPayload(entity, eventMapping.rawClass()))));
 		event.setEventTime(eventDetails.eventTime());
 
 		return event;
+	}
+
+	/**
+	 * The notification of one domain entity for one callback, shared by the broker and the outbox paths so both
+	 * build the same payload. {@code entity} is the domain object; it is mapped to its VO exactly once.
+	 */
+	protected <T> TMForumNotification createNotification(URI callback, EventDetails eventDetails, T entity,
+														  List<String> fields, String eventId) {
+		return new TMForumNotification(callback,
+				createEvent(eventDetails, entity, e -> applyFieldsFilter(e, fields), eventId));
 	}
 
 	protected <T> Map<String, Object> applyFieldsFilter(T entity, List<String> fields) {

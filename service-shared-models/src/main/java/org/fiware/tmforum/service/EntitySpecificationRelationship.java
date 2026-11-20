@@ -21,19 +21,19 @@ public class EntitySpecificationRelationship extends RefEntity {
 
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "relationshipType", embedProperty = true)}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "relationshipType", targetClass = String.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "relationshipType", fromProperties = true, targetClass = String.class)}))
     private String relationshipType;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "role", embedProperty = true)}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "role", targetClass = String.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "role", fromProperties = true, targetClass = String.class)}))
     private String role;
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "associationSpec", embedProperty = true)}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "associationSpec", targetClass = AssociationSpecificationRef.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "associationSpec", embedProperty = true)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "associationSpec", fromProperties = true, targetClass = AssociationSpecificationRef.class)}))
     private AssociationSpecificationRef associationSpec;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor", embedProperty = true)}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor", targetClass = TimePeriod.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "validFor", fromProperties = true, targetClass = TimePeriod.class)}))
     private TimePeriod validFor;
 
     @Default

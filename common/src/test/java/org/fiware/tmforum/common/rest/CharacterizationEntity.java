@@ -9,7 +9,7 @@ import org.fiware.tmforum.common.domain.EntityWithId;
 import java.util.List;
 
 /**
- * Entity of {@link CharacterizationTestController}: a property and a relationship that is resolved on read.
+ * Entity of {@link CharacterizationTestController}: a property and a relationship read from its stored properties.
  */
 @MappingEnabled(entityType = CharacterizationEntity.TYPE)
 public class CharacterizationEntity extends EntityWithId {
@@ -40,7 +40,7 @@ public class CharacterizationEntity extends EntityWithId {
 	}
 
 	@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = RELATED,
-			targetClass = CharacterizationRelated.class)
+			targetClass = CharacterizationRelated.class, fromProperties = true)
 	public void setRelated(List<CharacterizationRelated> related) {
 		this.related = related;
 	}

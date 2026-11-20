@@ -1,0 +1,28 @@
+r2dbc:
+  datasources:
+    default:
+      url: r2dbc:pool:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
+      username: ${POSTGRES_USER:tmforum}
+      password: ${POSTGRES_PASSWORD:tmforum}
+      # not r2dbc-pool's default size (10), so ConnectionPoolIT can tell the options are applied
+      options:
+        initial-size: 2
+        max-size: 4
+        max-acquire-time: PT10S
+        max-create-connection-time: PT10S
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
+      user: ${POSTGRES_USER:tmforum}
+      password: ${POSTGRES_PASSWORD:tmforum}
+      schemas: tmforum
+      create-schemas: true
+      locations: classpath:db/migration/tmforum
+
+# outbox ITs drive OutboxDispatcher.dispatchOnce() themselves; no scheduled dispatcher may race them
+tmforum:
+  outbox:
+    enabled: false

@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.repository;
 
 import io.micronaut.context.ApplicationContext;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.storage.EntityReadRepository;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.EntityWriteRepository;
@@ -10,14 +11,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Guards that each port interface resolves to exactly one NGSI-LD adapter bean. No broker is contacted.
+ * Guards that each port interface resolves to exactly one NGSI-LD adapter bean, and that broker-only ports are absent
+ * on PostgreSQL. No broker is contacted.
  */
 class StoragePortWiringTest {
 
@@ -38,7 +42,7 @@ class StoragePortWiringTest {
 				Arguments.of(EntityRepository.class, NgsiLdEntityRepository.class),
 				Arguments.of(EntityReadRepository.class, NgsiLdEntityRepository.class),
 				Arguments.of(EntityWriteRepository.class, NgsiLdEntityRepository.class),
-				Arguments.of(SubscriptionRepository.class, NgsiLdEntityRepository.class),
+				Arguments.of(SubscriptionRepository.class, NgsiLdSubscriptionRepository.class),
 				Arguments.of(ReferenceReadRepository.class, BrokerBackedReferencesRepository.class));
 	}
 
@@ -47,5 +51,14 @@ class StoragePortWiringTest {
 	void portResolvesToSingleAdapter(Class<?> port, Class<?> adapter) {
 		assertEquals(1, context.getBeanDefinitions(port).size(), "The port should have exactly one bean.");
 		assertInstanceOf(adapter, context.getBean(port), "The port should resolve to the NGSI-LD adapter.");
+	}
+
+	@ParameterizedTest(name = "{0} absent on postgresql")
+	@ValueSource(classes = {SubscriptionRepository.class})
+	void brokerOnlyPortAbsentOnPostgresql(Class<?> port) {
+		try (ApplicationContext postgresqlContext = ApplicationContext.run(CommonConstants.POSTGRESQL_ENVIRONMENT)) {
+			assertTrue(postgresqlContext.getBeanDefinitions(port).isEmpty(),
+					"The broker-only port should not be wired on PostgreSQL.");
+		}
 	}
 }

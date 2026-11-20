@@ -16,8 +16,8 @@ import java.util.List;
 @EqualsAndHashCode
 public class ConnectionPointRef extends RefEntity {
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "version")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version")}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "version", embedProperty = true)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "version", fromProperties = true)}))
     private String version;
 
     public ConnectionPointRef(@JsonProperty("id") String id) {
@@ -28,5 +28,11 @@ public class ConnectionPointRef extends RefEntity {
     @JsonIgnore
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(getAtReferredType()));
+    }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
     }
 }

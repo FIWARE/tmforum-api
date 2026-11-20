@@ -376,16 +376,10 @@ public class ResourceSpecificationApiController extends AbstractApiController<Re
 		ResourceSpecification spec = mapSpecVOToDomain(subTypeVO, entityClass);
 		spec.setLastUpdate(clock.instant());
 
-		URI idUri = URI.create(id);
 		Mono<ResourceSpecification> validatedMono = Mono.zip(
 				getCheckingMono(spec), validateSpec(spec), (p1, p2) -> spec);
 
-		return repository.get(idUri, entityClass)
-				.switchIfEmpty(Mono.error(new TmForumException("No such resource specification exists.",
-						TmForumExceptionReason.NOT_FOUND)))
-				.flatMap(existing -> validatedMono)
-				.flatMap(checked -> repository.updateDomainEntity(id, spec)
-						.then(repository.get(idUri, entityClass)))
+		return patch(id, spec, validatedMono, (Class<ResourceSpecification>) entityClass)
 				.map(this::mapSpecToVO)
 				.map(HttpResponse::ok);
 	}

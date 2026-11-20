@@ -1,6 +1,7 @@
 package org.fiware.tmforum.product;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Category.TYPE_CATEGORY)
-public class Category extends EntityWithId {
+public class Category extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_CATEGORY = "category";
 
@@ -46,7 +47,7 @@ public class Category extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "parentId") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", targetClass = CategoryRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", fromProperties = true, targetClass = CategoryRef.class) }))
 	private CategoryRef parentId;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "version") }))
@@ -56,12 +57,12 @@ public class Category extends EntityWithId {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOffering") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOffering", targetClass = ProductOfferingRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "productOffering", fromProperties = true, targetClass = ProductOfferingRef.class) }))
 	private List<ProductOfferingRef> productOffering;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "subCategory") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "subCategory", targetClass = CategoryRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "subCategory", fromProperties = true, targetClass = CategoryRef.class) }))
 	private List<CategoryRef> subCategory;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor") }))

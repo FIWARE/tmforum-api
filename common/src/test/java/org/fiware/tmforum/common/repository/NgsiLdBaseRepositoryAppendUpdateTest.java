@@ -55,7 +55,7 @@ class NgsiLdBaseRepositoryAppendUpdateTest {
 		javaObjectMapper = mock(JavaObjectMapper.class);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new NgsiLdEntityRepository(properties, entitiesApi, null, null, ngsiMapper, javaObjectMapper);
+		repository = new NgsiLdEntityRepository(properties, entitiesApi, null, ngsiMapper, javaObjectMapper, null);
 		when(entitiesApi.updateEntity(any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.noContent()));
 	}

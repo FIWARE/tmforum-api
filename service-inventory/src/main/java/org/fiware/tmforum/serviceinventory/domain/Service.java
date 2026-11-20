@@ -110,7 +110,7 @@ public class Service extends EntityWithId {
     private List<ServiceRelationship> serviceRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "serviceSpecification")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceSpecification", targetClass = ServiceSpecificationRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceSpecification", fromProperties = true, targetClass = ServiceSpecificationRef.class)}))
     private ServiceSpecificationRef serviceSpecification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "state")}))
@@ -118,7 +118,7 @@ public class Service extends EntityWithId {
     private ServiceStateType state;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "supportingResource")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "supportingResource", targetClass = ResourceRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "supportingResource", fromProperties = true, targetClass = ResourceRef.class)}))
     private List<ResourceRef> supportingResource;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "supportingService")}))

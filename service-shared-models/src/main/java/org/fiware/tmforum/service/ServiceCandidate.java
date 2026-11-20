@@ -1,6 +1,7 @@
 package org.fiware.tmforum.service;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -19,7 +20,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ServiceCandidate.TYPE_SERVICE_CANDIDATE)
-public class ServiceCandidate extends EntityWithId {
+public class ServiceCandidate extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_SERVICE_CANDIDATE = "service-candidate";
 
@@ -48,11 +49,11 @@ public class ServiceCandidate extends EntityWithId {
     private String version;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", targetClass = ServiceCategoryRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", fromProperties = true, targetClass = ServiceCategoryRef.class)}))
     private List<ServiceCategoryRef> category;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "serviceSpecification")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceSpecification", targetClass = ServiceSpecificationRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "serviceSpecification", fromProperties = true, targetClass = ServiceSpecificationRef.class)}))
     private ServiceSpecificationRef serviceSpecification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))

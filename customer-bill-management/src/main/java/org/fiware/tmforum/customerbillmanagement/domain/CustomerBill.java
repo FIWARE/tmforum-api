@@ -3,7 +3,6 @@ package org.fiware.tmforum.customerbillmanagement.domain;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.fiware.customerbillmanagement.model.PaymentMethodRefVO;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
 import org.fiware.tmforum.common.domain.BillingAccountRef;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -90,7 +89,7 @@ public class CustomerBill extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod", embedProperty = true) }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod", targetClass = PaymentMethodRefVO.class, fromProperties = true) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "paymentMethod", targetClass = PaymentMethodRef.class, fromProperties = true) }))
 	private PaymentMethodRef paymentMethod;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))

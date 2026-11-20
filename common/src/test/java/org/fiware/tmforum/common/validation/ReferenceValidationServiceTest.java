@@ -6,35 +6,44 @@ import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.configuration.ReferenceProperties;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
+import org.fiware.tmforum.storage.StorageErrorReason;
+import org.fiware.tmforum.storage.StorageException;
+import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.StoredReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ReferenceValidationServiceTest {
 
 	private static final String CATEGORY_TYPE = "category";
 	private static final String OFFERING_TYPE = "product-offering";
+	private static final String NO_VERSION = "";
 
 	private static final TestRef CATEGORY_A = categoryRef("urn:ngsi-ld:category:a");
 	private static final TestRef CATEGORY_B = categoryRef("urn:ngsi-ld:category:b");
@@ -55,13 +64,26 @@ class ReferenceValidationServiceTest {
 	// external systems may use plain ids; the broker only accepts URIs, so such a reference cannot resolve
 	private static final TestRef NON_URI_ID = categoryRef("1234");
 	private static final TestRef EXTERNAL_NON_URI_ID = externalRef(URI.create("1234"));
-	private static final TestRef NULL_ID = new TestRef(null, List.of(CATEGORY_TYPE), null);
+	private static final TestRef NULL_ID = new TestRef(null, List.of(CATEGORY_TYPE), null, null);
+
+	private static final String CURRENT_VERSION = "1.0";
+	private static final String OTHER_VERSION = "2.0";
+	private static final String CASE_DIFFERENT_VERSION = "1.0-RC";
+	private static final String CASE_DIFFERENT_CURRENT = "1.0-rc";
+	private static final URI VERSIONED_ID = URI.create("urn:ngsi-ld:category:versioned");
+	private static final URI CASE_VERSIONED_ID = URI.create("urn:ngsi-ld:category:case-versioned");
+	// the versioned category with that version stored, unversioned ones store NO_VERSION
+	private static final Map<String, String> STORED_VERSIONS = Map.of(
+			VERSIONED_ID.toString(), CURRENT_VERSION,
+			CASE_VERSIONED_ID.toString(), CASE_DIFFERENT_CURRENT);
 
 	/** Entities present in local storage, id to type. */
 	private static final Map<String, String> STORED_ENTITIES = Map.of(
 			CATEGORY_A.id().toString(), CATEGORY_TYPE,
 			CATEGORY_B.id().toString(), CATEGORY_TYPE,
 			CATEGORY_C.id().toString(), CATEGORY_TYPE,
+			VERSIONED_ID.toString(), CATEGORY_TYPE,
+			CASE_VERSIONED_ID.toString(), CATEGORY_TYPE,
 			WRONG_TYPE.id().toString(), OFFERING_TYPE);
 
 	private ReferenceReadRepository referencesRepository;
@@ -76,12 +98,21 @@ class ReferenceValidationServiceTest {
 			String id = invocation.getArgument(0);
 			String type = STORED_ENTITIES.get(id);
 			List<String> acceptedTypes = invocation.getArgument(1);
-			return type != null && acceptedTypes.contains(type) ? Mono.just(new StoredReference(id, type)) : Mono.empty();
+			return type != null && acceptedTypes.contains(type)
+					? Mono.just(new StoredReference(id, type, NO_VERSION))
+					: Mono.empty();
 		});
 		when(referencesRepository.findReference(anyString())).thenAnswer(invocation -> {
 			String id = invocation.getArgument(0);
 			String type = STORED_ENTITIES.get(id);
-			return type == null ? Mono.empty() : Mono.just(new StoredReference(id, type));
+			return type == null ? Mono.empty() : Mono.just(new StoredReference(id, type, NO_VERSION));
+		});
+		when(referencesRepository.findReferences(anyCollection())).thenAnswer(invocation -> {
+			Collection<String> ids = invocation.getArgument(0);
+			return Flux.fromIterable(ids)
+					.filter(STORED_ENTITIES::containsKey)
+					.map(id -> new StoredReference(id, STORED_ENTITIES.get(id), STORED_VERSIONS.getOrDefault(id,
+						NO_VERSION)));
 		});
 		meterRegistry = new SimpleMeterRegistry();
 		ReferenceProperties referenceProperties = new ReferenceProperties();
@@ -148,8 +179,7 @@ class ReferenceValidationServiceTest {
 	public void referencesWithAnIdThatIsNotAUriAreNotLookedUp(String description, TestRef ref, String scope) {
 		assertEquals(false, service.checkReferenceExists(List.of(ref)).block());
 
-		verify(referencesRepository, never()).referenceExists(anyString(), anyList());
-		verify(referencesRepository, never()).findReference(anyString());
+		verify(referencesRepository, never()).findReferences(anyCollection());
 		assertEquals(1, count(scope, ReferenceValidationService.RESULT_UNRESOLVED));
 	}
 
@@ -160,14 +190,54 @@ class ReferenceValidationServiceTest {
 				Arguments.of("reference without an id", NULL_ID, ReferenceValidationService.SCOPE_LOCAL));
 	}
 
-	@Test
-	public void externalReferencesAreOnlyLookedUpLocallyById() {
-		assertEquals(true, service.checkReferenceExists(List.of(CATEGORY_A, EXTERNAL_1)).block());
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("lookups")
+	public void eachListIsLookedUpWithOneCall(String description, List<TestRef> refs, Set<String> expectedIds) {
+		service.checkReferenceExists(refs).block();
 
-		verify(referencesRepository).referenceExists(eq(CATEGORY_A.id().toString()), anyList());
-		verify(referencesRepository, never()).referenceExists(eq(EXTERNAL_1.id().toString()), anyList());
-		verify(referencesRepository).findReference(EXTERNAL_1.id().toString());
-		verify(referencesRepository, never()).findReference(CATEGORY_A.id().toString());
+		verify(referencesRepository).findReferences(Set.copyOf(expectedIds));
+		verify(referencesRepository, never()).referenceExists(anyString(), anyList());
+		verify(referencesRepository, never()).findReference(anyString());
+	}
+
+	private static Stream<Arguments> lookups() {
+		return Stream.of(
+				Arguments.of("one local", List.of(CATEGORY_A), ids(CATEGORY_A)),
+				Arguments.of("local and missing", List.of(CATEGORY_A, MISSING_X, CATEGORY_B, WRONG_TYPE),
+						ids(CATEGORY_A, MISSING_X, CATEGORY_B, WRONG_TYPE)),
+				Arguments.of("local and external", List.of(CATEGORY_A, EXTERNAL_1, EXTERNAL_WRONG_TYPE),
+						ids(CATEGORY_A, EXTERNAL_1, EXTERNAL_WRONG_TYPE)),
+				Arguments.of("duplicates", List.of(CATEGORY_A, CATEGORY_A, EXTERNAL_ACCEPTED), ids(CATEGORY_A)),
+				Arguments.of("ids that are not URIs left out", Arrays.asList(NON_URI_ID, CATEGORY_A, NULL_ID, null,
+						EXTERNAL_NON_URI_ID), ids(CATEGORY_A)));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("listsWithoutLookup")
+	public void listWithoutResolvableIdIsNotLookedUp(String description, List<TestRef> refs) {
+		service.checkReferenceExists(refs).block();
+
+		verifyNoInteractions(referencesRepository);
+	}
+
+	private static Stream<Arguments> listsWithoutLookup() {
+		return Stream.of(
+				Arguments.of("null list", null),
+				Arguments.of("empty list", List.of()),
+				Arguments.of("only nulls", Arrays.asList(null, null)),
+				Arguments.of("only ids that are not URIs", List.of(NON_URI_ID, EXTERNAL_NON_URI_ID, NULL_ID)));
+	}
+
+	@Test
+	public void lookupFailurePropagates() {
+		StorageException failure = new StorageException(StorageOperation.READ, StorageErrorReason.UNAVAILABLE,
+				"storage down");
+		when(referencesRepository.findReferences(anyCollection())).thenReturn(Flux.error(failure));
+
+		Exception exception = assertThrows(Exception.class, () -> service.checkReferenceExists(List.of(CATEGORY_A))
+				.block());
+
+		assertSame(failure, exception);
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -216,6 +286,78 @@ class ReferenceValidationServiceTest {
 				MISSING_X.id()), exception.getCause().getMessage());
 	}
 
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("versionCombinations")
+	public void pinnedVersionHasToMatchTheTargetsCurrentVersion(String description, TestRef ref, boolean expected,
+			String scope, String result) {
+		assertEquals(expected, service.checkReferenceExists(List.of(ref)).block());
+
+		assertEquals(1, count(scope, result));
+	}
+
+	private static Stream<Arguments> versionCombinations() {
+		String local = ReferenceValidationService.SCOPE_LOCAL;
+		String external = ReferenceValidationService.SCOPE_EXTERNAL;
+		String resolved = ReferenceValidationService.RESULT_RESOLVED;
+		String unresolved = ReferenceValidationService.RESULT_UNRESOLVED;
+		return Stream.of(
+				Arguments.of("no version", pinnedRef(VERSIONED_ID, null), true, local, resolved),
+				Arguments.of("empty version", pinnedRef(VERSIONED_ID, NO_VERSION), true, local, resolved),
+				Arguments.of("equal version", pinnedRef(VERSIONED_ID, CURRENT_VERSION), true, local, resolved),
+				Arguments.of("different version", pinnedRef(VERSIONED_ID, OTHER_VERSION), false, local, unresolved),
+				Arguments.of("version differing in case", pinnedRef(CASE_VERSIONED_ID, CASE_DIFFERENT_VERSION), false,
+						local, unresolved),
+				Arguments.of("pinned against an unversioned target", pinnedRef(CATEGORY_A.id(), CURRENT_VERSION),
+						false, local, unresolved),
+				Arguments.of("empty version against an unversioned target", pinnedRef(CATEGORY_A.id(), NO_VERSION),
+						true, local, resolved),
+				Arguments.of("pinned external without local target",
+						pinnedExternalRef(EXTERNAL_1.id(), OTHER_VERSION), true, external,
+						ReferenceValidationService.RESULT_SKIPPED),
+				Arguments.of("pinned external naming a local entity of another version",
+						pinnedExternalRef(VERSIONED_ID, OTHER_VERSION), false, external, unresolved),
+				Arguments.of("pinned external naming a local entity of that version",
+						pinnedExternalRef(VERSIONED_ID, CURRENT_VERSION), true, external, resolved));
+	}
+
+	@Test
+	public void exactlyTheMismatchingReferenceIsUnresolved() {
+		TestRef mismatch = pinnedRef(VERSIONED_ID, OTHER_VERSION);
+		List<TestRef> refs = List.of(CATEGORY_A, mismatch, pinnedRef(CASE_VERSIONED_ID, CASE_DIFFERENT_CURRENT),
+				CATEGORY_B);
+
+		assertEquals(List.of(mismatch), service.findUnresolved(refs).block());
+
+		verify(referencesRepository).findReferences(anyCollection());
+		assertEquals(1, count(ReferenceValidationService.SCOPE_LOCAL, ReferenceValidationService.RESULT_UNRESOLVED));
+		assertEquals(3, count(ReferenceValidationService.SCOPE_LOCAL, ReferenceValidationService.RESULT_RESOLVED));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("failureMessages")
+	public void getCheckingMonoNamesMissingAndMismatchingReferences(String description, List<TestRef> refs,
+			String expectedMessage) {
+		Exception exception = assertThrows(Exception.class, () -> service.getCheckingMono(refs, new Object()).block());
+
+		assertEquals(NonExistentReferenceException.class, exception.getCause().getClass());
+		assertEquals(expectedMessage, exception.getCause().getMessage());
+	}
+
+	private static Stream<Arguments> failureMessages() {
+		return Stream.of(
+				Arguments.of("only a mismatch", List.of(CATEGORY_A, pinnedRef(VERSIONED_ID, OTHER_VERSION)),
+						String.format("Reference version mismatch: [%s (version %s, current %s)]", VERSIONED_ID,
+								OTHER_VERSION, CURRENT_VERSION)),
+				Arguments.of("pinned against an unversioned target", List.of(pinnedRef(CATEGORY_A.id(),
+								CURRENT_VERSION)),
+						String.format("Reference version mismatch: [%s (version %s, target is unversioned)]", CATEGORY_A.id(),
+								CURRENT_VERSION)),
+				Arguments.of("missing and mismatch", List.of(pinnedRef(VERSIONED_ID, OTHER_VERSION), MISSING_X),
+						String.format("References do not exist: [%s]; Reference version mismatch: "
+								+ "[%s (version %s, current %s)]", MISSING_X.id(), VERSIONED_ID, OTHER_VERSION,
+								CURRENT_VERSION)));
+	}
+
 	private double count(String scope, String result) {
 		Counter counter = meterRegistry.find(ReferenceValidationService.REFERENCES_METRIC)
 				.tag(ReferenceValidationService.SCOPE_TAG, scope)
@@ -224,15 +366,33 @@ class ReferenceValidationServiceTest {
 		return counter == null ? 0 : counter.count();
 	}
 
+	private static Set<String> ids(TestRef... refs) {
+		return Arrays.stream(refs).map(ref -> ref.id().toString()).collect(Collectors.toSet());
+	}
+
 	private static TestRef categoryRef(String id) {
-		return new TestRef(URI.create(id), List.of(CATEGORY_TYPE), null);
+		return new TestRef(URI.create(id), List.of(CATEGORY_TYPE), null, null);
 	}
 
 	private static TestRef externalRef(URI id) {
-		return new TestRef(id, List.of(CATEGORY_TYPE), EXTERNAL_HREF);
+		return new TestRef(id, List.of(CATEGORY_TYPE), EXTERNAL_HREF, null);
 	}
 
-	private record TestRef(URI id, List<String> referencedTypes, URI href) implements ReferencedEntity {
+	private static TestRef pinnedRef(URI id, String version) {
+		return new TestRef(id, List.of(CATEGORY_TYPE), null, version);
+	}
+
+	private static TestRef pinnedExternalRef(URI id, String version) {
+		return new TestRef(id, List.of(CATEGORY_TYPE), EXTERNAL_HREF, version);
+	}
+
+	private record TestRef(URI id, List<String> referencedTypes, URI href, String version)
+			implements ReferencedEntity {
+
+		@Override
+		public String getReferenceVersion() {
+			return version;
+		}
 
 		@Override
 		public URI getReferenceHref() {

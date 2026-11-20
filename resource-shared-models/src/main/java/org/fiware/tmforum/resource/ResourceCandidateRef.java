@@ -33,4 +33,10 @@ public class ResourceCandidateRef extends RefEntity {
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(ResourceCandidate.TYPE_RESOURCE_CANDIDATE));
     }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

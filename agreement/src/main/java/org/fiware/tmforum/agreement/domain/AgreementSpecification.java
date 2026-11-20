@@ -1,6 +1,7 @@
 package org.fiware.tmforum.agreement.domain;
 
 import java.net.URI;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import java.time.Instant;
 import java.util.List;
 
@@ -20,7 +21,7 @@ import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION)
-public class AgreementSpecification extends EntityWithId {
+public class AgreementSpecification extends EntityWithId implements VersionedEntity {
         public static final String TYPE_AGREEMENT_SPECIFICATION = "agreementSpecification";
 
         public AgreementSpecification(String id) {
@@ -62,7 +63,7 @@ public class AgreementSpecification extends EntityWithId {
         @Getter(onMethod = @__({
                         @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
         @Setter(onMethod = @__({
-                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class) }))
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty", targetClass = RelatedParty.class, fromProperties = true) }))
         private List<RelatedParty> relatedParty;
 
         @Getter(onMethod = @__({
@@ -80,7 +81,7 @@ public class AgreementSpecification extends EntityWithId {
         @Getter(onMethod = @__({
                         @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship") }))
         @Setter(onMethod = @__({
-                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship", targetClass = AgreementSpecificationRelationship.class) }))
+                        @AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "specificationRelationship", targetClass = AgreementSpecificationRelationship.class, fromProperties = true) }))
         private List<AgreementSpecificationRelationship> specificationRelationship;
 
         @Getter(onMethod = @__({
