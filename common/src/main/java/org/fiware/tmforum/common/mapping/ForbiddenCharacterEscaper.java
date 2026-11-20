@@ -25,6 +25,10 @@ public final class ForbiddenCharacterEscaper {
 		ForbiddenCharacterEscaper.enabled = enabled;
 	}
 
+	public static boolean isEnabled() {
+		return enabled;
+	}
+
 	public static String escape(String value) {
 		return value == null || !enabled ? value : URLEncoder.encode(value, StandardCharsets.UTF_8);
 	}

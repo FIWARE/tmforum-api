@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.fiware.tmforum</groupId>
+    <artifactId>postgresql-migrator</artifactId>
+    <version>0.1</version>
+
+    <parent>
+        <groupId>org.fiware.tmforum</groupId>
+        <artifactId>data-migrator</artifactId>
+        <version>0.1</version>
+    </parent>
+
+    <description>Moves a broker-backed TMForum deployment onto PostgreSQL and backfills inline references.</description>
+
+    <properties>
+        <exec.mainClass>org.fiware.tmforum.migration.postgresql.Application</exec.mainClass>
+        <!-- the root pom resolves these against project.parent.basedir, which is data-migrator here -->
+        <tmforum.root.dir>${project.basedir}/../..</tmforum.root.dir>
+        <k3s.manifests.dir>${tmforum.root.dir}/k3s</k3s.manifests.dir>
+        <jacoco.mergeDir>${tmforum.root.dir}/</jacoco.mergeDir>
+        <jacoco.reportFolder>${tmforum.root.dir}/target/jacoco/${project.artifactId}</jacoco.reportFolder>
+    </properties>
+
+    <dependencies>
+        <!-- every domain class and both storage adapters; the migrator reads and writes through them -->
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>all-in-one</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
+            <artifactId>storage-postgresql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>4.7.7</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.180</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- copy project dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>${exec.mainClass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!-- run tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!-- the root argLine without -Dmicronaut.environments, which MigrationContexts rejects: each
+                         context sets its own environments -->
+                    <argLine>${failsafe.jacoco.args} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
+                        java.base/java.time=ALL-UNNAMED -Dgeneral.replace-on-update=false
+                    </argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.kokuwa.maven</groupId>
+                <artifactId>k3s-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- build image, tmforum-postgresql-migrator -->
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
