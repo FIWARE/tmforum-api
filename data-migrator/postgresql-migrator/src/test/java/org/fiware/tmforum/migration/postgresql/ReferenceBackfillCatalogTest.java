@@ -3,6 +3,7 @@ package org.fiware.tmforum.migration.postgresql;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.github.wistefan.mapping.annotations.AttributeType;
 import io.github.wistefan.mapping.annotations.MappingEnabled;
+import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.DatasetIdRewrite;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.Entry;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.Excluded;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.FillableField;
@@ -18,6 +19,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -38,6 +40,7 @@ class ReferenceBackfillCatalogTest {
 	private static final String COMMENT_PREFIX = "#";
 	private static final int EXPECTED_ENTRIES = 81;
 	private static final int EXPECTED_EXCLUDED = 2;
+	private static final int EXPECTED_DATASET_ID_REWRITES = 1;
 	private static final int EXPECTED_PRE_88_SETTERS = 83;
 
 	private static final ReferenceBackfillCatalog CATALOG = ReferenceBackfillCatalog.load();
@@ -55,6 +58,10 @@ class ReferenceBackfillCatalogTest {
 
 	static Stream<Excluded> excluded() {
 		return CATALOG.excluded().stream();
+	}
+
+	static Stream<DatasetIdRewrite> datasetIdRewrites() {
+		return CATALOG.datasetIdRewrites().stream();
 	}
 
 	@ParameterizedTest
@@ -78,13 +85,18 @@ class ReferenceBackfillCatalogTest {
 
 	@ParameterizedTest
 	@MethodSource("entries")
-	void ownerTypesAreStoredTypesOfTheOwnerClass(Entry entry) {
-		Class<?> ownerClass = load(entry.ownerClass());
-		assertFalse(entry.ownerTypes().isEmpty(), entry.ownerClass());
-		for (String type : entry.ownerTypes()) {
-			Class<?> stored = registry.domainClass(type).orElseThrow(() -> new AssertionError("Unknown type " + type));
-			assertTrue(ownerClass.isAssignableFrom(stored), type + " is stored as " + stored.getName());
-		}
+	void ownerTypesAreExactlyTheStoredTypesOfTheOwnerClass(Entry entry) {
+		assertOwnerTypesComplete(entry.ownerClass(), entry.ownerTypes());
+	}
+
+	@ParameterizedTest
+	@MethodSource("datasetIdRewrites")
+	void datasetIdRewriteIsStillARelationshipListOfTheStoredOwnerTypes(DatasetIdRewrite rewrite) {
+		Method setter = attributeSetter(load(rewrite.ownerClass()), rewrite.attribute());
+		assertEquals(AttributeType.RELATIONSHIP_LIST, setter.getAnnotation(AttributeSetter.class).value(),
+				rewrite.attribute());
+		assertEquals(load(rewrite.referenceClass()), referenceType(setter, true), rewrite.attribute());
+		assertOwnerTypesComplete(rewrite.ownerClass(), rewrite.ownerTypes());
 	}
 
 	@ParameterizedTest
@@ -102,6 +114,7 @@ class ReferenceBackfillCatalogTest {
 		assertEquals(EXPECTED_PRE_88_SETTERS, pinned.size());
 		assertEquals(EXPECTED_ENTRIES, CATALOG.entries().size());
 		assertEquals(EXPECTED_EXCLUDED, CATALOG.excluded().size());
+		assertEquals(EXPECTED_DATASET_ID_REWRITES, CATALOG.datasetIdRewrites().size());
 
 		Set<String> catalogued = Stream.concat(
 						CATALOG.entries().stream().map(e -> e.ownerClass() + "#" + e.attribute()),
@@ -120,6 +133,16 @@ class ReferenceBackfillCatalogTest {
 					.filter(line -> !line.isEmpty() && !line.startsWith(COMMENT_PREFIX))
 					.collect(Collectors.toCollection(TreeSet::new));
 		}
+	}
+
+	// Step 4 limits its UPDATE to these types, so a missing subtype would silently get no backfill.
+	private static void assertOwnerTypesComplete(String ownerClassName, List<String> ownerTypes) {
+		Class<?> ownerClass = load(ownerClassName);
+		assertFalse(ownerTypes.isEmpty(), ownerClassName);
+		Set<String> storedTypes = registry.types().stream()
+				.filter(type -> ownerClass.isAssignableFrom(registry.domainClass(type).orElseThrow()))
+				.collect(Collectors.toCollection(TreeSet::new));
+		assertEquals(storedTypes, new TreeSet<>(ownerTypes), ownerClassName);
 	}
 
 	private static Method attributeSetter(Class<?> owner, String attribute) {

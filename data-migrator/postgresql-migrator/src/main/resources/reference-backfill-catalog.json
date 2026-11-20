@@ -1326,7 +1326,7 @@
       "declaringClass": "org.fiware.tmforum.service.EntitySpecificationRelationship",
       "attribute": "associationSpec",
       "referenceClass": "org.fiware.tmforum.service.AssociationSpecificationRef",
-      "reason": "Embedded in the entitySpecRelationship lists of ServiceSpecification, DocumentSpecification and UsageSpecification, which are read from the stored properties (fromProperties = true); pre-88 resolution only covered top-level relationship attributes, so the payload was never filled."
+      "reason": "Embedded in the entitySpecRelationship lists of ServiceSpecification, DocumentSpecification and UsageSpecification, which are catalog entries themselves (fromProperties = true only since ticket 88). EntitySpecificationRelationship has no @MappingEnabled, so pre-88 resolution of the parent either built an id-only object (TolerantEntityVOMapper.idOnly, missing target) or failed in fromEntityVO with \"Mapping is not enabled\" (existing target); the nested associationSpec was never mapped, so its payload was never filled."
     }
   ],
   "datasetIdRewrites": [
