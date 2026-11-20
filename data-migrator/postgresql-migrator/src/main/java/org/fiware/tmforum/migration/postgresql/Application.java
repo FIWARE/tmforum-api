@@ -1,5 +1,6 @@
 package org.fiware.tmforum.migration.postgresql;
 
+import io.r2dbc.spi.ConnectionFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExitCode;
@@ -22,6 +23,8 @@ public class Application implements Runnable {
 
 	private static final String DRY_RUN_DESCRIPTION = "Report what would change without writing.";
 	private static final String DEFAULT_PAGE_SIZE = "100";
+	private static final String TARGET_POSTGRESQL = "postgresql";
+	private static final String TARGET_BROKER = "broker";
 	private static final String NOT_IMPLEMENTED = "The '%s' command is not implemented yet.";
 
 	@Spec
@@ -45,7 +48,9 @@ public class Application implements Runnable {
 					description = "Entities per broker request; Orion-LD caps it at 1000.") int pageSize,
 			@Option(names = "--resume", description = "Continue an earlier import: accept a non-empty target and skip "
 					+ "ids that are already stored.") boolean resume,
-			@Option(names = "--fail-fast", description = "Stop at the first failure.") boolean failFast) {
+			@Option(names = "--fail-fast", description = "Stop at the first failure.") boolean failFast,
+			@Option(names = "--backfill-references", description = "After a successful import, run "
+					+ "backfill-references --target " + TARGET_POSTGRESQL + ".") boolean backfillReferences) {
 		ImportOptions options;
 		Set<String> resolvedTypes;
 		EntityTypeRegistry registry = EntityTypeRegistry.scan();
@@ -71,8 +76,32 @@ public class Application implements Runnable {
 
 	@Command(name = "backfill-references", description = "Fill absent fields of stored references from their targets.")
 	int backfillReferences(@Mixin MigrationContexts contexts,
+			@Option(names = "--target", required = true,
+					description = "Store to backfill: " + TARGET_POSTGRESQL + " or " + TARGET_BROKER + ".") String target,
 			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun) {
-		return notImplemented("backfill-references");
+		if (TARGET_BROKER.equals(target)) {
+			return notImplemented("backfill-references --target " + TARGET_BROKER);
+		}
+		if (!TARGET_POSTGRESQL.equals(target)) {
+			throw new ParameterException(spec.commandLine(), String.format(
+					"Unknown --target '%s', expected %s or %s.", target, TARGET_POSTGRESQL, TARGET_BROKER));
+		}
+		try (contexts) {
+			contexts.startTarget();
+			ReferenceBackfillReport report = postgresBackfill(contexts).run(dryRun);
+			try {
+				contexts.verifyEscaperFlag();
+			} catch (IllegalStateException e) {
+				report.escaperDrift(e.getMessage());
+			}
+			report.print(spec.commandLine().getOut());
+			return report.succeeded() ? ExitCode.OK : ExitCode.SOFTWARE;
+		}
+	}
+
+	private static PostgresReferenceBackfill postgresBackfill(MigrationContexts contexts) {
+		return new PostgresReferenceBackfill(contexts.target().getBean(ConnectionFactory.class),
+				ReferenceBackfillCatalog.load());
 	}
 
 	@Command(name = "verify", description = "Compare the broker and PostgreSQL entity by entity.")

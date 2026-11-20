@@ -91,6 +91,18 @@ public class MigrationContexts implements AutoCloseable {
 	void start(Map<String, Object> targetOverrides) {
 		rejectInheritedEnvironments();
 		source = builder(sourceEnvironments(), sourceProperties()).start();
+		startTargetContext(targetOverrides);
+	}
+
+	/**
+	 * Starts the target context only, for commands that work on PostgreSQL alone; {@link #source()} stays unavailable.
+	 */
+	public void startTarget() {
+		rejectInheritedEnvironments();
+		startTargetContext(Map.of());
+	}
+
+	private void startTargetContext(Map<String, Object> targetOverrides) {
 		Map<String, Object> targetProperties = new HashMap<>(targetProperties());
 		targetProperties.putAll(targetOverrides);
 		target = builder(targetEnvironments(), targetProperties).start();
