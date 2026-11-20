@@ -7,7 +7,7 @@ FIWARE implementation of the TMForum APIs. Each TMForum API is a Micronaut servi
 - Language: Java 25 (`jdk.version`/`release.version` in the root `pom.xml`)
 - Build: Maven multi-module. The parent is `io.micronaut.platform:micronaut-parent` 5.2.3, and the same version is in the `micronaut.version` property.
 - Framework: Micronaut 5, Project Reactor (`Mono`/`Flux` everywhere), Jackson 3 (`tools.jackson.*`, annotations stay `com.fasterxml.jackson.annotation`) through `micronaut-jackson-databind` (no serde), `micronaut-validation`, Lombok, MapStruct.
-- NGSI-LD: `io.github.wistefan:ngsi-ld-java-mapping` (1.6.31). It ships `EntitiesApiClient`/`SubscriptionsApiClient` (`org.fiware.ngsi.api`, client id `ngsi`), `EntityVOMapper`, `JavaObjectMapper` and its own Jackson-3 beans (`CacheSerdeableObjectMapper`, `EscapeCleaningJsonFactory`).
+- NGSI-LD: `io.github.wistefan:ngsi-ld-java-mapping` (1.6.33). It ships `EntitiesApiClient`/`SubscriptionsApiClient` (`org.fiware.ngsi.api`, client id `ngsi`), `EntityVOMapper`, `JavaObjectMapper` and its own Jackson-3 beans (`CacheSerdeableObjectMapper`, `EscapeCleaningJsonFactory`).
 - Codegen: `openapi-generator-maven-plugin` 7.20.0 with the `io.kokuwa.micronaut:micronaut-openapi-codegen` 4.5.1 generator (`generatorName=micronaut`).
 - Test: JUnit 5, Mockito, Micronaut Test (`@MicronautTest`), K3S through `io.kokuwa.maven:k3s-maven-plugin`.
 - Images: jib (`oci` profile), base image `registry.access.redhat.com/ubi9/openjdk-25-runtime`.
@@ -36,6 +36,7 @@ storage-api/               backend-neutral storage port (EntityRepository, Entit
 all-in-one/                one app containing all APIs (24 codegen executions)
 ui/                        read-only browser for all-in-one; Node server + static page, jib-only, no Java
 data-migrator/             update-writer, migrator (picocli, separate classloaders); legacy-loader (old mapping lib 1.2.11) is NOT in this build, it is built from the frozen tag in `legacy.loader.ref`
+                           postgresql-migrator (ticket 91): broker -> PostgreSQL import/backfill/verify CLI, depends on all-in-one, two ApplicationContexts (broker env + postgresql env)
 k3s/                       manifests for orion-ld, scorpio, minio, schema-provider used by ITs/dev
 .github/workflows/         CI (Java 25; check.yml still on 11)
 ```
@@ -78,4 +79,6 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - Two notification paths: TMForum (`TMForumEventHandler`, both backends; on PostgreSQL fed by the outbox) and NGSI-LD (`NgsiLdEventHandler`, `SubscriptionRepository`, `POST /callback` on `AbstractSubscriptionApiController`, broker-only). Broker-only beans carry `@Requires(notEnv = CommonConstants.POSTGRESQL_ENVIRONMENT)`.
 - `findEntities` with a `query` is called outside list endpoints by `TMForumEventHandler.getSubscriptions` and `AbstractSubscriptionApiController` (duplicate hub check).
 - `storage-postgresql/src/main/resources/db/migration/tmforum/V1__entity.sql`: `tmforum.entity` with the versioning columns (`version`, `revision`, `is_current`, PK `(id, version)`, `entity_current_idx`); ticket 93 fills `version` and checks `*Ref` versions in `ReferenceValidationService`, but superseded versions are never kept (`revision` 1, `is_current` true).
+- `PostgresEntityRepository.importDomainEntity(entity, createdAt, updatedAt)`: migration insert, keeps broker timestamps, writes no outbox row. `VersionedEntity.VERSIONED_TYPES` lists 25 stored types (18 classes plus subclasses).
+- Relationship setters that resolved on read before ticket 88 (83, `fromProperties = false`): `git grep "@AttributeSetter.*RELATIONSHIP" 9570e548`.
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.
