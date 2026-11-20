@@ -89,8 +89,7 @@ public class MigrationContexts implements AutoCloseable {
 
 	// targetOverrides lets tests start the target without a database
 	void start(Map<String, Object> targetOverrides) {
-		rejectInheritedEnvironments();
-		source = builder(sourceEnvironments(), sourceProperties()).start();
+		startSource();
 		startTargetContext(targetOverrides);
 	}
 
@@ -102,6 +101,14 @@ public class MigrationContexts implements AutoCloseable {
 		startTargetContext(Map.of());
 	}
 
+	/**
+	 * Starts the source context only, for commands that work on the broker alone; {@link #target()} stays unavailable.
+	 */
+	public void startSource() {
+		rejectInheritedEnvironments();
+		source = builder(sourceEnvironments(), sourceProperties()).start();
+	}
+
 	private void startTargetContext(Map<String, Object> targetOverrides) {
 		Map<String, Object> targetProperties = new HashMap<>(targetProperties());
 		targetProperties.putAll(targetOverrides);
@@ -109,7 +116,7 @@ public class MigrationContexts implements AutoCloseable {
 	}
 
 	/**
-	 * The started source context. Throws {@link IllegalStateException} before {@link #start()}.
+	 * The started source context. Throws {@link IllegalStateException} before {@link #start()} or {@link #startSource()}.
 	 */
 	public ApplicationContext source() {
 		return requireStarted(source);

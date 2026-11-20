@@ -188,7 +188,11 @@ class PostgresReferenceBackfill {
 	}
 
 	static String label(Entry entry) {
-		return String.join(",", entry.ownerTypes()) + "." + entry.attribute();
+		return label(entry.ownerTypes(), entry.attribute());
+	}
+
+	static String label(List<String> ownerTypes, String attribute) {
+		return String.join(",", ownerTypes) + "." + attribute;
 	}
 
 	private static String fill(String reference) {

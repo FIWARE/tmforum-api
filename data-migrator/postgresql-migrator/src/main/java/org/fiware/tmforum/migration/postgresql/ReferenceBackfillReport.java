@@ -7,7 +7,8 @@ import java.util.Objects;
 
 /**
  * Per-attribute outcome of a reference backfill; it succeeded when nothing failed.
- * A failed run is rolled back as a whole, so it carries no attribute rows.
+ * A failed PostgreSQL run is rolled back as a whole, so it carries no attribute rows. The broker backfill writes
+ * entity by entity and records each failure as an error next to the rows.
  */
 class ReferenceBackfillReport {
 
@@ -15,6 +16,7 @@ class ReferenceBackfillReport {
 
 	private final boolean dryRun;
 	private final List<AttributeResult> attributes = new ArrayList<>();
+	private final List<String> errors = new ArrayList<>();
 	private String failure;
 
 	ReferenceBackfillReport(boolean dryRun) {
@@ -40,8 +42,19 @@ class ReferenceBackfillReport {
 		failure = Objects.requireNonNullElse(cause.getMessage(), cause.getClass().getName());
 	}
 
+	/**
+	 * Records a failure that did not stop the run, e.g. of a single entity.
+	 */
+	void error(String message) {
+		errors.add(message);
+	}
+
 	boolean succeeded() {
-		return failure == null;
+		return failure == null && errors.isEmpty();
+	}
+
+	List<String> errors() {
+		return List.copyOf(errors);
 	}
 
 	List<AttributeResult> attributes() {
@@ -53,6 +66,7 @@ class ReferenceBackfillReport {
 		out.printf(ROW_FORMAT, "attribute", "filled-references", "missing-target", "changed-entities");
 		attributes.forEach(result -> out.printf(ROW_FORMAT, result.attribute(), result.filledReferences(),
 				result.missingTargets(), result.changedEntities()));
+		errors.forEach(error -> out.println("ERROR " + error));
 		if (failure != null) {
 			out.println("ERROR rolled back, nothing written: " + failure);
 		}

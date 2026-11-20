@@ -58,6 +58,7 @@ class PostgresReferenceBackfillIT {
 	private static final String DELETE_TYPES = "DELETE FROM tmforum.entity WHERE type = ANY(?)";
 	private static final String DELETE_OUTBOX = "DELETE FROM tmforum.event_outbox";
 	private static final String COUNT_OUTBOX = "SELECT count(*) FROM tmforum.event_outbox";
+	private static final String FILL_REF = "SELECT pg_temp.fill_ref(?::jsonb, ?::jsonb, ?, ?)::text";
 
 	private static final String OFFERING = urn(OFFERING_TYPE);
 	private static final String RESOURCE_CANDIDATE = urn(RESOURCE_CANDIDATE_TYPE);
@@ -216,6 +217,31 @@ class PostgresReferenceBackfillIT {
 
 		runCommand(escapedOption);
 		assertEquals("candidate", row(OFFERING).data().path("resourceCandidate").path("name").asString());
+	}
+
+	static Stream<ReferenceFillCases.Case> fillCases() {
+		return ReferenceFillCases.cases();
+	}
+
+	// the broker backfill fills with ReferenceFiller, so both rules must agree case by case
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("fillCases")
+	void fillRefMatchesReferenceFiller(ReferenceFillCases.Case testCase) throws SQLException {
+		try (Connection connection = connection();
+			 Statement create = connection.createStatement();
+			 PreparedStatement fill = connection.prepareStatement(FILL_REF)) {
+			create.execute(PostgresReferenceBackfill.CREATE_FILL_REF);
+			fill.setString(1, testCase.reference());
+			fill.setString(2, testCase.target());
+			fill.setArray(3, connection.createArrayOf("text", ReferenceFillCases.FIELDS.stream()
+					.map(ReferenceBackfillCatalog.FillableField::referenceKey).toArray()));
+			fill.setArray(4, connection.createArrayOf("text", ReferenceFillCases.FIELDS.stream()
+					.map(ReferenceBackfillCatalog.FillableField::targetKey).toArray()));
+			try (ResultSet result = fill.executeQuery()) {
+				assertTrue(result.next());
+				assertEquals(JSON_MAPPER.readTree(testCase.expected()), JSON_MAPPER.readTree(result.getString(1)));
+			}
+		}
 	}
 
 	private static String runCommand(String... extraArgs) {
