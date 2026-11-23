@@ -292,8 +292,12 @@ public class Application implements Runnable {
 			List<String> types,
 			@Option(names = "--page-size", defaultValue = DEFAULT_PAGE_SIZE,
 					description = "Entities per PostgreSQL page and subscriptions per broker request.") int pageSize,
-			@Option(names = "--resume", description = "Continue an earlier export: accept a non-empty broker, skip ids "
-					+ "that are already stored and keep hub subscriptions the broker still holds.") boolean resume,
+			@Option(names = "--resume", description = "Continue an earlier export: accept a non-empty broker and skip "
+					+ "ids that are already stored, never overwriting them; implies --keep-broker-subscriptions. Only "
+					+ "for a broker that holds nothing but an earlier export's output.") boolean resume,
+			@Option(names = "--keep-broker-subscriptions", description = "Keep the hub subscriptions the broker "
+					+ "already holds, e.g. the old broker's in the rollback window, instead of refusing them; the "
+					+ "broker must still hold no entity of an exported type.") boolean keepBrokerSubscriptions,
 			@Option(names = "--fail-fast", description = "Stop at the first failure.") boolean failFast,
 			@Option(names = "--notification-endpoint", description = "<serverHost><basepath>/callback of the "
 					+ "broker-backed deployment, notified by the hubs' new subscriptions; required when hubs are "
@@ -305,7 +309,8 @@ public class Application implements Runnable {
 		Set<String> resolvedTypes;
 		EntityTypeRegistry registry = EntityTypeRegistry.scan();
 		try {
-			options = new ExportOptions(pageSize, resume, failFast, dryRun, notificationEndpoint, endpointsByType);
+			options = new ExportOptions(pageSize, resume, keepBrokerSubscriptions, failFast, dryRun, notificationEndpoint,
+					endpointsByType);
 			resolvedTypes = ImportCommand.resolveTypes(registry, types);
 		} catch (IllegalArgumentException e) {
 			throw new ParameterException(spec.commandLine(), e.getMessage());

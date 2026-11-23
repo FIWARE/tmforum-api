@@ -11,6 +11,7 @@ import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -20,10 +21,13 @@ import java.util.stream.Collectors;
 /**
  * Copies every entity of the requested types from PostgreSQL back into an empty broker, the rollback after
  * PostgreSQL took writes. References stay inline. Every hub gets a new NGSI-LD subscription notifying the broker
- * deployment, registered before the hub is written, since a hub without one stays silent on the broker path.
+ * deployment, registered before the hub is written, since a hub without one stays silent on the broker path. A hub
+ * whose own subscription the broker still holds fails the export, unless subscriptions are kept.
  */
 @Slf4j
 class ExportCommand {
+
+	private static final String KEEP_OR_DELETE = "Delete them first, or use --keep-broker-subscriptions to keep them.";
 
 	private final ExportSource source;
 	private final ExportTarget target;
@@ -60,7 +64,8 @@ class ExportCommand {
 			long stored = target.count(type);
 			if (stored > 0) {
 				report.error = String.format("the broker already holds %d entities of this type; export needs an empty "
-						+ "broker, or --resume to continue an earlier export.", stored);
+						+ "broker. --resume continues an earlier export, but never overwrites an entity the broker "
+						+ "holds.", stored);
 				return;
 			}
 		}
@@ -68,7 +73,7 @@ class ExportCommand {
 				.orElseThrow(() -> new IllegalArgumentException("No domain class maps " + type + "."));
 		Set<URI> brokerSubscriptions = null;
 		if (TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type)) {
-			brokerSubscriptions = brokerSubscriptions(report);
+			brokerSubscriptions = brokerSubscriptions(domainClass, report);
 			if (brokerSubscriptions == null) {
 				return;
 			}
@@ -99,38 +104,81 @@ class ExportCommand {
 		}
 	}
 
-	// null when the broker already notifies a configured endpoint and the run does not resume
-	private Set<URI> brokerSubscriptions(TypeReport report) {
+	// null when the broker holds subscriptions that new ones would duplicate and they are not to be kept
+	private Set<URI> brokerSubscriptions(Class<?> domainClass, TypeReport report) {
 		List<BrokerSubscription> subscriptions = target.subscriptions(options.pageSize());
-		if (!options.resume()) {
-			Set<String> endpoints = options.endpoints();
-			List<URI> notifying = subscriptions.stream()
-					.filter(subscription -> endpoints.contains(subscription.endpoint()))
-					.map(BrokerSubscription::id)
-					.toList();
-			if (!notifying.isEmpty()) {
-				report.error = String.format("the broker already holds %d subscriptions notifying %s, e.g. %s; new ones "
-								+ "would duplicate the notifications. Use --resume to keep them.", notifying.size(), endpoints,
-						notifying.stream().limit(ExportReport.MAX_EXAMPLES).toList());
-				return null;
-			}
+		Set<URI> ids = subscriptions.stream().map(BrokerSubscription::id).collect(Collectors.toSet());
+		if (options.keepsBrokerSubscriptions()) {
+			return ids;
 		}
-		return subscriptions.stream().map(BrokerSubscription::id).collect(Collectors.toSet());
+		Set<String> endpoints = options.endpoints();
+		List<URI> notifying = subscriptions.stream()
+				.filter(subscription -> endpoints.contains(subscription.endpoint()))
+				.map(BrokerSubscription::id)
+				.toList();
+		if (!notifying.isEmpty()) {
+			report.error = String.format("the broker already holds %d subscriptions notifying %s, e.g. %s; new ones "
+							+ "would duplicate the notifications. %s", notifying.size(), endpoints,
+					notifying.stream().limit(ExportReport.MAX_EXAMPLES).toList(), KEEP_OR_DELETE);
+			return null;
+		}
+		// a hub's own subscription may notify another spelling of the endpoint, so match it by id as well
+		List<URI> held = heldSubscriptions(domainClass, ids);
+		if (!held.isEmpty()) {
+			report.error = String.format("the broker still holds the subscriptions of %d hubs, e.g. %s, under another "
+							+ "notification endpoint; new ones would duplicate the notifications. %s", held.size(),
+					held.stream().limit(ExportReport.MAX_EXAMPLES).toList(), KEEP_OR_DELETE);
+			return null;
+		}
+		return ids;
+	}
+
+	private List<URI> heldSubscriptions(Class<?> domainClass, Set<URI> brokerSubscriptions) {
+		List<URI> held = new ArrayList<>();
+		if (brokerSubscriptions.isEmpty()) {
+			return held;
+		}
+		int offset = 0;
+		long sourceCount;
+		do {
+			ExportSource.Page page = source.page(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION, domainClass, offset,
+					options.pageSize());
+			sourceCount = page.totalCount();
+			for (Object entity : page.entities()) {
+				URI stored = storedSubscription((TMForumSubscription) entity);
+				if (stored != null && brokerSubscriptions.contains(stored)) {
+					held.add(stored);
+				}
+			}
+			if (page.entities().isEmpty()) {
+				break;
+			}
+			offset += page.entities().size();
+		} while (offset < sourceCount);
+		return held;
+	}
+
+	private static URI storedSubscription(TMForumSubscription hub) {
+		return hub.getSubscription() == null ? null : hub.getSubscription().getId();
 	}
 
 	private boolean exportHub(TMForumSubscription hub, Set<URI> brokerSubscriptions, TypeReport report) {
-		URI stored = hub.getSubscription() == null ? null : hub.getSubscription().getId();
-		if (options.resume()) {
-			// the broker still holds the hub's subscription, e.g. after an import from this very broker
-			if (stored != null && brokerSubscriptions.contains(stored)) {
-				report.subscriptionsKept++;
-				return write(hub, report) != Outcome.FAILED;
+		URI stored = storedSubscription(hub);
+		// the broker still holds the hub's subscription, e.g. after an import from this very broker
+		if (stored != null && brokerSubscriptions.contains(stored)) {
+			if (!options.keepsBrokerSubscriptions()) {
+				// stored after the check in brokerSubscriptions, e.g. by a write during the export
+				report.fail(String.format("%s: the broker still holds its subscription %s; delete it first, or use "
+						+ "--keep-broker-subscriptions to keep it.", hub.getId(), stored));
+				return false;
 			}
-			// written by an earlier export, together with its subscription
-			if (target.exists(hub.getId())) {
-				report.skipped++;
-				return true;
-			}
+			report.subscriptionsKept++;
+			return write(hub, report) != Outcome.FAILED;
+		}
+		// written by an earlier export, together with its subscription
+		if (options.resume() && target.exists(hub.getId())) {
+			report.skipped++;
+			return true;
 		}
 		Subscription subscription;
 		try {

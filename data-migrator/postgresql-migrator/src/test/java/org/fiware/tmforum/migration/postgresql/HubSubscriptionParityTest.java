@@ -60,7 +60,7 @@ class HubSubscriptionParityTest {
 		hub.setSubscription(null);
 
 		Subscription exported = new ExportCommand(null, null, null,
-				new ExportOptions(1, false, false, false, NOTIFICATION_ENDPOINT, Map.of())).subscription(hub);
+				new ExportOptions(1, false, false, false, false, NOTIFICATION_ENDPOINT, Map.of())).subscription(hub);
 
 		assertEquals(List.of(), ResponseDiff.diff(json(registered), json(exported), UNORDERED));
 		assertEquals(NOTIFICATION_ENDPOINT, exported.getNotification().getEndpoint().getUri());

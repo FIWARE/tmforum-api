@@ -40,6 +40,8 @@ class ExportCommandTest {
 	private static final String ORDER = "product-order";
 	private static final URI ENDPOINT = URI.create("http://tmforum.example.org/callback");
 	private static final URI ORDER_ENDPOINT = URI.create("http://ordering.example.org/callback");
+	// the same deployment as ENDPOINT, spelled differently, as the old broker's hubs may hold it
+	private static final String OTHER_ENDPOINT_SPELLING = "http://tmforum.example.org:80/callback/";
 	private static final URI CALLBACK = URI.create("http://listener.example.org/hub");
 	private static final String QUERY = "state==\"active\"";
 	private static final int PAGE_SIZE = 2;
@@ -66,24 +68,26 @@ class ExportCommandTest {
 	static Stream<Arguments> filledBrokers() {
 		return Stream.of(
 				// a filled broker without --resume: nothing is read or written
-				Arguments.of(false, 1, false, false, 0, 0, 0),
+				Arguments.of(false, false, 1, false, false, 0, 0, 0),
+				// keeping broker subscriptions still needs an empty broker
+				Arguments.of(false, true, 1, false, false, 0, 0, 0),
 				// a fresh broker, an id stored meanwhile: a failure
-				Arguments.of(false, 0, true, false, 1, 0, 1),
+				Arguments.of(false, false, 0, true, false, 1, 0, 1),
 				// a resumed run: the stored id is skipped
-				Arguments.of(true, 1, true, true, 1, 1, 0));
+				Arguments.of(true, false, 1, true, true, 1, 1, 0));
 	}
 
 	@ParameterizedTest
 	@MethodSource("filledBrokers")
-	void needsAnEmptyBrokerUnlessResumed(boolean resume, long stored, boolean firstConflicts, boolean succeeds,
-			long written, long skipped, long failed) {
+	void needsAnEmptyBrokerUnlessResumed(boolean resume, boolean keepSubscriptions, long stored,
+			boolean firstConflicts, boolean succeeds, long written, long skipped, long failed) {
 		source.addPlain(2);
 		target.counts.put(PLAIN, stored);
 		if (firstConflicts) {
 			target.stored.add(((EntityWithId) source.entities.get(PLAIN).getFirst()).getId());
 		}
 
-		TypeReport report = run(options(resume, false), PLAIN).type(PLAIN);
+		TypeReport report = run(options(resume, keepSubscriptions, false), PLAIN).type(PLAIN);
 
 		assertEquals(succeeds, report.succeeded(), String.valueOf(report.error));
 		assertEquals(written, report.written);
@@ -128,6 +132,41 @@ class ExportCommandTest {
 	}
 
 	@Test
+	void refusesAHubSubscriptionTheBrokerHoldsUnderAnotherEndpoint() {
+		source.addHub(List.of(PRODUCT), null);
+		URI held = URI.create("urn:ngsi-ld:Subscription:held");
+		source.addHub(List.of(PRODUCT), held);
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(held, OTHER_ENDPOINT_SPELLING));
+
+		ExportReport report = run(options(false, false), HUB);
+
+		assertFalse(report.succeeded());
+		String error = report.type(HUB).error;
+		assertTrue(error.contains(held.toString()) && error.contains("--keep-broker-subscriptions"), error);
+		assertTrue(target.registered.isEmpty(), "No hub may get a subscription before the check passed.");
+		assertTrue(target.created.isEmpty());
+	}
+
+	@Test
+	void keepsTheSubscriptionsTheBrokerHoldsOnRequest() {
+		URI held = URI.create("urn:ngsi-ld:Subscription:held");
+		TMForumSubscription withHeld = source.addHub(List.of(PRODUCT), held);
+		TMForumSubscription fresh = source.addHub(List.of(PRODUCT), null);
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(held, OTHER_ENDPOINT_SPELLING));
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(URI.create("urn:orphan"),
+				ENDPOINT.toString()));
+
+		TypeReport report = run(options(false, true, false), HUB).type(HUB);
+
+		assertTrue(report.succeeded(), String.valueOf(report.failures));
+		assertEquals(1, report.subscriptionsKept);
+		assertEquals(1, report.subscriptionsRegistered);
+		assertEquals(2, report.written);
+		assertEquals(held, target.createdHub(withHeld.getId()).getSubscription().getId());
+		assertTrue(target.registered.contains(target.createdHub(fresh.getId()).getSubscription()));
+	}
+
+	@Test
 	void aResumeKeepsSubscriptionsTheBrokerHoldsAndSkipsExportedHubs() {
 		URI kept = URI.create("urn:ngsi-ld:Subscription:kept");
 		TMForumSubscription withKept = source.addHub(List.of(PRODUCT), kept);
@@ -163,7 +202,7 @@ class ExportCommandTest {
 	@MethodSource("endpoints")
 	void picksTheNotificationEndpointByTheHubsEntities(String description, URI defaultEndpoint,
 			Map<String, URI> overrides, List<String> entities, URI expected) {
-		ExportOptions options = new ExportOptions(PAGE_SIZE, false, false, false, defaultEndpoint, overrides);
+		ExportOptions options = new ExportOptions(PAGE_SIZE, false, false, false, false, defaultEndpoint, overrides);
 
 		if (expected == null) {
 			assertThrows(IllegalArgumentException.class, () -> options.notificationEndpoint(entities), description);
@@ -176,7 +215,9 @@ class ExportCommandTest {
 	void aHubWithoutAnEndpointFailsAndRegistersNothing() {
 		source.addHub(List.of(PRODUCT), null);
 
-		TypeReport report = run(new ExportOptions(PAGE_SIZE, false, false, false, null, Map.of()), HUB).type(HUB);
+		ExportOptions withoutEndpoint = new ExportOptions(PAGE_SIZE, false, false, false, false, null, Map.of());
+
+		TypeReport report = run(withoutEndpoint, HUB).type(HUB);
 
 		assertEquals(1, report.failed);
 		assertTrue(target.registered.isEmpty());
@@ -215,7 +256,9 @@ class ExportCommandTest {
 		source.addPlain(2);
 		target.failing.add(((EntityWithId) source.entities.get(PLAIN).getFirst()).getId());
 
-		ExportReport report = run(new ExportOptions(PAGE_SIZE, false, true, false, ENDPOINT, Map.of()), PLAIN, HUB);
+		ExportOptions failFast = new ExportOptions(PAGE_SIZE, false, false, true, false, ENDPOINT, Map.of());
+
+		ExportReport report = run(failFast, PLAIN, HUB);
 
 		assertFalse(report.succeeded());
 		assertEquals(1, report.type(PLAIN).read);
@@ -227,7 +270,11 @@ class ExportCommandTest {
 	}
 
 	private static ExportOptions options(boolean resume, boolean dryRun) {
-		return new ExportOptions(PAGE_SIZE, resume, false, dryRun, ENDPOINT, Map.of());
+		return options(resume, false, dryRun);
+	}
+
+	private static ExportOptions options(boolean resume, boolean keepSubscriptions, boolean dryRun) {
+		return new ExportOptions(PAGE_SIZE, resume, keepSubscriptions, false, dryRun, ENDPOINT, Map.of());
 	}
 
 	private static String output(ExportReport report) {

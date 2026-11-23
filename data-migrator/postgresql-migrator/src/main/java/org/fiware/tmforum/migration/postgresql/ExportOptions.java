@@ -10,19 +10,28 @@ import java.util.stream.Collectors;
 /**
  * Switches of the {@code export} command.
  *
- * @param resume               accept a non-empty broker: an id already stored and a hub whose stored subscription is
- *                             registered count as skipped
- * @param notificationEndpoint the broker deployment's {@code <serverHost><basepath>/callback}; null when not given
- * @param endpointsByType      overrides of {@code notificationEndpoint} per entity type a hub listens to
+ * @param resume                  continue an earlier export: accept a non-empty broker and count an id already
+ *                                stored as skipped, never overwriting it; implies {@code keepBrokerSubscriptions}
+ * @param keepBrokerSubscriptions keep the hub subscriptions the broker holds instead of refusing them; the broker
+ *                                must still hold no entity of an exported type
+ * @param notificationEndpoint    the broker deployment's {@code <serverHost><basepath>/callback}; null when not given
+ * @param endpointsByType         overrides of {@code notificationEndpoint} per entity type a hub listens to
  */
-record ExportOptions(int pageSize, boolean resume, boolean failFast, boolean dryRun, URI notificationEndpoint,
-		Map<String, URI> endpointsByType) {
+record ExportOptions(int pageSize, boolean resume, boolean keepBrokerSubscriptions, boolean failFast, boolean dryRun,
+		URI notificationEndpoint, Map<String, URI> endpointsByType) {
 
 	ExportOptions {
 		if (pageSize < 1) {
 			throw new IllegalArgumentException("The page size must be positive, was " + pageSize + ".");
 		}
 		endpointsByType = endpointsByType == null ? Map.of() : Map.copyOf(endpointsByType);
+	}
+
+	/**
+	 * Whether hub subscriptions the broker already holds are kept rather than refused.
+	 */
+	boolean keepsBrokerSubscriptions() {
+		return resume || keepBrokerSubscriptions;
 	}
 
 	/**
