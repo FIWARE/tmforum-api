@@ -4,13 +4,17 @@ import io.github.wistefan.mapping.JavaObjectMapper;
 import io.github.wistefan.mapping.NgsiLdWriteOperation;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
+import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.DatasetIdRewrite;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.Entry;
@@ -47,14 +51,15 @@ import java.util.stream.Collectors;
  * the datasetIds of {@link ReferenceBackfillCatalog#datasetIdRewrites()}. Entities are read page by page and turned
  * into the PostgreSQL document form, so {@link ReferenceFiller} applies the rule of the PostgreSQL backfill to the same
  * keys. Targets come from batched id queries; one whose fillable keys include a list attribute is read again by id, as
- * Orion-LD's queries leave multi-instance attributes out. Only changed attributes are written, through the NGSI-LD
- * adapter's {@code updateDomainEntity}.
+ * Orion-LD's queries leave multi-instance attributes out. Only changed attributes are written.
  * <p>
- * Scorpio runs with {@code replaceOnUpdate} ({@link MigrationContexts} pins it), so {@code updateDomainEntity} replaces
- * every instance itself. Orion-LD appends, which replaces stored instances by datasetId only, so an attribute whose
- * stored datasetIds differ from the written ones (a single reference stored with a datasetId, which the mapping writes
- * as the default instance; the old {@code productOrderItem} format) is deleted first and, if a later delete or the
- * write fails, restored from its read value; the value is logged before the delete for a manual restore. Each write
+ * Scorpio ({@code replaceOnUpdate}, pinned by {@link MigrationContexts}) gets one Update Attributes call with the new
+ * instances only: it replaces every instance of a sent attribute, and stores the NGSI-LD Null instances that
+ * {@code updateDomainEntity} sends for dropped datasetIds as values. Orion-LD gets {@code updateDomainEntity}, which
+ * appends and so replaces stored instances by datasetId only; an attribute whose stored datasetIds differ from the
+ * written ones (a single reference stored with a datasetId, which the mapping writes as the default instance; the old
+ * {@code productOrderItem} format) is deleted first and, if a later delete or the write fails, restored from its read
+ * value; the value is logged before the delete for a manual restore. Each write
  * is a normal broker update: it moves {@code modifiedAt} and notifies the broker's own subscriptions. Not
  * transactional; a re-run is a no-op.
  */
@@ -71,6 +76,7 @@ class BrokerReferenceBackfill {
 	private final BrokerSource source;
 	private final NgsiLdEntityRepository repository;
 	private final JavaObjectMapper javaObjectMapper;
+	private final NGSIMapper ngsiMapper;
 	private final DocumentMapper documents;
 	private final boolean replaceOnUpdate;
 	private final EntityTypeRegistry registry;
@@ -91,6 +97,7 @@ class BrokerReferenceBackfill {
 		this.source = source;
 		this.repository = repository;
 		this.javaObjectMapper = sourceContext.getBean(JavaObjectMapper.class);
+		this.ngsiMapper = sourceContext.getBean(NGSIMapper.class);
 		// the PostgreSQL document form only, so the catalog keys apply; nothing is written to a database
 		this.documents = new PostgresDocumentMapper(sourceContext.getBean(ObjectMapper.class)).storage();
 		this.replaceOnUpdate = sourceContext.getBean(GeneralProperties.class).isReplaceOnUpdate();
@@ -368,7 +375,11 @@ class BrokerReferenceBackfill {
 					}
 					deleted.put(attribute, value);
 				});
-				repository.updateDomainEntity(id.toString(), finalUpdate).block();
+				if (replaceOnUpdate) {
+					replaceAttributes(id, finalUpdate);
+				} else {
+					repository.updateDomainEntity(id.toString(), finalUpdate).block();
+				}
 			} catch (RuntimeException e) {
 				throw restore(owner, deleted, domainClass, e);
 			}
@@ -379,6 +390,15 @@ class BrokerReferenceBackfill {
 				attribute.filledReferences += references(value).size();
 			}
 		});
+	}
+
+	private void replaceAttributes(URI id, Object update) {
+		EntityFragmentVO fragment = ngsiMapper.map(javaObjectMapper.toEntityVO(update, NgsiLdWriteOperation.UPDATE));
+		HttpResponse<?> response = repository.updateAttributes(id, fragment).block();
+		if (response != null && response.getStatus() == HttpStatus.MULTI_STATUS) {
+			throw new IllegalStateException(String.format("The broker did not update every attribute of %s: %s", id,
+					response.getBody(String.class).orElse("no details given")));
+		}
 	}
 
 	// rewrites only what was actually deleted, from the read values; re-appending an undeleted attribute would

@@ -1,6 +1,9 @@
 package org.fiware.tmforum.migration.postgresql;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import picocli.CommandLine;
 import reactor.core.publisher.Mono;
@@ -73,9 +77,14 @@ class BrokerReferenceBackfillTest {
 
 	@BeforeEach
 	void startSourceContext() {
+		context = sourceContext(BrokerType.ORION_LD);
+	}
+
+	private static ApplicationContext sourceContext(BrokerType brokerType) {
 		MigrationContexts contexts = new MigrationContexts();
-		new CommandLine(contexts).parseArgs("--broker-url", UNUSED_BROKER_URL);
-		context = ApplicationContext.builder()
+		new CommandLine(contexts).parseArgs("--broker-url", UNUSED_BROKER_URL,
+				"--broker-type=" + brokerType.getEnvironment());
+		return ApplicationContext.builder()
 				.deduceEnvironment(false)
 				.deduceCloudEnvironment(false)
 				.environments(contexts.sourceEnvironments().toArray(String[]::new))
@@ -137,6 +146,30 @@ class BrokerReferenceBackfillTest {
 			assertEquals(Set.copyOf(deletes), writtenAttributes((ProductOffering) updates.getLast()),
 					"The restore must carry exactly the deleted attributes.");
 		}
+	}
+
+	// Scorpio replaces every instance of a sent attribute and stores updateDomainEntity's NGSI-LD Null deletions as
+	// values, so changed datasetIds are written with one Update Attributes call of the new instances
+	@ParameterizedTest(name = "status={0}")
+	@EnumSource(value = HttpStatus.class, names = {"NO_CONTENT", "MULTI_STATUS"})
+	void replacesChangedInstancesOnScorpioWithoutDeleting(HttpStatus status) {
+		context.close();
+		context = sourceContext(BrokerType.SCORPIO);
+		seedOfferingWithDatasetIdInstances();
+		List<EntityFragmentVO> fragments = new ArrayList<>();
+		when(repository.updateAttributes(eq(OFFERING_ID), any())).thenAnswer(invocation -> {
+			fragments.add(invocation.getArgument(1));
+			return Mono.just(HttpResponse.status(status));
+		});
+
+		ReferenceBackfillReport report = new BrokerReferenceBackfill(context, source, repository,
+				ReferenceBackfillCatalog.load(), EntityTypeRegistry.scan(), PAGE_SIZE).run(false);
+
+		assertEquals(status == HttpStatus.NO_CONTENT, report.succeeded(), report.errors().toString());
+		verify(source, never()).deleteAttribute(any(), anyString());
+		verify(repository, never()).updateDomainEntity(anyString(), any());
+		assertEquals(1, fragments.size());
+		assertEquals(Set.of(CATEGORY, RESOURCE_CANDIDATE), fragments.getFirst().getAdditionalProperties().keySet());
 	}
 
 	@Test
