@@ -69,7 +69,7 @@ public class Application implements Runnable {
 		}
 		try (contexts) {
 			contexts.start();
-			ImportReport report = new ImportCommand(new BrokerSource(contexts.source()),
+			ImportReport report = new ImportCommand(new BrokerSource(contexts.source(), registry),
 					new PostgresTarget(contexts.target()), registry, options).run(resolvedTypes);
 			recordEscaperDrift(contexts, report::escaperDrift);
 			Supplier<ReferenceBackfillReport> backfill = backfillReferences
@@ -108,9 +108,26 @@ public class Application implements Runnable {
 	int backfillReferences(@Mixin MigrationContexts contexts,
 			@Option(names = "--target", required = true,
 					description = "Store to backfill: " + TARGET_POSTGRESQL + " or " + TARGET_BROKER + ".") String target,
-			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun) {
+			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun,
+			@Option(names = "--page-size", defaultValue = DEFAULT_PAGE_SIZE,
+					description = "Entities per broker request (" + TARGET_BROKER + " only); Orion-LD caps it at 1000.")
+			int pageSize) {
 		if (TARGET_BROKER.equals(target)) {
-			return notImplemented("backfill-references --target " + TARGET_BROKER);
+			if (pageSize < 1) {
+				throw new ParameterException(spec.commandLine(), "--page-size must be positive.");
+			}
+			contexts.brokerWriteModeProblem().ifPresent(problem -> {
+				throw new ParameterException(spec.commandLine(), problem);
+			});
+			try (contexts) {
+				contexts.startSource();
+				ReferenceBackfillReport report = new BrokerReferenceBackfill(contexts.source(),
+						ReferenceBackfillCatalog.load(), EntityTypeRegistry.scan(), pageSize).run(dryRun);
+				// it maps broker data, which only decodes right under --source-escaped
+				recordEscaperDrift(contexts, report::error);
+				report.print(spec.commandLine().getOut());
+				return exitCode(report.succeeded());
+			}
 		}
 		if (!TARGET_POSTGRESQL.equals(target)) {
 			throw new ParameterException(spec.commandLine(), String.format(

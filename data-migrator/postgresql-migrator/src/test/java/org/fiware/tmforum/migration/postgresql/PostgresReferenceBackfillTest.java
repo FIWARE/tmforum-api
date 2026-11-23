@@ -28,15 +28,15 @@ class PostgresReferenceBackfillTest {
 
 	private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 	private static final Pattern PLACEHOLDER = Pattern.compile("\\$(\\d+)");
-	private static final int BINDING_COUNT = 4;
+	private static final int BINDING_COUNT = 5;
 	private static final String FAILING_FACTORY_NAME = "failing";
 
 	private static final List<String> OWNER_TYPES = List.of("owner-type-a", "owner-type-b");
 	private static final String ATTRIBUTE = "someReference";
 	private static final List<FillableField> FIELDS = List.of(
-			new FillableField("refKeyName", "targetKeyName"), new FillableField("refKeyHref", "targetKeyHref"));
+			new FillableField("refKeyName", "targetKeyName", false), new FillableField("refKeyHref", "targetKeyHref", true));
 
-	private static final String FILL_REF = "pg_temp.fill_ref(r.ref, t.data, $3::text[], $4::text[])";
+	private static final String FILL_REF = "pg_temp.fill_ref(r.ref, t.data, $3::text[], $4::text[], $5::boolean[])";
 	private static final String COUNT_TEMPLATE = "SELECT count(*) FILTER (WHERE t.id IS NOT NULL AND " + FILL_REF
 			+ " <> r.ref), count(*) FILTER (WHERE r.ref ->> 'id' IS NOT NULL AND t.id IS NULL), "
 			+ "count(DISTINCT o.id) FILTER (WHERE t.id IS NOT NULL AND " + FILL_REF + " <> r.ref) "
@@ -46,7 +46,7 @@ class PostgresReferenceBackfillTest {
 			"CROSS JOIN LATERAL (SELECT o.data -> $2::text AS ref) r", "object");
 	private static final String EXPECTED_COUNT_LIST = String.format(COUNT_TEMPLATE,
 			"CROSS JOIN LATERAL jsonb_array_elements(o.data -> $2::text) WITH ORDINALITY AS r(ref, ord)", "array");
-	private static final String SINGLE_FILL_REF = "pg_temp.fill_ref(e.data -> $2::text, t.data, $3::text[], $4::text[])";
+	private static final String SINGLE_FILL_REF = "pg_temp.fill_ref(e.data -> $2::text, t.data, $3::text[], $4::text[], $5::boolean[])";
 	private static final String EXPECTED_FILL_SINGLE = "UPDATE tmforum.entity e SET data = "
 			+ "jsonb_set(e.data, ARRAY[$2::text], " + SINGLE_FILL_REF + ") FROM tmforum.entity t "
 			+ "WHERE e.type = ANY($1::text[]) AND e.is_current AND jsonb_typeof(e.data -> $2::text) = 'object' "
@@ -88,6 +88,7 @@ class PostgresReferenceBackfillTest {
 		assertEquals(ATTRIBUTE, bindings.get(1));
 		assertArrayEquals(new String[]{"refKeyName", "refKeyHref"}, (String[]) bindings.get(2));
 		assertArrayEquals(new String[]{"targetKeyName", "targetKeyHref"}, (String[]) bindings.get(3));
+		assertArrayEquals(new Boolean[]{false, true}, (Boolean[]) bindings.get(4));
 	}
 
 	@ParameterizedTest(name = "list={0}")
@@ -95,7 +96,7 @@ class PostgresReferenceBackfillTest {
 	void interpolatesNoValueIntoTheSql(boolean list) {
 		EntryStatements statements = PostgresReferenceBackfill.statements(entry(list, OWNER_TYPES, ATTRIBUTE, FIELDS));
 		EntryStatements other = PostgresReferenceBackfill.statements(entry(list, List.of("other-owner"),
-				"otherReference", List.of(new FillableField("otherRefKey", "otherTargetKey"))));
+				"otherReference", List.of(new FillableField("otherRefKey", "otherTargetKey", false))));
 
 		assertEquals(statements.countSql(), other.countSql(), "The SQL text must depend on the entry's shape only.");
 		assertEquals(statements.fillSql(), other.fillSql(), "The SQL text must depend on the entry's shape only.");

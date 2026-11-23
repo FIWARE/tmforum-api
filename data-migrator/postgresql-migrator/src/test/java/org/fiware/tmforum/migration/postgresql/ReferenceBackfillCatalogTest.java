@@ -14,12 +14,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -46,10 +49,15 @@ class ReferenceBackfillCatalogTest {
 	private static final ReferenceBackfillCatalog CATALOG = ReferenceBackfillCatalog.load();
 
 	private static EntityTypeRegistry registry;
+	private static Set<String> storedListAttributes;
 
 	@BeforeAll
 	static void scan() {
 		registry = EntityTypeRegistry.scan();
+		storedListAttributes = registry.types().stream()
+				.map(type -> registry.domainClass(type).orElseThrow())
+				.flatMap(domainClass -> BrokerSource.listAttributes(domainClass).stream())
+				.collect(Collectors.toSet());
 	}
 
 	static Stream<Entry> entries() {
@@ -80,6 +88,20 @@ class ReferenceBackfillCatalogTest {
 		for (FillableField field : entry.fillableFields()) {
 			assertTrue(declaresField(referenceClass, field.referenceKey()),
 					referenceClass.getName() + " has no field " + field.referenceKey());
+		}
+	}
+
+	// the fill copies the target value as it is, so only a list into a single field needs the unwrap; some reference
+	// classes pick their target type per instance, so a key counts as a list when any stored class stores it as one
+	@ParameterizedTest
+	@MethodSource("entries")
+	void unwrapIsSetExactlyWhereAListTargetFillsASingleField(Entry entry) {
+		Class<?> referenceClass = load(entry.referenceClass());
+		for (FillableField field : entry.fillableFields()) {
+			boolean referenceList = Collection.class.isAssignableFrom(field(referenceClass, field.referenceKey()).getType());
+			boolean targetList = storedListAttributes.contains(field.targetKey());
+			assertFalse(referenceList && !targetList, field + " fills a list from a single value");
+			assertEquals(targetList && !referenceList, field.unwrapSingleElement(), field.toString());
 		}
 	}
 
@@ -161,6 +183,16 @@ class ReferenceBackfillCatalogTest {
 			return parameterized.getActualTypeArguments()[0];
 		}
 		return parameter;
+	}
+
+	private static Field field(Class<?> type, String name) {
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			Optional<Field> field = Arrays.stream(c.getDeclaredFields()).filter(f -> f.getName().equals(name)).findFirst();
+			if (field.isPresent()) {
+				return field.get();
+			}
+		}
+		throw new AssertionError(type.getName() + " has no field " + name);
 	}
 
 	private static boolean declaresField(Class<?> type, String name) {

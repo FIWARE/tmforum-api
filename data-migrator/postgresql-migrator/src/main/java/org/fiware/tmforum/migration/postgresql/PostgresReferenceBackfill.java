@@ -29,20 +29,24 @@ class PostgresReferenceBackfill {
 	 * but an object reference with a target comes back unchanged.
 	 */
 	static final String CREATE_FILL_REF = """
-			CREATE OR REPLACE FUNCTION pg_temp.fill_ref(ref jsonb, target jsonb, ref_keys text[], target_keys text[])
+			CREATE OR REPLACE FUNCTION pg_temp.fill_ref(ref jsonb, target jsonb, ref_keys text[], target_keys text[],
+				unwrap boolean[])
 			RETURNS jsonb LANGUAGE sql IMMUTABLE AS $fill$
 			SELECT CASE WHEN jsonb_typeof(ref) = 'object' AND target IS NOT NULL
-				THEN ref || coalesce((SELECT jsonb_object_agg(k.ref_key, target -> k.target_key)
-					FROM unnest(ref_keys, target_keys) AS k(ref_key, target_key)
-					WHERE ref -> k.ref_key IS NULL
-						AND coalesce(jsonb_typeof(target -> k.target_key), 'null') <> 'null'), '{}'::jsonb)
+				THEN ref || coalesce((SELECT jsonb_object_agg(k.ref_key, k.value)
+					FROM (SELECT u.ref_key, CASE WHEN NOT u.unwrap THEN target -> u.target_key
+							WHEN jsonb_typeof(target -> u.target_key) = 'array'
+								AND jsonb_array_length(target -> u.target_key) = 1 THEN target -> u.target_key -> 0
+						END AS value
+						FROM unnest(ref_keys, target_keys, unwrap) AS u(ref_key, target_key, unwrap)) k
+					WHERE ref -> k.ref_key IS NULL AND coalesce(jsonb_typeof(k.value), 'null') <> 'null'), '{}'::jsonb)
 				ELSE ref END
 			$fill$""";
 
-	static final String DROP_FILL_REF = "DROP FUNCTION pg_temp.fill_ref(jsonb, jsonb, text[], text[])";
+	static final String DROP_FILL_REF = "DROP FUNCTION pg_temp.fill_ref(jsonb, jsonb, text[], text[], boolean[])";
 
-	// $1 owner types, $2 attribute, $3 reference keys, $4 target keys
-	private static final String FILL = "pg_temp.fill_ref(%s, t.data, $3::text[], $4::text[])";
+	// $1 owner types, $2 attribute, $3 reference keys, $4 target keys, $5 unwrap flags
+	private static final String FILL = "pg_temp.fill_ref(%s, t.data, $3::text[], $4::text[], $5::boolean[])";
 	private static final String OWNER_FILTER = "%1$s.type = ANY($1::text[]) AND %1$s.is_current "
 			+ "AND jsonb_typeof(%1$s.data -> $2::text) = '%2$s'";
 	private static final String TARGET_JOIN = "t.id = %s ->> 'id' AND t.is_current";
@@ -94,7 +98,7 @@ class PostgresReferenceBackfill {
 	}
 
 	/**
-	 * The count and fill statements of one catalog entry; {@code bindings} are {@code $1..$4} in order.
+	 * The count and fill statements of one catalog entry; {@code bindings} are {@code $1..$5} in order.
 	 */
 	record EntryStatements(Entry entry, String countSql, String fillSql, List<Object> bindings) {
 	}
@@ -114,7 +118,8 @@ class PostgresReferenceBackfill {
 				entry.ownerTypes().toArray(String[]::new),
 				entry.attribute(),
 				entry.fillableFields().stream().map(FillableField::referenceKey).toArray(String[]::new),
-				entry.fillableFields().stream().map(FillableField::targetKey).toArray(String[]::new));
+				entry.fillableFields().stream().map(FillableField::targetKey).toArray(String[]::new),
+				entry.fillableFields().stream().map(FillableField::unwrapSingleElement).toArray(Boolean[]::new));
 		return entry.list()
 				? new EntryStatements(entry, COUNT_LIST, FILL_LIST, bindings)
 				: new EntryStatements(entry, COUNT_SINGLE, FILL_SINGLE, bindings);
@@ -188,7 +193,11 @@ class PostgresReferenceBackfill {
 	}
 
 	static String label(Entry entry) {
-		return String.join(",", entry.ownerTypes()) + "." + entry.attribute();
+		return label(entry.ownerTypes(), entry.attribute());
+	}
+
+	static String label(List<String> ownerTypes, String attribute) {
+		return String.join(",", ownerTypes) + "." + attribute;
 	}
 
 	private static String fill(String reference) {

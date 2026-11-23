@@ -17,11 +17,13 @@ import picocli.CommandLine;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MigrationContextsTest {
 
@@ -73,7 +75,33 @@ class MigrationContextsTest {
 		Map<String, Object> properties = contexts.sourceProperties();
 		assertEquals(BROKER_URL, properties.get(MigrationContexts.NGSI_URL_PROPERTY));
 		assertEquals(TENANT, properties.get(MigrationContexts.TENANT_PROPERTY));
+		assertEquals(false, properties.get(MigrationContexts.REPLACE_ON_UPDATE_PROPERTY));
 		assertSharedProperties(properties, true);
+	}
+
+	@ParameterizedTest
+	@CsvSource(value = {"orion-ld;;false", "orion-ld;false;false", "scorpio;;false", "scorpio;false;false",
+			"scorpio;true;true"}, delimiter = ';')
+	void passesReplaceOnUpdateToTheSource(String brokerType, String replaceOnUpdate, boolean expected) {
+		contexts = replaceOnUpdate == null
+				? parse("--broker-type", brokerType)
+				: parse("--broker-type", brokerType, "--replace-on-update", replaceOnUpdate);
+
+		assertEquals(expected, contexts.sourceProperties().get(MigrationContexts.REPLACE_ON_UPDATE_PROPERTY));
+	}
+
+	@ParameterizedTest
+	@CsvSource(value = {"orion-ld;;", "orion-ld;false;", "orion-ld;true;not supported on Orion-LD",
+			"scorpio;;Set --replace-on-update for Scorpio", "scorpio;false;", "scorpio;true;"}, delimiter = ';')
+	void checksTheBrokerWriteMode(String brokerType, String replaceOnUpdate, String expectedProblem) {
+		contexts = replaceOnUpdate == null
+				? parse("--broker-type", brokerType)
+				: parse("--broker-type", brokerType, "--replace-on-update", replaceOnUpdate);
+
+		Optional<String> problem = contexts.brokerWriteModeProblem();
+
+		assertEquals(expectedProblem != null, problem.isPresent(), problem.toString());
+		problem.ifPresent(message -> assertTrue(message.contains(expectedProblem), message));
 	}
 
 	@Test
@@ -128,6 +156,7 @@ class MigrationContextsTest {
 
 		assertEquals(Set.copyOf(contexts.sourceEnvironments()), ownEnvironments(contexts.source()));
 		assertEquals(Set.copyOf(contexts.targetEnvironments()), ownEnvironments(contexts.target()));
+		assertFalse(contexts.source().getBean(GeneralProperties.class).isReplaceOnUpdate());
 	}
 
 	@ParameterizedTest

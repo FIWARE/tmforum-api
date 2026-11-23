@@ -11,7 +11,8 @@
       "fillableFields": [
         {
           "referenceKey": "accountBalance",
-          "targetKey": "accountBalance"
+          "targetKey": "accountBalance",
+          "unwrapSingleElement": true
         },
         {
           "referenceKey": "href",
@@ -34,7 +35,8 @@
       "fillableFields": [
         {
           "referenceKey": "accountBalance",
-          "targetKey": "accountBalance"
+          "targetKey": "accountBalance",
+          "unwrapSingleElement": true
         },
         {
           "referenceKey": "href",
@@ -57,7 +59,8 @@
       "fillableFields": [
         {
           "referenceKey": "accountBalance",
-          "targetKey": "accountBalance"
+          "targetKey": "accountBalance",
+          "unwrapSingleElement": true
         },
         {
           "referenceKey": "href",

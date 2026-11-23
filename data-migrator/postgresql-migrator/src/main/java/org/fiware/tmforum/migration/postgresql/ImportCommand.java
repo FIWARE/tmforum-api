@@ -17,7 +17,9 @@ import java.util.TreeSet;
 /**
  * Copies every entity of the requested types from the source into the target, type by type, page by page.
  * Broker paging has no stable order, so an id read twice is written once, and a type whose distinct ids fall short of
- * the broker's count fails; a {@code --resume} run then picks up the rest.
+ * the broker's count fails; a {@code --resume} run then picks up the rest. {@link BrokerSource} re-reads each listed
+ * entity of a type with list attributes by id (one extra request per entity), because Orion-LD's entity query leaves
+ * out multi-instance attributes.
  */
 @Slf4j
 class ImportCommand {
@@ -105,11 +107,11 @@ class ImportCommand {
 					return;
 				}
 			}
-			if (page.entities().isEmpty()) {
+			if (page.listed() == 0) {
 				break;
 			}
 			// advancing by what came back, not by the page size, so a broker capping the limit skips nothing
-			offset += page.entities().size();
+			offset += page.listed();
 		} while (offset < brokerCount);
 		report.brokerCount = brokerCount;
 		if (seen.size() < brokerCount) {

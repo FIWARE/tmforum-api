@@ -10,6 +10,7 @@ import picocli.CommandLine.Option;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 /**
@@ -24,6 +25,9 @@ public class MigrationContexts implements AutoCloseable {
 	static final String NGSI_URL_PROPERTY = "micronaut.http.services.ngsi.url";
 	static final String TENANT_PROPERTY = "general.tenant";
 	static final String ESCAPE_PROPERTY = "general.escape-forbidden-characters";
+	// set from --replace-on-update, not left to all-in-one's yaml (true for Scorpio), which the root pom keeps off
+	// for the cluster's Scorpio 5.0.3
+	static final String REPLACE_ON_UPDATE_PROPERTY = "general.replace-on-update";
 	static final String SERIALIZATION_INCLUSION_PROPERTY = "jackson.serialization-inclusion";
 	// Micronaut's NON_EMPTY default would drop empty values and lists of migrated entities
 	static final String SERIALIZATION_INCLUSION = "non_null";
@@ -57,6 +61,13 @@ public class MigrationContexts implements AutoCloseable {
 			description = "Whether the broker data was written with general.escape-forbidden-characters=true.")
 	boolean sourceEscaped;
 
+	// null when not given; only the broker backfill writes to the broker, and it needs the value on Scorpio
+	@Option(names = "--replace-on-update", arity = "1",
+			description = "general.replace-on-update of the source broker's deployment: true for Scorpio >= 6.0.0, "
+					+ "false for Scorpio < 6.0.0 and Orion-LD. Required by backfill-references --target broker on "
+					+ "Scorpio; false by default otherwise.")
+	Boolean replaceOnUpdate;
+
 	@Option(names = "--pg-host", defaultValue = "${env:POSTGRES_HOST:-localhost}")
 	String pgHost;
 
@@ -89,8 +100,7 @@ public class MigrationContexts implements AutoCloseable {
 
 	// targetOverrides lets tests start the target without a database
 	void start(Map<String, Object> targetOverrides) {
-		rejectInheritedEnvironments();
-		source = builder(sourceEnvironments(), sourceProperties()).start();
+		startSource();
 		startTargetContext(targetOverrides);
 	}
 
@@ -102,6 +112,14 @@ public class MigrationContexts implements AutoCloseable {
 		startTargetContext(Map.of());
 	}
 
+	/**
+	 * Starts the source context only, for commands that work on the broker alone; {@link #target()} stays unavailable.
+	 */
+	public void startSource() {
+		rejectInheritedEnvironments();
+		source = builder(sourceEnvironments(), sourceProperties()).start();
+	}
+
 	private void startTargetContext(Map<String, Object> targetOverrides) {
 		Map<String, Object> targetProperties = new HashMap<>(targetProperties());
 		targetProperties.putAll(targetOverrides);
@@ -109,7 +127,7 @@ public class MigrationContexts implements AutoCloseable {
 	}
 
 	/**
-	 * The started source context. Throws {@link IllegalStateException} before {@link #start()}.
+	 * The started source context. Throws {@link IllegalStateException} before {@link #start()} or {@link #startSource()}.
 	 */
 	public ApplicationContext source() {
 		return requireStarted(source);
@@ -134,6 +152,22 @@ public class MigrationContexts implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * Why the broker writes of the backfill cannot run, if so: Scorpio appends replace array attributes only below
+	 * 6.0.0, so its mode must be given; Orion-LD rejects the NGSI-LD Null that {@code replaceOnUpdate} sends.
+	 */
+	public Optional<String> brokerWriteModeProblem() {
+		if (brokerType == BrokerType.SCORPIO && replaceOnUpdate == null) {
+			return Optional.of("Set --replace-on-update for Scorpio: true for Scorpio >= 6.0.0 (appending keeps the "
+					+ "stored instances), false below it.");
+		}
+		if (brokerType == BrokerType.ORION_LD && Boolean.TRUE.equals(replaceOnUpdate)) {
+			return Optional.of("--replace-on-update=true is not supported on Orion-LD, which rejects the NGSI-LD Null "
+					+ "that removes a stored instance.");
+		}
+		return Optional.empty();
+	}
+
 	@Override
 	public void close() {
 		closeQuietly(target);
@@ -153,6 +187,7 @@ public class MigrationContexts implements AutoCloseable {
 	Map<String, Object> sourceProperties() {
 		Map<String, Object> properties = sharedProperties();
 		properties.put(NGSI_URL_PROPERTY, brokerUrl);
+		properties.put(REPLACE_ON_UPDATE_PROPERTY, Boolean.TRUE.equals(replaceOnUpdate));
 		if (tenant != null) {
 			properties.put(TENANT_PROPERTY, tenant);
 		}

@@ -68,6 +68,8 @@ class ImportIT {
 	private static final String GIVEN_VERSION = "1.2";
 	private static final String NESTED_ID = "nested-id";
 	private static final String NESTED_VALUE_TYPE = "nested-value-type";
+	private static final String ITEM_A = "item-a";
+	private static final String ITEM_B = "item-b";
 	private static final URI HUB_CALLBACK = URI.create("http://hub.example.org/listener");
 	private static final String HUB_EVENT_TYPE = "ProductCreateEvent";
 	private static final String ENTITIES_PATH = "/ngsi-ld/v1/entities";
@@ -188,6 +190,37 @@ class ImportIT {
 		assertEquals(0, outboxCount(), "The import must not fire events.");
 	}
 
+	// Orion-LD's entity query leaves out attributes with several instances, so BrokerSource re-reads every entity by id
+	@Test
+	void importsMultiInstanceAttributes() throws Exception {
+		startSeedContexts(true);
+		URI categoryOne = urn("category");
+		URI categoryTwo = urn("category");
+		URI offeringId = urn(ProductOffering.TYPE_PRODUCT_OFFERING);
+		createRawEntity(String.format("""
+				{"id": "%1$s", "type": "%2$s", "name": {"type": "Property", "value": "offering"},
+				 "category": [
+				  {"type": "Relationship", "object": "%3$s", "datasetId": "%3$s"},
+				  {"type": "Relationship", "object": "%4$s", "datasetId": "%4$s"}]}""",
+				offeringId, ProductOffering.TYPE_PRODUCT_OFFERING, categoryOne, categoryTwo));
+		URI productId = urn(Product.TYPE_PRODUCT);
+		URI orderId = urn("product-order");
+		createRawEntity(String.format("""
+				{"id": "%1$s", "type": "%2$s", "name": {"type": "Property", "value": "product"},
+				 "productOrderItem": [
+				  {"type": "Relationship", "object": "%3$s", "datasetId": "%3$s:%4$s",
+				   "orderItemId": {"type": "Property", "value": "%4$s"}},
+				  {"type": "Relationship", "object": "%3$s", "datasetId": "%3$s:%5$s",
+				   "orderItemId": {"type": "Property", "value": "%5$s"}}]}""",
+				productId, Product.TYPE_PRODUCT, orderId, ITEM_A, ITEM_B));
+
+		runImport(true, Product.TYPE_PRODUCT, ProductOffering.TYPE_PRODUCT_OFFERING);
+
+		assertEquals(Set.of(categoryOne.toString(), categoryTwo.toString()),
+				listField(row(offeringId).data().path("category"), "id"));
+		assertEquals(Set.of(ITEM_A, ITEM_B), listField(row(productId).data().path("productOrderItem"), "orderItemId"));
+	}
+
 	private void startSeedContexts(boolean sourceEscaped) throws SQLException {
 		seedContexts = new MigrationContexts();
 		new CommandLine(seedContexts).parseArgs(brokerTypeOption(), sourceEscapedOption(sourceEscaped));
@@ -285,6 +318,14 @@ class ImportIT {
 
 	private static Connection connection() throws SQLException {
 		return DriverManager.getConnection(JDBC_URL, DB_CREDENTIAL, DB_CREDENTIAL);
+	}
+
+	private static Set<String> listField(JsonNode list, String field) {
+		assertTrue(list.isArray(), "Not stored as a list: " + list);
+		Set<String> values = new TreeSet<>();
+		list.forEach(element -> values.add(element.path(field).asString()));
+		assertEquals(list.size(), values.size(), "An instance is stored twice: " + list);
+		return values;
 	}
 
 	private static Set<String> fieldNames(JsonNode node) {
