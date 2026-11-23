@@ -28,6 +28,8 @@ class DocumentDiffTest {
 	private static final Rules HUB_RULES = new Rules(false, true, Map.of());
 	private static final Rules EXPORTED_HUB_RULES = new Rules(false, true, Map.of(), true);
 	private static final Rules UNVERSIONED_RULES = new Rules(false, false, Map.of());
+	private static final Rules EXPORTED_RULES = new Rules(true, false, Map.of("productSpecification",
+			Set.of("name", "version"), "category", Set.of("name")), true);
 
 	static Stream<Arguments> differences() {
 		return Stream.of(
@@ -54,6 +56,17 @@ class DocumentDiffTest {
 				Arguments.of("hub subscription registered by the export, on a stored hub without one",
 						EXPORTED_HUB_RULES, "{\"subscription\":{\"id\":\"urn:new\"}}", "{}",
 						List.of(new Expected(Kind.REGISTERED_SUBSCRIPTION, "subscription"))),
+				Arguments.of("hub exported without a subscription", EXPORTED_HUB_RULES,
+						"{}", "{\"subscription\":{\"id\":\"urn:old\"}}",
+						List.of(new Expected(Kind.MISMATCH, "subscription"))),
+				Arguments.of("reference field lost by the export", EXPORTED_RULES,
+						"{\"productSpecification\":{\"id\":\"s\"}}",
+						"{\"productSpecification\":{\"id\":\"s\",\"name\":\"spec\"}}",
+						List.of(new Expected(Kind.MISMATCH, "productSpecification"))),
+				Arguments.of("version lost by the export", EXPORTED_RULES, "{\"name\":\"n\"}",
+						"{\"name\":\"n\",\"version\":\"0.0.1\"}", List.of(new Expected(Kind.MISMATCH, "version"))),
+				Arguments.of("version blanked by the export", EXPORTED_RULES, "{\"version\":\"\"}",
+						"{\"version\":\"0.0.1\"}", List.of(new Expected(Kind.MISMATCH, "version"))),
 				Arguments.of("changed hub subscription after an import", HUB_RULES,
 						"{\"subscription\":{\"id\":\"urn:new\"}}", "{\"subscription\":{\"id\":\"urn:old\"}}",
 						List.of(new Expected(Kind.MISMATCH, "subscription"))),

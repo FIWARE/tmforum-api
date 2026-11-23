@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * Compares the source and target documents of one entity, both written by the PostgreSQL document mapper. Only the
  * migration's own changes are allowed: reference fields the backfill filled, the seeded version, the subscription
  * attribute that {@code cleanup-subscriptions} drops and the one {@code export} registers anew; anything else is a
- * mismatch.
+ * mismatch. After an export the broker is a verbatim copy, so only the registered subscription may differ.
  */
 final class DocumentDiff {
 
@@ -49,7 +49,8 @@ final class DocumentDiff {
 
 	/**
 	 * What may differ for one type. {@code fillableKeys} maps a backfilled attribute to its fillable reference keys;
-	 * {@code exported} allows a hub's broker subscription to differ from the stored one.
+	 * {@code exported} allows a hub's broker subscription to differ from the stored one and disables the backfill and
+	 * seeded-version allowances, which describe an import.
 	 */
 	record Rules(boolean versioned, boolean hub, Map<String, Set<String>> fillableKeys, boolean exported) {
 
@@ -88,15 +89,16 @@ final class DocumentDiff {
 			if (Objects.equals(sourceValue, targetValue)) {
 				continue;
 			}
-			if (VERSION_KEY.equals(key) && rules.versioned() && isBlank(sourceValue)
+			if (VERSION_KEY.equals(key) && rules.versioned() && !rules.exported() && isBlank(sourceValue)
 					&& targetValue != null && ImportCommand.SEED_VERSION.equals(targetValue.asString())) {
 				differences.add(new Difference(Kind.SEEDED_VERSION, key, ImportCommand.SEED_VERSION));
-			} else if (RawAttributeCheck.SUBSCRIPTION_ATTRIBUTE.equals(key) && rules.hub() && rules.exported()) {
-				// the source is the broker the export registered a new subscription on
+			} else if (RawAttributeCheck.SUBSCRIPTION_ATTRIBUTE.equals(key) && rules.hub() && rules.exported()
+					&& sourceValue != null) {
+				// the source is the broker the export registered a new subscription on; without one the hub is silent
 				differences.add(new Difference(Kind.REGISTERED_SUBSCRIPTION, key, render(sourceValue)));
 			} else if (RawAttributeCheck.SUBSCRIPTION_ATTRIBUTE.equals(key) && rules.hub() && targetValue == null) {
 				differences.add(new Difference(Kind.DROPPED_SUBSCRIPTION, key, render(sourceValue)));
-			} else if (rules.fillableKeys().containsKey(key)) {
+			} else if (!rules.exported() && rules.fillableKeys().containsKey(key)) {
 				compareReferences(key, sourceValue, targetValue, rules.fillableKeys().get(key), differences);
 			} else {
 				differences.add(mismatch(key, sourceValue, targetValue));

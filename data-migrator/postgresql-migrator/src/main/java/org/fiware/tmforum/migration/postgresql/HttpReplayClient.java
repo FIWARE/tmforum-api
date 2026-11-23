@@ -10,13 +10,16 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * {@link ReplayClient} on the JDK client. Captured headers the client sets itself (e.g. {@code Host}) are dropped.
+ * {@link ReplayClient} on the JDK client. Captured headers the client sets itself (e.g. {@code Host}) and
+ * {@code Accept-Encoding} are dropped, so both deployments answer uncompressed.
  */
 class HttpReplayClient implements ReplayClient {
 
 	// the JDK client rejects these, and a captured value would be wrong for the other deployment anyway
 	static final Set<String> RESTRICTED_HEADERS = Set.of("host", "content-length", "connection", "expect", "upgrade",
 			"transfer-encoding");
+	// the JDK client does not decompress, so a compressed body would no longer parse as JSON
+	static final String ACCEPT_ENCODING = "accept-encoding";
 	private static final String CONTENT_TYPE = "Content-Type";
 	private static final String JSON = "application/json";
 
@@ -33,7 +36,8 @@ class HttpReplayClient implements ReplayClient {
 		String base = baseUrl.toString().replaceAll("/+$", "");
 		HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(base + request.path())).timeout(timeout);
 		request.headers().forEach((name, value) -> {
-			if (!RESTRICTED_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
+			String lowerName = name.toLowerCase(Locale.ROOT);
+			if (!RESTRICTED_HEADERS.contains(lowerName) && !ACCEPT_ENCODING.equals(lowerName)) {
 				builder.header(name, value);
 			}
 		});

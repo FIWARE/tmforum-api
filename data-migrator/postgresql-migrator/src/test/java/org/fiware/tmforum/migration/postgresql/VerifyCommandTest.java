@@ -79,6 +79,20 @@ class VerifyCommandTest {
 		assertEquals(1, report.type(VERSIONED).targetOnlyKeys.get(DocumentDiff.VERSION_KEY));
 	}
 
+	@Test
+	void failsAStoredVersionTheExportLost() {
+		EntityVO entity = entity(VERSIONED, 0, NAME, "n");
+		source.add(entity);
+		target.store(entity, "{\"id\":\"" + entity.getId() + "\",\"name\":\"n\",\"version\":\"0.0.1\"}");
+
+		VerifyReport report = run(VERSIONED, VerifyOptions.Direction.EXPORT);
+
+		assertFalse(report.succeeded());
+		String failures = String.join("\n", report.failures());
+		assertTrue(failures.contains("key 'version' of the target missing in the broker"), failures);
+		assertTrue(failures.contains("1 field differences"), failures);
+	}
+
 	static Stream<Arguments> corruptions() {
 		return Stream.of(
 				Arguments.of("deleted row", (Corruption) (target, entity) -> target.documents.remove(entity.getId()),
@@ -173,9 +187,13 @@ class VerifyCommandTest {
 	}
 
 	private VerifyReport run(String type) {
+		return run(type, VerifyOptions.Direction.IMPORT);
+	}
+
+	private VerifyReport run(String type, VerifyOptions.Direction direction) {
 		return new VerifyCommand(source, target, registry, EMPTY_CATALOG,
-				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, FULL_CHECK_THRESHOLD, true,
-						VerifyOptions.Direction.IMPORT)).run(List.of(type));
+				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, FULL_CHECK_THRESHOLD, true, direction))
+				.run(List.of(type));
 	}
 
 	private void copy(EntityVO entity) {

@@ -150,6 +150,7 @@ class VerifyReport {
 		boolean fullCheck;
 		final Findings missingRows = new Findings();
 		final Map<String, Findings> missingAttributes = new TreeMap<>();
+		final Map<String, Findings> missingInSourceKeys = new TreeMap<>();
 		final Map<String, Long> allowedMissingAttributes = new TreeMap<>();
 		final Map<String, Long> targetOnlyKeys = new TreeMap<>();
 		final Map<Kind, Findings> allowedDifferences = new EnumMap<>(Kind.class);
@@ -179,6 +180,8 @@ class VerifyReport {
 					missingAttributes.computeIfAbsent(attribute, a -> new Findings()).add(id.toString()));
 			result.allowedMissing().forEach(attribute -> allowedMissingAttributes.merge(attribute, 1L, Long::sum));
 			result.targetOnly().forEach(key -> targetOnlyKeys.merge(key, 1L, Long::sum));
+			result.missingInSource().forEach(key ->
+					missingInSourceKeys.computeIfAbsent(key, k -> new Findings()).add(id.toString()));
 		}
 
 		boolean succeeded() {
@@ -204,6 +207,9 @@ class VerifyReport {
 			}
 			missingAttributes.forEach((attribute, findings) -> failures.add(String.format(
 					"attribute '%s' missing in the target on %d entities, e.g. %s", attribute, findings.count,
+					findings.examples)));
+			missingInSourceKeys.forEach((key, findings) -> failures.add(String.format(
+					"key '%s' of the target missing in the broker on %d entities, e.g. %s", key, findings.count,
 					findings.examples)));
 			if (mismatches.count > 0) {
 				failures.add(String.format("%d field differences, e.g. %s", mismatches.count, mismatches.examples));
@@ -243,6 +249,8 @@ class VerifyReport {
 			node.set("missingRows", missingRows.toJson(mapper));
 			ObjectNode missing = node.putObject("missingAttributes");
 			missingAttributes.forEach((attribute, findings) -> missing.set(attribute, findings.toJson(mapper)));
+			ObjectNode missingInSource = node.putObject("missingInSourceKeys");
+			missingInSourceKeys.forEach((key, findings) -> missingInSource.set(key, findings.toJson(mapper)));
 			ObjectNode allowedMissing = node.putObject("allowedMissingAttributes");
 			allowedMissingAttributes.forEach(allowedMissing::put);
 			ObjectNode targetOnly = node.putObject("targetOnlyKeys");

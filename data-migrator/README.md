@@ -71,7 +71,9 @@ Or as a container:
 ```
 
 - `method` and `path` are required; `path` starts with `/` and keeps its query string.
-- `headers` is optional and sent as captured.
+- `headers` is optional and sent as captured, except `Host`, `Content-Length`, `Connection`, `Expect`, `Upgrade`,
+  `Transfer-Encoding` (set by the HTTP client) and `Accept-Encoding` (dropped so both deployments answer uncompressed
+  and the bodies can be compared as JSON).
 - `body` is optional: a JSON string is sent as its text, any other JSON value as JSON.
 
 Each request goes to `--broker-base-url` and `--postgres-base-url`, and the status and JSON bodies are diffed. The diff

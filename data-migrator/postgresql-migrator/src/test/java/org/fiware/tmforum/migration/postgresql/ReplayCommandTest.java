@@ -11,6 +11,7 @@ import picocli.CommandLine;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -26,8 +27,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.zip.GZIPOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -40,6 +43,9 @@ class ReplayCommandTest {
 	private static final String DIFFERING_PATH = LIST_PATH + "/urn:ngsi-ld:category:2";
 	private static final String MISSING_PATH = LIST_PATH + "/urn:ngsi-ld:category:3";
 	private static final String TENANT_HEADER = "X-Tenant";
+	private static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
+	private static final String CONTENT_ENCODING_HEADER = "Content-Encoding";
+	private static final String GZIP = "gzip";
 	private static final Duration TIMEOUT = Duration.ofSeconds(5);
 	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
@@ -97,6 +103,19 @@ class ReplayCommandTest {
 	}
 
 	@Test
+	void dropsACapturedAcceptEncoding() throws IOException {
+		Path requests = requests("{\"method\":\"GET\",\"path\":\"" + LIST_PATH + "\",\"headers\":{\""
+				+ ACCEPT_ENCODING_HEADER + "\":\"gzip, deflate, br\"}}");
+
+		ReplayReport report = command(false, false).run(requests);
+
+		ReplayReport.Result result = report.results().getFirst();
+		assertEquals(Outcome.EQUAL, result.outcome, result.differences.toString());
+		assertNull(broker.received.getFirst().acceptEncoding(), "A captured Accept-Encoding must not be sent along.");
+		assertNull(postgres.received.getFirst().acceptEncoding(), "A captured Accept-Encoding must not be sent along.");
+	}
+
+	@Test
 	void sendsWritesOnlyWhenIncluded() throws IOException {
 		broker.respond(LIST_PATH, 201, "{\"name\":\"new\"}");
 		postgres.respond(LIST_PATH, 201, "{\"name\":\"new\"}");
@@ -148,11 +167,12 @@ class ReplayCommandTest {
 		return Files.write(directory.resolve("requests.jsonl"), List.of(lines));
 	}
 
-	private record Received(String method, String path, String tenant, String body) {
+	private record Received(String method, String path, String tenant, String acceptEncoding, String body) {
 	}
 
 	/**
-	 * Answers each path with a fixed status and body, and records what it received.
+	 * Answers each path with a fixed status and body, gzipped when the request accepts it as a compressing server
+	 * would, and records what it received.
 	 */
 	private static final class Stub {
 		final HttpServer server;
@@ -176,14 +196,28 @@ class ReplayCommandTest {
 		private void handle(HttpExchange exchange) throws IOException {
 			received.add(new Received(exchange.getRequestMethod(), exchange.getRequestURI().toString(),
 					exchange.getRequestHeaders().getFirst(TENANT_HEADER),
+					exchange.getRequestHeaders().getFirst(ACCEPT_ENCODING_HEADER),
 					new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8)));
 			Map.Entry<Integer, String> response = responses.getOrDefault(exchange.getRequestURI().getPath(),
 					Map.entry(404, ""));
 			byte[] body = response.getValue().getBytes(StandardCharsets.UTF_8);
+			String acceptEncoding = exchange.getRequestHeaders().getFirst(ACCEPT_ENCODING_HEADER);
+			if (body.length > 0 && acceptEncoding != null && acceptEncoding.contains(GZIP)) {
+				body = gzip(body);
+				exchange.getResponseHeaders().set(CONTENT_ENCODING_HEADER, GZIP);
+			}
 			exchange.sendResponseHeaders(response.getKey(), body.length == 0 ? -1 : body.length);
 			try (OutputStream stream = exchange.getResponseBody()) {
 				stream.write(body);
 			}
+		}
+
+		private static byte[] gzip(byte[] body) throws IOException {
+			ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+			try (GZIPOutputStream stream = new GZIPOutputStream(compressed)) {
+				stream.write(body);
+			}
+			return compressed.toByteArray();
 		}
 	}
 }
