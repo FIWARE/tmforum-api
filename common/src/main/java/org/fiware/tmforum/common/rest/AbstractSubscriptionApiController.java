@@ -14,17 +14,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
-import org.fiware.tmforum.common.domain.subscription.Endpoint;
-import org.fiware.tmforum.common.domain.subscription.EntityInfo;
-import org.fiware.tmforum.common.domain.subscription.KeyValuePair;
-import org.fiware.tmforum.common.domain.subscription.NotificationParams;
-import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.EventConstants;
 import org.fiware.tmforum.common.notification.NgsiLdEventHandler;
+import org.fiware.tmforum.common.notification.NgsiLdSubscriptionFactory;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.querying.QueryParser;
 import org.fiware.tmforum.common.querying.SubscriptionQuery;
@@ -45,12 +41,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 public abstract class AbstractSubscriptionApiController extends AbstractApiController<TMForumSubscription> {
-	private static final String RECEIVER_INFO_LISTENER_ENDPOINT = "Listener-Endpoint";
 	private static final String CALLBACK_ATTRIBUTE = "callback";
 	static final int SAME_CALLBACK_PAGE_SIZE = 100;
 	// false on PostgreSQL, where the NGSI-LD path is not wired, so the router answers its normal 404
@@ -155,33 +149,12 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 		tmForumSubscription.setCallback(URI.create(callback));
 		tmForumSubscription.setFields(subscriptionQuery.getFields());
 		if (brokerNotifications()) {
-			tmForumSubscription.setSubscription(buildNgsiLdSubscription(callback, subscriptionQuery, entities));
+			tmForumSubscription.setSubscription(NgsiLdSubscriptionFactory.build(
+					NgsiLdSubscriptionFactory.notificationEndpoint(generalProperties.getServerHost(),
+							generalProperties.getBasepath()),
+					callback, subscriptionQuery.getQuery(), entities, subscriptionQuery.getFields()));
 		}
 		return tmForumSubscription;
-	}
-
-	private Subscription buildNgsiLdSubscription(String callback, SubscriptionQuery subscriptionQuery, List<String> entities) {
-		Subscription subscription = new Subscription(UUID.randomUUID().toString());
-		subscription.setQ(subscriptionQuery.getQuery());
-		subscription.setEntities(entities.stream().map(entityType -> {
-			EntityInfo entityInfo = new EntityInfo();
-			entityInfo.setType(entityType);
-			return entityInfo;
-		}).toList());
-		subscription.setNotification(buildNotificationParams(callback, subscriptionQuery));
-		return subscription;
-	}
-
-	private NotificationParams buildNotificationParams(String callback, SubscriptionQuery subscriptionQuery) {
-		NotificationParams notificationParams = new NotificationParams();
-		notificationParams.setAttributes(Set.copyOf(subscriptionQuery.getFields()));
-		notificationParams.setFormat(EventConstants.NOTIFICATION_FORMAT);
-		notificationParams.setEndpoint(
-				new Endpoint(
-						getCallbackURI(),
-						EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
-						List.of(new KeyValuePair(RECEIVER_INFO_LISTENER_ENDPOINT, callback))));
-		return notificationParams;
 	}
 
 	@Override
@@ -192,14 +165,6 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 		}
 		return subscriptionRepository.deleteDomainSubscriptionByTmForumSubscription(URI.create(id))
 				.then(super.delete(id));
-	}
-
-	private URI getCallbackURI() {
-		String basepath = generalProperties.getBasepath() != null ? generalProperties.getBasepath() : "";
-		if (basepath.endsWith("/")) {
-			basepath = basepath.substring(0, basepath.length() - 1);
-		}
-		return URI.create(generalProperties.getServerHost() + basepath + EventConstants.SUBSCRIPTION_CALLBACK_PATH);
 	}
 
 	@Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)

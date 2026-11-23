@@ -78,7 +78,7 @@ class VerifyCommand {
 		Class<?> domainClass = registry.domainClass(type)
 				.orElseThrow(() -> new IllegalArgumentException("No domain class maps " + type + "."));
 		RawAttributeCheck rawCheck = new RawAttributeCheck(type, domainClass);
-		DocumentDiff.Rules rules = DocumentDiff.Rules.of(type, domainClass, catalog);
+		DocumentDiff.Rules rules = DocumentDiff.Rules.of(type, domainClass, catalog, options.direction());
 		boolean hub = TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type);
 		EntitySample sample = new EntitySample(options.sampleSize(), options.seed());
 		Set<URI> seen = new HashSet<>();

@@ -107,6 +107,18 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 		return new Page(entities, listed.size(), totalCount(response, type));
 	}
 
+	/**
+	 * The broker's count of the type, from a one-entity page.
+	 */
+	long count(String type) {
+		HttpResponse<EntityListVO> response = entitiesApi.queryEntities(generalProperties.getTenant(), null, null,
+				type, null, null, null, null, null, null, null, null, 1, 0, true, null, linkHeader()).block();
+		if (response == null) {
+			throw new IllegalStateException(String.format("The broker returned no response for %s.", type));
+		}
+		return totalCount(response, type);
+	}
+
 	// a type no domain class maps is re-read too, nothing tells what it holds
 	private boolean canHoldMultiInstanceAttributes(String type) {
 		return multiInstanceTypes.computeIfAbsent(type, t -> registry.domainClass(t)
@@ -267,7 +279,7 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 		String count = response.header(generalProperties.getCountHeader());
 		if (count == null) {
 			throw new IllegalStateException(String.format(
-					"The broker reported no %s for %s, so the import cannot check it read everything.",
+					"The broker reported no %s for %s, so the run cannot check it read everything.",
 					generalProperties.getCountHeader(), type));
 		}
 		return Long.parseLong(count);

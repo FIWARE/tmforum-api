@@ -26,6 +26,7 @@ class DocumentDiffTest {
 	private static final Rules RULES = new Rules(true, false, Map.of("productSpecification", Set.of("name", "version"),
 			"category", Set.of("name")));
 	private static final Rules HUB_RULES = new Rules(false, true, Map.of());
+	private static final Rules EXPORTED_HUB_RULES = new Rules(false, true, Map.of(), true);
 	private static final Rules UNVERSIONED_RULES = new Rules(false, false, Map.of());
 
 	static Stream<Arguments> differences() {
@@ -47,6 +48,15 @@ class DocumentDiffTest {
 				Arguments.of("dropped hub subscription", HUB_RULES,
 						"{\"query\":\"q\",\"subscription\":{\"id\":\"urn:s\"}}", "{\"query\":\"q\"}",
 						List.of(new Expected(Kind.DROPPED_SUBSCRIPTION, "subscription"))),
+				Arguments.of("hub subscription registered by the export", EXPORTED_HUB_RULES,
+						"{\"subscription\":{\"id\":\"urn:new\"}}", "{\"subscription\":{\"id\":\"urn:old\"}}",
+						List.of(new Expected(Kind.REGISTERED_SUBSCRIPTION, "subscription"))),
+				Arguments.of("hub subscription registered by the export, on a stored hub without one",
+						EXPORTED_HUB_RULES, "{\"subscription\":{\"id\":\"urn:new\"}}", "{}",
+						List.of(new Expected(Kind.REGISTERED_SUBSCRIPTION, "subscription"))),
+				Arguments.of("changed hub subscription after an import", HUB_RULES,
+						"{\"subscription\":{\"id\":\"urn:new\"}}", "{\"subscription\":{\"id\":\"urn:old\"}}",
+						List.of(new Expected(Kind.MISMATCH, "subscription"))),
 				Arguments.of("changed field", RULES, "{\"name\":\"n\"}", "{\"name\":\"changed\"}",
 						List.of(new Expected(Kind.MISMATCH, "name"))),
 				Arguments.of("removed field", RULES, "{\"name\":\"n\",\"description\":\"d\"}", "{\"name\":\"n\"}",
@@ -108,12 +118,16 @@ class DocumentDiffTest {
 	void rulesComeFromTheCatalogAndTheDomainClass() {
 		ReferenceBackfillCatalog catalog = ReferenceBackfillCatalog.load();
 
-		Rules offering = Rules.of(ProductOffering.TYPE_PRODUCT_OFFERING, ProductOffering.class, catalog);
-		Rules hub = Rules.of(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION, TMForumSubscription.class, catalog);
+		Rules offering = Rules.of(ProductOffering.TYPE_PRODUCT_OFFERING, ProductOffering.class, catalog,
+				VerifyOptions.Direction.IMPORT);
+		Rules hub = Rules.of(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION, TMForumSubscription.class, catalog,
+				VerifyOptions.Direction.EXPORT);
 
 		assertTrue(offering.versioned());
 		assertTrue(offering.fillableKeys().get("category").contains("name"), offering.toString());
 		assertTrue(hub.hub());
+		assertTrue(hub.exported());
+		assertEquals(false, offering.exported());
 		assertEquals(false, hub.versioned());
 	}
 

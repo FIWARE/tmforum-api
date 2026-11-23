@@ -149,7 +149,8 @@ class VerifyCommandTest {
 		target.store(hub, "{\"id\":\"" + hub.getId() + "\",\"query\":\"" + storedQuery + "\"}");
 
 		VerifyReport report = new VerifyCommand(source, target, registry, EMPTY_CATALOG,
-				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, 0, sourceEscaped)).run(List.of(HUB));
+				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, 0, sourceEscaped,
+						VerifyOptions.Direction.IMPORT)).run(List.of(HUB));
 
 		assertEquals(passes ? 0 : 1, report.type(HUB).hubQueryMismatches.count, report.failures().toString());
 	}
@@ -173,7 +174,8 @@ class VerifyCommandTest {
 
 	private VerifyReport run(String type) {
 		return new VerifyCommand(source, target, registry, EMPTY_CATALOG,
-				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, FULL_CHECK_THRESHOLD, true)).run(List.of(type));
+				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, FULL_CHECK_THRESHOLD, true,
+						VerifyOptions.Direction.IMPORT)).run(List.of(type));
 	}
 
 	private void copy(EntityVO entity) {

@@ -11,16 +11,19 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
 
 import java.io.PrintWriter;
+import java.net.URI;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Moves a broker-backed deployment onto PostgreSQL and backfills inline references on either backend.
- * Subcommands not implemented yet are stubs that exit non-zero.
+ * Moves a broker-backed deployment onto PostgreSQL and back, and backfills inline references on either backend.
  */
 @Command(name = "postgresql-migrator", mixinStandardHelpOptions = true,
 		description = "Migrates TMForum data from an NGSI-LD broker to PostgreSQL.")
@@ -35,7 +38,8 @@ public class Application implements Runnable {
 	static final String CONFIRM_CUTOVER_FINAL = "--confirm-cutover-final";
 	static final String CONFIRMATION_MISSING = "cleanup-subscriptions breaks hub notifications on the broker, which a "
 			+ "rollback relies on. Run it after the rollback window with " + CONFIRM_CUTOVER_FINAL + ", or use --dry-run.";
-	private static final String NOT_IMPLEMENTED = "The '%s' command is not implemented yet.";
+	private static final String DEFAULT_REPLAY_TIMEOUT_SECONDS = "30";
+	private static final String DEFAULT_REPLAY_REPORT = "replay-report.json";
 	static final String BACKFILL_SKIPPED_FAILED_IMPORT = "Reference backfill skipped: the import failed.";
 	// the backfill fills from the stored targets, and a dry-run import stored none
 	static final String BACKFILL_SKIPPED_DRY_RUN =
@@ -179,14 +183,17 @@ public class Application implements Runnable {
 					+ "and printed in the report.") Long seed,
 			@Option(names = "--full-check-threshold", defaultValue = DEFAULT_FULL_CHECK_THRESHOLD,
 					description = "Types with at most this many entities are diffed completely.") int fullCheckThreshold,
-			@Option(names = "--report", description = "Write the JSON report to this file.") Path reportFile) {
+			@Option(names = "--report", description = "Write the JSON report to this file.") Path reportFile,
+			@Option(names = "--direction", defaultValue = "import", converter = DirectionConverter.class,
+					description = "import (broker to PostgreSQL) or export (PostgreSQL to the broker, which allows "
+							+ "the hubs' newly registered subscriptions).") VerifyOptions.Direction direction) {
 		VerifyOptions options;
 		Set<String> resolvedTypes;
 		EntityTypeRegistry registry = EntityTypeRegistry.scan();
 		try {
 			options = new VerifyOptions(pageSize, sampleSize,
 					seed == null ? ThreadLocalRandom.current().nextLong() : seed, fullCheckThreshold,
-					contexts.sourceEscaped);
+					contexts.sourceEscaped, direction);
 			resolvedTypes = ImportCommand.resolveTypes(registry, types);
 		} catch (IllegalArgumentException e) {
 			throw new ParameterException(spec.commandLine(), e.getMessage());
@@ -241,20 +248,87 @@ public class Application implements Runnable {
 		}
 	}
 
-	@Command(name = "replay", description = "Replay recorded API requests against both backends and diff the responses.")
-	int replay(@Mixin MigrationContexts contexts,
-			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun) {
-		return notImplemented("replay");
+	@Command(name = "replay", description = "Send recorded API requests to the broker-backed and the PostgreSQL-backed "
+			+ "deployment and diff the responses.")
+	int replay(@Option(names = "--requests", required = true,
+					description = "JSON-lines file, one captured request per line: method, path, headers, body.")
+			Path requests,
+			@Option(names = "--broker-base-url", required = true,
+					description = "Base URL of the broker-backed deployment.") URI brokerBaseUrl,
+			@Option(names = "--postgres-base-url", required = true,
+					description = "Base URL of the PostgreSQL-backed deployment.") URI postgresBaseUrl,
+			@Option(names = "--unordered-paths", split = ",", description = "Request paths whose response lists are "
+					+ "compared as sets; * matches within a path segment, ** across segments.") List<String> unorderedPaths,
+			@Option(names = "--ignore", split = ",", description = "JSON pointers left out of the diff; * matches one "
+					+ "key or index, ** any depth.") List<String> ignore,
+			@Option(names = "--external-host", split = ",", description = "Hosts of external targets "
+					+ "(references.external-hosts): only id and href of their references are compared.")
+			Set<String> externalHosts,
+			@Option(names = "--include-writes", description = "Also replay POST, PUT, PATCH and DELETE; for rehearsal "
+					+ "environments only.") boolean includeWrites,
+			@Option(names = "--timeout-seconds", defaultValue = DEFAULT_REPLAY_TIMEOUT_SECONDS,
+					description = "Per-request timeout in seconds.") long timeoutSeconds,
+			@Option(names = "--report", defaultValue = DEFAULT_REPLAY_REPORT,
+					description = "Where the JSON report goes.") Path reportFile,
+			@Option(names = "--dry-run", description = "List what would be sent without sending.") boolean dryRun) {
+		ReplayCommand command;
+		try {
+			command = new ReplayCommand(new HttpReplayClient(Duration.ofSeconds(timeoutSeconds)), new ReplayOptions(brokerBaseUrl, postgresBaseUrl,
+					unorderedPaths, ignore, externalHosts, includeWrites, dryRun));
+		} catch (IllegalArgumentException e) {
+			throw new ParameterException(spec.commandLine(), e.getMessage());
+		}
+		ReplayReport report = command.run(requests);
+		report.write(reportFile);
+		report.print(spec.commandLine().getOut());
+		return exitCode(report.succeeded());
 	}
 
-	@Command(name = "export", description = "Copy every entity from PostgreSQL back into an empty broker (rollback).")
+	@Command(name = "export", description = "Copy every entity from PostgreSQL back into an empty broker (rollback), "
+			+ "registering a new NGSI-LD subscription for every hub.")
 	int export(@Mixin MigrationContexts contexts,
-			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun) {
-		return notImplemented("export");
+			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun,
+			@Option(names = "--types", split = ",", description = "Entity types to export; all mapped types by default.")
+			List<String> types,
+			@Option(names = "--page-size", defaultValue = DEFAULT_PAGE_SIZE,
+					description = "Entities per PostgreSQL page and subscriptions per broker request.") int pageSize,
+			@Option(names = "--resume", description = "Continue an earlier export: accept a non-empty broker, skip ids "
+					+ "that are already stored and keep hub subscriptions the broker still holds.") boolean resume,
+			@Option(names = "--fail-fast", description = "Stop at the first failure.") boolean failFast,
+			@Option(names = "--notification-endpoint", description = "<serverHost><basepath>/callback of the "
+					+ "broker-backed deployment, notified by the hubs' new subscriptions; required when hubs are "
+					+ "exported.") URI notificationEndpoint,
+			@Option(names = "--notification-endpoint-for", description = "<entityType>=<url>: the endpoint for hubs "
+					+ "listening to that type, for deployments split per API module.")
+			Map<String, URI> endpointsByType) {
+		ExportOptions options;
+		Set<String> resolvedTypes;
+		EntityTypeRegistry registry = EntityTypeRegistry.scan();
+		try {
+			options = new ExportOptions(pageSize, resume, failFast, dryRun, notificationEndpoint, endpointsByType);
+			resolvedTypes = ImportCommand.resolveTypes(registry, types);
+		} catch (IllegalArgumentException e) {
+			throw new ParameterException(spec.commandLine(), e.getMessage());
+		}
+		try (contexts) {
+			contexts.start();
+			ExportReport report = new ExportCommand(new PostgresExportSource(contexts.target()),
+					new BrokerExportTarget(contexts.source(), new BrokerSource(contexts.source(), registry)), registry,
+					options).run(resolvedTypes);
+			// it encodes the broker's hub queries, which must match --source-escaped
+			recordEscaperDrift(contexts, report::error);
+			report.print(spec.commandLine().getOut());
+			return exitCode(report.succeeded());
+		}
 	}
 
-	private int notImplemented(String command) {
-		spec.commandLine().getErr().println(String.format(NOT_IMPLEMENTED, command));
-		return ExitCode.SOFTWARE;
+	/**
+	 * Reads {@code --direction} case-insensitively.
+	 */
+	static final class DirectionConverter implements CommandLine.ITypeConverter<VerifyOptions.Direction> {
+		@Override
+		public VerifyOptions.Direction convert(String value) {
+			return VerifyOptions.Direction.valueOf(value.toUpperCase(Locale.ROOT));
+		}
 	}
 }
