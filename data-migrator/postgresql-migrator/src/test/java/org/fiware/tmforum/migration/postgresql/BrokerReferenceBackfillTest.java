@@ -8,6 +8,7 @@ import org.fiware.tmforum.account.domain.AccountBalance;
 import org.fiware.tmforum.account.domain.BillingAccount;
 import org.fiware.tmforum.account.domain.FinancialAccount;
 import org.fiware.tmforum.account.domain.FinancialAccountRef;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
 import org.fiware.tmforum.product.Category;
@@ -21,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 import reactor.core.publisher.Mono;
 
@@ -48,8 +48,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * The write paths of the broker backfill: on Orion-LD a failed delete or write restores only what was actually
- * deleted, Scorpio writes without deleting, and a target whose fillable keys include a list is read again by id, since
- * the entity query leaves such attributes out.
+ * deleted, Scorpio writes without deleting in either replaceOnUpdate mode, and a target whose fillable keys include
+ * a list is read again by id, since the entity query leaves such attributes out.
  */
 class BrokerReferenceBackfillTest {
 
@@ -79,9 +79,13 @@ class BrokerReferenceBackfillTest {
 	}
 
 	private static ApplicationContext sourceContext(BrokerType brokerType) {
+		return sourceContext(brokerType, false);
+	}
+
+	private static ApplicationContext sourceContext(BrokerType brokerType, boolean replaceOnUpdate) {
 		MigrationContexts contexts = new MigrationContexts();
 		new CommandLine(contexts).parseArgs("--broker-url", UNUSED_BROKER_URL,
-				"--broker-type=" + brokerType.getEnvironment());
+				"--broker-type=" + brokerType.getEnvironment(), "--replace-on-update=" + replaceOnUpdate);
 		return ApplicationContext.builder()
 				.deduceEnvironment(false)
 				.deduceCloudEnvironment(false)
@@ -146,12 +150,22 @@ class BrokerReferenceBackfillTest {
 		}
 	}
 
-	// Scorpio's append replaces every instance of the attribute and its deleteAll fails, so nothing is deleted
-	@ParameterizedTest(name = "write fails={0}")
-	@ValueSource(booleans = {false, true})
-	void appendsChangedInstancesOnScorpioWithoutDeleting(boolean writeFails) {
+	static Stream<Arguments> scorpioWrites() {
+		return Stream.of(
+				// below 6.0.0 an append replaces every instance of the attribute (and deleteAll fails)
+				Arguments.of(false, false),
+				Arguments.of(false, true),
+				// from 6.0.0 on, updateDomainEntity's replace path removes the other datasetIds in the same PATCH
+				Arguments.of(true, false),
+				Arguments.of(true, true));
+	}
+
+	// the stored datasetIds differ from the written ones, yet neither Scorpio mode deletes anything first
+	@ParameterizedTest(name = "replaceOnUpdate={0}, write fails={1}")
+	@MethodSource("scorpioWrites")
+	void writesChangedInstancesOnScorpioWithoutDeleting(boolean replaceOnUpdate, boolean writeFails) {
 		context.close();
-		context = sourceContext(BrokerType.SCORPIO);
+		context = sourceContext(BrokerType.SCORPIO, replaceOnUpdate);
 		seedOfferingWithDatasetIdInstances();
 		when(repository.updateDomainEntity(anyString(), any())).thenAnswer(invocation -> {
 			updates.add(invocation.getArgument(1));
@@ -165,6 +179,7 @@ class BrokerReferenceBackfillTest {
 		verify(source, never()).deleteAttribute(any(), anyString());
 		assertEquals(1, updates.size(), "One write and no restore.");
 		assertEquals(Set.of(CATEGORY, RESOURCE_CANDIDATE), writtenAttributes((ProductOffering) updates.getFirst()));
+		assertEquals(replaceOnUpdate, context.getBean(GeneralProperties.class).isReplaceOnUpdate());
 	}
 
 	@Test

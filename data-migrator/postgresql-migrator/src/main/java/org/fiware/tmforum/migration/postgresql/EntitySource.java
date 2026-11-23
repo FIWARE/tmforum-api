@@ -25,6 +25,14 @@ interface EntitySource {
 	 */
 	Set<String> types();
 
-	record Page(List<EntityVO> entities, long totalCount) {
+	/**
+	 * {@code listed} is how many entities the broker listed; {@code entities} holds fewer when one vanished before
+	 * its re-read by id. Offsets advance by {@code listed}.
+	 */
+	record Page(List<EntityVO> entities, int listed, long totalCount) {
+
+		Page(List<EntityVO> entities, long totalCount) {
+			this(entities, entities.size(), totalCount);
+		}
 	}
 }

@@ -38,7 +38,7 @@ class BrokerSourceTest {
 	void listingTheTypesOfASilentBrokerTimesOut() throws IOException {
 		// the kernel accepts connections into the backlog, but nothing ever answers
 		try (ServerSocket silentBroker = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
-			BrokerSource source = new BrokerSource(sourceContext(silentBroker.getLocalPort()));
+			BrokerSource source = new BrokerSource(sourceContext(silentBroker.getLocalPort()), EntityTypeRegistry.scan());
 
 			IllegalStateException failure = assertTimeoutPreemptively(TEST_TIMEOUT,
 					() -> assertThrows(IllegalStateException.class, source::types));

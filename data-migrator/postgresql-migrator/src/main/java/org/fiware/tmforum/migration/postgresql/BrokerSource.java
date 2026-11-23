@@ -1,6 +1,7 @@
 package org.fiware.tmforum.migration.postgresql;
 
 import io.github.wistefan.mapping.EntityVOMapper;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -20,8 +21,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -39,6 +44,7 @@ class BrokerSource implements EntitySource {
 	// deleteAll removes every instance, whatever its datasetId; the generated client cannot pass it nor a Link header
 	static final String DELETE_ATTRIBUTE_PATH = "/ngsi-ld/v1/entities/%s/attrs/%s?deleteAll=true";
 	static final String TYPE_LIST_FIELD = "typeList";
+	private static final String LIST_TYPE_SUFFIX = "_LIST";
 	private static final String LINK_HEADER = "Link";
 	private static final String TENANT_HEADER = "NGSILD-Tenant";
 	private static final String ACCEPT_HEADER = "Accept";
@@ -59,8 +65,11 @@ class BrokerSource implements EntitySource {
 	private final Duration readTimeout;
 	private final HttpClient httpClient;
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
+	private final EntityTypeRegistry registry;
+	private final Map<String, Boolean> multiInstanceTypes = new HashMap<>();
 
-	BrokerSource(ApplicationContext source) {
+	BrokerSource(ApplicationContext source, EntityTypeRegistry registry) {
+		this.registry = registry;
 		this.entitiesApi = source.getBean(EntitiesApiClient.class);
 		this.entityVOMapper = source.getBean(EntityVOMapper.class);
 		this.generalProperties = source.getBean(GeneralProperties.class);
@@ -82,9 +91,29 @@ class BrokerSource implements EntitySource {
 		}
 		List<EntityVO> listed = response.body() == null ? List.of() : List.copyOf(response.body());
 		// Orion-LD's query omits multi-instance attributes (list references, productOrderItem); the by-id read has them
-		List<EntityVO> entities = listed.stream().map(EntityVO::getId).map(this::entity).flatMap(Optional::stream)
-				.toList();
-		return new Page(entities, totalCount(response, type));
+		List<EntityVO> entities = canHoldMultiInstanceAttributes(type)
+				? listed.stream().map(EntityVO::getId).map(this::entity).flatMap(Optional::stream).toList()
+				: listed;
+		return new Page(entities, listed.size(), totalCount(response, type));
+	}
+
+	// a type no domain class maps is re-read too, nothing tells what it holds
+	private boolean canHoldMultiInstanceAttributes(String type) {
+		return multiInstanceTypes.computeIfAbsent(type, t -> registry.domainClass(t)
+				.map(domainClass -> !listAttributes(domainClass).isEmpty())
+				.orElse(true));
+	}
+
+	/**
+	 * The target names of the class's list-valued attributes, which the broker stores as one instance per element.
+	 */
+	static Set<String> listAttributes(Class<?> domainClass) {
+		return Arrays.stream(domainClass.getMethods())
+				.map(method -> method.getAnnotation(AttributeSetter.class))
+				.filter(Objects::nonNull)
+				.filter(setter -> setter.value().name().endsWith(LIST_TYPE_SUFFIX))
+				.map(AttributeSetter::targetName)
+				.collect(Collectors.toSet());
 	}
 
 	/**

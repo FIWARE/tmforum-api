@@ -77,13 +77,16 @@ class BrokerReferenceBackfillIT {
 	private static final String ITEM_B = "item-b";
 
 	private final HttpClient httpClient = HttpClient.newHttpClient();
+	private static final String REPLACE_ON_UPDATE_OFF = "--replace-on-update=false";
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
 	private MigrationContexts contexts;
 
 	@BeforeEach
 	void startSource() {
 		contexts = new MigrationContexts();
-		new CommandLine(contexts).parseArgs(brokerTypeOption());
+		// the cluster's Scorpio is 5.0.3, below 6.0.0; Orion-LD needs the same value
+		new CommandLine(contexts).parseArgs(brokerTypeOption(), REPLACE_ON_UPDATE_OFF);
+		assertTrue(contexts.brokerWriteModeProblem().isEmpty());
 		contexts.startSource();
 		deleteSeededEntities();
 	}

@@ -157,6 +157,21 @@ class ImportCommandTest {
 		assertTrue(report.error.contains("broker counts 4"), report.error);
 	}
 
+	@Test
+	void advancesByTheListedCountWhenAnEntityVanishesBeforeItsReRead() {
+		source.add(PLAIN, 4, null);
+		source.vanished.add(source.entities.get(PLAIN).get(1).getId());
+
+		TypeReport report = run(options(false, false, false), PLAIN).type(PLAIN);
+
+		assertEquals(2, source.requests, "The second page starts behind the vanished entity, not on it.");
+		assertEquals(3, report.read);
+		assertEquals(0, report.duplicateRead);
+		assertEquals(3, report.written);
+		assertFalse(report.succeeded());
+		assertTrue(report.error.contains("broker counts 4"), report.error);
+	}
+
 	static Stream<Arguments> mappingFailures() {
 		return Stream.of(
 				Arguments.of(false, 2, false),
@@ -257,7 +272,8 @@ class ImportCommandTest {
 	}
 
 	/**
-	 * Slices the added entities by offset and limit, unless a script overrides the page content.
+	 * Slices the added entities by offset and limit, unless a script overrides the page content; a vanished entity
+	 * counts as listed but is not returned.
 	 */
 	private static final class FakeSource implements EntitySource {
 		private final Map<String, List<EntityVO>> entities = new HashMap<>();
@@ -265,6 +281,8 @@ class ImportCommandTest {
 		private final Set<URI> unmappable = new HashSet<>();
 		private Set<String> types = Set.of();
 		private Function<Integer, List<EntityVO>> script;
+		// listed, but gone by the re-read
+		private final Set<URI> vanished = new HashSet<>();
 		private int cap = Integer.MAX_VALUE;
 		private int requests;
 
@@ -286,7 +304,8 @@ class ImportCommandTest {
 			List<EntityVO> all = entities.getOrDefault(type, List.of());
 			List<EntityVO> page = script != null ? script.apply(offset)
 					: all.subList(Math.min(offset, all.size()), Math.min(offset + Math.min(limit, cap), all.size()));
-			return new Page(page, all.size());
+			return new Page(page.stream().filter(entity -> !vanished.contains(entity.getId())).toList(), page.size(),
+					all.size());
 		}
 
 		@Override

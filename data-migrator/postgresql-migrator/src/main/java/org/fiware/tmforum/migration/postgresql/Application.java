@@ -69,7 +69,7 @@ public class Application implements Runnable {
 		}
 		try (contexts) {
 			contexts.start();
-			ImportReport report = new ImportCommand(new BrokerSource(contexts.source()),
+			ImportReport report = new ImportCommand(new BrokerSource(contexts.source(), registry),
 					new PostgresTarget(contexts.target()), registry, options).run(resolvedTypes);
 			recordEscaperDrift(contexts, report::escaperDrift);
 			Supplier<ReferenceBackfillReport> backfill = backfillReferences
@@ -116,6 +116,9 @@ public class Application implements Runnable {
 			if (pageSize < 1) {
 				throw new ParameterException(spec.commandLine(), "--page-size must be positive.");
 			}
+			contexts.brokerWriteModeProblem().ifPresent(problem -> {
+				throw new ParameterException(spec.commandLine(), problem);
+			});
 			try (contexts) {
 				contexts.startSource();
 				ReferenceBackfillReport report = new BrokerReferenceBackfill(contexts.source(),

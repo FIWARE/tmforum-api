@@ -56,7 +56,7 @@ class ReferenceBackfillCatalogTest {
 		registry = EntityTypeRegistry.scan();
 		storedListAttributes = registry.types().stream()
 				.map(type -> registry.domainClass(type).orElseThrow())
-				.flatMap(domainClass -> BrokerReferenceBackfill.listAttributes(domainClass).stream())
+				.flatMap(domainClass -> BrokerSource.listAttributes(domainClass).stream())
 				.collect(Collectors.toSet());
 	}
 
