@@ -101,6 +101,8 @@ class MigrationRehearsalIT {
 	private static final String ESCAPED_PRODUCT_ID = "urn:ngsi-ld:product:rehearsal-escaped";
 	private static final String NAME = "name";
 	private static final String DESCRIPTION = "description";
+	private static final String VERSION = "version";
+	private static final String API_VERSION = RAW_VERSION;
 	/** One raw record per API module, read back through {@code requests.jsonl} by the fixed id of RAW_ID_TEMPLATE. */
 	private static final List<RawRecord> RAW_RECORDS = List.of(
 			new RawRecord("billing-account", NAME, false),
@@ -153,13 +155,24 @@ class MigrationRehearsalIT {
 		if (callbackServer != null) {
 			callbackServer.stop(0);
 		}
-		if (brokerContexts != null) {
-			deleteBrokerSubscriptions();
-			deleteBrokerEntities();
-			brokerContexts.close();
+		// any of the fields may be unset when the test failed early, and that failure must not be masked
+		try {
+			if (broker != null && notificationEndpoint != null) {
+				deleteBrokerSubscriptions();
+			}
+			if (broker != null) {
+				deleteBrokerEntities();
+			}
+		} finally {
+			if (brokerContexts != null) {
+				brokerContexts.close();
+			}
+			try {
+				clearTarget();
+			} finally {
+				ForbiddenCharacterEscaper.setEnabled(true);
+			}
 		}
-		clearTarget();
-		ForbiddenCharacterEscaper.setEnabled(true);
 	}
 
 	@Test
@@ -178,10 +191,12 @@ class MigrationRehearsalIT {
 		// 1. seed the broker, through the broker server's API and raw
 		EmbeddedServer brokerServer = startServer(brokerPort, brokerEnvironment(), cacheEnvironment());
 		URI brokerUrl = localUrl(brokerPort);
-		ObjectNode category = jsonMapper.createObjectNode().put(NAME, "rehearsal-category");
+		// versioned like the raw records, so only the pre-88 offering gets the seeded version
+		ObjectNode category = jsonMapper.createObjectNode().put(NAME, "rehearsal-category").put(VERSION, API_VERSION);
 		JsonNode storedCategory = post(brokerUrl, CATEGORY_PATH, category);
 		post(brokerUrl, OFFERING_PATH, jsonMapper.createObjectNode()
 				.put(NAME, "rehearsal-offering")
+				.put(VERSION, API_VERSION)
 				.set("category", jsonMapper.createArrayNode().add(completeReference(storedCategory))));
 		JsonNode organization = post(brokerUrl, ORGANIZATION_PATH,
 				jsonMapper.createObjectNode().put(NAME, "api-organization"));
@@ -280,7 +295,7 @@ class MigrationRehearsalIT {
 	// carries every field the backfill could fill, so the API-created offering stays unchanged on PostgreSQL
 	private ObjectNode completeReference(JsonNode target) {
 		ObjectNode reference = jsonMapper.createObjectNode();
-		Stream.of("id", "href", NAME, "version")
+		Stream.of("id", "href", NAME, VERSION)
 				.filter(field -> target.hasNonNull(field))
 				.forEach(field -> reference.set(field, target.get(field)));
 		return reference;
