@@ -252,6 +252,20 @@ class ExportCommandTest {
 	}
 
 	@Test
+	void exportsHubsAfterEveryOtherType() {
+		source.addHub(List.of(PLAIN), null);
+		source.addPlain(PAGE_SIZE + 1);
+
+		ExportReport report = run(options(false, false), HUB, PLAIN);
+
+		assertTrue(report.succeeded(), output(report));
+		List<Object> created = target.created;
+		assertTrue(created.getLast() instanceof TMForumSubscription, "The hub must be written last.");
+		assertTrue(created.subList(0, created.size() - 1).stream().noneMatch(TMForumSubscription.class::isInstance),
+				"No entity may be written after a hub's subscription is registered.");
+	}
+
+	@Test
 	void stopsAtTheFirstFailureWithFailFast() {
 		source.addPlain(2);
 		target.failing.add(((EntityWithId) source.entities.get(PLAIN).getFirst()).getId());

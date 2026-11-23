@@ -43,7 +43,7 @@ class ExportCommand {
 
 	ExportReport run(Collection<String> types) {
 		ExportReport report = new ExportReport(options.dryRun());
-		for (String type : types) {
+		for (String type : hubsLast(types)) {
 			TypeReport typeReport = report.type(type);
 			try {
 				exportType(type, typeReport);
@@ -57,6 +57,17 @@ class ExportCommand {
 			}
 		}
 		return report;
+	}
+
+	// a hub's new subscription notifies on creation, so restoring the entities it watches after it would fire events
+	private static List<String> hubsLast(Collection<String> types) {
+		List<String> ordered = types.stream()
+				.filter(type -> !TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type))
+				.collect(Collectors.toCollection(ArrayList::new));
+		if (types.contains(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION)) {
+			ordered.add(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION);
+		}
+		return ordered;
 	}
 
 	private void exportType(String type, TypeReport report) {

@@ -297,7 +297,8 @@ public class Application implements Runnable {
 					+ "for a broker that holds nothing but an earlier export's output.") boolean resume,
 			@Option(names = "--keep-broker-subscriptions", description = "Keep the hub subscriptions the broker "
 					+ "already holds, e.g. the old broker's in the rollback window, instead of refusing them; the "
-					+ "broker must still hold no entity of an exported type.") boolean keepBrokerSubscriptions,
+					+ "broker must still hold no entity of an exported type. Kept subscriptions are live for the whole "
+					+ "export and notify for every exported entity of the types they watch.") boolean keepBrokerSubscriptions,
 			@Option(names = "--fail-fast", description = "Stop at the first failure.") boolean failFast,
 			@Option(names = "--notification-endpoint", description = "<serverHost><basepath>/callback of the "
 					+ "broker-backed deployment, notified by the hubs' new subscriptions; required when hubs are "
