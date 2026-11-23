@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import picocli.CommandLine;
 import picocli.CommandLine.ExitCode;
 
 import java.io.PrintWriter;
@@ -58,6 +59,25 @@ class ApplicationTest {
 		String printed = out.toString();
 		assertTrue(printed.indexOf("Import succeeded.") < printed.indexOf(BACKFILL_SUCCEEDED), printed);
 		assertFalse(printed.contains(IMPORT_FAILED), printed);
+	}
+
+	// rejected before any context starts, so no broker or database is needed
+	@ParameterizedTest(name = "{0}")
+	@CsvSource(delimiter = '|', value = {
+			"no confirmation          | cleanup-subscriptions                                                   | "
+					+ Application.CONFIRMATION_MISSING,
+			"orphans without endpoint | cleanup-subscriptions --dry-run --include-orphans                       | "
+					+ "--include-orphans needs at least one --callback-endpoint.",
+			"non-positive page size   | cleanup-subscriptions " + Application.CONFIRM_CUTOVER_FINAL + " --page-size=0 | "
+					+ "--page-size must be positive."})
+	void cleanupSubscriptionsRejectsAnUnsafeInvocation(String description, String args, String expectedError) {
+		StringWriter err = new StringWriter();
+
+		int exitCode = new CommandLine(new Application()).setOut(new PrintWriter(out)).setErr(new PrintWriter(err))
+				.execute(args.split(" "));
+
+		assertEquals(ExitCode.USAGE, exitCode, description);
+		assertTrue(err.toString().contains(expectedError), err.toString());
 	}
 
 	private static int exitCode(boolean success) {

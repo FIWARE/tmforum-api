@@ -274,16 +274,21 @@ The plan delivers the tooling, runbook and an in-cluster rollback rehearsal (Ste
 
 ### Step 7: `cleanup-subscriptions` command — broker subscriptions and the `subscription` attribute
 - **Broker side.** Deletes the NGSI-LD subscriptions this service registered: the ids held in the `subscription`
-  relationship of the source `tm-forum-subscription` entities (`SubscriptionsApiClient.removeSubscription`).
-  `--include-orphans` additionally lists, and with confirmation deletes, broker subscriptions whose notification
-  endpoint is `<serverHost><basepath>/callback` (`AbstractSubscriptionApiController`, `EventConstants`) but that no
-  entity references. A missing subscription (404) counts as already deleted.
+  relationship of the source `tm-forum-subscription` entities. The calls go over plain HTTP through `BrokerSource`
+  (`GET`/`DELETE /ngsi-ld/v1/subscriptions`), not `SubscriptionsApiClient`: the generated client sends no tenant on
+  delete or list and cannot page. `--include-orphans` additionally lists and deletes broker subscriptions whose
+  notification endpoint is one of the `--callback-endpoint` values (each service's
+  `<serverHost><basepath>/callback`, see `AbstractSubscriptionApiController` and `EventConstants`) but that no entity
+  references. The migrator cannot derive these URLs, so `--include-orphans` requires at least one. Orphans are always
+  listed in the report. A missing subscription (404) counts as already deleted.
 - **PostgreSQL side.** `UPDATE tmforum.entity SET data = data - 'subscription' WHERE type = 'tm-forum-subscription'
-  AND data ? 'subscription'`, in one transaction. First check whether `PostgresDocumentMapper` writes `subscription`
-  at all. If it never does, this half becomes a verified no-op and the report says so.
+  AND data -> 'subscription' IS NOT NULL` (same rows as `data ? 'subscription'`), in one transaction.
+  `PostgresDocumentMapper` does write `subscription` (a unit test pins this), so this is a real update. When no row
+  holds the key, the report says that nothing was removed. The broker and PostgreSQL halves both run even when the
+  other fails, and both are idempotent.
 - **Rollback.** The command refuses to run without `--confirm-cutover-final`. Deleting broker subscriptions breaks
   hub notifications on the broker path, so it belongs after the rollback window (runbook, Step 9). `--dry-run` lists
-  what would be deleted.
+  what would be deleted and needs no confirmation.
 - **Tests.** `CleanupSubscriptionsIT` on orion-ld and scorpio. It creates hubs through the source context so that
   broker subscriptions exist, imports, runs the cleanup, and asserts that the broker subscriptions are gone, that the
   rows have no `subscription` key, and that the other hub fields are unchanged.
