@@ -2,6 +2,7 @@ package org.fiware.tmforum.migration.postgresql;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ContainerNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.databind.node.StringNode;
 
@@ -86,6 +87,11 @@ final class ResponseDiff {
 		String head = segments.getFirst();
 		List<String> rest = segments.subList(1, segments.size());
 		if (ANY_DEPTH.equals(head)) {
+			if (rest.isEmpty()) {
+				// a trailing ** matches everything below, the container itself stays
+				((ContainerNode<?>) node).removeAll();
+				return;
+			}
 			// ** matching nothing, then one level deeper with ** still pending
 			removeBelow(node, rest);
 			children(node).forEach(child -> removeBelow(child, segments));

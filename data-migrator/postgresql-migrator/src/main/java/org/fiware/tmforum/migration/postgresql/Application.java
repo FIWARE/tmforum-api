@@ -294,8 +294,9 @@ public class Application implements Runnable {
 					description = "Entities per PostgreSQL page and subscriptions per broker request.") int pageSize,
 			@Option(names = "--resume", description = "Continue an earlier export: accept a non-empty broker and skip "
 					+ "ids that are already stored, never overwriting them; implies --keep-broker-subscriptions. A hub "
-					+ "reuses the subscription an interrupted run registered for it; a stored hub whose subscription is "
-					+ "gone fails. Only for a broker that holds nothing but an earlier export's output.") boolean resume,
+					+ "reuses the subscription an interrupted run registered for it, unless it notifies another "
+					+ "endpoint; a stored hub whose subscription is gone fails. Only for a broker that holds nothing but "
+					+ "an earlier export's output.") boolean resume,
 			@Option(names = "--keep-broker-subscriptions", description = "Keep the hub subscriptions the broker "
 					+ "already holds, e.g. the old broker's in the rollback window, instead of refusing them; the "
 					+ "broker must still hold no entity of an exported type. Kept subscriptions are live for the whole "

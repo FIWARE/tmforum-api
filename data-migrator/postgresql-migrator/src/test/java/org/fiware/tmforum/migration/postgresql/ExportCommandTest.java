@@ -45,6 +45,8 @@ class ExportCommandTest {
 	private static final URI ORDER_ENDPOINT = URI.create("http://ordering.example.org/callback");
 	// the same deployment as ENDPOINT, spelled differently, as the old broker's hubs may hold it
 	private static final String OTHER_ENDPOINT_SPELLING = "http://tmforum.example.org:80/callback/";
+	// an earlier export run's --notification-endpoint, pointing at another deployment
+	private static final String WRONG_ENDPOINT = "http://staging.example.org/callback";
 	private static final URI CALLBACK = URI.create("http://listener.example.org/hub");
 	private static final String QUERY = "state==\"active\"";
 	private static final int PAGE_SIZE = 2;
@@ -348,6 +350,34 @@ class ExportCommandTest {
 		assertEquals(0, report.skipped);
 		assertTrue(report.failures.getFirst().contains("never notify"), String.valueOf(report.failures));
 		assertTrue(target.registered.isEmpty());
+	}
+
+	static Stream<Arguments> misdirectedSubscriptions() {
+		return Stream.of(
+				Arguments.of("resumed, hub not yet written", true, false, false),
+				Arguments.of("resumed, hub already written", true, false, true),
+				Arguments.of("kept", false, true, false));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("misdirectedSubscriptions")
+	void refusesToReuseASubscriptionNotifyingAnotherEndpoint(String description, boolean resume,
+			boolean keepSubscriptions, boolean hubOnBroker) {
+		source.addPlain(1);
+		TMForumSubscription hub = source.addHub(List.of(PRODUCT), null);
+		URI registered = ExportCommand.exportSubscriptionId(hub.getId());
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(registered, WRONG_ENDPOINT));
+		if (hubOnBroker) {
+			target.storeHub(hub.getId(), registered);
+		}
+
+		ExportReport report = run(options(resume, keepSubscriptions, false), PLAIN, HUB);
+
+		assertFalse(report.succeeded());
+		assertTrue(output(report).contains("notifies " + WRONG_ENDPOINT), output(report));
+		assertTrue(target.created.isEmpty(), "Nothing may be written before the hub check passed.");
+		assertTrue(target.registered.isEmpty());
+		assertEquals(0, report.type(HUB).subscriptionsKept);
 	}
 
 	@Test

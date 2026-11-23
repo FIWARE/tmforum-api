@@ -78,7 +78,8 @@ Or as a container:
 
 Each request goes to `--broker-base-url` and `--postgres-base-url`, and the status and JSON bodies are diffed. The diff
 ignores object key order, the server host of every absolute `href`, every field but `id` and `href` of a reference to
-an `--external-host`, and the JSON pointers in `--ignore` (`*` matches one key or index, `**` any depth). Lists are
-compared as sets only for paths matched by `--unordered-paths`. `POST`, `PUT`, `PATCH` and `DELETE` are skipped unless
-`--include-writes` is set, which is meant for rehearsal environments only. The per-request diffs go to `--report`
+an `--external-host`, and the JSON pointers in `--ignore` (`*` matches one key or index, `**` any depth; a trailing
+`**` drops everything below its parent, which stays as an empty list or object). Lists are compared as sets only for
+paths matched by `--unordered-paths`. `POST`, `PUT`, `PATCH` and `DELETE` are skipped unless `--include-writes` is
+set, which is meant for rehearsal environments only. The per-request diffs go to `--report`
 (default `replay-report.json`), and the command exits non-zero on any difference or failed request.
