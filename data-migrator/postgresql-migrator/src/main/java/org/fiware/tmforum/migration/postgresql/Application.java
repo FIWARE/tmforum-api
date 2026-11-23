@@ -11,8 +11,10 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
 
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -26,6 +28,8 @@ public class Application implements Runnable {
 
 	private static final String DRY_RUN_DESCRIPTION = "Report what would change without writing.";
 	private static final String DEFAULT_PAGE_SIZE = "100";
+	private static final String DEFAULT_SAMPLE_SIZE = "50";
+	private static final String DEFAULT_FULL_CHECK_THRESHOLD = "1000";
 	private static final String TARGET_POSTGRESQL = "postgresql";
 	private static final String TARGET_BROKER = "broker";
 	private static final String NOT_IMPLEMENTED = "The '%s' command is not implemented yet.";
@@ -161,8 +165,41 @@ public class Application implements Runnable {
 
 	@Command(name = "verify", description = "Compare the broker and PostgreSQL entity by entity.")
 	int verify(@Mixin MigrationContexts contexts,
-			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun) {
-		return notImplemented("verify");
+			@Option(names = "--dry-run", description = "Accepted for uniformity; verify never writes.") boolean dryRun,
+			@Option(names = "--types", split = ",", description = "Entity types to verify; all mapped types by default.")
+			List<String> types,
+			@Option(names = "--page-size", defaultValue = DEFAULT_PAGE_SIZE,
+					description = "Entities per broker request; Orion-LD caps it at 1000.") int pageSize,
+			@Option(names = "--sample-size", defaultValue = DEFAULT_SAMPLE_SIZE,
+					description = "Entities per type that the field-level diff checks.") int sampleSize,
+			@Option(names = "--seed", description = "Seed of the sample, for a reproducible run; random by default "
+					+ "and printed in the report.") Long seed,
+			@Option(names = "--full-check-threshold", defaultValue = DEFAULT_FULL_CHECK_THRESHOLD,
+					description = "Types with at most this many entities are diffed completely.") int fullCheckThreshold,
+			@Option(names = "--report", description = "Write the JSON report to this file.") Path reportFile) {
+		VerifyOptions options;
+		Set<String> resolvedTypes;
+		EntityTypeRegistry registry = EntityTypeRegistry.scan();
+		try {
+			options = new VerifyOptions(pageSize, sampleSize,
+					seed == null ? ThreadLocalRandom.current().nextLong() : seed, fullCheckThreshold,
+					contexts.sourceEscaped);
+			resolvedTypes = ImportCommand.resolveTypes(registry, types);
+		} catch (IllegalArgumentException e) {
+			throw new ParameterException(spec.commandLine(), e.getMessage());
+		}
+		try (contexts) {
+			contexts.start();
+			VerifyReport report = new VerifyCommand(new BrokerSource(contexts.source(), registry),
+					new PostgresVerifyTarget(contexts.target()), registry, ReferenceBackfillCatalog.load(), options)
+					.run(resolvedTypes);
+			recordEscaperDrift(contexts, report::error);
+			if (reportFile != null) {
+				report.write(reportFile);
+			}
+			report.print(spec.commandLine().getOut());
+			return exitCode(report.succeeded());
+		}
 	}
 
 	@Command(name = "cleanup-subscriptions", description = "Delete the broker subscriptions registered for TMForum hubs.")
