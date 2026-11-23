@@ -7,6 +7,7 @@ import org.fiware.tmforum.migration.postgresql.CleanupSubscriptionsReport.Kind;
 import org.fiware.tmforum.migration.postgresql.SubscriptionStore.BrokerSubscription;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -85,6 +86,7 @@ class CleanupSubscriptionsCommand {
 	}
 
 	private void readHubs(CleanupSubscriptionsReport report, Set<URI> referenced) {
+		Set<URI> seen = new HashSet<>();
 		int offset = 0;
 		long brokerCount;
 		do {
@@ -92,6 +94,10 @@ class CleanupSubscriptionsCommand {
 					options.pageSize());
 			brokerCount = page.totalCount();
 			for (EntityVO entity : page.entities()) {
+				// offset paging has no stable order, so a page shift can return a hub twice
+				if (!seen.add(entity.getId())) {
+					continue;
+				}
 				report.hubs++;
 				try {
 					Subscription subscription = hubs.toDomain(entity, TMForumSubscription.class).getSubscription();
@@ -109,6 +115,12 @@ class CleanupSubscriptionsCommand {
 			}
 			offset += page.listed();
 		} while (offset < brokerCount);
+		// a skipped hub's subscription would stay on the broker unnoticed
+		if (seen.size() < brokerCount) {
+			report.error(String.format("read %d distinct hubs, but the broker counts %d; %d were skipped by unstable "
+					+ "paging or concurrent writes, so their subscriptions were not deleted. Freeze writes and re-run.",
+					seen.size(), brokerCount, brokerCount - seen.size()));
+		}
 	}
 
 	private void delete(CleanupSubscriptionsReport report, Kind kind) {

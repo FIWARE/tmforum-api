@@ -78,6 +78,29 @@ class CleanupSubscriptionsCommandTest {
 		assertEquals(List.of(REFERENCED), subscriptions.deleteCalls);
 	}
 
+	static Stream<Arguments> unstablePaging() {
+		return Stream.of(
+				Arguments.of("a hub read twice", 0, true),
+				Arguments.of("a hub skipped", 1, false));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("unstablePaging")
+	void countsDistinctHubsAndFailsOnAShortfall(String description, int skipped, boolean succeeds) {
+		hubs.add(REFERENCED);
+		hubs.add(GONE);
+		hubs.repeatLast();
+		hubs.skipped = skipped;
+
+		CleanupSubscriptionsReport report = run(false, false);
+
+		assertEquals(succeeds, report.succeeded(), printed(report));
+		assertEquals(2, report.hubs, description);
+		assertEquals(List.of(REFERENCED, GONE), subscriptions.deleteCalls, description);
+		assertEquals(succeeds, report.errors().stream().noneMatch(error -> error.contains("were skipped")),
+				report.errors().toString());
+	}
+
 	@Test
 	void deletesOnlyOrphansWithACallbackEndpoint() {
 		hubs.add(REFERENCED);
@@ -205,6 +228,13 @@ class CleanupSubscriptionsCommandTest {
 		private final Map<URI, TMForumSubscription> domainEntities = new LinkedHashMap<>();
 		boolean unmappable;
 		boolean pagingFails;
+		// hubs the broker counts but no page returns, as when a page shift skips them
+		int skipped;
+
+		// a page overlap: the broker returns the last hub again on a later page
+		void repeatLast() {
+			entities.add(entities.get(entities.size() - 1));
+		}
 
 		void add(URI subscriptionId) {
 			TMForumSubscription hub = new TMForumSubscription("hub-" + entities.size());
@@ -222,7 +252,7 @@ class CleanupSubscriptionsCommandTest {
 			}
 			assertEquals(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION, type);
 			return new Page(entities.subList(Math.min(offset, entities.size()),
-					Math.min(offset + limit, entities.size())), entities.size());
+					Math.min(offset + limit, entities.size())), entities.stream().distinct().count() + skipped);
 		}
 
 		@Override
