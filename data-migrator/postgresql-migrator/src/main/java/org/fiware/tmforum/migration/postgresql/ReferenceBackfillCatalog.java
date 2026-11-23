@@ -36,9 +36,11 @@ public record ReferenceBackfillCatalog(List<Entry> entries, List<Excluded> exclu
 	}
 
 	/**
-	 * A reference field that is copied from the target document when the stored reference lacks it.
+	 * A reference field that is copied from the target document when the stored reference lacks it. With
+	 * {@code unwrapSingleElement} the target holds a list and the reference a single value: only a one-element list
+	 * fills it, with its element, since pre-88 a target with several instances failed the read.
 	 */
-	public record FillableField(String referenceKey, String targetKey) {
+	public record FillableField(String referenceKey, String targetKey, boolean unwrapSingleElement) {
 	}
 
 	/**

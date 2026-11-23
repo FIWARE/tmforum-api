@@ -4,6 +4,10 @@ import io.micronaut.context.ApplicationContext;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
+import org.fiware.tmforum.account.domain.AccountBalance;
+import org.fiware.tmforum.account.domain.BillingAccount;
+import org.fiware.tmforum.account.domain.FinancialAccount;
+import org.fiware.tmforum.account.domain.FinancialAccountRef;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
 import org.fiware.tmforum.product.Category;
@@ -13,6 +17,7 @@ import org.fiware.tmforum.resource.ResourceCandidate;
 import org.fiware.tmforum.resource.ResourceCandidateRef;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -23,6 +28,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -35,11 +41,13 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * The Orion-LD replace path of the broker backfill when a delete or the write fails: only what was actually deleted is
- * restored, and nothing is lost silently.
+ * The Orion-LD paths of the broker backfill: a failed delete or write restores only what was actually deleted, and a
+ * target whose fillable keys include a list is read again by id, since the entity query leaves such attributes out.
  */
 class BrokerReferenceBackfillTest {
 
@@ -52,6 +60,10 @@ class BrokerReferenceBackfillTest {
 	private static final URI OFFERING_ID = URI.create("urn:ngsi-ld:product-offering:offering");
 	private static final URI CANDIDATE_ID = URI.create("urn:ngsi-ld:resource-candidate:candidate");
 	private static final URI CATEGORY_ID = URI.create("urn:ngsi-ld:category:category");
+	private static final URI BILLING_ACCOUNT_ID = URI.create("urn:ngsi-ld:billing-account:billing");
+	private static final URI FINANCIAL_ACCOUNT_ID = URI.create("urn:ngsi-ld:financialAccount:financial");
+	private static final String FINANCIAL_ACCOUNT_NAME = "financial account";
+	private static final String BALANCE_TYPE = "deposit";
 
 	private final BrokerSource source = mock(BrokerSource.class);
 	private final NgsiLdEntityRepository repository = mock(NgsiLdEntityRepository.class);
@@ -125,6 +137,54 @@ class BrokerReferenceBackfillTest {
 			assertEquals(Set.copyOf(deletes), writtenAttributes((ProductOffering) updates.getLast()),
 					"The restore must carry exactly the deleted attributes.");
 		}
+	}
+
+	@Test
+	void readsATargetWithAListFillableKeyAgainById() {
+		EntityVO billingVO = entity(BILLING_ACCOUNT_ID, BillingAccount.TYPE_BILLINGAC);
+		billingVO.setAdditionalProperties("financialAccount", new RelationshipVO()._object(FINANCIAL_ACCOUNT_ID));
+		BillingAccount billing = new BillingAccount(BILLING_ACCOUNT_ID.toString());
+		billing.setFinancialAccount(new FinancialAccountRef(FINANCIAL_ACCOUNT_ID.toString()));
+		// as Orion-LD's query lists it: the multi-instance accountBalance is missing
+		EntityVO listedVO = entity(FINANCIAL_ACCOUNT_ID, FinancialAccount.TYPE_FINANCIALAC);
+		EntityVO completeVO = entity(FINANCIAL_ACCOUNT_ID, FinancialAccount.TYPE_FINANCIALAC);
+		FinancialAccount complete = new FinancialAccount(FINANCIAL_ACCOUNT_ID.toString());
+		complete.setName(FINANCIAL_ACCOUNT_NAME);
+		AccountBalance balance = new AccountBalance();
+		balance.setBalanceType(BALANCE_TYPE);
+		complete.setAccountBalance(List.of(balance));
+
+		when(source.page(anyString(), anyInt(), anyInt())).thenReturn(new EntitySource.Page(List.of(), 0));
+		when(source.page(eq(BillingAccount.TYPE_BILLINGAC), eq(0), anyInt()))
+				.thenReturn(new EntitySource.Page(List.of(billingVO), 1));
+		when(source.entities(any())).thenReturn(List.of(listedVO));
+		when(source.entity(FINANCIAL_ACCOUNT_ID)).thenReturn(Optional.of(completeVO));
+		when(source.toDomain(billingVO, BillingAccount.class)).thenReturn(billing);
+		when(source.toDomain(completeVO, FinancialAccount.class)).thenReturn(complete);
+		when(repository.updateDomainEntity(anyString(), any())).thenAnswer(invocation -> {
+			updates.add(invocation.getArgument(1));
+			return Mono.empty();
+		});
+
+		ReferenceBackfillReport report = new BrokerReferenceBackfill(context, source, repository,
+				ReferenceBackfillCatalog.load(), EntityTypeRegistry.scan(), PAGE_SIZE).run(false);
+
+		assertTrue(report.succeeded(), report.errors().toString());
+		verify(source).entity(FINANCIAL_ACCOUNT_ID);
+		FinancialAccountRef written = ((BillingAccount) updates.getLast()).getFinancialAccount();
+		assertEquals(FINANCIAL_ACCOUNT_NAME, written.getName());
+		assertEquals(BALANCE_TYPE, written.getAccountBalance().getBalanceType());
+	}
+
+	@Test
+	void keepsTheListedTargetWithoutAListFillableKey() {
+		seedOfferingWithDatasetIdInstances();
+
+		ReferenceBackfillReport report = new BrokerReferenceBackfill(context, source, repository,
+				ReferenceBackfillCatalog.load(), EntityTypeRegistry.scan(), PAGE_SIZE).run(true);
+
+		assertTrue(report.succeeded(), report.errors().toString());
+		verify(source, never()).entity(any());
 	}
 
 	// the mapping library writes a single reference (and a one-element list) as the default instance, so stored

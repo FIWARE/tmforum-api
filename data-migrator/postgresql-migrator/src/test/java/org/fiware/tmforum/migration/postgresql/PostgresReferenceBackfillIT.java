@@ -58,7 +58,7 @@ class PostgresReferenceBackfillIT {
 	private static final String DELETE_TYPES = "DELETE FROM tmforum.entity WHERE type = ANY(?)";
 	private static final String DELETE_OUTBOX = "DELETE FROM tmforum.event_outbox";
 	private static final String COUNT_OUTBOX = "SELECT count(*) FROM tmforum.event_outbox";
-	private static final String FILL_REF = "SELECT pg_temp.fill_ref(?::jsonb, ?::jsonb, ?, ?)::text";
+	private static final String FILL_REF = "SELECT pg_temp.fill_ref(?::jsonb, ?::jsonb, ?, ?, ?)::text";
 
 	private static final String OFFERING = urn(OFFERING_TYPE);
 	private static final String RESOURCE_CANDIDATE = urn(RESOURCE_CANDIDATE_TYPE);
@@ -237,6 +237,8 @@ class PostgresReferenceBackfillIT {
 					.map(ReferenceBackfillCatalog.FillableField::referenceKey).toArray()));
 			fill.setArray(4, connection.createArrayOf("text", ReferenceFillCases.FIELDS.stream()
 					.map(ReferenceBackfillCatalog.FillableField::targetKey).toArray()));
+			fill.setArray(5, connection.createArrayOf("boolean", ReferenceFillCases.FIELDS.stream()
+					.map(ReferenceBackfillCatalog.FillableField::unwrapSingleElement).toArray()));
 			try (ResultSet result = fill.executeQuery()) {
 				assertTrue(result.next());
 				assertEquals(JSON_MAPPER.readTree(testCase.expected()), JSON_MAPPER.readTree(result.getString(1)));

@@ -1,8 +1,13 @@
 package org.fiware.tmforum.migration.postgresql;
 
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.account.domain.AccountBalance;
+import org.fiware.tmforum.account.domain.BillingAccount;
+import org.fiware.tmforum.account.domain.FinancialAccount;
+import org.fiware.tmforum.account.domain.FinancialAccountRef;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.domain.Money;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.common.test.NgsiLdTestEntityCleaner;
@@ -35,6 +40,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -55,13 +61,18 @@ class BrokerReferenceBackfillIT {
 	private static final int HTTP_CREATED = 201;
 	private static final int PAGE_SIZE = 100;
 	private static final List<String> SEEDED_TYPES = List.of(ProductOffering.TYPE_PRODUCT_OFFERING,
-			Product.TYPE_PRODUCT, Category.TYPE_CATEGORY, ResourceCandidate.TYPE_RESOURCE_CANDIDATE);
+			Product.TYPE_PRODUCT, Category.TYPE_CATEGORY, ResourceCandidate.TYPE_RESOURCE_CANDIDATE,
+			BillingAccount.TYPE_BILLINGAC, FinancialAccount.TYPE_FINANCIALAC);
 
 	private static final String CANDIDATE_LABEL = ProductOffering.TYPE_PRODUCT_OFFERING + ".resourceCandidate";
 	private static final String CATEGORY_LABEL = ProductOffering.TYPE_PRODUCT_OFFERING + ".category";
 	private static final String ORDER_ITEM_LABEL = Product.TYPE_PRODUCT + ".productOrderItem"
 			+ BrokerReferenceBackfill.DATASET_ID_REWRITE_SUFFIX;
+	private static final String FINANCIAL_ACCOUNT_LABEL = BillingAccount.TYPE_BILLINGAC + ".financialAccount";
 	private static final String CLIENT_NAME = "client name";
+	private static final String BALANCE_TYPE = "deposit";
+	private static final String CURRENCY = "EUR";
+	private static final float FIRST_AMOUNT = 10.5f;
 	private static final String ITEM_A = "item-a";
 	private static final String ITEM_B = "item-b";
 
@@ -155,6 +166,62 @@ class BrokerReferenceBackfillIT {
 		assertEquals(new AttributeResult(CATEGORY_LABEL, 0, 0, 0), result(rerun, CATEGORY_LABEL));
 		assertEquals(new AttributeResult(ORDER_ITEM_LABEL, 0, 0, 0), result(rerun, ORDER_ITEM_LABEL));
 		assertEquals(backfilledModifiedAt, modifiedAt(offeringId, productId), "A re-run must not write.");
+	}
+
+	// Orion-LD's entity query leaves out the balances of a two-balance account, so the target is read again by id;
+	// a single balance fills the reference's one accountBalance, two cannot and leave it absent (pre-88 failed the read)
+	@Test
+	void fillsAccountBalanceOnlyFromASingleBalanceTarget() throws Exception {
+		FinancialAccount oneBalance = financialAccount("one balance", 1);
+		FinancialAccount twoBalances = financialAccount("two balances", 2);
+		for (Object target : List.of(oneBalance, twoBalances)) {
+			repository().createDomainEntity(target).block();
+		}
+		URI oneBalanceOwner = idOnlyBillingAccount(oneBalance.getId());
+		URI twoBalancesOwner = idOnlyBillingAccount(twoBalances.getId());
+
+		ReferenceBackfillReport report = backfill().run(false);
+
+		assertTrue(report.succeeded(), report(report));
+		assertEquals(new AttributeResult(FINANCIAL_ACCOUNT_LABEL, 2, 0, 2), result(report, FINANCIAL_ACCOUNT_LABEL));
+		FinancialAccountRef filled = repository().get(oneBalanceOwner, BillingAccount.class).block()
+				.getFinancialAccount();
+		assertEquals("one balance", filled.getName());
+		assertEquals(oneBalance.getAccountBalance().getFirst().getAmount().getTmfValue(),
+				filled.getAccountBalance().getAmount().getTmfValue());
+		FinancialAccountRef unwrappable = repository().get(twoBalancesOwner, BillingAccount.class).block()
+				.getFinancialAccount();
+		assertEquals("two balances", unwrappable.getName(), "The target's balances must not hide its name.");
+		assertNull(unwrappable.getAccountBalance(), "Two balances cannot fill a single accountBalance.");
+
+		ReferenceBackfillReport rerun = backfill().run(false);
+		assertTrue(rerun.succeeded(), report(rerun));
+		assertEquals(new AttributeResult(FINANCIAL_ACCOUNT_LABEL, 0, 0, 0), result(rerun, FINANCIAL_ACCOUNT_LABEL));
+	}
+
+	private FinancialAccount financialAccount(String name, int balances) {
+		FinancialAccount account = new FinancialAccount(urn(FinancialAccount.TYPE_FINANCIALAC).toString());
+		account.setName(name);
+		account.setAccountBalance(IntStream.range(0, balances).mapToObj(i -> {
+			Money amount = new Money();
+			amount.setUnit(CURRENCY);
+			amount.setTmfValue(FIRST_AMOUNT + i);
+			AccountBalance balance = new AccountBalance();
+			balance.setBalanceType(BALANCE_TYPE);
+			balance.setAmount(amount);
+			return balance;
+		}).toList());
+		return account;
+	}
+
+	// written before ticket 88: the reference is the relationship only
+	private URI idOnlyBillingAccount(URI financialAccount) throws IOException, InterruptedException {
+		URI id = urn(BillingAccount.TYPE_BILLINGAC);
+		createRawEntity(String.format("""
+				{"id": "%s", "type": "%s", "name": {"type": "Property", "value": "billing account"},
+				 "financialAccount": {"type": "Relationship", "object": "%s"}}""",
+				id, BillingAccount.TYPE_BILLINGAC, financialAccount));
+		return id;
 	}
 
 	private static void assertExpectedChanges(ReferenceBackfillReport report) {

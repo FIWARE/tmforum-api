@@ -19,7 +19,8 @@ final class ReferenceFiller {
 
 	/**
 	 * {@code reference} plus every target key it lacks and {@code target} holds non-null; a key present in the
-	 * reference, even as JSON null, always wins. Anything but an object reference with an object target comes back as
+	 * reference, even as JSON null, always wins; an {@code unwrapSingleElement} field takes the element of a one-element
+	 * target list and nothing else. Anything but an object reference with an object target comes back as
 	 * the same instance, which is never modified.
 	 */
 	static JsonNode fill(JsonNode reference, JsonNode target, List<FillableField> fields) {
@@ -28,7 +29,7 @@ final class ReferenceFiller {
 		}
 		ObjectNode filled = null;
 		for (FillableField field : fields) {
-			JsonNode value = target.get(field.targetKey());
+			JsonNode value = value(target, field);
 			if (reference.get(field.referenceKey()) != null || value == null || value.isNull()) {
 				continue;
 			}
@@ -38,6 +39,15 @@ final class ReferenceFiller {
 			filled.set(field.referenceKey(), value.deepCopy());
 		}
 		return filled == null ? reference : filled;
+	}
+
+	// a list fills a single-valued reference field only when it has exactly one element
+	private static JsonNode value(JsonNode target, FillableField field) {
+		JsonNode value = target.get(field.targetKey());
+		if (!field.unwrapSingleElement()) {
+			return value;
+		}
+		return value != null && value.isArray() && value.size() == 1 ? value.get(0) : null;
 	}
 
 	/**

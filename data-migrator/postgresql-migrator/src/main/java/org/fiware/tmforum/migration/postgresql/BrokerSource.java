@@ -82,14 +82,17 @@ class BrokerSource implements EntitySource {
 		}
 		List<EntityVO> listed = response.body() == null ? List.of() : List.copyOf(response.body());
 		// Orion-LD's query omits multi-instance attributes (list references, productOrderItem); the by-id read has them
-		List<EntityVO> entities = listed.stream().map(this::complete).flatMap(Optional::stream).toList();
+		List<EntityVO> entities = listed.stream().map(EntityVO::getId).map(this::entity).flatMap(Optional::stream)
+				.toList();
 		return new Page(entities, totalCount(response, type));
 	}
 
-	// empty when the entity was deleted since the listing
-	private Optional<EntityVO> complete(EntityVO listed) {
+	/**
+	 * The entity read by id, with every instance of its multi-instance attributes; empty when it is not stored.
+	 */
+	Optional<EntityVO> entity(URI id) {
 		try {
-			return Optional.ofNullable(entitiesApi.retrieveEntityById(listed.getId(), generalProperties.getTenant(),
+			return Optional.ofNullable(entitiesApi.retrieveEntityById(id, generalProperties.getTenant(),
 					null, null, SYS_ATTRS, linkHeader()).block()).map(HttpResponse::body);
 		} catch (HttpClientResponseException e) {
 			if (HttpStatus.NOT_FOUND.equals(e.getStatus())) {
@@ -100,7 +103,8 @@ class BrokerSource implements EntitySource {
 	}
 
 	/**
-	 * The stored entities among {@code ids}, in one request; an unknown id is simply absent.
+	 * The stored entities among {@code ids}, in one request; an unknown id is simply absent. Like any entity query
+	 * on Orion-LD, it leaves out attributes with several instances; {@link #entity(URI)} has them.
 	 */
 	List<EntityVO> entities(Collection<URI> ids) {
 		if (ids.isEmpty()) {

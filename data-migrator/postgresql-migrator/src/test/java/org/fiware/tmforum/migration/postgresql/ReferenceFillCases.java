@@ -10,9 +10,10 @@ import java.util.stream.Stream;
  */
 final class ReferenceFillCases {
 
-	static final List<FillableField> FIELDS = List.of(new FillableField("name", "name"),
-			new FillableField("href", "href"), new FillableField("version", "version"),
-			new FillableField("validFor", "validFor"), new FillableField("label", "title"));
+	static final List<FillableField> FIELDS = List.of(new FillableField("name", "name", false),
+			new FillableField("href", "href", false), new FillableField("version", "version", false),
+			new FillableField("validFor", "validFor", false), new FillableField("label", "title", false),
+			new FillableField("balance", "balances", true));
 
 	private static final String TARGET = """
 			{"id": "urn:t", "name": "target", "href": "http://t.example.org", "version": "1.0",
@@ -59,6 +60,23 @@ final class ReferenceFillCases {
 						{"id": "urn:t", "name": "n", "href": "h", "version": "v", "validFor": {}, "label": "l"}"""),
 				new Case("a non-object reference is unchanged", """
 						"urn:t\"""", TARGET, """
-						"urn:t\""""));
+						"urn:t\""""),
+				new Case("a one-element list fills a single-valued field with its element", """
+						{"id": "urn:t", "name": "n", "href": "h", "version": "v", "validFor": {}, "label": "l"}""", """
+						{"id": "urn:t", "balances": [{"amount": 1}]}""", """
+						{"id": "urn:t", "name": "n", "href": "h", "version": "v", "validFor": {}, "label": "l",
+						 "balance": {"amount": 1}}"""),
+				new Case("a longer list never fills a single-valued field", """
+						{"id": "urn:t", "name": "n", "href": "h", "version": "v", "validFor": {}, "label": "l"}""", """
+						{"id": "urn:t", "balances": [{"amount": 1}, {"amount": 2}]}""", """
+						{"id": "urn:t", "name": "n", "href": "h", "version": "v", "validFor": {}, "label": "l"}"""),
+				new Case("an empty list never fills a single-valued field", """
+						{"id": "urn:t"}""", """
+						{"id": "urn:t", "balances": []}""", """
+						{"id": "urn:t"}"""),
+				new Case("a non-list value never fills a single-valued field", """
+						{"id": "urn:t"}""", """
+						{"id": "urn:t", "balances": {"amount": 1}}""", """
+						{"id": "urn:t"}"""));
 	}
 }

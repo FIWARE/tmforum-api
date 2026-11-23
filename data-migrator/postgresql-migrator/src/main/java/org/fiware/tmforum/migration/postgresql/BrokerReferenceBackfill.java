@@ -2,6 +2,7 @@ package org.fiware.tmforum.migration.postgresql;
 
 import io.github.wistefan.mapping.JavaObjectMapper;
 import io.github.wistefan.mapping.NgsiLdWriteOperation;
+import io.github.wistefan.mapping.annotations.AttributeSetter;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.AdditionalPropertyVO;
@@ -27,6 +28,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,12 +40,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * Fills absent fields of the catalog's references in the broker, for deployments that stay on NGSI-LD, and rewrites
  * the datasetIds of {@link ReferenceBackfillCatalog#datasetIdRewrites()}. Entities are read page by page and turned
  * into the PostgreSQL document form, so {@link ReferenceFiller} applies the rule of the PostgreSQL backfill to the same
- * keys. Only changed attributes are written, through the NGSI-LD adapter's {@code updateDomainEntity}.
+ * keys. Targets come from batched id queries; one whose fillable keys include a list attribute is read again by id, as
+ * Orion-LD's queries leave multi-instance attributes out. Only changed attributes are written, through the NGSI-LD
+ * adapter's {@code updateDomainEntity}.
  * <p>
  * Scorpio runs with {@code replaceOnUpdate} ({@link MigrationContexts} pins it), so {@code updateDomainEntity} replaces
  * every instance itself. Orion-LD appends, which replaces stored instances by datasetId only, so an attribute whose
@@ -61,6 +66,7 @@ class BrokerReferenceBackfill {
 	static final String DATASET_ID_REWRITE_SUFFIX = " (datasetId)";
 	private static final String TYPE_KEY = "type";
 	private static final String DEFAULT_INSTANCE = "";
+	private static final String LIST_TYPE_SUFFIX = "_LIST";
 
 	private final BrokerSource source;
 	private final NgsiLdEntityRepository repository;
@@ -71,6 +77,7 @@ class BrokerReferenceBackfill {
 	private final int pageSize;
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
 	private final List<Attribute> attributes;
+	private final Map<Class<?>, Set<String>> listAttributes = new HashMap<>();
 
 	BrokerReferenceBackfill(ApplicationContext sourceContext, ReferenceBackfillCatalog catalog,
 			EntityTypeRegistry registry, int pageSize) {
@@ -232,9 +239,11 @@ class BrokerReferenceBackfill {
 	private Map<String, JsonNode> targets(List<Owner> owners, List<Attribute> typeAttributes,
 			ReferenceBackfillReport report) {
 		Set<URI> ids = new LinkedHashSet<>();
+		Set<String> targetKeys = new HashSet<>();
 		for (Owner owner : owners) {
 			for (Attribute attribute : typeAttributes) {
 				if (!attribute.rewrite) {
+					attribute.fields.forEach(field -> targetKeys.add(field.targetKey()));
 					references(owner.document().get(attribute.name)).stream()
 							.map(ReferenceFiller::referenceId)
 							.filter(Objects::nonNull)
@@ -248,26 +257,51 @@ class BrokerReferenceBackfill {
 		for (URI id : ids) {
 			batch.add(id);
 			if (batch.size() == TARGET_BATCH_SIZE) {
-				fetchTargets(batch, targets, report);
+				fetchTargets(batch, targetKeys, targets, report);
 				batch.clear();
 			}
 		}
-		fetchTargets(batch, targets, report);
+		fetchTargets(batch, targetKeys, targets, report);
 		return targets;
 	}
 
-	private void fetchTargets(Collection<URI> ids, Map<String, JsonNode> targets, ReferenceBackfillReport report) {
-		for (EntityVO target : source.entities(ids)) {
+	private void fetchTargets(Collection<URI> ids, Set<String> targetKeys, Map<String, JsonNode> targets,
+			ReferenceBackfillReport report) {
+		for (EntityVO listed : source.entities(ids)) {
 			// a type no domain class maps is no TMForum entity; the reference stays as it is, like a missing target
-			registry.domainClass(target.getType()).ifPresent(targetClass -> {
+			registry.domainClass(listed.getType()).ifPresent(targetClass -> {
 				try {
-					targets.put(target.getId().toString(), document(source.toDomain(target, targetClass)));
+					// Orion-LD's entity query leaves out multi-instance attributes, so a target whose fillable keys
+					// include a list is read again by id; one deleted since the query counts as missing
+					Optional<EntityVO> target = hasListAttribute(targetClass, targetKeys)
+							? source.entity(listed.getId())
+							: Optional.of(listed);
+					if (target.isPresent()) {
+						targets.put(listed.getId().toString(), document(source.toDomain(target.get(), targetClass)));
+					}
 				} catch (RuntimeException e) {
-					log.warn("Was not able to read the target {}.", target.getId(), e);
-					report.error("target " + target.getId() + ": " + message(e));
+					log.warn("Was not able to read the target {}.", listed.getId(), e);
+					report.error("target " + listed.getId() + ": " + message(e));
 				}
 			});
 		}
+	}
+
+	private boolean hasListAttribute(Class<?> targetClass, Set<String> targetKeys) {
+		return listAttributes.computeIfAbsent(targetClass, BrokerReferenceBackfill::listAttributes).stream()
+				.anyMatch(targetKeys::contains);
+	}
+
+	/**
+	 * The target names of the class's list-valued attributes, which the broker stores as one instance per element.
+	 */
+	static Set<String> listAttributes(Class<?> domainClass) {
+		return Arrays.stream(domainClass.getMethods())
+				.map(method -> method.getAnnotation(AttributeSetter.class))
+				.filter(Objects::nonNull)
+				.filter(setter -> setter.value().name().endsWith(LIST_TYPE_SUFFIX))
+				.map(AttributeSetter::targetName)
+				.collect(Collectors.toSet());
 	}
 
 	private JsonNode fill(JsonNode value, Attribute attribute, Map<String, JsonNode> targets) {
