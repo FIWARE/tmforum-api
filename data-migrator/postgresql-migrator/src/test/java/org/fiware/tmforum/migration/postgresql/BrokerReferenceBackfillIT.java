@@ -251,7 +251,7 @@ class BrokerReferenceBackfillIT {
 		int exitCode = new CommandLine(new Application())
 				.setOut(new PrintWriter(out))
 				.setErr(new PrintWriter(err))
-				.execute("backfill-references", "--target", "broker", brokerTypeOption());
+				.execute("backfill-references", "--target", "broker", brokerTypeOption(), REPLACE_ON_UPDATE_OFF);
 		assertEquals(CommandLine.ExitCode.OK, exitCode, out + "\n" + err);
 	}
 
