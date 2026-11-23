@@ -32,6 +32,9 @@ public class Application implements Runnable {
 	private static final String DEFAULT_FULL_CHECK_THRESHOLD = "1000";
 	private static final String TARGET_POSTGRESQL = "postgresql";
 	private static final String TARGET_BROKER = "broker";
+	static final String CONFIRM_CUTOVER_FINAL = "--confirm-cutover-final";
+	static final String CONFIRMATION_MISSING = "cleanup-subscriptions breaks hub notifications on the broker, which a "
+			+ "rollback relies on. Run it after the rollback window with " + CONFIRM_CUTOVER_FINAL + ", or use --dry-run.";
 	private static final String NOT_IMPLEMENTED = "The '%s' command is not implemented yet.";
 	static final String BACKFILL_SKIPPED_FAILED_IMPORT = "Reference backfill skipped: the import failed.";
 	// the backfill fills from the stored targets, and a dry-run import stored none
@@ -202,10 +205,40 @@ public class Application implements Runnable {
 		}
 	}
 
-	@Command(name = "cleanup-subscriptions", description = "Delete the broker subscriptions registered for TMForum hubs.")
+	@Command(name = "cleanup-subscriptions", description = "Delete the broker subscriptions registered for TMForum hubs "
+			+ "and drop the hubs' subscription attribute in PostgreSQL. Breaks hub notifications on the broker, so run "
+			+ "it only once the rollback window is over.")
 	int cleanupSubscriptions(@Mixin MigrationContexts contexts,
-			@Option(names = "--dry-run", description = DRY_RUN_DESCRIPTION) boolean dryRun) {
-		return notImplemented("cleanup-subscriptions");
+			@Option(names = "--dry-run", description = "List what would be deleted without writing; needs no "
+					+ CONFIRM_CUTOVER_FINAL + ".") boolean dryRun,
+			@Option(names = CONFIRM_CUTOVER_FINAL, description = "Confirm the cutover to PostgreSQL is final: no "
+					+ "rollback to the broker will follow.") boolean confirmCutoverFinal,
+			@Option(names = "--include-orphans", description = "Also delete broker subscriptions that no hub references "
+					+ "but that notify a --callback-endpoint.") boolean includeOrphans,
+			@Option(names = "--callback-endpoint", split = ",", description = "<serverHost><basepath>/callback of a "
+					+ "TMForum service that registered subscriptions on the broker.") Set<String> callbackEndpoints,
+			@Option(names = "--page-size", defaultValue = DEFAULT_PAGE_SIZE,
+					description = "Entities and subscriptions per broker request; Orion-LD caps it at 1000.") int pageSize) {
+		if (!dryRun && !confirmCutoverFinal) {
+			throw new ParameterException(spec.commandLine(), CONFIRMATION_MISSING);
+		}
+		CleanupSubscriptionsCommand.Options options;
+		try {
+			options = new CleanupSubscriptionsCommand.Options(pageSize, dryRun, includeOrphans,
+					callbackEndpoints == null ? Set.of() : callbackEndpoints);
+		} catch (IllegalArgumentException e) {
+			throw new ParameterException(spec.commandLine(), e.getMessage());
+		}
+		try (contexts) {
+			contexts.start();
+			BrokerSource broker = new BrokerSource(contexts.source(), EntityTypeRegistry.scan());
+			CleanupSubscriptionsReport report = new CleanupSubscriptionsCommand(broker, broker,
+					new PostgresStoredHubs(contexts.target().getBean(ConnectionFactory.class)), options).run();
+			// it maps the broker's hubs
+			recordEscaperDrift(contexts, report::error);
+			report.print(spec.commandLine().getOut());
+			return exitCode(report.succeeded());
+		}
 	}
 
 	@Command(name = "replay", description = "Replay recorded API requests against both backends and diff the responses.")

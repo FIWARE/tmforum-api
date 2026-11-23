@@ -11,6 +11,7 @@ import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,15 +37,22 @@ import java.util.stream.Collectors;
 /**
  * Reads the broker of the source context through the application's own client and mapper, so the data maps exactly
  * as the NGSI-LD adapter reads it (reserved-key and query unescaping included). The broker backfill also deletes
- * attributes through it.
+ * attributes through it, and {@code cleanup-subscriptions} the NGSI-LD subscriptions.
  */
-class BrokerSource implements EntitySource {
+class BrokerSource implements EntitySource, SubscriptionStore {
 
 	static final String SYS_ATTRS = "sysAttrs";
 	static final String TYPES_PATH = "/ngsi-ld/v1/types";
 	// deleteAll removes every instance, whatever its datasetId; the generated client cannot pass it nor a Link header
 	static final String DELETE_ATTRIBUTE_PATH = "/ngsi-ld/v1/entities/%s/attrs/%s?deleteAll=true";
 	static final String TYPE_LIST_FIELD = "typeList";
+	// the generated subscription client sends no tenant on delete/list and cannot page
+	static final String SUBSCRIPTIONS_PATH = "/ngsi-ld/v1/subscriptions?limit=%d&offset=%d";
+	static final String SUBSCRIPTION_PATH = "/ngsi-ld/v1/subscriptions/%s";
+	private static final String ID_FIELD = "id";
+	private static final String NOTIFICATION_FIELD = "notification";
+	private static final String ENDPOINT_FIELD = "endpoint";
+	private static final String URI_FIELD = "uri";
 	private static final String LIST_TYPE_SUFFIX = "_LIST";
 	private static final String LINK_HEADER = "Link";
 	private static final String TENANT_HEADER = "NGSILD-Tenant";
@@ -51,6 +60,7 @@ class BrokerSource implements EntitySource {
 	private static final String JSON = "application/json";
 	private static final int HTTP_OK = 200;
 	private static final int HTTP_NO_CONTENT = 204;
+	private static final int HTTP_NOT_FOUND = 404;
 	private static final String ID_SEPARATOR = ",";
 	static final String READ_TIMEOUT_PROPERTY = "micronaut.http.services.ngsi.read-timeout";
 	static final String CONNECT_TIMEOUT_PROPERTY = "micronaut.http.services.ngsi.connect-timeout";
@@ -158,6 +168,51 @@ class BrokerSource implements EntitySource {
 			throw new IllegalStateException(String.format("Deleting %s of %s returned %d: %s", attribute, entityId,
 					response.statusCode(), response.body()));
 		}
+	}
+
+	@Override
+	public List<BrokerSubscription> subscriptions(int pageSize) {
+		Map<URI, BrokerSubscription> subscriptions = new LinkedHashMap<>();
+		int offset = 0;
+		int listed;
+		do {
+			java.net.http.HttpResponse<String> response = send(
+					request(String.format(SUBSCRIPTIONS_PATH, pageSize, offset)).GET(), "listing the subscriptions");
+			if (response.statusCode() != HTTP_OK) {
+				throw new IllegalStateException(String.format("Listing the subscriptions returned %d: %s",
+						response.statusCode(), response.body()));
+			}
+			JsonNode page = jsonMapper.readTree(response.body());
+			int known = subscriptions.size();
+			page.forEach(subscription -> {
+				URI id = URI.create(subscription.path(ID_FIELD).asString());
+				subscriptions.put(id, new BrokerSubscription(id,
+						subscription.path(NOTIFICATION_FIELD).path(ENDPOINT_FIELD).path(URI_FIELD).asString(null)));
+			});
+			listed = page.size();
+			// a broker that ignores the offset would repeat the first page forever
+			if (listed > 0 && subscriptions.size() == known) {
+				throw new IllegalStateException(String.format(
+						"The broker repeated the subscriptions at offset %d; it does not page them.", offset));
+			}
+			offset += listed;
+		} while (listed == pageSize);
+		return List.copyOf(subscriptions.values());
+	}
+
+	@Override
+	public boolean deleteSubscription(URI subscriptionId) {
+		java.net.http.HttpResponse<String> response = send(
+				request(String.format(SUBSCRIPTION_PATH, encode(subscriptionId.toString()))).DELETE(),
+				"deleting subscription " + subscriptionId);
+		if (response.statusCode() == HTTP_NOT_FOUND) {
+			return false;
+		}
+		if (response.statusCode() != HTTP_NO_CONTENT) {
+			throw new IllegalStateException(String.format("Deleting subscription %s returned %d: %s", subscriptionId,
+					response.statusCode(), response.body()));
+		}
+		return true;
 	}
 
 	@Override
