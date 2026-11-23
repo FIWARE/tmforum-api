@@ -34,7 +34,8 @@ class PostgresVerifyTarget implements VerifyTarget {
 			+ " e LEFT JOIN LATERAL jsonb_object_keys(e.data) k(key) ON true WHERE e.id = ANY($1::text[]) AND e.is_current";
 	static final String DOCUMENTS = "SELECT id, data::text FROM " + PostgresStorage.QUALIFIED_ENTITY_TABLE
 			+ " WHERE id = ANY($1::text[]) AND is_current";
-	// walks every object member and array element; the CASE guards keep jsonb_each/jsonb_array_elements off scalars
+	// walks every object member and array element; the CASE guards keep jsonb_each/jsonb_array_elements off scalars;
+	// the window count runs before LIMIT, so it is the number of all matching rows, not of the examples
 	static final String ESCAPED_KEYS = """
 			WITH RECURSIVE node(id, key, value) AS (
 			  SELECT e.id, NULL::text, e.data FROM %s e WHERE e.is_current
@@ -48,7 +49,8 @@ class PostgresVerifyTarget implements VerifyTarget {
 			      CASE WHEN jsonb_typeof(n.value) = 'array' THEN n.value ELSE '[]'::jsonb END) a
 			  ) child
 			)
-			SELECT DISTINCT id FROM node WHERE starts_with(key, $1) ORDER BY id LIMIT $2""".formatted(
+			SELECT id, count(*) OVER () FROM (SELECT DISTINCT id FROM node WHERE starts_with(key, $1)) matched
+			ORDER BY id LIMIT $2""".formatted(
 			PostgresStorage.QUALIFIED_ENTITY_TABLE);
 
 	private final ConnectionFactory connectionFactory;
@@ -109,9 +111,11 @@ class PostgresVerifyTarget implements VerifyTarget {
 	}
 
 	@Override
-	public List<String> idsWithEscapedKeys(int limit) {
-		return query(ESCAPED_KEYS, List.of(RawAttributeCheck.ESCAPE_PREFIX, limit),
-				row -> row.get(0, String.class));
+	public EscapedKeyRows rowsWithEscapedKeys(int maxExamples) {
+		List<Map.Entry<String, Long>> rows = query(ESCAPED_KEYS, List.of(RawAttributeCheck.ESCAPE_PREFIX, maxExamples),
+				row -> Map.entry(row.get(0, String.class), row.get(1, Long.class)));
+		long count = rows.isEmpty() ? 0 : rows.getFirst().getValue();
+		return new EscapedKeyRows(count, rows.stream().map(Map.Entry::getKey).toList());
 	}
 
 	private static String[] idArray(Collection<URI> ids) {

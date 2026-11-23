@@ -7,6 +7,7 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.common.test.NgsiLdTestEntityCleaner;
+import org.fiware.tmforum.product.BundleProductSpecification;
 import org.fiware.tmforum.product.Characteristic;
 import org.fiware.tmforum.product.Product;
 import org.fiware.tmforum.product.ProductOffering;
@@ -66,6 +67,9 @@ class VerifyIT {
 	private static final String ENTITIES_PATH = "/ngsi-ld/v1/entities";
 	private static final String JSON = "application/json";
 	private static final int HTTP_CREATED = 201;
+	private static final String SPECIFICATION_NAME = "specification";
+	// a catalog entry (product-specification#bundledProductSpecification) whose name the backfill fills
+	private static final String BACKFILLED_PATH = "bundledProductSpecification[0].name";
 	private static final List<String> TYPES = List.of(Product.TYPE_PRODUCT, ProductOffering.TYPE_PRODUCT_OFFERING,
 			ProductSpecification.TYPE_PRODUCT_SPECIFICATION, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION);
 
@@ -88,9 +92,16 @@ class VerifyIT {
 		EntityRepository repository = seedContexts.source().getBean(EntityRepository.class);
 
 		ProductSpecification specification = new ProductSpecification(urn(ProductSpecification.TYPE_PRODUCT_SPECIFICATION));
-		specification.setName("specification");
+		specification.setName(SPECIFICATION_NAME);
 		specification.setVersion("1.0");
 		repository.createDomainEntity(specification).block();
+
+		// an id-only reference in a catalog attribute, so import --backfill-references fills its name
+		ProductSpecification bundle = new ProductSpecification(urn(ProductSpecification.TYPE_PRODUCT_SPECIFICATION));
+		bundle.setName("bundle");
+		bundle.setVersion("1.0");
+		bundle.setBundledProductSpecification(List.of(new BundleProductSpecification(specification.getId().toString())));
+		repository.createDomainEntity(bundle).block();
 
 		Characteristic characteristic = new Characteristic();
 		characteristic.setName("characteristic");
@@ -119,7 +130,9 @@ class VerifyIT {
 				urn(ProductOffering.TYPE_PRODUCT_OFFERING), ProductOffering.TYPE_PRODUCT_OFFERING,
 				specification.getId()));
 
-		assertEquals(CommandLine.ExitCode.OK, run("import").exitCode(), "The import must succeed.");
+		// the runbook's sequence: verify runs after the reference backfill
+		assertEquals(CommandLine.ExitCode.OK, run("import", "--backfill-references").exitCode(),
+				"The import with the reference backfill must succeed.");
 	}
 
 	@AfterEach
@@ -143,10 +156,16 @@ class VerifyIT {
 		assertTrue(report.path("succeeded").asBoolean(), report.toString());
 		assertEquals(1, report.path("types").path(ProductOffering.TYPE_PRODUCT_OFFERING).path("allowedDifferences")
 				.path(DocumentDiff.Kind.SEEDED_VERSION.name()).path("count").asLong(), report.toString());
+		JsonNode backfilled = report.path("types").path(ProductSpecification.TYPE_PRODUCT_SPECIFICATION)
+				.path("allowedDifferences").path(DocumentDiff.Kind.BACKFILLED_REFERENCE_FIELD.name());
+		assertEquals(1, backfilled.path("count").asLong(), report.toString());
+		assertTrue(backfilled.path("examples").get(0).asString().contains(BACKFILLED_PATH + ": \"" + SPECIFICATION_NAME),
+				report.toString());
 		for (String type : TYPES) {
 			JsonNode typeReport = report.path("types").path(type);
-			assertEquals(1, typeReport.path("brokerCount").asLong(), type);
-			assertEquals(1, typeReport.path("diffChecked").asLong(), type);
+			long expected = type.equals(ProductSpecification.TYPE_PRODUCT_SPECIFICATION) ? 2 : 1;
+			assertEquals(expected, typeReport.path("brokerCount").asLong(), type);
+			assertEquals(expected, typeReport.path("diffChecked").asLong(), type);
 		}
 	}
 

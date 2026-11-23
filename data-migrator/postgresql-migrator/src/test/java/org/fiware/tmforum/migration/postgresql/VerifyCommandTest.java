@@ -105,6 +105,20 @@ class VerifyCommandTest {
 	}
 
 	@Test
+	void reportsEveryEscapedKeyRowWithBoundedExamples() {
+		int rows = VerifyReport.MAX_EXAMPLES * 5;
+		IntStream.range(0, rows).forEach(i -> target.escapedKeyIds.add("urn:ngsi-ld:escaped:" + i));
+
+		VerifyReport report = run(PLAIN);
+		ObjectNode escaped = (ObjectNode) report.toJson(MAPPER).get("escapedKeyRows");
+
+		assertEquals(rows, escaped.get("count").asLong());
+		assertEquals(VerifyReport.MAX_EXAMPLES, escaped.get("examples").size());
+		assertTrue(String.join("\n", report.failures()).contains("escape check: " + rows + " rows"),
+				report.failures().toString());
+	}
+
+	@Test
 	void diffsOnlyASampleOfALargeType() {
 		IntStream.range(0, FULL_CHECK_THRESHOLD + 1).forEach(i -> copy(entity(PLAIN, i, NAME, "n" + i)));
 
@@ -261,8 +275,8 @@ class VerifyCommandTest {
 		}
 
 		@Override
-		public List<String> idsWithEscapedKeys(int limit) {
-			return escapedKeyIds;
+		public EscapedKeyRows rowsWithEscapedKeys(int maxExamples) {
+			return new EscapedKeyRows(escapedKeyIds.size(), escapedKeyIds.stream().limit(maxExamples).toList());
 		}
 	}
 }

@@ -40,7 +40,14 @@ interface VerifyTarget {
 	Object domainEntity(String document, Class<?> domainClass);
 
 	/**
-	 * Ids of the rows holding a {@value RawAttributeCheck#ESCAPE_PREFIX} key at any depth, at most {@code limit}.
+	 * The rows holding a {@value RawAttributeCheck#ESCAPE_PREFIX} key at any depth: their total number and the first
+	 * {@code maxExamples} ids.
 	 */
-	List<String> idsWithEscapedKeys(int limit);
+	EscapedKeyRows rowsWithEscapedKeys(int maxExamples);
+
+	/**
+	 * Result of {@link #rowsWithEscapedKeys(int)}.
+	 */
+	record EscapedKeyRows(long count, List<String> examples) {
+	}
 }

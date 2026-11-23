@@ -49,8 +49,8 @@ class VerifyReport {
 	/**
 	 * The rows holding a {@value RawAttributeCheck#ESCAPE_PREFIX} key, as found by the escape check.
 	 */
-	void escapedKeyRows(List<String> ids) {
-		ids.forEach(escapedKeyRows::add);
+	void escapedKeyRows(VerifyTarget.EscapedKeyRows rows) {
+		escapedKeyRows.set(rows.count(), rows.examples());
 	}
 
 	boolean succeeded() {
@@ -115,6 +115,15 @@ class VerifyReport {
 			if (examples.size() < MAX_EXAMPLES) {
 				examples.add(example);
 			}
+		}
+
+		/**
+		 * Replaces the findings with a count found elsewhere, e.g. by SQL, keeping at most {@value #MAX_EXAMPLES} examples.
+		 */
+		void set(long total, List<String> found) {
+			count = total;
+			examples.clear();
+			found.stream().limit(MAX_EXAMPLES).forEach(examples::add);
 		}
 
 		ObjectNode toJson(JsonMapper mapper) {

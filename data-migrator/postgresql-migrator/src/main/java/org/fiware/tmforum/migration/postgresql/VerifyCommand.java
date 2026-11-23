@@ -66,7 +66,7 @@ class VerifyCommand {
 			}
 		}
 		try {
-			report.escapedKeyRows(target.idsWithEscapedKeys(VerifyReport.MAX_EXAMPLES));
+			report.escapedKeyRows(target.rowsWithEscapedKeys(VerifyReport.MAX_EXAMPLES));
 		} catch (RuntimeException e) {
 			log.warn("Was not able to run the escape check.", e);
 			report.error("Was not able to run the escape check: " + e.getMessage());
