@@ -1,9 +1,6 @@
 package org.fiware.tmforum.migration.postgresql;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import org.fiware.ngsi.model.EntityFragmentVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
@@ -23,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import picocli.CommandLine;
 import reactor.core.publisher.Mono;
@@ -50,7 +46,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * The Orion-LD paths of the broker backfill: a failed delete or write restores only what was actually deleted, and a
+ * The write paths of the broker backfill: a failed delete or write restores only what was actually deleted, and a
  * target whose fillable keys include a list is read again by id, since the entity query leaves such attributes out.
  */
 class BrokerReferenceBackfillTest {
@@ -98,19 +94,23 @@ class BrokerReferenceBackfillTest {
 		ForbiddenCharacterEscaper.setEnabled(true);
 	}
 
+	// both brokers take the same delete-then-append path, as MigrationContexts pins replaceOnUpdate off
 	static Stream<Arguments> failures() {
-		return Stream.of(
-				Arguments.of("the write fails, the restore succeeds", NO_FAILING_DELETE, false,
+		return Stream.of(BrokerType.values()).flatMap(brokerType -> Stream.of(
+				Arguments.of(brokerType, "the write fails, the restore succeeds", NO_FAILING_DELETE, false,
 						"were restored"),
-				Arguments.of("the write fails, the restore fails", NO_FAILING_DELETE, true,
+				Arguments.of(brokerType, "the write fails, the restore fails", NO_FAILING_DELETE, true,
 						"restore them by hand"),
-				Arguments.of("the second delete fails", 1, false, "were restored"),
-				Arguments.of("the first delete fails", 0, false, "its read value was"));
+				Arguments.of(brokerType, "the second delete fails", 1, false, "were restored"),
+				Arguments.of(brokerType, "the first delete fails", 0, false, "its read value was")));
 	}
 
-	@ParameterizedTest(name = "{0}")
+	@ParameterizedTest(name = "{0}: {1}")
 	@MethodSource("failures")
-	void restoresOnlyWhatWasDeleted(String scenario, int failingDelete, boolean restoreFails, String expectedError) {
+	void restoresOnlyWhatWasDeleted(BrokerType brokerType, String scenario, int failingDelete, boolean restoreFails,
+			String expectedError) {
+		context.close();
+		context = sourceContext(brokerType);
 		seedOfferingWithDatasetIdInstances();
 		doAnswer(invocation -> {
 			String attribute = invocation.getArgument(1);
@@ -146,30 +146,6 @@ class BrokerReferenceBackfillTest {
 			assertEquals(Set.copyOf(deletes), writtenAttributes((ProductOffering) updates.getLast()),
 					"The restore must carry exactly the deleted attributes.");
 		}
-	}
-
-	// Scorpio replaces every instance of a sent attribute and stores updateDomainEntity's NGSI-LD Null deletions as
-	// values, so changed datasetIds are written with one Update Attributes call of the new instances
-	@ParameterizedTest(name = "status={0}")
-	@EnumSource(value = HttpStatus.class, names = {"NO_CONTENT", "MULTI_STATUS"})
-	void replacesChangedInstancesOnScorpioWithoutDeleting(HttpStatus status) {
-		context.close();
-		context = sourceContext(BrokerType.SCORPIO);
-		seedOfferingWithDatasetIdInstances();
-		List<EntityFragmentVO> fragments = new ArrayList<>();
-		when(repository.updateAttributes(eq(OFFERING_ID), any())).thenAnswer(invocation -> {
-			fragments.add(invocation.getArgument(1));
-			return Mono.just(HttpResponse.status(status));
-		});
-
-		ReferenceBackfillReport report = new BrokerReferenceBackfill(context, source, repository,
-				ReferenceBackfillCatalog.load(), EntityTypeRegistry.scan(), PAGE_SIZE).run(false);
-
-		assertEquals(status == HttpStatus.NO_CONTENT, report.succeeded(), report.errors().toString());
-		verify(source, never()).deleteAttribute(any(), anyString());
-		verify(repository, never()).updateDomainEntity(anyString(), any());
-		assertEquals(1, fragments.size());
-		assertEquals(Set.of(CATEGORY, RESOURCE_CANDIDATE), fragments.getFirst().getAdditionalProperties().keySet());
 	}
 
 	@Test
