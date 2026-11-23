@@ -27,11 +27,13 @@ import java.util.stream.Collectors;
  * PostgreSQL took writes. References stay inline. Every hub gets a new NGSI-LD subscription notifying the broker
  * deployment, registered before the hub is written, since a hub without one stays silent on the broker path. Its id
  * is derived from the hub's, so a re-run reuses the subscription of an interrupted one. A hub whose own subscription
- * the broker still holds fails the export, unless subscriptions are kept.
+ * the broker still holds fails the export, unless subscriptions are kept. The hub checks run before anything is
+ * written, so a refused export leaves the broker untouched.
  */
 @Slf4j
 class ExportCommand {
 
+	private static final String HUB_TYPE = TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION;
 	private static final String KEEP_OR_DELETE = "Delete them first, or use --keep-broker-subscriptions to keep them.";
 
 	private final ExportSource source;
@@ -48,13 +50,23 @@ class ExportCommand {
 
 	ExportReport run(Collection<String> types) {
 		ExportReport report = new ExportReport(options.dryRun());
-		for (String type : hubsLast(types)) {
+		List<String> ordered = hubsLast(types);
+		ordered.forEach(report::type);
+		Set<URI> brokerSubscriptions = null;
+		if (ordered.contains(HUB_TYPE)) {
+			brokerSubscriptions = checkHubs(report.type(HUB_TYPE));
+			if (brokerSubscriptions == null) {
+				report.error("nothing was exported, since the " + HUB_TYPE + " check failed.");
+				return report;
+			}
+		}
+		for (String type : ordered) {
 			TypeReport typeReport = report.type(type);
 			try {
-				exportType(type, typeReport);
+				exportType(type, typeReport, HUB_TYPE.equals(type) ? brokerSubscriptions : null);
 			} catch (RuntimeException e) {
 				log.warn("Was not able to export {}.", type, e);
-				typeReport.error = Objects.requireNonNullElse(e.getMessage(), e.getClass().getName());
+				typeReport.error = message(e);
 			}
 			if (options.failFast() && !typeReport.succeeded()) {
 				report.abort();
@@ -64,36 +76,42 @@ class ExportCommand {
 		return report;
 	}
 
+	private static String message(RuntimeException e) {
+		return Objects.requireNonNullElse(e.getMessage(), e.getClass().getName());
+	}
+
+	// runs before any write, so a refusal the operator has to resolve leaves the broker untouched; null when it failed
+	private Set<URI> checkHubs(TypeReport report) {
+		try {
+			if (!options.resume() && !brokerIsEmpty(HUB_TYPE, report)) {
+				return null;
+			}
+			return brokerSubscriptions(domainClass(HUB_TYPE), report);
+		} catch (RuntimeException e) {
+			log.warn("Was not able to check the hubs.", e);
+			report.error = message(e);
+			return null;
+		}
+	}
+
 	// a hub's new subscription notifies on creation, so restoring the entities it watches after it would fire events
 	private static List<String> hubsLast(Collection<String> types) {
 		List<String> ordered = types.stream()
-				.filter(type -> !TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type))
+				.filter(type -> !HUB_TYPE.equals(type))
+				.distinct()
 				.collect(Collectors.toCollection(ArrayList::new));
-		if (types.contains(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION)) {
-			ordered.add(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION);
+		if (types.contains(HUB_TYPE)) {
+			ordered.add(HUB_TYPE);
 		}
 		return ordered;
 	}
 
-	private void exportType(String type, TypeReport report) {
-		if (!options.resume()) {
-			long stored = target.count(type);
-			if (stored > 0) {
-				report.error = String.format("the broker already holds %d entities of this type; export needs an empty "
-						+ "broker. --resume continues an earlier export, but never overwrites an entity the broker "
-						+ "holds.", stored);
-				return;
-			}
+	// brokerSubscriptions is null for every type but the hubs, whose emptiness checkHubs already confirmed
+	private void exportType(String type, TypeReport report, Set<URI> brokerSubscriptions) {
+		if (brokerSubscriptions == null && !options.resume() && !brokerIsEmpty(type, report)) {
+			return;
 		}
-		Class<?> domainClass = registry.domainClass(type)
-				.orElseThrow(() -> new IllegalArgumentException("No domain class maps " + type + "."));
-		Set<URI> brokerSubscriptions = null;
-		if (TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type)) {
-			brokerSubscriptions = brokerSubscriptions(domainClass, report);
-			if (brokerSubscriptions == null) {
-				return;
-			}
-		}
+		Class<?> domainClass = domainClass(type);
 		int offset = 0;
 		long sourceCount;
 		do {
@@ -120,56 +138,80 @@ class ExportCommand {
 		}
 	}
 
-	// null when the broker holds subscriptions that new ones would duplicate and they are not to be kept
+	private boolean brokerIsEmpty(String type, TypeReport report) {
+		long stored = target.count(type);
+		if (stored > 0) {
+			report.error = String.format("the broker already holds %d entities of this type; export needs an empty "
+					+ "broker. --resume continues an earlier export, but never overwrites an entity the broker "
+					+ "holds.", stored);
+			return false;
+		}
+		return true;
+	}
+
+	private Class<?> domainClass(String type) {
+		return registry.domainClass(type)
+				.orElseThrow(() -> new IllegalArgumentException("No domain class maps " + type + "."));
+	}
+
+	// null when the broker holds subscriptions that new ones would duplicate and they are not to be kept, or a hub
+	// that needs a new subscription has no notification endpoint
 	private Set<URI> brokerSubscriptions(Class<?> domainClass, TypeReport report) {
 		List<BrokerSubscription> subscriptions = target.subscriptions(options.pageSize());
 		Set<URI> ids = subscriptions.stream().map(BrokerSubscription::id).collect(Collectors.toSet());
-		if (options.keepsBrokerSubscriptions()) {
-			return ids;
+		boolean keep = options.keepsBrokerSubscriptions();
+		if (!keep) {
+			Set<String> endpoints = options.endpoints();
+			List<URI> notifying = subscriptions.stream()
+					.filter(subscription -> endpoints.contains(subscription.endpoint()))
+					.map(BrokerSubscription::id)
+					.toList();
+			if (!notifying.isEmpty()) {
+				report.error = String.format("the broker already holds %d subscriptions notifying %s, e.g. %s; new "
+								+ "ones would duplicate the notifications. %s", notifying.size(), endpoints,
+						notifying.stream().limit(ExportReport.MAX_EXAMPLES).toList(), KEEP_OR_DELETE);
+				return null;
+			}
 		}
-		Set<String> endpoints = options.endpoints();
-		List<URI> notifying = subscriptions.stream()
-				.filter(subscription -> endpoints.contains(subscription.endpoint()))
-				.map(BrokerSubscription::id)
-				.toList();
-		if (!notifying.isEmpty()) {
-			report.error = String.format("the broker already holds %d subscriptions notifying %s, e.g. %s; new ones "
-							+ "would duplicate the notifications. %s", notifying.size(), endpoints,
-					notifying.stream().limit(ExportReport.MAX_EXAMPLES).toList(), KEEP_OR_DELETE);
-			return null;
-		}
+		HubScan scan = scanHubs(domainClass, ids);
 		// a hub's own subscription, or the one an interrupted export registered for it, may notify another spelling of
 		// the endpoint, so match them by id as well
-		Set<URI> held = heldSubscriptions(domainClass, ids);
-		if (!held.isEmpty()) {
+		if (!keep && !scan.held().isEmpty()) {
 			report.error = String.format("the broker still holds the subscriptions of %d hubs, e.g. %s, under another "
-							+ "notification endpoint; new ones would duplicate the notifications. %s", held.size(),
-					held.stream().limit(ExportReport.MAX_EXAMPLES).toList(), KEEP_OR_DELETE);
+							+ "notification endpoint; new ones would duplicate the notifications. %s", scan.held().size(),
+					scan.held().stream().limit(ExportReport.MAX_EXAMPLES).toList(), KEEP_OR_DELETE);
+			return null;
+		}
+		if (!scan.withoutEndpoint().isEmpty()) {
+			report.error = String.format("%d hubs need a new subscription but have no notification endpoint, e.g. %s",
+					scan.withoutEndpoint().size(),
+					scan.withoutEndpoint().stream().limit(ExportReport.MAX_EXAMPLES).toList());
 			return null;
 		}
 		return ids;
 	}
 
-	private Set<URI> heldSubscriptions(Class<?> domainClass, Set<URI> brokerSubscriptions) {
+	private HubScan scanHubs(Class<?> domainClass, Set<URI> brokerSubscriptions) {
 		Set<URI> held = new LinkedHashSet<>();
-		if (brokerSubscriptions.isEmpty()) {
-			return held;
-		}
+		List<String> withoutEndpoint = new ArrayList<>();
 		int offset = 0;
 		long sourceCount;
 		do {
-			ExportSource.Page page = source.page(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION, domainClass, offset,
-					options.pageSize());
+			ExportSource.Page page = source.page(HUB_TYPE, domainClass, offset, options.pageSize());
 			sourceCount = page.totalCount();
 			for (Object entity : page.entities()) {
 				TMForumSubscription hub = (TMForumSubscription) entity;
 				URI stored = storedSubscription(hub);
-				if (stored != null && brokerSubscriptions.contains(stored)) {
+				boolean storedHeld = stored != null && brokerSubscriptions.contains(stored);
+				if (storedHeld) {
 					held.add(stored);
 				}
 				URI exported = exportSubscriptionId(hub.getId());
 				if (brokerSubscriptions.contains(exported)) {
 					held.add(exported);
+				}
+				if (!storedHeld) {
+					missingEndpoint(hub).ifPresent(withoutEndpoint::add);
 				}
 			}
 			if (page.entities().isEmpty()) {
@@ -177,7 +219,20 @@ class ExportCommand {
 			}
 			offset += page.entities().size();
 		} while (offset < sourceCount);
-		return held;
+		return new HubScan(held, withoutEndpoint);
+	}
+
+	// empty when the hub's endpoint resolves, or when a resumed run skips the hub since the broker already holds it
+	private Optional<String> missingEndpoint(TMForumSubscription hub) {
+		try {
+			options.notificationEndpoint(hub.getEntities());
+			return Optional.empty();
+		} catch (IllegalArgumentException e) {
+			if (options.resume() && target.hub(hub.getId()).isPresent()) {
+				return Optional.empty();
+			}
+			return Optional.of(hub.getId() + ": " + e.getMessage());
+		}
 	}
 
 	private static URI storedSubscription(TMForumSubscription hub) {
@@ -324,6 +379,9 @@ class ExportCommand {
 
 	private static Object id(Object entity) {
 		return entity instanceof EntityWithId withId ? withId.getId() : entity;
+	}
+
+	private record HubScan(Set<URI> held, List<String> withoutEndpoint) {
 	}
 
 	private enum Outcome {

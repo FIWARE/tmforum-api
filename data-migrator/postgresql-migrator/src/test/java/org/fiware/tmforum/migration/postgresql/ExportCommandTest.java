@@ -12,6 +12,7 @@ import org.fiware.tmforum.storage.StorageOperation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -226,9 +227,69 @@ class ExportCommandTest {
 
 		TypeReport report = run(withoutEndpoint, HUB).type(HUB);
 
-		assertEquals(1, report.failed);
+		assertTrue(report.error.contains("--notification-endpoint"), report.error);
 		assertTrue(target.registered.isEmpty());
 		assertTrue(target.created.isEmpty());
+	}
+
+	private enum HubCheckFailure {
+		SUBSCRIPTION_NOTIFYING_THE_ENDPOINT("duplicate"),
+		HUB_SUBSCRIPTION_UNDER_ANOTHER_ENDPOINT("--keep-broker-subscriptions"),
+		NO_NOTIFICATION_ENDPOINT("--notification-endpoint"),
+		HUBS_ON_THE_BROKER("empty broker");
+
+		final String expectedError;
+
+		HubCheckFailure(String expectedError) {
+			this.expectedError = expectedError;
+		}
+	}
+
+	@ParameterizedTest
+	@EnumSource(HubCheckFailure.class)
+	void writesNothingWhenTheHubCheckFails(HubCheckFailure failure) {
+		source.addPlain(PAGE_SIZE + 1);
+		URI stored = URI.create("urn:ngsi-ld:Subscription:held");
+		source.addHub(List.of(PRODUCT), stored);
+		URI endpoint = ENDPOINT;
+		switch (failure) {
+			case SUBSCRIPTION_NOTIFYING_THE_ENDPOINT -> target.subscriptions.add(
+					new SubscriptionStore.BrokerSubscription(URI.create("urn:existing"), ENDPOINT.toString()));
+			case HUB_SUBSCRIPTION_UNDER_ANOTHER_ENDPOINT -> target.subscriptions.add(
+					new SubscriptionStore.BrokerSubscription(stored, OTHER_ENDPOINT_SPELLING));
+			case NO_NOTIFICATION_ENDPOINT -> endpoint = null;
+			case HUBS_ON_THE_BROKER -> target.counts.put(HUB, 1L);
+		}
+
+		ExportReport report = run(new ExportOptions(PAGE_SIZE, false, false, false, false, endpoint, Map.of()), PLAIN,
+				HUB);
+
+		assertFalse(report.succeeded());
+		String error = report.type(HUB).error;
+		assertTrue(error != null && error.contains(failure.expectedError), error);
+		assertEquals(0, report.type(PLAIN).read, "No type may be exported before the hub check passed.");
+		assertTrue(target.created.isEmpty());
+		assertTrue(target.registered.isEmpty());
+		assertTrue(output(report).contains("nothing was exported"), output(report));
+	}
+
+	@Test
+	void aResumeNeedsNoEndpointForHubsTheBrokerHoldsOrKeeps() {
+		source.addPlain(1);
+		URI kept = URI.create("urn:ngsi-ld:Subscription:kept");
+		source.addHub(List.of(PRODUCT), kept);
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(kept, ENDPOINT.toString()));
+		TMForumSubscription exported = source.addHub(List.of(PRODUCT), null);
+		URI exportedSubscription = ExportCommand.exportSubscriptionId(exported.getId());
+		target.storeHub(exported.getId(), exportedSubscription);
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(exportedSubscription, ENDPOINT.toString()));
+
+		ExportReport report = run(new ExportOptions(PAGE_SIZE, true, false, false, false, null, Map.of()), PLAIN, HUB);
+
+		assertTrue(report.succeeded(), output(report));
+		assertEquals(1, report.type(PLAIN).written);
+		assertEquals(1, report.type(HUB).subscriptionsKept);
+		assertEquals(1, report.type(HUB).skipped);
 	}
 
 	@Test
