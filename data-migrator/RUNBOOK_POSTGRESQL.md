@@ -118,7 +118,9 @@ Choose how long the rollback stays possible, e.g. a few days. Within it:
 
   - `export` needs a broker that holds no entity of the exported types: a fresh broker, or the old one emptied of
     them.
-  - It registers a new NGSI-LD subscription for every hub, notifying `--notification-endpoint`. Use
+  - It registers a new NGSI-LD subscription for every hub, notifying `--notification-endpoint`. On the broker path
+    that subscription carries the hub's DeleteEvents; create and update events are sent in-process from the hub
+    entities. Use
     `--notification-endpoint-for <entityType>=<url>` for deployments split per API module. Hubs are exported last,
     so restoring the other entities fires no notification.
   - A broker that still holds subscriptions notifying that endpoint, or the old subscription of an exported hub,
@@ -161,9 +163,9 @@ $MIGRATOR cleanup-subscriptions $BROKER $ESCAPED --confirm-cutover-final \
     [--include-orphans --callback-endpoint <serverHost><basepath>/callback]
 ```
 
-This breaks hub notifications on the broker path, so a rollback after it needs `export`, which registers new
-subscriptions. `--include-orphans` also deletes subscriptions that notify a given callback endpoint but that no hub
-references. Then decommission the broker deployment.
+This breaks hub DeleteEvent notifications on the broker path, so a rollback after it needs `export`, which
+registers new subscriptions. `--include-orphans` also deletes subscriptions that notify a given callback endpoint
+but that no hub references. Then decommission the broker deployment.
 
 ## What each step guarantees
 
@@ -175,7 +177,7 @@ references. Then decommission the broker deployment.
 | No TMForum notification for the bulk copy            | `import` writes no outbox row |
 | References carry the fields the broker used to fill  | `backfill-references` (both targets) |
 | The API answers the same on both backends            | `replay` |
-| Hubs keep notifying after the cutover and a rollback | outbox on PostgreSQL; `export --notification-endpoint` |
+| Hubs keep notifying after the cutover and a rollback | outbox on PostgreSQL; restored hubs on the broker, with `export --notification-endpoint` for DeleteEvents |
 | Rollback before and after writes on PostgreSQL       | step 7 |
 | No broker subscription left behind                   | `cleanup-subscriptions` |
 

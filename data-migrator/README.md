@@ -123,7 +123,9 @@ arguments after the image name are the command:
 `-Dbroker=orion-ld` or `-Dbroker=scorpio` (and `-Dcache=in-memory|redis`). `MigrationRehearsalIT` rehearses the
 whole runbook with two in-process `all-in-one` servers: import, backfill, verify, replay of
 [requests.jsonl](./postgresql-migrator/src/test/resources/replay/requests.jsonl), writes on PostgreSQL, `export`,
-replay again and a hub notification through the restored broker deployment.
+then replay again. It also checks that every restored hub owns its NGSI-LD subscription to `--notification-endpoint`
+(the broker path's DeleteEvent channel), and that both hubs get a create notification from the restored broker
+deployment. That deployment sends the notification in-process from the restored hub entities.
 
 ### `replay` capture format
 

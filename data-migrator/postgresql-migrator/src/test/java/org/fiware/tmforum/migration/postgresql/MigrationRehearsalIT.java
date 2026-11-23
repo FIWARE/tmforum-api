@@ -5,11 +5,16 @@ import com.sun.net.httpserver.HttpServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.runtime.server.EmbeddedServer;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
+import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdSubscriptionFactory;
+import org.fiware.tmforum.common.querying.SubscriptionQuery;
+import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
 import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.common.test.NgsiLdTestEntityCleaner;
 import org.fiware.tmforum.product.Characteristic;
@@ -49,10 +54,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,7 +68,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The runbook end to end: two in-process all-in-one servers, one on the test cluster's broker and one on its
  * PostgreSQL. Seeds the broker, runs {@code import --backfill-references}, {@code verify} and {@code replay}, writes
- * through the PostgreSQL server, then rolls back with {@code export} and checks replay and hub notifications again.
+ * through the PostgreSQL server, then rolls back with {@code export}. It then checks the replay again, checks that every
+ * restored hub has its NGSI-LD subscription on the broker (the DeleteEvent path), and checks that both hubs get a create
+ * notification, which the broker server sends in-process from the restored hub entities.
  */
 @BrokerOnly
 class MigrationRehearsalIT {
@@ -129,7 +138,9 @@ class MigrationRehearsalIT {
 	private static final String NOTIFY_MARKER = "rehearsal-notify";
 	private static final String IMPORTED_CALLBACK = "/imported";
 	private static final String CREATED_CALLBACK = "/created";
-	private static final String IMPORTED_HUB_QUERY = "eventType=CategoryCreateEvent&event.Category.name=" + NOTIFY_MARKER;
+	// the payload name is lowerCamel, see TMForumEventHandler.makeEventDetails
+	private static final String IMPORTED_HUB_QUERY = "eventType=CategoryCreateEvent&event.category.name=" + NOTIFY_MARKER;
+	private static final String HUB_ENTITY_TYPE = "category";
 	private static final String CREATED_HUB_QUERY = "eventType=CategoryCreateEvent";
 	// the migration's own changes on the pre-88 offering: the seeded version and the backfilled category reference
 	private static final Pattern EXPLAINED_DIFFERENCE = Pattern.compile(
@@ -200,7 +211,7 @@ class MigrationRehearsalIT {
 				.set("category", jsonMapper.createArrayNode().add(completeReference(storedCategory))));
 		JsonNode organization = post(brokerUrl, ORGANIZATION_PATH,
 				jsonMapper.createObjectNode().put(NAME, "api-organization"));
-		post(brokerUrl, HUB_PATH, hub(callbackBase.resolve(IMPORTED_CALLBACK), IMPORTED_HUB_QUERY));
+		URI importedHubId = createImportedHub(callbackBase.resolve(IMPORTED_CALLBACK));
 		for (RawRecord record : RAW_RECORDS) {
 			createRawEntity(record.json());
 		}
@@ -224,6 +235,7 @@ class MigrationRehearsalIT {
 		// 3. no diff but the migration's own
 		JsonNode cutoverReplay = replay(brokerUrl, postgresUrl, "cutover");
 		assertEquals(List.of(), unexplainedDifferences(cutoverReplay), cutoverReplay.toString());
+		assertEquals(List.of(), unansweredRequests(cutoverReplay), cutoverReplay.toString());
 		assertTrue(differencesOf(cutoverReplay, OFFERING_PATH + "/" + PRE_88_OFFERING_ID).stream()
 						.anyMatch(difference -> difference.startsWith(BACKFILLED_NAME_DIFFERENCE)),
 				"The replay must show the backfilled reference: " + cutoverReplay);
@@ -233,24 +245,28 @@ class MigrationRehearsalIT {
 		post(postgresUrl, CATEGORY_PATH, jsonMapper.createObjectNode().put(NAME, "postgresql-category"));
 		patch(postgresUrl, ORGANIZATION_PATH + "/" + organization.path("id").asString(),
 				jsonMapper.createObjectNode().put("tradingName", "patched-on-postgresql"));
-		post(postgresUrl, HUB_PATH, hub(callbackBase.resolve(CREATED_CALLBACK), CREATED_HUB_QUERY));
+		URI createdHubId = URI.create(post(postgresUrl, HUB_PATH,
+				hub(callbackBase.resolve(CREATED_CALLBACK), CREATED_HUB_QUERY)).path("id").asString());
 		deleteBrokerSubscriptions();
 		deleteBrokerEntities();
 		Run exported = run("export", "--notification-endpoint", notificationEndpoint.toString());
 		assertEquals(CommandLine.ExitCode.OK, exported.exitCode(), exported.output());
 		Run reverseVerified = run("verify", "--direction", "export");
 		assertEquals(CommandLine.ExitCode.OK, reverseVerified.exitCode(), reverseVerified.output());
+		assertEquals(Set.of(restoredSubscription(importedHubId), restoredSubscription(createdHubId)),
+				notifyingSubscriptions(), "Each restored hub must own exactly one broker subscription to the endpoint.");
 		startServer(brokerPort, brokerEnvironment(), cacheEnvironment());
 		URI restoredUrl = localUrl(brokerPort);
 
 		// 5. the restored broker answers as PostgreSQL does, and both hubs notify
 		JsonNode rollbackReplay = replay(restoredUrl, postgresUrl, "rollback");
 		assertTrue(rollbackReplay.path("succeeded").asBoolean(), rollbackReplay.toString());
+		assertEquals(List.of(), unansweredRequests(rollbackReplay), rollbackReplay.toString());
 		notifications.clear();
 		post(restoredUrl, CATEGORY_PATH, jsonMapper.createObjectNode().put(NAME, NOTIFY_MARKER));
 		Set<String> expectedCallbacks = Set.of(IMPORTED_CALLBACK, CREATED_CALLBACK);
 		assertEquals(expectedCallbacks, awaitNotifiedCallbacks(expectedCallbacks),
-				"Both hubs must notify through the restored broker server.");
+				"Both restored hubs must get the create notification from the restored broker server.");
 	}
 
 	private JsonNode replay(URI brokerUrl, URI postgresUrl, String name) throws IOException, URISyntaxException {
@@ -282,6 +298,17 @@ class MigrationRehearsalIT {
 		return unexplained;
 	}
 
+	// equal on both sides is not enough: a path that fails on both backends would cover nothing
+	private static List<String> unansweredRequests(JsonNode report) {
+		List<String> unanswered = new ArrayList<>();
+		report.path("requests").values().forEach(request -> {
+			if (request.path("brokerStatus").asInt() != HTTP_OK) {
+				unanswered.add(request.path("path").asString() + ": " + request.path("brokerStatus").asInt());
+			}
+		});
+		return unanswered;
+	}
+
 	private static List<String> differencesOf(JsonNode report, String path) {
 		List<String> differences = new ArrayList<>();
 		report.path("requests").values().forEach(request -> {
@@ -299,6 +326,45 @@ class MigrationRehearsalIT {
 				.filter(field -> target.hasNonNull(field))
 				.forEach(field -> reference.set(field, target.get(field)));
 		return reference;
+	}
+
+	// seeded as the broker-backed hub controller would, without it: hub registration through the API fails on Scorpio
+	private URI createImportedHub(URI callback) {
+		SubscriptionQuery query = SubscriptionQueryParser.parse(IMPORTED_HUB_QUERY, List.of());
+		List<String> entities = List.of(HUB_ENTITY_TYPE);
+		TMForumSubscription hub = new TMForumSubscription(UUID.randomUUID().toString());
+		hub.setRawQuery(IMPORTED_HUB_QUERY);
+		hub.setEventTypes(query.getEventTypes());
+		hub.setEntities(entities);
+		hub.setQuery(query.getQuery());
+		hub.setCallback(callback);
+		hub.setFields(query.getFields());
+		hub.setSubscription(NgsiLdSubscriptionFactory.build(notificationEndpoint, callback.toString(),
+				query.getQuery(), entities, query.getFields()));
+		ApplicationContext source = brokerContexts.source();
+		GeneralProperties properties = source.getBean(GeneralProperties.class);
+		source.getBean(SubscriptionsApiClient.class).createSubscription(
+				source.getBean(SubscriptionMapper.class).map(hub.getSubscription())
+						.atContext(properties.getContextUrl()),
+				properties.getTenant()).block();
+		source.getBean(EntityRepository.class).createDomainEntity(hub).block();
+		return hub.getId();
+	}
+
+	private URI restoredSubscription(URI hubId) {
+		TMForumSubscription hub = broker.toDomain(
+				broker.entity(hubId).orElseThrow(() -> new AssertionError(hubId + " was not exported.")),
+				TMForumSubscription.class);
+		Subscription subscription = hub.getSubscription();
+		assertTrue(subscription != null && subscription.getId() != null, hubId + " has no subscription.");
+		return subscription.getId();
+	}
+
+	private Set<URI> notifyingSubscriptions() {
+		return broker.subscriptions(PAGE_SIZE).stream()
+				.filter(subscription -> notificationEndpoint.toString().equals(subscription.endpoint()))
+				.map(SubscriptionStore.BrokerSubscription::id)
+				.collect(Collectors.toSet());
 	}
 
 	private ObjectNode hub(URI callback, String query) {
