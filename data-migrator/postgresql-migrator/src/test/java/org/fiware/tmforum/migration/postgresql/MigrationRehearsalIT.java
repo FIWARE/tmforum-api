@@ -93,6 +93,7 @@ class MigrationRehearsalIT {
 	private static final int HTTP_OK = 200;
 	private static final int HTTP_CREATED = 201;
 	private static final int HTTP_NO_CONTENT = 204;
+	private static final int HTTP_PARTIAL_CONTENT = 206;
 	private static final int PAGE_SIZE = 100;
 	private static final Duration NOTIFICATION_TIMEOUT = Duration.ofSeconds(30);
 
@@ -102,6 +103,8 @@ class MigrationRehearsalIT {
 	private static final String HUB_PATH = PRODUCT_CATALOG + "/hub";
 	private static final String ORGANIZATION_PATH = "/tmf-api/party/v4/organization";
 	private static final String NGSI_ENTITIES_PATH = "/ngsi-ld/v1/entities";
+	// collection endpoints only: a GET by id is compared positionally, so a backfilled field shows up by name
+	private static final String UNORDERED_PATHS = "/tmf-api/*/v4/*";
 
 	private static final String RAW_ID_TEMPLATE = "urn:ngsi-ld:%s:rehearsal";
 	private static final String RAW_NAME_TEMPLATE = "rehearsal-%s";
@@ -143,10 +146,18 @@ class MigrationRehearsalIT {
 	private static final String HUB_ENTITY_TYPE = "category";
 	private static final String CREATED_HUB_QUERY = "eventType=CategoryCreateEvent";
 	// the migration's own changes on the pre-88 offering: the seeded version and the backfilled category reference
-	private static final Pattern EXPLAINED_DIFFERENCE = Pattern.compile(
+	private static final Pattern MIGRATED_OFFERING_DIFFERENCE = Pattern.compile(
 			"/version: broker <absent>, postgresql \"0\\.0\\.1\""
 					+ "|/category/0/(href|name|version): broker <absent>, postgresql .+");
 	private static final String BACKFILLED_NAME_DIFFERENCE = "/category/0/name";
+	// the empty page of requests.jsonl: PostgreSQL still counts the matches, Orion-LD reports no total for it
+	private static final String PAGE_PAST_END_PATH = ORGANIZATION_PATH + "?offset=100&limit=10";
+	private static final Pattern PAGE_PAST_END_DIFFERENCE = Pattern.compile("status: broker 200, postgresql 206");
+	private static final Map<String, Pattern> CUTOVER_EXPLAINED = Map.of(
+			OFFERING_PATH + "/" + PRE_88_OFFERING_ID, MIGRATED_OFFERING_DIFFERENCE,
+			PAGE_PAST_END_PATH, PAGE_PAST_END_DIFFERENCE);
+	private static final Map<String, Pattern> ROLLBACK_EXPLAINED = Map.of(PAGE_PAST_END_PATH, PAGE_PAST_END_DIFFERENCE);
+	private static final Set<Integer> ANSWERED = Set.of(HTTP_OK, HTTP_PARTIAL_CONTENT);
 
 	private final HttpClient httpClient = HttpClient.newHttpClient();
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
@@ -234,7 +245,7 @@ class MigrationRehearsalIT {
 
 		// 3. no diff but the migration's own
 		JsonNode cutoverReplay = replay(brokerUrl, postgresUrl, "cutover");
-		assertEquals(List.of(), unexplainedDifferences(cutoverReplay), cutoverReplay.toString());
+		assertEquals(List.of(), unexplainedDifferences(cutoverReplay, CUTOVER_EXPLAINED), cutoverReplay.toString());
 		assertEquals(List.of(), unansweredRequests(cutoverReplay), cutoverReplay.toString());
 		assertTrue(differencesOf(cutoverReplay, OFFERING_PATH + "/" + PRE_88_OFFERING_ID).stream()
 						.anyMatch(difference -> difference.startsWith(BACKFILLED_NAME_DIFFERENCE)),
@@ -260,7 +271,7 @@ class MigrationRehearsalIT {
 
 		// 5. the restored broker answers as PostgreSQL does, and both hubs notify
 		JsonNode rollbackReplay = replay(restoredUrl, postgresUrl, "rollback");
-		assertTrue(rollbackReplay.path("succeeded").asBoolean(), rollbackReplay.toString());
+		assertEquals(List.of(), unexplainedDifferences(rollbackReplay, ROLLBACK_EXPLAINED), rollbackReplay.toString());
 		assertEquals(List.of(), unansweredRequests(rollbackReplay), rollbackReplay.toString());
 		notifications.clear();
 		post(restoredUrl, CATEGORY_PATH, jsonMapper.createObjectNode().put(NAME, NOTIFY_MARKER));
@@ -273,13 +284,13 @@ class MigrationRehearsalIT {
 		Path report = reports.resolve(name + ".json");
 		Path requests = Path.of(MigrationRehearsalIT.class.getResource(REQUESTS_RESOURCE).toURI());
 		run(List.of("replay", "--requests", requests.toString(), "--broker-base-url", brokerUrl.toString(),
-				"--postgres-base-url", postgresUrl.toString(), "--unordered-paths", "/tmf-api/**",
+				"--postgres-base-url", postgresUrl.toString(), "--unordered-paths", UNORDERED_PATHS,
 				"--report", report.toString()));
 		return jsonMapper.readTree(report.toFile());
 	}
 
-	// every difference outside the pre-88 offering's GET, or not one the migration explains, plus failed requests
-	private static List<String> unexplainedDifferences(JsonNode report) {
+	// every difference that its request's entry in explained does not match, plus failed requests
+	private static List<String> unexplainedDifferences(JsonNode report, Map<String, Pattern> explained) {
 		List<String> unexplained = new ArrayList<>();
 		report.path("errors").values().forEach(error -> unexplained.add(error.asString()));
 		for (JsonNode request : report.path("requests").values()) {
@@ -288,9 +299,9 @@ class MigrationRehearsalIT {
 			if (outcome.equals(ReplayReport.Outcome.FAILED.name())) {
 				unexplained.add(path + ": " + request.path("error").asString());
 			}
-			boolean explainable = path.equals(OFFERING_PATH + "/" + PRE_88_OFFERING_ID);
+			Pattern explanation = explained.get(path);
 			request.path("differences").values().forEach(difference -> {
-				if (!explainable || !EXPLAINED_DIFFERENCE.matcher(difference.asString()).matches()) {
+				if (explanation == null || !explanation.matcher(difference.asString()).matches()) {
 					unexplained.add(path + " " + difference.asString());
 				}
 			});
@@ -298,11 +309,11 @@ class MigrationRehearsalIT {
 		return unexplained;
 	}
 
-	// equal on both sides is not enough: a path that fails on both backends would cover nothing
+	// equal on both sides is not enough: a path that fails on both backends would cover nothing; 206 is a partial page
 	private static List<String> unansweredRequests(JsonNode report) {
 		List<String> unanswered = new ArrayList<>();
 		report.path("requests").values().forEach(request -> {
-			if (request.path("brokerStatus").asInt() != HTTP_OK) {
+			if (!ANSWERED.contains(request.path("brokerStatus").asInt())) {
 				unanswered.add(request.path("path").asString() + ": " + request.path("brokerStatus").asInt());
 			}
 		});

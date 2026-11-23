@@ -32,9 +32,9 @@ inline references for deployments that stay on the broker. The API modules thems
 
 ## Expected differences
 
-These differences between the broker-backed and the PostgreSQL-backed deployment come from the migration itself.
-`verify` allows the first two and lists them separately. `replay` reports them like any other difference, so
-check each one against this list:
+These differences between the broker-backed and the PostgreSQL-backed deployment come from the
+migration itself or, for the last one, from the backends. `verify` allows the first two and lists them separately.
+`replay` reports them like any other difference, so check each one against this list:
 
 * **Backfilled reference fields.** After `backfill-references --target postgresql`, references that the broker
   stored with the id only carry the `name`, `href`, `version`, ... of their target on PostgreSQL. The broker
@@ -51,6 +51,11 @@ check each one against this list:
 * **Empty values after a rollback.** `export` cannot restore empty lists and empty values that PostgreSQL stores:
   the NGSI-LD mapping omits them on write, so the restored broker deployment reads them back as absent.
   `verify --direction export` allows this.
+* **The status of a page past the end.** A list request whose `offset` lies beyond the last match (e.g.
+  `?offset=100&limit=10` on 20 entities) returns an empty list on both backends. PostgreSQL still counts the matches
+  and answers `206 Partial Content` with `X-Total-Count`. Orion-LD reports no usable total for an empty page, so the
+  broker deployment answers `200 OK`. `replay` reports this as `status: broker 200, postgresql 206`. This is a
+  backend difference, not a data one.
 
 ## Known limitations
 

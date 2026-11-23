@@ -81,15 +81,18 @@ Start the PostgreSQL deployment next to the broker deployment, if it is not runn
 ```shell
 $MIGRATOR replay --requests captured.jsonl \
     --broker-base-url http://tmforum-broker:8080 --postgres-base-url http://tmforum-postgresql:8080 \
-    --unordered-paths '/tmf-api/**' --external-host <references.external-hosts> --report replay-report.json
+    --unordered-paths '/tmf-api/*/v4/*' --external-host <references.external-hosts> --report replay-report.json
 ```
 
-List order is not stable on the broker, so compare lists as sets (`--unordered-paths`). Every difference left in
-the report must be one of the expected ones listed in
+List order is not stable on the broker, so compare the lists of the collection endpoints as sets
+(`--unordered-paths`; `*` stays within one path segment). Leave GETs by id out of it: they are compared position by
+position, so a backfilled field shows up as `/<attr>/<index>/<field>` instead of one opaque `only in the list` entry.
+Every difference left in the report must be one of the expected ones listed in
 [RELEASE_NOTES_DATA_MIGRATION.md](../release-notes/RELEASE_NOTES_DATA_MIGRATION.md#expected-differences):
 - backfilled reference fields;
 - the seeded `0.0.1`;
-- reference fields of external targets.
+- reference fields of external targets;
+- `206` instead of `200` on a list page past the last match.
 
 Anything else stops the migration.
 
