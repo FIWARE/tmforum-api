@@ -47,13 +47,14 @@ import java.util.stream.Collectors;
  * into the PostgreSQL document form, so {@link ReferenceFiller} applies the rule of the PostgreSQL backfill to the same
  * keys. Targets come from batched id queries; one whose fillable keys include a list attribute is read again by id, as
  * Orion-LD's queries leave multi-instance attributes out. Only changed attributes are written, through the NGSI-LD
- * adapter's {@code updateDomainEntity} with {@code replaceOnUpdate} off ({@link MigrationContexts} pins it): an append,
- * which Orion-LD merges by datasetId, keeping stored instances under other datasetIds. So on either broker, an
- * attribute whose stored datasetIds differ from the written ones (a single reference stored with a datasetId, which
- * the mapping writes as the default instance; the old {@code productOrderItem} format) is deleted first and, if a later
- * delete or the write fails, restored from its read value; the value is logged before the delete for a manual
- * restore. Each write is a normal broker update: it moves {@code modifiedAt} and notifies the broker's own
- * subscriptions. Not transactional; a re-run is a no-op.
+ * adapter's {@code updateDomainEntity} with {@code replaceOnUpdate} off ({@link MigrationContexts} pins it): an append.
+ * Scorpio replaces every instance of an appended attribute, and its 5.0.3 fails {@code deleteAll}, so that is the
+ * whole write there. Orion-LD merges by datasetId, keeping stored instances under other datasetIds, so an attribute
+ * whose stored datasetIds differ from the written ones (a single reference stored with a datasetId, which the mapping
+ * writes as the default instance; the old {@code productOrderItem} format) is deleted first and, if a later delete or
+ * the write fails, restored from its read value; the value is logged before the delete for a manual restore. Each
+ * write is a normal broker update: it moves {@code modifiedAt} and notifies the broker's own subscriptions. Not
+ * transactional; a re-run is a no-op.
  */
 @Slf4j
 class BrokerReferenceBackfill {
@@ -69,6 +70,7 @@ class BrokerReferenceBackfill {
 	private final NgsiLdEntityRepository repository;
 	private final JavaObjectMapper javaObjectMapper;
 	private final DocumentMapper documents;
+	private final boolean appendReplacesInstances;
 	private final EntityTypeRegistry registry;
 	private final int pageSize;
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
@@ -89,6 +91,8 @@ class BrokerReferenceBackfill {
 		this.javaObjectMapper = sourceContext.getBean(JavaObjectMapper.class);
 		// the PostgreSQL document form only, so the catalog keys apply; nothing is written to a database
 		this.documents = new PostgresDocumentMapper(sourceContext.getBean(ObjectMapper.class)).storage();
+		this.appendReplacesInstances = sourceContext.getEnvironment().getActiveNames()
+				.contains(BrokerType.SCORPIO.getEnvironment());
 		this.registry = registry;
 		this.pageSize = pageSize;
 		this.attributes = attributes(catalog);
@@ -338,7 +342,7 @@ class BrokerReferenceBackfill {
 			if (attribute.rewrite && sameInstances) {
 				// already in the new format
 				owner.changes().remove(attribute);
-			} else if (!sameInstances) {
+			} else if (!sameInstances && !appendReplacesInstances) {
 				replaced.put(attribute, owner.document().get(attribute.name));
 			}
 		}

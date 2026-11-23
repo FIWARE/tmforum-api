@@ -24,8 +24,8 @@ public class MigrationContexts implements AutoCloseable {
 	static final String NGSI_URL_PROPERTY = "micronaut.http.services.ngsi.url";
 	static final String TENANT_PROPERTY = "general.tenant";
 	static final String ESCAPE_PROPERTY = "general.escape-forbidden-characters";
-	// pinned off, not left to all-in-one's yaml (true for Scorpio): the broker backfill does its own delete-then-append,
-	// and the Update Attributes path of replaceOnUpdate is the one the root pom keeps off for the cluster's Scorpio
+	// pinned off, not left to all-in-one's yaml (true for Scorpio): the broker backfill writes plain appends, and the
+	// Update Attributes path of replaceOnUpdate is the one the root pom keeps off for the cluster's Scorpio
 	static final String REPLACE_ON_UPDATE_PROPERTY = "general.replace-on-update";
 	static final String SERIALIZATION_INCLUSION_PROPERTY = "jackson.serialization-inclusion";
 	// Micronaut's NON_EMPTY default would drop empty values and lists of migrated entities

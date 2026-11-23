@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 import reactor.core.publisher.Mono;
 
@@ -46,8 +47,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * The write paths of the broker backfill: a failed delete or write restores only what was actually deleted, and a
- * target whose fillable keys include a list is read again by id, since the entity query leaves such attributes out.
+ * The write paths of the broker backfill: on Orion-LD a failed delete or write restores only what was actually
+ * deleted, Scorpio writes without deleting, and a target whose fillable keys include a list is read again by id, since
+ * the entity query leaves such attributes out.
  */
 class BrokerReferenceBackfillTest {
 
@@ -94,23 +96,19 @@ class BrokerReferenceBackfillTest {
 		ForbiddenCharacterEscaper.setEnabled(true);
 	}
 
-	// both brokers take the same delete-then-append path, as MigrationContexts pins replaceOnUpdate off
 	static Stream<Arguments> failures() {
-		return Stream.of(BrokerType.values()).flatMap(brokerType -> Stream.of(
-				Arguments.of(brokerType, "the write fails, the restore succeeds", NO_FAILING_DELETE, false,
+		return Stream.of(
+				Arguments.of("the write fails, the restore succeeds", NO_FAILING_DELETE, false,
 						"were restored"),
-				Arguments.of(brokerType, "the write fails, the restore fails", NO_FAILING_DELETE, true,
+				Arguments.of("the write fails, the restore fails", NO_FAILING_DELETE, true,
 						"restore them by hand"),
-				Arguments.of(brokerType, "the second delete fails", 1, false, "were restored"),
-				Arguments.of(brokerType, "the first delete fails", 0, false, "its read value was")));
+				Arguments.of("the second delete fails", 1, false, "were restored"),
+				Arguments.of("the first delete fails", 0, false, "its read value was"));
 	}
 
-	@ParameterizedTest(name = "{0}: {1}")
+	@ParameterizedTest(name = "{0}")
 	@MethodSource("failures")
-	void restoresOnlyWhatWasDeleted(BrokerType brokerType, String scenario, int failingDelete, boolean restoreFails,
-			String expectedError) {
-		context.close();
-		context = sourceContext(brokerType);
+	void restoresOnlyWhatWasDeleted(String scenario, int failingDelete, boolean restoreFails, String expectedError) {
 		seedOfferingWithDatasetIdInstances();
 		doAnswer(invocation -> {
 			String attribute = invocation.getArgument(1);
@@ -146,6 +144,27 @@ class BrokerReferenceBackfillTest {
 			assertEquals(Set.copyOf(deletes), writtenAttributes((ProductOffering) updates.getLast()),
 					"The restore must carry exactly the deleted attributes.");
 		}
+	}
+
+	// Scorpio's append replaces every instance of the attribute and its deleteAll fails, so nothing is deleted
+	@ParameterizedTest(name = "write fails={0}")
+	@ValueSource(booleans = {false, true})
+	void appendsChangedInstancesOnScorpioWithoutDeleting(boolean writeFails) {
+		context.close();
+		context = sourceContext(BrokerType.SCORPIO);
+		seedOfferingWithDatasetIdInstances();
+		when(repository.updateDomainEntity(anyString(), any())).thenAnswer(invocation -> {
+			updates.add(invocation.getArgument(1));
+			return writeFails ? Mono.error(new IllegalStateException("broker unavailable")) : Mono.empty();
+		});
+
+		ReferenceBackfillReport report = new BrokerReferenceBackfill(context, source, repository,
+				ReferenceBackfillCatalog.load(), EntityTypeRegistry.scan(), PAGE_SIZE).run(false);
+
+		assertEquals(!writeFails, report.succeeded(), report.errors().toString());
+		verify(source, never()).deleteAttribute(any(), anyString());
+		assertEquals(1, updates.size(), "One write and no restore.");
+		assertEquals(Set.of(CATEGORY, RESOURCE_CANDIDATE), writtenAttributes((ProductOffering) updates.getFirst()));
 	}
 
 	@Test
