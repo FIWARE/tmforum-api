@@ -49,8 +49,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Imports a product and a hub from the test cluster's broker, adds a hub on PostgreSQL, empties the broker and runs
- * {@code export} and {@code verify --direction export}, the rollback after cutover.
+ * Imports a product and a hub from the test cluster's broker, adds a hub and a product with empty lists on PostgreSQL,
+ * empties the broker and runs {@code export} and {@code verify --direction export}, the rollback after cutover.
  */
 @BrokerOnly
 class ExportIT {
@@ -70,6 +70,7 @@ class ExportIT {
 	private static final String RAW_QUERY_TEMPLATE = "name=%s";
 	private static final int PAGE_SIZE = 100;
 	private static final int HTTP_OK = 200;
+	private static final String EMPTY_LIST_ATTRIBUTE = "relatedParty";
 
 	private final HttpClient httpClient = HttpClient.newHttpClient();
 	private final JsonMapper jsonMapper = JsonMapper.builder().build();
@@ -80,6 +81,7 @@ class ExportIT {
 	private BrokerSource broker;
 	private URI importedHubId;
 	private URI createdHubId;
+	private URI emptyListsProductId;
 	private URI importedSubscriptionId;
 
 	@BeforeEach
@@ -107,9 +109,17 @@ class ExportIT {
 		assertEquals(CommandLine.ExitCode.OK, run("import").exitCode(), "The import must succeed.");
 
 		// created after the cutover: PostgreSQL holds no subscription for it
+		EntityRepository postgresRepository = seedContexts.target().getBean(EntityRepository.class);
 		TMForumSubscription createdHub = hub(CREATED_QUERY_VALUE);
-		seedContexts.target().getBean(EntityRepository.class).createDomainEntity(createdHub).block();
+		postgresRepository.createDomainEntity(createdHub).block();
 		createdHubId = createdHub.getId();
+		// stored as [] on PostgreSQL; the NGSI-LD mapping omits an empty list when it creates the entity
+		Product emptyLists = new Product(urn(Product.TYPE_PRODUCT));
+		emptyLists.setName("empty-lists");
+		emptyLists.setRelatedParty(List.of());
+		emptyLists.setProductCharacteristic(List.of());
+		postgresRepository.createDomainEntity(emptyLists).block();
+		emptyListsProductId = emptyLists.getId();
 
 		// the rollback starts from an empty broker
 		assertTrue(broker.deleteSubscription(importedSubscriptionId));
@@ -137,6 +147,10 @@ class ExportIT {
 		assertEquals(CommandLine.ExitCode.OK, export.exitCode(), export.output());
 		Run verify = run("verify", "--direction", "export");
 		assertEquals(CommandLine.ExitCode.OK, verify.exitCode(), verify.output());
+		Set<String> emptyListsAttributes = RawAttributeCheck.attributeNames(broker.entity(emptyListsProductId)
+				.orElseThrow(() -> new AssertionError(emptyListsProductId + " was not exported.")));
+		assertFalse(emptyListsAttributes.contains(EMPTY_LIST_ATTRIBUTE),
+				"verify must allow the empty list the broker omits: " + emptyListsAttributes);
 
 		Set<URI> notifying = notifyingSubscriptions();
 		assertEquals(2, notifying.size(), "Exactly one subscription per hub: " + notifying);
@@ -165,14 +179,20 @@ class ExportIT {
 	void refusesABrokerThatAlreadyNotifiesTheEndpoint() {
 		assertEquals(CommandLine.ExitCode.OK,
 				run("export", "--notification-endpoint", notificationEndpoint.toString()).exitCode());
+		Set<URI> registered = notifyingSubscriptions();
+		// an export interrupted after registering the subscriptions, so the entity count check passes
+		deleteBrokerEntities();
 
 		Run again = run("export", "--notification-endpoint", notificationEndpoint.toString());
 		Run resumed = run("export", "--resume", "--notification-endpoint", notificationEndpoint.toString());
 
 		assertEquals(CommandLine.ExitCode.SOFTWARE, again.exitCode(), again.output());
-		assertTrue(again.output().contains("already holds"), again.output());
+		assertTrue(again.output().contains("subscriptions notifying"), again.output());
 		assertEquals(CommandLine.ExitCode.OK, resumed.exitCode(), resumed.output());
-		assertEquals(2, notifyingSubscriptions().size(), "A resumed export must not duplicate subscriptions.");
+		assertEquals(registered, notifyingSubscriptions(), "A resumed export must reuse the subscriptions.");
+		for (URI hubId : List.of(importedHubId, createdHubId)) {
+			assertTrue(registered.contains(brokerHub(hubId).getSubscription().getId()), hubId.toString());
+		}
 	}
 
 	private TMForumSubscription hub(String queryValue) {

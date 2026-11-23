@@ -111,9 +111,9 @@ class VerifyCommand {
 
 	// returns the entities that are stored, the others are reported as missing rows
 	private List<EntityVO> checkAttributes(List<EntityVO> entities, RawAttributeCheck rawCheck, TypeReport report) {
-		Map<URI, Set<String>> keys = target.topLevelKeys(entities.stream().map(EntityVO::getId).toList());
+		Map<URI, VerifyTarget.StoredKeys> keys = target.topLevelKeys(entities.stream().map(EntityVO::getId).toList());
 		return entities.stream().filter(entity -> {
-			Set<String> targetKeys = keys.get(entity.getId());
+			VerifyTarget.StoredKeys targetKeys = keys.get(entity.getId());
 			if (targetKeys == null) {
 				report.missingRows.add(entity.getId().toString());
 				return false;

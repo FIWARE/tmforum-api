@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
  * Compares the source and target documents of one entity, both written by the PostgreSQL document mapper. Only the
  * migration's own changes are allowed: reference fields the backfill filled, the seeded version, the subscription
  * attribute that {@code cleanup-subscriptions} drops and the one {@code export} registers anew; anything else is a
- * mismatch. After an export the broker is a verbatim copy, so only the registered subscription may differ.
+ * mismatch. After an export the broker is a verbatim copy, so only the registered subscription and the empty values
+ * the NGSI-LD mapping omits on create may differ.
  */
 final class DocumentDiff {
 
@@ -34,7 +35,8 @@ final class DocumentDiff {
 	 * What a difference is; everything but {@link #MISMATCH} is an intended change of the migration.
 	 */
 	enum Kind {
-		BACKFILLED_REFERENCE_FIELD, SEEDED_VERSION, DROPPED_SUBSCRIPTION, REGISTERED_SUBSCRIPTION, MISMATCH
+		BACKFILLED_REFERENCE_FIELD, SEEDED_VERSION, DROPPED_SUBSCRIPTION, REGISTERED_SUBSCRIPTION, OMITTED_EMPTY_VALUE,
+		MISMATCH
 	}
 
 	/**
@@ -96,6 +98,8 @@ final class DocumentDiff {
 					&& sourceValue != null) {
 				// the source is the broker the export registered a new subscription on; without one the hub is silent
 				differences.add(new Difference(Kind.REGISTERED_SUBSCRIPTION, key, render(sourceValue)));
+			} else if (rules.exported() && sourceValue == null && isEmptyContainer(targetValue)) {
+				differences.add(new Difference(Kind.OMITTED_EMPTY_VALUE, key, render(targetValue)));
 			} else if (RawAttributeCheck.SUBSCRIPTION_ATTRIBUTE.equals(key) && rules.hub() && targetValue == null) {
 				differences.add(new Difference(Kind.DROPPED_SUBSCRIPTION, key, render(sourceValue)));
 			} else if (!rules.exported() && rules.fillableKeys().containsKey(key)) {
@@ -144,6 +148,10 @@ final class DocumentDiff {
 				differences.add(mismatch(keyPath, sourceValue, targetValue));
 			}
 		}
+	}
+
+	private static boolean isEmptyContainer(JsonNode value) {
+		return value != null && value.isContainer() && value.isEmpty();
 	}
 
 	private static boolean isBlank(JsonNode value) {

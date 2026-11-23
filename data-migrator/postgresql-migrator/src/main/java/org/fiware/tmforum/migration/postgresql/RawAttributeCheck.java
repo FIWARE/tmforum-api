@@ -14,7 +14,8 @@ import java.util.TreeSet;
 /**
  * Compares the top-level attributes of a raw broker entity with the top-level keys of its stored document, so an
  * attribute that the domain mapping drops on read is caught (the document diff reads both sides through that mapping).
- * After an export the broker is the copy, so a stored key it lacks fails as well.
+ * After an export the broker is the copy, so a stored key it lacks fails as well, unless the key holds an empty array
+ * or object: the NGSI-LD mapping omits those when it creates an entity.
  */
 final class RawAttributeCheck {
 
@@ -85,9 +86,11 @@ final class RawAttributeCheck {
 
 	/**
 	 * Checks one entity: {@code missing} and {@code missingInSource} fail the run, {@code allowedMissing} and
-	 * {@code targetOnly} are only listed. A target-only key is {@code missingInSource} after an export.
+	 * {@code targetOnly} are only listed. After an export a target-only key is {@code missingInSource}, or
+	 * {@code allowedMissing} when it holds an empty value.
 	 */
-	Result check(Set<String> sourceAttributes, Set<String> targetKeys) {
+	Result check(Set<String> sourceAttributes, VerifyTarget.StoredKeys stored) {
+		Set<String> targetKeys = stored.keys();
 		Set<String> missing = new TreeSet<>();
 		Set<String> allowedMissing = new TreeSet<>();
 		Set<String> expectedKeys = new TreeSet<>();
@@ -106,9 +109,14 @@ final class RawAttributeCheck {
 		Set<String> targetOnly = new TreeSet<>(targetKeys);
 		targetOnly.removeAll(expectedKeys);
 		targetOnly.removeAll(SYSTEM_KEYS);
-		return exported
-				? new Result(missing, allowedMissing, Set.of(), targetOnly)
-				: new Result(missing, allowedMissing, targetOnly, Set.of());
+		if (!exported) {
+			return new Result(missing, allowedMissing, targetOnly, Set.of());
+		}
+		Set<String> missingInSource = new TreeSet<>();
+		for (String key : targetOnly) {
+			(stored.emptyKeys().contains(key) ? allowedMissing : missingInSource).add(key);
+		}
+		return new Result(missing, allowedMissing, Set.of(), missingInSource);
 	}
 
 	/**

@@ -7,6 +7,7 @@ import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.customermanagement.domain.Customer;
 import org.fiware.tmforum.migration.postgresql.RawAttributeCheck.Result;
 import org.fiware.tmforum.migration.postgresql.VerifyOptions.Direction;
+import org.fiware.tmforum.migration.postgresql.VerifyTarget.StoredKeys;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
@@ -101,8 +102,28 @@ class RawAttributeCheckTest {
 	@MethodSource("checks")
 	void reportsAttributesMissingOnEitherSide(String description, String type, Class<?> domainClass,
 			Direction direction, Set<String> sourceAttributes, Set<String> targetKeys, Result expected) {
-		assertEquals(expected,
-				new RawAttributeCheck(type, domainClass, direction).check(sourceAttributes, targetKeys), description);
+		assertEquals(expected, new RawAttributeCheck(type, domainClass, direction).check(sourceAttributes,
+				new StoredKeys(targetKeys, Set.of())), description);
+	}
+
+	static Stream<Arguments> emptyValueChecks() {
+		return Stream.of(
+				Arguments.of("empty value omitted by the export", EXPORT, Set.of("name"),
+						new Result(Set.of(), Set.of("relatedParty"), Set.of(), Set.of())),
+				Arguments.of("empty value stored after an import", IMPORT, Set.of("name"),
+						new Result(Set.of(), Set.of(), Set.of("relatedParty"), Set.of())),
+				Arguments.of("empty value exported", EXPORT, Set.of("name", "relatedParty"),
+						new Result(Set.of(), Set.of(), Set.of(), Set.of())));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("emptyValueChecks")
+	void allowsAnEmptyStoredValueTheBrokerOmits(String description, Direction direction, Set<String> sourceAttributes,
+			Result expected) {
+		StoredKeys stored = new StoredKeys(Set.of("id", "name", "relatedParty"), Set.of("relatedParty"));
+
+		assertEquals(expected, new RawAttributeCheck(OFFERING, ProductOffering.class, direction)
+				.check(sourceAttributes, stored), description);
 	}
 
 	static Stream<Arguments> renamedAttributes() {

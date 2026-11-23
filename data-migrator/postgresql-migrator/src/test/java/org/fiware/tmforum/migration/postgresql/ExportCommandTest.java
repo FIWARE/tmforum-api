@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -84,7 +86,7 @@ class ExportCommandTest {
 		source.addPlain(2);
 		target.counts.put(PLAIN, stored);
 		if (firstConflicts) {
-			target.stored.add(((EntityWithId) source.entities.get(PLAIN).getFirst()).getId());
+			target.store(source.entities.get(PLAIN).getFirst());
 		}
 
 		TypeReport report = run(options(resume, keepSubscriptions, false), PLAIN).type(PLAIN);
@@ -109,6 +111,7 @@ class ExportCommandTest {
 			TMForumSubscription written = target.createdHub(hub.getId());
 			Subscription subscription = written.getSubscription();
 			assertTrue(target.registered.contains(subscription), "The hub must reference its registered subscription.");
+			assertEquals(ExportCommand.exportSubscriptionId(hub.getId()), subscription.getId());
 			assertEquals(ENDPOINT, subscription.getNotification().getEndpoint().getUri());
 			assertEquals(QUERY, subscription.getQ());
 			assertEquals(PRODUCT, subscription.getEntities().getFirst().getType());
@@ -131,11 +134,13 @@ class ExportCommandTest {
 		assertTrue(target.created.isEmpty());
 	}
 
-	@Test
-	void refusesAHubSubscriptionTheBrokerHoldsUnderAnotherEndpoint() {
+	@ParameterizedTest(name = "interrupted export: {0}")
+	@ValueSource(booleans = {false, true})
+	void refusesAHubSubscriptionTheBrokerHoldsUnderAnotherEndpoint(boolean interruptedExport) {
 		source.addHub(List.of(PRODUCT), null);
-		URI held = URI.create("urn:ngsi-ld:Subscription:held");
-		source.addHub(List.of(PRODUCT), held);
+		URI stored = URI.create("urn:ngsi-ld:Subscription:held");
+		TMForumSubscription hub = source.addHub(List.of(PRODUCT), interruptedExport ? null : stored);
+		URI held = interruptedExport ? ExportCommand.exportSubscriptionId(hub.getId()) : stored;
 		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(held, OTHER_ENDPOINT_SPELLING));
 
 		ExportReport report = run(options(false, false), HUB);
@@ -173,7 +178,9 @@ class ExportCommandTest {
 		TMForumSubscription exported = source.addHub(List.of(PRODUCT), null);
 		TMForumSubscription fresh = source.addHub(List.of(PRODUCT), URI.create("urn:ngsi-ld:Subscription:gone"));
 		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(kept, ENDPOINT.toString()));
-		target.stored.add(exported.getId());
+		URI exportedSubscription = ExportCommand.exportSubscriptionId(exported.getId());
+		target.storeHub(exported.getId(), exportedSubscription);
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(exportedSubscription, ENDPOINT.toString()));
 
 		TypeReport report = run(options(true, false), HUB).type(HUB);
 
@@ -234,6 +241,67 @@ class ExportCommandTest {
 		assertEquals(1, report.failed);
 		assertEquals(0, report.subscriptionsRegistered);
 		assertEquals(target.registered.stream().map(Subscription::getId).toList(), target.deleted);
+	}
+
+	@Test
+	void keepsTheSubscriptionOfAHubStoredDespiteAFailedWrite() {
+		TMForumSubscription hub = source.addHub(List.of(PRODUCT), null);
+		target.landingDespiteFailure.add(hub.getId());
+
+		TypeReport failed = run(options(false, false), HUB).type(HUB);
+
+		assertEquals(1, failed.failed);
+		assertEquals(1, failed.subscriptionsRegistered);
+		assertTrue(target.deleted.isEmpty(), "The stored hub must keep its subscription.");
+
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(
+				ExportCommand.exportSubscriptionId(hub.getId()), ENDPOINT.toString()));
+		TypeReport resumed = run(options(true, false), HUB).type(HUB);
+
+		assertTrue(resumed.succeeded(), String.valueOf(resumed.failures));
+		assertEquals(1, resumed.skipped);
+		assertEquals(1, target.registered.size(), "The resumed run must not register a second subscription.");
+	}
+
+	@Test
+	void keepsTheSubscriptionWhenItCannotCheckWhetherTheHubWasStored() {
+		TMForumSubscription hub = source.addHub(List.of(PRODUCT), null);
+		target.failing.add(hub.getId());
+		target.lookupFails = true;
+
+		TypeReport report = run(options(false, false), HUB).type(HUB);
+
+		assertTrue(target.deleted.isEmpty(), "An unchecked hub may have been stored, so its subscription stays.");
+		assertTrue(report.failures.stream().anyMatch(failure -> failure.contains("--resume")),
+				String.valueOf(report.failures));
+	}
+
+	@Test
+	void failsAResumedHubTheBrokerHoldsWithoutItsSubscription() {
+		TMForumSubscription hub = source.addHub(List.of(PRODUCT), null);
+		target.storeHub(hub.getId(), URI.create("urn:ngsi-ld:Subscription:gone"));
+
+		TypeReport report = run(options(true, false), HUB).type(HUB);
+
+		assertEquals(1, report.failed);
+		assertEquals(0, report.skipped);
+		assertTrue(report.failures.getFirst().contains("never notify"), String.valueOf(report.failures));
+		assertTrue(target.registered.isEmpty());
+	}
+
+	@Test
+	void reusesTheSubscriptionOfAnInterruptedExport() {
+		TMForumSubscription hub = source.addHub(List.of(PRODUCT), null);
+		URI registered = ExportCommand.exportSubscriptionId(hub.getId());
+		target.subscriptions.add(new SubscriptionStore.BrokerSubscription(registered, ENDPOINT.toString()));
+
+		TypeReport report = run(options(true, false), HUB).type(HUB);
+
+		assertTrue(report.succeeded(), String.valueOf(report.failures));
+		assertEquals(1, report.subscriptionsKept);
+		assertEquals(0, report.subscriptionsRegistered);
+		assertTrue(target.registered.isEmpty(), "A second subscription would notify twice.");
+		assertEquals(registered, target.createdHub(hub.getId()).getSubscription().getId());
 	}
 
 	@Test
@@ -329,12 +397,25 @@ class ExportCommandTest {
 
 	private static final class FakeTarget implements ExportTarget {
 		final Map<String, Long> counts = new HashMap<>();
-		final Set<URI> stored = new HashSet<>();
+		final Map<URI, Object> stored = new HashMap<>();
 		final Set<URI> failing = new HashSet<>();
+		// stored, but the write reports an error, as after a timeout
+		final Set<URI> landingDespiteFailure = new HashSet<>();
 		final List<Object> created = new ArrayList<>();
 		final List<Subscription> registered = new ArrayList<>();
 		final List<SubscriptionStore.BrokerSubscription> subscriptions = new ArrayList<>();
 		final List<URI> deleted = new ArrayList<>();
+		boolean lookupFails;
+
+		void store(Object entity) {
+			stored.put(((EntityWithId) entity).getId(), entity);
+		}
+
+		void storeHub(URI id, URI subscriptionId) {
+			TMForumSubscription hub = new TMForumSubscription(id.toString());
+			hub.setSubscription(new Subscription(subscriptionId.toString()));
+			store(hub);
+		}
 
 		TMForumSubscription createdHub(URI id) {
 			return created.stream().map(TMForumSubscription.class::cast).filter(hub -> hub.getId().equals(id))
@@ -347,18 +428,25 @@ class ExportCommandTest {
 		}
 
 		@Override
-		public boolean exists(URI id) {
-			return stored.contains(id);
+		public Optional<TMForumSubscription> hub(URI id) {
+			if (lookupFails) {
+				throw new IllegalStateException("broker down");
+			}
+			return Optional.ofNullable(stored.get(id)).map(TMForumSubscription.class::cast);
 		}
 
 		@Override
 		public void create(Object domainEntity) {
 			URI id = ((EntityWithId) domainEntity).getId();
-			if (stored.contains(id)) {
+			if (stored.containsKey(id)) {
 				throw new StorageException(StorageOperation.CREATE, StorageErrorReason.CONFLICT, "taken");
 			}
 			if (failing.contains(id)) {
 				throw new IllegalStateException("broker down");
+			}
+			store(domainEntity);
+			if (landingDespiteFailure.contains(id)) {
+				throw new IllegalStateException("timed out");
 			}
 			created.add(domainEntity);
 		}

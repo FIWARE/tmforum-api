@@ -29,7 +29,15 @@ public final class NgsiLdSubscriptionFactory {
 	 */
 	public static Subscription build(URI notificationEndpoint, String callback, String q, List<String> entityTypes,
 			Collection<String> fields) {
-		Subscription subscription = new Subscription(UUID.randomUUID().toString());
+		return build(UUID.randomUUID().toString(), notificationEndpoint, callback, q, entityTypes, fields);
+	}
+
+	/**
+	 * As {@link #build(URI, String, String, List, Collection)}, with the given id (an NGSI-LD id, or a suffix for one).
+	 */
+	public static Subscription build(String id, URI notificationEndpoint, String callback, String q,
+			List<String> entityTypes, Collection<String> fields) {
+		Subscription subscription = new Subscription(id);
 		subscription.setQ(q);
 		subscription.setEntities(entityTypes.stream().map(entityType -> {
 			EntityInfo entityInfo = new EntityInfo();

@@ -11,18 +11,23 @@ import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * Copies every entity of the requested types from PostgreSQL back into an empty broker, the rollback after
  * PostgreSQL took writes. References stay inline. Every hub gets a new NGSI-LD subscription notifying the broker
- * deployment, registered before the hub is written, since a hub without one stays silent on the broker path. A hub
- * whose own subscription the broker still holds fails the export, unless subscriptions are kept.
+ * deployment, registered before the hub is written, since a hub without one stays silent on the broker path. Its id
+ * is derived from the hub's, so a re-run reuses the subscription of an interrupted one. A hub whose own subscription
+ * the broker still holds fails the export, unless subscriptions are kept.
  */
 @Slf4j
 class ExportCommand {
@@ -133,8 +138,9 @@ class ExportCommand {
 					notifying.stream().limit(ExportReport.MAX_EXAMPLES).toList(), KEEP_OR_DELETE);
 			return null;
 		}
-		// a hub's own subscription may notify another spelling of the endpoint, so match it by id as well
-		List<URI> held = heldSubscriptions(domainClass, ids);
+		// a hub's own subscription, or the one an interrupted export registered for it, may notify another spelling of
+		// the endpoint, so match them by id as well
+		Set<URI> held = heldSubscriptions(domainClass, ids);
 		if (!held.isEmpty()) {
 			report.error = String.format("the broker still holds the subscriptions of %d hubs, e.g. %s, under another "
 							+ "notification endpoint; new ones would duplicate the notifications. %s", held.size(),
@@ -144,8 +150,8 @@ class ExportCommand {
 		return ids;
 	}
 
-	private List<URI> heldSubscriptions(Class<?> domainClass, Set<URI> brokerSubscriptions) {
-		List<URI> held = new ArrayList<>();
+	private Set<URI> heldSubscriptions(Class<?> domainClass, Set<URI> brokerSubscriptions) {
+		Set<URI> held = new LinkedHashSet<>();
 		if (brokerSubscriptions.isEmpty()) {
 			return held;
 		}
@@ -156,9 +162,14 @@ class ExportCommand {
 					options.pageSize());
 			sourceCount = page.totalCount();
 			for (Object entity : page.entities()) {
-				URI stored = storedSubscription((TMForumSubscription) entity);
+				TMForumSubscription hub = (TMForumSubscription) entity;
+				URI stored = storedSubscription(hub);
 				if (stored != null && brokerSubscriptions.contains(stored)) {
 					held.add(stored);
+				}
+				URI exported = exportSubscriptionId(hub.getId());
+				if (brokerSubscriptions.contains(exported)) {
+					held.add(exported);
 				}
 			}
 			if (page.entities().isEmpty()) {
@@ -186,10 +197,11 @@ class ExportCommand {
 			report.subscriptionsKept++;
 			return write(hub, report) != Outcome.FAILED;
 		}
-		// written by an earlier export, together with its subscription
-		if (options.resume() && target.exists(hub.getId())) {
-			report.skipped++;
-			return true;
+		if (options.resume()) {
+			Optional<TMForumSubscription> exported = target.hub(hub.getId());
+			if (exported.isPresent()) {
+				return skipExported(exported.get(), brokerSubscriptions, report);
+			}
 		}
 		Subscription subscription;
 		try {
@@ -199,24 +211,48 @@ class ExportCommand {
 			return false;
 		}
 		hub.setSubscription(subscription);
-		if (options.dryRun()) {
+		// registered by an interrupted export that did not write the hub
+		boolean reused = brokerSubscriptions.contains(subscription.getId());
+		if (reused) {
+			report.subscriptionsKept++;
+		} else if (options.dryRun()) {
 			report.subscriptionsRegistered++;
-			return write(hub, report) != Outcome.FAILED;
+		} else {
+			try {
+				target.registerSubscription(subscription);
+			} catch (RuntimeException e) {
+				log.warn("Was not able to register the subscription of {}.", hub.getId(), e);
+				report.fail(hub.getId() + ": registering its subscription failed: " + e.getMessage());
+				return false;
+			}
+			report.subscriptionsRegistered++;
 		}
-		try {
-			target.registerSubscription(subscription);
-		} catch (RuntimeException e) {
-			log.warn("Was not able to register the subscription of {}.", hub.getId(), e);
-			report.fail(hub.getId() + ": registering its subscription failed: " + e.getMessage());
-			return false;
-		}
-		report.subscriptionsRegistered++;
 		Outcome outcome = write(hub, report);
 		if (outcome != Outcome.WRITTEN) {
-			// a subscription without its hub would notify a hub the broker does not know
-			removeSubscription(subscription.getId(), report);
+			releaseSubscription(hub.getId(), subscription.getId(), reused, report);
 		}
 		return outcome != Outcome.FAILED;
+	}
+
+	// written by an earlier export; it only notifies while the broker holds the subscription it references
+	private static boolean skipExported(TMForumSubscription exported, Set<URI> brokerSubscriptions,
+			TypeReport report) {
+		URI subscription = storedSubscription(exported);
+		if (subscription != null && brokerSubscriptions.contains(subscription)) {
+			report.skipped++;
+			return true;
+		}
+		report.fail(String.format("%s: the broker holds the hub, but not its subscription %s, so it would never "
+				+ "notify; delete the hub from the broker and re-run with --resume.", exported.getId(), subscription));
+		return false;
+	}
+
+	/**
+	 * The id {@code export} gives the hub's subscription; derived from the hub id, so it is the same on every run.
+	 */
+	static URI exportSubscriptionId(URI hubId) {
+		return new Subscription(UUID.nameUUIDFromBytes(hubId.toString().getBytes(StandardCharsets.UTF_8)).toString())
+				.getId();
 	}
 
 	/**
@@ -228,14 +264,34 @@ class ExportCommand {
 			throw new IllegalArgumentException("the hub has no callback.");
 		}
 		List<String> entityTypes = hub.getEntities() == null ? List.of() : hub.getEntities();
-		return NgsiLdSubscriptionFactory.build(options.notificationEndpoint(entityTypes), hub.getCallback().toString(),
-				hub.getQuery(), entityTypes, hub.getFields());
+		return NgsiLdSubscriptionFactory.build(exportSubscriptionId(hub.getId()).toString(),
+				options.notificationEndpoint(entityTypes), hub.getCallback().toString(), hub.getQuery(), entityTypes,
+				hub.getFields());
 	}
 
-	private void removeSubscription(URI subscriptionId, TypeReport report) {
+	// a write that failed may still have stored the hub, which then needs the subscription
+	private void releaseSubscription(URI hubId, URI subscriptionId, boolean reused, TypeReport report) {
+		Optional<TMForumSubscription> stored;
+		try {
+			stored = target.hub(hubId);
+		} catch (RuntimeException e) {
+			log.warn("Was not able to check whether {} was stored.", hubId, e);
+			report.fail(String.format("%s: could not check whether the hub was stored, so its subscription %s is kept; "
+					+ "re-run with --resume: %s", hubId, subscriptionId, e.getMessage()));
+			return;
+		}
+		if (stored.map(ExportCommand::storedSubscription).filter(subscriptionId::equals).isPresent()) {
+			log.info("{} was stored with subscription {} despite the error, the subscription is kept.", hubId,
+					subscriptionId);
+			return;
+		}
 		try {
 			target.deleteSubscription(subscriptionId);
-			report.subscriptionsRegistered--;
+			if (reused) {
+				report.subscriptionsKept--;
+			} else {
+				report.subscriptionsRegistered--;
+			}
 		} catch (RuntimeException e) {
 			log.warn("Was not able to remove subscription {}.", subscriptionId, e);
 			report.fail(String.format("subscription %s of an unwritten hub is left on the broker: %s", subscriptionId,

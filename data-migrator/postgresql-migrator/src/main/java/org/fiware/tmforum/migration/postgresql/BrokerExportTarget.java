@@ -3,12 +3,14 @@ package org.fiware.tmforum.migration.postgresql;
 import io.micronaut.context.ApplicationContext;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
+import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
 import org.fiware.tmforum.common.repository.SubscriptionRepository;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Writes into the source context's broker through the application's NGSI-LD adapter and subscription repository, so
@@ -36,8 +38,8 @@ class BrokerExportTarget implements ExportTarget {
 	}
 
 	@Override
-	public boolean exists(URI id) {
-		return broker.entity(id).isPresent();
+	public Optional<TMForumSubscription> hub(URI id) {
+		return broker.entity(id).map(entity -> broker.toDomain(entity, TMForumSubscription.class));
 	}
 
 	@Override
