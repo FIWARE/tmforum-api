@@ -77,8 +77,8 @@ class VerifyCommand {
 	private void verifyType(String type, TypeReport report) {
 		Class<?> domainClass = registry.domainClass(type)
 				.orElseThrow(() -> new IllegalArgumentException("No domain class maps " + type + "."));
-		RawAttributeCheck rawCheck = new RawAttributeCheck(type, domainClass);
-		DocumentDiff.Rules rules = DocumentDiff.Rules.of(type, domainClass, catalog);
+		RawAttributeCheck rawCheck = new RawAttributeCheck(type, domainClass, options.direction());
+		DocumentDiff.Rules rules = DocumentDiff.Rules.of(type, domainClass, catalog, options.direction());
 		boolean hub = TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type);
 		EntitySample sample = new EntitySample(options.sampleSize(), options.seed());
 		Set<URI> seen = new HashSet<>();
@@ -111,9 +111,9 @@ class VerifyCommand {
 
 	// returns the entities that are stored, the others are reported as missing rows
 	private List<EntityVO> checkAttributes(List<EntityVO> entities, RawAttributeCheck rawCheck, TypeReport report) {
-		Map<URI, Set<String>> keys = target.topLevelKeys(entities.stream().map(EntityVO::getId).toList());
+		Map<URI, VerifyTarget.StoredKeys> keys = target.topLevelKeys(entities.stream().map(EntityVO::getId).toList());
 		return entities.stream().filter(entity -> {
-			Set<String> targetKeys = keys.get(entity.getId());
+			VerifyTarget.StoredKeys targetKeys = keys.get(entity.getId());
 			if (targetKeys == null) {
 				report.missingRows.add(entity.getId().toString());
 				return false;

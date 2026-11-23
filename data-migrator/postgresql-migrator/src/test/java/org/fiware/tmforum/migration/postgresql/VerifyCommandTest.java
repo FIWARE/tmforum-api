@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -24,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -77,6 +79,33 @@ class VerifyCommandTest {
 		assertTrue(report.succeeded(), report.failures().toString());
 		assertEquals(1, report.type(VERSIONED).allowedDifferences.get(DocumentDiff.Kind.SEEDED_VERSION).count);
 		assertEquals(1, report.type(VERSIONED).targetOnlyKeys.get(DocumentDiff.VERSION_KEY));
+	}
+
+	@Test
+	void failsAStoredVersionTheExportLost() {
+		EntityVO entity = entity(VERSIONED, 0, NAME, "n");
+		source.add(entity);
+		target.store(entity, "{\"id\":\"" + entity.getId() + "\",\"name\":\"n\",\"version\":\"0.0.1\"}");
+
+		VerifyReport report = run(VERSIONED, VerifyOptions.Direction.EXPORT);
+
+		assertFalse(report.succeeded());
+		String failures = String.join("\n", report.failures());
+		assertTrue(failures.contains("key 'version' of the target missing in the broker"), failures);
+		assertTrue(failures.contains("1 field differences"), failures);
+	}
+
+	@Test
+	void allowsAnEmptyListTheExportOmitted() {
+		EntityVO entity = entity(VERSIONED, 0, NAME, "n");
+		source.add(entity);
+		target.store(entity, "{\"id\":\"" + entity.getId() + "\",\"name\":\"n\",\"relatedParty\":[]}");
+
+		VerifyReport report = run(VERSIONED, VerifyOptions.Direction.EXPORT);
+
+		assertTrue(report.succeeded(), report.failures().toString());
+		assertEquals(1, report.type(VERSIONED).allowedDifferences.get(DocumentDiff.Kind.OMITTED_EMPTY_VALUE).count);
+		assertEquals(1, report.type(VERSIONED).allowedMissingAttributes.get("relatedParty"));
 	}
 
 	static Stream<Arguments> corruptions() {
@@ -149,7 +178,8 @@ class VerifyCommandTest {
 		target.store(hub, "{\"id\":\"" + hub.getId() + "\",\"query\":\"" + storedQuery + "\"}");
 
 		VerifyReport report = new VerifyCommand(source, target, registry, EMPTY_CATALOG,
-				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, 0, sourceEscaped)).run(List.of(HUB));
+				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, 0, sourceEscaped,
+						VerifyOptions.Direction.IMPORT)).run(List.of(HUB));
 
 		assertEquals(passes ? 0 : 1, report.type(HUB).hubQueryMismatches.count, report.failures().toString());
 	}
@@ -172,8 +202,13 @@ class VerifyCommandTest {
 	}
 
 	private VerifyReport run(String type) {
+		return run(type, VerifyOptions.Direction.IMPORT);
+	}
+
+	private VerifyReport run(String type, VerifyOptions.Direction direction) {
 		return new VerifyCommand(source, target, registry, EMPTY_CATALOG,
-				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, FULL_CHECK_THRESHOLD, true)).run(List.of(type));
+				new VerifyOptions(PAGE_SIZE, SAMPLE_SIZE, SEED, FULL_CHECK_THRESHOLD, true, direction))
+				.run(List.of(type));
 	}
 
 	private void copy(EntityVO entity) {
@@ -250,10 +285,15 @@ class VerifyCommandTest {
 		}
 
 		@Override
-		public Map<URI, Set<String>> topLevelKeys(Collection<URI> ids) {
-			Map<URI, Set<String>> keys = new HashMap<>();
-			ids.stream().filter(documents::containsKey).forEach(id ->
-					keys.put(id, Set.copyOf(MAPPER.readTree(documents.get(id)).propertyNames())));
+		public Map<URI, StoredKeys> topLevelKeys(Collection<URI> ids) {
+			Map<URI, StoredKeys> keys = new HashMap<>();
+			ids.stream().filter(documents::containsKey).forEach(id -> {
+				JsonNode document = MAPPER.readTree(documents.get(id));
+				keys.put(id, new StoredKeys(Set.copyOf(document.propertyNames()), document.properties().stream()
+						.filter(property -> property.getValue().isContainer() && property.getValue().isEmpty())
+						.map(Map.Entry::getKey)
+						.collect(Collectors.toSet())));
+			});
 			return keys;
 		}
 

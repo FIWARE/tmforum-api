@@ -26,7 +26,10 @@ class DocumentDiffTest {
 	private static final Rules RULES = new Rules(true, false, Map.of("productSpecification", Set.of("name", "version"),
 			"category", Set.of("name")));
 	private static final Rules HUB_RULES = new Rules(false, true, Map.of());
+	private static final Rules EXPORTED_HUB_RULES = new Rules(false, true, Map.of(), true);
 	private static final Rules UNVERSIONED_RULES = new Rules(false, false, Map.of());
+	private static final Rules EXPORTED_RULES = new Rules(true, false, Map.of("productSpecification",
+			Set.of("name", "version"), "category", Set.of("name")), true);
 
 	static Stream<Arguments> differences() {
 		return Stream.of(
@@ -47,6 +50,37 @@ class DocumentDiffTest {
 				Arguments.of("dropped hub subscription", HUB_RULES,
 						"{\"query\":\"q\",\"subscription\":{\"id\":\"urn:s\"}}", "{\"query\":\"q\"}",
 						List.of(new Expected(Kind.DROPPED_SUBSCRIPTION, "subscription"))),
+				Arguments.of("hub subscription registered by the export", EXPORTED_HUB_RULES,
+						"{\"subscription\":{\"id\":\"urn:new\"}}", "{\"subscription\":{\"id\":\"urn:old\"}}",
+						List.of(new Expected(Kind.REGISTERED_SUBSCRIPTION, "subscription"))),
+				Arguments.of("hub subscription registered by the export, on a stored hub without one",
+						EXPORTED_HUB_RULES, "{\"subscription\":{\"id\":\"urn:new\"}}", "{}",
+						List.of(new Expected(Kind.REGISTERED_SUBSCRIPTION, "subscription"))),
+				Arguments.of("hub exported without a subscription", EXPORTED_HUB_RULES,
+						"{}", "{\"subscription\":{\"id\":\"urn:old\"}}",
+						List.of(new Expected(Kind.MISMATCH, "subscription"))),
+				Arguments.of("reference field lost by the export", EXPORTED_RULES,
+						"{\"productSpecification\":{\"id\":\"s\"}}",
+						"{\"productSpecification\":{\"id\":\"s\",\"name\":\"spec\"}}",
+						List.of(new Expected(Kind.MISMATCH, "productSpecification"))),
+				Arguments.of("version lost by the export", EXPORTED_RULES, "{\"name\":\"n\"}",
+						"{\"name\":\"n\",\"version\":\"0.0.1\"}", List.of(new Expected(Kind.MISMATCH, "version"))),
+				Arguments.of("version blanked by the export", EXPORTED_RULES, "{\"version\":\"\"}",
+						"{\"version\":\"0.0.1\"}", List.of(new Expected(Kind.MISMATCH, "version"))),
+				Arguments.of("empty list omitted by the export", EXPORTED_RULES, "{\"name\":\"n\"}",
+						"{\"name\":\"n\",\"relatedParty\":[]}",
+						List.of(new Expected(Kind.OMITTED_EMPTY_VALUE, "relatedParty"))),
+				Arguments.of("empty object omitted by the export", EXPORTED_RULES, "{\"name\":\"n\"}",
+						"{\"name\":\"n\",\"validFor\":{}}", List.of(new Expected(Kind.OMITTED_EMPTY_VALUE, "validFor"))),
+				Arguments.of("non-empty list lost by the export", EXPORTED_RULES, "{\"name\":\"n\"}",
+						"{\"name\":\"n\",\"relatedParty\":[{\"id\":\"p\"}]}",
+						List.of(new Expected(Kind.MISMATCH, "relatedParty"))),
+				Arguments.of("empty list missing in the target after an import", RULES,
+						"{\"name\":\"n\",\"relatedParty\":[]}", "{\"name\":\"n\"}",
+						List.of(new Expected(Kind.MISMATCH, "relatedParty"))),
+				Arguments.of("changed hub subscription after an import", HUB_RULES,
+						"{\"subscription\":{\"id\":\"urn:new\"}}", "{\"subscription\":{\"id\":\"urn:old\"}}",
+						List.of(new Expected(Kind.MISMATCH, "subscription"))),
 				Arguments.of("changed field", RULES, "{\"name\":\"n\"}", "{\"name\":\"changed\"}",
 						List.of(new Expected(Kind.MISMATCH, "name"))),
 				Arguments.of("removed field", RULES, "{\"name\":\"n\",\"description\":\"d\"}", "{\"name\":\"n\"}",
@@ -108,12 +142,16 @@ class DocumentDiffTest {
 	void rulesComeFromTheCatalogAndTheDomainClass() {
 		ReferenceBackfillCatalog catalog = ReferenceBackfillCatalog.load();
 
-		Rules offering = Rules.of(ProductOffering.TYPE_PRODUCT_OFFERING, ProductOffering.class, catalog);
-		Rules hub = Rules.of(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION, TMForumSubscription.class, catalog);
+		Rules offering = Rules.of(ProductOffering.TYPE_PRODUCT_OFFERING, ProductOffering.class, catalog,
+				VerifyOptions.Direction.IMPORT);
+		Rules hub = Rules.of(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION, TMForumSubscription.class, catalog,
+				VerifyOptions.Direction.EXPORT);
 
 		assertTrue(offering.versioned());
 		assertTrue(offering.fillableKeys().get("category").contains("name"), offering.toString());
 		assertTrue(hub.hub());
+		assertTrue(hub.exported());
+		assertEquals(false, offering.exported());
 		assertEquals(false, hub.versioned());
 	}
 

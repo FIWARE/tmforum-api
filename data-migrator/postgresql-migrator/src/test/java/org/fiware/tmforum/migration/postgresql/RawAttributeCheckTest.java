@@ -6,6 +6,8 @@ import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.customermanagement.domain.Customer;
 import org.fiware.tmforum.migration.postgresql.RawAttributeCheck.Result;
+import org.fiware.tmforum.migration.postgresql.VerifyOptions.Direction;
+import org.fiware.tmforum.migration.postgresql.VerifyTarget.StoredKeys;
 import org.fiware.tmforum.party.domain.individual.Individual;
 import org.fiware.tmforum.product.ProductOffering;
 import org.fiware.tmforum.resourcefunction.domain.ResourceFunction;
@@ -27,6 +29,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.fiware.tmforum.migration.postgresql.VerifyOptions.Direction.EXPORT;
+import static org.fiware.tmforum.migration.postgresql.VerifyOptions.Direction.IMPORT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,32 +63,67 @@ class RawAttributeCheckTest {
 
 	static Stream<Arguments> checks() {
 		return Stream.of(
-				Arguments.of("all stored", OFFERING, ProductOffering.class, Set.of("name", "version"),
-						Set.of("id", "type", "name", "version"), new Result(Set.of(), Set.of(), Set.of())),
-				Arguments.of("dropped attribute", OFFERING, ProductOffering.class, Set.of("name", "description"),
-						Set.of("id", "name"), new Result(Set.of("description"), Set.of(), Set.of())),
-				Arguments.of("seeded version only in the target", OFFERING, ProductOffering.class, Set.of("name"),
-						Set.of("id", "type", "name", "version"), new Result(Set.of(), Set.of(), Set.of("version"))),
-				Arguments.of("dropped hub subscription", HUB, TMForumSubscription.class,
+				Arguments.of("all stored", OFFERING, ProductOffering.class, IMPORT, Set.of("name", "version"),
+						Set.of("id", "type", "name", "version"), new Result(Set.of(), Set.of(), Set.of(), Set.of())),
+				Arguments.of("dropped attribute", OFFERING, ProductOffering.class, IMPORT,
+						Set.of("name", "description"), Set.of("id", "name"), new Result(Set.of("description"), Set.of(), Set.of(), Set.of())),
+				Arguments.of("seeded version only in the target", OFFERING, ProductOffering.class, IMPORT,
+						Set.of("name"), Set.of("id", "type", "name", "version"),
+						new Result(Set.of(), Set.of(), Set.of("version"), Set.of())),
+				Arguments.of("dropped hub subscription", HUB, TMForumSubscription.class, IMPORT,
 						Set.of("query", "subscription"), Set.of("id", "query"),
-						new Result(Set.of(), Set.of("subscription"), Set.of())),
-				Arguments.of("dropped subscription on a non-hub", OFFERING, ProductOffering.class,
-						Set.of("subscription"), Set.of("id"), new Result(Set.of("subscription"), Set.of(), Set.of())),
-				Arguments.of("renamed attribute stored", Individual.TYPE_INDIVIDUAL, Individual.class,
-						Set.of("individualLocation"), Set.of("id", "location"), new Result(Set.of(), Set.of(), Set.of())),
-				Arguments.of("renamed attribute dropped", Individual.TYPE_INDIVIDUAL, Individual.class,
+						new Result(Set.of(), Set.of("subscription"), Set.of(), Set.of())),
+				Arguments.of("dropped subscription on a non-hub", OFFERING, ProductOffering.class, IMPORT,
+						Set.of("subscription"), Set.of("id"),
+						new Result(Set.of("subscription"), Set.of(), Set.of(), Set.of())),
+				Arguments.of("renamed attribute stored", Individual.TYPE_INDIVIDUAL, Individual.class, IMPORT,
+						Set.of("individualLocation"), Set.of("id", "location"),
+						new Result(Set.of(), Set.of(), Set.of(), Set.of())),
+				Arguments.of("renamed attribute dropped", Individual.TYPE_INDIVIDUAL, Individual.class, IMPORT,
 						Set.of("individualLocation"), Set.of("id"),
-						new Result(Set.of("individualLocation"), Set.of(), Set.of())),
-				Arguments.of("unmapped extension stored under its name", OFFERING, ProductOffering.class,
-						Set.of("extension"), Set.of("id", "extension"), new Result(Set.of(), Set.of(), Set.of())));
+						new Result(Set.of("individualLocation"), Set.of(), Set.of(), Set.of())),
+				Arguments.of("unmapped extension stored under its name", OFFERING, ProductOffering.class, IMPORT,
+						Set.of("extension"), Set.of("id", "extension"),
+						new Result(Set.of(), Set.of(), Set.of(), Set.of())),
+				Arguments.of("stored key missing on the broker after an export", OFFERING, ProductOffering.class,
+						EXPORT, Set.of("name"), Set.of("id", "type", "name", "version"),
+						new Result(Set.of(), Set.of(), Set.of(), Set.of("version"))),
+				Arguments.of("all exported", OFFERING, ProductOffering.class, EXPORT, Set.of("name", "version"),
+						Set.of("id", "type", "name", "version"), new Result(Set.of(), Set.of(), Set.of(), Set.of())),
+				Arguments.of("subscription registered on a hub created on PostgreSQL", HUB, TMForumSubscription.class,
+						EXPORT, Set.of("query", "subscription"), Set.of("id", "query"),
+						new Result(Set.of(), Set.of("subscription"), Set.of(), Set.of())),
+				Arguments.of("hub exported without a subscription", HUB, TMForumSubscription.class, EXPORT,
+						Set.of("query"), Set.of("id", "query", "subscription"),
+						new Result(Set.of(), Set.of(), Set.of(), Set.of("subscription"))));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("checks")
-	void reportsAttributesMissingInTheTarget(String description, String type, Class<?> domainClass,
-			Set<String> sourceAttributes, Set<String> targetKeys, Result expected) {
-		assertEquals(expected, new RawAttributeCheck(type, domainClass).check(sourceAttributes, targetKeys),
-				description);
+	void reportsAttributesMissingOnEitherSide(String description, String type, Class<?> domainClass,
+			Direction direction, Set<String> sourceAttributes, Set<String> targetKeys, Result expected) {
+		assertEquals(expected, new RawAttributeCheck(type, domainClass, direction).check(sourceAttributes,
+				new StoredKeys(targetKeys, Set.of())), description);
+	}
+
+	static Stream<Arguments> emptyValueChecks() {
+		return Stream.of(
+				Arguments.of("empty value omitted by the export", EXPORT, Set.of("name"),
+						new Result(Set.of(), Set.of("relatedParty"), Set.of(), Set.of())),
+				Arguments.of("empty value stored after an import", IMPORT, Set.of("name"),
+						new Result(Set.of(), Set.of(), Set.of("relatedParty"), Set.of())),
+				Arguments.of("empty value exported", EXPORT, Set.of("name", "relatedParty"),
+						new Result(Set.of(), Set.of(), Set.of(), Set.of())));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("emptyValueChecks")
+	void allowsAnEmptyStoredValueTheBrokerOmits(String description, Direction direction, Set<String> sourceAttributes,
+			Result expected) {
+		StoredKeys stored = new StoredKeys(Set.of("id", "name", "relatedParty"), Set.of("relatedParty"));
+
+		assertEquals(expected, new RawAttributeCheck(OFFERING, ProductOffering.class, direction)
+				.check(sourceAttributes, stored), description);
 	}
 
 	static Stream<Arguments> renamedAttributes() {

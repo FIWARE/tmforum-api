@@ -5,8 +5,18 @@ package org.fiware.tmforum.migration.postgresql;
  *
  * @param fullCheckThreshold a type with at most this many entities is diffed completely, a larger one by sample
  * @param sourceEscaped      whether the broker's hub queries are URL-encoded, as {@code --source-escaped}
+ * @param direction          which way the data was copied, so which store holds the migration's own changes
  */
-record VerifyOptions(int pageSize, int sampleSize, long seed, int fullCheckThreshold, boolean sourceEscaped) {
+record VerifyOptions(int pageSize, int sampleSize, long seed, int fullCheckThreshold, boolean sourceEscaped,
+		Direction direction) {
+
+	/**
+	 * {@code IMPORT}: broker to PostgreSQL. {@code EXPORT}: PostgreSQL back to the broker, which registered new hub
+	 * subscriptions.
+	 */
+	enum Direction {
+		IMPORT, EXPORT
+	}
 
 	VerifyOptions {
 		if (pageSize < 1) {

@@ -14,6 +14,8 @@ import java.util.TreeSet;
 /**
  * Compares the top-level attributes of a raw broker entity with the top-level keys of its stored document, so an
  * attribute that the domain mapping drops on read is caught (the document diff reads both sides through that mapping).
+ * After an export the broker is the copy, so a stored key it lacks fails as well, unless the key holds an empty array
+ * or object: the NGSI-LD mapping omits those when it creates an entity.
  */
 final class RawAttributeCheck {
 
@@ -25,13 +27,15 @@ final class RawAttributeCheck {
 
 	private final Map<String, String> documentKeys;
 	private final boolean hub;
+	private final boolean exported;
 
 	/**
 	 * {@code domainClass} is null for a type no class maps; its attribute names are then taken as the document keys.
 	 */
-	RawAttributeCheck(String type, Class<?> domainClass) {
+	RawAttributeCheck(String type, Class<?> domainClass, VerifyOptions.Direction direction) {
 		this.documentKeys = domainClass == null ? Map.of() : documentKeys(domainClass);
 		this.hub = TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type);
+		this.exported = direction == VerifyOptions.Direction.EXPORT;
 	}
 
 	/**
@@ -81,9 +85,12 @@ final class RawAttributeCheck {
 	}
 
 	/**
-	 * Checks one entity: {@code missing} fails the run, {@code allowedMissing} and {@code targetOnly} are only listed.
+	 * Checks one entity: {@code missing} and {@code missingInSource} fail the run, {@code allowedMissing} and
+	 * {@code targetOnly} are only listed. After an export a target-only key is {@code missingInSource}, or
+	 * {@code allowedMissing} when it holds an empty value.
 	 */
-	Result check(Set<String> sourceAttributes, Set<String> targetKeys) {
+	Result check(Set<String> sourceAttributes, VerifyTarget.StoredKeys stored) {
+		Set<String> targetKeys = stored.keys();
 		Set<String> missing = new TreeSet<>();
 		Set<String> allowedMissing = new TreeSet<>();
 		Set<String> expectedKeys = new TreeSet<>();
@@ -102,13 +109,21 @@ final class RawAttributeCheck {
 		Set<String> targetOnly = new TreeSet<>(targetKeys);
 		targetOnly.removeAll(expectedKeys);
 		targetOnly.removeAll(SYSTEM_KEYS);
-		return new Result(missing, allowedMissing, targetOnly);
+		if (!exported) {
+			return new Result(missing, allowedMissing, targetOnly, Set.of());
+		}
+		Set<String> missingInSource = new TreeSet<>();
+		for (String key : targetOnly) {
+			(stored.emptyKeys().contains(key) ? allowedMissing : missingInSource).add(key);
+		}
+		return new Result(missing, allowedMissing, Set.of(), missingInSource);
 	}
 
 	/**
 	 * Attribute names of one entity, by outcome.
 	 */
-	record Result(Set<String> missing, Set<String> allowedMissing, Set<String> targetOnly) {
+	record Result(Set<String> missing, Set<String> allowedMissing, Set<String> targetOnly,
+			Set<String> missingInSource) {
 	}
 
 	private static boolean hasField(Class<?> type, String name) {

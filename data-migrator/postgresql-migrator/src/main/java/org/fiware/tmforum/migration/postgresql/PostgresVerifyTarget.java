@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -30,8 +29,9 @@ class PostgresVerifyTarget implements VerifyTarget {
 	static final String COUNT_CURRENT = "SELECT type, count(*) FROM " + PostgresStorage.QUALIFIED_ENTITY_TABLE
 			+ " WHERE is_current GROUP BY type";
 	// LEFT JOIN, so a stored document without keys still shows up as stored
-	static final String TOP_LEVEL_KEYS = "SELECT e.id, k.key FROM " + PostgresStorage.QUALIFIED_ENTITY_TABLE
-			+ " e LEFT JOIN LATERAL jsonb_object_keys(e.data) k(key) ON true WHERE e.id = ANY($1::text[]) AND e.is_current";
+	static final String TOP_LEVEL_KEYS = "SELECT e.id, k.key, k.value IN ('[]'::jsonb, '{}'::jsonb) FROM "
+			+ PostgresStorage.QUALIFIED_ENTITY_TABLE + " e LEFT JOIN LATERAL jsonb_each(e.data) k(key, value) ON true"
+			+ " WHERE e.id = ANY($1::text[]) AND e.is_current";
 	static final String DOCUMENTS = "SELECT id, data::text FROM " + PostgresStorage.QUALIFIED_ENTITY_TABLE
 			+ " WHERE id = ANY($1::text[]) AND is_current";
 	// walks every object member and array element; the CASE guards keep jsonb_each/jsonb_array_elements off scalars;
@@ -71,20 +71,27 @@ class PostgresVerifyTarget implements VerifyTarget {
 	}
 
 	@Override
-	public Map<URI, Set<String>> topLevelKeys(Collection<URI> ids) {
-		Map<URI, Set<String>> keys = new HashMap<>();
+	public Map<URI, StoredKeys> topLevelKeys(Collection<URI> ids) {
+		Map<URI, StoredKeys> keys = new HashMap<>();
 		if (ids.isEmpty()) {
 			return keys;
 		}
-		query(TOP_LEVEL_KEYS, List.of(idArray(ids)), row -> new String[]{row.get(0, String.class),
-				row.get(1, String.class)})
-				.forEach(idAndKey -> {
-					Set<String> entityKeys = keys.computeIfAbsent(URI.create(idAndKey[0]), id -> new HashSet<>());
-					if (idAndKey[1] != null) {
-						entityKeys.add(idAndKey[1]);
+		query(TOP_LEVEL_KEYS, List.of(idArray(ids)), row -> new StoredKey(row.get(0, String.class),
+				row.get(1, String.class), Boolean.TRUE.equals(row.get(2, Boolean.class))))
+				.forEach(stored -> {
+					StoredKeys entityKeys = keys.computeIfAbsent(URI.create(stored.id()),
+							id -> new StoredKeys(new HashSet<>(), new HashSet<>()));
+					if (stored.key() != null) {
+						entityKeys.keys().add(stored.key());
+						if (stored.empty()) {
+							entityKeys.emptyKeys().add(stored.key());
+						}
 					}
 				});
 		return keys;
+	}
+
+	private record StoredKey(String id, String key, boolean empty) {
 	}
 
 	@Override

@@ -22,7 +22,14 @@ interface VerifyTarget {
 	/**
 	 * The top-level document keys per stored id; an id that is not stored is absent.
 	 */
-	Map<URI, Set<String>> topLevelKeys(Collection<URI> ids);
+	Map<URI, StoredKeys> topLevelKeys(Collection<URI> ids);
+
+	/**
+	 * A document's top-level keys; {@code emptyKeys} are those holding an empty array or object, which the NGSI-LD
+	 * mapping omits when it creates an entity.
+	 */
+	record StoredKeys(Set<String> keys, Set<String> emptyKeys) {
+	}
 
 	/**
 	 * The stored document text per stored id; an id that is not stored is absent.

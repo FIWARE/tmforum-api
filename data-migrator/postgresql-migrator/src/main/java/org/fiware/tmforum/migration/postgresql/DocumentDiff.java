@@ -18,8 +18,10 @@ import java.util.stream.Collectors;
 
 /**
  * Compares the source and target documents of one entity, both written by the PostgreSQL document mapper. Only the
- * migration's own changes are allowed: reference fields the backfill filled, the seeded version and the subscription
- * attribute that {@code cleanup-subscriptions} drops; anything else is a mismatch.
+ * migration's own changes are allowed: reference fields the backfill filled, the seeded version, the subscription
+ * attribute that {@code cleanup-subscriptions} drops and the one {@code export} registers anew; anything else is a
+ * mismatch. After an export the broker is a verbatim copy, so only the registered subscription and the empty values
+ * the NGSI-LD mapping omits on create may differ.
  */
 final class DocumentDiff {
 
@@ -33,7 +35,8 @@ final class DocumentDiff {
 	 * What a difference is; everything but {@link #MISMATCH} is an intended change of the migration.
 	 */
 	enum Kind {
-		BACKFILLED_REFERENCE_FIELD, SEEDED_VERSION, DROPPED_SUBSCRIPTION, MISMATCH
+		BACKFILLED_REFERENCE_FIELD, SEEDED_VERSION, DROPPED_SUBSCRIPTION, REGISTERED_SUBSCRIPTION, OMITTED_EMPTY_VALUE,
+		MISMATCH
 	}
 
 	/**
@@ -47,11 +50,18 @@ final class DocumentDiff {
 	}
 
 	/**
-	 * What may differ for one type. {@code fillableKeys} maps a backfilled attribute to its fillable reference keys.
+	 * What may differ for one type. {@code fillableKeys} maps a backfilled attribute to its fillable reference keys;
+	 * {@code exported} allows a hub's broker subscription to differ from the stored one and disables the backfill and
+	 * seeded-version allowances, which describe an import.
 	 */
-	record Rules(boolean versioned, boolean hub, Map<String, Set<String>> fillableKeys) {
+	record Rules(boolean versioned, boolean hub, Map<String, Set<String>> fillableKeys, boolean exported) {
 
-		static Rules of(String type, Class<?> domainClass, ReferenceBackfillCatalog catalog) {
+		Rules(boolean versioned, boolean hub, Map<String, Set<String>> fillableKeys) {
+			this(versioned, hub, fillableKeys, false);
+		}
+
+		static Rules of(String type, Class<?> domainClass, ReferenceBackfillCatalog catalog,
+				VerifyOptions.Direction direction) {
 			Map<String, Set<String>> fillable = new HashMap<>();
 			for (Entry entry : catalog.entries()) {
 				if (entry.ownerTypes().contains(type)) {
@@ -60,7 +70,8 @@ final class DocumentDiff {
 				}
 			}
 			return new Rules(domainClass != null && VersionedEntity.class.isAssignableFrom(domainClass),
-					TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type), Map.copyOf(fillable));
+					TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION.equals(type), Map.copyOf(fillable),
+					direction == VerifyOptions.Direction.EXPORT);
 		}
 	}
 
@@ -80,12 +91,18 @@ final class DocumentDiff {
 			if (Objects.equals(sourceValue, targetValue)) {
 				continue;
 			}
-			if (VERSION_KEY.equals(key) && rules.versioned() && isBlank(sourceValue)
+			if (VERSION_KEY.equals(key) && rules.versioned() && !rules.exported() && isBlank(sourceValue)
 					&& targetValue != null && ImportCommand.SEED_VERSION.equals(targetValue.asString())) {
 				differences.add(new Difference(Kind.SEEDED_VERSION, key, ImportCommand.SEED_VERSION));
+			} else if (RawAttributeCheck.SUBSCRIPTION_ATTRIBUTE.equals(key) && rules.hub() && rules.exported()
+					&& sourceValue != null) {
+				// the source is the broker the export registered a new subscription on; without one the hub is silent
+				differences.add(new Difference(Kind.REGISTERED_SUBSCRIPTION, key, render(sourceValue)));
+			} else if (rules.exported() && sourceValue == null && isEmptyContainer(targetValue)) {
+				differences.add(new Difference(Kind.OMITTED_EMPTY_VALUE, key, render(targetValue)));
 			} else if (RawAttributeCheck.SUBSCRIPTION_ATTRIBUTE.equals(key) && rules.hub() && targetValue == null) {
 				differences.add(new Difference(Kind.DROPPED_SUBSCRIPTION, key, render(sourceValue)));
-			} else if (rules.fillableKeys().containsKey(key)) {
+			} else if (!rules.exported() && rules.fillableKeys().containsKey(key)) {
 				compareReferences(key, sourceValue, targetValue, rules.fillableKeys().get(key), differences);
 			} else {
 				differences.add(mismatch(key, sourceValue, targetValue));
@@ -131,6 +148,10 @@ final class DocumentDiff {
 				differences.add(mismatch(keyPath, sourceValue, targetValue));
 			}
 		}
+	}
+
+	private static boolean isEmptyContainer(JsonNode value) {
+		return value != null && value.isContainer() && value.isEmpty();
 	}
 
 	private static boolean isBlank(JsonNode value) {

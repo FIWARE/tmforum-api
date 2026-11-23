@@ -61,3 +61,25 @@ Or as a container:
 ```shell
     docker run --env READ_BROKER="http://my-read-broker.org" --env WRITE_BROKER="http://my-write-broker.org"  quay.io/fiware/tmforum-migrator
 ```
+## postgresql-migrator: `replay` capture format
+
+`replay` reads a JSON-lines file, one captured API request per line:
+
+```json
+{"method": "GET", "path": "/tmf-api/productCatalogManagement/v4/productOffering?limit=10", "headers": {"Accept": "application/json"}}
+{"method": "PATCH", "path": "/tmf-api/productCatalogManagement/v4/productOffering/urn:ngsi-ld:product-offering:1", "headers": {"Content-Type": "application/merge-patch+json"}, "body": {"name": "renamed"}}
+```
+
+- `method` and `path` are required; `path` starts with `/` and keeps its query string.
+- `headers` is optional and sent as captured, except `Host`, `Content-Length`, `Connection`, `Expect`, `Upgrade`,
+  `Transfer-Encoding` (set by the HTTP client) and `Accept-Encoding` (dropped so both deployments answer uncompressed
+  and the bodies can be compared as JSON).
+- `body` is optional: a JSON string is sent as its text, any other JSON value as JSON.
+
+Each request goes to `--broker-base-url` and `--postgres-base-url`, and the status and JSON bodies are diffed. The diff
+ignores object key order, the server host of every absolute `href`, every field but `id` and `href` of a reference to
+an `--external-host`, and the JSON pointers in `--ignore` (`*` matches one key or index, `**` any depth; a trailing
+`**` drops everything below its parent, which stays as an empty list or object). Lists are compared as sets only for
+paths matched by `--unordered-paths`. `POST`, `PUT`, `PATCH` and `DELETE` are skipped unless `--include-writes` is
+set, which is meant for rehearsal environments only. The per-request diffs go to `--report`
+(default `replay-report.json`), and the command exits non-zero on any difference or failed request.
