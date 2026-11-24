@@ -33,7 +33,8 @@ inline references for deployments that stay on the broker. The API modules thems
 ## Expected differences
 
 These differences between the broker-backed and the PostgreSQL-backed deployment come from the
-migration itself or, for the last one, from the backends. `verify` allows the first two and lists them separately.
+migration itself or, for the last one, from the backends. `verify` allows the first two and lists them separately;
+`verify --direction export` allows the empty values after a rollback.
 `replay` reports them like any other difference, so check each one against this list:
 
 * **Backfilled reference fields.** After `backfill-references --target postgresql`, references that the broker

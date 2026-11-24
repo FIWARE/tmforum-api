@@ -138,7 +138,10 @@ Choose how long the rollback stays possible, e.g. a few days. Within it:
     mapping omits them on write, so the broker deployment reads them back as absent. `verify --direction export`
     allows this difference.
 
-  A replay between the restored broker deployment and PostgreSQL must come back without differences.
+  A replay between the restored broker deployment and PostgreSQL may show only the expected differences of a
+  rollback in [RELEASE_NOTES_DATA_MIGRATION.md](../release-notes/RELEASE_NOTES_DATA_MIGRATION.md#expected-differences):
+  the empty values above, and `206` instead of `200` on a list page past the last match. Backfilled fields and the
+  seeded `0.0.1` are exported, so they no longer differ. Anything else stops the rollback.
 
 ## 8. Broker deployments that stay on NGSI-LD
 
