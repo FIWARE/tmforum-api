@@ -119,9 +119,20 @@ the consumers listed below, `StorageBackendValidator` from Step 1, their tests, 
     `ExternalReferenceIT`, `NgsiLdEntityRepositoryContractIT`, `DateTimeFilterBehaviourIT` and the migrator ITs.
 - `QueryParser` (storage-neutral) splits string values a second time on `ngsildOrQueryValue` (line ~309). Every
   shipped profile sets it to `,`, the same as `TMFORUM_OR_VALUE`, so the split does nothing in practice, and
-  `NgsiLdQueryRenderer` already joins with that key. Remove the split so the parser depends only on
-  `TMFORUM_OR_VALUE`. Add a parameterized case showing the literals are unchanged for `,`-separated values. The
-  release note goes in Step 5.
+  `NgsiLdQueryRenderer` already joins with that key (line ~178, it stays). Remove the split so the parser depends
+  only on `TMFORUM_OR_VALUE`, and fix the `toValues` Javadoc, which still says it splits on `ngsildOrQueryValue`.
+  Some existing tests assert the split on purpose. Rewrite them; do not put the split back to make them pass:
+  - `QueryParserModelTest.testParseSplitsConfiguredOrValueSeparator` (sets `PIPE`): rename it, and assert that
+    `color=a|b` parses to the one literal `a|b`, `color=a|b,c` to `a|b` and `c`, and the regex case is unchanged.
+    Add the `,`-separated case (`color=a,b` -> `a`, `b`).
+  - `NgsiLdQueryRendererTest.testOrValueSeparatorInsideValue` (`color=a|b`): the parser now yields one literal,
+    so the expected render is a single comparison on `"a|b"` (escaped as the renderer escapes it), not two
+    values. Rewrite its Javadoc as well. Keep a separate case where the parser yields two values (`color=a,b`)
+    to show the renderer still joins them with `ngsildOrQueryValue`.
+  - `QueryParserTest` sets `ngsildOrQueryValue("|")` at lines ~28, 43, 58 and 232. None of its inputs carries a
+    `|` inside a value, so these only move to `NgsiLdBrokerProperties`. If one of them fails, the input relied
+    on the split; change the expectation to the single literal.
+  The release note goes in Step 5.
 - Extend `StorageBackendValidator` for the broker-only `general.*` keys that are explicitly configured (check both
   camelCase and kebab-case through the `PropertyResolver`):
   - `postgresql` defaulted by the runner: add them to Step 1's check 2, so a defaulted backend with any of them set
@@ -175,8 +186,11 @@ and `data-migrator/RUNBOOK_POSTGRESQL.md`.
     to `storage-postgresql/README.md#configuration` rather than copying it.
   - **NGSI-LD broker**: one sentence saying everything in this subsection applies to the broker backend only. Then
     a table of the broker-only `general.*` keys (`NgsiLdBrokerProperties`) with a one-line meaning each, and the
-    existing `### Attribute updates (replaceOnUpdate)` text and table moved here unchanged. Keep `-Pdev`
-    (broker on `localhost:1026`) in "Dev-Environment".
+    existing `### Attribute updates (replaceOnUpdate)` text and table moved here unchanged.
+- README "Dev-Environment": `-Pdev` deploys both the broker (`localhost:1026`) and PostgreSQL (`localhost:5432`).
+  Say that a module started locally without a backend env now runs on PostgreSQL, and that the validator does
+  not warn because the NGSI URL is the shipped default. To use the dev broker, start the module with
+  `MICRONAUT_ENVIRONMENTS=orion-ld,in-memory` (`scorpio,in-memory` after `mvn install -Pdev -Dbroker=scorpio`).
   - **Accepted deviations**: one table with columns *Area | PostgreSQL | NGSI-LD broker | Decision*. It is the
     single place where deviations are recorded; say so in one sentence. Rows:
     1. Event delivery: at-least-once through `tmforum.event_outbox` vs fire-and-forget (decision 13; facts in
