@@ -53,6 +53,8 @@ spec:
               containerPort: 8632
               protocol: TCP
           env:
+            - name: MICRONAUT_ENVIRONMENTS
+              value: orion-ld
             - name: MICRONAUT_HTTP_SERVICES_NGSI_URL
               value: http://orion-ld:1026
             - name: GENERAL_BASEPATH
