@@ -1,4 +1,4 @@
-# PostgreSQL storage (Micronaut environment "postgresql"); the NGSI-LD broker is not used.
+# Default storage backend: PostgreSQL. The NGSI-LD broker and the broker-only general.* keys are not used.
 # Outbox (tmforum.outbox.*) and readiness timeout keep their code defaults, see storage-postgresql/README.md.
 r2dbc:
   datasources:
