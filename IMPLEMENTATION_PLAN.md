@@ -40,9 +40,11 @@ Correction D4 in `doc/access-policies/TICKETS.md` (AP-01). This ticket adds test
 - **Entity cache on the NGSI-LD backends.** `NgsiLdBaseRepository.retrieveEntityById` is `@Cacheable("entities")` (2s in the test config). `createEntity` carries `@CachePut`, but it returns `Mono<Void>`: Micronaut's `CacheInterceptor` builds no put operations for a void-valued publisher (`CacheOperation`: `putOperations = isVoid ? null : ...`), and the put would sit in a `flatMap` that never fires. Create therefore caches nothing, and the GET after the POST is a miss that reads the broker. The cached entry is then the broker's `EntityVO`, but with `-Dcache=redis` it also went through `EntityVOSerializer`. So the IT must:
   - never compare the POST response body, which is built from the client-side object;
   - invalidate the entry before the port-level read, so it reads the store: inject `CacheManager` and call `getCache(CommonConstants.ENTITIES_CACHE_NAME).invalidate(id)` when `getCacheNames()` contains it (postgresql has no such read cache).
+  - also test the cached read, because AP-07 reads through this port and gets cache hits in production: after the store read, assert the entry is now in the cache (`getCache(...).get(id, Object.class)` is present, so the check cannot silently become a second miss when the 2s TTL lapses), then read through the port again. That read is a hit, and with `-Dcache=redis` its `EntityVO` went through `EntityVOSerializer` and back. Skip it when the cache name is absent.
+- **Cache dimension.** The in-memory cache keeps the `EntityVO` instance, so only `-Dcache=redis` can change the value on a hit. Outcomes are therefore keyed by storage run, not only broker: `orion-ld`, `scorpio`, `postgresql` (all `-Dcache=in-memory`, the default) plus `orion-ld+redis` and `scorpio+redis`. postgresql gets no redis run, because it has no entity read cache.
 - Build/run:
   - `mvn install -pl product-catalog,service-catalog -am -DskipTests -DskipITs`
-  - `mvn integration-test -pl product-catalog -Dit.test=ProductOfferingPolicyRoundTripIT -DskipTests -Dbroker=<orion-ld|scorpio|postgresql>`. The default broker is `orion-ld`. Run `mvn clean` on the module between backends, or the K3S cluster from the previous broker is reused.
+  - `mvn integration-test -pl product-catalog -Dit.test=ProductOfferingPolicyRoundTripIT -DskipTests -Dbroker=<orion-ld|scorpio|postgresql> [-Dcache=redis]`. The default broker is `orion-ld`, the default cache `in-memory`; the run key comes from `Environment.getActiveNames()` (`redis` is active with `-Dcache=redis`). Run `mvn clean` on the module between runs, or the K3S cluster from the previous run is reused.
 
 ## Steps
 
@@ -52,7 +54,7 @@ Correction D4 in `doc/access-policies/TICKETS.md` (AP-01). This ticket adds test
 - `product-catalog/src/test/resources/access-policy/`:
   - `uc1-product-offering-term.json`: the UC-1 term, copied verbatim from `POLICY_EXAMPLES.md`.
   - `uc6-policy.json`: the UC-6 `value` object, verbatim.
-  - The IT builds the request bodies from these two files. Pinned observed shapes for lossy cases go next to them as `*-observed-<backend>.json`.
+  - The IT builds the request bodies from these two files. Pinned observed shapes for lossy cases go next to them as `*-observed-<run>.json`.
 - `product-catalog/src/test/java/org/fiware/tmforum/productcatalog/ProductOfferingPolicyRoundTripIT.java`: new, `@MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)`, extends `AbstractApiIT`, `getEntityType()` = `ProductOffering.TYPE_PRODUCT_OFFERING`.
   - Also clean `ProductSpecification.TYPE_PRODUCT_SPECIFICATION`.
 
@@ -68,10 +70,11 @@ Correction D4 in `doc/access-policies/TICKETS.md` (AP-01). This ticket adds test
 **What each case asserts**
 1. The POST status.
 2. When the POST succeeds, the GET-by-id body subtree at each pointer against the fixture subtree (API level).
-3. `objectMapper.valueToTree(<domain accessor>)` on the object from `EntityReadRepository.get(id, ProductOffering.class | ProductSpecification.class)` against the same fixture subtree (port level). Invalidate the `entities` cache entry for the id first (see "Entity cache" above).
-4. The outcome per backend. Each case carries a `Map<backend, Outcome>` for the API level and another for the domain level, where `Outcome` ∈ {`PRESERVED`, `LOSSY`, `DROPPED`, `REJECTED`}:
+3. `objectMapper.valueToTree(<domain accessor>)` on the object from `EntityReadRepository.get(id, ProductOffering.class | ProductSpecification.class)` against the same fixture subtree (port level, store read). Invalidate the `entities` cache entry for the id first (see "Entity cache" above).
+4. On the NGSI-LD backends, the same comparison on a second port read that is a confirmed cache hit (port level, cached read; see "Entity cache" above).
+5. The outcome per run (see "Cache dimension"). Each case carries one `Map<run, Outcome>` per level (API, store read, cached read), where `Outcome` ∈ {`PRESERVED`, `LOSSY`, `DROPPED`, `REJECTED`}:
    - `PRESERVED`: the subtrees are equal.
-   - `LOSSY`: the actual subtree equals the pinned `*-observed-<backend>.json`, and differs from the fixture.
+   - `LOSSY`: the actual subtree equals the pinned `*-observed-<run>.json`, and differs from the fixture.
    - `DROPPED`: the stored value is absent.
    - `REJECTED`: 4xx on POST, with the status pinned.
 
@@ -79,18 +82,18 @@ The expected map holds what was **observed**. A carrier that turns out lossy get
 
 **Procedure**
 1. Write every case expecting `PRESERVED`, except the two expected 400s (`OFFERING_TERM_VERBATIM`, `PRODUCT_SPEC_WRONG_CONTAINER`).
-2. Run on orion-ld, then scorpio, then postgresql, and pin each result.
+2. Run on orion-ld, scorpio and postgresql, then on orion-ld and scorpio with `-Dcache=redis`, and pin each result.
 3. When a value is lost, put a one-line comment on the case naming what is lost, e.g. "scorpio expands `@context` / compacts single-element arrays".
 
 **Acceptance**
-- `ProductOfferingPolicyRoundTripIT` is green on `-Dbroker=orion-ld`, `-Dbroker=scorpio` and `-Dbroker=postgresql`.
+- `ProductOfferingPolicyRoundTripIT` is green on `-Dbroker=orion-ld`, `-Dbroker=scorpio` and `-Dbroker=postgresql`, and on orion-ld and scorpio with `-Dcache=redis`.
 - No production code changed.
-- The step's completion summary lists the observed outcome matrix (case × backend × level).
+- The step's completion summary lists the observed outcome matrix (case × run × level).
 
 ### Step 2: Service-catalog round-trip IT, pinned on all three storages
 **Files**
 - `service-catalog/src/test/resources/access-policy/uc6-service-specification.json`: the UC-6 body, verbatim from `POLICY_EXAMPLES.md`.
-- `service-catalog/src/test/java/org/fiware/tmforum/servicecatalog/ServiceSpecificationPolicyRoundTripIT.java`: new. It has the same structure, `Outcome` model, backend detection and cache invalidation before the port read as step 1; copy the small helpers, do not move them into `common`. `getEntityType()` = `ServiceSpecification.TYPE_SERVICE_SPECIFICATION`.
+- `service-catalog/src/test/java/org/fiware/tmforum/servicecatalog/ServiceSpecificationPolicyRoundTripIT.java`: new. It has the same structure, `Outcome` model, run detection, store read after cache invalidation and cached second read as step 1; copy the small helpers, do not move them into `common`. `getEntityType()` = `ServiceSpecification.TYPE_SERVICE_SPECIFICATION`.
 
 **Test cases** (parameterized)
 
@@ -102,21 +105,21 @@ The expected map holds what was **observed**. A carrier that turns out lossy get
 The wrong-container case pins whether the most common authoring mistake is rejected (expected 400) or silently dropped.
 
 - Both base paths come from the `basePath` in `api/tm-forum/*/api.json` and are confirmed.
-- Run and pin on the three backends exactly as in step 1.
+- Run and pin on the five runs exactly as in step 1.
 
 **Acceptance**
-- `ServiceSpecificationPolicyRoundTripIT` is green on orion-ld, scorpio and postgresql.
+- `ServiceSpecificationPolicyRoundTripIT` is green on orion-ld, scorpio and postgresql, and on orion-ld and scorpio with `-Dcache=redis`.
 - No production code changed.
 - The outcome matrix is in the completion summary.
 
 ### Step 3: Written finding and, if needed, the AP-2 correction
 **Files**
 - New `doc/access-policies/AP-01_FINDINGS.md`. For each of the three carriers:
-  - The outcome per backend at the API level and at the domain level: preserved / lossy (exactly what is lost) / dropped / rejected. Copy the numbers from the pinned tests of steps 1 and 2, not from memory.
+  - The outcome per run at the API level and at the domain level (store read and cached read, so it says whether a Redis-served read keeps the policy): preserved / lossy (exactly what is lost) / dropped / rejected. Copy the numbers from the pinned tests of steps 1 and 2, not from memory.
   - The **exact accessor path** the `PolicyCarrier` (AP-07) will use, from the facts list above, plus any unwrapping it needs. Examples of unwrapping: `UnmappedProperty.getValue()` is a `Map`, a compacted array must be re-wrapped. Record that both specification carriers share the holder `service.CharacteristicValueSpecification.getTmfValue()`, so one accessor serves both.
   - What a provider must write. Expected: the offering term needs a `@schemaLocation` whose schema admits `accessPolicy`/`contractPolicy`. If confirmed, correct the UC-1 example in `POLICY_EXAMPLES.md` to carry it and to name the schema.
   - The wrong-container results.
-  - What is not covered: list reads (`findEntities`), `ProductOfferingPrice.productOfferingTerm`, PATCH.
+  - What is not covered: list reads (`findEntities`), `ProductOfferingPrice.productOfferingTerm`, PATCH, Redis on postgresql (no entity read cache there).
 - `doc/access-policies/TICKETS.md`: set the D4 row status to the result and link the finding.
 - If any carrier is **dropped** on any backend, or is unusable in the form providers write it:
   - Add a "Correction proposed by AP-01" subsection to AP-2 in `doc/access-policies/DECISIONS.md`. Options to weigh: a typed `accessPolicy`/`contractPolicy` on `ProductOfferingTerm`, a mandatory extension schema, or resolution at the PAP by target.
