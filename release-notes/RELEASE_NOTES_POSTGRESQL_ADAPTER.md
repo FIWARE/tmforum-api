@@ -5,7 +5,8 @@
 The TMForum APIs can store their entities in PostgreSQL 18 instead of an NGSI-LD context broker. The new module
 [storage-postgresql](../storage-postgresql/README.md) implements the backend-neutral port of
 [storage-api](../storage-api/README.md) with R2DBC (non-blocking) and migrates its schema with Flyway at startup.
-The NGSI-LD adapter stays the default; ticket 9 makes the backend a regular setting and flips the default.
+PostgreSQL is the default backend; how a deployment selects its backend is described in
+[Storage backends](../README.md#storage-backends).
 
 A PostgreSQL deployment needs no context broker. Hub registration (`POST /hub`, `DELETE /hub/{id}`) and TMForum
 event delivery work without one: the hub is stored as a TMForum subscription with no NGSI-LD subscription, and the
@@ -13,7 +14,8 @@ event outbox delivers its events (see [Notifications](#notifications)).
 
 ## Enabling it
 
-1. Add `postgresql` to the Micronaut environments: `MICRONAUT_ENVIRONMENTS=postgresql,<cache>`.
+1. Nothing to select: PostgreSQL is the default when no backend is named. To name it explicitly, use
+   `MICRONAUT_ENVIRONMENTS=postgresql,<cache>`.
 2. Point the module at the database. Every API module ships an `application-postgresql.yaml`; its variables are
    `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` and the `POSTGRES_POOL_*`
    pool bounds. The full block and the defaults are in the [storage-postgresql README](../storage-postgresql/README.md#configuration).
@@ -106,8 +108,10 @@ the `jsonb` document; every user value is a bound parameter.
     results were observed. `ORIONLD_EXPERIMENTAL` was not tested; per Orion-LD's docs it sorts on the first key
     only, with the direction from `reverse=true` rather than `;desc`, so `-name` or `name,version` would still
     come back in the wrong order.
-* **No accepted deviations yet.** The backend differences observed while testing are pending acceptance in ticket 0
-  and are listed here once accepted.
+* **Backend differences.** The accepted ones are listed in the README's
+  [Accepted deviations](../README.md#accepted-deviations) table. The differences observed while testing are listed
+  under [Known backend differences, not accepted](../README.md#known-backend-differences-not-accepted) and are
+  pending acceptance in ticket 0.
 
 ## Notifications
 
