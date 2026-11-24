@@ -1,5 +1,6 @@
 package org.fiware.tmforum.migration.postgresql;
 
+import org.fiware.tmforum.common.configuration.StorageBackend;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.TypeConversionException;
 
@@ -11,8 +12,8 @@ import java.util.Iterator;
  */
 public enum BrokerType {
 
-	ORION_LD("orion-ld"),
-	SCORPIO("scorpio");
+	ORION_LD(StorageBackend.ORION_LD.environment()),
+	SCORPIO(StorageBackend.SCORPIO.environment());
 
 	private final String environment;
 

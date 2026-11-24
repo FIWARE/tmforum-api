@@ -45,4 +45,14 @@ public class CommonConstants {
 	 */
 	public static final String POSTGRESQL_ENVIRONMENT = "postgresql";
 
+	/**
+	 * Micronaut environment of the Orion-LD broker storage.
+	 */
+	public static final String ORION_LD_ENVIRONMENT = "orion-ld";
+
+	/**
+	 * Micronaut environment of the Scorpio broker storage.
+	 */
+	public static final String SCORPIO_ENVIRONMENT = "scorpio";
+
 }
