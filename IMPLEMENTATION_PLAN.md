@@ -44,14 +44,25 @@ all 21 `*/src/main/java/**/Application.java` (20 API modules plus `all-in-one`; 
   `micronaut.environments` and `MICRONAUT_ENVIRONMENTS` values (comma-separated, may be null or blank), so it can be
   unit-tested without touching the JVM. Check in the Micronaut 5 sources (`DefaultEnvironment`) that builder
   environments are merged with both of those, and are not replaced by them.
+- The runner also sets a marker property (named constant, e.g. `tmforum.storage.backend-defaulted=true`, through
+  the builder's `.properties(...)`) when it added `postgresql`, so the validator can tell a defaulted backend from
+  a named one.
 - `StorageBackendValidator` is a `@Context` bean that checks the configuration when the context starts and throws
   `io.micronaut.context.exceptions.ConfigurationException`. The message names the offending setting and what to
-  set instead. Checks:
+  set instead. Checks are limited to misconfigurations a shipped module can actually have. Every module's
+  `application.yaml` sets `micronaut.http.services.ngsi.url: http://localhost:1026`, and every
+  `application-postgresql.yaml` sets both datasource URLs with `${POSTGRES_HOST:localhost}` defaults, so "URL
+  missing or blank" can never happen and is not checked. Reachability is left to Flyway, which aborts startup when
+  PostgreSQL is unreachable, and to the existing readiness indicators for the broker.
   1. More than one backend env is active (for example `postgresql,orion-ld` or `orion-ld,scorpio`): fail.
-  2. `postgresql` is active but `r2dbc.datasources.default.url` or `flyway.datasources.default.url` is missing or
-     blank: fail.
-  3. A broker is active, or no backend env is active (which today means the broker), but
-     `micronaut.http.services.ngsi.url` is missing or blank: fail.
+  2. A broker deployment that did not name its broker (the upgrade case): `postgresql` was added by the runner
+     (marker set) and `micronaut.http.services.ngsi.url` differs from the shipped default `http://localhost:1026`
+     (named constant). Fail, and tell the operator to add `orion-ld` or `scorpio` to `MICRONAUT_ENVIRONMENTS`, or
+     to name `postgresql` explicitly if PostgreSQL is intended. `conformance-test/api.yaml` today is exactly
+     this case (`MICRONAUT_HTTP_SERVICES_NGSI_URL` set, no backend env). Step 2 extends the same check to the
+     broker-only `general.*` keys.
+  With no backend env at all (only possible outside the runner, e.g. a hand-built context), the validator does
+  nothing, which keeps today's broker behaviour.
   Keep the checks in a pure method that takes the active env names and a `PropertyResolver`. The bean itself must
   not break the existing `@MicronautTest` unit tests in `common`, which run without a backend env and have no
   `src/test/resources/application.yaml`. Gate the bean with `@Requires(notEnv = Environment.TEST)` and unit-test
@@ -64,14 +75,18 @@ all 21 `*/src/main/java/**/Application.java` (20 API modules plus `all-in-one`; 
   context. In each, either the runner is not involved or a backend is named explicitly.
 - `all-in-one`'s `ControllerStorageBoundaryTest` (ArchUnit) must still pass with the new classes.
 - Tests, parameterized: default resolution (sysprop and env var each null, blank, cache-only, naming each backend,
-  naming a backend among others with whitespace), and validator cases 1–3, plus the valid combinations.
+  naming a backend among others with whitespace), and validator cases 1–2 plus the valid combinations. Include the
+  real deployment cases: `MICRONAUT_ENVIRONMENTS=redis` with `MICRONAUT_HTTP_SERVICES_NGSI_URL=http://orion-ld:1026`
+  (defaulted, fails), the same with `postgresql` named explicitly (passes), and defaulted with the shipped URL
+  (passes).
 - Acceptance: `mvn test -pl common -am` and `mvn install -DskipTests -DskipITs` are green. Starting a module jar with
   only `MICRONAUT_ENVIRONMENTS=in-memory` activates `postgresql`. `orion-ld,postgresql` aborts startup with the
-  validator message.
+  validator message, and so does `MICRONAUT_ENVIRONMENTS=in-memory` plus `MICRONAUT_HTTP_SERVICES_NGSI_URL=http://broker:1026`.
 
 ### Step 2: Scope the broker-only `general.*` properties
 Files: `common/.../configuration/GeneralProperties.java`, a new `common/.../configuration/NgsiLdBrokerProperties.java`,
-the consumers listed below, `StorageBackendValidator` from Step 1, and their tests.
+the consumers listed below, `StorageBackendValidator` from Step 1, their tests, and the base
+`*/src/main/resources/application.yaml` of the 20 API modules and `all-in-one` (only the `countHeader` line).
 
 - `NgsiLdBrokerProperties`: `@ConfigurationProperties("general")`, `@Data`, with no `@Requires`. Broker beans
   such as `NgsiLdEntityRepository` are also instantiated on PostgreSQL as non-`@Primary` beans, so the class must
@@ -97,11 +112,15 @@ the consumers listed below, `StorageBackendValidator` from Step 1, and their tes
   `NgsiLdQueryRenderer` already joins with that key. Remove the split so the parser depends only on
   `TMFORUM_OR_VALUE`. Add a parameterized case showing the literals are unchanged for `,`-separated values. The
   release note goes in Step 5.
-- Extend `StorageBackendValidator`: on `postgresql`, log a WARN listing every broker-only `general.*` key that is
-  explicitly configured. Check both camelCase and kebab-case through the `PropertyResolver`. The message says the
-  keys are ignored and that a broker deployment must add `orion-ld`/`scorpio` to `MICRONAUT_ENVIRONMENTS`. Do not
-  fail. For this not to fire on every start, `general.countHeader` must leave the base `application.yaml` (Step 3).
-  Cover the warning with a parameterized unit test.
+- Extend `StorageBackendValidator` for the broker-only `general.*` keys that are explicitly configured (check both
+  camelCase and kebab-case through the `PropertyResolver`):
+  - `postgresql` defaulted by the runner: add them to Step 1's check 2, so a defaulted backend with any of them set
+    fails startup with the same "add `orion-ld`/`scorpio`" message.
+  - `postgresql` named explicitly: log a WARN listing them, saying they are ignored. Do not fail.
+  For this not to fire on every start, remove `general.countHeader: NGSILD-Results-Count` from every module's base
+  `src/main/resources/application.yaml` in this step (the code default is identical and both broker yamls keep
+  it). Cover both outcomes with a parameterized unit test, including `GENERAL_REPLACE_ON_UPDATE=true` with no
+  backend env named, so the runner defaults to `postgresql` (fails), and with `postgresql` named (warns).
 - Acceptance: `mvn test -pl common,data-migrator/postgresql-migrator,data-migrator/update-writer -am` is green.
   `general.*` keys bind as before; there is a test that sets `general.replace-on-update=true` and
   `general.tenant` and reads them from `NgsiLdBrokerProperties`.
@@ -113,8 +132,8 @@ breaks.
 
 - `application.yaml`: add a short comment block at the top (3–4 lines, the same in every module) saying the backend
   is chosen with `MICRONAUT_ENVIRONMENTS=<postgresql|orion-ld|scorpio>,<in-memory|redis>` and that PostgreSQL is
-  the default. Mark `micronaut.http.services.ngsi` as broker-only with a one-line comment. Remove
-  `general.countHeader: NGSILD-Results-Count`, since the code default is identical and both broker yamls keep it.
+  the default. Mark `micronaut.http.services.ngsi` as broker-only with a one-line comment. (`general.countHeader`
+  was already removed in Step 2.)
 - `application-postgresql.yaml`: replace the first comment line with "Default storage backend: PostgreSQL. The
   NGSI-LD broker and the broker-only `general.*` keys are not used."
 - `application-orion-ld.yaml` and `application-scorpio.yaml`: add a one-line header saying this is a broker backend
@@ -160,7 +179,9 @@ and `data-migrator/RUNBOOK_POSTGRESQL.md`.
   accepted deviations yet …" to point at the README table. Change "Enabling it" step 1 to say it is the default.
 - `AGENTS.md`: rewrite the Overview to describe the port and both adapters, with PostgreSQL as the default. Add
   `TmForumApplication`, `StorageBackendValidator` and `NgsiLdBrokerProperties` to Important Files in one line each.
-  Keep the file short.
+  Rewrite the "Storage backend selection" line from the plan PR: no backend env now means `postgresql` for
+  applications (added by `TmForumApplication`), tests and the migrator name their env explicitly, and
+  `conformance-test/api.yaml` names `orion-ld`. Keep the file short.
 - Root `pom.xml`: `project.description` becomes "Implementation of the TMForum APIs, backed by PostgreSQL or an
   NGSI-LD context broker", and `project.summary` becomes "TMForum APIs on PostgreSQL or NGSI-LD.".
 - Acceptance: `git grep -n -i "backed by NGSI-LD\|Broker compatibility"` matches nothing outside release notes
