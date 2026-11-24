@@ -89,6 +89,9 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 	private static final String PRODUCT_CONTAINER = "productSpecCharacteristicValue";
 	// the ServiceSpecification's container name, the documented authoring mistake on a product specification
 	private static final String SERVICE_CONTAINER = "characteristicValueSpecification";
+	// ValidatingDeserializer's message: it survives Jackson wrapping a nested failure, the rejected key list may not
+	private static final String UNKNOWN_PROPERTY_REJECTION =
+			"No additional properties are allowed without a @schemaLocation";
 
 	private final HttpClient httpClient;
 	private final EntityReadRepository entityReadRepository;
@@ -142,10 +145,11 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 
 	/**
 	 * One request and its pinned outcomes. {@code expected} holds, per level, the outcome per run key
-	 * ({@code <storage>[+redis]}); a level without the current run is not checked.
+	 * ({@code <storage>[+redis]}); a level without the current run is not checked. A rejection must answer
+	 * {@code rejectedWith} with {@code rejectedBecause} in its body.
 	 */
 	record RoundTripCase(String name, String path, Class<?> domainClass, ObjectNode body, List<Probe> probes,
-						 HttpStatus rejectedWith, Map<Level, Map<String, Outcome>> expected) {
+						 HttpStatus rejectedWith, String rejectedBecause, Map<Level, Map<String, Outcome>> expected) {
 		@Override
 		public String toString() {
 			return name;
@@ -162,19 +166,20 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 		return Stream.of(
 				// ValidatingDeserializer: no unknown properties without a @schemaLocation
 				new RoundTripCase("OFFERING_TERM_VERBATIM", PRODUCT_OFFERING_PATH, ProductOffering.class,
-						offering(verbatimTerm), termProbes, HttpStatus.BAD_REQUEST, rejected()),
+						offering(verbatimTerm), termProbes, HttpStatus.BAD_REQUEST, UNKNOWN_PROPERTY_REJECTION,
+						rejected()),
 				new RoundTripCase("OFFERING_TERM_WITH_SCHEMA", PRODUCT_OFFERING_PATH, ProductOffering.class,
-						offering(termWithSchema), termProbes, null,
+						offering(termWithSchema), termProbes, null, null,
 						// scorpio compacts each policy's single-element "permission" array to its one object
 						stored(Outcome.PRESERVED,
 								Map.of(SCORPIO, Outcome.LOSSY, SCORPIO + REDIS_SUFFIX, Outcome.LOSSY))),
 				new RoundTripCase("PRODUCT_SPEC_CHARACTERISTIC_VALUE", PRODUCT_SPECIFICATION_PATH,
-						ProductSpecification.class, specification(PRODUCT_CONTAINER), specProbes, null,
+						ProductSpecification.class, specification(PRODUCT_CONTAINER), specProbes, null, null,
 						stored(Outcome.PRESERVED, Map.of())),
 				// the characteristic has a @schemaLocation property, so the unknown container is rejected
 				new RoundTripCase("PRODUCT_SPEC_WRONG_CONTAINER", PRODUCT_SPECIFICATION_PATH,
 						ProductSpecification.class, specification(SERVICE_CONTAINER), specProbes,
-						HttpStatus.BAD_REQUEST, rejected()));
+						HttpStatus.BAD_REQUEST, UNKNOWN_PROPERTY_REJECTION, rejected()));
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -184,8 +189,12 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 		HttpResponse<String> created = callAndCatch(() -> httpClient.toBlocking()
 				.exchange(HttpRequest.POST(roundTripCase.path(), roundTripCase.body().toString()), String.class));
 		if (expected(roundTripCase, Level.API, run) == Outcome.REJECTED) {
-			assertEquals(roundTripCase.rejectedWith(), created.getStatus(),
-					roundTripCase + " should be rejected on " + run + ": " + created.getBody(String.class));
+			String error = created.getBody(String.class).orElse("");
+			assertAll(
+					() -> assertEquals(roundTripCase.rejectedWith(), created.getStatus(),
+							roundTripCase + " should be rejected on " + run + ": " + error),
+					() -> assertTrue(error.contains(roundTripCase.rejectedBecause()),
+							roundTripCase + " should be rejected for an unknown property on " + run + ": " + error));
 			return;
 		}
 		// the POST body is built from the client-side object, so only its id is used
