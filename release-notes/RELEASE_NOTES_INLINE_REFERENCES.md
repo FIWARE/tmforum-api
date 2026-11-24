@@ -49,9 +49,10 @@ makes no request for any referenced id, whatever the number of references.
   the current state of the target has to fetch it.
 * **Data written before this release reads back with only the fields that were embedded at the time.** Fields that
   were filled in from the target (e.g. `name`/`href` the client never sent, or the extra fields listed above, which
-  were dropped on write) are absent. **This release does not migrate stored data.** A
-  later data-migration release will rewrite the stored references; until it is applied, existing data stays as
-  described here. In the meantime a client can restore the fields of a reference by PATCHing its attribute with the
+  were dropped on write) are absent. **This release does not migrate stored data.** The
+  `backfill-references` command of the data migration rewrites the stored references, on the broker as well as on
+  PostgreSQL (see [RELEASE_NOTES_DATA_MIGRATION.md](./RELEASE_NOTES_DATA_MIGRATION.md)); until it is applied,
+  existing data stays as described here. In the meantime a client can restore the fields of a reference by PATCHing its attribute with the
   full reference payload. A `productOrderItem` (product-inventory) stored before this release is the exception: its
   datasetId changed from the product order id to `<productOrderId>:<orderItemId>`, and on Orion-LD a PATCH without
   `replaceOnUpdate` keeps the old instance next to the new one, so a re-PATCH makes the product read back a duplicate

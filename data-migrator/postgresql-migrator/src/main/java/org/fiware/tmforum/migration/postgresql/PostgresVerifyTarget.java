@@ -76,7 +76,7 @@ class PostgresVerifyTarget implements VerifyTarget {
 		if (ids.isEmpty()) {
 			return keys;
 		}
-		query(TOP_LEVEL_KEYS, List.of(idArray(ids)), row -> new StoredKey(row.get(0, String.class),
+		query(TOP_LEVEL_KEYS, idBinding(ids), row -> new StoredKey(row.get(0, String.class),
 				row.get(1, String.class), Boolean.TRUE.equals(row.get(2, Boolean.class))))
 				.forEach(stored -> {
 					StoredKeys entityKeys = keys.computeIfAbsent(URI.create(stored.id()),
@@ -100,7 +100,7 @@ class PostgresVerifyTarget implements VerifyTarget {
 		if (ids.isEmpty()) {
 			return documents;
 		}
-		query(DOCUMENTS, List.of(idArray(ids)), row -> Map.entry(row.get(0, String.class),
+		query(DOCUMENTS, idBinding(ids), row -> Map.entry(row.get(0, String.class),
 				row.get(1, String.class)))
 				.forEach(entry -> documents.put(URI.create(entry.getKey()), entry.getValue()));
 		return documents;
@@ -125,8 +125,9 @@ class PostgresVerifyTarget implements VerifyTarget {
 		return new EscapedKeyRows(count, rows.stream().map(Map.Entry::getKey).toList());
 	}
 
-	private static String[] idArray(Collection<URI> ids) {
-		return ids.stream().map(URI::toString).toArray(String[]::new);
+	// one binding holding the whole array; List.of(String[]) would spread it into one binding per id
+	private static List<Object> idBinding(Collection<URI> ids) {
+		return List.of((Object) ids.stream().map(URI::toString).toArray(String[]::new));
 	}
 
 	private <T> List<T> query(String sql, List<Object> bindings, Function<Row, T> mapping) {

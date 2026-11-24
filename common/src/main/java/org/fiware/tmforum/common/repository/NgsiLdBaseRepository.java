@@ -374,10 +374,12 @@ public abstract class NgsiLdBaseRepository {
 			List<String> expectedTypes = Arrays.asList(mappingAnnotation.entityType());
 			filtered = entityVOStream.filter(entityVO -> expectedTypes.contains(entityVO.getType()));
 		}
-		return Mono.zip(
-				filtered.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList(),
-				oList -> Arrays.stream(oList).map(targetClass::cast).toList()
-		);
+		List<Mono<T>> mappingMonos = filtered.map(entityVO -> entityVOMapper.fromEntityVO(entityVO, targetClass)).toList();
+		// Mono.zip of nothing completes empty, which would drop an empty page together with its count
+		if (mappingMonos.isEmpty()) {
+			return Mono.just(List.of());
+		}
+		return Mono.zip(mappingMonos, oList -> Arrays.stream(oList).map(targetClass::cast).toList());
 	}
 
 	/**

@@ -35,8 +35,6 @@ public interface EntityReadRepository {
      * unrestricted and unordered.
      * Always emits a page, an empty one when nothing matches or the offset is past the last match, because the
      * controllers set the pagination headers from it.
-     * <p>
-     * Known NGSI-LD adapter defect, not a contract rule (ticket 0): an empty page completes empty instead.
      */
     <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           EntityQuery query, String ids, String types);

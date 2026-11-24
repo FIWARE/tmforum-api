@@ -170,6 +170,8 @@ class CleanupSubscriptionsIT {
 		subscription.setEntities(List.of(entityInfo));
 		NotificationParams notification = new NotificationParams();
 		notification.setFormat(EventConstants.NOTIFICATION_FORMAT);
+		// every attribute, as NgsiLdSubscriptionFactory sets it; SubscriptionMapper rejects a null set
+		notification.setAttributes(Set.of());
 		notification.setEndpoint(new Endpoint(URI.create(endpoint), EventConstants.NOTIFICATION_PAYLOAD_MIME_TYPE,
 				List.of(new KeyValuePair(LISTENER_HEADER, listener.toString()))));
 		subscription.setNotification(notification);

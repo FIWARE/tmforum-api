@@ -66,10 +66,14 @@ class ExportIT {
 	private static final String HUB_EVENT_TYPE = "ProductCreateEvent";
 	private static final String IMPORTED_QUERY_VALUE = "imported";
 	private static final String CREATED_QUERY_VALUE = "created-on-postgresql";
-	private static final String QUERY_TEMPLATE = "name==\"%s\"";
+	// Orion-LD rejects a literal '"' in a subscription's q and returns a single '=' as an empty q
+	private static final String QUERY_TEMPLATE = "name==%%22%s%%22";
 	private static final String RAW_QUERY_TEMPLATE = "name=%s";
 	private static final int PAGE_SIZE = 100;
 	private static final int HTTP_OK = 200;
+	// Scorpio answers 406 to a request without one
+	private static final String ACCEPT_HEADER = "Accept";
+	private static final String JSON = "application/json";
 	private static final String EMPTY_LIST_ATTRIBUTE = "relatedParty";
 
 	private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -230,6 +234,7 @@ class ExportIT {
 		String brokerUrl = seedContexts.source().getRequiredProperty(MigrationContexts.NGSI_URL_PROPERTY, String.class);
 		HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(brokerUrl + String.format(
 						BrokerSource.SUBSCRIPTION_PATH, URLEncoder.encode(id.toString(), StandardCharsets.UTF_8))))
+				.header(ACCEPT_HEADER, JSON)
 				.header("Link", String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, properties.getContextUrl()))
 				.GET();
 		if (properties.getTenant() != null) {

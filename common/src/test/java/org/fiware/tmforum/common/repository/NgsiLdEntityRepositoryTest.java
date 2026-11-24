@@ -1,11 +1,13 @@
 package org.fiware.tmforum.common.repository;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpResponse;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
+import org.fiware.tmforum.storage.PagedResult;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -30,11 +32,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class NgsiLdEntityRepositoryTest {
+
+	private static final String COUNT_HEADER = "NGSILD-Results-Count";
 
 	private GeneralProperties properties;
 	private NgsiLdEntityRepository repository;
@@ -123,6 +128,42 @@ class NgsiLdEntityRepositoryTest {
 		BiFunction<NgsiLdEntityRepository, EntityQuery, Mono<?>> polymorphic =
 				(repo, query) -> repo.findEntitiesPolymorphic(0, 10, "test", query, null, type -> Object.class);
 		return Stream.of(Arguments.of(plain), Arguments.of(polymorphic));
+	}
+
+	@ParameterizedTest
+	@MethodSource("emptyPages")
+	public void countsAnEmptyPagePastTheEndAgain(Integer offset, Integer limit, String reported, String recounted,
+												 Integer expectedTotal, int expectedQueries) {
+		properties.setCountHeader(COUNT_HEADER);
+		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null,
+				null, null, new NgsiLdQueryRenderer(properties));
+		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
+				any(), any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(withCount(reported)), Mono.just(withCount(recounted)));
+
+		PagedResult<Object> page = repositoryWithClient.findEntities(offset, limit, Object.class, null, null, "test")
+				.block();
+
+		assertEquals(expectedTotal, page.totalCount());
+		verify(entitiesApi, times(expectedQueries)).queryEntities(any(), any(), any(), any(), any(), any(), any(),
+				any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+	}
+
+	private static Stream<Arguments> emptyPages() {
+		return Stream.of(
+				Arguments.of(100, 10, null, "20", 20, 2),
+				Arguments.of(100, 10, "0", "20", 20, 2),
+				Arguments.of(0, 0, null, "20", 20, 2),
+				Arguments.of(100, 10, "20", null, 20, 1),
+				Arguments.of(0, 10, null, "20", null, 1),
+				Arguments.of(null, null, "0", "20", 0, 1),
+				Arguments.of(100, 10, null, null, null, 2));
+	}
+
+	private static HttpResponse<EntityListVO> withCount(String count) {
+		MutableHttpResponse<EntityListVO> response = HttpResponse.ok(new EntityListVO());
+		return count == null ? response : response.header(COUNT_HEADER, count);
 	}
 
 	@Test
