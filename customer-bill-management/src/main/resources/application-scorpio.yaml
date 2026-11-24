@@ -1,3 +1,4 @@
+# Broker storage backend (Scorpio); the general.* keys here are broker-only, see README "Storage backends".
 general:
   ngsildOrQueryValue: ","
   ngsildOrQueryKey: "|"
