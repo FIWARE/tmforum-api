@@ -17,6 +17,7 @@ import org.fiware.productcatalog.model.ProductOfferingCreateVOTestExample;
 import org.fiware.productcatalog.model.ProductOfferingVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.common.test.BrokerOnly;
@@ -177,13 +178,13 @@ public class DateTimeFilterBehaviourIT extends AbstractApiIT {
 	public DateTimeFilterBehaviourIT(ProductOfferingApiTestClient productOfferingApiTestClient,
 									 @Client("/") HttpClient httpClient, EntitiesApiClient entitiesApiClient,
 									 ObjectMapper objectMapper, GeneralProperties generalProperties,
-									 Environment environment) {
+									 NgsiLdBrokerProperties brokerProperties, Environment environment) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.productOfferingApiTestClient = productOfferingApiTestClient;
 		this.httpClient = httpClient;
 		this.entitiesApiClient = entitiesApiClient;
 		this.environment = environment;
-		this.tenant = generalProperties.getTenant();
+		this.tenant = brokerProperties.getTenant();
 		this.linkHeader = String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, generalProperties.getContextUrl());
 	}
 

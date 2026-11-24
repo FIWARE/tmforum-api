@@ -2,7 +2,7 @@ package org.fiware.tmforum.productcatalog.storage;
 
 import io.micronaut.context.env.Environment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.common.test.BrokerOnly;
@@ -31,13 +31,13 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 	private static final String ORION_LD_ENVIRONMENT = "orion-ld";
 
 	private final EntityRepository repository;
-	private final GeneralProperties generalProperties;
+	private final NgsiLdBrokerProperties brokerProperties;
 	private final Environment environment;
 
-	public NgsiLdEntityRepositoryContractIT(EntityRepository repository, GeneralProperties generalProperties,
+	public NgsiLdEntityRepositoryContractIT(EntityRepository repository, NgsiLdBrokerProperties brokerProperties,
 			Environment environment) {
 		this.repository = repository;
-		this.generalProperties = generalProperties;
+		this.brokerProperties = brokerProperties;
 		this.environment = environment;
 	}
 
@@ -56,7 +56,7 @@ public class NgsiLdEntityRepositoryContractIT extends AbstractEntityRepositoryCo
 		}
 		deviations.add(KnownDeviation.SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL);
 		deviations.add(KnownDeviation.MULTI_ELEMENT_LIST_NEVER_MATCHES);
-		if (!generalProperties.isReplaceOnUpdate()) {
+		if (!brokerProperties.isReplaceOnUpdate()) {
 			deviations.add(KnownDeviation.EMPTIED_LIST_BREAKS_READS);
 			deviations.add(KnownDeviation.REFERENCE_LIST_UPDATE_MERGES);
 			deviations.add(KnownDeviation.EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED);

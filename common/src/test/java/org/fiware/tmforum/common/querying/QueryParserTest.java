@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.querying;
 
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.EntityQuery;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("queriesAttributeIncluded")
 	public void testQueryParsingAttributeIncluded(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setEncloseQuery(true);
 		properties.setNgsildOrQueryKey("|");
 		properties.setNgsildOrQueryValue("|");
@@ -37,7 +38,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("queriesAttributeNotIncluded")
 	public void testQueryParsingAttributeNotIncluded(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setEncloseQuery(true);
 		properties.setNgsildOrQueryKey("|");
 		properties.setNgsildOrQueryValue("|");
@@ -52,7 +53,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("queriesAttributesWithDotPath")
 	public void testQueryParsingWithDotPath(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setEncloseQuery(true);
 		properties.setNgsildOrQueryKey("|");
 		properties.setNgsildOrQueryValue("|");
@@ -144,7 +145,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("reservedNameQueries")
 	public void testReservedAttributeNamesAreEscaped(String tmForumQuery, QueryParams ngsiLdQuery) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setEncloseQuery(false);
 		properties.setNgsildOrQueryKey(",");
 		properties.setNgsildOrQueryValue(",");
@@ -173,7 +174,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("reservedNameDotQueries")
 	public void testReservedAttributeNamesAreEscapedWithDotSeparator(String tmForumQuery, QueryParams ngsiLdQuery) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setEncloseQuery(false);
 		properties.setNgsildOrQueryKey(",");
 		properties.setNgsildOrQueryValue(",");
@@ -193,7 +194,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("scorpioQueries")
 	public void testScorpioQueryParsing(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setNgsildOrQueryKey(",");
 		properties.setNgsildOrQueryValue(",");
 		properties.setEncloseQuery(false);
@@ -226,7 +227,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("jsonLdReservedTokenQueries")
 	public void testJsonLdReservedTokenTranslation(String tmForumQuery, QueryParams ngsiLdQuery, Class<?> targetClass) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setEncloseQuery(true);
 		properties.setNgsildOrQueryKey("|");
 		properties.setNgsildOrQueryValue("|");
@@ -276,7 +277,7 @@ class QueryParserTest {
 	@MethodSource("sortToOrderByQueries")
 	public void testSortToOrderByTranslation(Map<String, List<String>> parameters, String expectedOrderBy,
 			Class<?> targetClass) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setUseDotSeperator(true);
 
 		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
@@ -310,7 +311,7 @@ class QueryParserTest {
 
 	@Test
 	public void testSortToOrderByReturnsNullWhenSortValueIsBlank() {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
 		assertNull(qp.toOrderBy(MyPojo.class, Map.of(QueryParser.SORT_KEY, List.of(""))),
 				"A blank sort value should not produce an orderBy.");
@@ -327,7 +328,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("invalidTypedValueQueries")
 	public void testInvalidTypedValuesAreRejected(String message, String tmForumQuery) {
-		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new NgsiLdBrokerProperties());
 		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -362,7 +363,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("orderedBooleanQueries")
 	public void testOrderingOperatorsAreRejectedForBooleans(String message, String tmForumQuery) {
-		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new NgsiLdBrokerProperties());
 		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -389,7 +390,7 @@ class QueryParserTest {
 	@MethodSource("orderedNonBooleanQueries")
 	public void testOrderingOperatorsAreKeptForOrderedTypes(String message, String tmForumQuery,
 			QueryParams ngsiLdQuery) {
-		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new NgsiLdBrokerProperties());
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -416,7 +417,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("validTypedValueQueries")
 	public void testValidTypedValuesAreTranslated(String message, String tmForumQuery, QueryParams ngsiLdQuery) {
-		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new NgsiLdBrokerProperties());
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -431,7 +432,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("regexQueries")
 	public void testRegexQueries(String message, String tmForumQuery, QueryParams ngsiLdQuery) {
-		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new NgsiLdBrokerProperties());
 		assertEquals(ngsiLdQuery, qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -456,7 +457,7 @@ class QueryParserTest {
 	public void testRegexHoldingQuerySyntaxIsRejected(String tmForumQuery) {
 		GeneralProperties properties = new GeneralProperties();
 		properties.setOptimizeRegexNotEquals(false);
-		NgsiLdTranslator qp = new NgsiLdTranslator(properties);
+		NgsiLdTranslator qp = new NgsiLdTranslator(properties, new NgsiLdBrokerProperties());
 		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery));
 	}
 
@@ -470,7 +471,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("regexOnNonStringQueries")
 	public void testRegexIsRejectedForNonStringTypes(String message, String tmForumQuery) {
-		NgsiLdTranslator qp = new NgsiLdTranslator(new GeneralProperties());
+		NgsiLdTranslator qp = new NgsiLdTranslator(new NgsiLdBrokerProperties());
 		assertThrows(QueryException.class, () -> qp.toNgsiLdQuery(MyPojo.class, tmForumQuery), message);
 	}
 
@@ -512,9 +513,13 @@ class QueryParserTest {
 		private final QueryParser parser;
 		private final NgsiLdQueryRenderer renderer;
 
-		NgsiLdTranslator(GeneralProperties properties) {
-			this.parser = new QueryParser(properties);
-			this.renderer = new NgsiLdQueryRenderer(properties);
+		NgsiLdTranslator(NgsiLdBrokerProperties brokerProperties) {
+			this(new GeneralProperties(), brokerProperties);
+		}
+
+		NgsiLdTranslator(GeneralProperties generalProperties, NgsiLdBrokerProperties brokerProperties) {
+			this.parser = new QueryParser(generalProperties);
+			this.renderer = new NgsiLdQueryRenderer(generalProperties, brokerProperties);
 		}
 
 		QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {

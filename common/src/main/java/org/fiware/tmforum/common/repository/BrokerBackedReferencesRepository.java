@@ -5,6 +5,7 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.VersionedEntity;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
 import org.fiware.tmforum.storage.StoredReference;
@@ -26,9 +27,10 @@ public class BrokerBackedReferencesRepository extends NgsiLdBaseRepository imple
 	private static final String VERSION_ATTRIBUTE = "version";
 	private static final String NO_VERSION = "";
 
-	public BrokerBackedReferencesRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi) {
+	public BrokerBackedReferencesRepository(GeneralProperties generalProperties,
+			NgsiLdBrokerProperties brokerProperties, EntitiesApiClient entitiesApi) {
 		// only used for retrieval, so no such mappers required
-		super(generalProperties, entitiesApi, null, null, null);
+		super(generalProperties, brokerProperties, entitiesApi, null, null, null);
 	}
 
 	@Override

@@ -49,7 +49,6 @@ logger:
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
-  countHeader: NGSILD-Results-Count
 api:
   product-inventory:
     basepath: ${general.basepath:/}

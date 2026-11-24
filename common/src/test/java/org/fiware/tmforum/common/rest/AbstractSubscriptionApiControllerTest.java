@@ -3,6 +3,7 @@ package org.fiware.tmforum.common.rest;
 import io.github.wistefan.mapping.EntityVOMapper;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -132,7 +133,7 @@ class AbstractSubscriptionApiControllerTest {
 
 		ArgumentCaptor<EntityQuery> query = ArgumentCaptor.forClass(EntityQuery.class);
 		verify(repository).findEntities(any(), any(), any(), any(), query.capture());
-		assertEquals("callback==\"" + CALLBACK + "\"", new NgsiLdQueryRenderer(properties).renderFilter(query.getValue()));
+		assertEquals("callback==\"" + CALLBACK + "\"", new NgsiLdQueryRenderer(properties, new NgsiLdBrokerProperties()).renderFilter(query.getValue()));
 	}
 
 	private static Stream<Arguments> existingHubs() {

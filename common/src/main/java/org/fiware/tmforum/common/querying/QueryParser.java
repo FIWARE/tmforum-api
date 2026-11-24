@@ -296,8 +296,8 @@ public class QueryParser {
     }
 
     /**
-     * Splits the (combined) value into exact literals: on {@code ,}, and for strings also on the configured
-     * {@code ngsildOrQueryValue}. A regex is never split. Numbers and booleans are trimmed and validated.
+     * Splits the (combined) value into exact literals on {@link #TMFORUM_OR_VALUE}. A regex is never split.
+     * Numbers and booleans are trimmed and validated.
      */
     private List<String> toValues(QueryPart qp, Operator operator, QueryAttributeType type) {
         if (operator == REGEX) {
@@ -305,9 +305,7 @@ public class QueryParser {
         }
         Stream<String> values = Arrays.stream(qp.value().split(TMFORUM_OR_VALUE));
         List<String> literals = switch (type) {
-            case STRING -> values
-                    .flatMap(value -> Arrays.stream(value.split(Pattern.quote(generalProperties.getNgsildOrQueryValue()))))
-                    .toList();
+            case STRING -> values.toList();
             case BOOLEAN -> values.map(value -> validateLiteral(qp.attribute(), value, Literals.BOOLEAN, "boolean"))
                     .toList();
             case NUMBER -> values.map(value -> validateLiteral(qp.attribute(), value, Literals.NUMBER, "number"))
