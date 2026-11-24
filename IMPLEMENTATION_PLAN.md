@@ -50,11 +50,16 @@ tests in `common/src/test/java/.../configuration/`.
   The CLI values, `Converter`, `Names` and `MigrationContexts` behave exactly as before; the existing
   `MigrationContextsTest`/`MigrationContextsIT` must pass unchanged.
 - `TmForumApplication.run(Class<?> mainClass, String... args)` replaces `Micronaut.run(Application.class, args)`.
-  It runs `Micronaut.build(args).mainClass(mainClass)`, adds `postgresql` via `.environments(...)` when no backend
-  is named, then calls `.start()`. Put the decision in a pure, package-visible function that takes the raw
+  It must start the same context `Micronaut.run` does. In micronaut-context 5.2.17 (platform 5.2.3) that is
+  `new Micronaut().classes(cls).args(args).start()`: `classes(...)` registers the main class's package, and there
+  is no `mainClass(...)` call, which would also set the class loader. So the runner is
+  `Micronaut.build(args).classes(mainClass)` (`build(args)` is `new Micronaut().args(args)`), plus the conditional
+  `.environments(...)`/`.properties(...)` below as the only addition, then `.start()`. Re-check this against the
+  sources if the Micronaut version has changed. Put the decision in a pure, package-visible function that takes the raw
   `micronaut.environments` and `MICRONAUT_ENVIRONMENTS` values (comma-separated, may be null or blank), so it can be
-  unit-tested without touching the JVM. Check in the Micronaut 5 sources (`DefaultEnvironment`) that builder
-  environments are merged with both of those, and are not replaced by them.
+  unit-tested without touching the JVM. Builder environments are merged with both of those, not replaced by them
+  (`DefaultEnvironmentAndPackageDeducer.deduce()` concatenates them; `defaultEnvironments` would only apply when
+  all are empty).
 - The runner also sets a marker property (named constant, e.g. `tmforum.storage.backend-defaulted=true`, through
   the builder's `.properties(...)`) when it added `postgresql`, so the validator can tell a defaulted backend from
   a named one.
