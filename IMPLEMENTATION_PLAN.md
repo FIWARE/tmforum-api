@@ -48,7 +48,7 @@ tests in `common/src/test/java/.../configuration/`.
 - `BrokerType` (migrator CLI) holds `"orion-ld"`/`"scorpio"` as literals today. Make its constants take their
   names from `StorageBackend.ORION_LD/SCORPIO.environment()` (or the new constants), so the names exist once.
   The CLI values, `Converter`, `Names` and `MigrationContexts` behave exactly as before; the existing
-  `BrokerType`/`MigrationContexts` tests must pass unchanged.
+  `MigrationContextsTest`/`MigrationContextsIT` must pass unchanged.
 - `TmForumApplication.run(Class<?> mainClass, String... args)` replaces `Micronaut.run(Application.class, args)`.
   It runs `Micronaut.build(args).mainClass(mainClass)`, adds `postgresql` via `.environments(...)` when no backend
   is named, then calls `.start()`. Put the decision in a pure, package-visible function that takes the raw
