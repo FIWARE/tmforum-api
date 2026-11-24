@@ -11,10 +11,10 @@ Correction D4 in `doc/access-policies/TICKETS.md` (AP-01). This ticket adds test
      - `ProductOfferingTerm` (product-shared-models) extends `Entity` and has no policy field.
      - Stored as `PROPERTY_LIST` `productOfferingTerm`.
   2. Product spec:
-     - Domain: `ProductSpecification.getProductSpecCharacteristic().get(i).getProductSpecCharacteristicValue().get(j).getTmfValue()`. The value is an `Object`, held by `productcatalog.domain.CharacteristicValueSpecification`, which extends `Entity`.
+     - Domain: `ProductSpecification.getProductSpecCharacteristic().get(i).getProductSpecCharacteristicValue().get(j).getTmfValue()`. The value is an `Object`, held by `org.fiware.tmforum.service.CharacteristicValueSpecification` (imported by `product.ProductSpecificationCharacteristic`, l.31), which is not an `Entity`. `productcatalog.domain.CharacteristicValueSpecification` is not on this path.
      - API path: `productSpecCharacteristic[].productSpecCharacteristicValue[].value`. MapStruct maps `value` to `tmfValue`.
   3. Service spec:
-     - Domain: `ServiceSpecification.getSpecCharacteristic().get(i).getCharacteristicValueSpecification().get(j).getTmfValue()`. Here `service.CharacteristicValueSpecification` is not an `Entity`.
+     - Domain: `ServiceSpecification.getSpecCharacteristic().get(i).getCharacteristicValueSpecification().get(j).getTmfValue()`. Same holder class as the product spec: `service.CharacteristicValueSpecification` (`service.CharacteristicSpecification`, l.23). Both specification carriers therefore end at one `getTmfValue()`, and the finding must say so.
      - API path: `specCharacteristic[].characteristicValueSpecification[].value`.
 - **Unknown fields need `@schemaLocation`.** `ProductOfferingTerm` in `api/tm-forum/product-catalog/api.json` has `@schemaLocation`. For such VOs, `common/.../mapping/ValidatingDeserializer` rejects unknown properties with **400** ("No additional properties are allowed without a @schemaLocation"). `BaseMapper.afterMappingToEntity`/`afterMappingFromEntity` copy unknown properties to and from `additionalProperties` only when `@schemaLocation != null`.
   - Expected result: the UC-1 term from `POLICY_EXAMPLES.md` sent **verbatim** (no `@schemaLocation`) is rejected. It is only stored once the term carries a `@schemaLocation`.
@@ -37,6 +37,9 @@ Correction D4 in `doc/access-policies/TICKETS.md` (AP-01). This ticket adds test
 - **Equivalence criterion for "byte-equivalent".**
   - Rule: Jackson `JsonNode.equals` between the subtree from the request fixture and the same JSON-pointer subtree of the GET body. Object key order and whitespace are ignored. Array order, value types (`"1"` vs `1`), `@`-prefixed keys and URL strings must all match exactly.
   - Do **not** use `AbstractApiIT.assertEqualsIgnoringEmptyLists`/`assertEqualsForFields`, because they mask differences.
+- **Entity cache on the NGSI-LD backends.** `NgsiLdBaseRepository.retrieveEntityById` is `@Cacheable("entities")` (2s in the test config). `createEntity` carries `@CachePut`, but it returns `Mono<Void>`: Micronaut's `CacheInterceptor` builds no put operations for a void-valued publisher (`CacheOperation`: `putOperations = isVoid ? null : ...`), and the put would sit in a `flatMap` that never fires. Create therefore caches nothing, and the GET after the POST is a miss that reads the broker. The cached entry is then the broker's `EntityVO`, but with `-Dcache=redis` it also went through `EntityVOSerializer`. So the IT must:
+  - never compare the POST response body, which is built from the client-side object;
+  - invalidate the entry before the port-level read, so it reads the store: inject `CacheManager` and call `getCache(CommonConstants.ENTITIES_CACHE_NAME).invalidate(id)` when `getCacheNames()` contains it (postgresql has no such read cache).
 - Build/run:
   - `mvn install -pl product-catalog,service-catalog -am -DskipTests -DskipITs`
   - `mvn integration-test -pl product-catalog -Dit.test=ProductOfferingPolicyRoundTripIT -DskipTests -Dbroker=<orion-ld|scorpio|postgresql>`. The default broker is `orion-ld`. Run `mvn clean` on the module between backends, or the K3S cluster from the previous broker is reused.
@@ -65,7 +68,7 @@ Correction D4 in `doc/access-policies/TICKETS.md` (AP-01). This ticket adds test
 **What each case asserts**
 1. The POST status.
 2. When the POST succeeds, the GET-by-id body subtree at each pointer against the fixture subtree (API level).
-3. `objectMapper.valueToTree(<domain accessor>)` on the object from `EntityReadRepository.get(id, ProductOffering.class | ProductSpecification.class)` against the same fixture subtree (port level).
+3. `objectMapper.valueToTree(<domain accessor>)` on the object from `EntityReadRepository.get(id, ProductOffering.class | ProductSpecification.class)` against the same fixture subtree (port level). Invalidate the `entities` cache entry for the id first (see "Entity cache" above).
 4. The outcome per backend. Each case carries a `Map<backend, Outcome>` for the API level and another for the domain level, where `Outcome` ∈ {`PRESERVED`, `LOSSY`, `DROPPED`, `REJECTED`}:
    - `PRESERVED`: the subtrees are equal.
    - `LOSSY`: the actual subtree equals the pinned `*-observed-<backend>.json`, and differs from the fixture.
@@ -87,7 +90,7 @@ The expected map holds what was **observed**. A carrier that turns out lossy get
 ### Step 2: Service-catalog round-trip IT, pinned on all three storages
 **Files**
 - `service-catalog/src/test/resources/access-policy/uc6-service-specification.json`: the UC-6 body, verbatim from `POLICY_EXAMPLES.md`.
-- `service-catalog/src/test/java/org/fiware/tmforum/servicecatalog/ServiceSpecificationPolicyRoundTripIT.java`: new. It has the same structure, `Outcome` model and backend detection as step 1; copy the small helpers, do not move them into `common`. `getEntityType()` = `ServiceSpecification.TYPE_SERVICE_SPECIFICATION`.
+- `service-catalog/src/test/java/org/fiware/tmforum/servicecatalog/ServiceSpecificationPolicyRoundTripIT.java`: new. It has the same structure, `Outcome` model, backend detection and cache invalidation before the port read as step 1; copy the small helpers, do not move them into `common`. `getEntityType()` = `ServiceSpecification.TYPE_SERVICE_SPECIFICATION`.
 
 **Test cases** (parameterized)
 
@@ -110,7 +113,7 @@ The wrong-container case pins whether the most common authoring mistake is rejec
 **Files**
 - New `doc/access-policies/AP-01_FINDINGS.md`. For each of the three carriers:
   - The outcome per backend at the API level and at the domain level: preserved / lossy (exactly what is lost) / dropped / rejected. Copy the numbers from the pinned tests of steps 1 and 2, not from memory.
-  - The **exact accessor path** the `PolicyCarrier` (AP-07) will use, from the facts list above, plus any unwrapping it needs. Examples of unwrapping: `UnmappedProperty.getValue()` is a `Map`, a compacted array must be re-wrapped.
+  - The **exact accessor path** the `PolicyCarrier` (AP-07) will use, from the facts list above, plus any unwrapping it needs. Examples of unwrapping: `UnmappedProperty.getValue()` is a `Map`, a compacted array must be re-wrapped. Record that both specification carriers share the holder `service.CharacteristicValueSpecification.getTmfValue()`, so one accessor serves both.
   - What a provider must write. Expected: the offering term needs a `@schemaLocation` whose schema admits `accessPolicy`/`contractPolicy`. If confirmed, correct the UC-1 example in `POLICY_EXAMPLES.md` to carry it and to name the schema.
   - The wrong-container results.
   - What is not covered: list reads (`findEntities`), `ProductOfferingPrice.productOfferingTerm`, PATCH.
