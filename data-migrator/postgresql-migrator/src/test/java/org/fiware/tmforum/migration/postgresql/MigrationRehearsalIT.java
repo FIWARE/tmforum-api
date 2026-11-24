@@ -5,16 +5,12 @@ import com.sun.net.httpserver.HttpServer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.runtime.server.EmbeddedServer;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
-import org.fiware.tmforum.common.mapping.SubscriptionMapper;
 import org.fiware.tmforum.common.notification.NgsiLdSubscriptionFactory;
-import org.fiware.tmforum.common.querying.SubscriptionQuery;
-import org.fiware.tmforum.common.querying.SubscriptionQueryParser;
 import org.fiware.tmforum.common.test.BrokerOnly;
 import org.fiware.tmforum.common.test.NgsiLdTestEntityCleaner;
 import org.fiware.tmforum.product.Characteristic;
@@ -54,7 +50,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -143,7 +138,6 @@ class MigrationRehearsalIT {
 	private static final String CREATED_CALLBACK = "/created";
 	// the payload name is lowerCamel, see TMForumEventHandler.makeEventDetails
 	private static final String IMPORTED_HUB_QUERY = "eventType=CategoryCreateEvent&event.category.name=" + NOTIFY_MARKER;
-	private static final String HUB_ENTITY_TYPE = "category";
 	private static final String CREATED_HUB_QUERY = "eventType=CategoryCreateEvent";
 	// the migration's own changes on the pre-88 offering: the seeded version and the backfilled category reference
 	private static final Pattern MIGRATED_OFFERING_DIFFERENCE = Pattern.compile(
@@ -222,7 +216,8 @@ class MigrationRehearsalIT {
 				.set("category", jsonMapper.createArrayNode().add(completeReference(storedCategory))));
 		JsonNode organization = post(brokerUrl, ORGANIZATION_PATH,
 				jsonMapper.createObjectNode().put(NAME, "api-organization"));
-		URI importedHubId = createImportedHub(callbackBase.resolve(IMPORTED_CALLBACK));
+		URI importedHubId = URI.create(post(brokerUrl, HUB_PATH,
+				hub(callbackBase.resolve(IMPORTED_CALLBACK), IMPORTED_HUB_QUERY)).path("id").asString());
 		for (RawRecord record : RAW_RECORDS) {
 			createRawEntity(record.json());
 		}
@@ -337,29 +332,6 @@ class MigrationRehearsalIT {
 				.filter(field -> target.hasNonNull(field))
 				.forEach(field -> reference.set(field, target.get(field)));
 		return reference;
-	}
-
-	// seeded as the broker-backed hub controller would, without it: hub registration through the API fails on Scorpio
-	private URI createImportedHub(URI callback) {
-		SubscriptionQuery query = SubscriptionQueryParser.parse(IMPORTED_HUB_QUERY, List.of());
-		List<String> entities = List.of(HUB_ENTITY_TYPE);
-		TMForumSubscription hub = new TMForumSubscription(UUID.randomUUID().toString());
-		hub.setRawQuery(IMPORTED_HUB_QUERY);
-		hub.setEventTypes(query.getEventTypes());
-		hub.setEntities(entities);
-		hub.setQuery(query.getQuery());
-		hub.setCallback(callback);
-		hub.setFields(query.getFields());
-		hub.setSubscription(NgsiLdSubscriptionFactory.build(notificationEndpoint, callback.toString(),
-				query.getQuery(), entities, query.getFields()));
-		ApplicationContext source = brokerContexts.source();
-		GeneralProperties properties = source.getBean(GeneralProperties.class);
-		source.getBean(SubscriptionsApiClient.class).createSubscription(
-				source.getBean(SubscriptionMapper.class).map(hub.getSubscription())
-						.atContext(properties.getContextUrl()),
-				properties.getTenant()).block();
-		source.getBean(EntityRepository.class).createDomainEntity(hub).block();
-		return hub.getId();
 	}
 
 	private URI restoredSubscription(URI hubId) {
