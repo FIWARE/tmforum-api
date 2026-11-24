@@ -87,6 +87,7 @@ public class QueryParser {
                 .toList();
     }
 
+    // not read since the parser stopped splitting on ngsildOrQueryValue; kept so the constructor stays stable
     protected final GeneralProperties generalProperties;
 
     // Keys for the "well-known" fields

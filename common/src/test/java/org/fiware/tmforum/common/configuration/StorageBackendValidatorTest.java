@@ -130,7 +130,7 @@ class StorageBackendValidatorTest {
 	static Stream<Arguments> brokerPropertiesWithNamedBackend() {
 		return Stream.of(
 				Arguments.of(List.of("redis", "postgresql"), REPLACE_ON_UPDATE_VARIABLE, List.of(REPLACE_ON_UPDATE_KEY)),
-				Arguments.of(List.of("postgresql"), CAMEL_CASE_KEYS, List.of(TENANT_KEY, REPLACE_ON_UPDATE_KEY)),
+				Arguments.of(List.of("postgresql"), CAMEL_CASE_KEYS, List.of(REPLACE_ON_UPDATE_KEY, TENANT_KEY)),
 				Arguments.of(List.of("postgresql"), KEBAB_CASE_KEY, List.of(COUNT_HEADER_KEY)),
 				Arguments.of(List.of("postgresql"), SHARED_KEYS_ONLY, List.of()),
 				// a named broker uses them
@@ -146,6 +146,15 @@ class StorageBackendValidatorTest {
 			List<String> expectedIgnored) {
 		assertEquals(expectedIgnored, StorageBackendValidator.validate(environments, resolver(false, configuration)),
 				"Exactly the broker settings PostgreSQL ignores should be reported.");
+	}
+
+	@DisplayName("The checked broker-only keys are exactly the NgsiLdBrokerProperties fields.")
+	@Test
+	void brokerOnlyPropertiesAreTheBrokerPropertiesFields() {
+		assertEquals(List.of("countHeader", "encloseQuery", "includeAttributeInList", "ngsildOrQueryKey",
+						"ngsildOrQueryValue", "replaceOnUpdate", "tenant", "useDotSeperator"),
+				StorageBackendValidator.BROKER_ONLY_PROPERTIES,
+				"Every broker-only field, and nothing else, should be checked.");
 	}
 
 	private static Throwable rootCause(Throwable throwable) {

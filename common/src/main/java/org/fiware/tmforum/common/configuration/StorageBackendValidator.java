@@ -11,7 +11,10 @@ import io.micronaut.core.value.PropertyResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.TmForumApplication;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -32,10 +35,15 @@ public class StorageBackendValidator {
 	static final String SHIPPED_NGSI_URL = "http://localhost:1026";
 	static final String GENERAL_PREFIX = "general.";
 	/**
-	 * The {@link NgsiLdBrokerProperties} fields, by their camelCase name.
+	 * The {@link NgsiLdBrokerProperties} fields, by their camelCase name; derived so a new field is checked too.
 	 */
-	static final List<String> BROKER_ONLY_PROPERTIES = List.of("tenant", "ngsildOrQueryValue", "ngsildOrQueryKey",
-			"encloseQuery", "includeAttributeInList", "useDotSeperator", "replaceOnUpdate", "countHeader");
+	static final List<String> BROKER_ONLY_PROPERTIES = Arrays.stream(NgsiLdBrokerProperties.class.getDeclaredFields())
+			// synthetic: coverage agents (JaCoCo) add their own fields
+			.filter(field -> !Modifier.isStatic(field.getModifiers()) && !field.isSynthetic())
+			.map(Field::getName)
+			// getDeclaredFields has no defined order; keeps the reported keys stable
+			.sorted()
+			.toList();
 
 	private static final String SETTINGS_SEPARATOR = ", ";
 	private static final String MULTIPLE_BACKENDS_MESSAGE = "More than one storage backend is selected in the "
