@@ -1,0 +1,197 @@
+# Implementation Plan: TMForum - DB Backend - Selectable backend
+
+## Overview
+Make the storage backend one documented setting, the Micronaut environment `postgresql`, `orion-ld` or `scorpio`,
+with PostgreSQL as the default when none is given. Startup fails fast on a contradictory or incomplete selection.
+The broker-only `general.*` keys move into their own properties class, still bound to the same keys. The README,
+`AGENTS.md`, the root pom and the release notes stop describing NGSI-LD as the only storage layer, and the accepted
+deviations are listed in one table. The broker adapter stays at full parity, and nothing on the ticket's "not deleted"
+list is touched.
+
+### Design decisions (apply to every step)
+- **The selector is the Micronaut environment.** It already exists: the `@Requires(env/notEnv =
+  CommonConstants.POSTGRESQL_ENVIRONMENT)` gates, the `application-{postgresql,orion-ld,scorpio}.yaml` files, the IT
+  wiring `-Dmicronaut.environments=${cache},${broker}`, `test-brokers.yaml` and `MigrationContexts` all use it.
+  No new property is added. The documented setting is `MICRONAUT_ENVIRONMENTS=<backend>,<cache>`.
+- **The default is applied at the application entry point only.** Micronaut ignores `defaultEnvironments` as soon as
+  any environment is set, and deployments always set the cache env. An `ApplicationContextConfigurer` runs for every
+  context, including `@MicronautTest` unit tests and the migrator's broker source context, so it would add
+  `postgresql` there too. Instead, the 21 `Application.main` methods call a shared runner. It adds `postgresql`
+  only when neither `micronaut.environments` (system property) nor `MICRONAUT_ENVIRONMENTS` (env var) names a
+  backend. Tests and the migrator keep setting their environments explicitly, so their behaviour does not change.
+- **This is a breaking change for broker deployments that do not name their broker.** Today, no backend env means
+  the broker. After this ticket it means PostgreSQL. Such a deployment must add `orion-ld` or `scorpio`. The release
+  notes say this first, and the startup warning for broker-only keys (Step 2) points at it.
+- **Config keys do not change.** The broker-only fields move to a new `@ConfigurationProperties("general")` class,
+  so `GENERAL_REPLACE_ON_UPDATE`, `general.tenant` and the other keys keep working.
+
+## Steps
+
+### Step 1: Backend selector, PostgreSQL default, fail-fast validation
+Files: `common/src/main/java/org/fiware/tmforum/common/configuration/StorageBackend.java` (new),
+`common/.../common/TmForumApplication.java` (new), `common/.../configuration/StorageBackendValidator.java` (new),
+all 21 `*/src/main/java/**/Application.java` (20 API modules plus `all-in-one`; find them with
+`grep -rl "Micronaut.run" --include=Application.java .`), `conformance-test/api.yaml`, plus unit tests in
+`common/src/test/java/.../configuration/`.
+
+- `StorageBackend` enum: `POSTGRESQL("postgresql")`, `ORION_LD("orion-ld")`, `SCORPIO("scorpio")`, with
+  `environment()` and `isBroker()`. `POSTGRESQL` uses `CommonConstants.POSTGRESQL_ENVIRONMENT`. Add named
+  constants for the broker env names, either in `CommonConstants` or in the enum, but no string literals in the
+  logic. Add a static helper that finds the backends among a set of environment names.
+- `TmForumApplication.run(Class<?> mainClass, String... args)` replaces `Micronaut.run(Application.class, args)`.
+  It runs `Micronaut.build(args).mainClass(mainClass)`, adds `postgresql` via `.environments(...)` when no backend
+  is named, then calls `.start()`. Put the decision in a pure, package-visible function that takes the raw
+  `micronaut.environments` and `MICRONAUT_ENVIRONMENTS` values (comma-separated, may be null or blank), so it can be
+  unit-tested without touching the JVM. Check in the Micronaut 5 sources (`DefaultEnvironment`) that builder
+  environments are merged with both of those, and are not replaced by them.
+- `StorageBackendValidator` is a `@Context` bean that checks the configuration when the context starts and throws
+  `io.micronaut.context.exceptions.ConfigurationException`. The message names the offending setting and what to
+  set instead. Checks:
+  1. More than one backend env is active (for example `postgresql,orion-ld` or `orion-ld,scorpio`): fail.
+  2. `postgresql` is active but `r2dbc.datasources.default.url` or `flyway.datasources.default.url` is missing or
+     blank: fail.
+  3. A broker is active, or no backend env is active (which today means the broker), but
+     `micronaut.http.services.ngsi.url` is missing or blank: fail.
+  Keep the checks in a pure method that takes the active env names and a `PropertyResolver`. The bean itself must
+  not break the existing `@MicronautTest` unit tests in `common`, which run without a backend env and have no
+  `src/test/resources/application.yaml`. Gate the bean with `@Requires(notEnv = Environment.TEST)` and unit-test
+  the pure method instead. Also test one `ApplicationContext.builder().deduceEnvironment(false)` start that fails.
+- `conformance-test/api.yaml` deploys the modules against `orion-ld` without naming a backend env. Add
+  `MICRONAUT_ENVIRONMENTS` with `orion-ld` (and its cache env, if one is implied) so the conformance run stays on
+  the broker. Check the `-Pdev` and `conformance-test` profiles in the root `pom.xml` for the same gap.
+- Unchanged, but verify: the root pom's failsafe `argLine`, `test-brokers.yaml`, `parallel-test.yml` (explicit
+  `in-memory,orion-ld`), `MigrationContexts` (explicit envs, rejects inherited ones) and `UpdateWriter`'s own
+  context. In each, either the runner is not involved or a backend is named explicitly.
+- `all-in-one`'s `ControllerStorageBoundaryTest` (ArchUnit) must still pass with the new classes.
+- Tests, parameterized: default resolution (sysprop and env var each null, blank, cache-only, naming each backend,
+  naming a backend among others with whitespace), and validator cases 1–3, plus the valid combinations.
+- Acceptance: `mvn test -pl common -am` and `mvn install -DskipTests -DskipITs` are green. Starting a module jar with
+  only `MICRONAUT_ENVIRONMENTS=in-memory` activates `postgresql`. `orion-ld,postgresql` aborts startup with the
+  validator message.
+
+### Step 2: Scope the broker-only `general.*` properties
+Files: `common/.../configuration/GeneralProperties.java`, a new `common/.../configuration/NgsiLdBrokerProperties.java`,
+the consumers listed below, `StorageBackendValidator` from Step 1, and their tests.
+
+- `NgsiLdBrokerProperties`: `@ConfigurationProperties("general")`, `@Data`, with no `@Requires`. Broker beans
+  such as `NgsiLdEntityRepository` are also instantiated on PostgreSQL as non-`@Primary` beans, so the class must
+  always exist. Move these fields over, with their defaults and existing field Javadoc: `tenant`,
+  `ngsildOrQueryValue`, `ngsildOrQueryKey`, `encloseQuery`, `includeAttributeInList`, `useDotSeperator`,
+  `replaceOnUpdate`, `countHeader`. Give the class one line of Javadoc saying the fields are NGSI-LD broker dialect
+  and ignored by the PostgreSQL backend.
+- `GeneralProperties` keeps `contextUrl`, `basepath`, `serverHost`, `escapeForbiddenCharacters` and
+  `optimizeRegexNotEquals`. The last two stay global on purpose: PostgreSQL's POSIX regex has no lookahead either,
+  and migrated data may still be escaped. Say so in their Javadoc in one line.
+- Switch the consumers to the new class (find them with `grep -rn "getTenant\|getCountHeader\|isReplaceOnUpdate\|
+  getNgsildOrQuery\|getEncloseQuery\|getIncludeAttributeInList\|getUseDotSeperator" --include=*.java .`):
+  - `common`: `NgsiLdQueryRenderer`, `NgsiLdBaseRepository`, `NgsiLdEntityRepository`,
+    `AbstractSubscriptionApiController` (tenant for the NGSI-LD subscription), and the `PaginationFilter` Javadoc
+    link.
+  - `data-migrator`: `postgresql-migrator`'s `BrokerSource`, `BrokerExportTarget`, `BrokerReferenceBackfill`, and
+    `update-writer`'s `UpdateWriter`.
+  - Tests: `QueryParserTest`, `QueryParserModelTest`, `NgsiLdQueryRendererTest`, `NgsiLd*RepositoryTest`, the
+    `NgsiLdBaseRepository*UpdateTest`s, `BrokerReferenceBackfillTest`, `MigrationContextsTest`, and the ITs
+    `ExternalReferenceIT`, `NgsiLdEntityRepositoryContractIT`, `DateTimeFilterBehaviourIT` and the migrator ITs.
+- `QueryParser` (storage-neutral) splits string values a second time on `ngsildOrQueryValue` (line ~309). Every
+  shipped profile sets it to `,`, the same as `TMFORUM_OR_VALUE`, so the split does nothing in practice, and
+  `NgsiLdQueryRenderer` already joins with that key. Remove the split so the parser depends only on
+  `TMFORUM_OR_VALUE`. Add a parameterized case showing the literals are unchanged for `,`-separated values. The
+  release note goes in Step 5.
+- Extend `StorageBackendValidator`: on `postgresql`, log a WARN listing every broker-only `general.*` key that is
+  explicitly configured. Check both camelCase and kebab-case through the `PropertyResolver`. The message says the
+  keys are ignored and that a broker deployment must add `orion-ld`/`scorpio` to `MICRONAUT_ENVIRONMENTS`. Do not
+  fail. For this not to fire on every start, `general.countHeader` must leave the base `application.yaml` (Step 3).
+  Cover the warning with a parameterized unit test.
+- Acceptance: `mvn test -pl common,data-migrator/postgresql-migrator,data-migrator/update-writer -am` is green.
+  `general.*` keys bind as before; there is a test that sets `general.replace-on-update=true` and
+  `general.tenant` and reads them from `NgsiLdBrokerProperties`.
+
+### Step 3: Per-module `application*.yaml` documentation
+Files: `*/src/main/resources/application.yaml`, `application-postgresql.yaml`, `application-orion-ld.yaml` and
+`application-scorpio.yaml` of the 20 API modules and `all-in-one`. Test resources stay as they are, unless a test
+breaks.
+
+- `application.yaml`: add a short comment block at the top (3–4 lines, the same in every module) saying the backend
+  is chosen with `MICRONAUT_ENVIRONMENTS=<postgresql|orion-ld|scorpio>,<in-memory|redis>` and that PostgreSQL is
+  the default. Mark `micronaut.http.services.ngsi` as broker-only with a one-line comment. Remove
+  `general.countHeader: NGSILD-Results-Count`, since the code default is identical and both broker yamls keep it.
+- `application-postgresql.yaml`: replace the first comment line with "Default storage backend: PostgreSQL. The
+  NGSI-LD broker and the broker-only `general.*` keys are not used."
+- `application-orion-ld.yaml` and `application-scorpio.yaml`: add a one-line header saying this is a broker backend
+  and the `general.*` keys here are broker-only (see README "Storage backends").
+- Do the edit with a script, keep each file's indentation, and diff two modules by hand afterwards.
+- Acceptance: `mvn install -DskipTests -DskipITs` is green. `git grep -n "countHeader" -- '*/src/main/resources/application.yaml'`
+  is empty. One module IT on `-Dbroker=orion-ld` and one on `-Dbroker=postgresql` pass, to prove the yaml still
+  loads.
+
+### Step 4: README "Storage backends", deviation table, `AGENTS.md`, root pom
+Files: `README.md`, `AGENTS.md`, `pom.xml` (`project.description`, `project.summary`), and any other docs that
+describe the broker as the default or the only storage. Find them with
+`grep -rn -i "backed by NGSI-LD\|stays the default\|NGSI-LD adapter.*default\|the broker is the" --include=*.md .`;
+expect `release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md`, `storage-postgresql/README.md`, `common/README.md`
+and `data-migrator/RUNBOOK_POSTGRESQL.md`.
+
+- README `## Structure`: the intro paragraph and the `k3s` bullet list now say the project stores entities through
+  a storage port (`storage-api`) with two adapters, `storage-postgresql` and the NGSI-LD broker adapter in `common`.
+  Add `postgresql-db` to the k3s list.
+- Replace `## Broker compatibility` with `## Storage backends`:
+  - **Selecting a backend**: the env names, the default, an example for each, and the fail-fast rules from
+    Step 1. Warn that broker deployments must name their broker.
+  - **PostgreSQL**: a setup summary (the `POSTGRES_*` variables, schema rights, Flyway on first start) that links
+    to `storage-postgresql/README.md#configuration` rather than copying it.
+  - **NGSI-LD broker**: one sentence saying everything in this subsection applies to the broker backend only. Then
+    a table of the broker-only `general.*` keys (`NgsiLdBrokerProperties`) with a one-line meaning each, and the
+    existing `### Attribute updates (replaceOnUpdate)` text and table moved here unchanged. Keep `-Pdev`
+    (broker on `localhost:1026`) in "Dev-Environment".
+  - **Accepted deviations**: one table with columns *Area | PostgreSQL | NGSI-LD broker | Decision*. It is the
+    single place where deviations are recorded; say so in one sentence. Rows:
+    1. Event delivery: at-least-once through `tmforum.event_outbox` vs fire-and-forget (decision 13; facts in
+       `RELEASE_NOTES_POSTGRESQL_ADAPTER.md` "Notifications"/"Events").
+    2. NGSI-LD subscriptions and `POST /callback`: broker-only, `404` on PostgreSQL (decision 2 as amended).
+    3. `totalCount`/`X-Total-Count`: always exact on PostgreSQL vs only when the broker sends `countHeader`.
+       Confirm in `PostgresEntityRepository.findEntities` and `PaginationFilter`.
+    4. `NULLS` ordering on `sort`: read the actual ordering in `JsonbQueryRenderer` and the broker behaviour in
+       `RELEASE_NOTES_POSTGRESQL_ADAPTER.md` (Orion-LD and Scorpio return unsorted results).
+    5. Entity versioning: schema prepared, `version` filled and `*Ref` versions checked, no history kept
+       (decision 11; `RELEASE_NOTES_ENTITY_VERSIONING.md`), and the same on both backends where that is the case.
+    Take every cell from the code or the existing release notes, not from memory. Where a fact cannot be confirmed,
+    write it down as an open question in the step's PR description and do not guess.
+- `RELEASE_NOTES_POSTGRESQL_ADAPTER.md`: change "The NGSI-LD adapter stays the default; ticket 9 …" and "No
+  accepted deviations yet …" to point at the README table. Change "Enabling it" step 1 to say it is the default.
+- `AGENTS.md`: rewrite the Overview to describe the port and both adapters, with PostgreSQL as the default. Add
+  `TmForumApplication`, `StorageBackendValidator` and `NgsiLdBrokerProperties` to Important Files in one line each.
+  Keep the file short.
+- Root `pom.xml`: `project.description` becomes "Implementation of the TMForum APIs, backed by PostgreSQL or an
+  NGSI-LD context broker", and `project.summary` becomes "TMForum APIs on PostgreSQL or NGSI-LD.".
+- Acceptance: `git grep -n -i "backed by NGSI-LD\|Broker compatibility"` matches nothing outside release notes
+  history. The README renders (check the table syntax). `mvn -q validate` is green.
+
+### Step 5: Release notes for the epic, then verify the full matrix
+Files: `release-notes/RELEASE_NOTES_STORAGE_BACKENDS.md` (new) and the README `## Release notes` table.
+
+- The release notes summarise the whole epic in one page, each item 1–3 lines with a link to the detailed notes:
+  - storage port (ticket 86) and external-reference policy (87, `RELEASE_NOTES_EXTERNAL_REFERENCES.md`);
+  - inline references (88, `RELEASE_NOTES_INLINE_REFERENCES.md`);
+  - PostgreSQL adapter and filter translation (89, 90, `RELEASE_NOTES_POSTGRESQL_ADAPTER.md`);
+  - broker-only NGSI-LD notifications (85);
+  - data migration (91, `RELEASE_NOTES_DATA_MIGRATION.md`);
+  - versioning readiness (93, `RELEASE_NOTES_ENTITY_VERSIONING.md`);
+  - this ticket: selector, default, validator, broker-only properties.
+- An **Upgrading** section comes first and says:
+  - **(a)** broker deployments must add `orion-ld` or `scorpio` to `MICRONAUT_ENVIRONMENTS`, otherwise they start
+    on PostgreSQL;
+  - **(b)** the `general.*` keys are unchanged;
+  - **(c)** `QueryParser` no longer splits filter values on a custom `general.ngsildOrQueryValue`;
+  - **(d)** to move existing broker data, see `data-migrator/RUNBOOK_POSTGRESQL.md`.
+- Link the deviation table in the README instead of copying it. Add a row to the README release-notes table.
+- Verification. The GitHub matrix cannot run here, so reproduce it locally and report the results in the PR
+  description:
+  - `mvn clean install -DskipTests -DskipITs`, then `mvn test` (all modules).
+  - `mvn verify -pl product-catalog -Dbroker=<b> -Dcache=<c>` for all six {orion-ld, scorpio, postgresql} x
+    {in-memory, redis} combinations.
+  - `mvn verify -pl all-in-one -Dbroker=scorpio -Dcache=in-memory` (`PostgresStartupIT`) and
+    `mvn verify -pl data-migrator/postgresql-migrator -Dbroker=orion-ld -Dcache=in-memory`.
+  - If a run fails because of the environment (k3s or Docker) and not the code, record it as such and do not
+    change the code to work around it.
+- Acceptance: every acceptance criterion of the ticket can be traced to one of Steps 1–5, and the PR description
+  has a checklist that maps them.
