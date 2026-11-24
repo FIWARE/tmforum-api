@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,6 +27,7 @@ class StorageBackendValidatorTest {
 
 	private static final String BROKER_URL = "http://orion-ld:1026";
 	private static final String SELECTION_SETTING = "MICRONAUT_ENVIRONMENTS";
+	private static final String MULTIPLE_BACKENDS_TEXT = "More than one storage backend";
 
 	static Stream<Arguments> validSelections() {
 		return Stream.of(
@@ -81,16 +83,18 @@ class StorageBackendValidatorTest {
 				.environments(StorageBackend.ORION_LD.environment(), StorageBackend.POSTGRESQL.environment())
 				.start()
 				.close(), "The context should not start with two backends.");
-		assertTrue(hasConfigurationExceptionCause(exception), "The validator should abort the start.");
+		Throwable rootCause = rootCause(exception);
+		assertInstanceOf(ConfigurationException.class, rootCause, "The validator should abort the start.");
+		assertTrue(rootCause.getMessage().contains(MULTIPLE_BACKENDS_TEXT),
+				"The start should fail on the two-backend check, not on another bean's configuration.");
 	}
 
-	private static boolean hasConfigurationExceptionCause(Throwable throwable) {
-		for (Throwable cause = throwable; cause != null; cause = cause.getCause()) {
-			if (cause instanceof ConfigurationException) {
-				return true;
-			}
+	private static Throwable rootCause(Throwable throwable) {
+		Throwable cause = throwable;
+		while (cause.getCause() != null && cause.getCause() != cause) {
+			cause = cause.getCause();
 		}
-		return false;
+		return cause;
 	}
 
 	private static MapPropertyResolver resolver(boolean defaulted, String ngsiUrl) {
