@@ -160,4 +160,19 @@ data:
       },
       "additionalProperties": false
     }
-
+  product-offering-term-policy-schema.json: |-
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "http://localhost:3000/ProductOfferingTerm-policy-schema.json",
+      "title": "Test Schema - ODRL policies on a product offering term",
+      "description": "Test Schema - ODRL policies on a product offering term",
+      "type": "object",
+      "properties": {
+          "accessPolicy": {
+              "type": "object"
+          },
+          "contractPolicy": {
+              "type": "object"
+          }
+      }
+    }
