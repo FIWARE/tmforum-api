@@ -5,6 +5,7 @@ import io.micronaut.http.MutableHttpResponse;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
 import org.fiware.tmforum.storage.PagedResult;
@@ -41,13 +42,13 @@ class NgsiLdEntityRepositoryTest {
 
 	private static final String COUNT_HEADER = "NGSILD-Results-Count";
 
-	private GeneralProperties properties;
+	private NgsiLdBrokerProperties properties;
 	private NgsiLdEntityRepository repository;
 
 	@BeforeEach
 	public void setUp() {
-		properties = new GeneralProperties();
-		repository = new NgsiLdEntityRepository(properties, null, null, null, null, null);
+		properties = new NgsiLdBrokerProperties();
+		repository = new NgsiLdEntityRepository(new GeneralProperties(), properties, null, null, null, null, null);
 	}
 
 	@Test
@@ -56,8 +57,8 @@ class NgsiLdEntityRepositoryTest {
 		// "id" query param to null, silently dropping any ?id= filter on polymorphic list
 		// endpoints (e.g. resourceSpecification, which spans several NGSI-LD types).
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null, null, null,
-				new NgsiLdQueryRenderer(properties));
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
 		String requestedId = "urn:ngsi-ld:software-specification:0e2d5c4a-cf51-43cf-a510-dff06f62f4a3";
 
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
@@ -77,8 +78,8 @@ class NgsiLdEntityRepositoryTest {
 	@MethodSource("queries")
 	public void findEntitiesRendersTheQueryForTheBroker(EntityQuery query, String expectedQ, String expectedOrderBy) {
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null,
-				null, null, new NgsiLdQueryRenderer(properties));
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.ok(new EntityListVO())));
@@ -108,8 +109,8 @@ class NgsiLdEntityRepositoryTest {
 	public void aRejectedFilterArrivesAsQueryExceptionSignal(
 			BiFunction<NgsiLdEntityRepository, EntityQuery, Mono<?>> listCall) {
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null,
-				null, null, new NgsiLdQueryRenderer(properties));
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
 		QueryFilter alternation = new QueryFilter.Comparison(new AttributePath(List.of("color"), false),
 				ComparisonOperator.REGEX, ValueType.STRING, List.of("a|b"));
 
@@ -136,8 +137,8 @@ class NgsiLdEntityRepositoryTest {
 												 Integer expectedTotal, int expectedQueries) {
 		properties.setCountHeader(COUNT_HEADER);
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
-		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(properties, entitiesApi, null,
-				null, null, new NgsiLdQueryRenderer(properties));
+		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(withCount(reported)), Mono.just(withCount(recounted)));

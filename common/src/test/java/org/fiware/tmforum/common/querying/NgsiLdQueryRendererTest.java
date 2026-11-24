@@ -1,6 +1,7 @@
 package org.fiware.tmforum.common.querying;
 
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
@@ -35,20 +36,21 @@ class NgsiLdQueryRendererTest {
 	private static final String ALL_SEPARATORS = "a,b;c|d&e";
 
 	// Orion-LD style: enclosed lists, "|" as OR, attribute repeated per value
-	private static final GeneralProperties ENCLOSED_ATTRIBUTE_IN_LIST = properties(true, PIPE, true, false);
-	private static final GeneralProperties ENCLOSED = properties(true, PIPE, false, false);
-	private static final GeneralProperties ENCLOSED_DOT = properties(true, PIPE, false, true);
+	private static final NgsiLdBrokerProperties ENCLOSED_ATTRIBUTE_IN_LIST = properties(true, PIPE, true, false);
+	private static final NgsiLdBrokerProperties ENCLOSED = properties(true, PIPE, false, false);
+	private static final NgsiLdBrokerProperties ENCLOSED_DOT = properties(true, PIPE, false, true);
 	// Scorpio style: plain "," lists
-	private static final GeneralProperties PLAIN = properties(false, COMMA, false, false);
-	private static final GeneralProperties PLAIN_DOT = properties(false, COMMA, false, true);
-	private static final GeneralProperties DEFAULTS = new GeneralProperties();
+	private static final NgsiLdBrokerProperties PLAIN = properties(false, COMMA, false, false);
+	private static final NgsiLdBrokerProperties PLAIN_DOT = properties(false, COMMA, false, true);
+	private static final NgsiLdBrokerProperties DEFAULTS = new NgsiLdBrokerProperties();
+	private static final GeneralProperties GENERAL_DEFAULTS = new GeneralProperties();
 	// the shipped orion-ld and scorpio profiles: both brokers take "|" between whole comparisons
-	private static final GeneralProperties BROKER_PROFILE = brokerProfile();
+	private static final NgsiLdBrokerProperties BROKER_PROFILE = brokerProfile();
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("filters")
-	void testRenderFilter(String expected, GeneralProperties properties, Class<?> queryClass, QueryFilter filter) {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
+	void testRenderFilter(String expected, NgsiLdBrokerProperties properties, Class<?> queryClass, QueryFilter filter) {
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, properties);
 		assertEquals(expected, renderer.renderFilter(new EntityQuery(queryClass, filter, List.of())));
 	}
 
@@ -151,8 +153,9 @@ class NgsiLdQueryRendererTest {
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("regexesHoldingQuerySyntax")
-	void testRegexHoldingQuerySyntaxIsRejected(String pattern, GeneralProperties properties) {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
+	void testRegexHoldingQuerySyntaxIsRejected(String pattern, NgsiLdBrokerProperties properties,
+			GeneralProperties generalProperties) {
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(generalProperties, properties);
 		EntityQuery query = new EntityQuery(MyPojo.class,
 				declared(REGEX, ValueType.STRING, List.of(pattern), "color"), List.of());
 		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
@@ -160,39 +163,43 @@ class NgsiLdQueryRendererTest {
 
 	private static Stream<Arguments> regexesHoldingQuerySyntax() {
 		return Stream.of(
-				Arguments.of("alpha|beta", BROKER_PROFILE),
-				Arguments.of("a(bet)", BROKER_PROFILE),
-				Arguments.of("a,b", DEFAULTS),
-				Arguments.of("a;b", DEFAULTS),
-				Arguments.of("y \"h", BROKER_PROFILE),
-				Arguments.of("it's", BROKER_PROFILE),
-				Arguments.of("a<b", DEFAULTS),
-				Arguments.of("a>b", DEFAULTS),
-				Arguments.of("a!b", DEFAULTS),
-				Arguments.of(ALL_SEPARATORS, ENCLOSED),
-				Arguments.of("^(?!a$).*$", withoutRegexOptimization()));
+				Arguments.of("alpha|beta", BROKER_PROFILE, GENERAL_DEFAULTS),
+				Arguments.of("a(bet)", BROKER_PROFILE, GENERAL_DEFAULTS),
+				Arguments.of("a,b", DEFAULTS, GENERAL_DEFAULTS),
+				Arguments.of("a;b", DEFAULTS, GENERAL_DEFAULTS),
+				Arguments.of("y \"h", BROKER_PROFILE, GENERAL_DEFAULTS),
+				Arguments.of("it's", BROKER_PROFILE, GENERAL_DEFAULTS),
+				Arguments.of("a<b", DEFAULTS, GENERAL_DEFAULTS),
+				Arguments.of("a>b", DEFAULTS, GENERAL_DEFAULTS),
+				Arguments.of("a!b", DEFAULTS, GENERAL_DEFAULTS),
+				Arguments.of(ALL_SEPARATORS, ENCLOSED, GENERAL_DEFAULTS),
+				Arguments.of("^(?!a$).*$", DEFAULTS, withoutRegexOptimization()));
 	}
 
 	/**
-	 * A value split on a non-default {@code ngsildOrQueryValue} is rendered like any multi-value list now.
+	 * The parser splits only on TMForum's {@code ,}: a {@code |} stays inside the one literal, and two values are
+	 * joined with the configured {@code ngsildOrQueryValue}.
 	 */
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orValueSeparatorQueries")
-	void testOrValueSeparatorInsideValue(String expected, GeneralProperties properties) {
-		QueryFilter filter = new QueryParser(properties).parse(MyPojo.class, "color=a|b").filter();
-		assertEquals(expected, new NgsiLdQueryRenderer(properties).renderFilter(new EntityQuery(MyPojo.class, filter, List.of())));
+	void testOrValueSeparatorInsideValue(String expected, NgsiLdBrokerProperties properties, String tmForumQuery) {
+		QueryFilter filter = new QueryParser(GENERAL_DEFAULTS).parse(MyPojo.class, tmForumQuery).filter();
+		assertEquals(expected, new NgsiLdQueryRenderer(GENERAL_DEFAULTS, properties)
+				.renderFilter(new EntityQuery(MyPojo.class, filter, List.of())));
 	}
 
 	private static Stream<Arguments> orValueSeparatorQueries() {
 		return Stream.of(
-				Arguments.of("(color==\"a\"|color==\"b\")", ENCLOSED_ATTRIBUTE_IN_LIST),
-				Arguments.of("color==(\"a\"|\"b\")", ENCLOSED));
+				Arguments.of("color==\"a|b\"", ENCLOSED_ATTRIBUTE_IN_LIST, "color=a|b"),
+				Arguments.of("color==\"a|b\"", ENCLOSED, "color=a|b"),
+				Arguments.of("(color==\"a\"|color==\"b\")", ENCLOSED_ATTRIBUTE_IN_LIST, "color=a,b"),
+				Arguments.of("color==(\"a\"|\"b\")", ENCLOSED, "color=a,b"));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("sorts")
-	void testRenderOrderBy(String expected, GeneralProperties properties, List<SortKey> sort) {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
+	void testRenderOrderBy(String expected, NgsiLdBrokerProperties properties, List<SortKey> sort) {
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, properties);
 		assertEquals(expected, renderer.renderOrderBy(new EntityQuery(MyPojo.class, null, sort)));
 	}
 
@@ -216,9 +223,9 @@ class NgsiLdQueryRendererTest {
 				Arguments.of(null, DEFAULTS, List.of()));
 	}
 
-	private static GeneralProperties properties(boolean encloseQuery, String orSeparator,
+	private static NgsiLdBrokerProperties properties(boolean encloseQuery, String orSeparator,
 												boolean includeAttributeInList, boolean useDotSeparator) {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setEncloseQuery(encloseQuery);
 		properties.setNgsildOrQueryKey(orSeparator);
 		properties.setNgsildOrQueryValue(orSeparator);
@@ -227,8 +234,8 @@ class NgsiLdQueryRendererTest {
 		return properties;
 	}
 
-	private static GeneralProperties brokerProfile() {
-		GeneralProperties properties = properties(true, COMMA, true, true);
+	private static NgsiLdBrokerProperties brokerProfile() {
+		NgsiLdBrokerProperties properties = properties(true, COMMA, true, true);
 		properties.setNgsildOrQueryKey(PIPE);
 		return properties;
 	}

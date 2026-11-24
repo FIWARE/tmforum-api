@@ -5,6 +5,7 @@ import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
@@ -214,7 +215,7 @@ class ExportIT {
 		GeneralProperties properties = source.getBean(GeneralProperties.class);
 		source.getBean(SubscriptionsApiClient.class).createSubscription(
 				source.getBean(SubscriptionMapper.class).map(subscription).atContext(properties.getContextUrl()),
-				properties.getTenant()).block();
+				source.getBean(NgsiLdBrokerProperties.class).getTenant()).block();
 	}
 
 	private TMForumSubscription brokerHub(URI id) {
@@ -237,8 +238,9 @@ class ExportIT {
 				.header(ACCEPT_HEADER, JSON)
 				.header("Link", String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, properties.getContextUrl()))
 				.GET();
-		if (properties.getTenant() != null) {
-			request.header("NGSILD-Tenant", properties.getTenant());
+		String tenant = seedContexts.source().getBean(NgsiLdBrokerProperties.class).getTenant();
+		if (tenant != null) {
+			request.header("NGSILD-Tenant", tenant);
 		}
 		HttpResponse<String> response = httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
 		assertEquals(HTTP_OK, response.statusCode(), response.body());

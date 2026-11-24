@@ -2,6 +2,7 @@ package org.fiware.tmforum.migration.postgresql;
 
 import io.micronaut.context.ApplicationContext;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.SubscriptionMapper;
@@ -23,6 +24,7 @@ class BrokerExportTarget implements ExportTarget {
 	private final SubscriptionRepository subscriptionRepository;
 	private final SubscriptionMapper subscriptionMapper;
 	private final GeneralProperties generalProperties;
+	private final NgsiLdBrokerProperties brokerProperties;
 
 	BrokerExportTarget(ApplicationContext source, BrokerSource broker) {
 		this.broker = broker;
@@ -30,6 +32,7 @@ class BrokerExportTarget implements ExportTarget {
 		this.subscriptionRepository = source.getBean(SubscriptionRepository.class);
 		this.subscriptionMapper = source.getBean(SubscriptionMapper.class);
 		this.generalProperties = source.getBean(GeneralProperties.class);
+		this.brokerProperties = source.getBean(NgsiLdBrokerProperties.class);
 	}
 
 	@Override
@@ -51,7 +54,7 @@ class BrokerExportTarget implements ExportTarget {
 	public void registerSubscription(Subscription subscription) {
 		subscriptionRepository.createSubscription(
 				subscriptionMapper.map(subscription).atContext(generalProperties.getContextUrl()),
-				generalProperties.getTenant()).block();
+				brokerProperties.getTenant()).block();
 	}
 
 	@Override

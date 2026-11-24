@@ -8,7 +8,7 @@ import org.fiware.tmforum.account.domain.AccountBalance;
 import org.fiware.tmforum.account.domain.BillingAccount;
 import org.fiware.tmforum.account.domain.FinancialAccount;
 import org.fiware.tmforum.account.domain.FinancialAccountRef;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
 import org.fiware.tmforum.product.Category;
@@ -179,7 +179,7 @@ class BrokerReferenceBackfillTest {
 		verify(source, never()).deleteAttribute(any(), anyString());
 		assertEquals(1, updates.size(), "One write and no restore.");
 		assertEquals(Set.of(CATEGORY, RESOURCE_CANDIDATE), writtenAttributes((ProductOffering) updates.getFirst()));
-		assertEquals(replaceOnUpdate, context.getBean(GeneralProperties.class).isReplaceOnUpdate());
+		assertEquals(replaceOnUpdate, context.getBean(NgsiLdBrokerProperties.class).isReplaceOnUpdate());
 	}
 
 	@Test

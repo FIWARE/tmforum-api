@@ -3,6 +3,7 @@ package org.fiware.tmforum.migration.postgresql;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.api.SubscriptionsApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.subscription.Endpoint;
 import org.fiware.tmforum.common.domain.subscription.EntityInfo;
 import org.fiware.tmforum.common.domain.subscription.KeyValuePair;
@@ -179,7 +180,7 @@ class CleanupSubscriptionsIT {
 		seedContexts.source().getBean(SubscriptionsApiClient.class).createSubscription(
 				seedContexts.source().getBean(SubscriptionMapper.class).map(subscription)
 						.atContext(properties.getContextUrl()),
-				properties.getTenant()).block();
+				seedContexts.source().getBean(NgsiLdBrokerProperties.class).getTenant()).block();
 		return subscription;
 	}
 

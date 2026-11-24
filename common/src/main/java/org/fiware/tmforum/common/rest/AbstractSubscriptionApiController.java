@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.model.NotificationVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -60,6 +61,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 	private final SubscriptionMapper subscriptionMapper;
 	@Nullable
 	private SubscriptionRepository subscriptionRepository;
+	private NgsiLdBrokerProperties ngsiLdBrokerProperties = new NgsiLdBrokerProperties();
 
 	public AbstractSubscriptionApiController(
 			QueryParser queryParser, ReferenceValidationService validationService, EntityRepository repository,
@@ -83,6 +85,14 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 		this.subscriptionRepository = subscriptionRepository;
 	}
 
+	/**
+	 * Setter-injected like {@link #setSubscriptionRepository}; the code defaults apply until it is called.
+	 */
+	@Inject
+	public void setNgsiLdBrokerProperties(NgsiLdBrokerProperties ngsiLdBrokerProperties) {
+		this.ngsiLdBrokerProperties = ngsiLdBrokerProperties;
+	}
+
 	private boolean brokerNotifications() {
 		return subscriptionRepository != null && ngsiLdEventHandler != null;
 	}
@@ -98,7 +108,7 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 						subscriptionMapper
 								.map(tmForumSubscription.getSubscription())
 								.atContext(generalProperties.getContextUrl()),
-						generalProperties.getTenant())))
+						ngsiLdBrokerProperties.getTenant())))
 				.then(create(Mono.just(tmForumSubscription), TMForumSubscription.class));
 	}
 

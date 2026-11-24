@@ -6,6 +6,7 @@ import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
@@ -34,10 +35,10 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
 
     private final NgsiLdQueryRenderer queryRenderer;
 
-    public NgsiLdEntityRepository(GeneralProperties generalProperties, EntitiesApiClient entitiesApi,
-                                  EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper,
+    public NgsiLdEntityRepository(GeneralProperties generalProperties, NgsiLdBrokerProperties brokerProperties,
+                                  EntitiesApiClient entitiesApi, EntityVOMapper entityVOMapper, NGSIMapper ngsiMapper,
                                   JavaObjectMapper javaObjectMapper, NgsiLdQueryRenderer queryRenderer) {
-        super(generalProperties, entitiesApi, javaObjectMapper, ngsiMapper, entityVOMapper);
+        super(generalProperties, brokerProperties, entitiesApi, javaObjectMapper, ngsiMapper, entityVOMapper);
         this.queryRenderer = queryRenderer;
     }
 
@@ -55,7 +56,7 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
     public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
                                           EntityQuery query, String ids, String types) {
         // deferred, so that a filter the renderer rejects arrives as an error signal like every other list failure
-        return Mono.defer(() -> entitiesApi.queryEntities(generalProperties.getTenant(),
+        return Mono.defer(() -> entitiesApi.queryEntities(brokerProperties.getTenant(),
                         ids,
                         null,
                         types,
@@ -91,7 +92,7 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
     public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
                                           EntityQuery query, String ids, Function<String, Class<? extends T>> typeToClass) {
         // deferred, so that a filter the renderer rejects arrives as an error signal like every other list failure
-        return Mono.defer(() -> entitiesApi.queryEntities(generalProperties.getTenant(),
+        return Mono.defer(() -> entitiesApi.queryEntities(brokerProperties.getTenant(),
                         ids,
                         null,
                         types,
@@ -139,17 +140,17 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
                                                String ids, String types, EntityQuery query) {
         Integer reported = extractTotalCount(response);
         boolean emptyPage = response.body() == null || response.body().isEmpty();
-        if (!emptyPage || (reported != null && reported > 0) || generalProperties.getCountHeader() == null
+        if (!emptyPage || (reported != null && reported > 0) || brokerProperties.getCountHeader() == null
                 || ((offset == null || offset <= 0) && (limit == null || limit > 0))) {
             return Mono.just(Optional.ofNullable(reported));
         }
-        return entitiesApi.queryEntities(generalProperties.getTenant(), ids, null, types, null, renderFilter(query),
+        return entitiesApi.queryEntities(brokerProperties.getTenant(), ids, null, types, null, renderFilter(query),
                         null, null, null, null, null, null, COUNT_PAGE_LIMIT, null, true, null, getLinkHeader())
                 .map(countResponse -> Optional.ofNullable(extractTotalCount(countResponse)));
     }
 
     Integer extractTotalCount(HttpResponse<?> response) {
-        String headerName = generalProperties.getCountHeader();
+        String headerName = brokerProperties.getCountHeader();
         if (headerName == null) {
             return null;
         }

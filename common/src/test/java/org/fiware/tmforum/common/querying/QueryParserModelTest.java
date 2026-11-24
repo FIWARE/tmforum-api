@@ -34,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 class QueryParserModelTest {
 
-	private static final String PIPE = "|";
 	private static final String RELATIONSHIP_ID = "urn:ngsi-ld:rel:1";
 
 	@ParameterizedTest(name = "{0}")
@@ -133,18 +132,20 @@ class QueryParserModelTest {
 						filter(declared(EQUALS, ValueType.STRING, List.of("therel"), "rel", "name"))));
 	}
 
+	/**
+	 * Values split only on TMForum's {@code ,}; the broker's {@code ngsildOrQueryValue} plays no part in parsing.
+	 */
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orValueSeparatorQueries")
-	void testParseSplitsConfiguredOrValueSeparator(String tmForumQuery, ParsedQuery expected) {
-		GeneralProperties properties = new GeneralProperties();
-		properties.setNgsildOrQueryValue(PIPE);
-		assertEquals(expected, new QueryParser(properties).parse(MyPojo.class, tmForumQuery));
+	void testParseSplitsOnlyOnTmForumOrValue(String tmForumQuery, ParsedQuery expected) {
+		assertEquals(expected, new QueryParser(new GeneralProperties()).parse(MyPojo.class, tmForumQuery));
 	}
 
 	private static Stream<Arguments> orValueSeparatorQueries() {
 		return Stream.of(
-				Arguments.of("color=a|b", filter(declared(EQUALS, ValueType.STRING, List.of("a", "b"), "color"))),
-				Arguments.of("color=a|b,c", filter(declared(EQUALS, ValueType.STRING, List.of("a", "b", "c"), "color"))),
+				Arguments.of("color=a|b", filter(declared(EQUALS, ValueType.STRING, List.of("a|b"), "color"))),
+				Arguments.of("color=a|b,c", filter(declared(EQUALS, ValueType.STRING, List.of("a|b", "c"), "color"))),
+				Arguments.of("color=a,b", filter(declared(EQUALS, ValueType.STRING, List.of("a", "b"), "color"))),
 				// a regex is never split
 				Arguments.of("color.regex=a|b", filter(declared(REGEX, ValueType.STRING, List.of("a|b"), "color"))));
 	}

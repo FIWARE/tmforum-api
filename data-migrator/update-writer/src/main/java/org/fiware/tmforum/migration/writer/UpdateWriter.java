@@ -7,7 +7,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 
 import java.util.Map;
 
@@ -32,7 +32,7 @@ public class UpdateWriter {
 			applicationContext = startContext();
 		}
 		EntitiesApiClient entitiesApiClient = applicationContext.getBean(EntitiesApiClient.class);
-		GeneralProperties generalProperties = applicationContext.getBean(GeneralProperties.class);
+		NgsiLdBrokerProperties brokerProperties = applicationContext.getBean(NgsiLdBrokerProperties.class);
 		ObjectMapper objectMapper = applicationContext.getBean(ObjectMapper.class);
 
 		JavaObjectMapper javaObjectMapper = applicationContext.getBean(JavaObjectMapper.class);
@@ -40,7 +40,7 @@ public class UpdateWriter {
 
 		EntityVO e = javaObjectMapper.toEntityVO(theObject);
 		try {
-			entitiesApiClient.createEntity(e, generalProperties.getTenant()).block();
+			entitiesApiClient.createEntity(e, brokerProperties.getTenant()).block();
 		} catch (HttpClientResponseException cre) {
 			System.out.println("Ex " + cre.getResponse().getBody(String.class));
 			System.out.println("The entity " + objectMapper.writeValueAsString(e));

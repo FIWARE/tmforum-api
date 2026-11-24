@@ -7,6 +7,7 @@ import io.github.wistefan.mapping.ReservedWordHandler;
 import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.ComparisonOperator;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 
 /**
  * Renders the backend-neutral query model into the NGSI-LD {@code q} and {@code orderBy} parameters, applying the
- * broker dialect configured in {@link GeneralProperties}.
+ * broker dialect configured in {@link NgsiLdBrokerProperties}.
  */
 @Singleton
 @RequiredArgsConstructor
@@ -75,6 +76,7 @@ public class NgsiLdQueryRenderer {
 	private static final String ESCAPED_COLON = Matcher.quoteReplacement("\\:");
 
 	private final GeneralProperties generalProperties;
+	private final NgsiLdBrokerProperties brokerProperties;
 
 	/**
 	 * The NGSI-LD {@code q} for the query's filter, or null without one.
@@ -102,7 +104,7 @@ public class NgsiLdQueryRenderer {
 		return switch (filter) {
 			case Comparison comparison -> renderComparison(queryClass, comparison);
 			case AllOf allOf -> renderChildren(queryClass, allOf.filters(), NGSI_LD_AND);
-			case AnyOf anyOf -> renderChildren(queryClass, anyOf.filters(), generalProperties.getNgsildOrQueryKey());
+			case AnyOf anyOf -> renderChildren(queryClass, anyOf.filters(), brokerProperties.getNgsildOrQueryKey());
 		};
 	}
 
@@ -168,15 +170,15 @@ public class NgsiLdQueryRenderer {
 		if (encodedValues.size() == 1) {
 			return attributeAndOperator + encodedValues.getFirst();
 		}
-		if (generalProperties.getIncludeAttributeInList()) {
+		if (brokerProperties.getIncludeAttributeInList()) {
 			// each element is a whole comparison, so they are OR-ed like filters
 			String query = encodedValues.stream()
 					.map(value -> attributeAndOperator + value)
-					.collect(Collectors.joining(generalProperties.getNgsildOrQueryKey()));
-			return generalProperties.getEncloseQuery() ? "(" + query + ")" : query;
+					.collect(Collectors.joining(brokerProperties.getNgsildOrQueryKey()));
+			return brokerProperties.getEncloseQuery() ? "(" + query + ")" : query;
 		}
-		String valueList = String.join(generalProperties.getNgsildOrQueryValue(), encodedValues);
-		return generalProperties.getEncloseQuery()
+		String valueList = String.join(brokerProperties.getNgsildOrQueryValue(), encodedValues);
+		return brokerProperties.getEncloseQuery()
 				? attributeAndOperator + "(" + valueList + ")"
 				: attributeAndOperator + valueList;
 	}
@@ -242,7 +244,7 @@ public class NgsiLdQueryRenderer {
 	}
 
 	private String mapPathPart(String part) {
-		if (generalProperties.getUseDotSeperator()) {
+		if (brokerProperties.getUseDotSeperator()) {
 			return "." + part;
 		}
 		return "[" + part + "]";

@@ -11,6 +11,7 @@ import org.fiware.ngsi.model.EntityListVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -71,6 +72,7 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 	private final EntitiesApiClient entitiesApi;
 	private final EntityVOMapper entityVOMapper;
 	private final GeneralProperties generalProperties;
+	private final NgsiLdBrokerProperties brokerProperties;
 	private final String brokerUrl;
 	private final Duration readTimeout;
 	private final HttpClient httpClient;
@@ -83,6 +85,7 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 		this.entitiesApi = source.getBean(EntitiesApiClient.class);
 		this.entityVOMapper = source.getBean(EntityVOMapper.class);
 		this.generalProperties = source.getBean(GeneralProperties.class);
+		this.brokerProperties = source.getBean(NgsiLdBrokerProperties.class);
 		this.brokerUrl = source.getRequiredProperty(MigrationContexts.NGSI_URL_PROPERTY, String.class);
 		this.readTimeout = source.getProperty(READ_TIMEOUT_PROPERTY, Duration.class).orElse(DEFAULT_READ_TIMEOUT);
 		this.httpClient = HttpClient.newBuilder()
@@ -93,7 +96,7 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 
 	@Override
 	public Page page(String type, int offset, int limit) {
-		HttpResponse<EntityListVO> response = entitiesApi.queryEntities(generalProperties.getTenant(), null, null,
+		HttpResponse<EntityListVO> response = entitiesApi.queryEntities(brokerProperties.getTenant(), null, null,
 				type, null, null, null, null, null, null, null, null, limit, offset, true, SYS_ATTRS, linkHeader())
 				.block();
 		if (response == null) {
@@ -111,7 +114,7 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 	 * The broker's count of the type, from a one-entity page.
 	 */
 	long count(String type) {
-		HttpResponse<EntityListVO> response = entitiesApi.queryEntities(generalProperties.getTenant(), null, null,
+		HttpResponse<EntityListVO> response = entitiesApi.queryEntities(brokerProperties.getTenant(), null, null,
 				type, null, null, null, null, null, null, null, null, 1, 0, true, null, linkHeader()).block();
 		if (response == null) {
 			throw new IllegalStateException(String.format("The broker returned no response for %s.", type));
@@ -143,7 +146,7 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 	 */
 	Optional<EntityVO> entity(URI id) {
 		try {
-			return Optional.ofNullable(entitiesApi.retrieveEntityById(id, generalProperties.getTenant(),
+			return Optional.ofNullable(entitiesApi.retrieveEntityById(id, brokerProperties.getTenant(),
 					null, null, SYS_ATTRS, linkHeader()).block()).map(HttpResponse::body);
 		} catch (HttpClientResponseException e) {
 			if (HttpStatus.NOT_FOUND.equals(e.getStatus())) {
@@ -162,7 +165,7 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 			return List.of();
 		}
 		String idList = ids.stream().map(URI::toString).collect(Collectors.joining(ID_SEPARATOR));
-		HttpResponse<EntityListVO> response = entitiesApi.queryEntities(generalProperties.getTenant(), idList, null,
+		HttpResponse<EntityListVO> response = entitiesApi.queryEntities(brokerProperties.getTenant(), idList, null,
 				null, null, null, null, null, null, null, null, null, ids.size(), 0, null, null, linkHeader()).block();
 		if (response == null) {
 			throw new IllegalStateException("The broker returned no response for an id query.");
@@ -254,8 +257,8 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 				.header(ACCEPT_HEADER, JSON)
 				.header(LINK_HEADER, linkHeader())
 				.timeout(readTimeout);
-		if (generalProperties.getTenant() != null) {
-			request.header(TENANT_HEADER, generalProperties.getTenant());
+		if (brokerProperties.getTenant() != null) {
+			request.header(TENANT_HEADER, brokerProperties.getTenant());
 		}
 		return request;
 	}
@@ -276,11 +279,11 @@ class BrokerSource implements EntitySource, SubscriptionStore {
 	}
 
 	private long totalCount(HttpResponse<?> response, String type) {
-		String count = response.header(generalProperties.getCountHeader());
+		String count = response.header(brokerProperties.getCountHeader());
 		if (count == null) {
 			throw new IllegalStateException(String.format(
 					"The broker reported no %s for %s, so the run cannot check it read everything.",
-					generalProperties.getCountHeader(), type));
+					brokerProperties.getCountHeader(), type));
 		}
 		return Long.parseLong(count);
 	}

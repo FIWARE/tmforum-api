@@ -1,6 +1,8 @@
 package org.fiware.tmforum.common.configuration;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.PropertySource;
+import io.micronaut.context.env.PropertySourcePropertyResolver;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.value.MapPropertyResolver;
 import org.fiware.tmforum.common.TmForumApplication;
@@ -16,6 +18,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,6 +31,20 @@ class StorageBackendValidatorTest {
 	private static final String BROKER_URL = "http://orion-ld:1026";
 	private static final String SELECTION_SETTING = "MICRONAUT_ENVIRONMENTS";
 	private static final String MULTIPLE_BACKENDS_TEXT = "More than one storage backend";
+	private static final String SOURCE_NAME = "test";
+	private static final String REPLACE_ON_UPDATE_KEY = "general.replace-on-update";
+	private static final String TENANT_KEY = "general.tenant";
+	private static final String COUNT_HEADER_KEY = "general.count-header";
+	// GENERAL_REPLACE_ON_UPDATE=true as an environment variable
+	private static final PropertySource REPLACE_ON_UPDATE_VARIABLE = PropertySource.of(SOURCE_NAME,
+			Map.of("GENERAL_REPLACE_ON_UPDATE", "true"), PropertySource.PropertyConvention.ENVIRONMENT_VARIABLE);
+	private static final PropertySource CAMEL_CASE_KEYS = PropertySource.of(SOURCE_NAME,
+			Map.of("general.replaceOnUpdate", true, "general.tenant", "t1"));
+	private static final PropertySource KEBAB_CASE_KEY = PropertySource.of(SOURCE_NAME,
+			Map.of(COUNT_HEADER_KEY, "X-Count"));
+	private static final PropertySource SHARED_KEYS_ONLY = PropertySource.of(SOURCE_NAME,
+			Map.of("general.basepath", "/tmf", "general.escape-forbidden-characters", false,
+					"general.optimizeRegexNotEquals", false));
 
 	static Stream<Arguments> validSelections() {
 		return Stream.of(
@@ -89,12 +106,68 @@ class StorageBackendValidatorTest {
 				"The start should fail on the two-backend check, not on another bean's configuration.");
 	}
 
+	static Stream<Arguments> brokerPropertiesWithDefaultedBackend() {
+		return Stream.of(
+				// the upgrade case: MICRONAUT_ENVIRONMENTS=redis plus GENERAL_REPLACE_ON_UPDATE=true
+				Arguments.of(List.of("redis", "postgresql"), REPLACE_ON_UPDATE_VARIABLE, REPLACE_ON_UPDATE_KEY),
+				Arguments.of(List.of("postgresql"), CAMEL_CASE_KEYS, TENANT_KEY),
+				Arguments.of(List.of("postgresql"), KEBAB_CASE_KEY, COUNT_HEADER_KEY));
+	}
+
+	@DisplayName("Broker-only general.* keys fail the start when PostgreSQL was only defaulted.")
+	@ParameterizedTest(name = "{0}, {2}")
+	@MethodSource("brokerPropertiesWithDefaultedBackend")
+	void brokerPropertiesWithDefaultedBackendAreRejected(List<String> environments, PropertySource configuration,
+			String expectedSetting) {
+		ConfigurationException exception = assertThrows(ConfigurationException.class,
+				() -> StorageBackendValidator.validate(environments, resolver(true, configuration)),
+				"A broker setting without a named backend should be rejected.");
+		assertTrue(exception.getMessage().contains(expectedSetting), "The message should name the broker setting.");
+		assertTrue(exception.getMessage().contains(StorageBackend.ORION_LD.environment()),
+				"The message should point at naming the broker.");
+	}
+
+	static Stream<Arguments> brokerPropertiesWithNamedBackend() {
+		return Stream.of(
+				Arguments.of(List.of("redis", "postgresql"), REPLACE_ON_UPDATE_VARIABLE, List.of(REPLACE_ON_UPDATE_KEY)),
+				Arguments.of(List.of("postgresql"), CAMEL_CASE_KEYS, List.of(REPLACE_ON_UPDATE_KEY, TENANT_KEY)),
+				Arguments.of(List.of("postgresql"), KEBAB_CASE_KEY, List.of(COUNT_HEADER_KEY)),
+				Arguments.of(List.of("postgresql"), SHARED_KEYS_ONLY, List.of()),
+				// a named broker uses them
+				Arguments.of(List.of("redis", "orion-ld"), REPLACE_ON_UPDATE_VARIABLE, List.of()),
+				Arguments.of(List.of("scorpio"), CAMEL_CASE_KEYS, List.of()),
+				Arguments.of(List.of("in-memory"), KEBAB_CASE_KEY, List.of()));
+	}
+
+	@DisplayName("Broker-only general.* keys are reported as ignored when PostgreSQL is named, and accepted.")
+	@ParameterizedTest(name = "{0}, ignored: {2}")
+	@MethodSource("brokerPropertiesWithNamedBackend")
+	void brokerPropertiesWithNamedBackendAreReported(List<String> environments, PropertySource configuration,
+			List<String> expectedIgnored) {
+		assertEquals(expectedIgnored, StorageBackendValidator.validate(environments, resolver(false, configuration)),
+				"Exactly the broker settings PostgreSQL ignores should be reported.");
+	}
+
+	@DisplayName("The checked broker-only keys are exactly the NgsiLdBrokerProperties fields.")
+	@Test
+	void brokerOnlyPropertiesAreTheBrokerPropertiesFields() {
+		assertEquals(List.of("countHeader", "encloseQuery", "includeAttributeInList", "ngsildOrQueryKey",
+						"ngsildOrQueryValue", "replaceOnUpdate", "tenant", "useDotSeperator"),
+				StorageBackendValidator.BROKER_ONLY_PROPERTIES,
+				"Every broker-only field, and nothing else, should be checked.");
+	}
+
 	private static Throwable rootCause(Throwable throwable) {
 		Throwable cause = throwable;
 		while (cause.getCause() != null && cause.getCause() != cause) {
 			cause = cause.getCause();
 		}
 		return cause;
+	}
+
+	private static PropertySourcePropertyResolver resolver(boolean defaulted, PropertySource configuration) {
+		return new PropertySourcePropertyResolver(configuration,
+				PropertySource.of(Map.of(TmForumApplication.BACKEND_DEFAULTED_PROPERTY, defaulted)));
 	}
 
 	private static MapPropertyResolver resolver(boolean defaulted, String ngsiUrl) {
