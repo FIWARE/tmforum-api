@@ -17,7 +17,7 @@ The [ui-module](ui) is a read-only browser for the APIs of the all-in-one deploy
 follows the references between them as hyperlinks. It is an image of its own (`tmforum-ui`), not part of the
 all-in-one: run it next to it as a sidecar, or on its own to debug. See [ui/README.md](ui/README.md).
 
-The project also contains 3 non-module folders:
+The project also contains 4 non-module folders:
 
 - [api](api) - contains the [OpenApi-Specifications](https://spec.openapis.org/oas/v3.1.0) of the NGSI-LD API used by
   the project. It does not contain the TMForum-API specs, since they are downloaded on built-time.
@@ -27,6 +27,9 @@ The project also contains 3 non-module folders:
     - [MongoDB](https://www.mongodb.com/)
 - [conformance-test](conformance-test) - contains a dockerfile to be used for running the TMForum-Conformance Tests
   inside the K3S setup. Also contains a kubernetes manifest for running the api-implementations.
+- [doc](doc) - design documentation for features that need more than a release note. Currently:
+  [access policies](doc/access-policies/README.md), an optional per-entity access control layer for
+  the catalog, ordering and quote APIs.
 
 ## Building
 
