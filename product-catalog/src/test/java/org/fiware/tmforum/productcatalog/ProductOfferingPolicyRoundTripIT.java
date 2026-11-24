@@ -52,6 +52,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * AP-01: pins whether an ODRL policy on a product offering term or a product specification characteristic value
  * survives POST -> storage -> GET, and whether it is reachable on the domain object the storage port returns.
  * Subtrees compare by {@link JsonNode#equals}: key order is ignored, array order, value types and keys are not.
+ * UNVERIFIED: no run on any backend has happened yet, so the stored outcomes below are the plan's starting
+ * hypothesis, not observations; pin what each of the five runs reports before the findings use them.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
@@ -89,9 +91,13 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 	private static final String PRODUCT_CONTAINER = "productSpecCharacteristicValue";
 	// the ServiceSpecification's container name, the documented authoring mistake on a product specification
 	private static final String SERVICE_CONTAINER = "characteristicValueSpecification";
-	// ValidatingDeserializer's message: it survives Jackson wrapping a nested failure, the rejected key list may not
+	// observed: Micronaut answers "Invalid JSON" with ValidatingDeserializer's message and Jackson's reference chain;
+	// the rejected key names do not reach the body
 	private static final String UNKNOWN_PROPERTY_REJECTION =
 			"No additional properties are allowed without a @schemaLocation";
+	private static final String OFFERING_TERM_CHAIN = "ProductOfferingCreateVO[\\\"productOfferingTerm\\\"]";
+	private static final String PRODUCT_SPEC_CHARACTERISTIC_CHAIN =
+			"ProductSpecificationCreateVO[\\\"productSpecCharacteristic\\\"]";
 
 	private final HttpClient httpClient;
 	private final EntityReadRepository entityReadRepository;
@@ -146,10 +152,11 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 	/**
 	 * One request and its pinned outcomes. {@code expected} holds, per level, the outcome per run key
 	 * ({@code <storage>[+redis]}); a level without the current run is not checked. A rejection must answer
-	 * {@code rejectedWith} with {@code rejectedBecause} in its body.
+	 * {@code rejectedWith} with every {@code rejectedBecause} fragment in its body.
 	 */
 	record RoundTripCase(String name, String path, Class<?> domainClass, ObjectNode body, List<Probe> probes,
-						 HttpStatus rejectedWith, String rejectedBecause, Map<Level, Map<String, Outcome>> expected) {
+						 HttpStatus rejectedWith, List<String> rejectedBecause,
+						 Map<Level, Map<String, Outcome>> expected) {
 		@Override
 		public String toString() {
 			return name;
@@ -166,20 +173,20 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 		return Stream.of(
 				// ValidatingDeserializer: no unknown properties without a @schemaLocation
 				new RoundTripCase("OFFERING_TERM_VERBATIM", PRODUCT_OFFERING_PATH, ProductOffering.class,
-						offering(verbatimTerm), termProbes, HttpStatus.BAD_REQUEST, UNKNOWN_PROPERTY_REJECTION,
-						rejected()),
+						offering(verbatimTerm), termProbes, HttpStatus.BAD_REQUEST,
+						List.of(UNKNOWN_PROPERTY_REJECTION, OFFERING_TERM_CHAIN), rejected()),
 				new RoundTripCase("OFFERING_TERM_WITH_SCHEMA", PRODUCT_OFFERING_PATH, ProductOffering.class,
 						offering(termWithSchema), termProbes, null, null,
-						// scorpio compacts each policy's single-element "permission" array to its one object
-						stored(Outcome.PRESERVED,
-								Map.of(SCORPIO, Outcome.LOSSY, SCORPIO + REDIS_SUFFIX, Outcome.LOSSY))),
+						// suspected, not observed: scorpio may compact the single-element "permission" array
+						stored(Outcome.PRESERVED, Map.of())),
 				new RoundTripCase("PRODUCT_SPEC_CHARACTERISTIC_VALUE", PRODUCT_SPECIFICATION_PATH,
 						ProductSpecification.class, specification(PRODUCT_CONTAINER), specProbes, null, null,
 						stored(Outcome.PRESERVED, Map.of())),
 				// the characteristic has a @schemaLocation property, so the unknown container is rejected
 				new RoundTripCase("PRODUCT_SPEC_WRONG_CONTAINER", PRODUCT_SPECIFICATION_PATH,
 						ProductSpecification.class, specification(SERVICE_CONTAINER), specProbes,
-						HttpStatus.BAD_REQUEST, UNKNOWN_PROPERTY_REJECTION, rejected()));
+						HttpStatus.BAD_REQUEST, List.of(UNKNOWN_PROPERTY_REJECTION, PRODUCT_SPEC_CHARACTERISTIC_CHAIN),
+						rejected()));
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -190,11 +197,12 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 				.exchange(HttpRequest.POST(roundTripCase.path(), roundTripCase.body().toString()), String.class));
 		if (expected(roundTripCase, Level.API, run) == Outcome.REJECTED) {
 			String error = created.getBody(String.class).orElse("");
-			assertAll(
-					() -> assertEquals(roundTripCase.rejectedWith(), created.getStatus(),
-							roundTripCase + " should be rejected on " + run + ": " + error),
-					() -> assertTrue(error.contains(roundTripCase.rejectedBecause()),
-							roundTripCase + " should be rejected for an unknown property on " + run + ": " + error));
+			List<Executable> rejection = new ArrayList<>();
+			rejection.add(() -> assertEquals(roundTripCase.rejectedWith(), created.getStatus(),
+					roundTripCase + " should be rejected on " + run + ": " + error));
+			roundTripCase.rejectedBecause().forEach(fragment -> rejection.add(() -> assertTrue(error.contains(fragment),
+					roundTripCase + " should be rejected with \"" + fragment + "\" on " + run + ": " + error)));
+			assertAll(rejection);
 			return;
 		}
 		// the POST body is built from the client-side object, so only its id is used
