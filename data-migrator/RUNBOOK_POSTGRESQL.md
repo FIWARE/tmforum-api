@@ -87,12 +87,13 @@ $MIGRATOR replay --requests captured.jsonl \
 List order is not stable on the broker, so compare the lists of the collection endpoints as sets
 (`--unordered-paths`; `*` stays within one path segment). Leave GETs by id out of it: they are compared position by
 position, so a backfilled field shows up as `/<attr>/<index>/<field>` instead of one opaque `only in the list` entry.
+The broker deployment must run this release: an earlier one answers a list page past the last match with `200`
+instead of `206`.
 Every difference left in the report must be one of the expected ones listed in
 [RELEASE_NOTES_DATA_MIGRATION.md](../release-notes/RELEASE_NOTES_DATA_MIGRATION.md#expected-differences):
 - backfilled reference fields;
 - the seeded `0.0.1`;
-- reference fields of external targets;
-- `206` instead of `200` on a list page past the last match.
+- reference fields of external targets.
 
 Anything else stops the migration.
 
@@ -140,8 +141,7 @@ Choose how long the rollback stays possible, e.g. a few days. Within it:
 
   A replay between the restored broker deployment and PostgreSQL may show only the expected differences of a
   rollback in [RELEASE_NOTES_DATA_MIGRATION.md](../release-notes/RELEASE_NOTES_DATA_MIGRATION.md#expected-differences):
-  the empty values above, and `206` instead of `200` on a list page past the last match. Backfilled fields and the
-  seeded `0.0.1` are exported, so they no longer differ. Anything else stops the rollback.
+  the empty values above. Backfilled fields and the seeded `0.0.1` are exported, so they no longer differ. Anything else stops the rollback.
 
 ## 8. Broker deployments that stay on NGSI-LD
 

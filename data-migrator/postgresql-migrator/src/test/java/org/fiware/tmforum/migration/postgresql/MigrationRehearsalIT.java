@@ -144,13 +144,11 @@ class MigrationRehearsalIT {
 			"/version: broker <absent>, postgresql \"0\\.0\\.1\""
 					+ "|/category/0/(href|name|version): broker <absent>, postgresql .+");
 	private static final String BACKFILLED_NAME_DIFFERENCE = "/category/0/name";
-	// the empty page of requests.jsonl: PostgreSQL still counts the matches, Orion-LD reports no total for it
+	// the empty page of requests.jsonl: both backends still count the matches and answer it as a partial page
 	private static final String PAGE_PAST_END_PATH = ORGANIZATION_PATH + "?offset=100&limit=10";
-	private static final Pattern PAGE_PAST_END_DIFFERENCE = Pattern.compile("status: broker 200, postgresql 206");
 	private static final Map<String, Pattern> CUTOVER_EXPLAINED = Map.of(
-			OFFERING_PATH + "/" + PRE_88_OFFERING_ID, MIGRATED_OFFERING_DIFFERENCE,
-			PAGE_PAST_END_PATH, PAGE_PAST_END_DIFFERENCE);
-	private static final Map<String, Pattern> ROLLBACK_EXPLAINED = Map.of(PAGE_PAST_END_PATH, PAGE_PAST_END_DIFFERENCE);
+			OFFERING_PATH + "/" + PRE_88_OFFERING_ID, MIGRATED_OFFERING_DIFFERENCE);
+	private static final Map<String, Pattern> ROLLBACK_EXPLAINED = Map.of();
 	private static final Set<Integer> ANSWERED = Set.of(HTTP_OK, HTTP_PARTIAL_CONTENT);
 
 	private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -242,6 +240,7 @@ class MigrationRehearsalIT {
 		JsonNode cutoverReplay = replay(brokerUrl, postgresUrl, "cutover");
 		assertEquals(List.of(), unexplainedDifferences(cutoverReplay, CUTOVER_EXPLAINED), cutoverReplay.toString());
 		assertEquals(List.of(), unansweredRequests(cutoverReplay), cutoverReplay.toString());
+		assertEquals(HTTP_PARTIAL_CONTENT, brokerStatusOf(cutoverReplay, PAGE_PAST_END_PATH), cutoverReplay.toString());
 		assertTrue(differencesOf(cutoverReplay, OFFERING_PATH + "/" + PRE_88_OFFERING_ID).stream()
 						.anyMatch(difference -> difference.startsWith(BACKFILLED_NAME_DIFFERENCE)),
 				"The replay must show the backfilled reference: " + cutoverReplay);
@@ -268,6 +267,7 @@ class MigrationRehearsalIT {
 		JsonNode rollbackReplay = replay(restoredUrl, postgresUrl, "rollback");
 		assertEquals(List.of(), unexplainedDifferences(rollbackReplay, ROLLBACK_EXPLAINED), rollbackReplay.toString());
 		assertEquals(List.of(), unansweredRequests(rollbackReplay), rollbackReplay.toString());
+		assertEquals(HTTP_PARTIAL_CONTENT, brokerStatusOf(rollbackReplay, PAGE_PAST_END_PATH), rollbackReplay.toString());
 		notifications.clear();
 		post(restoredUrl, CATEGORY_PATH, jsonMapper.createObjectNode().put(NAME, NOTIFY_MARKER));
 		Set<String> expectedCallbacks = Set.of(IMPORTED_CALLBACK, CREATED_CALLBACK);
@@ -313,6 +313,14 @@ class MigrationRehearsalIT {
 			}
 		});
 		return unanswered;
+	}
+
+	private static int brokerStatusOf(JsonNode report, String path) {
+		return report.path("requests").valueStream()
+				.filter(request -> path.equals(request.path("path").asString()))
+				.mapToInt(request -> request.path("brokerStatus").asInt())
+				.findFirst()
+				.orElseThrow(() -> new AssertionError("The replay has no request " + path + ": " + report));
 	}
 
 	private static List<String> differencesOf(JsonNode report, String path) {

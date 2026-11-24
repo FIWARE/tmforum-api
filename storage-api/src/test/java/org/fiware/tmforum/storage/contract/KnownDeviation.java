@@ -20,12 +20,6 @@ public enum KnownDeviation {
     EMPTIED_EXTENSION_LIST_READS_BACK_EXPANDED,
 
     /**
-     * {@code findEntities} completes empty instead of emitting a page when the page holds no entity, also when
-     * the offset is past the last match.
-     */
-    EMPTY_PAGE_COMPLETES_EMPTY,
-
-    /**
      * An extension (unknown) property named like a declared property overwrites the declared value, on create
      * and on update, and no extension of that name reads back. Observed on Orion-LD 1.9.0 and Scorpio 5.0.3: the
      * mapping library merges the extension into the {@code EntityVO} before the request reaches the broker.

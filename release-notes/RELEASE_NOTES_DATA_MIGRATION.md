@@ -5,7 +5,8 @@
 A broker-backed deployment (Orion-LD or Scorpio) can now be moved onto the PostgreSQL backend, and back while the
 rollback window is open. The new CLI [postgresql-migrator](../data-migrator/README.md#postgresql-migrator) does the
 work, and [RUNBOOK_POSTGRESQL.md](../data-migrator/RUNBOOK_POSTGRESQL.md) is the procedure. The same CLI also backfills
-inline references for deployments that stay on the broker. The API modules themselves are unchanged.
+inline references for deployments that stay on the broker. The API modules change in one point only: the status of
+a list page past the last match (below).
 
 ## What changed
 
@@ -23,6 +24,13 @@ inline references for deployments that stay on the broker. The API modules thems
   * `export`: the rollback. It copies PostgreSQL back into an empty broker and registers a new NGSI-LD subscription
     per hub.
   * `cleanup-subscriptions`: removes the broker subscriptions of the hubs once the cutover is final.
+* **A list page past the last match answers `206` on the broker too.** A request whose `offset` lies beyond the last
+  match (e.g. `?offset=100&limit=10` on 20 entities) returns an empty list on both backends. PostgreSQL always
+  answered `206 Partial Content` with `X-Total-Count`. The broker adapter dropped an empty page together with its
+  count, so the broker deployment answered `200 OK` without pagination headers. It now keeps the page, and when the
+  broker sends no count (or `0`) for it, counts the matches with a second one-entity query, so it answers `206` with
+  `X-Total-Count` as well. Run `replay` against a broker deployment of this release, otherwise this shows up as
+  `status: broker 200, postgresql 206`.
 * **The migrator reuses the application's own mapping.** It runs a broker context and a PostgreSQL context of
   `all-in-one` in one JVM, so the stored documents are exactly what the PostgreSQL deployment writes.
 * **The reference backfill is not a Flyway migration.** It runs once, from the migrator. A fresh PostgreSQL
@@ -33,8 +41,8 @@ inline references for deployments that stay on the broker. The API modules thems
 ## Expected differences
 
 These differences between the broker-backed and the PostgreSQL-backed deployment come from the
-migration itself or, for the last one, from the backends. `verify` allows the first two and lists them separately;
-`verify --direction export` allows the empty values after a rollback.
+migration itself or, for the empty values after a rollback, from the NGSI-LD mapping. `verify` allows the first two
+and lists them separately; `verify --direction export` allows the empty values after a rollback.
 `replay` reports them like any other difference, so check each one against this list:
 
 * **Backfilled reference fields.** After `backfill-references --target postgresql`, references that the broker
@@ -52,11 +60,6 @@ migration itself or, for the last one, from the backends. `verify` allows the fi
 * **Empty values after a rollback.** `export` cannot restore empty lists and empty values that PostgreSQL stores:
   the NGSI-LD mapping omits them on write, so the restored broker deployment reads them back as absent.
   `verify --direction export` allows this.
-* **The status of a page past the end.** A list request whose `offset` lies beyond the last match (e.g.
-  `?offset=100&limit=10` on 20 entities) returns an empty list on both backends. PostgreSQL still counts the matches
-  and answers `206 Partial Content` with `X-Total-Count`. Orion-LD reports no usable total for an empty page, so the
-  broker deployment answers `200 OK`. `replay` reports this as `status: broker 200, postgresql 206`. This is a
-  backend difference, not a data one.
 
 ## Known limitations
 

@@ -431,10 +431,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
         PagedResult<T> page = repository().findEntities(offset, limit, fixture().entityClass(), null, join(ids),
                 fixture().storedType()).block(TIMEOUT);
 
-        if (expectedSize == 0 && knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
-            assertNull(page, "An empty page is emitted now, drop " + KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
-            return;
-        }
         assertNotNull(page, "A page is always emitted, an empty one included.");
         assertEquals(expectedSize, page.items().size());
         assertTrue(ids.containsAll(idsOf(page)), "The page holds only matching entities.");
@@ -498,10 +494,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 return;
             }
             PagedResult<T> page = result.block(TIMEOUT);
-            if (knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
-                assertNull(page, changed);
-                return;
-            }
             assertNotNull(page, changed);
             assertTrue(page.items().isEmpty(), changed);
             return;
@@ -919,10 +911,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
 
         PagedResult<Q> page = find(queries, nameIs(queries, ALPHA), List.of(), ids, offset, limit).block(TIMEOUT);
 
-        if (expectedSize == 0 && knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
-            assertNull(page, "An empty page is emitted now, drop " + KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
-            return;
-        }
         assertNotNull(page, "A page is always emitted, an empty one included.");
         assertEquals(expectedSize, page.items().size());
         assertTrue(matches.containsAll(idsOf(queries, page.items())), "The page holds only matching entities.");
@@ -1079,9 +1067,6 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
     private <Q> List<URI> findIds(QueryFixture<Q> queries, QueryFilter filter, List<SortKey> sort, List<URI> ids,
                                   int offset, int limit) {
         PagedResult<Q> page = find(queries, filter, sort, ids, offset, limit).block(TIMEOUT);
-        if (page == null && knownDeviations().contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
-            return List.of();
-        }
         assertNotNull(page, "A page is always emitted, an empty one included.");
         return idsOf(queries, page.items());
     }
