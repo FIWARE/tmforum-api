@@ -131,6 +131,8 @@
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${project.artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
+        <!-- test-cluster manifests; a module nested deeper than one level overrides it, like postgresql-migrator -->
+        <k3s.manifests.dir>${project.parent.basedir}/k3s</k3s.manifests.dir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
         <!-- storage under test: orion-ld or scorpio (NGSI-LD broker), or postgresql (k3s/postgresql-db, no broker) -->
         <broker>orion-ld</broker>
@@ -620,7 +622,7 @@
                                     </goals>
                                     <configuration>
                                         <failIfExists>false</failIfExists>
-                                        <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
+                                        <manifests>${k3s.manifests.dir}/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
@@ -638,7 +640,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
+                                        <manifests>${k3s.manifests.dir}/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -648,7 +650,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/minio</manifests>
+                                        <manifests>${k3s.manifests.dir}/minio</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -658,7 +660,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/postgresql-db</manifests>
+                                        <manifests>${k3s.manifests.dir}/postgresql-db</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -693,7 +695,7 @@
                                     </goals>
                                     <configuration>
                                         <failIfExists>false</failIfExists>
-                                        <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
+                                        <manifests>${k3s.manifests.dir}/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
@@ -711,7 +713,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
+                                        <manifests>${k3s.manifests.dir}/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -720,7 +722,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/minio</manifests>
+                                        <manifests>${k3s.manifests.dir}/minio</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -729,7 +731,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/postgresql-db</manifests>
+                                        <manifests>${k3s.manifests.dir}/postgresql-db</manifests>
                                     </configuration>
                                 </execution>
                             </executions>

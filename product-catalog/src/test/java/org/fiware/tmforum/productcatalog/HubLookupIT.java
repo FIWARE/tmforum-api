@@ -3,7 +3,6 @@ package org.fiware.tmforum.productcatalog;
 import io.micronaut.context.env.Environment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.fiware.ngsi.api.EntitiesApiClient;
-import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.notification.EventDetails;
@@ -23,7 +22,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -95,9 +93,6 @@ public class HubLookupIT extends AbstractApiIT {
 
 	private static Set<KnownDeviation> knownDeviations(Set<String> activeEnvironments) {
 		Set<KnownDeviation> deviations = EnumSet.noneOf(KnownDeviation.class);
-		if (!activeEnvironments.contains(CommonConstants.POSTGRESQL_ENVIRONMENT)) {
-			deviations.add(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY);
-		}
 		if (activeEnvironments.contains(ORION_LD_ENVIRONMENT)) {
 			deviations.add(KnownDeviation.MULTI_ELEMENT_LIST_NEVER_MATCHES);
 		}
@@ -131,15 +126,9 @@ public class HubLookupIT extends AbstractApiIT {
 
 		List<TMForumSubscription> page = eventHandler.findSubscriptions(
 				new EventDetails(entityType, eventType, EVENT_TIME, PAYLOAD_NAME)).block();
-		List<TMForumSubscription> found;
-		if (knownDeviations.contains(KnownDeviation.EMPTY_PAGE_COMPLETES_EMPTY)) {
-			found = Optional.ofNullable(page).orElse(List.of());
-		} else {
-			assertNotNull(page, "A page is always emitted, an empty one included.");
-			found = page;
-		}
+		assertNotNull(page, "A page is always emitted, an empty one included.");
 
-		assertEquals(ids(foundToday(expectedHubs)), found.stream().map(TMForumSubscription::getId).collect(Collectors.toSet()),
+		assertEquals(ids(foundToday(expectedHubs)), page.stream().map(TMForumSubscription::getId).collect(Collectors.toSet()),
 				"Only hubs whose entities and eventTypes both hold the event's values should be found.");
 	}
 

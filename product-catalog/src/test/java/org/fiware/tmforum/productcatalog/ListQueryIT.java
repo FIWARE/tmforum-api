@@ -356,6 +356,23 @@ public class ListQueryIT extends AbstractApiIT {
 		assertEquals(expected, paged, query);
 	}
 
+	/**
+	 * A page past the last match is empty but still partial: every backend counts the matches and answers 206.
+	 */
+	@Test
+	public void pagePastTheEndIsPartial() throws Exception {
+		String query = eq("lifecycleStatus", "Active");
+		long matching = offerings.stream().filter(o -> "Active".equals(o.lifecycleStatus())).count();
+
+		HttpResponse<String> page = list(PRODUCT_OFFERING_PATH,
+				query + "&offset=" + (offerings.size() + PAGE_SIZE) + "&limit=" + PAGE_SIZE);
+
+		assertEquals(HttpStatus.PARTIAL_CONTENT, page.getStatus(), page.body());
+		assertEquals(String.valueOf(matching), page.header(TOTAL_COUNT_HEADER));
+		assertEquals("0", page.header(RESULT_COUNT_HEADER));
+		assertEquals(List.of(), ids(page));
+	}
+
 	private String createSpecification(int index) {
 		ProductSpecificationCreateVO createVO = ProductSpecificationCreateVOTestExample.build()
 				.atSchemaLocation(null)

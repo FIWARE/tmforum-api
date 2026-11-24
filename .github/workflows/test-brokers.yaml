@@ -61,13 +61,15 @@ jobs:
           path: |
             ${{matrix.module}}/target/site/jacoco/jacoco.xml
 
-  unit:
+  # the migration reads a broker and writes PostgreSQL, so there is no postgresql-only job
+  migration-it:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # all-in-one runs in the it matrix: its PostgresStartupIT needs the k3s cluster
-        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models ]
+        broker: [ scorpio, orion-ld ]
+        cache: [ in-memory, redis ]
+
     steps:
       - uses: actions/checkout@v2
 
@@ -77,6 +79,44 @@ jobs:
           java-version: '25'
           java-package: jdk
 
+      - name: Ensure br_netfilter is enabled.
+        run: |
+          sudo modprobe br_netfilter
+
+      - name: Build the migrator's dependencies
+        run: |
+          mvn install --projects data-migrator/postgresql-migrator --also-make -DskipTests -DskipITs -Dk3s.skip=true
+
+      - name: Execute tests
+        run: |
+          mvn verify --projects data-migrator/postgresql-migrator -Dbroker=${{matrix.broker}} -Dcache=${{matrix.cache}}
+
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # all-in-one runs in the it matrix: its PostgresStartupIT needs the k3s cluster
+        module: [ common, resource-shared-models, customer-shared-models, service-shared-models, product-shared-models ]
+        # artifact names must not contain a slash
+        include:
+          - module: data-migrator/postgresql-migrator
+            artifact: postgresql-migrator
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '25'
+          java-package: jdk
+
+      # it depends on all-in-one, which is not in the reactor below
+      - name: Build the migrator's dependencies
+        if: matrix.module == 'data-migrator/postgresql-migrator'
+        run: |
+          mvn install --projects ${{matrix.module}} --also-make -DskipTests -DskipITs -Dk3s.skip=true
+
       - name: Execute tests
         id: test
         run: |
@@ -85,7 +125,7 @@ jobs:
       - name: Archive coverage
         uses: actions/upload-artifact@v4
         with:
-          name: ${{matrix.module}}
+          name: ${{matrix.artifact || matrix.module}}
           path: |
             ${{matrix.module}}/target/site/jacoco/jacoco.xml
 

@@ -19,6 +19,8 @@ import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
 import java.net.URI;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -27,6 +29,8 @@ import java.util.stream.Stream;
 public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements EntityRepository {
 
     private static final String LIST_FAILED = "Was not able to list entities.";
+    // one entity is enough for the broker to report the count of the whole query
+    private static final int COUNT_PAGE_LIMIT = 1;
 
     private final NgsiLdQueryRenderer queryRenderer;
 
@@ -69,7 +73,8 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
                         null,
                         getLinkHeader()))
                 .flatMap(response -> zipToList(response.body() != null ? response.body().stream() : Stream.empty(), entityClass)
-                        .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
+                        .zipWith(totalCount(response, offset, limit, ids, types, query))
+                        .map(page -> new PagedResult<>(page.getT1(), offset, limit, page.getT2().orElse(null))))
                 .onErrorMap(NgsiLdEntityRepository::listFailure);
     }
 
@@ -104,7 +109,8 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
                         null,
                         getLinkHeader()))
                 .flatMap(response -> zipToPolymorphicList(response.body() != null ? response.body().stream() : Stream.empty(), typeToClass)
-                        .map(entities -> new PagedResult<>(entities, offset, limit, extractTotalCount(response))))
+                        .zipWith(totalCount(response, offset, limit, ids, types, query))
+                        .map(page -> new PagedResult<>(page.getT1(), offset, limit, page.getT2().orElse(null))))
                 .onErrorMap(NgsiLdEntityRepository::listFailure);
     }
 
@@ -125,6 +131,21 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
         log.warn(LIST_FAILED, failure);
         return new StorageException(StorageOperation.LIST, BrokerFailures.unknownOrUnavailable(failure), LIST_FAILED,
                 failure);
+    }
+
+    // a broker may send no count, or 0, with an empty page past the last match; it is counted again from the first
+    // page, so that such a page answers 206 with X-Total-Count, as on PostgreSQL
+    private Mono<Optional<Integer>> totalCount(HttpResponse<? extends List<?>> response, Integer offset, Integer limit,
+                                               String ids, String types, EntityQuery query) {
+        Integer reported = extractTotalCount(response);
+        boolean emptyPage = response.body() == null || response.body().isEmpty();
+        if (!emptyPage || (reported != null && reported > 0) || generalProperties.getCountHeader() == null
+                || ((offset == null || offset <= 0) && (limit == null || limit > 0))) {
+            return Mono.just(Optional.ofNullable(reported));
+        }
+        return entitiesApi.queryEntities(generalProperties.getTenant(), ids, null, types, null, renderFilter(query),
+                        null, null, null, null, null, null, COUNT_PAGE_LIMIT, null, true, null, getLinkHeader())
+                .map(countResponse -> Optional.ofNullable(extractTotalCount(countResponse)));
     }
 
     Integer extractTotalCount(HttpResponse<?> response) {
