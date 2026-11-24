@@ -37,13 +37,18 @@ list is touched.
 Files: `common/src/main/java/org/fiware/tmforum/common/configuration/StorageBackend.java` (new),
 `common/.../common/TmForumApplication.java` (new), `common/.../configuration/StorageBackendValidator.java` (new),
 all 21 `*/src/main/java/**/Application.java` (20 API modules plus `all-in-one`; find them with
-`grep -rl "Micronaut.run" --include=Application.java .`), `conformance-test/api.yaml`, plus unit tests in
-`common/src/test/java/.../configuration/`.
+`grep -rl "Micronaut.run" --include=Application.java .`), `conformance-test/api.yaml`,
+`data-migrator/postgresql-migrator/src/main/java/org/fiware/tmforum/migration/postgresql/BrokerType.java`, plus unit
+tests in `common/src/test/java/.../configuration/`.
 
 - `StorageBackend` enum: `POSTGRESQL("postgresql")`, `ORION_LD("orion-ld")`, `SCORPIO("scorpio")`, with
   `environment()` and `isBroker()`. `POSTGRESQL` uses `CommonConstants.POSTGRESQL_ENVIRONMENT`. Add named
   constants for the broker env names, either in `CommonConstants` or in the enum, but no string literals in the
   logic. Add a static helper that finds the backends among a set of environment names.
+- `BrokerType` (migrator CLI) holds `"orion-ld"`/`"scorpio"` as literals today. Make its constants take their
+  names from `StorageBackend.ORION_LD/SCORPIO.environment()` (or the new constants), so the names exist once.
+  The CLI values, `Converter`, `Names` and `MigrationContexts` behave exactly as before; the existing
+  `BrokerType`/`MigrationContexts` tests must pass unchanged.
 - `TmForumApplication.run(Class<?> mainClass, String... args)` replaces `Micronaut.run(Application.class, args)`.
   It runs `Micronaut.build(args).mainClass(mainClass)`, adds `postgresql` via `.environments(...)` when no backend
   is named, then calls `.start()`. Put the decision in a pure, package-visible function that takes the raw
@@ -187,25 +192,37 @@ and `data-migrator/RUNBOOK_POSTGRESQL.md`.
   - **NGSI-LD broker**: one sentence saying everything in this subsection applies to the broker backend only. Then
     a table of the broker-only `general.*` keys (`NgsiLdBrokerProperties`) with a one-line meaning each, and the
     existing `### Attribute updates (replaceOnUpdate)` text and table moved here unchanged.
-- README "Dev-Environment": `-Pdev` deploys both the broker (`localhost:1026`) and PostgreSQL (`localhost:5432`).
-  Say that a module started locally without a backend env now runs on PostgreSQL, and that the validator does
-  not warn because the NGSI URL is the shipped default. To use the dev broker, start the module with
-  `MICRONAUT_ENVIRONMENTS=orion-ld,in-memory` (`scorpio,in-memory` after `mvn install -Pdev -Dbroker=scorpio`).
-  - **Accepted deviations**: one table with columns *Area | PostgreSQL | NGSI-LD broker | Decision*. It is the
+  - **Accepted deviations** (in `## Storage backends`, after the NGSI-LD broker subsection, not in
+    "Dev-Environment"): one table with columns *Area | PostgreSQL | NGSI-LD broker | Decision*. It is the
     single place where deviations are recorded; say so in one sentence. Rows:
     1. Event delivery: at-least-once through `tmforum.event_outbox` vs fire-and-forget (decision 13; facts in
        `RELEASE_NOTES_POSTGRESQL_ADAPTER.md` "Notifications"/"Events").
     2. NGSI-LD subscriptions and `POST /callback`: broker-only, `404` on PostgreSQL (decision 2 as amended).
     3. `totalCount`/`X-Total-Count`: always exact on PostgreSQL vs only when the broker sends `countHeader`.
        Confirm in `PostgresEntityRepository.findEntities` and `PaginationFilter`.
-    4. `NULLS` ordering on `sort`: read the actual ordering in `JsonbQueryRenderer` and the broker behaviour in
-       `RELEASE_NOTES_POSTGRESQL_ADAPTER.md` (Orion-LD and Scorpio return unsorted results).
+    4. `NULLS` ordering on `sort`: the PostgreSQL cell is the actual ordering in `JsonbQueryRenderer`. The broker
+       cell says the brokers do not sort at all and links the `SORT_IS_IGNORED` entry in the pending list below,
+       so the row records only the PostgreSQL `NULLS` placement and does not claim a broker `NULLS` behaviour.
     5. Entity versioning: schema prepared, `version` filled and `*Ref` versions checked, no history kept
        (decision 11; `RELEASE_NOTES_ENTITY_VERSIONING.md`), and the same on both backends where that is the case.
     Take every cell from the code or the existing release notes, not from memory. Where a fact cannot be confirmed,
     write it down as an open question in the step's PR description and do not guess.
-- `RELEASE_NOTES_POSTGRESQL_ADAPTER.md`: change "The NGSI-LD adapter stays the default; ticket 9 …" and "No
-  accepted deviations yet …" to point at the README table. Change "Enabling it" step 1 to say it is the default.
+  - **Known backend differences, not accepted**: directly under the table, a short list with one line per
+    `KnownDeviation` entry (`storage-api/src/test/java/org/fiware/tmforum/storage/contract/KnownDeviation.java`,
+    11 entries today, e.g. `SORT_IS_IGNORED`, `MULTI_ELEMENT_LIST_NEVER_MATCHES`, `REFERENCE_LIST_UPDATE_MERGES`,
+    `NUMBER_AND_BOOLEAN_FILTER_FAILS`, `STRING_COMPARISON_IS_LINGUISTIC`, `ANCHORED_REGEX_NEVER_MATCHES`). Each
+    line names the enum constant, the affected backend(s) and versions as its Javadoc states them (e.g. Scorpio
+    5.0.3, Orion-LD 1.9.0), and the behaviour in a few words. Link the enum, say the contract tests pin today's
+    behaviour for each, and say an entry moves to the accepted table once ticket 0 accepts it. Take the list from
+    the enum when the step runs, not from this plan. Also link the "Known limitations" of
+    `RELEASE_NOTES_INLINE_REFERENCES.md`, without copying it.
+- README "Dev-Environment": `-Pdev` deploys both the broker (`localhost:1026`) and PostgreSQL (`localhost:5432`).
+  Say that a module started locally without a backend env now runs on PostgreSQL, and that the validator does
+  not warn because the NGSI URL is the shipped default. To use the dev broker, start the module with
+  `MICRONAUT_ENVIRONMENTS=orion-ld,in-memory` (`scorpio,in-memory` after `mvn install -Pdev -Dbroker=scorpio`).
+- `RELEASE_NOTES_POSTGRESQL_ADAPTER.md`: change "The NGSI-LD adapter stays the default; ticket 9 …" to point at
+  the README. Change "No accepted deviations yet …" so it points at both the accepted table and the "Known backend
+  differences, not accepted" list, and keep the wording that those differences are pending acceptance in ticket 0. Change "Enabling it" step 1 to say it is the default.
 - `AGENTS.md`: rewrite the Overview to describe the port and both adapters, with PostgreSQL as the default. Add
   `TmForumApplication`, `StorageBackendValidator` and `NgsiLdBrokerProperties` to Important Files in one line each.
   Rewrite the "Storage backend selection" line from the plan PR: no backend env now means `postgresql` for
@@ -237,7 +254,8 @@ Files: `release-notes/RELEASE_NOTES_STORAGE_BACKENDS.md` (new) and the README `#
     its `GENERAL_*` variable, and say that Scorpio < 6.0.0 must set `GENERAL_REPLACE_ON_UPDATE=false`;
   - **(c)** `QueryParser` no longer splits filter values on a custom `general.ngsildOrQueryValue`;
   - **(d)** to move existing broker data, see `data-migrator/RUNBOOK_POSTGRESQL.md`.
-- Link the deviation table in the README instead of copying it. Add a row to the README release-notes table.
+- Link the deviation table and the "Known backend differences, not accepted" list in the README instead of
+  copying them. Add a row to the README release-notes table.
 - Verification. The GitHub matrix cannot run here, so reproduce it locally and report the results in the PR
   description:
   - `mvn clean install -DskipTests -DskipITs`, then `mvn test` (all modules).
