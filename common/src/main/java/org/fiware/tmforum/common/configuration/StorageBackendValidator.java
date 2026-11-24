@@ -4,6 +4,8 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.core.value.PropertyResolver;
 import org.fiware.tmforum.common.TmForumApplication;
 
@@ -14,8 +16,10 @@ import java.util.stream.Collectors;
 /**
  * Aborts startup on a contradictory or incomplete storage backend selection.
  * Off in the test environment; tests name their backend explicitly.
+ * First among the eager beans, so it fails before Flyway's eager migration tries to reach PostgreSQL.
  */
 @Context
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @Requires(notEnv = Environment.TEST)
 public class StorageBackendValidator {
 
