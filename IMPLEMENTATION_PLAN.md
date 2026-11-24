@@ -22,6 +22,12 @@ list is touched.
 - **This is a breaking change for broker deployments that do not name their broker.** Today, no backend env means
   the broker. After this ticket it means PostgreSQL. Such a deployment must add `orion-ld` or `scorpio`. The release
   notes say this first, and the startup warning for broker-only keys (Step 2) points at it.
+  Naming the broker also loads `application-<broker>.yaml`, which such a deployment never loaded. That changes the
+  effective query dialect: `ngsildOrQueryKey` goes from `,` to `|`, and `encloseQuery` and `includeAttributeInList`
+  go from `false` to `true`. On `scorpio`, `replaceOnUpdate` also goes from `false` to `true`, which breaks
+  attribute creation on Scorpio < 6.0.0 (README `Scorpio < 6.0.0` row, failsafe argLine
+  `-Dgeneral.replace-on-update=false`). The docs (Steps 4 and 5) must say so, and say that Scorpio < 6.0.0 sets
+  `GENERAL_REPLACE_ON_UPDATE=false`.
 - **Config keys do not change.** The broker-only fields move to a new `@ConfigurationProperties("general")` class,
   so `GENERAL_REPLACE_ON_UPDATE`, `general.tenant` and the other keys keep working.
 
@@ -70,6 +76,10 @@ all 21 `*/src/main/java/**/Application.java` (20 API modules plus `all-in-one`; 
 - `conformance-test/api.yaml` deploys the modules against `orion-ld` without naming a backend env. Add
   `MICRONAUT_ENVIRONMENTS` with `orion-ld` (and its cache env, if one is implied) so the conformance run stays on
   the broker. Check the `-Pdev` and `conformance-test` profiles in the root `pom.xml` for the same gap.
+  This also loads `application-orion-ld.yaml` there for the first time, so the conformance run switches to the
+  Orion-LD query dialect (`ngsildOrQueryKey: "|"`, `encloseQuery: true`, `includeAttributeInList: true`). That
+  is the dialect the ITs already run with. Say this in the step's PR description, so that a later conformance
+  failure in a filter test is traced to the dialect change and not to the selector.
 - Unchanged, but verify: the root pom's failsafe `argLine`, `test-brokers.yaml`, `parallel-test.yml` (explicit
   `in-memory,orion-ld`), `MigrationContexts` (explicit envs, rejects inherited ones) and `UpdateWriter`'s own
   context. In each, either the runner is not involved or a backend is named explicitly.
@@ -118,7 +128,7 @@ the consumers listed below, `StorageBackendValidator` from Step 1, their tests, 
     fails startup with the same "add `orion-ld`/`scorpio`" message.
   - `postgresql` named explicitly: log a WARN listing them, saying they are ignored. Do not fail.
   For this not to fire on every start, remove `general.countHeader: NGSILD-Results-Count` from every module's base
-  `src/main/resources/application.yaml` in this step (the code default is identical and both broker yamls keep
+  `src/main/resources/application.yaml` in this step (the code default is identical and the broker yamls keep
   it). Cover both outcomes with a parameterized unit test, including `GENERAL_REPLACE_ON_UPDATE=true` with no
   backend env named, so the runner defaults to `postgresql` (fails), and with `postgresql` named (warns).
 - Acceptance: `mvn test -pl common,data-migrator/postgresql-migrator,data-migrator/update-writer -am` is green.
@@ -139,6 +149,8 @@ breaks.
 - `application-orion-ld.yaml` and `application-scorpio.yaml`: add a one-line header saying this is a broker backend
   and the `general.*` keys here are broker-only (see README "Storage backends").
 - Do the edit with a script, keep each file's indentation, and diff two modules by hand afterwards.
+  `document-management` has no `application-orion-ld.yaml` or `application-scorpio.yaml`, so the script must skip
+  missing files rather than create them.
 - Acceptance: `mvn install -DskipTests -DskipITs` is green. `git grep -n "countHeader" -- '*/src/main/resources/application.yaml'`
   is empty. One module IT on `-Dbroker=orion-ld` and one on `-Dbroker=postgresql` pass, to prove the yaml still
   loads.
@@ -155,7 +167,10 @@ and `data-migrator/RUNBOOK_POSTGRESQL.md`.
   Add `postgresql-db` to the k3s list.
 - Replace `## Broker compatibility` with `## Storage backends`:
   - **Selecting a backend**: the env names, the default, an example for each, and the fail-fast rules from
-    Step 1. Warn that broker deployments must name their broker.
+    Step 1. Warn that broker deployments must name their broker, and that naming it turns on the dialect keys of
+    `application-<broker>.yaml` (`ngsildOrQueryKey: "|"`, `encloseQuery: true`, `includeAttributeInList: true`,
+    plus `replaceOnUpdate: true` on `scorpio`), so Scorpio < 6.0.0 must set `GENERAL_REPLACE_ON_UPDATE=false`.
+    Link the `replaceOnUpdate` table in the NGSI-LD broker subsection.
   - **PostgreSQL**: a setup summary (the `POSTGRES_*` variables, schema rights, Flyway on first start) that links
     to `storage-postgresql/README.md#configuration` rather than copying it.
   - **NGSI-LD broker**: one sentence saying everything in this subsection applies to the broker backend only. Then
@@ -201,7 +216,11 @@ Files: `release-notes/RELEASE_NOTES_STORAGE_BACKENDS.md` (new) and the README `#
 - An **Upgrading** section comes first and says:
   - **(a)** broker deployments must add `orion-ld` or `scorpio` to `MICRONAUT_ENVIRONMENTS`, otherwise they start
     on PostgreSQL;
-  - **(b)** the `general.*` keys are unchanged;
+  - **(b)** the `general.*` key names are unchanged, but their effective values can change: a deployment that did
+    not name its broker ran on the code defaults, and naming it in (a) loads `application-<broker>.yaml`. List the
+    keys that change (`ngsildOrQueryKey` `,` -> `|`, `encloseQuery` and `includeAttributeInList` `false` -> `true`,
+    and on `scorpio` `replaceOnUpdate` `false` -> `true`), say that a deployment can override any of them through
+    its `GENERAL_*` variable, and say that Scorpio < 6.0.0 must set `GENERAL_REPLACE_ON_UPDATE=false`;
   - **(c)** `QueryParser` no longer splits filter values on a custom `general.ngsildOrQueryValue`;
   - **(d)** to move existing broker data, see `data-migrator/RUNBOOK_POSTGRESQL.md`.
 - Link the deviation table in the README instead of copying it. Add a row to the README release-notes table.
