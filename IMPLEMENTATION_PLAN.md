@@ -60,7 +60,9 @@ dependency.
 - Declaration: `public record Subject(String identity, Map<String, Object> claims, Instant expiresAt, String credentialFingerprint)`.
   - `public static final Subject ANONYMOUS` has `null` identity, empty claims, `null` expiry and `null` fingerprint.
   - `boolean isAnonymous()`.
-  - The compact constructor copies `claims` deeply into unmodifiable maps and lists.
+  - The compact constructor copies `claims` deeply into unmodifiable maps and lists. The copy must tolerate `null`
+    values, because JSON claims may hold `null`: use `Collections.unmodifiableMap(new LinkedHashMap<>(..))` and
+    `Collections.unmodifiableList(new ArrayList<>(..))`, never `Map.copyOf`/`List.copyOf`, which throw on `null`.
   - The Javadoc states that `null` identity and expiry occur only on `ANONYMOUS`. "Not resolved" is never a `Subject`;
     it is the absence of the request attribute (step 4).
 - `claims` holds every claim of the token except the registered JWT claims (`iss sub aud exp nbf iat jti`, see
@@ -68,8 +70,10 @@ dependency.
 - `static Subject of(String identity, Map<String, Object> claims, Instant expiresAt)` computes the fingerprint:
   lowercase SHA-256 hex (`HexFormat`) over a canonical JSON of `claims`. Canonical means object keys sorted recursively
   (`TreeMap`), serialized with nimbus `JSONObjectUtils.toJSONString`.
-  - The fingerprint never includes the raw token or time-varying claims, so a refreshed token presenting the same
-    credentials keeps its fingerprint, while a different credential set changes it.
+  - The fingerprint covers exactly `Subject.claims`, never the raw token or the registered claims. A refreshed token
+    presenting the same credentials therefore keeps its fingerprint, while a different credential set changes it.
+    Non-registered claims that vary per token (a VP `nonce`, a proof, `issuanceDate`) do change it; that is accepted,
+    since it only costs cache hits and never grants access.
   - Name the digest algorithm as a constant.
 - New class `IdentityClaimResolver`, package-private, static, with a single method
   `Optional<String> resolve(Map<String, Object> claims, String path)`:
@@ -81,7 +85,7 @@ dependency.
 - Tests:
   - `SubjectTest`, parameterized: equal claims in a different key order give the same fingerprint. A changed nested
     value, an added credential, or a different credential list gives a different fingerprint. `ANONYMOUS.isAnonymous()`.
-    Claims are immutable.
+    Claims are immutable. A claim with a `null` value (top-level and nested) is accepted and fingerprinted.
   - `IdentityClaimResolverTest`, parameterized: top-level claim, dotted path, issuer as a string and as `{id}`, dotted
     top-level name, missing segment, multi-element list, non-string terminal, blank value.
 
@@ -94,7 +98,10 @@ dependency.
   - Holds the set in an `AtomicReference<Mono<JWKSet>>` built with `Mono.cache(ttlForValue, ttlForError, ttlForEmpty)`.
     A good set lives for `JWKS_REFRESH_INTERVAL` (5 min). A failure is cached for `JWKS_MIN_REFRESH_INTERVAL` (30 s) so a
     down endpoint is not hammered.
-  - When a refresh fails, the last good set stays in use.
+  - Fallback mechanism: the last good set is kept in its own `AtomicReference<JWKSet> lastGood`, updated on every
+    successful fetch. The fetch `Mono` ends in `onErrorResume`, which emits `lastGood` when it is non-null and errors
+    only when there has never been a good set. So a failed refetch after the TTL yields the old set (cached for
+    `JWKS_MIN_REFRESH_INTERVAL`, then retried), and `KEYS_UNAVAILABLE` only occurs before the first successful fetch.
   - `refresh()`, which the validator calls on an unknown `kid`, is rate-limited by `JWKS_MIN_REFRESH_INTERVAL`.
   - Requests time out after `JWKS_FETCH_TIMEOUT`.
   - All of these durations are named constants, not new config keys.
@@ -108,15 +115,20 @@ dependency.
     1. `SignedJWT.parse`, else `MALFORMED`.
     2. The header algorithm must be in the RSA or EC families (`JWSAlgorithm.Family`), else `UNSUPPORTED_ALGORITHM`.
        This rejects `alg: none` and HS*.
-    3. Select the key by `kid` (or the single matching key when `kid` is absent) from `current()`. If none matches,
-       call `refresh()` once and retry. If there is still no key, `UNKNOWN_KEY`. A provider error gives `KEYS_UNAVAILABLE`.
-    4. Verify with `DefaultJWSVerifierFactory`, else `BAD_SIGNATURE`.
+    3. Select candidate keys from `current()` with `new JWKSelector(JWKMatcher.forJWSHeader(header)).select(set)`, which
+       matches kid, kty, alg, `use=sig` and curve. Never select by `kid` alone. If the selection is empty, call
+       `refresh()` once and select again. If it is still empty, `UNKNOWN_KEY`. A provider error gives `KEYS_UNAVAILABLE`.
+    4. Verify with `DefaultJWSVerifierFactory` against the selected keys; the token is valid if any of them verifies.
+       A `JOSEException` while building a verifier gives `UNSUPPORTED_ALGORITHM`; a failed or throwing `verify` gives
+       `BAD_SIGNATURE`.
     5. Run the claim checks by hand so that each one gets a distinct reason:
        - `exp` is required and must be after now minus `MAX_CLOCK_SKEW` (60 s), else `EXPIRED`;
        - `nbf`, if present, must be before now plus the skew, else `NOT_YET_VALID`;
        - `iss` must equal `jwt.issuer`, else `WRONG_ISSUER`;
        - when `jwt.audience` is set, `aud` must contain it, else `WRONG_AUDIENCE`.
-    6. Resolve the identity with `IdentityClaimResolver` and `jwt.identity-claim`. If it is empty, `NO_IDENTITY`.
+    6. Resolve the identity with `IdentityClaimResolver` and `jwt.identity-claim` against the **full** claim set
+       (`JWTClaimsSet.getClaims()`), so `identity-claim: sub` works. If it is empty, `NO_IDENTITY`. Only
+       `Subject.claims` is the non-registered subset.
     7. Return `Subject.of(identity, nonRegisteredClaims, exp)`.
   - Public `Mono<Subject> resolve(String token)` is `validate(token)`, mapping any error to `Subject.ANONYMOUS`. It logs
     at debug level only the `TokenRejection`, or the exception class for an unexpected error. It never logs the token or
@@ -125,14 +137,19 @@ dependency.
 - `BearerTokenValidatorTest` (Mockito/StepVerifier, in-memory `JwkSetProvider`, keys generated with `RSAKeyGenerator`/`ECKeyGenerator`):
   - Parameterized over the defects, each expecting its exact `TokenRejection`: garbage string, two-part string, `alg: none`,
     HS256 signed with the public key bytes, signed by a foreign key with a known kid, unknown kid (refresh is called
-    exactly once), expired, future `nbf`, wrong issuer, wrong audience, missing `exp`, no identity claim, and the
+    exactly once), a JWKS holding only an `enc` key or only a key of another `kty` under the token's kid (`UNKNOWN_KEY`),
+    expired, future `nbf`, wrong issuer, wrong audience, missing `exp`, no identity claim, and the
     provider erroring.
-  - Parameterized valid cases: RSA and EC keys; audience unset and set; the default dotted `verifiableCredential.issuer`
-    and a top-level custom claim. Each asserts identity, claims, expiry and fingerprint.
+  - Parameterized valid cases: RSA and EC keys; a token without `kid` against a JWKS holding one RSA and one EC key
+    (the matcher picks by kty/alg); audience unset and set; the default dotted `verifiableCredential.issuer`, a
+    top-level custom claim, and `identity-claim: sub` (identity from a registered claim, while `sub` stays out of
+    `Subject.claims`). Each asserts identity, claims, expiry and fingerprint.
   - A test that `resolve` maps every defect to `Subject.ANONYMOUS`.
-  - `HttpJwkSetProvider` test: the cache reuses the set, `refresh()` is rate-limited, and a failed refresh keeps the last
-    good set. Stub the fetch through a package-private constructor taking a `Supplier<Mono<String>>`, or use a local
-    `com.sun.net.httpserver.HttpServer`.
+  - `HttpJwkSetProvider` test: the cache reuses the set, `refresh()` is rate-limited, a failed refresh keeps the last
+    good set, a failure before any good set errors, and "set expired, refetch fails, a token signed with the old key
+    still validates" (a real `BearerTokenValidator` over the stubbed `HttpJwkSetProvider`; advance past the TTL with
+    `VirtualTimeScheduler`, which `Mono.cache` picks up through `Schedulers.parallel()`). Stub the fetch through a package-private
+    constructor taking a `Supplier<Mono<String>>`, or use a local `com.sun.net.httpserver.HttpServer`.
 
 ### Step 4: `SubjectResolutionFilter`
 New file `access-policy/.../SubjectResolutionFilter.java`, modelled on `common/.../filter/ForwardedForFilter.java`.
@@ -185,11 +202,14 @@ Host module: `product-catalog`. It reaches `access-policy` through `common` and 
   - `@TestInstance(PER_CLASS)` with `TestPropertyProvider`: start a JDK `com.sun.net.httpserver.HttpServer` on an
     ephemeral port that serves a test-generated RSA JWKS. Supply `access-policy.jwt.jwks-uri`, `issuer` and `audience`
     from it. This needs no k3s manifest change. Stop the server in `@AfterAll`.
-  - Parameterized cases: token A, token B, no token, expired token, wrongly signed token.
+  - Parameterized cases: token A, token B, no token, expired token, wrongly signed token. The wrongly signed token is
+    signed by a foreign RSA key but carries the **published** kid, so it takes the `BAD_SIGNATURE` path and triggers no
+    `refresh()`. No case uses an unknown kid.
     - Against `/test-subject`: A and B resolve to their own identities, with different fingerprints. No token and the
       defect cases resolve to anonymous.
     - Against `GET /productCatalogManagement/v4/productOffering`: `200` for every case. A bad token must never give `500`.
-  - Assert that the JWKS server was hit once across the whole run, which proves the cache.
+  - Assert that the JWKS server was hit exactly once across the whole run, which proves the cache. This holds only
+    because no case takes the unknown-kid refresh path (see the wrongly signed token above).
   - Leave out the `bypass-unauthenticated` and `mode` dimensions. Add a class Javadoc line saying they land with AP-09.
   - No storage-tag gating is needed; the IT is backend-neutral.
 - Docs:
