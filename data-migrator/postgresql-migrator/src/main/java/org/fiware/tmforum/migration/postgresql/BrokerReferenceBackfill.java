@@ -9,7 +9,7 @@ import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
 import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.ngsi.model.RelationshipVO;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.repository.NgsiLdEntityRepository;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.DatasetIdRewrite;
 import org.fiware.tmforum.migration.postgresql.ReferenceBackfillCatalog.Entry;
@@ -88,7 +88,7 @@ class BrokerReferenceBackfill {
 		this.javaObjectMapper = sourceContext.getBean(JavaObjectMapper.class);
 		// the PostgreSQL document form only, so the catalog keys apply; nothing is written to a database
 		this.documents = new PostgresDocumentMapper(sourceContext.getBean(ObjectMapper.class)).storage();
-		this.deleteBeforeWrite = !sourceContext.getBean(GeneralProperties.class).isReplaceOnUpdate()
+		this.deleteBeforeWrite = !sourceContext.getBean(NgsiLdBrokerProperties.class).isReplaceOnUpdate()
 				&& !sourceContext.getEnvironment().getActiveNames().contains(BrokerType.SCORPIO.getEnvironment());
 		this.registry = registry;
 		this.pageSize = pageSize;

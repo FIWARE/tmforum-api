@@ -73,8 +73,8 @@
         <!-- project info -->
         <project.author.name>Stefan Wiedemann</project.author.name>
         <project.author.email>stefan.wiedemann@fiware.org</project.author.email>
-        <project.description>Implementation of the TMForum APIs, backed by NGSI-LD</project.description>
-        <project.summary>NGSI-LD backed TMForum.</project.summary>
+        <project.description>Implementation of the TMForum APIs, backed by PostgreSQL or an NGSI-LD context broker</project.description>
+        <project.summary>TMForum APIs on PostgreSQL or NGSI-LD.</project.summary>
         <project.url>https://github.com/wistefan/tmforum-poc</project.url>
         <project.license.name>Apache License, Version 2.0</project.license.name>
         <project.license.identifier>Apache-2.0</project.license.identifier>

@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
 import org.fiware.tmforum.common.validation.ReferenceClassifier;
 import org.junit.jupiter.api.AfterEach;
@@ -156,7 +157,7 @@ class MigrationContextsTest {
 
 		assertEquals(Set.copyOf(contexts.sourceEnvironments()), ownEnvironments(contexts.source()));
 		assertEquals(Set.copyOf(contexts.targetEnvironments()), ownEnvironments(contexts.target()));
-		assertFalse(contexts.source().getBean(GeneralProperties.class).isReplaceOnUpdate());
+		assertFalse(contexts.source().getBean(NgsiLdBrokerProperties.class).isReplaceOnUpdate());
 	}
 
 	@ParameterizedTest

@@ -7,6 +7,7 @@ import io.micronaut.runtime.server.EmbeddedServer;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.subscription.Subscription;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.ForbiddenCharacterEscaper;
@@ -455,8 +456,9 @@ class MigrationRehearsalIT {
 				.header("Content-Type", "application/json")
 				.header("Link", String.format(CommonConstants.JSON_LD_CONTEXT_LINK_TEMPLATE, properties.getContextUrl()))
 				.POST(HttpRequest.BodyPublishers.ofString(json));
-		if (properties.getTenant() != null) {
-			request.header("NGSILD-Tenant", properties.getTenant());
+		String tenant = brokerContexts.source().getBean(NgsiLdBrokerProperties.class).getTenant();
+		if (tenant != null) {
+			request.header("NGSILD-Tenant", tenant);
 		}
 		HttpResponse<String> response = httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
 		assertEquals(HTTP_CREATED, response.statusCode(), response.body());

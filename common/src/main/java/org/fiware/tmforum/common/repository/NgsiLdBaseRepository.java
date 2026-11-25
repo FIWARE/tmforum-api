@@ -28,6 +28,7 @@ import org.fiware.ngsi.model.UpdateResultVO;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.caching.EntityIdKeyGenerator;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
@@ -64,6 +65,7 @@ public abstract class NgsiLdBaseRepository {
 	private static final URI NGSI_LD_NULL_URI = URI.create(NGSI_LD_NULL);
 
 	protected final GeneralProperties generalProperties;
+	protected final NgsiLdBrokerProperties brokerProperties;
 	protected final EntitiesApiClient entitiesApi;
 	protected final JavaObjectMapper javaObjectMapper;
 	protected final NGSIMapper ngsiMapper;
@@ -107,7 +109,7 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	@Cacheable(CommonConstants.ENTITIES_CACHE_NAME)
 	public Mono<EntityVO> retrieveEntityById(URI entityId) {
-		return asyncRetrieveEntityById(entityId, generalProperties.getTenant(), null, null, null, getLinkHeader());
+		return asyncRetrieveEntityById(entityId, brokerProperties.getTenant(), null, null, null, getLinkHeader());
 	}
 
 	/**
@@ -119,7 +121,7 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<Void> patchEntity(URI entityId, EntityFragmentVO entityFragmentVO) {
-		return entitiesApi.updateEntity(entityId, entityFragmentVO, generalProperties.getTenant(), null).then();
+		return entitiesApi.updateEntity(entityId, entityFragmentVO, brokerProperties.getTenant(), null).then();
 	}
 
 	/**
@@ -130,7 +132,7 @@ public abstract class NgsiLdBaseRepository {
 	 * @return an empty mono
 	 */
 	public <T> Mono<Void> createDomainEntity(T domainEntity) {
-		return createEntity(javaObjectMapper.toEntityVO(domainEntity), generalProperties.getTenant())
+		return createEntity(javaObjectMapper.toEntityVO(domainEntity), brokerProperties.getTenant())
 				.onErrorMap(HttpClientException.class,
 						e -> BrokerFailures.writeFailure(StorageOperation.CREATE, e));
 	}
@@ -151,14 +153,14 @@ public abstract class NgsiLdBaseRepository {
 		// translate that marker, so it never reaches the broker.
 		EntityVO updateEntityVO = javaObjectMapper.toEntityVO(domainEntity, NgsiLdWriteOperation.UPDATE);
 		URI entityId = URI.create(id);
-		if (!generalProperties.isReplaceOnUpdate()) {
+		if (!brokerProperties.isReplaceOnUpdate()) {
 			return patchEntity(entityId, ngsiMapper.map(withEmptiedListsAsEmptyArrays(updateEntityVO)))
 					.onErrorMap(HttpClientException.class,
 							e -> BrokerFailures.writeFailure(StorageOperation.UPDATE, e));
 		}
 		return entityAttributesApi
 				// read from the broker, a cached entity may miss instances written in the meantime
-				.retrieveEntityAsJson(entityId, generalProperties.getTenant(), getLinkHeader())
+				.retrieveEntityAsJson(entityId, brokerProperties.getTenant(), getLinkHeader())
 				.map(HttpResponse::body)
 				.onErrorResume(HttpClientResponseException.class, e -> e.getStatus() == HttpStatus.NOT_FOUND
 						? Mono.empty()
@@ -208,7 +210,7 @@ public abstract class NgsiLdBaseRepository {
 	 */
 	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<HttpResponse<?>> updateAttributes(URI entityId, EntityFragmentVO attributeUpdate) {
-		return entitiesApi.updateEntityAttributes(entityId, attributeUpdate, generalProperties.getTenant())
+		return entitiesApi.updateEntityAttributes(entityId, attributeUpdate, brokerProperties.getTenant())
 				.<HttpResponse<?>>map(response -> response)
 				.onErrorResume(HttpClientResponseException.class, e -> {
 					// a status that differs from the declared one surfaces as exception, even if it is a 2xx
@@ -347,7 +349,7 @@ public abstract class NgsiLdBaseRepository {
 	@CacheInvalidate(value = CommonConstants.ENTITIES_CACHE_NAME, keyGenerator = EntityIdKeyGenerator.class)
 	public Mono<Void> deleteDomainEntity(URI id) {
 		return entitiesApi
-				.removeEntityById(id, generalProperties.getTenant(), null)
+				.removeEntityById(id, brokerProperties.getTenant(), null)
 				.onErrorMap(t -> {
 					if (t instanceof HttpClientResponseException e && e.getStatus().equals(HttpStatus.NOT_FOUND)) {
 						return new StorageException(StorageOperation.DELETE, StorageErrorReason.NOT_FOUND,

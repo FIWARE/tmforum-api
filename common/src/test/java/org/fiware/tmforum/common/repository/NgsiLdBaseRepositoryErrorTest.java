@@ -9,6 +9,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
@@ -52,7 +53,7 @@ class NgsiLdBaseRepositoryErrorTest {
 		when(javaObjectMapper.toEntityVO(any(), any(NgsiLdWriteOperation.class))).thenReturn(entityVO);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new NgsiLdEntityRepository(new GeneralProperties(), entitiesApi, null, ngsiMapper,
+		repository = new NgsiLdEntityRepository(new GeneralProperties(), new NgsiLdBrokerProperties(), entitiesApi, null, ngsiMapper,
 				javaObjectMapper, null);
 	}
 

@@ -3,6 +3,7 @@ package org.fiware.tmforum.common.notification;
 import io.github.wistefan.mapping.EntityVOMapper;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.domain.subscription.TMForumSubscription;
 import org.fiware.tmforum.common.mapping.EventMapping;
 import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
@@ -146,7 +147,7 @@ class TMForumEventHandlerTest {
 		ArgumentCaptor<EntityQuery> query = ArgumentCaptor.forClass(EntityQuery.class);
 		verify(repository).findEntities(any(), any(), any(), any(), query.capture());
 		GeneralProperties properties = new GeneralProperties();
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties, new NgsiLdBrokerProperties());
 		// the hub lookup built this filter through the parser before the port took the model
 		QueryFilter parsed = new QueryParser(properties).parse(TMForumSubscription.class,
 				String.format("entities=%s&eventTypes=%s", CharacterizationEntity.TYPE, DELETE_EVENT_TYPE)).filter();

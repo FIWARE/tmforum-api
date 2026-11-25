@@ -44,6 +44,7 @@ import org.fiware.productcatalog.model.ServiceCandidateRefVOTestExample;
 import org.fiware.productcatalog.model.TargetProductSchemaVO;
 import org.fiware.productcatalog.model.TimePeriodVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
@@ -194,6 +195,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private final CategoryApiTestClient categoryApiTestClient;
 	private final ProductSpecificationApiTestClient productSpecificationApiTestClient;
 	private final GeneralProperties generalProperties;
+	private final NgsiLdBrokerProperties brokerProperties;
 	private final Environment environment;
 	private final BrokerRequestRecorder brokerRequestRecorder;
 
@@ -203,7 +205,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 	private final List<String> createdProductSpecifications = new ArrayList<>();
 
 	public ExternalReferenceIT(EntitiesApiClient entitiesApiClient, ObjectMapper objectMapper,
-							   GeneralProperties generalProperties,
+							   GeneralProperties generalProperties, NgsiLdBrokerProperties brokerProperties,
 							   ProductOfferingApiTestClient productOfferingApiTestClient,
 							   CatalogApiTestClient catalogApiTestClient,
 							   CategoryApiTestClient categoryApiTestClient,
@@ -211,6 +213,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 							   Environment environment, BrokerRequestRecorder brokerRequestRecorder) {
 		super(entitiesApiClient, objectMapper, generalProperties);
 		this.generalProperties = generalProperties;
+		this.brokerProperties = brokerProperties;
 		this.environment = environment;
 		this.brokerRequestRecorder = brokerRequestRecorder;
 		this.productOfferingApiTestClient = productOfferingApiTestClient;
@@ -426,7 +429,7 @@ public class ExternalReferenceIT extends AbstractApiIT {
 		ProductOfferingVO readBack = retrieve(id);
 		JsonNode created = objectMapper.valueToTree(createVO);
 		JsonNode patched = objectMapper.valueToTree(updateVO);
-		boolean keepsCreated = !generalProperties.isReplaceOnUpdate()
+		boolean keepsCreated = !brokerProperties.isReplaceOnUpdate()
 				&& environment.getActiveNames().contains(ORION_LD_ENVIRONMENT);
 		assertAll(LIST_REFERENCES.stream().map(attribute -> () -> {
 			Map<JsonNode, Long> expected = new HashMap<>(multiset(patched.get(attribute)));

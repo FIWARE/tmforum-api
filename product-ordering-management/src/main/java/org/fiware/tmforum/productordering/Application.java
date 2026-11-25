@@ -1,7 +1,7 @@
 package org.fiware.tmforum.productordering;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.runtime.Micronaut;
+import org.fiware.tmforum.common.TmForumApplication;
 
 /**
  * Base application as starting point
@@ -10,6 +10,6 @@ import io.micronaut.runtime.Micronaut;
 public class Application {
 
 	public static void main(String[] args) {
-		Micronaut.run(Application.class, args);
+		TmForumApplication.run(Application.class, args);
 	}
 }

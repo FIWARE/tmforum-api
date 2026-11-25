@@ -1,7 +1,7 @@
 package org.fiware.tmforum.documentmanagement;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.runtime.Micronaut;
+import org.fiware.tmforum.common.TmForumApplication;
 import jakarta.inject.Singleton;
 import org.fiware.document.model.DocumentSpecificationVO;
 import org.fiware.tmforum.common.mapping.FieldCleaningModule;
@@ -12,7 +12,7 @@ import java.util.List;
 public class Application {
 
     public static void main(String[] args) {
-        Micronaut.run(Application.class, args);
+        TmForumApplication.run(Application.class, args);
     }
 
     @Singleton
