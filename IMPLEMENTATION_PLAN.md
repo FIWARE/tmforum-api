@@ -31,6 +31,14 @@ Add a `FORBIDDEN` reason to `TmForumExceptionReason` and render it as `403` with
   `INVALID_RELATIONSHIP_PREFIX`). Add a guard that the provider covers every
   `TmForumExceptionReason.values()` entry, so a future constant without a row fails the test.
   Keep the existing `invalidRelationshipReportsTheReferenceCause` test unchanged. The file uses tabs.
+- `src/test/java/org/fiware/tmforum/common/filter/WiringTestController.java`: add
+  `Map.entry("tmforum-forbidden", () -> new TmForumException(MESSAGE, TmForumExceptionReason.FORBIDDEN))`
+  to `EXCEPTIONS`, next to the other `tmforum-*` entries. The file uses tabs.
+- `src/test/java/org/fiware/tmforum/common/filter/ServerWiringRegressionTest.java`: add
+  `Arguments.of("tmforum-forbidden", HttpStatus.FORBIDDEN)` to `exceptionStatuses()`, next to the
+  other `tmforum-*` rows. This checks that the 403 and its `ErrorDetails` body reach the client
+  through the running server and filter chain, and `coversEveryTestException` keeps the rows and
+  `EXCEPTIONS.keySet()` in sync. The file uses tabs.
 
 **Already checked (no change needed):** `TmForumExceptionHandler.handle` is the only `switch` over
 `TmForumExceptionReason`, and it keeps its `default ->`. The switches in
@@ -42,11 +50,12 @@ to confirm that nothing new switches over the enum.
 
 **No doc comments are added.** The enum and handler have none, and the reason name says enough.
 
-**Verify:** `mvn test -pl common -am -Dtest=TmForumExceptionHandlerTest -Dsurefire.failIfNoSpecifiedTests=false`
+**Verify:** `mvn test -pl common -am -Dtest='TmForumExceptionHandlerTest,ServerWiringRegressionTest' -Dsurefire.failIfNoSpecifiedTests=false`
 passes. Then run `mvn test -pl common` for the whole common unit suite, which includes the ArchUnit
 and boundary tests.
 
 **Acceptance criteria:**
-- `TmForumException(..., FORBIDDEN)` renders `403` with the standard `ErrorDetails` body.
+- `TmForumException(..., FORBIDDEN)` renders `403` with the standard `ErrorDetails` body, both
+  from the handler directly and through the running server (`ServerWiringRegressionTest`).
 - The other five reasons give the same status and body as before, including the
   `INVALID_RELATIONSHIP` reference-cause formatting. `UNKNOWN` still gives `500`.
