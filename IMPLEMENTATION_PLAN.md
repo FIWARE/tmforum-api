@@ -149,7 +149,8 @@ instead of being silently replaced by the default.
 - No change to the `oci` profile or any jib configuration. Confirm that
   `mvn install -Poci -DskipTests -DskipITs -pl access-policy` builds no image (jib is not bound in the
   module), and say so in the PR.
-- `AGENTS.md`:
+- `AGENTS.md` (deferred: step agents must not edit `AGENTS.md`, so the step-2 agent emitted a
+  `[plan-update]` and a plan-mode agent applies these two edits on the plan branch):
   - Add `access-policy/` to Project Structure: "optional per-entity access-policy layer
     (`org.fiware.tmforum.accesspolicy`), depends only on `storage-api`, `common` depends on it; ticket
     182 holds only `AccessPolicyProperties` + `AccessPolicyConfigurationGuard`".
