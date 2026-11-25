@@ -2,10 +2,11 @@
 
 The storage-neutral persistence port of the TMForum APIs. Controllers and services in `common` and in the API
 modules depend only on the types in `org.fiware.tmforum.storage`. A backend provides an adapter that implements
-them. There are two adapters: the NGSI-LD one in `common`
-(`org.fiware.tmforum.common.repository.NgsiLdEntityRepository`), the default, and the PostgreSQL one in
-[storage-postgresql](../storage-postgresql/README.md), active in the Micronaut environment `postgresql`. Both
-backends are permanent, so the port is a public contract.
+them. There are two adapters: the PostgreSQL one in
+[storage-postgresql](../storage-postgresql/README.md), the default, and the NGSI-LD one in `common`
+(`org.fiware.tmforum.common.repository.NgsiLdEntityRepository`), active in the Micronaut environment `orion-ld` or
+`scorpio`; see [Storage backends](../README.md#storage-backends). Both backends are permanent, so the port is a public
+contract.
 
 The Javadoc of the types is the contract. This file is only a map of it.
 

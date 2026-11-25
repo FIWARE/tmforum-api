@@ -1,7 +1,8 @@
 # storage-postgresql
 
 PostgreSQL (18) adapter of the `storage-api` port. Its beans are active only in the Micronaut environment
-`postgresql` (`PostgresStorage.ENVIRONMENT`), so the NGSI-LD adapter in `common` stays the default. The data path
+`postgresql` (`PostgresStorage.ENVIRONMENT`), which applications get by default when no backend is named, see
+[Storage backends](../README.md#storage-backends). The data path
 uses R2DBC. Flyway migrates the schema over JDBC at startup, and nothing else uses that JDBC connection.
 
 ## Schema
