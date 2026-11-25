@@ -70,7 +70,7 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - Tests (73 `*IT.java`): `*Test.java` are unit tests (JUnit5/Mockito). `*IT.java` extend `AbstractApiIT` and use `@MicronautTest(packages=...)`. Use parameterized tests where possible.
 
 ## Important Files
-- `pom.xml`: Micronaut parent/version, all version properties, openapi-generator `configOptions` (`useGenericResponse`, `supportAsync`, `serdeable=false`, `modelBaseClass=...UnknownPreservingBase`), jib base image, k3s IT wiring (`-Dmicronaut.environments=${cache},${broker}`).
+- `pom.xml`: Micronaut parent/version, all version properties, openapi-generator `configOptions` (`useGenericResponse`, `supportAsync`, `serdeable=false`, `modelBaseClass=...UnknownPreservingBase`), jib base image (only in `oci`'s `pluginManagement`: a module gets an image only if it declares jib, so library modules need nothing), k3s IT wiring (`-Dmicronaut.environments=${cache},${broker}`).
 - `common/pom.xml`: Micronaut, redis-lettuce, micrometer-prometheus, jackson deps (`tools.jackson.core:jackson-databind` plus `com.fasterxml.jackson.core:jackson-annotations`).
 - `*/src/main/resources/application*.yaml`: `micronaut.http.services.ngsi.*`, `micronaut.codec.json.additional-types`, `micronaut.caches.*`, `redis.caches.*.value-serializer`, `jackson.*`, `endpoints.*`.
 - `data-migrator/*/src/main/java/**/{UpdateWriter,LegacyLoader}.java`: build their own `ApplicationContext`.
