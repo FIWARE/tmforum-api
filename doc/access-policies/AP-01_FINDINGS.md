@@ -119,6 +119,11 @@ All of these round-trip unchanged on every run, including after `EntityVOSeriali
   The ITs use the minimal test schema `product-offering-term-policy-schema.json` from
   [`static-fileserver.yaml`](../../k3s/schema-provider/static-fileserver.yaml), which declares both
   keys as `{"type":"object"}` and nothing else.
+* **Admitting is not enough when the schema requires.** `ValidatingDeserializer.validateWithSchema`
+  enforces the whole schema on write, `required` included. `contract-definition.json` requires both
+  `accessPolicy` and `contractPolicy`, so a term that points at it and leaves one out gets `400`. A
+  UC-2 term ("no access policy") must then carry a permit-all `accessPolicy`, or the deployment must
+  host a schema that does not require it.
 * **Specifications:** nothing beyond the documented examples, as long as the container names match the
   type. The values need no schema.
 * **The term rejection does not name the key.** A term without `@schemaLocation` gets `400` with
@@ -148,9 +153,13 @@ reference chain to its parent.
 * **PATCH**: both a policy written by PATCH and a PATCH that replaces or removes one.
 * **Redis on postgresql.** The PostgreSQL adapter does not read through the `entities` cache, so there
   is no cached level to test.
-* **A real-world term schema.** The DSC's `contract-definition.json` `$ref`s a `policy.json` that may
-  type the policy more narrowly than `{"type":"object"}`. That can reject a policy at write time or
-  reshape it in the API response (`coerceToSchema`). It does not change the domain object.
+* **A real-world term schema.** No IT runs with the DSC's `contract-definition.json`. Reading it:
+  * it gives each key as `{"$ref": "policy.json"}` with no `type`. `BaseMapper.coerceToSchema` only
+    acts on a `type` and does not follow `$ref`, so the API response is not reshaped;
+  * `policy.json` declares only `permissions: {"type":"array"}`, has no `required` and allows
+    additional properties, so the UC-1 policy (`permission`, singular) validates;
+  * the constraint that does bite is the `required` pair (see
+    [What a provider must write](#what-a-provider-must-write)).
 * **A policy without an explicit `@context`**, and characteristics whose `valueType` is not
   `authorizationPolicy`.
 

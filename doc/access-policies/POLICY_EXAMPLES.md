@@ -97,10 +97,13 @@ The block is one entry of the offering's `productOfferingTerm` array.
 them, the API rejects the term with `400` ("No additional properties are allowed without a
 @schemaLocation"), and the body never names the offending key. The schema above is the one the DSC's
 [DSP integration guide](https://github.com/FIWARE/data-space-connector/blob/main/doc/DSP_INTEGRATION.md#prepare-the-offering)
-uses. A deployment may host its own copy, as long as it admits both keys as objects. With it, the pair
-round-trips unchanged on every storage
-([AP-01 finding](./AP-01_FINDINGS.md)). The same applies to the term carrying the UC-2 contract
-policy below.
+uses. A deployment may host its own schema instead, as long as it admits both keys as objects. With
+a schema that declares both keys as `{"type":"object"}`, the pair round-trips unchanged on every
+storage ([AP-01 finding](./AP-01_FINDINGS.md)). No IT runs with the DSC schema itself.
+
+The DSC `contract-definition.json` lists `accessPolicy` and `contractPolicy` as `required`, and the
+API enforces `required` on write. A term that points at it must carry **both** keys, or it gets
+`400`. The same applies to the term carrying the UC-2 contract policy below.
 
 Two things worth stating plainly:
 
@@ -124,7 +127,10 @@ The same constraint using the standard spatial operand, if the PDP implements th
 ## Visible but not orderable
 
 [UC-2](./USE_CASES.md#uc-2--visible-but-not-orderable). No access policy at all (or one that
-permits everyone), and a contract policy that constrains membership:
+permits everyone), and a contract policy that constrains membership. The term needs a
+`@schemaLocation` like the UC-1 term. Under the DSC `contract-definition.json`, which requires both
+keys, "no access policy" is not accepted: write a permit-all `accessPolicy`, or point the term at a
+schema that does not require it.
 
 ```json
 "contractPolicy": {
