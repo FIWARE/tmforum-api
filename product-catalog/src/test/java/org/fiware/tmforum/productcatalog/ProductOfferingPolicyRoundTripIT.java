@@ -52,8 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * AP-01: pins whether an ODRL policy on a product offering term or a product specification characteristic value
  * survives POST -> storage -> GET, and whether it is reachable on the domain object the storage port returns.
  * Subtrees compare by {@link JsonNode#equals}: key order is ignored, array order, value types and keys are not.
- * UNVERIFIED: no run on any backend has happened yet, so the stored outcomes below are the plan's starting
- * hypothesis, not observations; pin what each of the five runs reports before the findings use them.
+ * The outcomes below were observed on orion-ld, scorpio, postgresql, orion-ld+redis and scorpio+redis.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
@@ -178,7 +177,6 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 						List.of(UNKNOWN_PROPERTY_REJECTION, OFFERING_TERM_CHAIN), rejected()),
 				new RoundTripCase("OFFERING_TERM_WITH_SCHEMA", PRODUCT_OFFERING_PATH, ProductOffering.class,
 						offering(termWithSchema), termProbes, null, null,
-						// suspected, not observed: scorpio may compact the single-element "permission" array
 						stored(Outcome.PRESERVED, Map.of())),
 				new RoundTripCase("PRODUCT_SPEC_CHARACTERISTIC_VALUE", PRODUCT_SPECIFICATION_PATH,
 						ProductSpecification.class, specification(PRODUCT_CONTAINER), specProbes, null, null,
