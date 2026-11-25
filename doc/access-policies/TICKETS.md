@@ -61,7 +61,7 @@ None of them should be discovered during Phase 2.
 | **D1** | `PolicyEnforcingEntityRepository` is `@Primary` and injects `NgsiLdEntityRepository` by concrete type | Three ways wrong on `ticket-88/work`. `access-policy` cannot see that class, and **both ArchUnit rules forbid it anyway**: [`StorageBoundaryTest`](../../common/src/test/java/org/fiware/tmforum/common/architecture/StorageBoundaryTest.java) and [`ControllerStorageBoundaryTest`](../../all-in-one/src/test/java/org/fiware/tmforum/architecture/ControllerStorageBoundaryTest.java). There are now **two** adapters, so naming one leaves the other undecorated. And **`@Primary` is already taken**: `PostgresEntityRepository` and `PostgresReferencesRepository` are both `@Singleton @Primary @Requires(env = postgresql)`, which is how an adapter wins over the NGSI-LD one — a third `@Primary` bean makes the injection ambiguous | [AP-02](#ap-02--a-qualifier-for-the-storage-adapter-so-a-decorator-is-possible-at-all) |
 | **D2** | "One seam covers everything … and reads from `ReferenceValidationService` — all of them" ([AP-3](./DECISIONS.md#ap-3--enforce-at-the-storage-port)) | `ReferenceValidationService` reads through [`ReferenceReadRepository`](../../storage-api/src/main/java/org/fiware/tmforum/storage/ReferenceReadRepository.java), a **different port**. A decorator on `EntityRepository` does not see it, which leaves an existence oracle open against [C7](./ANALYSIS.md#constraints-that-shape-any-solution). On `ticket-88/work` the port grew a bulk `findReferences` and `StoredReference.version`, so the oracle now leaks the current version label of a hidden entity too — every governed type is in `VersionedEntity.VERSIONED_TYPES` | [AP-17](#ap-17--close-the-reference-port-existence-oracle) |
 | **D3** | A denied order answers `403` | [`TmForumExceptionReason`](../../common/src/main/java/org/fiware/tmforum/common/exception/TmForumExceptionReason.java) has no `FORBIDDEN`, and [`TmForumExceptionHandler`](../../common/src/main/java/org/fiware/tmforum/common/exception/TmForumExceptionHandler.java)'s `default ->` renders `500` | [AP-15](#ap-15--a-forbidden-exception-reason) |
-| **D4** | "The policy arrives with the entity … `productOfferingTerm.accessPolicy` is deserialised with the offering" | [`ProductOfferingTerm`](../../product-shared-models/src/main/java/org/fiware/tmforum/product/ProductOfferingTerm.java) has four fields and none of them is a policy. If the pair survives at all it survives in `Entity.additionalProperties` as `UnmappedProperty`, through a nested `PROPERTY_LIST` mapping — **unproven**. Unchanged on `ticket-88/work` | [AP-01](#ap-01--prove-the-policy-survives-the-entity-round-trip) |
+| **D4** | "The policy arrives with the entity … `productOfferingTerm.accessPolicy` is deserialised with the offering" | [`ProductOfferingTerm`](../../product-shared-models/src/main/java/org/fiware/tmforum/product/ProductOfferingTerm.java) has four fields and none of them is a policy. The pair survives in `Entity.additionalProperties` as `UnmappedProperty`, through a nested `PROPERTY_LIST` mapping. **Resolved by AP-01: preserved** on all three storages and through the Redis cache, provided the term carries a `@schemaLocation` (without one the POST is a `400`). Both specification carriers are preserved too ([finding](./AP-01_FINDINGS.md)) | [AP-01](#ap-01--prove-the-policy-survives-the-entity-round-trip) |
 | **D5** | "Writes pass straight through" | New on `ticket-88/work`: `ControllerStorageBoundaryTest` now fails any class outside the two adapter packages that calls `createDomainEntity`/`updateDomainEntity`/`deleteDomainEntity` without implementing `EntityEventPublisher`. A decorator of `EntityRepository` has to implement those three methods, and delegating them **violates that rule** | [AP-08](#ap-08--the-decorator-get-only) |
 | **D6** | A denied read answers `404`, and the architecture's action model covers `delete` | [`AbstractApiController#delete`](../../common/src/main/java/org/fiware/tmforum/common/rest/AbstractApiController.java) goes straight to `eventPublisher.deleteWithEvent`, which reads nothing first on either backend (`DirectEntityEventPublisher.deleteWithEvent` is `repository.deleteDomainEntity`; the PostgreSQL one delegates straight to its own repository). A read-side decorator therefore lets anyone who learns an id delete a restricted entity. `patch` does read first, so it is covered | [AP-23](#ap-23--deny-writes-to-entities-the-subject-cannot-read) |
 
@@ -71,6 +71,11 @@ therefore a gate, not a warm-up: if the pair is dropped on write or on read, the
 a typed field on `ProductOfferingTerm` or a second read, and
 [AP-2](./DECISIONS.md#ap-2--read-the-policies-the-entities-already-carry) has to be revisited before
 anything else is built.
+
+**AP-01 result:** the gate is passed. All three carriers are preserved on orion-ld, scorpio and
+postgresql, at the API and on the domain object the port returns, cached or not. AP-2 stands
+unchanged and AP-07 is not blocked. The one authoring rule is that the offering term needs a
+`@schemaLocation`, which the UC-1 example now carries. See [AP-01_FINDINGS.md](./AP-01_FINDINGS.md).
 
 ## The tickets
 
@@ -374,7 +379,10 @@ without the `access-policy` module knowing a single domain class.
   this is what makes the feature additive, and it needs a test of its own.
 * Implementations for `ProductOffering` (the `productOfferingTerm` pair) and the two specification
   types (the `authorizationPolicy` characteristic), reading through the accessor paths
-  [AP-01](#ap-01--prove-the-policy-survives-the-entity-round-trip) established.
+  [AP-01](#ap-01--prove-the-policy-survives-the-entity-round-trip) established
+  ([finding](./AP-01_FINDINGS.md#the-accessor-paths-for-policycarrier-ap-07)). Both specification
+  types end at `service.CharacteristicValueSpecification.getTmfValue()`, so they share one value
+  accessor.
 * A governed-type short-circuit that runs **before** anything else, so `party-catalog`,
   `usage-management` and the other 18 modules cost nothing. In `all-in-one` the decorator is `@Primary`
   for every API at once, so this is a hot path, not a nicety.
@@ -920,7 +928,8 @@ external dependency.
 ## Sequencing notes
 
 * **[AP-01](#ap-01--prove-the-policy-survives-the-entity-round-trip) goes first and alone.** It is the
-  only ticket that can invalidate the design, and it is a day's work.
+  only ticket that can invalidate the design, and it is a day's work. Done: it did not invalidate
+  the design ([finding](./AP-01_FINDINGS.md)).
 * **[AP-02](#ap-02--a-qualifier-for-the-storage-adapter-so-a-decorator-is-possible-at-all) and
   [AP-15](#ap-15--a-forbidden-exception-reason) can merge immediately.** Both are small, both are pure
   groundwork, and neither changes any behaviour. They need no decision from anybody. AP-02 is also the
