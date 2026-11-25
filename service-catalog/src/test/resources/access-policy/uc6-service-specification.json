@@ -1,0 +1,38 @@
+{
+  "name": "M&P K8S Cluster API (EU only)",
+  "version": "1.0.0",
+  "lifecycleStatus": "ACTIVE",
+  "specCharacteristic": [
+    {
+      "id": "visibility",
+      "name": "Who may see products built from this API",
+      "valueType": "authorizationPolicy",
+      "characteristicValueSpecification": [
+        {
+          "isDefault": true,
+          "value": {
+            "@context": { "odrl": "http://www.w3.org/ns/odrl/2/",
+                          "vc": "https://w3id.org/fiware/dsc/vc#",
+                          "dspace": "https://w3id.org/dspace/2024/1/" },
+            "@id": "https://mp-operation.org/policy/service/k8s-eu/visibility",
+            "odrl:uid": "https://mp-operation.org/policy/service/k8s-eu/visibility",
+            "@type": "odrl:Policy",
+            "odrl:permission": {
+              "odrl:assigner": { "@id": "did:web:mp-operations.org" },
+              "dspace:scope": "catalog",
+              "odrl:action": { "@id": "odrl:read" },
+              "odrl:constraint": {
+                "@type": "odrl:Constraint",
+                "odrl:leftOperand": "vc:country",
+                "odrl:operator": { "@id": "odrl:isAnyOf" },
+                "odrl:rightOperand": [ { "@value": "DE", "@type": "xsd:string" },
+                                       { "@value": "AT", "@type": "xsd:string" },
+                                       { "@value": "CH", "@type": "xsd:string" } ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

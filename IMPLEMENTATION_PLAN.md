@@ -100,7 +100,8 @@ The expected map holds what was **observed**. A carrier that turns out lossy get
 | Case | Request | JSON pointer checked | Domain accessor |
 |---|---|---|---|
 | `SERVICE_SPEC_CHARACTERISTIC_VALUE` | POST `/tmf-api/serviceCatalogManagement/v4/serviceSpecification` with the verbatim body | `/specCharacteristic/0/characteristicValueSpecification/0/value` | `getSpecCharacteristic().get(0).getCharacteristicValueSpecification().get(0).getTmfValue()` via `EntityReadRepository.get(id, ServiceSpecification.class)` |
-| `SERVICE_SPEC_WRONG_CONTAINER` | the same body with the product names `productSpecCharacteristicValue` (and the variant `productSpecCharacteristic` at the top level) | n/a | n/a |
+| `SERVICE_SPEC_WRONG_CONTAINER` | the same body with the product value container name `productSpecCharacteristicValue` | n/a | n/a |
+| `SERVICE_SPEC_WRONG_CHARACTERISTIC_CONTAINER` | the variant with both product names, `productSpecCharacteristic` at the top level | n/a | n/a |
 
 The wrong-container case pins whether the most common authoring mistake is rejected (expected 400) or silently dropped.
 
