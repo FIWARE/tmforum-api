@@ -8,14 +8,18 @@ import org.fiware.tmforum.accesspolicy.AccessPolicyProperties.Decision;
 import org.fiware.tmforum.accesspolicy.AccessPolicyProperties.Mode;
 import org.fiware.tmforum.accesspolicy.AccessPolicyProperties.TotalCount;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Fails the startup on an access-policy value that does not convert, since Micronaut binds any unknown boolean
- * string as {@code false} and the default would win silently.
+ * string as {@code false} and the default would win silently, and on an enabled feature without the token settings.
  */
 @Context
 @Requires(property = AccessPolicyProperties.PREFIX)
@@ -23,6 +27,10 @@ public class AccessPolicyConfigurationGuard {
 
 	private static final String TRUE = Boolean.TRUE.toString();
 	private static final String FALSE = Boolean.FALSE.toString();
+
+	private static final String JWKS_URI_KEY = AccessPolicyProperties.PREFIX + ".jwt.jwks-uri";
+	private static final String ISSUER_KEY = AccessPolicyProperties.PREFIX + ".jwt.issuer";
+	private static final Set<String> JWKS_URI_SCHEMES = Set.of("http", "https");
 
 	private static final Map<String, Class<?>> TYPED_KEYS = Map.ofEntries(
 			typedKey("enabled", Boolean.class),
@@ -43,6 +51,32 @@ public class AccessPolicyConfigurationGuard {
 	public AccessPolicyConfigurationGuard(Environment environment) {
 		TYPED_KEYS.forEach((key, type) -> environment.getProperty(key, String.class)
 				.ifPresent(raw -> check(environment, key, raw, type)));
+		if (environment.getProperty(AccessPolicyProperties.ENABLED_PROPERTY, String.class)
+				.filter(TRUE::equalsIgnoreCase).isPresent()) {
+			checkJwt(environment);
+		}
+	}
+
+	// without a key set and an issuer, every token would degrade to anonymous and the feature would bite nobody
+	private static void checkJwt(Environment environment) {
+		String jwksUri = environment.getProperty(JWKS_URI_KEY, String.class).orElse("");
+		if (!isAbsoluteHttpUri(jwksUri)) {
+			throw invalid(JWKS_URI_KEY, jwksUri, "is required while enabled and must be an absolute http(s) URI");
+		}
+		String issuer = environment.getProperty(ISSUER_KEY, String.class).orElse("");
+		if (issuer.isBlank()) {
+			throw invalid(ISSUER_KEY, issuer, "is required while enabled");
+		}
+	}
+
+	private static boolean isAbsoluteHttpUri(String raw) {
+		try {
+			URI uri = new URI(raw);
+			return uri.isAbsolute() && uri.getHost() != null
+					&& JWKS_URI_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT));
+		} catch (URISyntaxException e) {
+			return false;
+		}
 	}
 
 	private static Map.Entry<String, Class<?>> typedKey(String suffix, Class<?> type) {

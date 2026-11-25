@@ -14,6 +14,10 @@ import java.util.List;
 public class AccessPolicyProperties {
 
 	public static final String PREFIX = "access-policy";
+	/**
+	 * Key every bean of the feature is {@code @Requires}-gated on with value {@code true}.
+	 */
+	public static final String ENABLED_PROPERTY = PREFIX + ".enabled";
 
 	public static final int DEFAULT_MAX_SCAN = 10000;
 	public static final int DEFAULT_OVERFETCH_FACTOR = 4;

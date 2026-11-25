@@ -200,6 +200,52 @@ class AccessPolicyPropertiesTest {
 				String.format("The guard should reject %s, but the failure was: %s", key(property), thrown));
 	}
 
+	private static final String VALID_JWKS_URI = "https://keycloak.example.org/realms/test/protocol/openid-connect/certs";
+	private static final String VALID_ISSUER = "https://keycloak.example.org/realms/test";
+
+	private static Stream<Arguments> incompleteJwtSettings() {
+		return Stream.of(
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "/certs",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "keycloak:8080/certs",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "file:///etc/jwks.json",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "https://in valid",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "TRUE", key("jwt.jwks-uri"), VALID_JWKS_URI), "jwt.issuer"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+						key("jwt.issuer"), " "), "jwt.issuer"));
+	}
+
+	@DisplayName("An enabled access control without a JWKS URI or an issuer fails the startup.")
+	@ParameterizedTest(name = "{1}: {0}")
+	@MethodSource("incompleteJwtSettings")
+	void incompleteJwtSettingsFailStartup(Map<String, Object> configuration, String property) {
+		invalidValuesFailStartup(configuration, property);
+	}
+
+	private static Stream<Arguments> acceptedJwtSettings() {
+		return Stream.of(
+				Arguments.of(Map.of(key("enabled"), "false")),
+				Arguments.of(Map.of(key("mode"), "observe")),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+						key("jwt.issuer"), VALID_ISSUER)),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "http://keycloak:8080/certs",
+						key("jwt.issuer"), VALID_ISSUER)));
+	}
+
+	@DisplayName("A disabled access control needs no token settings, an enabled one starts with both set.")
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("acceptedJwtSettings")
+	void acceptedJwtSettingsStart(Map<String, Object> configuration) {
+		try (ApplicationContext context = ApplicationContext.run(configuration)) {
+			assertTrue(context.containsBean(AccessPolicyConfigurationGuard.class),
+					"The guard should exist and accept the configuration.");
+		}
+	}
+
 	private static boolean guardRejected(Throwable thrown, String key) {
 		for (Throwable cause = thrown; cause != null; cause = cause.getCause()) {
 			if (cause instanceof ConfigurationException && cause.getMessage().startsWith(key + ":")) {
