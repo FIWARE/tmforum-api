@@ -66,7 +66,12 @@ expectation (the broker adapter is now absent there by design), not the gate.
   delegate to `@StorageAdapter EntityRepository delegate`, and change the "injected by concrete type" sentence to
   "injected by the `@StorageAdapter` qualifier". The reasoning about the composition walk stays. In the flowchart
   (~line 67), rename the `ngsi[NgsiLdEntityRepository]` node to a generic `adapter["@StorageAdapter EntityRepository<br/>
-  (NGSI-LD or PostgreSQL)"]`, since the decorator now sits in front of either adapter.
+  (NGSI-LD or PostgreSQL)"]`, since the decorator now sits in front of either adapter. At ~line 104-105, change
+  "Off, it does not exist, and `NgsiLdEntityRepository` is injected directly as it is today" to "Off, it does not
+  exist, and the active `@StorageAdapter` bean is injected directly as it is today".
+- `doc/access-policies/TICKETS.md:440` (a later ticket's acceptance criterion) carries the same stale wording: change
+  "`NgsiLdEntityRepository` is injected directly" to "the active `@StorageAdapter` bean is injected directly". The D1
+  row (l.61) and the AP-02 notes (l.165-183) describe the old design on purpose and stay.
 - `doc/access-policies/DECISIONS.md:105`: change "the delegate must be injected by concrete type" to "the delegate is
   injected by the `@StorageAdapter` qualifier", so the two design docs agree. The rest of that bullet stays.
 - `AGENTS.md` already records the convention (Key Conventions, `@StorageAdapter` bullet). Update it only if the
