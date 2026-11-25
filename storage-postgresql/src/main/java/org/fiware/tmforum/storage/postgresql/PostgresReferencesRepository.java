@@ -1,10 +1,10 @@
 package org.fiware.tmforum.storage.postgresql;
 
-import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.r2dbc.spi.ConnectionFactory;
 import jakarta.inject.Singleton;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
+import org.fiware.tmforum.storage.StorageAdapter;
 import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.StoredReference;
 import reactor.core.publisher.Flux;
@@ -19,7 +19,7 @@ import static org.fiware.tmforum.storage.postgresql.PostgresStorage.QUALIFIED_EN
  * PostgreSQL adapter of the reference port; every lookup, single or batched, is one query on the current rows.
  */
 @Singleton
-@Primary
+@StorageAdapter
 @Requires(env = PostgresStorage.ENVIRONMENT)
 public class PostgresReferencesRepository implements ReferenceReadRepository {
 

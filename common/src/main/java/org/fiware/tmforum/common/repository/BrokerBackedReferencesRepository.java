@@ -1,12 +1,15 @@
 package org.fiware.tmforum.common.repository;
 
+import io.micronaut.context.annotation.Requires;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.PropertyVO;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.domain.VersionedEntity;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
+import org.fiware.tmforum.storage.StorageAdapter;
 import org.fiware.tmforum.storage.StoredReference;
 import reactor.core.publisher.Mono;
 
@@ -21,6 +24,8 @@ import java.util.Optional;
  */
 @Slf4j
 @Singleton
+@StorageAdapter
+@Requires(notEnv = CommonConstants.POSTGRESQL_ENVIRONMENT)
 public class BrokerBackedReferencesRepository extends NgsiLdBaseRepository implements ReferenceReadRepository {
 
 	private static final String VERSION_ATTRIBUTE = "version";

@@ -2,9 +2,11 @@ package org.fiware.tmforum.common.repository;
 
 import io.github.wistefan.mapping.EntityVOMapper;
 import io.github.wistefan.mapping.JavaObjectMapper;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.ngsi.api.EntitiesApiClient;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -12,6 +14,7 @@ import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.common.querying.NgsiLdQueryRenderer;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.StorageAdapter;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
 import org.fiware.tmforum.storage.query.EntityQuery;
@@ -26,6 +29,8 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Singleton
+@StorageAdapter
+@Requires(notEnv = CommonConstants.POSTGRESQL_ENVIRONMENT)
 public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements EntityRepository {
 
     private static final String LIST_FAILED = "Was not able to list entities.";
