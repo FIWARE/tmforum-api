@@ -14,12 +14,14 @@ instead of being silently replaced by the default.
   The `storage-postgresql` style (after `common`, depends on `common`) does not fit, because a module
   that `common` depends on cannot depend on `common`. State this reason in the PR body.
 - **Package:** `org.fiware.tmforum.accesspolicy` (the path in ARCHITECTURE.md § Components).
-- **Lenient binding is the known risk.** Micronaut skips a `@ConfigurationProperties` value it cannot
-  convert, and the field keeps its default (AGENTS.md: unit-less durations are silently dropped). Expect
-  unknown enum values (and unparsable ints) to behave the same way. The tests must show this; do not
-  assume it. Strictness comes from a separate guard bean that reads the **raw** values from the
-  `Environment`. The guard does not change the properties class and does not replace Micronaut's global
-  `Duration`/enum converters, because doing so would change every other module's behaviour.
+- **Lenient binding is the known risk.** The plan assumed Micronaut skips a value it cannot convert.
+  Step 1's tests showed that in Micronaut 5.2 this holds only for booleans (next bullet). An unknown
+  enum, a non-numeric int and a unit-less duration (string `"60"` or YAML integer `60`) already fail
+  startup with a `DependencyInjectionException`, as long as `micronaut-context` (the Duration converters)
+  is on the classpath. Without it every duration fails. The guard checks all typed keys anyway, so that
+  the error is one clear `ConfigurationException` and a converter change cannot weaken binding. It reads
+  the **raw** values from the `Environment`. It does not change the properties class or replace
+  Micronaut's global converters, because doing so would change every other module's behaviour.
 - **Booleans are lenient in a different way.** Micronaut's `CharSequence`→`Boolean` converter
   (micronaut-core 5.2.17, `DefaultMutableConversionService`) maps `yes`/`y`/`on`/`true` to `TRUE` and
   **every other string** to `FALSE`. It never gives an empty result, so a typo like `fail-open: ture`

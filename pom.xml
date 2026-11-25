@@ -31,6 +31,7 @@
 
     <modules>
         <module>storage-api</module>
+        <module>access-policy</module>
         <module>common</module>
         <module>storage-postgresql</module>
         <module>customer-shared-models</module>
