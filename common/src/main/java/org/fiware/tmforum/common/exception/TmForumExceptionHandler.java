@@ -42,6 +42,11 @@ public class TmForumExceptionHandler implements ExceptionHandler<TmForumExceptio
                     String.format("The requested object could not be found - %s", exception.getMessage()),
                     HttpStatus.NOT_FOUND.toString(),
                     null));
+            case FORBIDDEN -> HttpResponse.status(HttpStatus.FORBIDDEN).body(new ErrorDetails(HttpStatus.FORBIDDEN.toString(),
+                    HttpStatus.FORBIDDEN.getReason(),
+                    String.format("The requested operation is not permitted - %s", exception.getMessage()),
+                    HttpStatus.FORBIDDEN.toString(),
+                    null));
             default -> HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorDetails(HttpStatus.INTERNAL_SERVER_ERROR.toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR.getReason(),
                     String.format("An unexpected error happened - %s", exception.getMessage()),
