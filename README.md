@@ -400,3 +400,4 @@ general:
 |Version| Notes link                                                                                 |
 |------|--------------------------------------------------------------------------------------------|
 | 1.5.0 | [Add TMF652, TMF641, TMF730](./release-notes/RELEASE_NOTES_ADD_NEW_TMFORUM_API_MODULES.md) |
+| next  | [Selectable storage backend, PostgreSQL by default](./release-notes/RELEASE_NOTES_STORAGE_BACKENDS.md) |
