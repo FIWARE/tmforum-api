@@ -102,8 +102,8 @@ storage port.
 * Cost: the decorator needs the request to find the subject. `ServerRequestContext.currentRequest()`
   is how, and the codebase already relies on it inside the reactive chain in `AbstractApiController`
   and `FieldCleaningSerializer`, so this introduces no new mechanism.
-* Cost: the delegate must be injected by concrete type, and the composition walk must go through the
-  delegate rather than the decorator — otherwise the filter censors its own inputs and a restricted
+* Cost: the delegate is injected by the `@StorageAdapter` qualifier, and the composition walk must go
+  through the delegate rather than the decorator — otherwise the filter censors its own inputs and a restricted
   specification makes its own products unresolvable.
 * Cost: the write path is not covered. Ordering and quoting need a check in those two modules'
   create paths. That asymmetry is real and is called out in the architecture.

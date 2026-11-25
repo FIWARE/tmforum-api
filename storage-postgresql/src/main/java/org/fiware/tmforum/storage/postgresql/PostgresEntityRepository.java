@@ -1,6 +1,5 @@
 package org.fiware.tmforum.storage.postgresql;
 
-import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.r2dbc.postgresql.codec.Json;
 import io.r2dbc.spi.Connection;
@@ -15,6 +14,7 @@ import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.common.mapping.IdHelper;
 import org.fiware.tmforum.storage.EntityRepository;
 import org.fiware.tmforum.storage.PagedResult;
+import org.fiware.tmforum.storage.StorageAdapter;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
 import org.fiware.tmforum.storage.StorageOperation;
@@ -40,7 +40,7 @@ import static org.fiware.tmforum.storage.postgresql.PostgresStorage.QUALIFIED_OU
  * Lists and counts only see current rows; their filter and sort are rendered by {@link JsonbQueryRenderer}.
  */
 @Singleton
-@Primary
+@StorageAdapter
 @Requires(env = PostgresStorage.ENVIRONMENT)
 public class PostgresEntityRepository implements EntityRepository {
 

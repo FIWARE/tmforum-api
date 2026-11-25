@@ -20,6 +20,12 @@
             <artifactId>reactor-core</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+            <version>${version.jakarta.inject.jakarta.inject-api}</version>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>

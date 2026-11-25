@@ -64,8 +64,8 @@ flowchart TD
   fff --> srf[SubjectResolutionFilter<br/>token -> Subject, request attribute]
   srf --> ctl["AbstractApiController#list / get"]
   ctl --> dec[PolicyEnforcingEntityRepository]
-  dec -->|unfiltered reads:<br/>composition walk| ngsi[NgsiLdEntityRepository]
-  dec --> ngsi
+  dec -->|unfiltered reads:<br/>composition walk| adapter["@StorageAdapter EntityRepository<br/>(NGSI-LD or PostgreSQL)"]
+  dec --> adapter
   dec --> pdp[PolicyDecisionPoint]
   pdp -->|POST /validate| ext([external PDP])
   ctl --> pf[PaginationFilter<br/>Link, counts, 206]
@@ -102,8 +102,8 @@ the caller's view. Everything above it — the request attributes, the headers, 
 follows without modification.
 
 It also keeps the feature honest about [C1](./ANALYSIS.md#constraints-that-shape-any-solution): the
-decorator is one `@Requires`-gated bean. Off, it does not exist, and `NgsiLdEntityRepository` is
-injected directly as it is today.
+decorator is one `@Requires`-gated bean. Off, it does not exist, and the active `@StorageAdapter` bean
+is injected directly as it is today.
 
 ## The decision model
 
@@ -202,16 +202,18 @@ access-policy/src/main/java/org/fiware/tmforum/accesspolicy/
 @Requires(property = "access-policy.enabled", value = "true")
 public class PolicyEnforcingEntityRepository implements EntityRepository {
 
-    private final NgsiLdEntityRepository delegate;   // concrete type: never inject EntityRepository here
-    …
+    private final EntityRepository delegate;
+
+    // the qualifier selects the adapter: never inject an unqualified EntityRepository here
+    public PolicyEnforcingEntityRepository(@StorageAdapter EntityRepository delegate, …) { … }
 }
 ```
 
-The delegate is injected by concrete type. Injecting the interface would bind the decorator to
-itself, and — more subtly — the **composition walk must use the delegate directly**: resolving the
-`ProductSpecification` behind an offering is an internal read, and routing it through the decorator
-would make the filter censor its own inputs and hide an offering because its specification is
-restricted from the caller.
+The delegate is injected by the `@StorageAdapter` qualifier. Injecting the bare interface would
+bind the decorator to itself, and — more subtly — the **composition walk must use the delegate
+directly**: resolving the `ProductSpecification` behind an offering is an internal read, and routing
+it through the decorator would make the filter censor its own inputs and hide an offering because
+its specification is restricted from the caller.
 
 Writes pass straight through. The port's write side is untouched; ordering is handled separately
 ([Writes](#writes-ordering-and-quoting)).
