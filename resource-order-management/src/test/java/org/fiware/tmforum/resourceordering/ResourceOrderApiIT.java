@@ -21,6 +21,7 @@ import org.fiware.tmforum.common.exception.ErrorDetails;
 import org.fiware.tmforum.common.notification.TMForumEventHandler;
 import org.fiware.tmforum.common.test.AbstractApiIT;
 import org.fiware.tmforum.resourceordering.domain.ResourceOrder;
+import org.fiware.tmforum.resourceordering.domain.ResourceOrderState;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,6 +44,9 @@ import static org.mockito.Mockito.when;
 
 @MicronautTest(packages = { "org.fiware.tmforum.resourceordering" }, contextBuilder = FirstMatchConfigContextBuilder.class)
 public class ResourceOrderApiIT extends AbstractApiIT implements ResourceOrderApiTestSpec {
+
+	// the generated examples carry state "string", which is no ResourceOrderState and would be stored as null
+	private static final String VALID_STATE = ResourceOrderState.ACKNOWLEDGED.getValue();
 
 	public final ResourceOrderApiTestClient resourceOrderApiTestClient;
 
@@ -108,35 +112,35 @@ public class ResourceOrderApiIT extends AbstractApiIT implements ResourceOrderAp
 
 		testEntries.add(
 				Arguments.of("An empty resource order should have been created.",
-						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null),
-						ResourceOrderVOTestExample.build().atSchemaLocation(null)));
+						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null).state(VALID_STATE),
+						ResourceOrderVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)));
 
 		testEntries.add(
 				Arguments.of("A resource order with a category should have been created.",
-						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.category("Premium"),
-						ResourceOrderVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.category("Premium")));
 
 		testEntries.add(
 				Arguments.of("A resource order with a description should have been created.",
-						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.description("Test order"),
-						ResourceOrderVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.description("Test order")));
 
 		testEntries.add(
 				Arguments.of("A resource order with a name should have been created.",
-						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.name("My Order"),
-						ResourceOrderVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.name("My Order")));
 
 		testEntries.add(
 				Arguments.of("A resource order with priority should have been created.",
-						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderCreateVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.priority(1),
-						ResourceOrderVOTestExample.build().atSchemaLocation(null)
+						ResourceOrderVOTestExample.build().atSchemaLocation(null).state(VALID_STATE)
 								.priority(1)));
 
 		return testEntries.stream();

@@ -75,8 +75,9 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 	private static final String FIXTURE_DIRECTORY = "/access-policy/";
 	private static final String UC1_TERM_FIXTURE = "uc1-product-offering-term.json";
 	private static final String UC6_POLICY_FIXTURE = "uc6-policy.json";
-	// one pinned lossy shape per storage, shared by every level and cache
+	// a lossy shape pinned for one run and level wins over the one shared by every level and cache of a storage
 	private static final String OBSERVED_FORMAT = "%s-%s-observed-%s.json";
+	private static final String RUN_LEVEL_FORMAT = "%s-%s";
 	private static final String TERM_SCHEMA_LOCATION =
 			"http://localhost:3000/schemas/product-offering-term-policy-schema.json";
 
@@ -243,15 +244,22 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 			JsonNode actual = actualAt.apply(probe);
 			Outcome observed = outcome(requested, actual);
 			String context = String.format("%s %s at %s on %s", roundTripCase, probe.name(), level, run);
-			String observedFile = String.format(OBSERVED_FORMAT,
-					roundTripCase.name().toLowerCase().replace('_', '-'), probe.name(), storage());
 			checks.add(() -> assertEquals(expected, observed, context + ", observed: " + actual));
 			if (observed == Outcome.LOSSY) {
-				checks.add(() -> assertEquals(fixture(observedFile), actual,
+				checks.add(() -> assertEquals(observedShape(roundTripCase, probe, level, run), actual,
 						context + " should keep its pinned lossy shape."));
 			}
 		}
 		return checks;
+	}
+
+	private JsonNode observedShape(RoundTripCase roundTripCase, Probe probe, Level level, String run) {
+		String prefix = roundTripCase.name().toLowerCase().replace('_', '-');
+		String runAndLevel = String.format(RUN_LEVEL_FORMAT, run, level.name().toLowerCase().replace('_', '-'));
+		String specific = String.format(OBSERVED_FORMAT, prefix, probe.name(), runAndLevel);
+		return hasFixture(specific)
+				? fixture(specific)
+				: fixture(String.format(OBSERVED_FORMAT, prefix, probe.name(), storage()));
 	}
 
 	private static Outcome outcome(JsonNode requested, JsonNode actual) {
@@ -364,6 +372,10 @@ public class ProductOfferingPolicyRoundTripIT extends AbstractApiIT {
 		specification.put("name", "AP-01 specification");
 		specification.putArray("productSpecCharacteristic").add(characteristic);
 		return specification;
+	}
+
+	private static boolean hasFixture(String fileName) {
+		return ProductOfferingPolicyRoundTripIT.class.getResource(FIXTURE_DIRECTORY + fileName) != null;
 	}
 
 	private static JsonNode fixture(String fileName) {
