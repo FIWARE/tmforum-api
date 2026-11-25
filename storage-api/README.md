@@ -85,9 +85,12 @@ keys, which each adapter renders into its own query language.
    `product-catalog`'s `NgsiLd*ContractIT` show how. A backend that cannot meet a rule yet declares it in
    `knownDeviations()`. The affected cases then assert today's behaviour, so a fix fails the case instead of
    passing silently.
-4. Select the adapter per deployment through a Micronaut profile/`@Requires` (ticket 6), so exactly one
-   implementation of each interface is in the context. NGSI-LD subscriptions are not part of the port: the
-   `SubscriptionRepository` (`NgsiLdSubscriptionRepository`) is broker-only, and the subscription controllers
-   take it as optional, so a backend without a broker needs none.
+4. Annotate both beans with `@StorageAdapter` and select them through `@Requires` alone (`env = postgresql` for
+   the PostgreSQL adapter, `notEnv = postgresql` for the broker adapter), so exactly one adapter of each interface
+   is in the context. An adapter is never `@Primary`. A decorator is `@Primary`, injects
+   `@StorageAdapter EntityRepository` (or `ReferenceReadRepository`), never names an adapter class and does not
+   carry the qualifier itself; `@Replaces` does not work, as it hides the adapter from the decorator too.
+   NGSI-LD subscriptions are not part of the port: the `SubscriptionRepository` (`NgsiLdSubscriptionRepository`)
+   is broker-only, and the subscription controllers take it as optional, so a backend without a broker needs none.
 
 The known deviations of the NGSI-LD adapter are listed in `KnownDeviation` and in the port Javadoc.

@@ -437,7 +437,7 @@ exist. Lists are untouched by this ticket.
 * A denied `GET /{id}` and a `GET` of a nonexistent id produce identical status, headers and body.
 * `default-decision: allow` plus an entity with no policy makes **zero** PDP calls
   ([UC-8](./USE_CASES.md#uc-8--an-entity-without-a-policy-stays-public)).
-* With the feature off, no `access-policy` bean exists in the context and `NgsiLdEntityRepository` is
+* With the feature off, no `access-policy` bean exists in the context and the active `@StorageAdapter` bean is
   injected directly — asserted on the context, not only on behaviour.
 * A `PATCH` of a denied entity answers `404`, because
   [`AbstractApiController#patch`](../../common/src/main/java/org/fiware/tmforum/common/rest/AbstractApiController.java)
