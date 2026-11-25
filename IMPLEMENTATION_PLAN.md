@@ -3,8 +3,10 @@
 ## Overview
 Add a `@StorageAdapter` qualifier to `storage-api` and put it on the four adapter beans. Move each adapter's
 environment choice entirely onto `@Requires`, so no adapter needs `@Primary` and a decorator can take it. The
-decorator injects `@StorageAdapter EntityRepository` and is `@Primary`, as `ARCHITECTURE.md` and `DECISIONS.md`
-already assume. This step adds no decorator and changes no behaviour. A context test proves the mechanism on the
+decorator injects `@StorageAdapter EntityRepository` and is `@Primary`. `ARCHITECTURE.md` and `DECISIONS.md`
+already assume a `@Primary` decorator but say it injects its delegate by concrete type; Step 1 aligns both docs. This
+ticket adds no decorator. The one behaviour change is that a `postgresql` context without `storage-postgresql` on the
+classpath no longer falls back to the broker adapters (see Step 1). A context test proves the mechanism on the
 default storage and on `postgresql`.
 
 ### Decided selection mechanism (settled here, once)
@@ -32,6 +34,13 @@ Lookups by concrete class keep working: `getBean(NgsiLdEntityRepository.class)` 
 ### Step 1: `@StorageAdapter` qualifier, adapter annotations and env-only adapter selection
 Production change and docs only. No test classes are added here; Step 2 proves the mechanism.
 
+Behaviour change to state in the step summary: a `postgresql` context *without* `storage-postgresql` on the classpath
+used to fall back silently to the broker adapters, and now has no `EntityRepository`/`ReferenceReadRepository` bean.
+No shipped deployment hits this (all 21 API modules and all-in-one depend on `storage-postgresql`). Only `common`'s
+own tests start such a context (`CallbackRouteTest`, `NotificationWiringTest`, `StoragePortWiringTest`); they appear
+to use only `containsBean` or lazy wiring, and `mvn test -pl common` must prove it. If one fails, fix the test's
+expectation (the broker adapter is now absent there by design), not the gate.
+
 - `storage-api/pom.xml`: add `jakarta.inject:jakarta.inject-api` (compile scope). The `neutral-port` enforcer rule
   bans `io.micronaut*:*`, `io.github.wistefan:*` and `org.fiware.tmforum:*`, but `jakarta.inject` is allowed. It
   should be BOM-managed through `micronaut-parent`, so check with
@@ -55,7 +64,11 @@ Production change and docs only. No test classes are added here; Step 2 proves t
   itself. Mention the `@Replaces` pitfall in half a sentence.
 - `doc/access-policies/ARCHITECTURE.md` (§ `PolicyEnforcingEntityRepository`, ~line 196-214): change the snippet's
   delegate to `@StorageAdapter EntityRepository delegate`, and change the "injected by concrete type" sentence to
-  "injected by the `@StorageAdapter` qualifier". The reasoning about the composition walk stays.
+  "injected by the `@StorageAdapter` qualifier". The reasoning about the composition walk stays. In the flowchart
+  (~line 67), rename the `ngsi[NgsiLdEntityRepository]` node to a generic `adapter["@StorageAdapter EntityRepository<br/>
+  (NGSI-LD or PostgreSQL)"]`, since the decorator now sits in front of either adapter.
+- `doc/access-policies/DECISIONS.md:105`: change "the delegate must be injected by concrete type" to "the delegate is
+  injected by the `@StorageAdapter` qualifier", so the two design docs agree. The rest of that bullet stays.
 - `AGENTS.md` already records the convention (Key Conventions, `@StorageAdapter` bullet). Update it only if the
   final shape differs.
 
@@ -100,13 +113,15 @@ Parameterized cases (`@MethodSource`): environments `orion-ld`, `scorpio`, `post
 `PostgresStorage.ENVIRONMENT`, and named constants for the broker names), each × decorate `false|true`. Each case
 gives the expected entity adapter class and the expected reference adapter class.
 - decorate=false, i.e. resolution unchanged:
-  - `getBean(EntityRepository)`, `getBean(EntityReadRepository)` and `getBean(ReferenceReadRepository)` are
-    instances of the expected adapter.
+  - `getBean(EntityRepository)`, `getBean(EntityReadRepository)`, `getBean(EntityWriteRepository)` and
+    `getBean(ReferenceReadRepository)` are instances of the expected adapter.
   - The `@StorageAdapter`-qualified lookup (`Qualifiers.byStereotype(StorageAdapter.class)`) returns the same
     instance.
   - `getBeansOfType(EntityRepository.class)` has exactly one bean.
 - decorate=true:
-  - Unqualified `EntityRepository` and `EntityReadRepository` resolve to `RecordingEntityRepositoryDecorator`.
+  - Unqualified `EntityRepository`, `EntityReadRepository` and `EntityWriteRepository` resolve to
+    `RecordingEntityRepositoryDecorator`. This pins down that the write path also goes through a decorator that
+    implements `EntityRepository`.
   - Unqualified `ReferenceReadRepository` resolves to its decorator.
   - Each decorator's `delegate()` is the expected adapter, and is the same instance as the `@StorageAdapter`
     lookup.
