@@ -149,7 +149,7 @@ rejects it with `400` ([AP-01 finding](./AP-01_FINDINGS.md#what-a-provider-must-
 
 ```json
 "productOfferingTerm": [ { "name": "edc:contractDefinition",
-  "@schemaLocation": "https://raw.githubusercontent.com/wistefan/edc-dsc/refs/heads/init/schemas/contract-definition.json",
+  "@schemaLocation": "https://raw.githubusercontent.com/wistefan/edc-dsc/ef67c0f64b47e8097f3cb4dc806df5aba95ec089/schemas/contract-definition.json",
   "accessPolicy":   { … },
   "contractPolicy": { … } } ]
 ```

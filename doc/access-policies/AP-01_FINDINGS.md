@@ -114,7 +114,8 @@ All of these round-trip unchanged on every run, including after `EntityVOSeriali
   extension in this project (`ValidatingDeserializer`, `BaseMapper`). The Dataspace Protocol side
   already writes the term this way: the DSC's
   [DSP integration guide](https://github.com/FIWARE/data-space-connector/blob/main/doc/DSP_INTEGRATION.md#prepare-the-offering)
-  points it at `contract-definition.json`. Only the UC-1 example lacked it, and
+  points it at `contract-definition.json` (on the moving `init` branch; the examples now pin
+  commit [`ef67c0f`](https://github.com/wistefan/edc-dsc/blob/ef67c0f64b47e8097f3cb4dc806df5aba95ec089/schemas), which served the same file on 2026-11-25). Only the UC-1 example lacked it, and
   [POLICY_EXAMPLES.md](./POLICY_EXAMPLES.md#an-entity-restricted-by-a-subject-attribute) is corrected.
   The ITs use the minimal test schema `product-offering-term-policy-schema.json` from
   [`static-fileserver.yaml`](../../k3s/schema-provider/static-fileserver.yaml), which declares both
@@ -122,7 +123,7 @@ All of these round-trip unchanged on every run, including after `EntityVOSeriali
 * **Admitting is not enough when the schema requires.** `ValidatingDeserializer.deserialize`
   validates only the extension keys (what is left after the known VO fields and `@type` are
   removed) against the schema, `required` included, and skips validation when there are none.
-  `contract-definition.json` requires both `accessPolicy` and `contractPolicy`, so a term that
+  `contract-definition.json` at `ef67c0f` requires both `accessPolicy` and `contractPolicy`, so a term that
   points at it with exactly one of them gets `400`; a term with neither is accepted. A UC-2 term
   ("no access policy") must then carry a permit-all `accessPolicy`, or the deployment must host a
   schema that does not require it. Because the known fields never reach the validator, a schema
@@ -157,7 +158,9 @@ reference chain to its parent.
 * **PATCH**: both a policy written by PATCH and a PATCH that replaces or removes one.
 * **Redis on postgresql.** The PostgreSQL adapter does not read through the `entities` cache, so there
   is no cached level to test.
-* **A real-world term schema.** No IT runs with the DSC's `contract-definition.json`. Reading it:
+* **A real-world term schema.** No IT runs with the DSC's
+  [`contract-definition.json`](https://github.com/wistefan/edc-dsc/blob/ef67c0f64b47e8097f3cb4dc806df5aba95ec089/schemas/contract-definition.json). Reading it and
+  [`policy.json`](https://github.com/wistefan/edc-dsc/blob/ef67c0f64b47e8097f3cb4dc806df5aba95ec089/schemas/policy.json) at commit `ef67c0f` (fetched 2026-11-25):
   * it gives each key as `{"$ref": "policy.json"}` with no `type`. `BaseMapper.coerceToSchema` only
     acts on a `type` and does not follow `$ref`, so the API response is not reshaped;
   * `policy.json` declares only `permissions: {"type":"array"}`, has no `required` and allows
