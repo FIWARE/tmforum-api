@@ -101,9 +101,10 @@ uses. A deployment may host its own schema instead, as long as it admits both ke
 a schema that declares both keys as `{"type":"object"}`, the pair round-trips unchanged on every
 storage ([AP-01 finding](./AP-01_FINDINGS.md)). No IT runs with the DSC schema itself.
 
-The DSC `contract-definition.json` lists `accessPolicy` and `contractPolicy` as `required`, and the
-API enforces `required` on write. A term that points at it must carry **both** keys, or it gets
-`400`. The same applies to the term carrying the UC-2 contract policy below.
+The DSC `contract-definition.json` lists `accessPolicy` and `contractPolicy` as `required`. On
+write the API validates only the term's extension keys against the schema, and only when there is at
+least one. A term that points at it with exactly one of the two keys gets `400`; a term with neither
+is accepted. The same applies to the term carrying the UC-2 contract policy below.
 
 Two things worth stating plainly:
 

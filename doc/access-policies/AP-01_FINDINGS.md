@@ -119,11 +119,15 @@ All of these round-trip unchanged on every run, including after `EntityVOSeriali
   The ITs use the minimal test schema `product-offering-term-policy-schema.json` from
   [`static-fileserver.yaml`](../../k3s/schema-provider/static-fileserver.yaml), which declares both
   keys as `{"type":"object"}` and nothing else.
-* **Admitting is not enough when the schema requires.** `ValidatingDeserializer.validateWithSchema`
-  enforces the whole schema on write, `required` included. `contract-definition.json` requires both
-  `accessPolicy` and `contractPolicy`, so a term that points at it and leaves one out gets `400`. A
-  UC-2 term ("no access policy") must then carry a permit-all `accessPolicy`, or the deployment must
-  host a schema that does not require it.
+* **Admitting is not enough when the schema requires.** `ValidatingDeserializer.deserialize`
+  validates only the extension keys (what is left after the known VO fields and `@type` are
+  removed) against the schema, `required` included, and skips validation when there are none.
+  `contract-definition.json` requires both `accessPolicy` and `contractPolicy`, so a term that
+  points at it with exactly one of them gets `400`; a term with neither is accepted. A UC-2 term
+  ("no access policy") must then carry a permit-all `accessPolicy`, or the deployment must host a
+  schema that does not require it. Because the known fields never reach the validator, a schema
+  that lists a standard term field (`name`, `description`, …) under `required` rejects every term
+  that carries an extension key.
 * **Specifications:** nothing beyond the documented examples, as long as the container names match the
   type. The values need no schema.
 * **The term rejection does not name the key.** A term without `@schemaLocation` gets `400` with
