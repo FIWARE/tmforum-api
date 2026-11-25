@@ -20,6 +20,11 @@ instead of being silently replaced by the default.
   assume it. Strictness comes from a separate guard bean that reads the **raw** values from the
   `Environment`. The guard does not change the properties class and does not replace Micronaut's global
   `Duration`/enum converters, because doing so would change every other module's behaviour.
+- **Booleans are lenient in a different way.** Micronaut's `CharSequence`→`Boolean` converter
+  (micronaut-core 5.2.17, `DefaultMutableConversionService`) maps `yes`/`y`/`on`/`true` to `TRUE` and
+  **every other string** to `FALSE`. It never gives an empty result, so a typo like `fail-open: ture`
+  binds to `false`, and a conversion-service check cannot catch it. The guard therefore checks the six
+  booleans against the raw string, case-insensitive `true` or `false` only.
 - **Endpoint values have no default.** `pdp.url`, `jwt.jwks-uri`, `jwt.issuer` and `jwt.audience` default
   to `null`. The hosts in the ARCHITECTURE.md yaml are examples, and the defaults table does not list them.
   They are `String`s, so binding is lossless. Checking that they are set when `enabled = true` belongs to
@@ -88,13 +93,19 @@ instead of being silently replaced by the default.
   - `@Context @Requires(property = AccessPolicyProperties.PREFIX)`, so it exists only when **some**
     `access-policy.*` key is configured. With no key, no bean from this module is ever created.
   - Its constructor takes the `Environment`. For each typed key it reads the raw value as a `String`. If
-    the value is present, it converts the value to the target type with the environment's conversion
+    the value is present and the target is not `Boolean`, it converts the value to the target type with the environment's conversion
     service. If conversion gives an empty result or throws, it throws
     `io.micronaut.context.exceptions.ConfigurationException` naming the key and the rejected value, for
     example `access-policy.decision-ttl: '60' is not a duration, a unit is mandatory (e.g. 60s)`.
+  - A `Boolean` key does not go through the conversion service (see Decisions). The raw string must
+    equal `true` or `false`, ignoring case, or the guard throws the same `ConfigurationException`. A YAML
+    boolean (`enabled: true`) arrives as `"true"`, so it passes. `yes`/`on` are rejected on purpose,
+    because only `true`/`false` read the same in YAML, env vars and system properties.
   - The keys and their target types go in one named constant (`Map<String, Class<?>>` or a small record
     list): `mode`→`Mode`, `default-decision`/`anonymous-decision`→`Decision`, `total-count`→`TotalCount`,
-    `max-scan`/`overfetch-factor`→`Integer`, `decision-ttl`/`pdp.timeout`→`Duration`, and the five booleans.
+    `max-scan`/`overfetch-factor`→`Integer`, `decision-ttl`/`pdp.timeout`→`Duration`, and the six booleans
+    `enabled`, `bypass-unauthenticated`, `owner-exempt`, `derive-catalog-visibility`, `fail-open`,
+    `audit.enabled`→`Boolean`.
     Build the keys from `PREFIX`, not from repeated literals.
   - The class gets a one-line Javadoc saying why it exists: Micronaut drops a value it cannot convert, so
     the default would win silently.
@@ -108,10 +119,16 @@ instead of being silently replaced by the default.
   - Parameterized test: with an empty context, `AccessPolicyConfigurationGuard` is not a bean
     (`context.containsBean(...)` is false). This shows the module is inert when unconfigured.
   - Parameterized test: valid values bind. Cover `observe`/`deny`/`omit`/`upstream` in kebab/lower case,
-    `decision-ttl` as `30s`, `5m` and `PT1M`, and `pdp.timeout` as `500ms`.
+    `decision-ttl` as `30s`, `5m` and `PT1M`, `pdp.timeout` as `500ms`, and `fail-open` as `TRUE` and
+    `false`.
+  - Parameterized characterization test of the converter behaviour the guard depends on: for each of
+    `ture`, `1`, `enabled`, `ConversionService.SHARED.convert(value, Boolean.class)` is `Optional.of(FALSE)`
+    (not empty). If a Micronaut upgrade changes this, the test shows that the raw boolean check may no
+    longer be needed.
   - Parameterized test, the rejection cases: an unknown value for `mode`, `default-decision`,
     `anonymous-decision` and `total-count`, a unit-less `decision-ttl` (`60`) and `pdp.timeout` (`2`), and
-    a non-numeric `max-scan`. Each must make `ApplicationContext.run(Map)` throw, and the exception's cause
+    a non-numeric `max-scan`, and a misspelled boolean for `fail-open` (`ture`) and `audit.enabled`
+    (`yes`). Each must make `ApplicationContext.run(Map)` throw, and the exception's cause
     chain must contain the offending key. Also include one case with `access-policy.enabled=false` plus a
     bad value: it still fails, because a bad value is a configuration error whether or not the feature is
     on.
