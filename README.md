@@ -187,6 +187,10 @@ With `postgresql` named explicitly, configured broker-only `general.*` keys are 
 > Each of them can be overridden through its `GENERAL_*` variable. Scorpio < 6.0.0 does not create attributes with
 > `replaceOnUpdate: true` and must set `GENERAL_REPLACE_ON_UPDATE=false`, see
 > [Attribute updates](#attribute-updates-replaceonupdate).
+>
+> `document-management` is the exception: it ships no `application-orion-ld.yaml` or `application-scorpio.yaml`, so
+> naming a broker changes nothing there and it keeps the code defaults, including `replaceOnUpdate: false` on
+> `scorpio`.
 
 ### PostgreSQL
 
@@ -195,7 +199,7 @@ The default backend; it needs no context broker. Every module ships an `applicat
 1. Point the module at the database with `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER` and
    `POSTGRES_PASSWORD`, and bound the connection pool with the `POSTGRES_POOL_*` variables.
 2. Give the user the right to create the schema `tmforum`, or create it beforehand.
-3. Start the module. Flyway creates `tmforum.entity`, `tmforum.event_outbox` and its history table on the first start.
+3. Start the module. Flyway creates `tmforum.entity`, `tmforum.event_outbox` and Flyway's schema history table on the first start.
 
 Readiness then checks the database instead of the broker. The full configuration block, the defaults and the
 `tmforum.outbox.*` properties are in [storage-postgresql/README.md](storage-postgresql/README.md#configuration). To
@@ -207,7 +211,8 @@ Everything in this subsection applies to the broker backends (`orion-ld`, `scorp
 through `micronaut.http.services.ngsi.url` (`MICRONAUT_HTTP_SERVICES_NGSI_URL`). Its query dialect is set by the
 broker-only `general.*` keys ([NgsiLdBrokerProperties](common/src/main/java/org/fiware/tmforum/common/configuration/NgsiLdBrokerProperties.java)),
 each also settable through its `GENERAL_*` variable (e.g. `GENERAL_REPLACE_ON_UPDATE`). The `orion-ld` and `scorpio`
-columns are the values of the modules' `application-<broker>.yaml`:
+columns are the values of the modules' `application-<broker>.yaml`; `document-management` has neither file and runs
+on the code defaults:
 
 | Property                         | Code default           | `orion-ld`             | `scorpio`              | Meaning                                                                                               |
 |----------------------------------|------------------------|------------------------|------------------------|-------------------------------------------------------------------------------------------------------|
@@ -256,7 +261,7 @@ This table is the single place where accepted differences between the backends a
 
 | Area | PostgreSQL | NGSI-LD broker | Decision |
 |------|------------|----------------|----------|
-| TMForum event delivery | At-least-once: create, update and delete write their event into `tmforum.event_outbox` in the entity's transaction, and the `OutboxDispatcher` retries until every hub answered 2xx, with the same `eventId` (see [Notifications](release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md#tmforum-events)) | Fire-and-forget: a failed delivery is logged and lost | Accepted (decision 13) |
+| TMForum event delivery | At-least-once: create, update and delete write their event into `tmforum.event_outbox` in the entity's transaction, and the `OutboxDispatcher` retries with the same `eventId` until every hub answered 2xx or `tmforum.outbox.retention` (default `7d`) expires, then discards the row (see [TMForum events](release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md#tmforum-events)) | Fire-and-forget: a failed delivery is logged and lost | Accepted (decision 13) |
 | NGSI-LD subscriptions and `POST /callback` | Not wired, `POST /callback` answers `404`; TMForum hubs (`POST /hub`) work | Wired, the broker notifies `POST /callback` | Accepted, broker-only (decision 2 as amended) |
 | `X-Total-Count` and the `last` link | Always present: the total is counted with the page | Present only when the broker sends the `general.countHeader` header (`NGSILD-Results-Count`); otherwise `next` is inferred from a full page | Accepted |
 | `NULLS` ordering on `sort` | An entity without the sort key comes last, ascending and descending (`NULLS LAST`); ties break by creation and id | The brokers do not sort at all, see [`SORT_IS_IGNORED`](#known-backend-differences-not-accepted) | Accepted for PostgreSQL; the broker side is pending |
@@ -288,6 +293,12 @@ acceptance in ticket 0; an entry moves to the [accepted table](#accepted-deviati
 - `NUMBER_AND_BOOLEAN_FILTER_FAILS`: Scorpio 5.0.3; a filter combining a number and a boolean comparison answers
   `500`.
 - `SEVERAL_IDS_WITH_SEVERAL_TYPES_FAIL`: Orion-LD; a polymorphic lookup with several ids and several types fails.
+
+Outside the port contract, TMForum DeleteEvents differ as well: on PostgreSQL they go only to the hubs taking
+`<Type>DeleteEvent` whose query matched the deleted entity, on the broker to every hub taking `<Type>DeleteEvent`,
+whatever its query, because the broker's notification carries only the id (see
+[TMForum events](release-notes/RELEASE_NOTES_POSTGRESQL_ADAPTER.md#tmforum-events)). Decision 13 covers the delivery
+guarantee only, so this difference is pending acceptance as well.
 
 The inline-reference limitations are listed in
 [RELEASE_NOTES_INLINE_REFERENCES.md](release-notes/RELEASE_NOTES_INLINE_REFERENCES.md#known-limitations).
