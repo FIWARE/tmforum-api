@@ -47,6 +47,7 @@ The short version — the long one is [DECISIONS.md AP-2](./DECISIONS.md#ap-3--e
 | [USE_CASES.md](./USE_CASES.md) | UC-1 … UC-12, with actors, preconditions, flow and acceptance criteria |
 | [POLICY_EXAMPLES.md](./POLICY_EXAMPLES.md) | The ODRL a provider writes, and the vocabulary the PDP has to understand |
 | [DECISIONS.md](./DECISIONS.md) | The decisions behind the design, including the gateway-plugin alternative and why it was dropped |
+| [AP-01_FINDINGS.md](./AP-01_FINDINGS.md) | Whether a policy survives the entity round-trip on each carrier and storage, and the accessor paths to read it |
 | [TICKETS.md](./TICKETS.md) | The implementation broken into tickets, their order, and the four points where the design does not yet hold against the code |
 
 ## Reading order

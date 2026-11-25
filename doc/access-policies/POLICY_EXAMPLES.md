@@ -35,10 +35,12 @@ Operators in use: `odrl:eq`, `odrl:isAnyOf`, `odrl:hasPart`, `odrl:lt`, `http:is
 
 [UC-1](./USE_CASES.md#uc-1--an-entity-restricted-by-a-subject-attribute). Written
 on the `ProductOffering` as the DSP access/contract pair, so one authoring step covers both paths.
+The block is one entry of the offering's `productOfferingTerm` array.
 
 ```json
 {
   "name": "edc:contractDefinition",
+  "@schemaLocation": "https://raw.githubusercontent.com/wistefan/edc-dsc/refs/heads/init/schemas/contract-definition.json",
   "accessPolicy": {
     "@context": [
       "http://www.w3.org/ns/odrl.jsonld",
@@ -89,6 +91,16 @@ on the `ProductOffering` as the DSP access/contract pair, so one authoring step 
   }
 }
 ```
+
+**The `@schemaLocation` is mandatory.** `ProductOfferingTerm` has no policy fields, so
+`accessPolicy` and `contractPolicy` are extensions. Without a `@schemaLocation` whose schema admits
+them, the API rejects the term with `400` ("No additional properties are allowed without a
+@schemaLocation"), and the body never names the offending key. The schema above is the one the DSC's
+[DSP integration guide](https://github.com/FIWARE/data-space-connector/blob/main/doc/DSP_INTEGRATION.md#prepare-the-offering)
+uses. A deployment may host its own copy, as long as it admits both keys as objects. With it, the pair
+round-trips unchanged on every storage
+([AP-01 finding](./AP-01_FINDINGS.md)). The same applies to the term carrying the UC-2 contract
+policy below.
 
 Two things worth stating plainly:
 

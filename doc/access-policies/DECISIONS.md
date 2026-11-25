@@ -65,6 +65,9 @@ reads. Add no new schema.
 * Catalog and category policies have no carrier in TMF620. Rather than extend the model, the
   resolver also matches policies registered at the PDP whose target names the entity by id.
   [UC-3](./USE_CASES.md#uc-3--a-private-catalog-for-a-named-partner) tests whether that suffices.
+* [AP-01](./AP-01_FINDINGS.md) confirmed that all three carriers keep the policy on every storage.
+  The pair on the offering term is an extension, so the term has to name a `@schemaLocation` that
+  admits it. The DSP path already uses such a schema, so this adds no new one.
 * Cost: this project inherits vocabulary from a specific ecosystem (`dspace:scope`). It is a
   namespace in data the project already stores, not a code dependency.
 
