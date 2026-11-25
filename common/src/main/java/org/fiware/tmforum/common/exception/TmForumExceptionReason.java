@@ -6,5 +6,6 @@ public enum TmForumExceptionReason {
     INVALID_DATA,
     INVALID_RELATIONSHIP,
     NOT_FOUND,
+    FORBIDDEN,
     UNKNOWN;
 }

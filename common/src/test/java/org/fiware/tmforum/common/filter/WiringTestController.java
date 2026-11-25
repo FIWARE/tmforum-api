@@ -43,6 +43,7 @@ public class WiringTestController {
 			Map.entry("tmforum-invalid-relationship",
 					() -> new TmForumException(MESSAGE, TmForumExceptionReason.INVALID_RELATIONSHIP)),
 			Map.entry("tmforum-not-found", () -> new TmForumException(MESSAGE, TmForumExceptionReason.NOT_FOUND)),
+			Map.entry("tmforum-forbidden", () -> new TmForumException(MESSAGE, TmForumExceptionReason.FORBIDDEN)),
 			Map.entry("tmforum-unknown", () -> new TmForumException(MESSAGE, TmForumExceptionReason.UNKNOWN)),
 			Map.entry("deletion-not-found", () -> new DeletionException(MESSAGE, DeletionExceptionReason.NOT_FOUND)),
 			Map.entry("deletion-unknown", () -> new DeletionException(MESSAGE, DeletionExceptionReason.UNKNOWN)),
