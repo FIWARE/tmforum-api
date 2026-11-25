@@ -49,11 +49,19 @@ public class AccessPolicyConfigurationGuard {
 			typedKey("audit.enabled", Boolean.class));
 
 	public AccessPolicyConfigurationGuard(Environment environment) {
+		Optional<String> enabled = environment.getProperty(AccessPolicyProperties.ENABLED_PROPERTY, String.class);
+		enabled.ifPresent(AccessPolicyConfigurationGuard::checkEnabled);
 		TYPED_KEYS.forEach((key, type) -> environment.getProperty(key, String.class)
 				.ifPresent(raw -> check(environment, key, raw, type)));
-		if (environment.getProperty(AccessPolicyProperties.ENABLED_PROPERTY, String.class)
-				.filter(TRUE::equalsIgnoreCase).isPresent()) {
+		if (enabled.filter(TRUE::equals).isPresent()) {
 			checkJwt(environment);
+		}
+	}
+
+	// @Requires(value = "true") matches the raw string exactly, so a "TRUE" would bind as enabled while no gated bean exists
+	private static void checkEnabled(String raw) {
+		if (!TRUE.equals(raw) && !FALSE.equals(raw)) {
+			throw invalid(AccessPolicyProperties.ENABLED_PROPERTY, raw, "must be lowercase true or false");
 		}
 	}
 
