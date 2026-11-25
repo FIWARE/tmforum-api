@@ -73,6 +73,7 @@ class ServerWiringRegressionTest implements TestPropertyProvider {
 				Arguments.of("tmforum-invalid-data", HttpStatus.BAD_REQUEST),
 				Arguments.of("tmforum-invalid-relationship", HttpStatus.BAD_REQUEST),
 				Arguments.of("tmforum-not-found", HttpStatus.NOT_FOUND),
+				Arguments.of("tmforum-forbidden", HttpStatus.FORBIDDEN),
 				Arguments.of("tmforum-unknown", HttpStatus.INTERNAL_SERVER_ERROR),
 				Arguments.of("deletion-not-found", HttpStatus.NOT_FOUND),
 				Arguments.of("deletion-unknown", HttpStatus.INTERNAL_SERVER_ERROR),
