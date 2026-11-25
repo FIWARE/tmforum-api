@@ -144,10 +144,12 @@ can, while one that does not — almost all of them — does not have to.
 ## Where a provider writes a policy
 
 **1 — on the offering**, in `productOfferingTerm`. This already exists and is already honoured by
-the Dataspace Protocol side, so it needs no authoring change:
+the Dataspace Protocol side. The term needs a `@schemaLocation` that admits both keys, or the API
+rejects it with `400` ([AP-01 finding](./AP-01_FINDINGS.md#what-a-provider-must-write)):
 
 ```json
 "productOfferingTerm": [ { "name": "edc:contractDefinition",
+  "@schemaLocation": "https://raw.githubusercontent.com/wistefan/edc-dsc/ef67c0f64b47e8097f3cb4dc806df5aba95ec089/schemas/contract-definition.json",
   "accessPolicy":   { … },
   "contractPolicy": { … } } ]
 ```
