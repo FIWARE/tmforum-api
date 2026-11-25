@@ -26,6 +26,11 @@
         </dependency>
         <dependency>
             <groupId>org.fiware.tmforum</groupId>
+            <artifactId>access-policy</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.fiware.tmforum</groupId>
             <artifactId>customer-shared-models</artifactId>
             <version>${project.version}</version>
         </dependency>
