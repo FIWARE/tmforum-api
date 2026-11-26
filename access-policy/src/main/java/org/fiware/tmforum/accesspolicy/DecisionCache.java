@@ -27,6 +27,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DecisionCache {
 
 	public static final String CACHE_NAME = "decisions";
+	/**
+	 * The {@code redis.caches.decisions.value-serializer} every redis profile names: JSON through the app's mapper.
+	 * A name that resolves to no bean silently falls back to Java deserialization of Redis data, so copy it exactly.
+	 */
+	public static final String VALUE_SERIALIZER = "io.micronaut.jackson.serialize.JacksonObjectSerializer";
 	private static final String NO_CACHE_CONFIGURED = "No cache configured for name: ";
 
 	private final AccessPolicyProperties properties;

@@ -197,6 +197,12 @@ Acceptance: `mvn test -pl access-policy` is green.
 
 Acceptance: `mvn test -pl access-policy` is green and the serializer class name is settled.
 
+Settled: `DecisionCache.VALUE_SERIALIZER` = `io.micronaut.jackson.serialize.JacksonObjectSerializer` (resolved
+jar 5.2.17), no fallback class. It injects the `@Primary @Named("json")` mapper, so the mapping library's
+non-primary `CacheSerdeableObjectMapper` is not used. The app's `EscapeCleaningJsonFactory` only rewrites
+reserved property names, and `ValidatingDeserializer` passes through types without `@schemaLocation`. Both
+`RedisCache.get` (sync and async) hand `Argument<CachedDecision>` to `valueSerializer.deserialize`.
+
 ### Step 4: A `decisions` cache entry in all 72 profile YAMLs
 - Every file in `git ls-files '*application-in-memory.yaml' '*application-redis.yaml'` gets the
   entry. That is 20 modules under `src/main/resources` (`all-in-one` included) and 16 under
