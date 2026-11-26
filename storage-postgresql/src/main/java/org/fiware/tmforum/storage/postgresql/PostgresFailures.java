@@ -26,6 +26,12 @@ final class PostgresFailures {
     static final Set<String> INVALID_CHARACTER_STATES = Set.of("22P05", "22021");
     // connection_exception, insufficient_resources, and 57P01-57P05 (shutdown, cannot connect now, ...)
     static final Set<String> UNAVAILABLE_STATE_PREFIXES = Set.of("08", "53", "57P0");
+    /**
+     * States of a statement the server gave up on rather than refused: 40001 serialization_failure and 40P01
+     * deadlock_detected, which the caller may retry, and 57014 query_canceled, which the statement_timeout raises.
+     * None of them says anything about the request, so they report as UNAVAILABLE, not as an internal error.
+     */
+    static final Set<String> UNAVAILABLE_STATES = Set.of("40001", "40P01", "57014");
 
     private PostgresFailures() {
     }
@@ -97,7 +103,8 @@ final class PostgresFailures {
                     }
                 } else {
                     // the driver also raises every server state it does not classify as a resource failure
-                    return UNAVAILABLE_STATE_PREFIXES.stream().anyMatch(sqlState::startsWith);
+                    return UNAVAILABLE_STATES.contains(sqlState)
+                            || UNAVAILABLE_STATE_PREFIXES.stream().anyMatch(sqlState::startsWith);
                 }
             }
         }

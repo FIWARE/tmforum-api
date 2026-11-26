@@ -39,6 +39,8 @@ class PostgresFailuresTest {
     private static final String INTERNAL_ERROR_STATE = "XX000";
     private static final String IN_FAILED_TRANSACTION_STATE = "25P02";
     private static final String QUERY_CANCELED_STATE = "57014";
+    private static final String SERIALIZATION_FAILURE_STATE = "40001";
+    private static final String DEADLOCK_DETECTED_STATE = "40P01";
 
     static Stream<Arguments> failures() {
         return Stream.of(
@@ -73,9 +75,16 @@ class PostgresFailuresTest {
                 Arguments.of(Named.of("unclassified state: in failed transaction",
                         new R2dbcNonTransientResourceException(DRIVER_MESSAGE, IN_FAILED_TRANSACTION_STATE)),
                         StorageErrorReason.UNKNOWN),
-                Arguments.of(Named.of("unclassified state: query canceled",
+                // the server gave up on the statement rather than refusing the request; the caller may retry
+                Arguments.of(Named.of("query canceled by the statement timeout",
                         new R2dbcNonTransientResourceException(DRIVER_MESSAGE, QUERY_CANCELED_STATE)),
-                        StorageErrorReason.UNKNOWN),
+                        StorageErrorReason.UNAVAILABLE),
+                Arguments.of(Named.of("serialization failure",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, SERIALIZATION_FAILURE_STATE)),
+                        StorageErrorReason.UNAVAILABLE),
+                Arguments.of(Named.of("deadlock detected",
+                        new R2dbcNonTransientResourceException(DRIVER_MESSAGE, DEADLOCK_DETECTED_STATE)),
+                        StorageErrorReason.UNAVAILABLE),
                 Arguments.of(Named.of("unique violation", new R2dbcDataIntegrityViolationException(DRIVER_MESSAGE,
                         PostgresFailures.UNIQUE_VIOLATION)), StorageErrorReason.CONFLICT),
                 Arguments.of(Named.of("NUL in jsonb",

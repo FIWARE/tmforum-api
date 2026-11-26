@@ -256,6 +256,37 @@ expected for each — 400 for `BAD_REQUEST`, 500 for not-found, conflict, 500 an
 
 ---
 
+### #7 — Database failures map to wrong statuses and text
+
+> With the database down, create and update end in `UNAVAILABLE`, which returns 502 with "Context broker is not
+> reachable." Read, list and delete end in `UNKNOWN` (500). `UNAVAILABLE_STATE_PREFIXES` is `08`, `53`, `57P0`, so
+> statement timeout (`57014`), serialization failure (`40001`) and deadlock (`40P01`) also return 500.
+
+**Agreed, fixed** in `Answer an unreachable storage with 503, whichever backend`. All three parts are done.
+
+**UNAVAILABLE is now 503 for every operation, with backend-neutral text.** `StorageExceptionHandler` checks the
+reason before the operation and answers `503 Service Unavailable` with "The storage backend is currently not
+available." A storage that gave no answer is the same failure whether it was a broker or a database, and the
+response now says so instead of naming the context broker — which was wrong text on PostgreSQL and the wrong status
+(502) everywhere, since nothing upstream sent a bad response.
+
+This changes the broker path too, deliberately: a broker outage on create/update was 502 and is now 503, and on
+read/list/delete it was 500 and is now 503. The NGSI-LD *subscription* calls do not go through the storage port and
+keep their old rendering; the characterization tests now hold the two apart explicitly
+(`failedBrokerReads`, `failedBrokerDeletes`, `rejectedBrokerWritesUncaught`).
+
+**`40001`, `40P01` and `57014` are transient.** A new `UNAVAILABLE_STATES` set carries them next to the existing
+prefix set. Serialization failure and deadlock are retryable by definition. `57014` (query_canceled) is what the
+`statement_timeout` from #1 raises, so this comment and that one meet here: the timeout now has a status, and it is
+503 rather than 400 — the server gave up on the statement, which says nothing about the request being invalid, and
+it was not previously covered by the `57P0` prefix.
+
+Tests: `PostgresFailuresTest` gained the three states (the `57014` case flipped from `UNKNOWN` to `UNAVAILABLE` and
+is renamed from "unclassified state" accordingly). `ErrorResponseCharacterizationTest` pins the 503 across create,
+update, read, list, delete and the related-entity writes, under both the append and the replace update.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -263,7 +294,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | # | Comment | Verdict |
 |---|---------|---------|
 | #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |
-| #7 | Database failures map to wrong statuses and text | Agreed. `UNAVAILABLE` → 503 for every operation with backend-neutral text; `40001`/`40P01` as transient; `57014` (now reachable, see #1) needs its own status. |
 | #8 | Outbox delivery and housekeeping (5 sub-points) | **8.3's index is fixed** (above). Still open: per-hub delivery state (8.1) and paging past 100 hubs (8.2), which are real but larger; terminal failures (8.4) and un-owned types (8.5), separate small fixes. |
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
 | #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |

@@ -91,8 +91,11 @@ class QueryParserModelTest {
 				// a regex is one opaque pattern, OR-ed patterns included
 				Arguments.of("color.regex=a,b", MyPojo.class,
 						filter(declared(REGEX, ValueType.STRING, List.of("a,b"), "color"))),
+				// two patterns on one attribute stay two comparisons: joined, the comma would be part of the pattern
 				Arguments.of("color.regex=x;color.regex=y", MyPojo.class,
-						filter(declared(REGEX, ValueType.STRING, List.of("x,y"), "color"))),
+						filter(new AnyOf(List.of(
+								declared(REGEX, ValueType.STRING, List.of("x"), "color"),
+								declared(REGEX, ValueType.STRING, List.of("y"), "color"))))),
 				// date-time fields
 				Arguments.of("createdAt.gt=2024-01-01T00:00:00Z", MyPojo.class,
 						filter(declared(GREATER_THAN, ValueType.DATE_TIME, List.of("2024-01-01T00:00:00Z"), "createdAt"))),
