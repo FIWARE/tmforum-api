@@ -1,0 +1,40 @@
+{
+  "policy": {
+    "@context": "http://www.w3.org/ns/odrl.jsonld",
+    "@type": "Policy",
+    "uid": "urn:uuid:7e4c2f1a-0b8d-4c3e-9f6a-1d2b3c4d5e6f",
+    "permission": [
+      {
+        "action": "read",
+        "target": "urn:ngsi-ld:ProductOffering:42"
+      }
+    ]
+  },
+  "jsonInput": {
+    "payload": {
+      "scope": "catalog",
+      "protocol": "tmf",
+      "action": "read",
+      "resource": {
+        "type": "ProductOffering",
+        "id": "urn:ngsi-ld:ProductOffering:42",
+        "catalog": "urn:ngsi-ld:Catalog:public",
+        "category": [ "urn:ngsi-ld:Category:compute" ],
+        "relatedParty": [ { "role": "provider", "did": "did:web:mp-operations.org" } ]
+      }
+    },
+    "subject": {
+      "identity": "did:web:fancy-marketplace.biz",
+      "claims": {
+        "vc": [
+          {
+            "@context": [ "https://www.w3.org/2018/credentials/v1" ],
+            "type": [ "VerifiableCredential", "MarketplaceCredential" ],
+            "issuer": "did:web:fancy-marketplace.biz",
+            "credentialSubject": { "id": "did:key:holder", "role": "operator" }
+          }
+        ]
+      }
+    }
+  }
+}
