@@ -13,8 +13,9 @@ import org.fiware.tmforum.storage.StorageException;
 
 /**
  * Renders a {@link StorageException} no call site mapped, keyed on (operation, reason), through the existing handlers:
- * DELETE: 404 for NOT_FOUND, otherwise 500 (deletion body). LIST: TmForum 500 with the stored message. READ: catch-all
- * 500. CREATE/UPDATE: TmForum 400 with the stored message for PARTIAL_UPDATE, otherwise 502.
+ * DELETE: 404 for NOT_FOUND, otherwise 500 (deletion body). LIST: TmForum 400 with the stored message for
+ * INVALID_DATA, otherwise 500. READ: catch-all 500. CREATE/UPDATE: TmForum 400 with the stored message for
+ * PARTIAL_UPDATE, otherwise 502.
  */
 @Produces
 @Singleton
@@ -35,8 +36,11 @@ public class StorageExceptionHandler implements ExceptionHandler<StorageExceptio
 					exception.reason() == StorageErrorReason.NOT_FOUND
 							? DeletionExceptionReason.NOT_FOUND
 							: DeletionExceptionReason.UNKNOWN));
-			case LIST -> tmForumExceptionHandler.handle(request,
-					new TmForumException(message, exception, TmForumExceptionReason.UNKNOWN));
+			// a filter the backend rejects is the client's error, not an internal one
+			case LIST -> tmForumExceptionHandler.handle(request, new TmForumException(message, exception,
+					exception.reason() == StorageErrorReason.INVALID_DATA
+							? TmForumExceptionReason.INVALID_DATA
+							: TmForumExceptionReason.UNKNOWN));
 			case READ -> catchAllExceptionHandler.handle(request, exception);
 			case CREATE, UPDATE -> exception.reason() == StorageErrorReason.PARTIAL_UPDATE
 					? tmForumExceptionHandler.handle(request,

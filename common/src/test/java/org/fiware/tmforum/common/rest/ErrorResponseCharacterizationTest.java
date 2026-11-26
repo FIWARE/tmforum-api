@@ -51,6 +51,7 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 	static final String DELETION_NOT_FOUND_MESSAGE = "The requested entity doesn't exist.";
 	static final String DELETION_UNKNOWN_MESSAGE = "An unexpected error happened.";
 	static final String LIST_MESSAGE = "An unexpected error happened - Was not able to list entities.";
+	static final String LIST_REJECTED_MESSAGE = "The request contained invalid data - Was not able to list entities.";
 	static final String CREATING = "creating";
 	static final String UPDATING = "updating";
 
@@ -137,6 +138,10 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 
 	static Expected listFailed() {
 		return new Expected(HttpStatus.INTERNAL_SERVER_ERROR, LIST_MESSAGE);
+	}
+
+	static Expected listRejected() {
+		return new Expected(HttpStatus.BAD_REQUEST, LIST_REJECTED_MESSAGE);
 	}
 
 	static Expected deletionNotFound() {
@@ -266,12 +271,25 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		assertResponse(expected, HttpRequest.DELETE(ENTITIES + "/" + newEntityId()));
 	}
 
-	@ParameterizedTest(name = "{0}")
-	@EnumSource(Failure.class)
-	void listFails(Failure failure) {
+	/**
+	 * A filter the renderer lets through and the broker rejects is the client's error, as on PostgreSQL; every
+	 * other broker failure stays an internal one.
+	 */
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("failedLists")
+	void listFails(Failure failure, Expected expected) {
 		broker.answer("queryEntities", args -> failure.mono());
 
-		assertResponse(listFailed(), HttpRequest.GET(ENTITIES));
+		assertResponse(expected, HttpRequest.GET(ENTITIES));
+	}
+
+	static Stream<Arguments> failedLists() {
+		return Stream.of(
+				Arguments.of(Failure.BAD_REQUEST, listRejected()),
+				Arguments.of(Failure.NOT_FOUND, listFailed()),
+				Arguments.of(Failure.CONFLICT, listFailed()),
+				Arguments.of(Failure.INTERNAL_SERVER_ERROR, listFailed()),
+				Arguments.of(Failure.NO_ANSWER, listFailed()));
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
@@ -326,12 +344,13 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		return Stream.of(Failure.values()).map(failure -> Arguments.of(failure, badGateway()));
 	}
 
-	@ParameterizedTest(name = "{0}")
-	@EnumSource(Failure.class)
-	void registerFailsOnTheDuplicateCheck(Failure failure) {
+	// the duplicate check filters on the callback the client sent, so a broker 400 on it is the client's error too
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("failedLists")
+	void registerFailsOnTheDuplicateCheck(Failure failure, Expected expected) {
 		broker.answer("queryEntities", args -> failure.mono());
 
-		assertResponse(listFailed(), HttpRequest.POST(HUB + "?callback=" + SUBSCRIBER, ""));
+		assertResponse(expected, HttpRequest.POST(HUB + "?callback=" + SUBSCRIBER, ""));
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")

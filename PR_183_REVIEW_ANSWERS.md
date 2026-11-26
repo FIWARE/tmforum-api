@@ -230,6 +230,32 @@ Tests: `testStringValueHoldingQuerySyntaxIsRejected` (a bare quote, the comment'
 
 ---
 
+### #11 — A broker 400 on list becomes a 500
+
+> `listFailure` maps any `HttpClientResponseException` to `UNKNOWN`. Writes map a 400 to `INVALID_DATA`, reads do
+> not. A `q` that the renderer lets through and the broker rejects (for example a multi-value `>`) returns 500
+> instead of 400.
+
+**Agreed, fixed** in `Report a filter the broker rejects as the client's error`.
+
+Two places had to change, because mapping the reason alone would not have shown:
+
+- `BrokerFailures.unknownOrUnavailable` now resolves an `HttpClientResponseException` through the same `reasonOf`
+  the write path uses, so a 400 becomes `INVALID_DATA`. It also maps 503 and 504 to `UNAVAILABLE`, which is what
+  those statuses mean and what the write path was already missing.
+- `StorageExceptionHandler` mapped **every** LIST failure to `TmForumExceptionReason.UNKNOWN` (500), so the reason
+  would have been discarded one layer later. LIST now renders `INVALID_DATA` as a 400 and everything else as before.
+
+The hub registration's duplicate check runs through the same list path, so its broker 400 is now a 400 as well. That
+is right rather than collateral: the query it runs filters on the callback the client sent, so a rejection of it is
+also the client's error.
+
+Tests: `ErrorResponseCharacterizationTest.listFails` is now parameterized over the broker's status with the response
+expected for each — 400 for `BAD_REQUEST`, 500 for not-found, conflict, 500 and no answer — and
+`registerFailsOnTheDuplicateCheck` uses the same table. Both run again under `ReplaceOnUpdateErrorResponseCharacterizationTest`.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -240,7 +266,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | #7 | Database failures map to wrong statuses and text | Agreed. `UNAVAILABLE` → 503 for every operation with backend-neutral text; `40001`/`40P01` as transient; `57014` (now reachable, see #1) needs its own status. |
 | #8 | Outbox delivery and housekeeping (5 sub-points) | **8.3's index is fixed** (above). Still open: per-hub delivery state (8.1) and paging past 100 hubs (8.2), which are real but larger; terminal failures (8.4) and un-owned types (8.5), separate small fixes. |
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
-| #11 | A broker 400 on list becomes a 500 | Agreed. `listFailure` should map a 400 to `INVALID_DATA` like the write path. |
 | #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |
 | #13 | EXTERNAL references now fail on a local id collision | Deliberate per the code comment; needs a unit test pinning the behaviour. |
 | #14 | `cleanup-subscriptions` is not all-or-nothing | Agreed. Skip the deletion and the drop when the report already holds an error after the read phase. |

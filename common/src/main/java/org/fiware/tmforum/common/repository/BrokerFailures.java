@@ -30,17 +30,27 @@ final class BrokerFailures {
 		return new StorageException(operation, StorageErrorReason.UNAVAILABLE, failure.getMessage(), failure);
 	}
 
-	/** UNAVAILABLE if the broker gave no answer, also for a nested storage failure, UNKNOWN otherwise. */
+	/**
+	 * Reason of a read failure: UNAVAILABLE if the broker gave no answer, also for a nested storage failure, the
+	 * status's own reason if it answered with one - a query the renderer let through and the broker rejected is the
+	 * client's error, as on PostgreSQL - and UNKNOWN otherwise.
+	 */
 	static StorageErrorReason unknownOrUnavailable(Throwable failure) {
-		boolean unavailable = failure instanceof StorageException storageException
-				? storageException.reason() == StorageErrorReason.UNAVAILABLE
-				: failure instanceof HttpClientException && !(failure instanceof HttpClientResponseException);
-		return unavailable ? StorageErrorReason.UNAVAILABLE : StorageErrorReason.UNKNOWN;
+		if (failure instanceof StorageException storageException) {
+			return storageException.reason() == StorageErrorReason.UNAVAILABLE
+					? StorageErrorReason.UNAVAILABLE
+					: StorageErrorReason.UNKNOWN;
+		}
+		if (failure instanceof HttpClientResponseException responseException) {
+			return reasonOf(responseException.getStatus());
+		}
+		return failure instanceof HttpClientException ? StorageErrorReason.UNAVAILABLE : StorageErrorReason.UNKNOWN;
 	}
 
 	private static StorageErrorReason reasonOf(HttpStatus status) {
 		return switch (status) {
 			case NOT_FOUND -> StorageErrorReason.NOT_FOUND;
+			case SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT -> StorageErrorReason.UNAVAILABLE;
 			case CONFLICT -> StorageErrorReason.CONFLICT;
 			case BAD_REQUEST -> StorageErrorReason.INVALID_DATA;
 			default -> StorageErrorReason.UNKNOWN;
