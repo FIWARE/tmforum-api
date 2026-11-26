@@ -67,7 +67,7 @@ public class CategoryApiController extends AbstractApiController<Category> imple
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteCategory(String id) {
-		return delete(id);
+		return delete(id, Category.TYPE_CATEGORY);
 	}
 
 	@Override

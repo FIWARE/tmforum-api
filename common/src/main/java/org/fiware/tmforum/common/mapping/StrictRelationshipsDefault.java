@@ -9,10 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Turns off the mapping library's strict relationship handling, unless an operator configured it explicitly.
- * The write path accepts references to entities this deployment does not hold, so the read path has to tolerate
- * their unresolvable targets ({@link TolerantEntityVOMapper}). The library default ({@code true}) would fail the
- * GET of an entity that was created successfully, also for a deployment that replaces the shipped
- * {@code application.yaml}.
+ * The write path accepts references to entities this deployment does not hold. The library default ({@code true})
+ * would fail the GET of an entity that was created successfully if a relationship resolved its target, also for a
+ * deployment that replaces the shipped {@code application.yaml}. References are read inline
+ * ({@link InlineReferencesEntitiesRepository}), so nothing resolves today.
  */
 @Slf4j
 @Singleton

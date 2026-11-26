@@ -7,7 +7,7 @@ FIWARE implementation of the TMForum APIs. Each TMForum API is a Micronaut servi
 - Language: Java 25 (`jdk.version`/`release.version` in the root `pom.xml`)
 - Build: Maven multi-module. The parent is `io.micronaut.platform:micronaut-parent` 5.2.3, and the same version is in the `micronaut.version` property.
 - Framework: Micronaut 5, Project Reactor (`Mono`/`Flux` everywhere), Jackson 3 (`tools.jackson.*`, annotations stay `com.fasterxml.jackson.annotation`) through `micronaut-jackson-databind` (no serde), `micronaut-validation`, Lombok, MapStruct.
-- NGSI-LD: `io.github.wistefan:ngsi-ld-java-mapping` (1.6.31). It ships `EntitiesApiClient`/`SubscriptionsApiClient` (`org.fiware.ngsi.api`, client id `ngsi`), `EntityVOMapper`, `JavaObjectMapper` and its own Jackson-3 beans (`CacheSerdeableObjectMapper`, `EscapeCleaningJsonFactory`).
+- NGSI-LD: `io.github.wistefan:ngsi-ld-java-mapping` (1.6.33). It ships `EntitiesApiClient`/`SubscriptionsApiClient` (`org.fiware.ngsi.api`, client id `ngsi`), `EntityVOMapper`, `JavaObjectMapper` and its own Jackson-3 beans (`CacheSerdeableObjectMapper`, `EscapeCleaningJsonFactory`).
 - Codegen: `openapi-generator-maven-plugin` 7.20.0 with the `io.kokuwa.micronaut:micronaut-openapi-codegen` 4.5.1 generator (`generatorName=micronaut`).
 - Test: JUnit 5, Mockito, Micronaut Test (`@MicronautTest`), K3S through `io.kokuwa.maven:k3s-maven-plugin`.
 - Images: jib (`oci` profile), base image `registry.access.redhat.com/ubi9/openjdk-25-runtime`.
@@ -24,8 +24,11 @@ common/                    shared base code (all modules depend on it)
   .../common/exception/    ExceptionHandler implementations
   .../common/health/       readiness/liveness indicators (@Client(id="ngsihealth"))
   .../common/mapping/      UnknownPreservingBase (VO base class), FieldCleaningSerializer and TmForumMappingModule (Jackson 3 modules)
+  .../common/querying/     QueryParser (TMForum filter -> storage-neutral EntityQuery), NgsiLdQueryRenderer (-> NGSI-LD q/orderBy), SubscriptionQueryResolver (in-memory hub filter)
   .../common/validation/   ReferenceValidationService (referential integrity on create/update), ReferencedEntity
   .../common/test/         AbstractApiIT, TestServerHostConfigurer, FirstMatchConfigContextBuilder (test helpers in main code)
+storage-api/               backend-neutral storage port (EntityRepository, EntityReadRepository, ReferenceReadRepository, StoredReference);
+                           src/test/.../contract/ holds abstract contract tests (AbstractEntityRepositoryContractTest, EntityFixture) that each adapter extends
 *-shared-models/           domain classes shared between API modules
 <api-module>/              21 API modules, e.g. product-catalog, party-catalog, customer-management
   src/main/java/.../Application.java   Micronaut.run + @Factory
@@ -33,6 +36,7 @@ common/                    shared base code (all modules depend on it)
 all-in-one/                one app containing all APIs (24 codegen executions)
 ui/                        read-only browser for all-in-one; Node server + static page, jib-only, no Java
 data-migrator/             update-writer, migrator (picocli, separate classloaders); legacy-loader (old mapping lib 1.2.11) is NOT in this build, it is built from the frozen tag in `legacy.loader.ref`
+                           postgresql-migrator (ticket 91): broker -> PostgreSQL import/backfill/verify CLI, depends on all-in-one, two ApplicationContexts (broker env + postgresql env)
 k3s/                       manifests for orion-ld, scorpio, minio, schema-provider used by ITs/dev
 .github/workflows/         CI (Java 25; check.yml still on 11)
 ```
@@ -68,5 +72,15 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - `common/pom.xml`: Micronaut, redis-lettuce, micrometer-prometheus, jackson deps (`tools.jackson.core:jackson-databind` plus `com.fasterxml.jackson.core:jackson-annotations`).
 - `*/src/main/resources/application*.yaml`: `micronaut.http.services.ngsi.*`, `micronaut.codec.json.additional-types`, `micronaut.caches.*`, `redis.caches.*.value-serializer`, `jackson.*`, `endpoints.*`.
 - `data-migrator/*/src/main/java/**/{UpdateWriter,LegacyLoader}.java`: build their own `ApplicationContext`.
-- `common/.../repository/{TmForumRepository,NgsiLdBaseRepository,BrokerBackedReferencesRepository}.java`: the concrete NGSI-LD storage, injected directly by every controller (ticket 86 puts a `storage-api` port in front of it).
+- `common/.../repository/{TmForumRepository,NgsiLdBaseRepository,BrokerBackedReferencesRepository}.java`: the concrete NGSI-LD storage, the NGSI-LD adapter behind the `storage-api` port; `product-catalog/.../storage/NgsiLdEntityRepositoryContractIT` runs the port contract against it.
+- `common/.../rest/AbstractApiController.java`: the only place TMForum events are fired (after `create`/`patch`, fire-and-forget through `TMForumEventHandler`).
+- `common/.../test/AbstractApiIT.java`: per-test cleanup goes through the broker's `EntitiesApiClient`; every API IT passes one to its constructor.
+- `common/.../test/{StorageTags,RequiresQueryTranslation,RequiresHubSupport,BrokerOnly}.java` gate ITs per backend (`-Dbroker=postgresql` excludes `not-on-postgresql`).
+- Two notification paths: TMForum (`TMForumEventHandler`, both backends; on PostgreSQL fed by the outbox) and NGSI-LD (`NgsiLdEventHandler`, `SubscriptionRepository`, `POST /callback` on `AbstractSubscriptionApiController`, broker-only). Broker-only beans carry `@Requires(notEnv = CommonConstants.POSTGRESQL_ENVIRONMENT)`.
+- `findEntities` with a `query` is called outside list endpoints by `TMForumEventHandler.getSubscriptions` and `AbstractSubscriptionApiController` (duplicate hub check).
+- `storage-postgresql/src/main/resources/db/migration/tmforum/V1__entity.sql`: `tmforum.entity` with the versioning columns (`version`, `revision`, `is_current`, PK `(id, version)`, `entity_current_idx`); ticket 93 fills `version` and checks `*Ref` versions in `ReferenceValidationService`, but superseded versions are never kept (`revision` 1, `is_current` true).
+- `PostgresEntityRepository.importDomainEntity(entity, createdAt, updatedAt)`: migration insert, keeps broker timestamps, writes no outbox row. `VersionedEntity.VERSIONED_TYPES` lists 25 stored types (18 classes plus subclasses).
+- Relationship setters that resolved on read before ticket 88 (83, `fromProperties = false`): `git grep "@AttributeSetter.*RELATIONSHIP" 9570e548`.
+- Storage backend selection: the Micronaut env (`postgresql`, `orion-ld`, `scorpio`). With no backend env, `TmForumApplication.run` adds `postgresql`, so the broker beans gated `notEnv = postgresql` are NOT active and the app starts on the configured PostgreSQL database; `StorageBackendValidator` logs a WARN naming the defaulted backend, and aborts the start when broker settings are configured next to it. A broker deployment must name `orion-ld` or `scorpio` in `MICRONAUT_ENVIRONMENTS`. `conformance-test/api.yaml` names `orion-ld` in `MICRONAUT_ENVIRONMENTS`.
+- `release-notes/RELEASE_NOTES_*.md`: one file per feature/ticket; README `## Release notes` links only some of them.
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.

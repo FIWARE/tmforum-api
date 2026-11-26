@@ -58,7 +58,7 @@ public class BillPresentationMediaApiController extends AbstractApiController<Bi
 
     @Override
     public Mono<HttpResponse<Object>> deleteBillPresentationMedia(String id) {
-        return delete(id);
+        return delete(id, BillPresentationMedia.TYPE_BILLPM);
     }
 
     @Override

@@ -58,7 +58,7 @@ public class ProductOrderingApiController extends AbstractApiController<ProductO
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteProductOrder(@NonNull String id) {
-		return delete(id);
+		return delete(id, ProductOrder.TYPE_PRODUCT_ORDER);
 	}
 
 	@Override

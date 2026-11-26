@@ -63,7 +63,7 @@ public class PartyAccountApiController extends AbstractApiController<PartyAccoun
 
     @Override
     public Mono<HttpResponse<Object>> deletePartyAccount(String id) {
-        return delete(id);
+        return delete(id, PartyAccount.TYPE_PARTYAC);
     }
 
     @Override

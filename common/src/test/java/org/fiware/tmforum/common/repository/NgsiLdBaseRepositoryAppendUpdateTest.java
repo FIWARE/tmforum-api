@@ -12,6 +12,7 @@ import org.fiware.ngsi.model.PropertyVO;
 import org.fiware.ngsi.model.RelationshipListVO;
 import org.fiware.ngsi.model.RelationshipVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,13 +50,13 @@ class NgsiLdBaseRepositoryAppendUpdateTest {
 
 	@BeforeEach
 	public void setUp() {
-		GeneralProperties properties = new GeneralProperties();
+		NgsiLdBrokerProperties properties = new NgsiLdBrokerProperties();
 		properties.setReplaceOnUpdate(false);
 		entitiesApi = mock(EntitiesApiClient.class);
 		javaObjectMapper = mock(JavaObjectMapper.class);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new NgsiLdEntityRepository(properties, entitiesApi, null, null, ngsiMapper, javaObjectMapper);
+		repository = new NgsiLdEntityRepository(new GeneralProperties(), properties, entitiesApi, null, ngsiMapper, javaObjectMapper, null);
 		when(entitiesApi.updateEntity(any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.noContent()));
 	}

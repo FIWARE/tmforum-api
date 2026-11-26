@@ -23,8 +23,8 @@ public class FinancialAccountRef extends RefEntity {
         super(id);
     }
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "accountBalance")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "accountBalance")}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "accountBalance", embedProperty = true)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "accountBalance", fromProperties = true, targetClass = AccountBalance.class)}))
     private AccountBalance accountBalance;
 
     @Override

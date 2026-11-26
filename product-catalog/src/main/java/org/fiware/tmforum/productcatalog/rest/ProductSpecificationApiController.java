@@ -97,7 +97,7 @@ public class ProductSpecificationApiController extends AbstractProductCatalogApi
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteProductSpecification(String id) {
-		return delete(id);
+		return delete(id, ProductSpecification.TYPE_PRODUCT_SPECIFICATION);
 	}
 
 	@Override

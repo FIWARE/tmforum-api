@@ -48,7 +48,7 @@ class ReplaceOnUpdateErrorResponseCharacterizationTest extends ErrorResponseChar
 		return Stream.of(PATCH_PATH, DIRECT_PATH).flatMap(path -> Stream.of(
 				Arguments.of(path, Failure.NOT_FOUND, caInternal()),
 				Arguments.of(path, Failure.INTERNAL_SERVER_ERROR, caInternal()),
-				Arguments.of(path, Failure.NO_ANSWER, badGateway())));
+				Arguments.of(path, Failure.NO_ANSWER, unavailable())));
 	}
 
 	@ParameterizedTest(name = "{0} {1} -> {2}")

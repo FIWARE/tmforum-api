@@ -109,7 +109,7 @@ public class ProductOfferingPriceApiController extends AbstractProductCatalogApi
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteProductOfferingPrice(String id) {
-		return delete(id);
+		return delete(id, ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE);
 	}
 
 	@Override

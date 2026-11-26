@@ -48,7 +48,7 @@ public class Customer extends EntityWithId {
     private List<AccountRef> account;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", embedProperty = true)}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "agreement", targetClass = AgreementRef.class, fromProperties = true)}))
     private List<AgreementRef> agreement;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristics")}))
@@ -64,7 +64,7 @@ public class Customer extends EntityWithId {
     private List<CreditProfile> creditProfile;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "engagedParty")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "engagedParty", targetClass = RelatedParty.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "engagedParty", targetClass = RelatedParty.class, fromProperties = true)}))
     private RelatedParty engagedParty;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "paymentMethod", embedProperty = true)}))

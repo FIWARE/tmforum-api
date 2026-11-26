@@ -1,5 +1,10 @@
 package org.fiware.tmforum.storage;
 
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
+import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -16,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 class EntityReadRepositoryTest {
 
-    private static final String QUERY = "name==\"test\"";
+    private static final EntityQuery QUERY = new EntityQuery(String.class, new QueryFilter.Comparison(
+            new AttributePath(List.of("name"), true), ComparisonOperator.EQUALS, ValueType.STRING, List.of("test")),
+            List.of());
     private static final String ENTITY_TYPE = "product-offering";
 
     static Stream<Arguments> typedQueries() {
@@ -28,8 +35,8 @@ class EntityReadRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("typedQueries")
-    void typedFindEntitiesDelegatesWithoutIdsAndOrder(Integer offset, Integer limit, String entityType,
-                                                      String query) {
+    void typedFindEntitiesDelegatesWithoutIds(Integer offset, Integer limit, String entityType,
+                                                      EntityQuery query) {
         RecordingRepository repository = new RecordingRepository();
 
         repository.findEntities(offset, limit, entityType, String.class, query).block();
@@ -40,7 +47,6 @@ class EntityReadRepositoryTest {
         assertEquals(query, repository.query);
         assertNull(repository.ids);
         assertEquals(entityType, repository.types);
-        assertNull(repository.orderBy);
     }
 
     /** Captures the arguments of the abstract {@code findEntities}. */
@@ -48,10 +54,9 @@ class EntityReadRepositoryTest {
         private Integer offset;
         private Integer limit;
         private Class<?> entityClass;
-        private String query;
+        private EntityQuery query;
         private String ids;
         private String types;
-        private String orderBy;
 
         @Override
         public <T> Mono<T> get(URI id, Class<T> entityClass) {
@@ -60,20 +65,19 @@ class EntityReadRepositoryTest {
 
         @Override
         public <T> Mono<PagedResult<T>> findEntities(Integer offset, Integer limit, Class<T> entityClass,
-                                                     String query, String ids, String types, String orderBy) {
+                                                     EntityQuery query, String ids, String types) {
             this.offset = offset;
             this.limit = limit;
             this.entityClass = entityClass;
             this.query = query;
             this.ids = ids;
             this.types = types;
-            this.orderBy = orderBy;
             return Mono.just(new PagedResult<>(List.of(), offset, limit, null));
         }
 
         @Override
         public <T> Mono<PagedResult<T>> findEntitiesPolymorphic(Integer offset, Integer limit, String types,
-                                                                String query, String ids, String orderBy,
+                                                                EntityQuery query, String ids,
                                                                 Function<String, Class<? extends T>> typeToClass) {
             return Mono.empty();
         }

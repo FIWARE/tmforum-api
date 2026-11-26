@@ -63,7 +63,7 @@ public class SettlementAccountApiController extends AbstractApiController<Settle
 
     @Override
     public Mono<HttpResponse<Object>> deleteSettlementAccount(String id) {
-        return delete(id);
+        return delete(id, SettlementAccount.TYPE_SETTLEMENTAC);
     }
 
     @Override

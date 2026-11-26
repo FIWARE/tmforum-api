@@ -30,7 +30,7 @@ public class ProductSpecificationRef extends RefEntity {
     @Getter(onMethod = @__({
             @AttributeGetter(value = AttributeType.PROPERTY, targetName = "targetProductSchema", embedProperty = true)}))
     @Setter(onMethod = @__({
-            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetProductSchema", fromProperties = true)}))
+            @AttributeSetter(value = AttributeType.PROPERTY, targetName = "targetProductSchema", fromProperties = true, targetClass = TargetProductSchema.class)}))
     private TargetProductSchema targetProductSchema;
 
     public ProductSpecificationRef(@JsonProperty("id") String id) {
@@ -41,5 +41,11 @@ public class ProductSpecificationRef extends RefEntity {
     @JsonIgnore
     public List<String> getReferencedTypes() {
         return new ArrayList<>(List.of(TYPE_PRODUCT_SPECIFICATION));
+    }
+
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
     }
 }

@@ -1,6 +1,7 @@
 package org.fiware.tmforum.resource;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ResourceCandidate.TYPE_RESOURCE_CANDIDATE)
-public class ResourceCandidate extends EntityWithId {
+public class ResourceCandidate extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_RESOURCE_CANDIDATE = "resource-candidate";
 
@@ -45,11 +46,11 @@ public class ResourceCandidate extends EntityWithId {
     private String version;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", targetClass = ResourceCategoryRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", fromProperties = true, targetClass = ResourceCategoryRef.class)}))
     private List<ResourceCategoryRef> category;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification", targetClass = ResourceSpecificationRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceSpecification", fromProperties = true, targetClass = ResourceSpecificationRef.class)}))
     private ResourceSpecificationRef resourceSpecification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor")}))

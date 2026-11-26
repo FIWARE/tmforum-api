@@ -1,6 +1,8 @@
+# Broker storage backend (Scorpio); the general.* keys here are broker-only, see README "Storage backends".
 general:
   ngsildOrQueryValue: ","
-  ngsildOrQueryKey: ","
-  encloseQuery: false
+  ngsildOrQueryKey: "|"
+  encloseQuery: true
+  includeAttributeInList: true
   replaceOnUpdate: true
   countHeader: NGSILD-Results-Count

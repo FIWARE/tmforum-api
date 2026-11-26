@@ -1,0 +1,175 @@
+# storage-postgresql
+
+PostgreSQL (18) adapter of the `storage-api` port. Its beans are active only in the Micronaut environment
+`postgresql` (`PostgresStorage.ENVIRONMENT`), which applications get by default when no backend is named, see
+[Storage backends](../README.md#storage-backends). The data path
+uses R2DBC. Flyway migrates the schema over JDBC at startup, and nothing else uses that JDBC connection.
+
+## Schema
+
+Flyway owns the schema `tmforum`: it creates it and keeps its history table (`tmforum.flyway_schema_history`)
+there. The migrations are in `src/main/resources/db/migration/tmforum`.
+
+`tmforum.entity` holds one row per entity. `data` is the domain object as JSON. `version` holds the TMForum
+`version` label of a `VersionedEntity` type (`''` when unset, and always `''` for any other type). A `PATCH` updates it
+in place, in the same row. Rows written before entity versioning are backfilled by
+`V3__entity_version_backfill.sql`. `revision` is always `1` and `is_current` always `true`. The partial unique index
+`entity_current_idx` allows only one current row per `id`.
+
+The table is ready for versioning: keeping superseded versions (a new row per version, `is_current` moved, `revision`
+monotonic per `id`) is a future, PostgreSQL-only extension that needs no migration.
+
+| Column       | Type          | Default |
+|--------------|---------------|---------|
+| `id`         | `text`        |         |
+| `version`    | `text`        | `''`    |
+| `revision`   | `bigint`      | `1`     |
+| `is_current` | `boolean`     | `true`  |
+| `type`       | `text`        |         |
+| `data`       | `jsonb`       |         |
+| `created_at` | `timestamptz` | `now()` |
+| `updated_at` | `timestamptz` | `now()` |
+
+All columns are `NOT NULL`. The primary key is `(id, version)`.
+
+An update is one statement, `data = (data || patch) - <keys of the emptied lists>`. The patch holds only the
+attributes the entity carries (never `id` or `type`), and each one replaces its stored top-level value, so a carried
+list replaces the stored list. For declared properties, an emptied list removes the attribute, and a create or
+update writes no top-level empty object (a create no empty list either), like the NGSI-LD adapter, which creates no
+attribute for them. Extension properties are written as sent, empty values included. Nothing
+is read first, so two concurrent updates of the same attribute cannot
+interleave: the last one wins whole.
+
+A list is one `SELECT ... WHERE is_current AND type = ANY(...)` with the TMForum filter rendered by
+`JsonbQueryRenderer`: each comparison is an `EXISTS` over the values a jsonpath selects, with every literal bound
+as a parameter, and `ORDER BY` the sort keys, then `created_at, id`. The partial index
+`entity_current_type_created_idx (type, created_at, id) WHERE is_current` (V4) carries that filter and the default
+order; a filter on `data` has no index of its own yet, so it is evaluated on the rows the index found. The page
+size a list endpoint serves is bounded by `CommonConstants.MAX_LIMIT`, so one request can never read and map every
+stored row.
+
+## Configuration
+
+Put this block in the `application-postgresql.yaml` of the API module. Both datasources must point at the same
+database. The `r2dbc:pool:` URL puts an `r2dbc-pool` connection pool in front of the driver. Without it, every
+statement opens its own connection. Every module (main and test) keeps its own copy on purpose: Micronaut 5 fails on
+duplicate configuration resources, so a shared `application-postgresql.yaml` in this jar would clash with the
+module's own file.
+
+micronaut-r2dbc turns the kebab-case `options` keys into r2dbc-pool's camelCase options (`initial-size` becomes
+`initialSize`). r2dbc-pool reads durations with `Duration.parse`, so they must be ISO-8601 (`PT10S`, not `10s`).
+r2dbc-pool has no acquire or create timeout by default, so both are bounded here: when every connection is busy or
+the database cannot be reached, a request fails after `max-acquire-time` with UNAVAILABLE (503) instead of hanging.
+
+The nested `options` key is the driver's own `options` option: its `name=value` pairs are sent as PostgreSQL
+startup parameters, so every session of the pool carries a `statement_timeout`. A filter, sort or regex that would
+otherwise run on unbounded is cancelled by the server, and its connection goes back to the pool:
+
+```yaml
+r2dbc:
+  datasources:
+    default:
+      url: r2dbc:pool:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
+      username: ${POSTGRES_USER:tmforum}
+      password: ${POSTGRES_PASSWORD:tmforum}
+      options:
+        initial-size: ${POSTGRES_POOL_INITIAL_SIZE:2}
+        max-size: ${POSTGRES_POOL_MAX_SIZE:10}
+        max-acquire-time: ${POSTGRES_POOL_MAX_ACQUIRE_TIME:PT10S}
+        max-create-connection-time: ${POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME:PT10S}
+        options: statement_timeout=${POSTGRES_STATEMENT_TIMEOUT:30000}
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
+      user: ${POSTGRES_USER:tmforum}
+      password: ${POSTGRES_PASSWORD:tmforum}
+      schemas: tmforum
+      create-schemas: true
+      locations: classpath:db/migration/tmforum
+
+endpoints:
+  health:
+    # the postgresql readiness indicator covers the database
+    r2dbc:
+      enabled: false
+```
+
+| Environment variable                       | Default     |
+|--------------------------------------------|-------------|
+| `POSTGRES_HOST`                            | `localhost` |
+| `POSTGRES_PORT`                            | `5432`      |
+| `POSTGRES_DB`                              | `tmforum`   |
+| `POSTGRES_USER`                            | `tmforum`   |
+| `POSTGRES_PASSWORD`                        | `tmforum`   |
+| `POSTGRES_POOL_INITIAL_SIZE`               | `2`         |
+| `POSTGRES_POOL_MAX_SIZE`                   | `10`        |
+| `POSTGRES_POOL_MAX_ACQUIRE_TIME`           | `PT10S`     |
+| `POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME` | `PT10S`     |
+| `POSTGRES_STATEMENT_TIMEOUT` (milliseconds)| `30000`     |
+
+The modules leave the following properties at their code defaults (`OutboxProperties`, `PostgresReadinessIndicator`);
+set them only to deviate:
+
+| Property                                | Default | Meaning                                                    |
+|-----------------------------------------|---------|------------------------------------------------------------|
+| `tmforum.outbox.enabled`                | `true`  | runs the `OutboxDispatcher` (the test configs turn it off) |
+| `tmforum.outbox.poll-interval`          | `1s`    | delay between two dispatch rounds, base of the backoff     |
+| `tmforum.outbox.batch-size`             | `20`    | rows claimed per round                                     |
+| `tmforum.outbox.lease`                  | `10m`   | how long a claimed row stays invisible to other instances  |
+| `tmforum.outbox.max-backoff`            | `1h`    | upper bound of the retry delay                             |
+| `tmforum.outbox.retention`              | `7d`    | age after which an undelivered row is discarded            |
+| `tmforum.outbox.housekeeping-interval`  | `1m`    | delay between two retention and metrics runs               |
+
+A row is dropped before the retention when no retry could deliver it — its type has no event mapping, or its stored
+document does not read back as that type. Both change only with a deployment, so retrying would just hold the row
+until the retention. `tmforum.outbox.discarded` counts both cases, tagged `reason=undeliverable` for these and
+`reason=expired` for the retention sweep.
+| `endpoints.health.postgresql.timeout`   | `5s`    | time bound of the readiness `SELECT 1`                     |
+
+## Divergences from the broker backends
+
+A query is parsed once into the backend-neutral model, so both backends receive the same comparisons. What they do
+with a `.regex` pattern still differs, because each runs it through its own engine and NGSI-LD's `q` is not a regex
+language:
+
+| Filter | Broker (Orion-LD 1.9.0, Scorpio 5.0.3) | PostgreSQL |
+|--------|----------------------------------------|------------|
+| `.regex` holding one of <code>&#124;,;()"'<>!</code> | 400: `NgsiLdQueryRenderer` rejects it, since `q` reads each one as syntax, quoted or not — `a&#124;b` becomes "matches a, or attribute b exists" | matched as a POSIX regex |
+| `.regex` anchored with `^` or `$` | matches nothing on Scorpio 5.0.3 | matched |
+| a string value holding `"` or `\` | 400: `q` has no escape either broker honours inside a quoted value | bound as a parameter, matched |
+| an unbounded `.regex` | run by the broker | cancelled by `statement_timeout` if it outlives it |
+
+A `DATE_TIME` filter or sort compares the stored strings on this backend, not the instants they denote, so
+`2024-01-01T10:00:00.500Z` orders below `2024-01-01T10:00:00Z` and a value carrying an offset does not compare equal
+to the same instant in UTC. Entities this API writes carry `Instant.toString()`, which is canonical UTC, so only a
+fractional second tells the two orders apart; data written by another writer can use any ISO form. Comparing as
+instants would mean casting the stored string to `timestamptz`, which needs a zone for the forms that carry none
+(`2024-01-01T10:00:00`, `2024-01-01`) and which the query model accepts today.
+
+Rejecting those patterns on PostgreSQL too would make this backend refuse perfectly good POSIX regexes only because
+another backend cannot express them, which is a loss of function rather than a gain in portability. They are
+therefore left to work here and recorded as deviations instead: `storage-api`'s `KnownDeviation` names each one, and
+the contract test cases that hit them are tagged with it, so the contract states per backend what is expected.
+
+The not-equals idiom `^(?!X$).*$` is **not** on this list: `QueryParser` normalizes it into a `NOT_EQUALS`
+comparison when X is a literal, so both backends compare rather than run a pattern. With a metacharacter in X it is
+a genuine pattern and falls under the first row.
+
+## Tests
+
+Every IT run provisions PostgreSQL in the k3s test cluster (`k3s/postgresql-db`, port 5432, database, user and
+password `tmforum`), next to the broker. `-Dbroker=postgresql` starts no broker, only Redis (`k3s/postgresql`).
+
+```bash
+mvn verify -pl storage-postgresql                       # SchemaMigrationIT, PostgresEntityRepositoryIT, ...
+mvn verify -pl product-catalog -Dit.test=PostgresEntityRepositoryContractIT   # port contract on PostgreSQL
+mvn verify -pl product-catalog -Dbroker=postgresql      # the module's full IT suite on PostgreSQL
+```
+
+With `-Dbroker=postgresql`, failsafe excludes the tag `not-on-postgresql` (`StorageTags` in `common`):
+`@BrokerOnly`. The broker jobs exclude `@PostgresqlOnly` ITs the same way, so a `@PostgresqlOnly` IT picked with
+`-Dit.test` (e.g. `GetIssuesOneQueryIT` or the `*PostgresOutboxIT`s) also needs `-Dbroker=postgresql`; without it
+failsafe finds no test to run and fails.

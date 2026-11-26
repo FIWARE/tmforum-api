@@ -70,7 +70,7 @@ public class CatalogApiController extends AbstractApiController<Catalog> impleme
 
     @Override
     public Mono<HttpResponse<Object>> deleteCatalog(String id) {
-        return delete(id);
+        return delete(id, Catalog.TYPE_CATALOG);
     }
 
     @Override

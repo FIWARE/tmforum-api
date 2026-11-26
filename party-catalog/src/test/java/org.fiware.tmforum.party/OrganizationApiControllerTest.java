@@ -16,6 +16,7 @@ import org.fiware.tmforum.common.test.FirstMatchConfigContextBuilder;
 import org.fiware.tmforum.party.domain.organization.Organization;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -24,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -44,6 +47,21 @@ class OrganizationApiControllerTest {
 	@MockBean(EntitiesApiClient.class)
 	EntitiesApiClient entitiesApiClient() {
 		return mock(EntitiesApiClient.class);
+	}
+
+	/**
+	 * The organization delete used to hand-roll its id check and accepted any NGSI-LD id, so it deleted another
+	 * endpoint's entity and answered 204 while GET and PATCH on the same URL answered 404.
+	 */
+	@ParameterizedTest
+	@ValueSource(strings = {"urn:ngsi-ld:category:1", "urn:ngsi-ld:individual:1", "not-an-id"})
+	void deleteOfAnIdOfAnotherTypeIsNotFound(String id) {
+		HttpClientResponseException exception = assertThrows(HttpClientResponseException.class,
+				() -> httpClient.toBlocking().exchange(HttpRequest.DELETE(ORGANIZATION_PATH + id),
+						Argument.of(String.class), Argument.of(ErrorDetails.class)));
+
+		assertEquals(HttpStatus.NOT_FOUND, exception.getStatus(), "Unexpected status.");
+		verify(entitiesApiClient, never()).removeEntityById(any(), any(), any());
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")

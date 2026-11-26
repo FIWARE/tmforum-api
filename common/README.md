@@ -93,8 +93,9 @@ an entity with an unresolvable relationship target. With the flag `false`:
   relationship keeps the sub-properties stored on it (e.g. `name`), list entries do not.
 - any other broker error fails the GET, so real outages are not hidden.
 
-Fetched relationship target classes therefore need a `String` constructor, which `RelationshipTargetConstructorTest`
-(in `all-in-one`) enforces. `RelationshipTargetSerializationTest` next to it keeps that constructor from changing how
-the classes are (de)serialized, e.g. in the redis cache, by being picked up as a Jackson delegating creator. Until ticket 5 stores the reference payload inline (`fromProperties = true`), the `href`,
-`name` and `@referredType` of an external reference do not round-trip on fetched relationships.
-Relationships with `fromProperties = true` (e.g. `Catalog.category`) round-trip fully.
+Since ticket 88 every relationship setter is `fromProperties = true` (`RelationshipsReadFromPropertiesTest` in
+`all-in-one`), so no target is fetched on read and the handling above is no longer reached. A reference reads back
+exactly as written, with the fields the client sent. The mapper builds each target class through its `String`
+constructor, which `RelationshipTargetConstructorTest` enforces. `RelationshipTargetSerializationTest` next to it keeps
+that constructor from changing how the classes are (de)serialized, e.g. in the redis cache, by being picked up as a
+Jackson delegating creator.

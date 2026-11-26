@@ -16,13 +16,13 @@ import java.util.List;
 @EqualsAndHashCode
 public class EndpointRef extends RefEntity {
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "isRoot")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "isRoot")}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "isRoot", embedProperty = true)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "isRoot", fromProperties = true)}))
     private Boolean isRoot;
 
 
-    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "connectionPoint")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "connectionPoint", targetClass = ConnectionPointRef.class)}))
+    @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "connectionPoint", embedProperty = true)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.PROPERTY, targetName = "connectionPoint", fromProperties = true, targetClass = ConnectionPointRef.class)}))
     private ConnectionPointRef connectionPoint;
 
     public EndpointRef(@JsonProperty("id") String id) {

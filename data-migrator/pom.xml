@@ -16,6 +16,7 @@
     <modules>
         <module>update-writer</module>
         <module>migrator</module>
+        <module>postgresql-migrator</module>
     </modules>
     <dependencies>
         <dependency>

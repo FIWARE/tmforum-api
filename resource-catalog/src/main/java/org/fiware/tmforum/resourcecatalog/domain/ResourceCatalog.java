@@ -1,6 +1,7 @@
 package org.fiware.tmforum.resourcecatalog.domain;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ResourceCatalog.TYPE_RESOURCE_CATALOG)
-public class ResourceCatalog extends EntityWithId {
+public class ResourceCatalog extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_RESOURCE_CATALOG = "resource-catalog";
 
@@ -47,7 +48,7 @@ public class ResourceCatalog extends EntityWithId {
     private String version;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", targetClass = ResourceCategoryRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", fromProperties = true, targetClass = ResourceCategoryRef.class)}))
     private List<ResourceCategoryRef> category;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty")}))

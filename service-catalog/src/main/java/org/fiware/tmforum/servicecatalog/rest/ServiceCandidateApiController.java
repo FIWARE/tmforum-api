@@ -75,7 +75,7 @@ public class ServiceCandidateApiController extends AbstractApiController<Service
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteServiceCandidate(@NonNull String id) {
-		return delete(id);
+		return delete(id, ServiceCandidate.TYPE_SERVICE_CANDIDATE);
 	}
 
 	@Override

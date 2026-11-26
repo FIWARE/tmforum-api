@@ -36,4 +36,9 @@ public class ServiceSpecificationRef extends RefEntity {
         return new ArrayList<>(List.of(ServiceSpecification.TYPE_SERVICE_SPECIFICATION));
     }
 
+    @Override
+    @JsonIgnore
+    public String getReferenceVersion() {
+        return getVersion();
+    }
 }

@@ -1,6 +1,7 @@
 package org.fiware.tmforum.usagemanagement.domain;
 
 import java.net.URI;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import java.time.Instant;
 import java.util.List;
 
@@ -23,7 +24,7 @@ import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = UsageSpecification.TYPE_USP)
-public class UsageSpecification extends EntityWithId {
+public class UsageSpecification extends EntityWithId implements VersionedEntity {
 	public static final String TYPE_USP = "usageSpecification";
 
 	public UsageSpecification(String id) {
@@ -63,11 +64,11 @@ public class UsageSpecification extends EntityWithId {
 	private List<AttachmentRefOrValue> attachment;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", targetClass = ConstraintRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", targetClass = ConstraintRef.class, fromProperties = true)}))
 	private List<ConstraintRef> constraint;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class, fromProperties = true)}))
 	private List<EntitySpecificationRelationship> entitySpecRelationship;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty")}))

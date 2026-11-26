@@ -32,6 +32,7 @@
     <modules>
         <module>storage-api</module>
         <module>common</module>
+        <module>storage-postgresql</module>
         <module>customer-shared-models</module>
         <module>resource-shared-models</module>
         <module>product-shared-models</module>
@@ -72,8 +73,8 @@
         <!-- project info -->
         <project.author.name>Stefan Wiedemann</project.author.name>
         <project.author.email>stefan.wiedemann@fiware.org</project.author.email>
-        <project.description>Implementation of the TMForum APIs, backed by NGSI-LD</project.description>
-        <project.summary>NGSI-LD backed TMForum.</project.summary>
+        <project.description>Implementation of the TMForum APIs, backed by PostgreSQL or an NGSI-LD context broker</project.description>
+        <project.summary>TMForum APIs on PostgreSQL or NGSI-LD.</project.summary>
         <project.url>https://github.com/wistefan/tmforum-poc</project.url>
         <project.license.name>Apache License, Version 2.0</project.license.name>
         <project.license.identifier>Apache-2.0</project.license.identifier>
@@ -99,7 +100,7 @@
         <version.io.kokuwa.micronaut.codegen>4.5.1</version.io.kokuwa.micronaut.codegen>
 
         <!-- mapping -->
-        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.31</version.io.github.wistefan.ngsi-ld-mapping-java>
+        <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.33</version.io.github.wistefan.ngsi-ld-mapping-java>
 
 
 
@@ -125,12 +126,15 @@
         </version.org.apache.maven.plugins.maven-javadoc-plugin>
         <version.com.google.code.findbugs.annotations>3.0.1u2</version.com.google.code.findbugs.annotations>
         <version.io.minio.minio>8.5.7</version.io.minio.minio>
+        <version.io.r2dbc.r2dbc-proxy>1.1.7.RELEASE</version.io.r2dbc.r2dbc-proxy>
         <coveralls.token>myToken</coveralls.token>
         <jacoco.reportFolder>${project.parent.build.directory}/jacoco/${project.artifactId}</jacoco.reportFolder>
         <jacoco.utReportFile>${jacoco.reportFolder}/test.exec</jacoco.utReportFile>
         <jacoco.mergeDir>${project.parent.basedir}/</jacoco.mergeDir>
+        <!-- test-cluster manifests; a module nested deeper than one level overrides it, like postgresql-migrator -->
+        <k3s.manifests.dir>${project.parent.basedir}/k3s</k3s.manifests.dir>
         <spotbugs.reportFolder>${project.build.directory}/site/spotbugs</spotbugs.reportFolder>
-        <!-- broker to be used for testing, could be scorpio or orion-ld -->
+        <!-- storage under test: orion-ld or scorpio (NGSI-LD broker), or postgresql (k3s/postgresql-db, no broker) -->
         <broker>orion-ld</broker>
         <!-- caching to be used for testing, could be in-memory or redis -->
         <cache>in-memory</cache>
@@ -549,6 +553,9 @@
                         <!-- this is very important to avoid classpath conflicts between the micronaut-test-context and the beans present inside the shaded-jar -->
                         <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                         <failIfNoTests>true</failIfNoTests>
+                        <!-- skips the ITs the storage under test cannot run yet, see common's StorageTags; a profile
+                             activated by the broker property would deactivate the activeByDefault integration-test profile -->
+                        <excludedGroups>not-on-${broker}</excludedGroups>
                         <!-- the test cluster runs Scorpio 5.0.3 (k3s/scorpio), which does not create attributes with
                              PATCH /attrs, so replaceOnUpdate has to stay disabled despite application-scorpio.yaml -->
                         <argLine>${failsafe.jacoco.args} --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens
@@ -615,13 +622,14 @@
                                     </goals>
                                     <configuration>
                                         <failIfExists>false</failIfExists>
-                                        <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
+                                        <manifests>${k3s.manifests.dir}/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
                                             <portBinding>3000:3000</portBinding>
                                             <portBinding>9000:9000</portBinding>
                                             <portBinding>9001:9001</portBinding>
+                                            <portBinding>5432:5432</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -632,7 +640,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
+                                        <manifests>${k3s.manifests.dir}/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -642,7 +650,17 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/minio</manifests>
+                                        <manifests>${k3s.manifests.dir}/minio</manifests>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-postgresql</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${k3s.manifests.dir}/postgresql-db</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -677,13 +695,14 @@
                                     </goals>
                                     <configuration>
                                         <failIfExists>false</failIfExists>
-                                        <manifests>${project.parent.basedir}/k3s/${broker}</manifests>
+                                        <manifests>${k3s.manifests.dir}/${broker}</manifests>
                                         <portBindings>
                                             <portBinding>1026:1026</portBinding>
                                             <portBinding>6379:6379</portBinding>
                                             <portBinding>3000:3000</portBinding>
                                             <portBinding>9000:9000</portBinding>
                                             <portBinding>9001:9001</portBinding>
+                                            <portBinding>5432:5432</portBinding>
                                         </portBindings>
                                     </configuration>
                                 </execution>
@@ -694,7 +713,7 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/schema-provider</manifests>
+                                        <manifests>${k3s.manifests.dir}/schema-provider</manifests>
                                     </configuration>
                                 </execution>
                                 <execution>
@@ -703,7 +722,16 @@
                                         <goal>apply</goal>
                                     </goals>
                                     <configuration>
-                                        <manifests>${project.parent.basedir}/k3s/minio</manifests>
+                                        <manifests>${k3s.manifests.dir}/minio</manifests>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>apply-postgresql</id>
+                                    <goals>
+                                        <goal>apply</goal>
+                                    </goals>
+                                    <configuration>
+                                        <manifests>${k3s.manifests.dir}/postgresql-db</manifests>
                                     </configuration>
                                 </execution>
                             </executions>

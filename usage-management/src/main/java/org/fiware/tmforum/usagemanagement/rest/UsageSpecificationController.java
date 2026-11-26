@@ -65,7 +65,7 @@ public class UsageSpecificationController extends AbstractApiController<UsageSpe
 
         @Override
         public Mono<HttpResponse<Object>> deleteUsageSpecification(@NonNull String id) {
-                return delete(id);
+                return delete(id, UsageSpecification.TYPE_USP);
         }
 
         @Override

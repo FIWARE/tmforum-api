@@ -9,6 +9,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.fiware.ngsi.api.EntitiesApiClient;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
+import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.mapping.NGSIMapper;
 import org.fiware.tmforum.storage.StorageErrorReason;
 import org.fiware.tmforum.storage.StorageException;
@@ -52,8 +53,8 @@ class NgsiLdBaseRepositoryErrorTest {
 		when(javaObjectMapper.toEntityVO(any(), any(NgsiLdWriteOperation.class))).thenReturn(entityVO);
 		NGSIMapper ngsiMapper = new NGSIMapper() {
 		};
-		repository = new NgsiLdEntityRepository(new GeneralProperties(), entitiesApi, null, null, ngsiMapper,
-				javaObjectMapper);
+		repository = new NgsiLdEntityRepository(new GeneralProperties(), new NgsiLdBrokerProperties(), entitiesApi, null, ngsiMapper,
+				javaObjectMapper, null);
 	}
 
 	@ParameterizedTest(name = "{0} failing with {1}")
@@ -104,7 +105,8 @@ class NgsiLdBaseRepositoryErrorTest {
 		String failed = String.format("Was not able to delete %s.", ENTITY_ID);
 		return Stream.of(
 				Arguments.of(answered(HttpStatus.NOT_FOUND), StorageErrorReason.NOT_FOUND, notFound),
-				Arguments.of(answered(HttpStatus.BAD_REQUEST), StorageErrorReason.UNKNOWN, failed),
+				// a 400 is the client's error whichever operation was rejected
+				Arguments.of(answered(HttpStatus.BAD_REQUEST), StorageErrorReason.INVALID_DATA, failed),
 				Arguments.of(answered(HttpStatus.INTERNAL_SERVER_ERROR), StorageErrorReason.UNKNOWN, failed),
 				Arguments.of(new HttpClientException(NO_ANSWER), StorageErrorReason.UNAVAILABLE, failed));
 	}
@@ -116,8 +118,8 @@ class NgsiLdBaseRepositoryErrorTest {
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any())).thenReturn(Mono.error(failure));
 		Function<NgsiLdEntityRepository, Mono<?>> list = listMethod.equals("findEntities")
-				? r -> r.findEntities(0, 10, Object.class, null, null, "test", null)
-				: r -> r.findEntitiesPolymorphic(0, 10, "test", null, null, null, type -> Object.class);
+				? r -> r.findEntities(0, 10, Object.class, null, null, "test")
+				: r -> r.findEntitiesPolymorphic(0, 10, "test", null, null, type -> Object.class);
 
 		assertStorageException(StorageOperation.LIST, expectedReason, LIST_FAILED,
 				() -> list.apply(repository).block());
@@ -125,7 +127,8 @@ class NgsiLdBaseRepositoryErrorTest {
 
 	private static Stream<Arguments> listFailures() {
 		return Stream.of("findEntities", "findEntitiesPolymorphic").flatMap(method -> Stream.of(
-				Arguments.of(method, answered(HttpStatus.BAD_REQUEST), StorageErrorReason.UNKNOWN),
+				// a filter the renderer let through and the broker rejected is the client's error, as on PostgreSQL
+				Arguments.of(method, answered(HttpStatus.BAD_REQUEST), StorageErrorReason.INVALID_DATA),
 				Arguments.of(method, answered(HttpStatus.INTERNAL_SERVER_ERROR), StorageErrorReason.UNKNOWN),
 				Arguments.of(method, new HttpClientException(NO_ANSWER), StorageErrorReason.UNAVAILABLE)));
 	}

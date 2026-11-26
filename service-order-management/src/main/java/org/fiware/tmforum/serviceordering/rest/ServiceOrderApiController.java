@@ -73,7 +73,7 @@ public class ServiceOrderApiController extends AbstractApiController<ServiceOrde
 	 */
 	@Override
 	public Mono<HttpResponse<Object>> deleteServiceOrder(@NonNull String id) {
-		return delete(id);
+		return delete(id, ServiceOrder.TYPE_SERVICE_ORDER);
 	}
 
 	/**

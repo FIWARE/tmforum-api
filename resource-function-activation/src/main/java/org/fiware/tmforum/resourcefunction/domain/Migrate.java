@@ -50,11 +50,11 @@ public class Migrate extends EntityWithId {
     private String startTime;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "addConnectionPoint")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "addConnectionPoint", targetClass = ConnectionPointRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "addConnectionPoint", fromProperties = true, targetClass = ConnectionPointRef.class)}))
     private List<ConnectionPointRef> addConnectionPoint;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "removeConnectionPoint")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "removeConnectionPoint", targetClass = ConnectionPointRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "removeConnectionPoint", fromProperties = true, targetClass = ConnectionPointRef.class)}))
     private List<ConnectionPointRef> removeConnectionPoint;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristics")}))
@@ -62,11 +62,11 @@ public class Migrate extends EntityWithId {
     private List<Characteristic> characteristics;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "place")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "place", targetClass = PlaceRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "place", fromProperties = true, targetClass = PlaceRef.class)}))
     private PlaceRef place;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "resourceFunction")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceFunction", targetClass = ResourceFunctionRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "resourceFunction", fromProperties = true, targetClass = ResourceFunctionRef.class)}))
     private ResourceFunctionRef resourceFunction;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "state")}))

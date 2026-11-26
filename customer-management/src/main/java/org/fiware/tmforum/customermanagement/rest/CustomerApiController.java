@@ -69,7 +69,7 @@ public class CustomerApiController extends AbstractApiController<Customer> imple
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteCustomer(@NonNull String id) {
-		return delete(id);
+		return delete(id, Customer.TYPE_CUSTOMER);
 	}
 
 	@Override

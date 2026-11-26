@@ -1,5 +1,7 @@
+# Broker storage backend (Orion-LD); the general.* keys here are broker-only, see README "Storage backends".
 general:
-  ngsildOrQueryValue: ";"
-  ngsildOrQueryKey: ";"
+  ngsildOrQueryValue: ","
+  ngsildOrQueryKey: "|"
   encloseQuery: true
+  includeAttributeInList: true
   countHeader: NGSILD-Results-Count

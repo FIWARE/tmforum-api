@@ -62,7 +62,7 @@ public class BillingAccountApiController extends AbstractApiController<BillingAc
 
     @Override
     public Mono<HttpResponse<Object>> deleteBillingAccount(String id) {
-        return delete(id);
+        return delete(id, BillingAccount.TYPE_BILLINGAC);
     }
 
     @Override

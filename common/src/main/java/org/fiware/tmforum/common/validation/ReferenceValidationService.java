@@ -6,16 +6,21 @@ import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.fiware.tmforum.common.exception.NonExistentReferenceException;
 import org.fiware.tmforum.storage.ReferenceReadRepository;
-import reactor.core.publisher.Flux;
+import org.fiware.tmforum.storage.StoredReference;
 import reactor.core.publisher.Mono;
 
 import jakarta.inject.Singleton;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * Service to support validation of referential integrity.
+ * Service to support validation of referential integrity; a reference with a version also has to match its target's.
  */
 @Slf4j
 @Singleton
@@ -34,6 +39,12 @@ public class ReferenceValidationService {
     public static final String RESULT_UNRESOLVED = "unresolved";
     public static final String RESULT_SKIPPED = "skipped";
 
+    private static final String MISSING_FORMAT = "References do not exist: %s";
+    private static final String VERSION_MISMATCH_FORMAT = "Reference version mismatch: %s";
+    private static final String MISMATCH_ENTRY_FORMAT = "%s (version %s, current %s)";
+    private static final String UNVERSIONED_MISMATCH_ENTRY_FORMAT = "%s (version %s, target is unversioned)";
+    private static final String MESSAGE_SEPARATOR = "; ";
+
     private final ReferenceReadRepository referencesRepository;
     private final ReferenceClassifier referenceClassifier;
     @Nullable
@@ -51,9 +62,10 @@ public class ReferenceValidationService {
     }
 
     /**
-     * Check if all local referenced entities exist with an accepted type. The checks will be executed asynchronously to
-     * not block each other on sequential calls to the NGSI-LD api. Null entries are ignored, as are external ones whose
-     * id names no local entity, so an empty, null, all-null or all-external list emits true.
+     * Check if all local referenced entities exist with an accepted type and, when pinned, the referenced version, with
+     * one storage lookup for the whole list.
+     * Null entries are ignored, as are external ones whose id names no local entity, so an empty, null, all-null or
+     * all-external list emits true.
      *
      * @param references a list of referenced objects to be checked for existence
      * @param <T>        concrete type of the referenced entity
@@ -64,21 +76,14 @@ public class ReferenceValidationService {
     }
 
     /**
-     * Emits the non-null references that do not resolve to an entity with an accepted type, in input order. External
-     * references only count when their id names a local entity of another type. A reference whose id is not an
-     * absolute URI never resolves, since NGSI-LD ids are URIs.
-     * Always emits a (possibly empty) list; a null list counts as empty.
+     * Emits the non-null references that do not resolve to an entity with an accepted type and, when pinned, the
+     * referenced version, in input order. External references only count when their id names a local entity of another
+     * type or version. A reference whose id is not an absolute URI never resolves, since NGSI-LD ids are URIs.
+     * Always emits a (possibly empty) list; a null list counts as empty. At most one {@code findReferences} call per
+     * subscription, none when no id can resolve.
      */
     public <T extends ReferencedEntity> Mono<List<T>> findUnresolved(List<T> references) {
-        if (references == null) {
-            return Mono.just(List.of());
-        }
-        // Flux.fromIterable rejects null elements; the supplier gives each subscription a fresh stream
-        return Flux.fromStream(() -> references.stream().filter(Objects::nonNull))
-                .flatMapSequential(ref -> referenceResolves(ref)
-                        .filter(resolves -> !resolves)
-                        .map(resolves -> ref))
-                .collectList();
+        return findFailures(references).map(failures -> failures.stream().map(Failure::reference).toList());
     }
 
     /**
@@ -92,44 +97,109 @@ public class ReferenceValidationService {
      * @throws NonExistentReferenceException will be thrown in case not all references exist
      */
     public <T extends ReferencedEntity, R> Mono<R> getCheckingMono(List<T> refs, R returnObject) {
-        return findUnresolved(refs)
-                .flatMap(unresolved -> {
-                    if (unresolved.isEmpty()) {
-                        return Mono.just(returnObject);
-                    }
-                    List<String> unresolvedIds = unresolved.stream()
-                            .map(ref -> String.valueOf(ref.getEntityId()))
-                            .toList();
-                    return Mono.error(new NonExistentReferenceException(
-                            String.format("References do not exist: %s", unresolvedIds)));
-                });
+        return findFailures(refs)
+                .flatMap(failures -> failures.isEmpty()
+                        ? Mono.just(returnObject)
+                        : Mono.error(new NonExistentReferenceException(failureMessage(failures))));
     }
 
-    private Mono<Boolean> referenceResolves(ReferencedEntity ref) {
-        ReferenceScope scope = referenceClassifier.classify(ref);
+    private <T extends ReferencedEntity> Mono<List<Failure<T>>> findFailures(List<T> references) {
+        if (references == null) {
+            return Mono.just(List.of());
+        }
+        // deferred, so each subscription classifies, looks up and counts afresh
+        return Mono.defer(() -> {
+            List<ClassifiedReference<T>> classified = references.stream()
+                    .filter(Objects::nonNull)
+                    .map(ref -> new ClassifiedReference<>(ref, referenceClassifier.classify(ref)))
+                    .toList();
+            return storedReferences(classified).map(stored -> classified.stream()
+                    .map(reference -> new Failure<>(reference.reference(), resolve(reference, stored),
+                            stored.get(String.valueOf(reference.reference().getEntityId()))))
+                    .filter(failure -> failure.resolution() != Resolution.RESOLVED)
+                    .toList());
+        });
+    }
+
+    private static String failureMessage(List<? extends Failure<?>> failures) {
+        List<String> missing = failures.stream()
+                .filter(failure -> failure.resolution() == Resolution.MISSING)
+                .map(failure -> String.valueOf(failure.reference().getEntityId()))
+                .toList();
+        List<String> mismatched = failures.stream()
+                .filter(failure -> failure.resolution() == Resolution.VERSION_MISMATCH)
+                .map(ReferenceValidationService::mismatchEntry)
+                .toList();
+        List<String> parts = new ArrayList<>();
+        if (!missing.isEmpty()) {
+            parts.add(String.format(MISSING_FORMAT, missing));
+        }
+        if (!mismatched.isEmpty()) {
+            parts.add(String.format(VERSION_MISMATCH_FORMAT, mismatched));
+        }
+        return String.join(MESSAGE_SEPARATOR, parts);
+    }
+
+    private static String mismatchEntry(Failure<?> failure) {
+        String current = failure.stored().version();
+        if (current.isEmpty()) {
+            return String.format(UNVERSIONED_MISMATCH_ENTRY_FORMAT, failure.reference().getEntityId(),
+                    failure.reference().getReferenceVersion());
+        }
+        return String.format(MISMATCH_ENTRY_FORMAT, failure.reference().getEntityId(),
+                failure.reference().getReferenceVersion(), current);
+    }
+
+    // one lookup for all ids of the list that can resolve, keyed by id
+    private Mono<Map<String, StoredReference>> storedReferences(List<? extends ClassifiedReference<?>> references) {
+        Set<String> ids = references.stream()
+                .map(ClassifiedReference::reference)
+                .filter(ReferenceValidationService::hasLookupId)
+                .map(ref -> ref.getEntityId().toString())
+                .collect(Collectors.toSet());
+        if (ids.isEmpty()) {
+            return Mono.just(Map.of());
+        }
+        return referencesRepository.findReferences(ids).collectMap(StoredReference::id, Function.identity());
+    }
+
+    private Resolution resolve(ClassifiedReference<?> classified, Map<String, StoredReference> storedReferences) {
+        ReferencedEntity ref = classified.reference();
         URI entityId = ref.getEntityId();
-        if (entityId == null || !entityId.isAbsolute()) {
+        String scope = scopeTag(classified.scope());
+        if (!hasLookupId(ref)) {
             // the broker would answer such an id with a 400, which would surface as a 500 instead of a 400
             log.warn("The reference id '{}' is not an absolute URI (e.g. urn:ngsi-ld:category:1), so it cannot "
                     + "resolve.", entityId);
-            return Mono.just(count(scopeTag(scope), false));
+            return count(scope, Resolution.MISSING);
         }
-        return switch (scope) {
-            case EXTERNAL -> referencesRepository.findReference(entityId.toString())
-                    // a local entity with that id must not be smuggled in under another type
-                    .map(reference -> count(SCOPE_EXTERNAL, ref.getReferencedTypes().contains(reference.type())))
-                    .switchIfEmpty(Mono.fromSupplier(() -> skipExternal(entityId)));
-            case LOCAL -> referencesRepository.referenceExists(entityId.toString(), ref.getReferencedTypes())
-                    .map(reference -> true)
-                    .defaultIfEmpty(false)
-                    .map(resolves -> count(SCOPE_LOCAL, resolves));
-        };
+        StoredReference stored = storedReferences.get(entityId.toString());
+        if (stored == null) {
+            return classified.scope() == ReferenceScope.EXTERNAL
+                    ? skipExternal(entityId)
+                    : count(scope, Resolution.MISSING);
+        }
+        // a local entity with that id must not be smuggled in under another type or version, not even as external
+        if (!ref.getReferencedTypes().contains(stored.type())) {
+            return count(scope, Resolution.MISSING);
+        }
+        return count(scope, versionMatches(ref, stored) ? Resolution.RESOLVED : Resolution.VERSION_MISMATCH);
     }
 
-    private boolean skipExternal(URI entityId) {
+    private static boolean versionMatches(ReferencedEntity ref, StoredReference stored) {
+        String refVersion = ref.getReferenceVersion();
+        return refVersion == null || refVersion.isEmpty() || refVersion.equals(stored.version());
+    }
+
+    private static boolean hasLookupId(ReferencedEntity ref) {
+        URI entityId = ref.getEntityId();
+        return entityId != null && entityId.isAbsolute();
+    }
+
+    private Resolution skipExternal(URI entityId) {
         log.info("Skipping validation of external reference {}.", entityId);
         count(SCOPE_EXTERNAL, RESULT_SKIPPED);
-        return true;
+        return Resolution.RESOLVED;
     }
 
     private static String scopeTag(ReferenceScope scope) {
@@ -139,9 +209,9 @@ public class ReferenceValidationService {
         };
     }
 
-    private boolean count(String scope, boolean resolves) {
-        count(scope, resolves ? RESULT_RESOLVED : RESULT_UNRESOLVED);
-        return resolves;
+    private Resolution count(String scope, Resolution resolution) {
+        count(scope, resolution == Resolution.RESOLVED ? RESULT_RESOLVED : RESULT_UNRESOLVED);
+        return resolution;
     }
 
     private void count(String scope, String result) {
@@ -155,4 +225,13 @@ public class ReferenceValidationService {
                 .increment();
     }
 
+    private record ClassifiedReference<T extends ReferencedEntity>(T reference, ReferenceScope scope) {
+    }
+
+    private enum Resolution { RESOLVED, MISSING, VERSION_MISMATCH }
+
+    // stored is the found target, null when there is none
+    private record Failure<T extends ReferencedEntity>(T reference, Resolution resolution,
+                                                        @Nullable StoredReference stored) {
+    }
 }

@@ -1,3 +1,7 @@
+# Storage backend: MICRONAUT_ENVIRONMENTS=<postgresql|orion-ld|scorpio>,<in-memory|redis>.
+# PostgreSQL is the default when no backend environment is named.
+# The broker backends also read application-<broker>.yaml, see README "Storage backends".
+
 micronaut:
 
   codec:
@@ -17,6 +21,7 @@ micronaut:
 
   http:
     services:
+      # Broker only (orion-ld, scorpio); unused on PostgreSQL.
       ngsi:
         path: ngsi-ld/v1
         url: http://localhost:1026
@@ -49,7 +54,6 @@ logger:
 general:
   contextUrl: https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld
   serverHost: http://localhost:8632
-  countHeader: NGSILD-Results-Count
 
 api:
   resource-function-activation:

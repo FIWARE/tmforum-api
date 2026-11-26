@@ -1,6 +1,7 @@
 package org.fiware.tmforum.servicecatalog.domain;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.AttachmentRefOrValue;
@@ -25,7 +26,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ServiceSpecification.TYPE_SERVICE_SPECIFICATION)
-public class ServiceSpecification extends EntityWithId {
+public class ServiceSpecification extends EntityWithId implements VersionedEntity {
 
     public static final String TYPE_SERVICE_SPECIFICATION = "service-specification";
 
@@ -62,7 +63,7 @@ public class ServiceSpecification extends EntityWithId {
     private List<AttachmentRefOrValue> attachment;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", targetClass = EntitySpecificationRelationship.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "entitySpecRelationship", fromProperties = true, targetClass = EntitySpecificationRelationship.class)}))
     private List<EntitySpecificationRelationship> entitySpecRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "featureSpecification")}))
@@ -74,15 +75,15 @@ public class ServiceSpecification extends EntityWithId {
     private List<RelatedParty> relatedParty;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceSpecification")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceSpecification", targetClass = ResourceSpecificationRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceSpecification", fromProperties = true, targetClass = ResourceSpecificationRef.class)}))
     private List<ResourceSpecificationRef> resourceSpecification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceLevelSpecification")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceLevelSpecification", targetClass = ServiceLevelSpecificationRef.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceLevelSpecification", fromProperties = true, targetClass = ServiceLevelSpecificationRef.class)}))
     private List<ServiceLevelSpecificationRef> serviceLevelSpecification;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceSpecRelationship")}))
-    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceSpecRelationship", targetClass = ServiceSpecificationRelationship.class)}))
+    @Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceSpecRelationship", fromProperties = true, targetClass = ServiceSpecificationRelationship.class)}))
     private List<ServiceSpecificationRelationship> serviceSpecRelationship;
 
     @Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "specCharacteristic")}))

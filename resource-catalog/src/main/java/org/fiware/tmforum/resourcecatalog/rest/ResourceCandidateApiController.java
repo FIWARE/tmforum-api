@@ -76,7 +76,7 @@ public class ResourceCandidateApiController extends AbstractApiController<Resour
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteResourceCandidate(@NonNull String id) {
-		return delete(id);
+		return delete(id, ResourceCandidate.TYPE_RESOURCE_CANDIDATE);
 	}
 
 	@Override

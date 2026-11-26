@@ -1,6 +1,7 @@
 package org.fiware.tmforum.resource;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -17,7 +18,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ResourceCategory.TYPE_RESOURCE_CATEGORY)
-public class ResourceCategory extends EntityWithId {
+public class ResourceCategory extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_RESOURCE_CATEGORY = "resource-category";
 
@@ -46,7 +47,7 @@ public class ResourceCategory extends EntityWithId {
 	private String name;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "parentId") }))
-	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", targetClass = ResourceCategoryRef.class) }))
+	@Setter(onMethod = @__({ @AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", fromProperties = true, targetClass = ResourceCategoryRef.class) }))
 	private ResourceCategoryRef parentId;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "version") }))
@@ -55,7 +56,7 @@ public class ResourceCategory extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", targetClass = ResourceCategoryRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", fromProperties = true, targetClass = ResourceCategoryRef.class) }))
 	private List<ResourceCategoryRef> category;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "relatedParty") }))
@@ -66,7 +67,7 @@ public class ResourceCategory extends EntityWithId {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceCandidate") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceCandidate", targetClass = ResourceCandidateRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "resourceCandidate", fromProperties = true, targetClass = ResourceCandidateRef.class) }))
 	private List<ResourceCandidateRef> resourceCandidate;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor") }))

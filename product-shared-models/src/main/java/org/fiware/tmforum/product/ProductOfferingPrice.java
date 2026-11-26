@@ -1,6 +1,7 @@
 package org.fiware.tmforum.product;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.ConstraintRef;
@@ -21,7 +22,7 @@ import java.util.List;
 
 @MappingEnabled(entityType = ProductOfferingPrice.TYPE_PRODUCT_OFFERING_PRICE)
 @EqualsAndHashCode(callSuper = true)
-public class ProductOfferingPrice extends EntityWithId {
+public class ProductOfferingPrice extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_PRODUCT_OFFERING_PRICE = "product-offering-price";
 
@@ -74,15 +75,15 @@ public class ProductOfferingPrice extends EntityWithId {
 	private List<BundledProductOfferingPriceRelationship> bundledPopRelationship;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", targetClass = ConstraintRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "constraint", fromProperties = true, targetClass = ConstraintRef.class)}))
 	private List<ConstraintRef> constraint;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "place")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "place", targetClass = PlaceRef.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "place", fromProperties = true, targetClass = PlaceRef.class)}))
 	private List<PlaceRef> place;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "popRelationship")}))
-	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "popRelationship", targetClass = ProductOfferingPriceRelationship.class)}))
+	@Setter(onMethod = @__({@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "popRelationship", fromProperties = true, targetClass = ProductOfferingPriceRelationship.class)}))
 	private List<ProductOfferingPriceRelationship> popRelationship;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY, targetName = "price")}))

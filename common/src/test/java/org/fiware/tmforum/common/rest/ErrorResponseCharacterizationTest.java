@@ -48,9 +48,11 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 
 	static final String CA_MESSAGE = "Request could not be answered due to an unexpected internal error.";
 	static final String BAD_GATEWAY_MESSAGE = "Context broker is not reachable.";
+	static final String UNAVAILABLE_MESSAGE = "The storage backend is currently not available.";
 	static final String DELETION_NOT_FOUND_MESSAGE = "The requested entity doesn't exist.";
 	static final String DELETION_UNKNOWN_MESSAGE = "An unexpected error happened.";
 	static final String LIST_MESSAGE = "An unexpected error happened - Was not able to list entities.";
+	static final String LIST_REJECTED_MESSAGE = "The request contained invalid data - Was not able to list entities.";
 	static final String CREATING = "creating";
 	static final String UPDATING = "updating";
 
@@ -135,8 +137,17 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		return new Expected(HttpStatus.BAD_GATEWAY, BAD_GATEWAY_MESSAGE);
 	}
 
+	/** A storage that gave no answer is a 503 for every operation, named after neither backend. */
+	static Expected unavailable() {
+		return new Expected(HttpStatus.SERVICE_UNAVAILABLE, UNAVAILABLE_MESSAGE);
+	}
+
 	static Expected listFailed() {
 		return new Expected(HttpStatus.INTERNAL_SERVER_ERROR, LIST_MESSAGE);
+	}
+
+	static Expected listRejected() {
+		return new Expected(HttpStatus.BAD_REQUEST, LIST_REJECTED_MESSAGE);
 	}
 
 	static Expected deletionNotFound() {
@@ -168,7 +179,7 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 				Arguments.of(Failure.NOT_FOUND, downstream(Failure.NOT_FOUND)),
 				Arguments.of(Failure.CONFLICT, conflict(action, Failure.CONFLICT)),
 				Arguments.of(Failure.INTERNAL_SERVER_ERROR, downstream(Failure.INTERNAL_SERVER_ERROR)),
-				Arguments.of(Failure.NO_ANSWER, badGateway()));
+				Arguments.of(Failure.NO_ANSWER, unavailable()));
 	}
 
 	static Stream<Arguments> rejectedCreates() {
@@ -179,12 +190,37 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		return rejectedWrites(UPDATING);
 	}
 
-	static Stream<Arguments> failedReads() {
+	/**
+	 * The NGSI-LD subscription calls do not go through the storage port, so a broker that gives no answer is
+	 * rendered by the broker handlers as before, not as the port's 503.
+	 */
+	static Stream<Arguments> failedBrokerReads() {
 		return Stream.of(
 				Arguments.of(Failure.BAD_REQUEST, caInternal()),
 				Arguments.of(Failure.CONFLICT, caInternal()),
 				Arguments.of(Failure.INTERNAL_SERVER_ERROR, caInternal()),
 				Arguments.of(Failure.NO_ANSWER, caInternal()));
+	}
+
+	static Stream<Arguments> failedBrokerDeletes() {
+		return Stream.of(
+				Arguments.of(Failure.BAD_REQUEST, deletionUnknown()),
+				Arguments.of(Failure.NOT_FOUND, deletionNotFound()),
+				Arguments.of(Failure.CONFLICT, deletionUnknown()),
+				Arguments.of(Failure.INTERNAL_SERVER_ERROR, deletionUnknown()),
+				Arguments.of(Failure.NO_ANSWER, deletionUnknown()));
+	}
+
+	static Stream<Arguments> rejectedBrokerWritesUncaught() {
+		return Stream.of(Failure.values()).map(failure -> Arguments.of(failure, badGateway()));
+	}
+
+	static Stream<Arguments> failedReads() {
+		return Stream.of(
+				Arguments.of(Failure.BAD_REQUEST, caInternal()),
+				Arguments.of(Failure.CONFLICT, caInternal()),
+				Arguments.of(Failure.INTERNAL_SERVER_ERROR, caInternal()),
+				Arguments.of(Failure.NO_ANSWER, unavailable()));
 	}
 
 	static Stream<Arguments> failedDeletes() {
@@ -193,7 +229,7 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 				Arguments.of(Failure.NOT_FOUND, deletionNotFound()),
 				Arguments.of(Failure.CONFLICT, deletionUnknown()),
 				Arguments.of(Failure.INTERNAL_SERVER_ERROR, deletionUnknown()),
-				Arguments.of(Failure.NO_ANSWER, deletionUnknown()));
+				Arguments.of(Failure.NO_ANSWER, unavailable()));
 	}
 
 	static Stream<Arguments> failedRetrieves() {
@@ -266,12 +302,25 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		assertResponse(expected, HttpRequest.DELETE(ENTITIES + "/" + newEntityId()));
 	}
 
-	@ParameterizedTest(name = "{0}")
-	@EnumSource(Failure.class)
-	void listFails(Failure failure) {
+	/**
+	 * A filter the renderer lets through and the broker rejects is the client's error, as on PostgreSQL; every
+	 * other broker failure stays an internal one.
+	 */
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("failedLists")
+	void listFails(Failure failure, Expected expected) {
 		broker.answer("queryEntities", args -> failure.mono());
 
-		assertResponse(listFailed(), HttpRequest.GET(ENTITIES));
+		assertResponse(expected, HttpRequest.GET(ENTITIES));
+	}
+
+	static Stream<Arguments> failedLists() {
+		return Stream.of(
+				Arguments.of(Failure.BAD_REQUEST, listRejected()),
+				Arguments.of(Failure.NOT_FOUND, listFailed()),
+				Arguments.of(Failure.CONFLICT, listFailed()),
+				Arguments.of(Failure.INTERNAL_SERVER_ERROR, listFailed()),
+				Arguments.of(Failure.NO_ANSWER, unavailable()));
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
@@ -282,27 +331,36 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		assertResponse(expected, HttpRequest.GET(ENTITIES + "/" + newEntityId()));
 	}
 
+	// references are read from their stored properties (ticket 88), so the related entity is never retrieved
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
-	void listFailsOnTheRelationshipResolution(Failure failure) {
-		EntityVO stored = storedWithRelated(newEntityId());
+	void listDoesNotResolveTheRelationship(Failure failure) {
+		String relatedId = newRelatedId();
 		EntityListVO entities = new EntityListVO();
-		entities.add(stored);
+		entities.add(storedWithRelated(newEntityId(), relatedId));
 		broker.answer("queryEntities", args -> Mono.just(HttpResponse.ok(entities)));
 		broker.answer("retrieveEntityById", args -> failure.mono());
 
-		assertResponse(listFailed(), HttpRequest.GET(ENTITIES));
+		assertReadsRelated(relatedId, HttpRequest.GET(ENTITIES));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@EnumSource(value = Failure.class, names = {"INTERNAL_SERVER_ERROR", "NO_ANSWER"})
-	void retrieveFailsOnTheRelationshipResolution(Failure failure) {
+	void retrieveDoesNotResolveTheRelationship(Failure failure) {
 		String id = newEntityId();
-		EntityVO stored = storedWithRelated(id);
+		String relatedId = newRelatedId();
+		EntityVO stored = storedWithRelated(id, relatedId);
 		broker.answer("retrieveEntityById", args -> id.equals(args[0].toString())
 				? Mono.just(HttpResponse.ok(stored)) : failure.mono());
 
-		assertResponse(caInternal(), HttpRequest.GET(ENTITIES + "/" + id));
+		assertReadsRelated(relatedId, HttpRequest.GET(ENTITIES + "/" + id));
+	}
+
+	private void assertReadsRelated(String relatedId, HttpRequest<?> read) {
+		HttpResponse<String[]> response = httpClient.toBlocking().exchange(read, String[].class);
+
+		assertEquals(HttpStatus.OK, response.getStatus(), "The read should succeed without the related entity.");
+		assertEquals(List.of(relatedId), List.of(response.body()), "The relationship should read back as stored.");
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
@@ -314,19 +372,21 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 	}
 
 	static Stream<Arguments> rejectedWritesUncaught() {
-		return Stream.of(Failure.values()).map(failure -> Arguments.of(failure, badGateway()));
+		return Stream.of(Failure.values()).map(failure -> Arguments.of(failure,
+				failure == Failure.NO_ANSWER ? unavailable() : badGateway()));
 	}
 
-	@ParameterizedTest(name = "{0}")
-	@EnumSource(Failure.class)
-	void registerFailsOnTheDuplicateCheck(Failure failure) {
+	// the duplicate check filters on the callback the client sent, so a broker 400 on it is the client's error too
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("failedLists")
+	void registerFailsOnTheDuplicateCheck(Failure failure, Expected expected) {
 		broker.answer("queryEntities", args -> failure.mono());
 
-		assertResponse(listFailed(), HttpRequest.POST(HUB + "?callback=" + SUBSCRIBER, ""));
+		assertResponse(expected, HttpRequest.POST(HUB + "?callback=" + SUBSCRIBER, ""));
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
-	@MethodSource("rejectedWritesUncaught")
+	@MethodSource("rejectedBrokerWritesUncaught")
 	void registerFailsOnTheSubscriptionCreation(Failure failure, Expected expected) {
 		broker.answer("queryEntities", args -> Mono.just(HttpResponse.ok(new EntityListVO())));
 		broker.answer("createSubscription", args -> failure.mono());
@@ -344,7 +404,7 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
-	@MethodSource("failedDeletes")
+	@MethodSource("failedBrokerDeletes")
 	void unregisterFailsOnTheSubscriptionRemoval(Failure failure, Expected expected) {
 		String id = newSubscriptionId();
 		scriptStoredSubscription(id);
@@ -366,7 +426,7 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 	}
 
 	@ParameterizedTest(name = "{0} -> {1}")
-	@MethodSource("failedReads")
+	@MethodSource("failedBrokerReads")
 	void callbackFailsOnTheSubscriptionLookup(Failure failure, Expected expected) {
 		broker.answer("retrieveSubscriptionById", args -> failure.mono());
 
@@ -427,9 +487,9 @@ class ErrorResponseCharacterizationTest implements TestPropertyProvider {
 		return "urn:ngsi-ld:" + TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION + ":" + UUID.randomUUID();
 	}
 
-	private EntityVO storedWithRelated(String id) {
+	private EntityVO storedWithRelated(String id, String relatedId) {
 		CharacterizationEntity entity = new CharacterizationEntity(id);
-		entity.setRelated(List.of(new CharacterizationRelated(newRelatedId())));
+		entity.setRelated(List.of(new CharacterizationRelated(relatedId)));
 		return javaObjectMapper.toEntityVO(entity);
 	}
 

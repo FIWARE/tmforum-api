@@ -102,9 +102,9 @@ public class DocumentSpecificationApiController extends AbstractApiController<Do
                     Mono<Void> deletionStep = attachmentService != null
                             ? attachmentService.deleteAttachments(docSpec.getAttachment())
                             : Mono.empty();
-                    return deletionStep.then(delete(id));
+                    return deletionStep.then(delete(id, DocumentSpecification.TYPE_DOCUMENT_SPECIFICATION));
                 })
-                .switchIfEmpty(Mono.defer(() -> delete(id)));
+                .switchIfEmpty(Mono.defer(() -> delete(id, DocumentSpecification.TYPE_DOCUMENT_SPECIFICATION)));
     }
 
     @Override

@@ -15,9 +15,21 @@ public class CommonConstants {
 	public static final int DEFAULT_LIMIT = 10;
 
 	/**
+	 * Upper bound of the page size a list endpoint serves. A larger requested limit is clamped to it, so that a
+	 * single request can never make the storage read and map an unbounded number of entities.
+	 */
+	public static final int MAX_LIMIT = 1000;
+
+	/**
 	 * String template for an NGSI-LD compatible id
 	 */
 	public static final String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
+
+	/**
+	 * String template for the NGSI-LD Link header pointing at the JSON-LD context url
+	 */
+	public static final String JSON_LD_CONTEXT_LINK_TEMPLATE =
+			"<%s>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"";
 
 	/**
 	 * Name for the entities cache
@@ -30,8 +42,23 @@ public class CommonConstants {
 	public static final String TMFORUM_SUBSCRIPTIONS_CACHE_NAME = "tmforum-subscriptions";
 
 	/**
-	 * Name for the subscriptions cache
+	 * Name for the NGSI-LD subscriptions cache; broker-only, unused on postgresql
 	 */
 	public static final String SUBSCRIPTIONS_CACHE_NAME = "subscriptions";
+
+	/**
+	 * Micronaut environment of the PostgreSQL storage; {@code common} beans that the adapter replaces exclude it.
+	 */
+	public static final String POSTGRESQL_ENVIRONMENT = "postgresql";
+
+	/**
+	 * Micronaut environment of the Orion-LD broker storage.
+	 */
+	public static final String ORION_LD_ENVIRONMENT = "orion-ld";
+
+	/**
+	 * Micronaut environment of the Scorpio broker storage.
+	 */
+	public static final String SCORPIO_ENVIRONMENT = "scorpio";
 
 }

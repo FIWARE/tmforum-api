@@ -62,7 +62,7 @@ public class UsageController extends AbstractApiController<Usage> implements Usa
 
         @Override
         public Mono<HttpResponse<Object>> deleteUsage(@NonNull String id) {
-                return delete(id);
+                return delete(id, Usage.TYPE_U);
         }
 
         @Override

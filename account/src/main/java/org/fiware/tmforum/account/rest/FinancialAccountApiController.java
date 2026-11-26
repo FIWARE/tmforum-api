@@ -59,7 +59,7 @@ public class FinancialAccountApiController extends AbstractApiController<Financi
 
     @Override
     public Mono<HttpResponse<Object>> deleteFinancialAccount(String id) {
-        return delete(id);
+        return delete(id, FinancialAccount.TYPE_FINANCIALAC);
     }
 
     @Override

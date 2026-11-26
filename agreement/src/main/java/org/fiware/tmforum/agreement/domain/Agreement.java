@@ -1,6 +1,7 @@
 package org.fiware.tmforum.agreement.domain;
 
 import java.net.URI;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import java.time.Instant;
 import java.util.List;
 
@@ -20,7 +21,7 @@ import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = Agreement.TYPE_AGREEMENT)
-public class Agreement extends EntityWithId {
+public class Agreement extends EntityWithId implements VersionedEntity {
 	public static final String TYPE_AGREEMENT = "agreement";
 
 	public Agreement(String id) {
@@ -87,7 +88,7 @@ public class Agreement extends EntityWithId {
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "associatedAgreement")}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "associatedAgreement", targetClass = AgreementRef.class)}))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "associatedAgreement", targetClass = AgreementRef.class, fromProperties = true)}))
 	private List<AgreementRef> associatedAgreement;
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.PROPERTY_LIST, targetName = "characteristic")}))
@@ -101,7 +102,7 @@ public class Agreement extends EntityWithId {
 
 	@Getter(onMethod = @__({@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty")}))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty", targetClass = RelatedParty.class)}))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "engagedParty", targetClass = RelatedParty.class, fromProperties = true)}))
 	private List<RelatedParty> engagedParty;
 
 	@Override

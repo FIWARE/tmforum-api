@@ -75,7 +75,7 @@ public class ResourceCategoryApiController extends AbstractApiController<Resourc
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteResourceCategory(@NonNull String id) {
-		return delete(id);
+		return delete(id, ResourceCategory.TYPE_RESOURCE_CATEGORY);
 	}
 
 	@Override

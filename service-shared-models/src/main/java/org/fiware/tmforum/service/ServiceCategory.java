@@ -1,6 +1,7 @@
 package org.fiware.tmforum.service;
 
 import lombok.EqualsAndHashCode;
+import org.fiware.tmforum.common.domain.VersionedEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.fiware.tmforum.common.domain.EntityWithId;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @MappingEnabled(entityType = ServiceCategory.TYPE_SERVICE_CATEGORY)
-public class ServiceCategory extends EntityWithId {
+public class ServiceCategory extends EntityWithId implements VersionedEntity {
 
 	public static final String TYPE_SERVICE_CATEGORY = "service-category";
 
@@ -46,7 +47,7 @@ public class ServiceCategory extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP, targetName = "parentId") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", targetClass = ServiceCategoryRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP, targetName = "parentId", fromProperties = true, targetClass = ServiceCategoryRef.class) }))
 	private ServiceCategoryRef parentId;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "version") }))
@@ -55,13 +56,13 @@ public class ServiceCategory extends EntityWithId {
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", targetClass = ServiceCategoryRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "category", fromProperties = true, targetClass = ServiceCategoryRef.class) }))
 	private List<ServiceCategoryRef> category;
 
 	@Getter(onMethod = @__({
 			@AttributeGetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceCandidate") }))
 	@Setter(onMethod = @__({
-			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceCandidate", targetClass = ServiceCandidateRef.class) }))
+			@AttributeSetter(value = AttributeType.RELATIONSHIP_LIST, targetName = "serviceCandidate", fromProperties = true, targetClass = ServiceCandidateRef.class) }))
 	private List<ServiceCandidateRef> serviceCandidate;
 
 	@Getter(onMethod = @__({ @AttributeGetter(value = AttributeType.PROPERTY, targetName = "validFor") }))
