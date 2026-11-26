@@ -555,15 +555,62 @@ patch can put a null into the document.
 
 ---
 
+### #6 — `RELATIONSHIP` to `PROPERTY` in two getters
+
+> The other relationship changes in this PR add `fromProperties = true` on the setter. These two also change the
+> getter to `PROPERTY` with `embedProperty = true`, so what is written changes. Existing Orion/Scorpio data holds
+> these as Relationships, and the new setters read Properties. After the upgrade an old `EndpointRef` or
+> `associationSpec` can read back as null or fail.
+
+**Answered; no change needed.** The observation is right — I confirmed these are the only two getters in the PR that
+move away from `RELATIONSHIP`, against eleven that stay — but the conclusion does not follow, for two reasons.
+
+**They are required to be `PROPERTY`, and a test enforces it.** Both fields live on a *relationship target* class
+(`EndpointRef`, `EntitySpecificationRelationship`). The whole point of this PR is that a relationship target is
+stored inline, and `RelationshipsReadFromPropertiesTest.everyRelationshipTargetIsStoredInline` in `all-in-one`
+fails the build for any getter on such a class that is not `PROPERTY` with `embedProperty = true`. A nested
+`RELATIONSHIP` cannot be expressed inside an embedded property in the first place. The other eleven are getters on
+the *owning* entity, pointing at a target — a different position, which is why they stay relationships.
+
+**There is no stored Relationship to migrate.** These two fields were not written before this PR at all.
+`RELEASE_NOTES_INLINE_REFERENCES.md` lists them by name among the "`RefEntity` subclasses whose extra fields were
+silently dropped on write now store them": `EndpointRef.isRoot`/`connectionPoint` and
+`EntitySpecificationRelationship.associationSpec`. A field that was dropped on write left nothing in Orion or
+Scorpio, so there is no old shape for the new setter to fail on — an upgraded deployment reads them back absent,
+which the release notes already state for every reference field under "Data written before this release reads back
+with only the fields that were embedded at the time".
+
+So neither a test with a legacy entity nor a migration note is owed: the test that would have caught the problem
+already exists as a build-time guard, and the data the migration would convert was never written.
+
+---
+
+### M3 — `ControllerStorageBoundaryTest` exempts any method named `relatedEntityHandlingMono`
+
+> It exempts any method named `relatedEntityHandlingMono` and only inspects `createDomainEntity`,
+> `updateDomainEntity` and `deleteDomainEntity`. It passes with the `DELETE` gap from #2.
+
+**Agreed on the exemption, fixed** in `Exempt one method, not every method of that name`. The `DELETE` gap itself is
+closed by #2.
+
+The exemption matched on the method name alone, so any class anywhere could have called a storage write from a
+method it named `relatedEntityHandlingMono` and the rule would have passed it. It now also requires the declaring
+class to be `AbstractApiController`, which is the one method the exemption is for.
+
+The three write methods are the right set to inspect: they are the whole write surface of the storage port, and the
+rule's job is that each of them goes through `EntityEventPublisher`. `delete()` not checking the type was never
+something this rule could have seen — it is an argument the controller did not pass, not a call it made past the
+port.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
 
 | # | Comment | Verdict |
 |---|---------|---------|
-| #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |
 | #8.1 | A row is delivered to every matching hub and fails unless all acknowledge | The only sub-point still open — see the note below the table. |
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
-| M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |

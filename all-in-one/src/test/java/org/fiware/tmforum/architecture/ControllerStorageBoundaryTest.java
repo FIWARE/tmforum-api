@@ -3,12 +3,14 @@ package org.fiware.tmforum.architecture;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaCodeUnit;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.syntax.elements.GivenClassesConjunction;
 import org.fiware.tmforum.common.notification.EntityEventPublisher;
+import org.fiware.tmforum.common.rest.AbstractApiController;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,6 +40,8 @@ class ControllerStorageBoundaryTest {
 	// writes related entities without events on purpose; its lambdas compile to lambda$<name>$<n>
 	private static final String EVENTLESS_WRITER = "relatedEntityHandlingMono";
 	private static final String LAMBDA_PREFIX = "lambda$";
+	// the one method the exemption is for; a method of that name anywhere else is not exempt
+	private static final String EVENTLESS_WRITER_OWNER = AbstractApiController.class.getName();
 
 	private static JavaClasses mainClasses;
 
@@ -53,8 +57,8 @@ class ControllerStorageBoundaryTest {
 		DescribedPredicate<JavaClass> adapterPrivateTypes = resideInAPackage(ADAPTER_PACKAGES).and(not(INTERFACES))
 				.as("are non-interface types in the adapter-private package " + ADAPTER_PACKAGES);
 		DescribedPredicate<JavaMethodCall> eventlessWrites = DescribedPredicate.describe(
-				"a storage write outside " + EVENTLESS_WRITER,
-				call -> WRITE_METHODS.contains(call.getName()) && !isEventlessWriter(call.getOrigin().getName()));
+				"a storage write outside " + EVENTLESS_WRITER_OWNER + "#" + EVENTLESS_WRITER,
+				call -> WRITE_METHODS.contains(call.getName()) && !isEventlessWriter(call.getOrigin()));
 		return Stream.of(
 						noModuleClasses().should().dependOnClassesThat(adapterPrivateTypes),
 						// every API write goes through EntityEventPublisher, so each backend can attach its events
@@ -70,7 +74,11 @@ class ControllerStorageBoundaryTest {
 				.map(rule -> Named.of(rule.getDescription(), rule));
 	}
 
-	private static boolean isEventlessWriter(String methodName) {
+	private static boolean isEventlessWriter(JavaCodeUnit origin) {
+		if (!origin.getOwner().getName().equals(EVENTLESS_WRITER_OWNER)) {
+			return false;
+		}
+		String methodName = origin.getName();
 		return methodName.equals(EVENTLESS_WRITER) || methodName.startsWith(LAMBDA_PREFIX + EVENTLESS_WRITER + "$");
 	}
 
