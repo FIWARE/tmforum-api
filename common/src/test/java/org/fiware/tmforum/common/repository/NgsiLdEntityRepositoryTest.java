@@ -73,7 +73,7 @@ class NgsiLdEntityRepositoryTest {
 		// endpoints (e.g. resourceSpecification, which spans several NGSI-LD types).
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
 		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
-				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(properties));
 		String requestedId = "urn:ngsi-ld:software-specification:0e2d5c4a-cf51-43cf-a510-dff06f62f4a3";
 
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
@@ -94,7 +94,7 @@ class NgsiLdEntityRepositoryTest {
 	public void findEntitiesRendersTheQueryForTheBroker(EntityQuery query, String expectedQ, String expectedOrderBy) {
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
 		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
-				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(properties));
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(HttpResponse.ok(new EntityListVO())));
@@ -125,7 +125,7 @@ class NgsiLdEntityRepositoryTest {
 			BiFunction<NgsiLdEntityRepository, EntityQuery, Mono<?>> listCall) {
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
 		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
-				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(properties));
 		QueryFilter alternation = new QueryFilter.Comparison(new AttributePath(List.of("color"), false),
 				ComparisonOperator.REGEX, ValueType.STRING, List.of("a|b"));
 
@@ -153,7 +153,7 @@ class NgsiLdEntityRepositoryTest {
 		properties.setCountHeader(COUNT_HEADER);
 		EntitiesApiClient entitiesApi = mock(EntitiesApiClient.class);
 		NgsiLdEntityRepository repositoryWithClient = new NgsiLdEntityRepository(new GeneralProperties(), properties,
-				entitiesApi, null, null, null, new NgsiLdQueryRenderer(new GeneralProperties(), properties));
+				entitiesApi, null, null, null, new NgsiLdQueryRenderer(properties));
 		when(entitiesApi.queryEntities(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(),
 				any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(withCount(reported)), Mono.just(withCount(recounted)));

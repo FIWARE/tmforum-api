@@ -12,8 +12,10 @@ import io.github.wistefan.mapping.annotations.RelationshipObject;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
+import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.DateTimeLiterals;
 import org.fiware.tmforum.storage.query.Literals;
 import org.fiware.tmforum.storage.query.QueryFilter;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,6 +89,18 @@ public class QueryParser {
                 .toList();
     }
 
+    /**
+     * Idiom TMForum clients write "not equal to X" with, since the API has no not-equals parameter:
+     * {@code ^(?!X$).*$}. {@link #normalizeNotEquals} turns it into {@link ComparisonOperator#NOT_EQUALS} so that
+     * every backend reads it alike, instead of each running the pattern through its own regex engine.
+     */
+    private static final Pattern NOT_EQUALS_REGEX_IDIOM = Pattern.compile("^\\^\\(\\?!(.+?)\\$\\)\\.\\*\\$$");
+    /** Characters that make the captured fragment a pattern rather than the literal the idiom compares to. */
+    private static final Pattern REGEX_METACHARACTERS = Pattern.compile("[\\\\.\\[\\]{}()*+?^$|]");
+
+    /** Read by {@link #normalizeNotEquals}: whether the not-equals idiom is normalized at all. */
+    protected final GeneralProperties generalProperties;
+
     // Keys for the "well-known" fields
     public static final String OFFSET_KEY = "offset";
     public static final String LIMIT_KEY = "limit";
@@ -98,6 +113,8 @@ public class QueryParser {
     // the ";" in tm-forum parameters is an or
     public static final String TMFORUM_OR_KEY = ";";
     public static final String TMFORUM_AND = "&";
+
+
 
     // TMForum marks a sort field as descending by prefixing it with "-", e.g. sort=name,-billDate
     private static final String SORT_DESCENDING_PREFIX = "-";
@@ -284,8 +301,39 @@ public class QueryParser {
             // the model always points at the referenced entity's id
             path = Stream.concat(path.stream(), Stream.of(ID)).toList();
         }
-        return Optional.of(new Comparison(new AttributePath(path, declared), operator.getComparisonOperator(),
-                valueType, values));
+        return Optional.of(normalizeNotEquals(new Comparison(new AttributePath(path, declared),
+                operator.getComparisonOperator(), valueType, values)));
+    }
+
+    public QueryParser(GeneralProperties generalProperties) {
+        this.generalProperties = generalProperties;
+    }
+
+    /**
+     * Rewrites the {@code ^(?!X$).*$} "not equal" idiom into {@link ComparisonOperator#NOT_EQUALS} when X is a
+     * literal.
+     * <p>
+     * Only then do the two readings agree: as a comparison every backend excludes exactly X, while as a pattern each
+     * backend runs it through its own regex engine - NGSI-LD's {@code q} would receive the fragment as a string, so
+     * {@code ^(?!a\.b$).*$} excluded the four characters {@code a\.b} on the broker and the three characters
+     * {@code a.b} on PostgreSQL, the opposite answers for a stored {@code a.b}. A fragment holding a metacharacter
+     * is therefore left as the regex it is, and both backends run it as one.
+     * </p>
+     */
+    private Comparison normalizeNotEquals(Comparison comparison) {
+        if (comparison.operator() != ComparisonOperator.REGEX || !generalProperties.isOptimizeRegexNotEquals()) {
+            return comparison;
+        }
+        Matcher idiom = NOT_EQUALS_REGEX_IDIOM.matcher(comparison.values().getFirst());
+        if (!idiom.matches()) {
+            return comparison;
+        }
+        String literal = idiom.group(1);
+        if (REGEX_METACHARACTERS.matcher(literal).find()) {
+            return comparison;
+        }
+        return new Comparison(comparison.attribute(), ComparisonOperator.NOT_EQUALS, comparison.valueType(),
+                List.of(literal));
     }
 
     /**

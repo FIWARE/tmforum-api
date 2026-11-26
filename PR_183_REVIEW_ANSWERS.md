@@ -365,6 +365,42 @@ operator to freeze writes and re-run.
 
 ---
 
+### V3 — `^(?!X$).*$` → `!=` takes a regex fragment as a string literal
+
+> This takes `group(1)` of the `^(?!X$).*$` idiom as a string literal for `!=`, but X is a regex fragment. For
+> `foo.regex=^(?!a\.b$).*$` the broker renders `foo!="a\.b"` (excludes the backslash literal) while postgres runs
+> the real regex (excludes `a.b`) — opposite results for `foo="a.b"`. Since the backend is meant to be transparent,
+> normalize this in the shared parser (e.g. a model-level NOT_EQUALS operator) rather than only in the NGSI renderer.
+
+**Agreed, fixed** in `Normalize the not-equals idiom into a model operator`, the way the comment asks: with a
+model-level operator in the shared parser, not a patch in the NGSI renderer.
+
+`ComparisonOperator.NOT_EQUALS` is new. `QueryParser.normalizeNotEquals` recognizes the idiom and rewrites it —
+**only when X is a literal**, which is the part that makes the two backends agree. X holding a regex
+metacharacter is a pattern, so it stays a `REGEX` and both backends run it as one; the comment's own
+`^(?!a\.b$).*$` is exactly that case and no longer becomes a string comparison on either side.
+
+The renderers now only render what the model says, and neither knows about the idiom:
+
+- `NgsiLdQueryRenderer` renders `NOT_EQUALS` as `!=` and no longer rewrites anything. It lost its
+  `GeneralProperties` dependency with the rewrite.
+- `JsonbQueryRenderer` renders `NOT_EQUALS` as `<>` inside the existing per-value `EXISTS`, so PostgreSQL keeps the
+  semantics the lookahead regex had there — "some value differs" — rather than gaining a new reading.
+
+This also makes `optimizeRegexNotEquals` do what its own documentation claimed. The property said "Global, not
+broker-only: PostgreSQL's POSIX regex has no lookahead either", but it was read only by the NGSI renderer, so on
+PostgreSQL the idiom was always carried through as a raw lookahead pattern. Now the normalization happens before
+either backend sees it, and neither depends on lookahead support. The property's Javadoc is corrected accordingly.
+
+The storage contract's `REGEX_NOT_EQUALS` case built the idiom as a raw `REGEX` filter, which is no longer what the
+parser produces; it is replaced by a `NOT_EQUALS` case, so the contract pins the operator both adapters now receive.
+
+Tests: `QueryParserModelTest` gained four cases — a plain literal and a literal holding a comma normalize, while
+`^(?!a\.b$).*$` and `^(?!a|b$).*$` stay regexes. `NgsiLdQueryRendererTest` and `JsonbQueryRendererTest` pin the two
+renderings of the new operator.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -379,5 +415,4 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
-| V3 | `^(?!X$).*$` → `!=` takes a regex fragment as a string literal | Agreed. Normalize in the shared parser (a model-level `NOT_EQUALS`), not only in the NGSI renderer. |
 | V4 | `toRegExp` rejects `|,;()"'<>!`, postgres accepts them | Agreed, related to #4. Align or document. |

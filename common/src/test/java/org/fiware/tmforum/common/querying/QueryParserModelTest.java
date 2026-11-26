@@ -25,6 +25,7 @@ import static org.fiware.tmforum.storage.query.ComparisonOperator.GREATER_THAN;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.GREATER_THAN_EQUALS;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.LESS_THAN;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.LESS_THAN_EQUALS;
+import static org.fiware.tmforum.storage.query.ComparisonOperator.NOT_EQUALS;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.REGEX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,7 +40,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("filterQueries")
 	void testParse(String tmForumQuery, Class<?> queryClass, ParsedQuery expected) {
-		QueryParser qp = new QueryParser();
+		QueryParser qp = new QueryParser(new GeneralProperties());
 		assertEquals(expected, qp.parse(queryClass, tmForumQuery));
 	}
 
@@ -88,6 +89,16 @@ class QueryParserModelTest {
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("1", "abc"), "ext"))),
 				Arguments.of("relatedParty.role=Owner", MyPojo.class,
 						filter(undeclared(EQUALS, ValueType.STRING, List.of("Owner"), "relatedParty", "role"))),
+				// the "not equal" idiom becomes a model operator when X is a literal, so both backends read it alike
+				Arguments.of("color.regex=^(?!red$).*$", MyPojo.class,
+						filter(declared(NOT_EQUALS, ValueType.STRING, List.of("red"), "color"))),
+				Arguments.of("color.regex=^(?!a,b$).*$", MyPojo.class,
+						filter(declared(NOT_EQUALS, ValueType.STRING, List.of("a,b"), "color"))),
+				// X holds a metacharacter, so it is a pattern and stays one: a backend must not read it as a literal
+				Arguments.of("color.regex=^(?!a\\.b$).*$", MyPojo.class,
+						filter(declared(REGEX, ValueType.STRING, List.of("^(?!a\\.b$).*$"), "color"))),
+				Arguments.of("color.regex=^(?!a|b$).*$", MyPojo.class,
+						filter(declared(REGEX, ValueType.STRING, List.of("^(?!a|b$).*$"), "color"))),
 				// a regex is one opaque pattern, OR-ed patterns included
 				Arguments.of("color.regex=a,b", MyPojo.class,
 						filter(declared(REGEX, ValueType.STRING, List.of("a,b"), "color"))),
@@ -141,7 +152,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orValueSeparatorQueries")
 	void testParseSplitsOnlyOnTmForumOrValue(String tmForumQuery, ParsedQuery expected) {
-		assertEquals(expected, new QueryParser().parse(MyPojo.class, tmForumQuery));
+		assertEquals(expected, new QueryParser(new GeneralProperties()).parse(MyPojo.class, tmForumQuery));
 	}
 
 	private static Stream<Arguments> orValueSeparatorQueries() {
@@ -156,7 +167,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("sortQueries")
 	void testParseSort(String sort, Class<?> queryClass, List<SortKey> expected) {
-		QueryParser qp = new QueryParser();
+		QueryParser qp = new QueryParser(new GeneralProperties());
 		assertEquals(expected, qp.parseSort(queryClass, Map.of(QueryParser.SORT_KEY, List.of(sort))));
 	}
 
@@ -190,13 +201,13 @@ class QueryParserModelTest {
 
 	@Test
 	void testParseSortWithoutSort() {
-		assertEquals(List.of(), new QueryParser().parseSort(MyPojo.class, Map.of()));
+		assertEquals(List.of(), new QueryParser(new GeneralProperties()).parseSort(MyPojo.class, Map.of()));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@ValueSource(strings = {"-", "sub..status"})
 	void testParseSortRejectsBlankSegments(String sort) {
-		QueryParser qp = new QueryParser();
+		QueryParser qp = new QueryParser(new GeneralProperties());
 		assertThrows(QueryException.class,
 				() -> qp.parseSort(MyPojo.class, Map.of(QueryParser.SORT_KEY, List.of(sort))));
 	}
@@ -204,7 +215,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("invalidQueries")
 	void testParseRejectsInvalidQueries(String tmForumQuery) {
-		QueryParser qp = new QueryParser();
+		QueryParser qp = new QueryParser(new GeneralProperties());
 		assertThrows(QueryException.class, () -> qp.parse(MyPojo.class, tmForumQuery));
 	}
 

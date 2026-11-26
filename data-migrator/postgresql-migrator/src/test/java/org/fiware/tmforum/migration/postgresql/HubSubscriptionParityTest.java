@@ -82,7 +82,7 @@ class HubSubscriptionParityTest {
 	private static final class TestController extends AbstractSubscriptionApiController {
 
 		TestController(GeneralProperties properties) {
-			super(new QueryParser(), null, mock(EntityRepository.class), EVENT_GROUPS, null,
+			super(new QueryParser(new GeneralProperties()), null, mock(EntityRepository.class), EVENT_GROUPS, null,
 					mock(NgsiLdEventHandler.class), properties, mock(EntityVOMapper.class), mock(SubscriptionMapper.class));
 		}
 

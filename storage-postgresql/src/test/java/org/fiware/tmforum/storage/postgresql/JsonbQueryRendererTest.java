@@ -53,6 +53,8 @@ class JsonbQueryRendererTest {
 
     private static final Map<ComparisonOperator, String> SQL_OPERATORS = Map.of(
             ComparisonOperator.EQUALS, "=",
+            // the parser's normalization of the TMForum "not equal" regex idiom
+            ComparisonOperator.NOT_EQUALS, "<>",
             ComparisonOperator.GREATER_THAN, ">",
             ComparisonOperator.GREATER_THAN_EQUALS, ">=",
             ComparisonOperator.LESS_THAN, "<",

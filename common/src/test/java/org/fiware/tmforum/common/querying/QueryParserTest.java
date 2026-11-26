@@ -461,7 +461,7 @@ class QueryParserTest {
 	@ParameterizedTest
 	@MethodSource("regexFiltersOnOneAttribute")
 	public void regexFiltersOnOneAttributeStayApart(String message, String tmForumQuery, QueryFilter expected) {
-		QueryParser queryParser = new QueryParser();
+		QueryParser queryParser = new QueryParser(new GeneralProperties());
 
 		ParsedQuery parsed = queryParser.parse(MyPojo.class, tmForumQuery);
 
@@ -554,8 +554,8 @@ class QueryParserTest {
 		}
 
 		NgsiLdTranslator(GeneralProperties generalProperties, NgsiLdBrokerProperties brokerProperties) {
-			this.parser = new QueryParser();
-			this.renderer = new NgsiLdQueryRenderer(generalProperties, brokerProperties);
+			this.parser = new QueryParser(generalProperties);
+			this.renderer = new NgsiLdQueryRenderer(brokerProperties);
 		}
 
 		QueryParams toNgsiLdQuery(Class<?> queryClass, String queryString) {

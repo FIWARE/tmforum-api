@@ -39,12 +39,12 @@ public class GeneralProperties {
 
 	/**
 	 * When a {@code .regex} filter's value matches the "not equal" idiom
-	 * {@code ^(?!X$).*$}, translate it into NGSI-LD's native {@code !=} comparison
-	 * instead of forwarding {@code ~=} (pattern match) to the broker. Not every
-	 * broker's regex engine supports negative lookahead (e.g. Scorpio's
-	 * PostgreSQL-backed POSIX regex doesn't), so this optimization keeps the
-	 * common "not equal" case portable. Default true.
-	 * Global, not broker-only: PostgreSQL's POSIX regex has no lookahead either.
+	 * {@code ^(?!X$).*$} and X is a literal, normalize it into a NOT_EQUALS
+	 * comparison instead of carrying the pattern to the backend. Not every regex
+	 * engine supports negative lookahead, and a pattern is read by each backend's
+	 * own engine, so normalizing keeps the common "not equal" case portable and
+	 * backend-neutral. Default true. X holding a regex metacharacter is a pattern
+	 * rather than a literal and stays one whatever this says.
 	 */
 	private boolean optimizeRegexNotEquals = true;
 }

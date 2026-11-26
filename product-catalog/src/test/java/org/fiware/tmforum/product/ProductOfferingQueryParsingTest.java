@@ -26,7 +26,7 @@ class ProductOfferingQueryParsingTest {
 
 	private static final String INSTANT_LITERAL = "2024-01-01T10:00:00Z";
 
-	private final QueryParser queryParser = new QueryParser();
+	private final QueryParser queryParser = new QueryParser(new GeneralProperties());
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("dateTimePaths")

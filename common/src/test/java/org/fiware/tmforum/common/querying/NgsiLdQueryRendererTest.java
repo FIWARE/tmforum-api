@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.fiware.tmforum.storage.query.ComparisonOperator.EQUALS;
+import static org.fiware.tmforum.storage.query.ComparisonOperator.NOT_EQUALS;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.GREATER_THAN;
 import static org.fiware.tmforum.storage.query.ComparisonOperator.REGEX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,7 +52,7 @@ class NgsiLdQueryRendererTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("filters")
 	void testRenderFilter(String expected, NgsiLdBrokerProperties properties, Class<?> queryClass, QueryFilter filter) {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, properties);
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
 		assertEquals(expected, renderer.renderFilter(new EntityQuery(queryClass, filter, List.of())));
 	}
 
@@ -144,11 +145,12 @@ class NgsiLdQueryRendererTest {
 						declared(REGEX, ValueType.STRING, List.of("x2024-01"), "color")),
 				Arguments.of("color~=[0-9]{4}-01", DEFAULTS, MyPojo.class,
 						declared(REGEX, ValueType.STRING, List.of("[0-9]{4}-01"), "color")),
-				// deliberate change: the not-equals idiom keeps its value as one literal instead of splitting it
+				// the parser normalizes the not-equals idiom; the renderer only renders the model operator, and
+				// keeps the value as one literal instead of splitting it
 				Arguments.of("color!=\"a,b\"", DEFAULTS, MyPojo.class,
-						declared(REGEX, ValueType.STRING, List.of("^(?!a,b$).*$"), "color")),
+						declared(NOT_EQUALS, ValueType.STRING, List.of("a,b"), "color")),
 				Arguments.of("color!=\"a|b\"", ENCLOSED_ATTRIBUTE_IN_LIST, MyPojo.class,
-						declared(REGEX, ValueType.STRING, List.of("^(?!a|b$).*$"), "color")),
+						declared(NOT_EQUALS, ValueType.STRING, List.of("a|b"), "color")),
 				Arguments.of(null, DEFAULTS, MyPojo.class, null));
 	}
 
@@ -156,7 +158,7 @@ class NgsiLdQueryRendererTest {
 	@MethodSource("regexesHoldingQuerySyntax")
 	void testRegexHoldingQuerySyntaxIsRejected(String pattern, NgsiLdBrokerProperties properties,
 			GeneralProperties generalProperties) {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(generalProperties, properties);
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
 		EntityQuery query = new EntityQuery(MyPojo.class,
 				declared(REGEX, ValueType.STRING, List.of(pattern), "color"), List.of());
 		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
@@ -186,7 +188,7 @@ class NgsiLdQueryRendererTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("valuesHoldingQuerySyntax")
 	void testStringValueHoldingQuerySyntaxIsRejected(String value, ValueType valueType) {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, DEFAULTS);
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(DEFAULTS);
 		EntityQuery query = new EntityQuery(MyPojo.class,
 				declared(EQUALS, valueType, List.of(value), "color"), List.of());
 		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
@@ -206,7 +208,7 @@ class NgsiLdQueryRendererTest {
 	 */
 	@Test
 	void testNotEqualsValueHoldingQuerySyntaxIsRejected() {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, DEFAULTS);
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(DEFAULTS);
 		EntityQuery query = new EntityQuery(MyPojo.class,
 				declared(REGEX, ValueType.STRING, List.of("^(?!a\"b$).*$"), "color"), List.of());
 		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
@@ -219,8 +221,8 @@ class NgsiLdQueryRendererTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orValueSeparatorQueries")
 	void testOrValueSeparatorInsideValue(String expected, NgsiLdBrokerProperties properties, String tmForumQuery) {
-		QueryFilter filter = new QueryParser().parse(MyPojo.class, tmForumQuery).filter();
-		assertEquals(expected, new NgsiLdQueryRenderer(GENERAL_DEFAULTS, properties)
+		QueryFilter filter = new QueryParser(new GeneralProperties()).parse(MyPojo.class, tmForumQuery).filter();
+		assertEquals(expected, new NgsiLdQueryRenderer(properties)
 				.renderFilter(new EntityQuery(MyPojo.class, filter, List.of())));
 	}
 
@@ -235,7 +237,7 @@ class NgsiLdQueryRendererTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("sorts")
 	void testRenderOrderBy(String expected, NgsiLdBrokerProperties properties, List<SortKey> sort) {
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, properties);
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties);
 		assertEquals(expected, renderer.renderOrderBy(new EntityQuery(MyPojo.class, null, sort)));
 	}
 

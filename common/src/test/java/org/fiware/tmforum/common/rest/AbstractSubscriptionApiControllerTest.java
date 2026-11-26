@@ -84,7 +84,7 @@ class AbstractSubscriptionApiControllerTest {
 		EntityRepository repository = mock(EntityRepository.class);
 		SubscriptionRepository subscriptionRepository = mock(SubscriptionRepository.class);
 		GeneralProperties properties = new GeneralProperties();
-		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(), repository,
+		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(new GeneralProperties()), repository,
 				properties);
 		controller.setSubscriptionRepository(subscriptionRepository);
 		// stops the create flow right after the duplicate check
@@ -120,7 +120,7 @@ class AbstractSubscriptionApiControllerTest {
 		EntityRepository repository = mock(EntityRepository.class);
 		SubscriptionRepository subscriptionRepository = mock(SubscriptionRepository.class);
 		GeneralProperties properties = new GeneralProperties();
-		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(), repository,
+		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(new GeneralProperties()), repository,
 				properties);
 		controller.setSubscriptionRepository(subscriptionRepository);
 		when(subscriptionRepository.createSubscription(any(), any()))
@@ -133,7 +133,7 @@ class AbstractSubscriptionApiControllerTest {
 
 		ArgumentCaptor<EntityQuery> query = ArgumentCaptor.forClass(EntityQuery.class);
 		verify(repository).findEntities(any(), any(), any(), any(), query.capture());
-		assertEquals("callback==\"" + CALLBACK + "\"", new NgsiLdQueryRenderer(properties, new NgsiLdBrokerProperties()).renderFilter(query.getValue()));
+		assertEquals("callback==\"" + CALLBACK + "\"", new NgsiLdQueryRenderer(new NgsiLdBrokerProperties()).renderFilter(query.getValue()));
 	}
 
 	private static Stream<Arguments> existingHubs() {
@@ -166,7 +166,7 @@ class AbstractSubscriptionApiControllerTest {
 		EntityRepository repository = mock(EntityRepository.class);
 		SubscriptionRepository subscriptionRepository = mock(SubscriptionRepository.class);
 		GeneralProperties properties = new GeneralProperties();
-		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(), repository,
+		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(new GeneralProperties()), repository,
 				properties);
 		controller.setSubscriptionRepository(subscriptionRepository);
 		URI id = URI.create("urn:ngsi-ld:tm-forum-subscription:1");
@@ -193,7 +193,7 @@ class AbstractSubscriptionApiControllerTest {
 	private static Backend backend(boolean broker) {
 		EntityRepository repository = mock(EntityRepository.class);
 		GeneralProperties properties = new GeneralProperties();
-		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(), repository,
+		TestSubscriptionController controller = new TestSubscriptionController(new QueryParser(new GeneralProperties()), repository,
 				properties, broker ? mock(NgsiLdEventHandler.class) : null);
 		SubscriptionRepository subscriptionRepository = mock(SubscriptionRepository.class);
 		controller.setSubscriptionRepository(broker ? subscriptionRepository : null);

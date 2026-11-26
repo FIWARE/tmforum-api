@@ -147,9 +147,9 @@ class TMForumEventHandlerTest {
 		ArgumentCaptor<EntityQuery> query = ArgumentCaptor.forClass(EntityQuery.class);
 		verify(repository).findEntities(any(), any(), any(), any(), query.capture());
 		GeneralProperties properties = new GeneralProperties();
-		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties, new NgsiLdBrokerProperties());
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(new NgsiLdBrokerProperties());
 		// the hub lookup built this filter through the parser before the port took the model
-		QueryFilter parsed = new QueryParser().parse(TMForumSubscription.class,
+		QueryFilter parsed = new QueryParser(new GeneralProperties()).parse(TMForumSubscription.class,
 				String.format("entities=%s&eventTypes=%s", CharacterizationEntity.TYPE, DELETE_EVENT_TYPE)).filter();
 		String rendered = renderer.renderFilter(query.getValue());
 		assertEquals(String.format("entities==\"%s\";eventTypes==\"%s\"", CharacterizationEntity.TYPE, DELETE_EVENT_TYPE),

@@ -57,7 +57,7 @@ public enum KnownDeviation {
      * A regex anchored with {@code ^} or {@code $} matches nothing, while an unanchored one matches (the contract's
      * {@code REGEX_UNANCHORED} case). Observed on
      * Scorpio 5.0.3, quoted and unquoted. The not-equals idiom still works where {@code optimizeRegexNotEquals}
-     * rewrites it to {@code !=}. Pending acceptance (ticket 0).
+     * lets {@code QueryParser} normalize it into a NOT_EQUALS comparison. Pending acceptance (ticket 0).
      */
     ANCHORED_REGEX_NEVER_MATCHES,
 

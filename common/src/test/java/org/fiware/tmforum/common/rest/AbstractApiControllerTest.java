@@ -59,7 +59,7 @@ class AbstractApiControllerTest {
 		// was correctly parsed into ParsedQuery.ids(). The non-polymorphic list() already forwarded
 		// it; listPolymorphic must do the same.
 		GeneralProperties properties = new GeneralProperties();
-		QueryParser queryParser = new QueryParser();
+		QueryParser queryParser = new QueryParser(new GeneralProperties());
 		EntityRepository repository = mock(EntityRepository.class);
 		TestController controller = new TestController(queryParser, repository);
 
@@ -89,7 +89,7 @@ class AbstractApiControllerTest {
 	@ParameterizedTest
 	@MethodSource("provideNonIntegerPaginationParameters")
 	public void listRejectsNonIntegerPaginationParameters(String message, String queryString) {
-		TestController controller = new TestController(new QueryParser(),
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(EntityRepository.class));
 		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
@@ -103,7 +103,7 @@ class AbstractApiControllerTest {
 	@ParameterizedTest
 	@MethodSource("provideNonIntegerPaginationParameters")
 	public void listPolymorphicRejectsNonIntegerPaginationParameters(String message, String queryString) {
-		TestController controller = new TestController(new QueryParser(),
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(EntityRepository.class));
 		HttpRequest<?> request = HttpRequest.GET("/resource" + queryString);
 
@@ -133,7 +133,7 @@ class AbstractApiControllerTest {
 	@Test
 	public void listAcceptsIntegerPaginationParameters() {
 		EntityRepository repository = mock(EntityRepository.class);
-		TestController controller = new TestController(new QueryParser(), repository);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
 		HttpRequest<?> request = HttpRequest.GET("/resource?offset=10&limit=5");
 		when(repository.findEntities(any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 10, 5, null)));
@@ -153,7 +153,7 @@ class AbstractApiControllerTest {
 	@MethodSource("provideForeignIds")
 	public void deleteRejectsAnIdOfAnotherType(String message, String id) {
 		EntityEventPublisher publisher = mock(EntityEventPublisher.class);
-		TestController controller = new TestController(new QueryParser(),
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(EntityRepository.class));
 		controller.setEventPublisher(publisher);
 
@@ -177,7 +177,7 @@ class AbstractApiControllerTest {
 			List<String> expectedTypes) {
 		EntityEventPublisher publisher = mock(EntityEventPublisher.class);
 		when(publisher.deleteWithEvent(any(), any())).thenReturn(Mono.empty());
-		TestController controller = new TestController(new QueryParser(),
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(EntityRepository.class));
 		controller.setEventPublisher(publisher);
 
@@ -203,7 +203,7 @@ class AbstractApiControllerTest {
 	@MethodSource("provideLimits")
 	public void listClampsTheLimitToTheMaximum(Integer requestedLimit, int expectedLimit) {
 		EntityRepository repository = mock(EntityRepository.class);
-		TestController controller = new TestController(new QueryParser(), repository);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
 		when(repository.findEntities(any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, expectedLimit, null)));
 		when(repository.findEntitiesPolymorphic(any(), any(), any(), any(), any(), any()))
@@ -231,7 +231,7 @@ class AbstractApiControllerTest {
 	@ParameterizedTest
 	@MethodSource("provideInvalidPagination")
 	public void listRejectsAnOutOfRangePaginationParameter(String message, Integer offset, Integer limit) {
-		TestController controller = new TestController(new QueryParser(),
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
 				mock(EntityRepository.class));
 
 		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
@@ -252,7 +252,7 @@ class AbstractApiControllerTest {
 	@MethodSource("provideListQueries")
 	public void listPassesTheParsedFilterAndSortToTheRepository(String queryString, EntityQuery expected) {
 		EntityRepository repository = mock(EntityRepository.class);
-		TestController controller = new TestController(new QueryParser(), repository);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
 		when(repository.findEntities(any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, 10, null)));
 
@@ -267,7 +267,7 @@ class AbstractApiControllerTest {
 	@MethodSource("provideListQueries")
 	public void listPolymorphicPassesTheParsedFilterAndSortToTheRepository(String queryString, EntityQuery expected) {
 		EntityRepository repository = mock(EntityRepository.class);
-		TestController controller = new TestController(new QueryParser(), repository);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
 		when(repository.findEntitiesPolymorphic(any(), any(), any(), any(), any(), any()))
 				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, 10, null)));
 

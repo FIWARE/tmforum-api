@@ -6,7 +6,6 @@ import io.github.wistefan.mapping.QueryAttributeType;
 import io.github.wistefan.mapping.ReservedWordHandler;
 import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
@@ -42,17 +41,8 @@ public class NgsiLdQueryRenderer {
 	// the referenced entity's id is implied by the relationship itself
 	private static final String RELATIONSHIP_ID_SUFFIX = RELATIONSHIP_PATH_SEPARATOR + ID;
 
-	// NGSI-LD's native "not equal" operator, used to rewrite the `.regex` "not equal" idiom below
+	// NGSI-LD's native "not equal" operator; QueryParser produces the model operator from the `.regex` idiom
 	private static final String NGSI_LD_NOT_EQUALS = "!=";
-
-	/**
-	 * Idiom used to express "not equal to X" via a negative-lookahead regex: {@code ^(?!X$).*$}. When
-	 * {@link GeneralProperties#isOptimizeRegexNotEquals()} is enabled, a {@code .regex} filter matching
-	 * this idiom is rewritten to NGSI-LD's native {@code !=} instead of forwarding a broker-side pattern
-	 * match, since not every broker's regex engine supports lookahead (e.g. Scorpio's PostgreSQL-backed
-	 * POSIX regex doesn't).
-	 */
-	private static final Pattern NOT_EQUALS_REGEX_IDIOM = Pattern.compile("^\\^\\(\\?!(.+?)\\$\\)\\.\\*\\$$");
 
 	/**
 	 * Characters NGSI-LD's {@code q} reads as syntax inside a pattern, quoted or not. On Orion-LD 1.9.0 or Scorpio 5.0.3
@@ -81,7 +71,6 @@ public class NgsiLdQueryRenderer {
 	private static final Pattern WORD_COLON_WORD = Pattern.compile("(?<=\\w):(?=\\w)");
 	private static final String ESCAPED_COLON = Matcher.quoteReplacement("\\:");
 
-	private final GeneralProperties generalProperties;
 	private final NgsiLdBrokerProperties brokerProperties;
 
 	/**
@@ -139,21 +128,16 @@ public class NgsiLdQueryRenderer {
 		NgsiLdAttribute attribute = toNgsiLdAttribute(queryClass, comparison.attribute());
 		String attrPath = toAttrPath(attribute, QueryParser.isRelationship(queryClass, attribute));
 
-		String operator = Operator.of(comparison.operator()).getNgsiLdOperator();
 		List<String> values = comparison.values();
-		ValueType valueType = comparison.valueType();
 		if (comparison.operator() == ComparisonOperator.REGEX) {
-			Matcher notEquals = NOT_EQUALS_REGEX_IDIOM.matcher(values.getFirst());
-			if (generalProperties.isOptimizeRegexNotEquals() && notEquals.matches()) {
-				operator = NGSI_LD_NOT_EQUALS;
-				values = List.of(notEquals.group(1));
-				valueType = ValueType.STRING;
-			} else {
-				return attrPath + operator + toRegExp(values.getFirst());
-			}
+			return attrPath + Operator.of(ComparisonOperator.REGEX).getNgsiLdOperator()
+					+ toRegExp(values.getFirst());
 		}
+		String operator = comparison.operator() == ComparisonOperator.NOT_EQUALS
+				? NGSI_LD_NOT_EQUALS
+				: Operator.of(comparison.operator()).getNgsiLdOperator();
 
-		ValueType encodingType = valueType;
+		ValueType encodingType = comparison.valueType();
 		List<String> encodedValues = values.stream().map(value -> encodeValue(value, encodingType)).toList();
 		return renderValues(attrPath + operator, encodedValues);
 	}

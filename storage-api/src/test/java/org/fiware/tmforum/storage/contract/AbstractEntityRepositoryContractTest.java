@@ -566,8 +566,9 @@ public abstract class AbstractEntityRepositoryContractTest<T, O> {
                 KnownDeviation.ANCHORED_REGEX_NEVER_MATCHES),
         REGEX_UNANCHORED(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of(UNANCHORED_PATTERN),
                 Set.of(1, 2)),
-        REGEX_NOT_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.REGEX, List.of("^(?!" + ALPHA + "$).*$"),
-                Set.of(1, 2)),
+        // what QueryParser makes of the TMForum "not equal" regex idiom when its value is a literal; both backends
+        // compare rather than run a pattern, so neither depends on lookahead support
+        NOT_EQUALS(Attribute.STRING, WORDS, ComparisonOperator.NOT_EQUALS, List.of(ALPHA), Set.of(1, 2)),
         REGEX_ALTERNATION(Attribute.STRING, WORDS, ComparisonOperator.REGEX,
                 List.of(ALTERNATION_PATTERN), Set.of(1, 2),
                 KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED),

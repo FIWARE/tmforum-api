@@ -180,6 +180,7 @@ final class JsonbQueryRenderer {
     private static String sqlOperator(ComparisonOperator operator) {
         return switch (operator) {
             case EQUALS -> "=";
+            case NOT_EQUALS -> "<>";
             case GREATER_THAN -> ">";
             case GREATER_THAN_EQUALS -> ">=";
             case LESS_THAN -> "<";
