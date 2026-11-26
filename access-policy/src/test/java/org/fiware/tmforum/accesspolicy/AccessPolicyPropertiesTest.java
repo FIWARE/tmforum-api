@@ -7,7 +7,6 @@ import org.fiware.tmforum.accesspolicy.AccessPolicyProperties.Decision;
 import org.fiware.tmforum.accesspolicy.AccessPolicyProperties.Mode;
 import org.fiware.tmforum.accesspolicy.AccessPolicyProperties.TotalCount;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -15,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,6 +32,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * control without notice.
  */
 class AccessPolicyPropertiesTest {
+
+	static final String VALID_PDP_URL = "http://odrl-pap.example.org:8080";
+
+	private static final String PDP_SERVICE_URL_KEY = "micronaut.http.services.pdp.url";
+	private static final String PDP_SERVICE_URLS_KEY = "micronaut.http.services.pdp.urls";
 
 	private static String key(String suffix) {
 		return AccessPolicyProperties.PREFIX + "." + suffix;
@@ -103,12 +109,12 @@ class AccessPolicyPropertiesTest {
 		}
 	}
 
-	@DisplayName("Without any access-policy key, the guard does not exist.")
-	@Test
-	void guardIsAbsentWhenUnconfigured() {
+	@DisplayName("Without any access-policy key, neither the guard nor the PDP client exists.")
+	@ParameterizedTest(name = "{0}")
+	@ValueSource(classes = {AccessPolicyConfigurationGuard.class, PolicyDecisionPoint.class})
+	void featureBeansAreAbsentWhenUnconfigured(Class<?> bean) {
 		try (ApplicationContext context = ApplicationContext.run()) {
-			assertFalse(context.containsBean(AccessPolicyConfigurationGuard.class),
-					"Without configuration, the module must not create any bean.");
+			assertFalse(context.containsBean(bean), "Without configuration, the module must not create any bean.");
 		}
 	}
 
@@ -192,13 +198,17 @@ class AccessPolicyPropertiesTest {
 	@ParameterizedTest(name = "{1}: {0}")
 	@MethodSource("invalidValues")
 	void invalidValuesFailStartup(Map<String, Object> configuration, String property) {
+		assertGuardRejects(configuration, key(property));
+	}
+
+	private static void assertGuardRejects(Map<String, Object> configuration, String rejectedKey) {
 		Throwable thrown = assertThrows(Throwable.class, () -> {
 			try (ApplicationContext context = ApplicationContext.run(configuration)) {
 				context.getBean(AccessPolicyProperties.class);
 			}
-		}, String.format("An invalid %s must fail the startup.", property));
-		assertTrue(guardRejected(thrown, key(property)),
-				String.format("The guard should reject %s, but the failure was: %s", key(property), thrown));
+		}, String.format("An invalid %s must fail the startup.", rejectedKey));
+		assertTrue(guardRejected(thrown, rejectedKey),
+				String.format("The guard should reject %s, but the failure was: %s", rejectedKey, thrown));
 	}
 
 	private static final String VALID_JWKS_URI = "https://keycloak.example.org/realms/test/protocol/openid-connect/certs";
@@ -234,11 +244,11 @@ class AccessPolicyPropertiesTest {
 				Arguments.of(Map.of(key("enabled"), "false")),
 				Arguments.of(Map.of(key("mode"), "observe")),
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
-						key("jwt.issuer"), VALID_ISSUER)),
+						key("jwt.issuer"), VALID_ISSUER, key("pdp.url"), VALID_PDP_URL)),
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "http://keycloak:8080/certs",
-						key("jwt.issuer"), VALID_ISSUER)),
+						key("jwt.issuer"), VALID_ISSUER, key("pdp.url"), VALID_PDP_URL)),
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
-						key("jwt.issuer"), VALID_ISSUER, key("jwt.audience"), "tmforum-api")));
+						key("jwt.issuer"), VALID_ISSUER, key("jwt.audience"), "tmforum-api", key("pdp.url"), VALID_PDP_URL)));
 	}
 
 	@DisplayName("A disabled access control needs no token settings, an enabled one starts with both set.")
@@ -248,6 +258,74 @@ class AccessPolicyPropertiesTest {
 		try (ApplicationContext context = ApplicationContext.run(configuration)) {
 			assertTrue(context.containsBean(AccessPolicyConfigurationGuard.class),
 					"The guard should exist and accept the configuration.");
+		}
+	}
+
+	private static Map<String, Object> enabledWith(Map<String, Object> pdpEndpoint) {
+		Map<String, Object> configuration = new HashMap<>(pdpEndpoint);
+		configuration.putAll(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+				key("jwt.issuer"), VALID_ISSUER));
+		return configuration;
+	}
+
+	private static Stream<Arguments> invalidPdpEndpoints() {
+		return Stream.of(
+				Arguments.of("neither", enabledWith(Map.of()), key("pdp.url")),
+				Arguments.of("blank url", enabledWith(Map.of(key("pdp.url"), " ")), key("pdp.url")),
+				Arguments.of("relative url", enabledWith(Map.of(key("pdp.url"), "/validate")), key("pdp.url")),
+				Arguments.of("url without scheme", enabledWith(Map.of(key("pdp.url"), "odrl-pap:8080")), key("pdp.url")),
+				Arguments.of("both, service url", enabledWith(Map.of(key("pdp.url"), VALID_PDP_URL,
+						PDP_SERVICE_URL_KEY, VALID_PDP_URL)), key("pdp.url")),
+				Arguments.of("both, service urls", enabledWith(Map.of(key("pdp.url"), VALID_PDP_URL,
+						PDP_SERVICE_URLS_KEY, List.of(VALID_PDP_URL))), key("pdp.url")),
+				Arguments.of("blank service url", enabledWith(Map.of(PDP_SERVICE_URL_KEY, "")), key("pdp.url")),
+				Arguments.of("blank service url, blank url", enabledWith(Map.of(key("pdp.url"), "",
+						PDP_SERVICE_URL_KEY, " ")), key("pdp.url")),
+				Arguments.of("blank service urls", enabledWith(Map.of(PDP_SERVICE_URLS_KEY, List.of(" "))),
+						key("pdp.url")),
+				Arguments.of("relative service url", enabledWith(Map.of(PDP_SERVICE_URL_KEY, "/validate")),
+						PDP_SERVICE_URL_KEY),
+				Arguments.of("service urls without scheme", enabledWith(Map.of(PDP_SERVICE_URLS_KEY,
+						List.of(VALID_PDP_URL, "odrl-pap:8080"))), PDP_SERVICE_URLS_KEY),
+				Arguments.of("service url with base path", enabledWith(Map.of(PDP_SERVICE_URL_KEY,
+						VALID_PDP_URL + "/base")), PDP_SERVICE_URL_KEY),
+				Arguments.of("service urls with base path", enabledWith(Map.of(PDP_SERVICE_URLS_KEY,
+						List.of(VALID_PDP_URL, VALID_PDP_URL + "/base"))), PDP_SERVICE_URLS_KEY),
+				Arguments.of("invalid path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL,
+						key("pdp.path"), "/val idate")), key("pdp.path")),
+				Arguments.of("absolute path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL,
+						key("pdp.path"), VALID_PDP_URL + "/validate")), key("pdp.path")),
+				Arguments.of("blank path", enabledWith(Map.of(key("pdp.url"), VALID_PDP_URL,
+						key("pdp.path"), " ")), key("pdp.path")),
+				Arguments.of("zero timeout", enabledWith(Map.of(key("pdp.url"), VALID_PDP_URL,
+						key("pdp.timeout"), "0s")), key("pdp.timeout")),
+				Arguments.of("negative timeout", enabledWith(Map.of(key("pdp.url"), VALID_PDP_URL,
+						key("pdp.timeout"), "PT-1S")), key("pdp.timeout")));
+	}
+
+	@DisplayName("An enabled access control needs exactly one absolute http(s) PDP endpoint, a path and a positive timeout.")
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("invalidPdpEndpoints")
+	void invalidPdpEndpointFailsStartup(String name, Map<String, Object> configuration, String rejectedKey) {
+		assertGuardRejects(configuration, rejectedKey);
+	}
+
+	private static Stream<Arguments> acceptedPdpEndpoints() {
+		return Stream.of(
+				Arguments.of("pdp.url", enabledWith(Map.of(key("pdp.url"), VALID_PDP_URL))),
+				Arguments.of("service url", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL))),
+				Arguments.of("service urls", enabledWith(Map.of(PDP_SERVICE_URLS_KEY, List.of(VALID_PDP_URL)))),
+				Arguments.of("service url with root path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL + "/"))),
+				Arguments.of("service url and service path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL,
+						"micronaut.http.services.pdp.path", "/base"))));
+	}
+
+	@DisplayName("Either PDP endpoint starts an enabled access control with a PDP client.")
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("acceptedPdpEndpoints")
+	void acceptedPdpEndpointStarts(String name, Map<String, Object> configuration) {
+		try (ApplicationContext context = ApplicationContext.run(configuration)) {
+			assertNotNull(context.getBean(PolicyDecisionPoint.class), "The PDP client should exist once enabled.");
 		}
 	}
 
@@ -282,7 +360,7 @@ class AccessPolicyPropertiesTest {
 				Arguments.of(Map.of(key("mode"), "observe")),
 				Arguments.of(Map.of(key("enabled"), "false")),
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
-						key("jwt.issuer"), VALID_ISSUER)));
+						key("jwt.issuer"), VALID_ISSUER, key("pdp.url"), VALID_PDP_URL)));
 	}
 
 	@DisplayName("Every enabled value the guard accepts is read alike by the bound properties and by the bean gate.")

@@ -56,6 +56,12 @@
             <artifactId>reactor-core</artifactId>
             <scope>compile</scope>
         </dependency>
+        <!-- pins the PDP request's wire shape regardless of the deploying app's serialization inclusion -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -87,6 +93,25 @@
 
     <build>
         <plugins>
+            <!-- exports only the PDP stub, so the test beans, fixtures and logging config stay out of every consumer -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>pdp-stub</id>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>org/fiware/tmforum/accesspolicy/StubPolicyDecisionPoint.class</include>
+                                <include>org/fiware/tmforum/accesspolicy/StubPolicyDecisionPoint$*.class</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- the module sits below common, so depending on any other module of this build fails the build -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
