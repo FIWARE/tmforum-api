@@ -14,8 +14,12 @@ entry lives for `min(token exp, decision-ttl)`. The cache runs over the already-
   and coalescing concurrent misses. The cache backends are still the wired ones. As the ticket
   requires, the key is built **only from method parameters**: the `Subject` is passed in and never
   read from `ServerRequestContext`.
-- **Key.** It is a SHA-256 hex of the canonical list `[policyUid, scope, action, identity,
-  credentialFingerprint, digest(policy), digest(resource) | null]`. Scope and action are in the key
+- **Key.** It is the SHA-256 hex of a canonical map with fixed names: `uid`, `scope`, `action`,
+  `identity`, `fingerprint`, `policy` (= `digest(policy)`) and, only for resource-constrained
+  policies, `resource` (= `digest(resourceMap)`). Null entries are dropped before digesting, so the
+  digest never depends on how the JSON writer renders `null`, and the fixed names keep an absent
+  entry unambiguous. `resourceMap` is built by hand, never by reflection: `type`, `id`, `catalog`,
+  `category` (list order kept) and `relatedParty` as a list of `{role, did}` maps. Scope and action are in the key
   so that a `catalog/read` verdict never answers an `order` check. The policy-body digest makes an
   edited policy a new key at once, while reuse of the same policy still deduplicates. The resource
   digest is only included when `ResourceConstraintDetector` flags the policy. A hex key also keeps
@@ -46,9 +50,11 @@ entry lives for `min(token exp, decision-ttl)`. The cache runs over the already-
 
 ### Step 1: Canonical digest, resource-constraint detection and the decision key
 Pure, bean-free groundwork in `access-policy/src/main/java/org/fiware/tmforum/accesspolicy/`:
-- `CanonicalJson` (package-private, final). `static String digest(Object value)`: a SHA-256 hex of
-  the canonical JSON, with maps sorted recursively and lists kept in order, through
-  `JSONObjectUtils.toJSONString`. Move `Subject.fingerprint`/`canonicalMap`/`canonicalValue` into it
+- `CanonicalJson` (package-private, final). `static String digest(Map<String, ?> value)`: a SHA-256
+  hex of the canonical JSON, with maps sorted recursively and lists kept in order, through
+  `JSONObjectUtils.toJSONString`, which only takes a `Map<String, ?>`. Nested values are what JSON
+  parsing yields (maps, lists, strings, numbers, booleans); callers never pass records or other
+  beans, so nimbus' shaded Gson never reflects over a type. Move `Subject.fingerprint`/`canonicalMap`/`canonicalValue` into it
   and have `Subject` delegate. The fingerprints must stay byte-identical, so the existing
   `SubjectTest` passes unchanged.
 - `ResourceConstraintDetector` (package-private, final). `static boolean constrainsResource(Map<String, Object> policy)`
@@ -57,7 +63,9 @@ Pure, bean-free groundwork in `access-policy/src/main/java/org/fiware/tmforum/ac
 - `DecisionKey` record (`String value`), with `toString()` returning `value` because Redis
   serialises keys through their string form. Add `static DecisionKey of(String policyUid,
   Map<String, Object> policy, String scope, String action, ValidationRequest.Resource resource,
-  Subject subject)` built as described in the Overview.
+  Subject subject)` built as described in the Overview: the key parts go into a `LinkedHashMap` with
+  the fixed names, and a private `resourceMap(Resource)` / `relatedPartyMap(RelatedParty)` turn the
+  records into plain maps before `CanonicalJson.digest`.
 - Tests, parameterized. `ResourceConstraintDetectorTest` covers UC-1 compact, an expanded JSON-LD
   variant, the UC-3 refinement policy, a plain `odrl:target` id, `tmf:relatedParty` in a permission
   constraint, an unreadable `leftOperand`, and an empty policy. `DecisionKeyTest` checks these cases:
@@ -66,6 +74,9 @@ Pure, bean-free groundwork in `access-policy/src/main/java/org/fiware/tmforum/ac
   - A different resource gives the same key for a subject-only policy and a different key for a
     constrained one.
   - `ANONYMOUS` is accepted.
+  - A `null` resource, `null` catalog, `null` category or `null` relatedParty is accepted.
+  - The record components of `Resource` and `RelatedParty` equal the field sets `resourceMap` and
+    `relatedPartyMap` handle, so a new field fails this test and has to be added to the key on purpose.
 
 Acceptance: `mvn test -pl access-policy` is green and `SubjectTest` is unchanged.
 
@@ -75,12 +86,23 @@ Acceptance: `mvn test -pl access-policy` is green and `SubjectTest` is unchanged
   the `below-common` enforcer still passes.
 - `CachedDecision` record (`AccessDecision decision`, `long validUntilEpochMilli`), with
   `boolean isValidAt(Instant now)`. Use plain fields that Jackson can bind; Step 3 relies on this.
-- `DecisionCache`: `@Singleton` and `@Requires(property = AccessPolicyProperties.ENABLED_PROPERTY,
-  value = "true")`, with `public static final String CACHE_NAME = "decisions"`.
+- `DecisionCache`: `@Context` (eager, not `@Singleton`) and `@Requires(property =
+  AccessPolicyProperties.ENABLED_PROPERTY, value = "true")`, with `public static final String
+  CACHE_NAME = "decisions"`.
   - The `@Inject` constructor takes `(AccessPolicyProperties, PolicyDecisionPoint, CacheManager<?>)`.
     A package-private constructor adds a `java.time.Clock` for tests.
-  - Resolve `cacheManager.getCache(CACHE_NAME).async()` once at construction, so a missing
-    `decisions` entry fails startup with a clear `ConfigurationException`, not the first request.
+  - Resolve `cacheManager.getCache(CACHE_NAME).async()` once at construction. Because the bean is
+    `@Context`, a missing `decisions` entry fails `ApplicationContext.run()` with a
+    `ConfigurationException` (`DefaultCacheManager`: "No cache configured for name: decisions"),
+    never the first filtered request. Neither Caffeine nor Redis registers a dynamic cache manager,
+    so nothing creates the cache silently. This matters most for deployments that bring their own
+    config (Helm values) instead of the profile YAMLs.
+  - The existing enabled-context tests in `access-policy` (`PolicyDecisionPointHttpTest`,
+    `SubjectResolutionFilterContextTest`, `HttpJwkSetProviderHttpTest`, and any other test that sets
+    `ENABLED_PROPERTY` to `true`) now need a `decisions` cache. Add one shared test constant (for
+    example `TestCaches.DECISIONS = Map.of("micronaut.caches.decisions.maximum-size", ...)`) and
+    merge it into their properties. Product-catalog's `AccessPolicySubjectResolutionIT` gets the
+    cache from the profile YAMLs in Step 4.
   - Public `Mono<AccessDecision> decide(String policyUid, Map<String, Object> policy, String scope,
     String action, ValidationRequest.Resource resource, Subject subject)`. It builds the
     `ValidationRequest` with `ValidationRequest.of(...)` only on a miss, and follows every rule in the
@@ -107,6 +129,8 @@ Acceptance: `mvn test -pl access-policy` is green and `SubjectTest` is unchanged
   - A cache whose `get`/`put` errors still yields the PDP verdict. Use a mocked `CacheManager` for
     this case only.
   - `decide` runs with no `ServerRequestContext`, which confirms the key comes from parameters.
+  - Enabled with no `micronaut.caches.decisions` entry: `ApplicationContext.run()` throws, and the
+    cause chain holds a `ConfigurationException` that names `decisions`.
 
 Acceptance: `mvn test -pl access-policy` is green.
 
@@ -118,10 +142,19 @@ Acceptance: `mvn test -pl access-policy` is green.
     `micronaut-jackson-databind`. Use `mvn dependency:copy` or unzip the jar from `~/.m2`.
   - Also confirm that `RedisCache.get(key, Argument)` hands it the `CachedDecision` type, since the
     `@Cacheable` path is not used.
-  - If the class is missing or cannot bind the record, add a fallback:
+  - Checked during plan review: `io.micronaut.jackson.serialize.JacksonObjectSerializer` is in
+    `micronaut-jackson-databind` 5.2.17 (the core version in the 5.2.3 BOM). Re-check it on the
+    build's resolved jar.
+  - If the class cannot bind the record, add a fallback:
     `CachedDecisionSerializer implements io.micronaut.core.serialize.ObjectSerializer` in
-    `access-policy`, backed by `io.micronaut.json.JsonMapper`. Gate it with the same `@Requires`.
-- Never use `JdkSerializer`. Java deserialization of data read from Redis is a gadget risk.
+    `access-policy`, backed by `io.micronaut.json.JsonMapper`. Do **not** gate it with
+    `@Requires(access-policy.enabled)`: the YAMLs name it in every redis profile, and a bean that does
+    not exist is silently replaced (see the next bullet).
+- Never use `JdkSerializer`. Java deserialization of data read from Redis is a gadget risk. Note the
+  silent fallback: micronaut-redis 7.2.0 `AbstractRedisCache` resolves `value-serializer` through
+  `beanLocator.findOrInstantiateBean(...)` and, if that is empty, falls back to the default cache's
+  serializer and then to `new JdkSerializer(...)`. A typo or a missing bean therefore brings back
+  `JdkSerializer` with no error. Step 4 and Step 5 check for it.
 - Add `CachedDecisionSerializationTest` in `access-policy` (adding `micronaut-jackson-databind` with
   test scope if needed). Run the chosen serializer from a real `ApplicationContext`, so the app's
   `ObjectMapper` modules apply, and round-trip `CachedDecision` with each `Source`, a `null` reason
@@ -149,7 +182,8 @@ Acceptance: `mvn test -pl access-policy` is green and the serializer class name 
 - Do not add `decisions` to `ClientTrackingRedisCache`'s tracking prefixes. Nothing keeps a local
   copy, so the reads go to Redis directly.
 - Check: `git ls-files '*application-in-memory.yaml' '*application-redis.yaml' | xargs grep -L
-  'decisions:'` prints nothing. `mvn clean install -DskipTests -DskipITs` passes. A disabled app
+  'decisions:'` prints nothing, and `git ls-files '*application-redis.yaml' | xargs grep -L
+  '<Step 3 serializer class>'` prints nothing, which catches a typo in any redis file. `mvn clean install -DskipTests -DskipITs` passes. A disabled app
   (for example `mvn test -pl party-catalog`) still starts, because a configured but unused cache is
   harmless.
 - `AGENTS.md`: one line in Key Conventions saying every cache profile YAML carries
@@ -169,16 +203,32 @@ Acceptance: `mvn test -pl access-policy` is green and the serializer class name 
     - 100 resources and 6 uids give 6 stub calls.
     - A different credential set gets its own decision.
     - UC-9 with Awaitility (`org.awaitility`, already in the root pom): after a narrow and after a
-      widen, the new verdict shows within `decision-ttl` plus a small named slack constant, and the
-      narrow takes no longer than the widen.
+      widen, the new verdict shows within `decision-ttl` plus a small named slack constant. The two
+      wall-clock durations are not compared with each other, because they differ only by poll
+      jitter. The equal bound is proven by the `Clock`-driven `DecisionCacheTest` in Step 2.
     - Round-trip: read the `decisions` entry back through `cacheManager.getCache("decisions")` and
-      check it equals the stored `CachedDecision`. When the environment is active for `redis`,
-      assert that the native cache is a Redis one, so a silent fallback to Caffeine cannot pass.
+      check it equals the stored `CachedDecision`. When the environment is active for `redis`:
+      - assert that the native cache is a Redis one, so a silent fallback to Caffeine cannot pass;
+      - read the raw bytes of the entry through the native connection (`decisions:<key>`) and
+        assert they are the chosen serializer's JSON (they parse as a JSON object and do not start
+        with the Java serialization magic `0xACED`). A round trip alone would also pass under
+        `JdkSerializer`.
   - The test touches no storage, so it needs no storage tag.
-- `doc/access-policies/ARCHITECTURE.md` § Caching: two or three lines that document the staleness
-  bound (`decision-ttl`, symmetric for grant and revocation, failures uncached), the key
-  composition, and the fail-safe resource-constraint rule. That satisfies UC-9's "documented"
-  criterion.
+- `doc/access-policies/ARCHITECTURE.md`:
+  - § Caching: replace "Micronaut `@Cacheable` over the already-wired in-memory or Redis backend"
+    (line ~382) with the programmatic `DecisionCache` over the same backends, and state why the
+    annotation was not used: per-entry expiry `min(token exp, decision-ttl)`, no caching of PDP
+    failures, coalescing of concurrent misses.
+  - § Caching: two or three lines that document the staleness bound (`decision-ttl`, symmetric for
+    grant and revocation, failures uncached), the key composition, and the fail-safe
+    resource-constraint rule. That satisfies UC-9's "documented" criterion.
+  - The file tree (line ~191): `PolicyDecisionPoint.java` loses `@Cacheable`, and `DecisionCache.java`
+    is added with a short description.
+  - `git grep -n Cacheable doc/access-policies` must only show the sentence that explains why the
+    annotation is not used.
+- PR descriptions: the Step 2 PR and the Step 5 PR each state the departure from the ticket's
+  `@Cacheable` and the three reasons. They also point to `DecisionCache.decide(...)` taking the
+  `Subject` as a parameter, which meets the scope bullet "key built from method parameters".
 - Run:
   - `mvn integration-test -pl product-catalog -Dit.test=AccessPolicyCacheIT -DskipTests`
   - the same command with `-Dcache=redis`
