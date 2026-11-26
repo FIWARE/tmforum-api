@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -29,6 +30,7 @@ import static org.fiware.tmforum.accesspolicy.ValidationRequestSerializationTest
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests the wired {@link PolicyDecisionPoint} over real HTTP against {@link StubPolicyDecisionPoint}.
@@ -112,23 +114,30 @@ class PolicyDecisionPointHttpTest {
 		assertEquals(1, stub.requestCount());
 	}
 
+	// each case pins its own reason, so a 503 or a refused connection that degrades into a timeout fails the test
 	private static Stream<Arguments> failures() {
 		return Stream.of(
 				Arguments.of("503", (Function<StubPolicyDecisionPoint, String>) stub -> {
 					stub.failWith(SERVICE_UNAVAILABLE);
 					return stub.url();
-				}),
+				}, LENIENT_TIMEOUT, (Consumer<String>) reason ->
+						assertEquals(String.format(PolicyDecisionPoint.ANSWERED, SERVICE_UNAVAILABLE), reason)),
 				Arguments.of("delay beyond the timeout", (Function<StubPolicyDecisionPoint, String>) stub -> {
 					stub.delay(STUB_DELAY);
 					return stub.url();
-				}),
-				Arguments.of("closed port", (Function<StubPolicyDecisionPoint, String>) stub -> closedPortUrl()));
+				}, SHORT_TIMEOUT, (Consumer<String>) reason ->
+						assertEquals(String.format(PolicyDecisionPoint.TIMED_OUT, SHORT_TIMEOUT), reason)),
+				Arguments.of("closed port", (Function<StubPolicyDecisionPoint, String>) stub -> closedPortUrl(),
+						LENIENT_TIMEOUT, (Consumer<String>) reason -> assertTrue(
+								reason.startsWith(String.format(PolicyDecisionPoint.UNREACHABLE, "")), reason)));
 	}
 
+	// the verify bound holds for every case, so a lenient pdp.timeout still has to fail fast
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("failures")
-	void tagsAFailureWithinTheTimeout(String name, Function<StubPolicyDecisionPoint, String> pdpUrl) {
-		try (ApplicationContext context = context(Map.of(PDP_URL_KEY, pdpUrl.apply(stub)), SHORT_TIMEOUT)) {
+	void tagsAFailureWithinTheTimeout(String name, Function<StubPolicyDecisionPoint, String> pdpUrl,
+			Duration pdpTimeout, Consumer<String> expectedReason) {
+		try (ApplicationContext context = context(Map.of(PDP_URL_KEY, pdpUrl.apply(stub)), pdpTimeout)) {
 			PolicyDecisionPoint pdp = context.getBean(PolicyDecisionPoint.class);
 
 			StepVerifier.create(pdp.decide(FULL_POLICY_UID, request(FULL_POLICY_UID, Subject.ANONYMOUS)))
@@ -136,6 +145,7 @@ class PolicyDecisionPointHttpTest {
 						assertEquals(Source.PDP_FAILURE, decision.source());
 						assertFalse(decision.permitted());
 						assertEquals(FULL_POLICY_UID, decision.policyUid());
+						expectedReason.accept(decision.reason());
 					})
 					.expectComplete()
 					.verify(SHORT_TIMEOUT.plus(FAILURE_SLACK));
