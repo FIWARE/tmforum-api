@@ -11,6 +11,7 @@ import org.fiware.tmforum.common.validation.ReferencedEntity;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.BeanDescription;
 import tools.jackson.databind.SerializationConfig;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.SerializationContext;
 import tools.jackson.databind.module.SimpleModule;
 import tools.jackson.databind.ser.BeanPropertyWriter;
@@ -163,6 +164,8 @@ class PostgresMappingModule extends SimpleModule {
     /**
      * Writes each extension entry as a property, skipping names of declared properties so no key is duplicated;
      * of two entries with the same name the last one wins, and a null value is omitted like a null declared one.
+     * A {@code NullNode} counts as null: a stored document never holds one, since the merge of a patch reads a
+     * null value as "remove this key".
      */
     private static final class ExtensionPropertiesWriter extends BeanPropertyWriter {
 
@@ -187,12 +190,17 @@ class PostgresMappingModule extends SimpleModule {
                 }
             }
             for (Map.Entry<String, Object> extension : extensionValues.entrySet()) {
-                if (extension.getValue() == null) {
+                if (isNull(extension.getValue())) {
                     continue;
                 }
                 generator.writeName(extension.getKey());
                 context.writeValue(generator, extension.getValue());
             }
+        }
+
+        // a JSON null reaches the domain object as a Java null, but a value built as a tree node carries NullNode
+        private static boolean isNull(Object value) {
+            return value == null || (value instanceof JsonNode node && node.isNull());
         }
     }
 }

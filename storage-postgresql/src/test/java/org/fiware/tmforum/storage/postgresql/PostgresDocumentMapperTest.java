@@ -27,6 +27,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.NullNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.cfg.DateTimeFeature;
@@ -268,10 +269,25 @@ class PostgresDocumentMapperTest {
                 Arguments.of(Named.of("event", event), DocumentMode.CARRIED_ATTRIBUTES, false, false));
     }
 
-    @ParameterizedTest
-    @EnumSource(DocumentMode.class)
-    void aNullExtensionIsNotWritten(DocumentMode mode) {
-        JsonNode document = document(documentMapper.storage(), catalogWithNullExtension(), mode);
+    static Stream<Arguments> nullExtensionValues() {
+        // a JSON null reaches the domain object as a Java null; a NullNode only if something builds one explicitly
+        return Stream.of(DocumentMode.values()).flatMap(mode -> Stream.of(
+                Arguments.of(mode, false), Arguments.of(mode, true)));
+    }
+
+    /**
+     * A stored document never holds null: the merge of a patch reads a null value as "remove this key", so a
+     * created document holding one would delete its own key on the next patch that carries it.
+     */
+    @ParameterizedTest(name = "{0}, NullNode: {1}")
+    @MethodSource("nullExtensionValues")
+    void aNullExtensionIsNotWritten(DocumentMode mode, boolean asNullNode) {
+        TestCatalog catalog = catalog(c -> {
+            c.setName(NAME);
+            c.addAdditionalProperties(EXTENSION_KEY, asNullNode ? NullNode.getInstance() : null);
+        });
+
+        JsonNode document = document(documentMapper.storage(), catalog, mode);
 
         assertFalse(document.has(EXTENSION_KEY), document.toString());
     }

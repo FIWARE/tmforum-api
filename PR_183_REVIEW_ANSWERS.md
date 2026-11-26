@@ -524,6 +524,37 @@ already pinned the scoping.
 
 ---
 
+### #12 — Shallow PATCH and `NullNode` in extensions
+
+> `data || patch` replaces each top-level attribute whole, so a nested object in the patch replaces the stored one
+> instead of being merged. Is that the intended PATCH semantics on both backends (NGSI-LD replaces per attribute)?
+>
+> `removeEmptyAttributes` [...] an extension attribute holding a `NullNode` is not removed there. [...] Worth a test
+> with a `NullNode` extension value; if confirmed, drop `NullNode` values in the full-document mode.
+
+Two separate points. The first is answered, the second was confirmed and fixed in
+`Keep a null extension value out of the stored document`.
+
+**The shallow merge is intended.** NGSI-LD replaces an attribute whole, and the PostgreSQL adapter matches it on
+purpose, so the same PATCH against either backend produces the same stored entity. A deep merge would be a
+divergence, and it would also make it impossible to shrink a nested object — a client could add keys to it but
+never remove one. `storage-api`'s contract test runs the same partial-update cases against both adapters, which is
+where that equivalence is held.
+
+**The `NullNode` is a real defect.** Writing the test the comment asks for reproduced it immediately: with the
+extension value built as a tree node rather than as a Java null, a create stored
+`{"id":…,"name":…,"customField":null}`. That contradicts "a stored document never holds null", and the merge reads
+a null value as "remove this key", so the next patch carrying the same extension would delete it.
+
+It is fixed where the value is written rather than in `removeEmptyAttributes`: `ExtensionPropertiesWriter` already
+skipped a Java null, and now treats a `NullNode` as one. That covers both document modes, so neither a create nor a
+patch can put a null into the document.
+
+(A JSON `null` in a request reaches the domain object as a Java null, which was already skipped and tested — the
+`NullNode` only appears when a value is built as a tree node. The test now covers both, in both modes.)
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -533,7 +564,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |
 | #8.1 | A row is delivered to every matching hub and fails unless all acknowledge | The only sub-point still open — see the note below the table. |
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
-| #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
