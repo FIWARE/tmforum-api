@@ -78,13 +78,43 @@ only for the test's own exemption list, which is unrelated to the gap itself.
 
 ---
 
+### #3 — With no backend named the default is now PostgreSQL (blocking)
+
+> A broker deployment at the default URL (sidecar, host network) without `MICRONAUT_ENVIRONMENTS` starts on an empty
+> database and serves empty data after the upgrade. Log a WARN at startup naming the selected backend, or fail when
+> no `POSTGRES_*` setting is present. `AGENTS.md` needs the same correction.
+
+**Agreed, fixed** in `Say which storage backend a start selected`.
+
+Taken as the WARN rather than the hard failure. Requiring a `POSTGRES_*` setting would reject the deployment the
+defaults are written for — a database reachable at `localhost:5432` with the shipped credentials — and the case the
+comment is really about (a broker at the shipped `http://localhost:1026`) would still pass that check, because such
+a deployment sets no `POSTGRES_*` either way. What distinguishes it is that nothing was named at all, and that is
+exactly what is now logged.
+
+`StorageBackendValidator` logs:
+
+- a **WARN** on the defaulted path, naming `postgresql` as the backend in use, saying the data comes from the
+  PostgreSQL database, and naming `orion-ld`/`scorpio` as what a broker deployment has to set — so an upgraded
+  deployment that silently moved to an empty database says so in its first lines of log;
+- an **INFO** naming the backend whenever one was selected explicitly, for either backend, so the log always answers
+  "which storage is this process on".
+
+The existing hard failure is unchanged: a defaulted start that *does* carry broker settings (a non-shipped ngsi URL
+or a `general.*` key) still aborts with the `ConfigurationException`.
+
+`AGENTS.md` L84 was wrong in two ways and is corrected: it said the broker beans are active when no backend env is
+set (they are not — `TmForumApplication.run` adds `postgresql`), and it said `conformance-test/api.yaml` deploys
+without `MICRONAUT_ENVIRONMENTS`, while that file now sets `orion-ld`.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
 
 | # | Comment | Verdict |
 |---|---------|---------|
-| #3 | With no backend named the default is now PostgreSQL | Agreed, blocking. A broker deployment at the default URL and without `MICRONAUT_ENVIRONMENTS` silently starts on an empty database. Plan: WARN at startup naming the selected backend, and correct `AGENTS.md` L84, which still says the broker beans are active when no backend env is set. |
 | #4 | Several `regex` filters on one attribute merged into one pattern | Agreed. `combineParts` must not join `REGEX` parts; emit one `Comparison` each and combine with `AnyOf`. |
 | #5 | `encodeValue` does not escape `"` | Agreed. Escape `"` and `\`, or throw `QueryException`; same for the `!=` group. |
 | #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |

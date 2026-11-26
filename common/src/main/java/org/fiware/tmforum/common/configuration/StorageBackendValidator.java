@@ -53,6 +53,11 @@ public class StorageBackendValidator {
 			+ "add %s or %s to MICRONAUT_ENVIRONMENTS. To use PostgreSQL, add %s to MICRONAUT_ENVIRONMENTS.";
 	private static final String IGNORED_BROKER_PROPERTIES_MESSAGE = "The NGSI-LD broker settings {} are ignored, "
 			+ "since {} is selected as storage backend. To use a broker, select {} or {} in MICRONAUT_ENVIRONMENTS.";
+	private static final String DEFAULTED_BACKEND_MESSAGE = "No storage backend is named in MICRONAUT_ENVIRONMENTS, "
+			+ "so {} is used by default and the data is read from and written to the configured PostgreSQL database. "
+			+ "A deployment that used an NGSI-LD broker before has to name {} or {} in MICRONAUT_ENVIRONMENTS, "
+			+ "otherwise it starts on an empty database.";
+	private static final String SELECTED_BACKEND_MESSAGE = "{} is selected as storage backend.";
 
 	public StorageBackendValidator(Environment environment) {
 		validate(environment.getActiveNames(), environment);
@@ -69,12 +74,18 @@ public class StorageBackendValidator {
 					environmentNames(backends), environmentNames(Set.of(StorageBackend.values()))));
 		}
 		if (!backends.contains(StorageBackend.POSTGRESQL)) {
+			backends.stream().findFirst().ifPresent(backend ->
+					log.info(SELECTED_BACKEND_MESSAGE, backend.environment()));
 			return List.of();
 		}
 		List<String> brokerProperties = configuredBrokerProperties(propertyResolver);
 		boolean defaulted = propertyResolver.getProperty(TmForumApplication.BACKEND_DEFAULTED_PROPERTY,
 				Boolean.class, false);
 		if (defaulted) {
+			// the broker was the backend before this was configurable, so an upgrade that keeps its settings at the
+			// shipped defaults is indistinguishable from a deployment that wants PostgreSQL; it must be visible
+			log.warn(DEFAULTED_BACKEND_MESSAGE, StorageBackend.POSTGRESQL.environment(),
+					StorageBackend.ORION_LD.environment(), StorageBackend.SCORPIO.environment());
 			List<String> brokerSettings = new ArrayList<>();
 			String ngsiUrl = propertyResolver.getProperty(NGSI_URL_PROPERTY, String.class, SHIPPED_NGSI_URL);
 			if (!SHIPPED_NGSI_URL.equals(ngsiUrl)) {
@@ -88,6 +99,7 @@ public class StorageBackendValidator {
 			}
 			return List.of();
 		}
+		log.info(SELECTED_BACKEND_MESSAGE, StorageBackend.POSTGRESQL.environment());
 		if (!brokerProperties.isEmpty()) {
 			log.warn(IGNORED_BROKER_PROPERTIES_MESSAGE, String.join(SETTINGS_SEPARATOR, brokerProperties),
 					StorageBackend.POSTGRESQL.environment(), StorageBackend.ORION_LD.environment(),
