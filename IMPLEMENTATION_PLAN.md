@@ -119,13 +119,16 @@ Acceptance: `mvn test -pl access-policy` is green and `SubjectTest` is unchanged
 - `DecisionCache`: `@Context` (eager, not `@Singleton`) and `@Requires(property =
   AccessPolicyProperties.ENABLED_PROPERTY, value = "true")`, with `public static final String
   CACHE_NAME = "decisions"`.
-  - The `@Inject` constructor takes `(AccessPolicyProperties, PolicyDecisionPoint, CacheManager<?>)`.
+  - The `@Inject` constructor takes `(AccessPolicyConfigurationGuard, AccessPolicyProperties,
+    PolicyDecisionPoint, CacheManager<?>)`. The guard comes first so that an invalid configuration
+    fails on the guard's message before the eager bean builds the PDP client.
     A package-private constructor adds a `java.time.Clock` for tests.
   - Resolve `cacheManager.getCache(CACHE_NAME).async()` once at construction. Because the bean is
     `@Context`, a missing `decisions` entry fails `ApplicationContext.run()` with a
-    `ConfigurationException` (`DefaultCacheManager`: "No cache configured for name: decisions"),
-    never the first filtered request. Neither Caffeine nor Redis registers a dynamic cache manager,
-    so nothing creates the cache silently. This matters most for deployments that bring their own
+    `ConfigurationException` ("No cache configured for name: decisions"), never the first filtered
+    request. Caffeine does register a dynamic cache manager (`DefaultDynamicCacheManager`, on unless
+    `micronaut.cache.dynamic=false`), which would create the cache silently, so the constructor first
+    checks that `cacheManager.getCacheNames()` holds `decisions` and throws otherwise. This matters most for deployments that bring their own
     config (Helm values) instead of the profile YAMLs.
   - The existing enabled-context tests in `access-policy` (`PolicyDecisionPointHttpTest`,
     `SubjectResolutionFilterContextTest`, `HttpJwkSetProviderHttpTest`, and any other test that sets

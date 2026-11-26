@@ -62,6 +62,12 @@
             <artifactId>jackson-annotations</artifactId>
             <scope>compile</scope>
         </dependency>
+        <!-- DecisionCache runs over whichever cache backend the deploying app wires (Caffeine or Redis) -->
+        <dependency>
+            <groupId>io.micronaut.cache</groupId>
+            <artifactId>micronaut-cache-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -87,6 +93,11 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-jackson-databind</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.cache</groupId>
+            <artifactId>micronaut-cache-caffeine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
