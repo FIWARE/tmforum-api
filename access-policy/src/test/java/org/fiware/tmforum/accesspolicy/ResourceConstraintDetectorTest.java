@@ -76,6 +76,11 @@ class ResourceConstraintDetectorTest {
 				Arguments.of("no constraint at all", """
 						{ %s, "permission": [ { "action": "read", "assignee": "did:web:partner" } ] }"""
 						.formatted(INLINE_CONTEXT), false),
+				Arguments.of("inline typed compact IRI terms", """
+						{ "@context": { "odrl": "http://www.w3.org/ns/odrl/2/", "vc": "https://w3id.org/fiware/dsc/vc#",
+						                "odrl:leftOperand": { "@type": "@id" }, "odrl:action": { "@type": "@id" } },
+						  "odrl:permission": { "odrl:action": "odrl:read", "odrl:constraint": {
+						    "odrl:leftOperand": "vc:country", "odrl:rightOperand": "DE" } } }""", false),
 				Arguments.of("UC-3 refinement on the target", """
 						{ "@context": { "odrl": "http://www.w3.org/ns/odrl/2/", "dspace": "https://w3id.org/dspace/2024/1/" },
 						  "odrl:permission": {
@@ -112,6 +117,34 @@ class ResourceConstraintDetectorTest {
 				Arguments.of("term aliasing odrl:target", """
 						{ "@context": { "odrl": "http://www.w3.org/ns/odrl/2/", "asset": "odrl:target" },
 						  "permission": [ { "asset": "urn:ngsi-ld:Catalog:p" } ] }""", true),
+				Arguments.of("inheritFrom a parent policy", """
+						{ "inheritFrom": "urn:policy:parent", "permission": [ { "action": "read" } ] }""", true),
+				Arguments.of("prefix splitting the odrl:target IRI", """
+						{ "@context": { "ot": "http://www.w3.org/ns/odrl/2/tar" },
+						  "permission": [ { "ot:get": "urn:ngsi-ld:Catalog:p" } ] }""", true),
+				Arguments.of("term aliasing a split-prefix target", """
+						{ "@context": { "ot": "http://www.w3.org/ns/odrl/2/tar", "asset": "ot:get" },
+						  "permission": [ { "asset": "urn:ngsi-ld:Catalog:p" } ] }""", true),
+				Arguments.of("prefix chained through a default prefix", """
+						{ "@context": { "o": "odrl:", "asset": "o:target" },
+						  "permission": [ { "asset": "urn:ngsi-ld:Catalog:p" } ] }""", true),
+				Arguments.of("@vocab splitting the odrl:target IRI", """
+						{ "@context": { "@vocab": "http://www.w3.org/ns/odrl/2/tar" },
+						  "permission": [ { "get": "urn:ngsi-ld:Catalog:p" } ] }""", true),
+				Arguments.of("any inline @vocab", """
+						{ "@context": [ { "@vocab": "http://www.w3.org/ns/odrl/2/" },
+						                { "vc": "https://w3id.org/fiware/dsc/vc#" } ],
+						  "permission": [ { "constraint": { "leftOperand": "vc:country", "rightOperand": "DE" } } ] }""",
+						true),
+				Arguments.of("key term with a @reverse definition", """
+						{ "@context": { "asset": { "@reverse": "http://www.w3.org/ns/odrl/2/target" } },
+						  "permission": [ { "asset": "urn:ngsi-ld:Catalog:p" } ] }""", true),
+				Arguments.of("cyclic term definitions", """
+						{ "@context": { "a": "b:x", "b": "a:y" }, "permission": [ { "a": "urn:ngsi-ld:Catalog:p" } ] }""",
+						true),
+				Arguments.of("unknown remote context without constraints", """
+						{ "@context": [ "http://www.w3.org/ns/odrl.jsonld", "https://example.org/context.jsonld" ],
+						  "permission": [ { "action": "read", "asset": "urn:ngsi-ld:Catalog:p" } ] }""", true),
 				Arguments.of("unbound prefix", leftOperand("\"foo:country\""), true),
 				Arguments.of("bare term", leftOperand("\"country\""), true),
 				Arguments.of("vc:country under an unknown remote context", """

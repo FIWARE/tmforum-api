@@ -25,7 +25,8 @@ final class ResourceConstraintDetector {
 			"vc", VC_NAMESPACE,
 			"dspace", DSPACE_NAMESPACE,
 			"odrl", ODRL_NAMESPACE);
-	// Checked by hand: both bind only odrl/dspace (to the namespaces above) and alias none of the watched keys.
+	// Checked by hand: both bind only odrl/dspace (to the namespaces above), set no @vocab and alias none of the
+	// resource keys.
 	private static final Set<String> TRUSTED_REMOTE_CONTEXTS = Set.of(
 			"http://www.w3.org/ns/odrl.jsonld",
 			"https://w3id.org/dspace/2024/1/context.json");
@@ -33,11 +34,17 @@ final class ResourceConstraintDetector {
 
 	private static final String TARGET = "target";
 	private static final String RIGHT_OPERAND_REFERENCE = "rightOperandReference";
+	// The parent policy named by inheritFrom may carry a target this detector never sees.
+	private static final String INHERIT_FROM = "inheritFrom";
+	private static final Set<String> RESOURCE_KEYS = Set.of(TARGET, RIGHT_OPERAND_REFERENCE, INHERIT_FROM);
 	private static final String LEFT_OPERAND = "leftOperand";
-	private static final Set<String> WATCHED_KEYS = Set.of(TARGET, RIGHT_OPERAND_REFERENCE, LEFT_OPERAND);
 	private static final String CONTEXT = "@context";
 	private static final String ID = "@id";
 	private static final String IMPORT = "@import";
+	private static final String VOCAB = "@vocab";
+	private static final String REVERSE = "@reverse";
+	// Bounds term-to-term chains, which also stops a cyclic context.
+	private static final int MAX_EXPANSION_DEPTH = 8;
 	private static final String KEYWORD_MARKER = "@";
 	private static final char COMPACT_IRI_SEPARATOR = ':';
 	private static final String LOCAL_NAME_SEPARATORS = "#/:";
@@ -53,7 +60,8 @@ final class ResourceConstraintDetector {
 		try {
 			Bindings bindings = new Bindings();
 			collectContexts(policy, bindings);
-			return bindings.aliasesWatchedKey || constrainsResource(policy, bindings);
+			// A context this code cannot read could alias any key, even a bare one, to a resource key.
+			return bindings.untrustedRemoteContext || bindings.vocab || constrainsResource(policy, bindings);
 		} catch (RuntimeException e) {
 			return true;
 		}
@@ -71,8 +79,12 @@ final class ResourceConstraintDetector {
 			if (CONTEXT.equals(key)) {
 				continue;
 			}
-			String localName = localName(key);
-			if (TARGET.equals(localName) || RIGHT_OPERAND_REFERENCE.equals(localName)) {
+			String iri = expandKey(key, bindings, 0);
+			if (iri == null) {
+				return true;
+			}
+			String localName = localName(iri);
+			if (RESOURCE_KEYS.contains(localName)) {
 				return true;
 			}
 			if (LEFT_OPERAND.equals(localName) && !isSubjectSide(expand(operandIri(entry.getValue()), bindings))) {
@@ -109,14 +121,24 @@ final class ResourceConstraintDetector {
 				String term = String.valueOf(key);
 				if (IMPORT.equals(term)) {
 					readContext(definition, bindings);
+				} else if (VOCAB.equals(term)) {
+					bindings.vocab |= definition != null;
 				} else if (!term.startsWith(KEYWORD_MARKER)) {
-					bindings.bind(term, definitionIri(definition));
+					if (!onlyTypesCompactIri(term, definition)) {
+						bindings.bind(term, definitionIri(definition));
+					}
 					if (definition instanceof Map<?, ?> expanded) {
 						readContext(expanded.get(CONTEXT), bindings);
 					}
 				}
 			});
 		}
+	}
+
+	// {"odrl:target": {"@type": "@id"}} keeps the compact IRI's own expansion, so it binds nothing.
+	private static boolean onlyTypesCompactIri(String term, Object definition) {
+		return term.indexOf(COMPACT_IRI_SEPARATOR) > 0 && definition instanceof Map<?, ?> expanded
+				&& !expanded.containsKey(ID) && !expanded.containsKey(REVERSE);
 	}
 
 	private static String definitionIri(Object definition) {
@@ -156,6 +178,35 @@ final class ResourceConstraintDetector {
 		return namespace == null ? null : namespace + iri.substring(separator + 1);
 	}
 
+	/**
+	 * Expands a key the way a JSON-LD processor would, so a prefix that splits a resource key's IRI cannot hide it.
+	 * Null when the key cannot be expanded (an unresolvable term, or a chain beyond {@link #MAX_EXPANSION_DEPTH}).
+	 */
+	private static String expandKey(String key, Bindings bindings, int depth) {
+		if (key == null || depth > MAX_EXPANSION_DEPTH) {
+			return null;
+		}
+		if (key.startsWith(KEYWORD_MARKER) || ABSOLUTE_IRI_SCHEMES.stream().anyMatch(key::startsWith)) {
+			return key;
+		}
+		if (bindings.isBound(key)) {
+			return expandKey(bindings.definition(key), bindings, depth + 1);
+		}
+		int separator = key.indexOf(COMPACT_IRI_SEPARATOR);
+		if (separator < 0) {
+			return key;
+		}
+		String prefix = key.substring(0, separator);
+		String suffix = key.substring(separator + 1);
+		if (bindings.isBound(prefix)) {
+			String namespace = expandKey(bindings.definition(prefix), bindings, depth + 1);
+			return namespace == null ? null : namespace + suffix;
+		}
+		String namespace = DEFAULT_PREFIXES.get(prefix);
+		// An unbound, non-default prefix is an IRI scheme (urn:, did:), so the key is already absolute.
+		return namespace == null ? key : namespace + suffix;
+	}
+
 	private static boolean isSubjectSide(String iri) {
 		return iri != null && ((iri.startsWith(VC_NAMESPACE) && iri.length() > VC_NAMESPACE.length())
 				|| SUBJECT_SIDE_IRIS.contains(iri));
@@ -174,20 +225,22 @@ final class ResourceConstraintDetector {
 		private final Map<String, String> terms = new HashMap<>();
 		private final Set<String> unresolvable = new HashSet<>();
 		private boolean untrustedRemoteContext;
-		private boolean aliasesWatchedKey;
+		private boolean vocab;
 
 		void bind(String term, String iri) {
 			if (iri == null) {
 				unresolvable.add(term);
 				return;
 			}
-			if (WATCHED_KEYS.contains(localName(iri)) && !localName(iri).equals(localName(term))) {
-				aliasesWatchedKey = true;
-			}
 			String previous = terms.putIfAbsent(term, iri);
 			if (previous != null && !previous.equals(iri)) {
 				unresolvable.add(term);
 			}
+		}
+
+		/** The IRI a term is bound to; null if unbound or unresolvable. */
+		String definition(String term) {
+			return unresolvable.contains(term) ? null : terms.get(term);
 		}
 
 		boolean isBound(String term) {
