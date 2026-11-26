@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +106,9 @@ class ValidationRequestSerializationTest {
 				Arguments.of("validation-request-full.json",
 						ValidationRequest.of(fullPolicy(), SCOPE, READ, fullResource(),
 								subjectPresenting(credential()))),
+				Arguments.of("validation-request-null-credential.json",
+						ValidationRequest.of(fullPolicy(), SCOPE, READ, fullResource(),
+								subjectPresenting(Arrays.asList(null, credential())))),
 				Arguments.of("validation-request-anonymous.json",
 						ValidationRequest.of(readAllPolicy(), SCOPE, READ,
 								new ValidationRequest.Resource("Category", "urn:ngsi-ld:Category:compute",

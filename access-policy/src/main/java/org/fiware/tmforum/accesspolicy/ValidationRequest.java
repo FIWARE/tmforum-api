@@ -2,6 +2,7 @@ package org.fiware.tmforum.accesspolicy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,14 +28,14 @@ public record ValidationRequest(Map<String, Object> policy, JsonInput jsonInput)
 				new JsonInput(new Payload(scope, PROTOCOL, action, resource), requestSubject));
 	}
 
-	// The credentials are handed over as presented; interpreting them is the PDP's job (AP-1).
+	// The credentials are handed over as presented, null elements included; interpreting them is the PDP's job (AP-1).
 	private static List<Object> presentedCredentials(Subject subject) {
 		Object claim = subject.claims().get(VERIFIABLE_CREDENTIAL_CLAIM);
 		if (claim == null) {
 			return List.of();
 		}
 		if (claim instanceof List<?> credentials) {
-			return List.copyOf(credentials);
+			return Collections.unmodifiableList(credentials);
 		}
 		return List.of(claim);
 	}
