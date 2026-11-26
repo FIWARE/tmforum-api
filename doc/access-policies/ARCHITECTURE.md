@@ -443,6 +443,7 @@ access-policy:
     path: /validate
     timeout: 2s
     # instead of url, a micronaut.http.services.pdp.url(s) service may be set (path is then relative to it); exactly one
+    # such a service url carries no path; a base path goes into micronaut.http.services.pdp.path
   jwt:
     jwks-uri: http://verifier:3000/.well-known/jwks
     issuer: https://verifier.example.org
