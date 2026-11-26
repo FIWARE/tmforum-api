@@ -32,8 +32,9 @@ class ValidationRequestSerializationTest {
 
 	// Deliberately not ValidationRequest.PROTOCOL, so changing the constant breaks this test.
 	private static final String EXPECTED_PROTOCOL = "tmf";
-	private static final String FIXTURE_DIRECTORY = "/pdp/";
-	private static final String IDENTITY = "did:web:fancy-marketplace.biz";
+	static final String FIXTURE_DIRECTORY = "/pdp/";
+	static final String FULL_FIXTURE = "validation-request-full.json";
+	static final String IDENTITY = "did:web:fancy-marketplace.biz";
 	private static final Instant EXPIRES_AT = Instant.parse("2026-11-26T12:00:00Z");
 	private static final String SCOPE = "catalog";
 	private static final String READ = "read";
@@ -41,7 +42,7 @@ class ValidationRequestSerializationTest {
 	private static final String OFFERING_TYPE = "ProductOffering";
 	private static final String OFFERING_ID = "urn:ngsi-ld:ProductOffering:42";
 	private static final String PUBLIC_CATALOG = "urn:ngsi-ld:Catalog:public";
-	private static final String FULL_POLICY_UID = "urn:uuid:7e4c2f1a-0b8d-4c3e-9f6a-1d2b3c4d5e6f";
+	static final String FULL_POLICY_UID = "urn:uuid:7e4c2f1a-0b8d-4c3e-9f6a-1d2b3c4d5e6f";
 	private static final String READ_ALL_POLICY_UID = "urn:uuid:0f1e2d3c-4b5a-4968-8776-655443322110";
 	private static final String JWT_CREDENTIAL = "eyJhbGciOiJFUzI1NiIsInR5cCI6InZjK2p3dCJ9"
 			+ ".eyJpc3MiOiJkaWQ6d2ViOmZhbmN5LW1hcmtldHBsYWNlLmJpeiJ9.c2lnbmF0dXJl";
@@ -98,12 +99,16 @@ class ValidationRequestSerializationTest {
 				List.of(new ValidationRequest.RelatedParty("provider", "did:web:mp-operations.org")));
 	}
 
+	/** The request {@link #FULL_FIXTURE} pins. */
+	static ValidationRequest fullRequest() {
+		return ValidationRequest.of(fullPolicy(), SCOPE, READ, fullResource(),
+				subjectPresenting(List.of(credential())));
+	}
+
 	private static Stream<Arguments> requests() {
 		return Stream.of(
-				Arguments.of("validation-request-full.json",
-						ValidationRequest.of(fullPolicy(), SCOPE, READ, fullResource(),
-								subjectPresenting(List.of(credential())))),
-				Arguments.of("validation-request-full.json",
+				Arguments.of(FULL_FIXTURE, fullRequest()),
+				Arguments.of(FULL_FIXTURE,
 						ValidationRequest.of(fullPolicy(), SCOPE, READ, fullResource(),
 								subjectPresenting(credential()))),
 				Arguments.of("validation-request-null-credential.json",

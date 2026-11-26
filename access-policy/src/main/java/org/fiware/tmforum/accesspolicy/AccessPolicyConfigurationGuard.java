@@ -39,7 +39,9 @@ public class AccessPolicyConfigurationGuard {
 	private static final String PDP_TIMEOUT_KEY = AccessPolicyProperties.PREFIX + ".pdp.timeout";
 	private static final String PDP_SERVICE_URL_KEY = PolicyDecisionPoint.SERVICE_PREFIX + ".url";
 	private static final String PDP_SERVICE_URLS_KEY = PolicyDecisionPoint.SERVICE_PREFIX + ".urls";
+	private static final String PDP_SERVICE_PATH_KEY = PolicyDecisionPoint.SERVICE_PREFIX + ".path";
 	private static final String PDP_SERVICE_KEYS = PDP_SERVICE_URL_KEY + " / " + PDP_SERVICE_URLS_KEY;
+	private static final String ROOT_PATH = "/";
 	private static final Set<String> HTTP_SCHEMES = Set.of("http", "https");
 
 	private static final Map<String, Class<?>> TYPED_KEYS = Map.ofEntries(
@@ -119,6 +121,10 @@ public class AccessPolicyConfigurationGuard {
 		configured.stream().filter(url -> !isAbsoluteHttpUri(url)).findFirst().ifPresent(url -> {
 			throw invalid(key, url, "must be an absolute http(s) URI");
 		});
+		// the client resolves pdp.path past a service url's own path, so the PDP would answer 404 to every call
+		configured.stream().filter(AccessPolicyConfigurationGuard::hasPath).findFirst().ifPresent(url -> {
+			throw invalid(key, url, String.format("must not carry a path, set %s instead", PDP_SERVICE_PATH_KEY));
+		});
 		return !configured.isEmpty();
 	}
 
@@ -148,6 +154,11 @@ public class AccessPolicyConfigurationGuard {
 		} catch (URISyntaxException e) {
 			return false;
 		}
+	}
+
+	private static boolean hasPath(String absoluteUri) {
+		String path = URI.create(absoluteUri).getRawPath();
+		return !path.isEmpty() && !ROOT_PATH.equals(path);
 	}
 
 	private static boolean isAbsoluteHttpUri(String raw) {

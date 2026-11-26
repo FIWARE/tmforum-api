@@ -287,6 +287,10 @@ class AccessPolicyPropertiesTest {
 						PDP_SERVICE_URL_KEY),
 				Arguments.of("service urls without scheme", enabledWith(Map.of(PDP_SERVICE_URLS_KEY,
 						List.of(VALID_PDP_URL, "odrl-pap:8080"))), PDP_SERVICE_URLS_KEY),
+				Arguments.of("service url with base path", enabledWith(Map.of(PDP_SERVICE_URL_KEY,
+						VALID_PDP_URL + "/base")), PDP_SERVICE_URL_KEY),
+				Arguments.of("service urls with base path", enabledWith(Map.of(PDP_SERVICE_URLS_KEY,
+						List.of(VALID_PDP_URL, VALID_PDP_URL + "/base"))), PDP_SERVICE_URLS_KEY),
 				Arguments.of("invalid path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL,
 						key("pdp.path"), "/val idate")), key("pdp.path")),
 				Arguments.of("absolute path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL,
@@ -310,7 +314,10 @@ class AccessPolicyPropertiesTest {
 		return Stream.of(
 				Arguments.of("pdp.url", enabledWith(Map.of(key("pdp.url"), VALID_PDP_URL))),
 				Arguments.of("service url", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL))),
-				Arguments.of("service urls", enabledWith(Map.of(PDP_SERVICE_URLS_KEY, List.of(VALID_PDP_URL)))));
+				Arguments.of("service urls", enabledWith(Map.of(PDP_SERVICE_URLS_KEY, List.of(VALID_PDP_URL)))),
+				Arguments.of("service url with root path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL + "/"))),
+				Arguments.of("service url and service path", enabledWith(Map.of(PDP_SERVICE_URL_KEY, VALID_PDP_URL,
+						"micronaut.http.services.pdp.path", "/base"))));
 	}
 
 	@DisplayName("Either PDP endpoint starts an enabled access control with a PDP client.")
