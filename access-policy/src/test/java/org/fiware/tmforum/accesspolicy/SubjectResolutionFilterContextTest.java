@@ -67,6 +67,7 @@ class SubjectResolutionFilterContextTest {
 		if (enabled) {
 			properties.put(AccessPolicyProperties.PREFIX + ".jwt.jwks-uri", "http://"
 					+ server.getAddress().getHostString() + ":" + server.getAddress().getPort() + JWKS_PATH);
+			properties.putAll(TestCaches.DECISIONS);
 		}
 		try (ApplicationContext context = ApplicationContext.run(properties)) {
 			for (Class<?> bean : SUBJECT_RESOLUTION_BEANS) {
