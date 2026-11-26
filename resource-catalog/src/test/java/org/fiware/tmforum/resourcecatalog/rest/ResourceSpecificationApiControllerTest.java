@@ -62,7 +62,8 @@ class ResourceSpecificationApiControllerTest {
 		NOT_FOUND(HttpStatus.NOT_FOUND, HttpStatus.INTERNAL_SERVER_ERROR),
 		CONFLICT(HttpStatus.CONFLICT, HttpStatus.CONFLICT),
 		INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR),
-		NO_ANSWER(null, HttpStatus.BAD_GATEWAY);
+		// a storage that gave no answer is a 503 for every operation, named after neither backend
+		NO_ANSWER(null, HttpStatus.SERVICE_UNAVAILABLE);
 
 		private final HttpStatus status;
 		private final HttpStatus expected;

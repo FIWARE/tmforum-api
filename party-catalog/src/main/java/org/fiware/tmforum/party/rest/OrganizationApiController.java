@@ -8,8 +8,6 @@ import org.fiware.party.api.OrganizationApi;
 import org.fiware.party.model.OrganizationCreateVO;
 import org.fiware.party.model.OrganizationUpdateVO;
 import org.fiware.party.model.OrganizationVO;
-import org.fiware.tmforum.common.exception.DeletionException;
-import org.fiware.tmforum.common.exception.DeletionExceptionReason;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.mapping.IdHelper;
@@ -24,7 +22,6 @@ import org.fiware.tmforum.party.domain.organization.OrganizationIdentification;
 import reactor.core.publisher.Mono;
 
 import jakarta.annotation.Nullable;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

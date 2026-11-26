@@ -142,7 +142,7 @@ class SchemaMigrationIT {
                 row -> row.get("indexname", String.class),
                 SCHEMA, ENTITY_TABLE);
 
-        assertEquals(List.of(ENTITY_CURRENT_INDEX, ENTITY_LIST_INDEX, PRIMARY_KEY_INDEX),
+        assertEquals(List.of(ENTITY_CURRENT_INDEX, ENTITY_LIST_INDEX, PRIMARY_KEY_INDEX).stream().sorted().toList(),
                 indexes.stream().sorted().toList(),
                 "The entity table should carry its keys and the list index, and nothing else.");
     }
@@ -173,7 +173,8 @@ class SchemaMigrationIT {
                 row -> row.get("indexname", String.class),
                 SCHEMA, OUTBOX_TABLE);
 
-        assertEquals(List.of(OUTBOX_DUE_INDEX, OUTBOX_PRIMARY_KEY_INDEX, OUTBOX_RETENTION_INDEX),
+        assertEquals(List.of(OUTBOX_PRIMARY_KEY_INDEX, OUTBOX_RETENTION_INDEX, OUTBOX_DUE_INDEX).stream()
+                        .sorted().toList(),
                 indexes.stream().sorted().toList(),
                 "The outbox should carry its primary key, the claim index and the retention index.");
     }
