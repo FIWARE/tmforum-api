@@ -183,7 +183,8 @@ API modules.
 ```
 access-policy/src/main/java/org/fiware/tmforum/accesspolicy/
   AccessPolicyProperties.java          @ConfigurationProperties("access-policy")
-  Subject.java                         record Subject(String identity, List<Map<String,Object>> credentials, …)
+  Subject.java                         record Subject(String identity, Map<String,Object> claims, Instant expiresAt,
+                                              String credentialFingerprint); ANONYMOUS
   SubjectResolutionFilter.java         @Filter(MATCH_ALL_PATTERN), HttpServerFilter, Ordered
   PolicyCarrier.java                   SPI: the policies an entity carries, and at which scope
   PolicyResolver.java                  composition walk + derived visibility, over the *delegate* port

@@ -207,13 +207,14 @@ Host module: `product-catalog`. It reaches `access-policy` through `common` and 
     `refresh()`. No case uses an unknown kid.
     - Against `/test-subject`: A and B resolve to their own identities, with different fingerprints. No token and the
       defect cases resolve to anonymous.
-    - Against `GET /productCatalogManagement/v4/productOffering`: `200` for every case. A bad token must never give `500`.
+    - Against `GET /productOffering` (the module serves at the root base path): `200` for every case. A bad token must never give `500`.
   - Assert that the JWKS server was hit exactly once across the whole run, which proves the cache. This holds only
     because no case takes the unknown-kid refresh path (see the wrongly signed token above).
   - Leave out the `bypass-unauthenticated` and `mode` dimensions. Add a class Javadoc line saying they land with AP-09.
   - No storage-tag gating is needed; the IT is backend-neutral.
 - Docs:
   - `AGENTS.md`: add the nimbus line to Tech Stack, and add `SubjectResolutionFilter`/`SUBJECT_ATTR` to Important Files.
+    Deferred: step agents must not edit `AGENTS.md`, so the lines are handed to a plan-mode agent in the final comment.
   - `doc/access-policies/ARCHITECTURE.md` § Components: change the `Subject` record sketch to the implemented shape.
 - Acceptance: run `mvn integration-test -pl product-catalog -Dit.test=AccessPolicySubjectResolutionIT -DskipTests`
   and confirm it is green on orion-ld. The other ITs of the module are unchanged, since the feature is off in their
