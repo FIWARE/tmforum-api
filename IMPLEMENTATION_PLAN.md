@@ -226,7 +226,8 @@ reserved property names, and `ValidatingDeserializer` passes through types witho
   (for example `mvn test -pl party-catalog`) still starts, because a configured but unused cache is
   harmless.
 - `AGENTS.md`: one line in Key Conventions saying every cache profile YAML carries
-  `entities`, `subscriptions` and `decisions`, and a new module needs all three.
+  `entities`, `subscriptions` and `decisions`, and a new module needs all three. Step agents may
+  not edit `AGENTS.md`, so this line is left to a plan-mode agent (flagged in the Step 4 comment).
 
 ### Step 5: `AccessPolicyCacheIT` on both cache profiles, and the documented staleness bound
 - `product-catalog/pom.xml`: add `org.fiware.tmforum:access-policy` `test-jar` with test scope, for
