@@ -24,13 +24,34 @@ entry lives for `min(token exp, decision-ttl)`. The cache runs over the already-
   edited policy a new key at once, while reuse of the same policy still deduplicates. The resource
   digest is only included when `ResourceConstraintDetector` flags the policy. A hex key also keeps
   identities out of the Redis key space.
-- **Resource-constrained detection (fail-safe).** A policy is resource-constrained if it has any
-  `target` at any depth. Keys match by local name, so `target`, `odrl:target` and
-  `http://www.w3.org/ns/odrl/2/target` all count. A policy is also resource-constrained if any
-  `leftOperand` is a `tmf:` operand: the value has a `tmf:` prefix, or its IRI local name is one of
-  `resource`, `resourceId`, `relatedParty`, `catalog`, `category`. A `leftOperand` that cannot be
-  read as a string or `{"@id": …}` also counts. A false positive only costs deduplication, while a
-  false negative would leak. The UC-1 `vc:country` policy has no target, so it stays shareable.
+- **Resource-constrained detection (fail-safe, allowlist).** A policy counts as subject-only, and so
+  shareable across resources, only when every rule below says so. Anything else counts as
+  resource-constrained. A false positive only costs deduplication, while a false negative would
+  share one verdict across resources, which is a leak.
+  - The walk visits every map and list at any depth: permissions, prohibitions, duties, refinements
+    and logical constraints (`and`, `or`, `xone`, `andSequence`). Keys match by local name, so
+    `target`, `odrl:target` and `http://www.w3.org/ns/odrl/2/target` all count.
+  - Any `target` or any `rightOperandReference` makes the policy resource-constrained.
+  - Every `leftOperand` must expand to a **subject-side** IRI. The allowlist comes from
+    POLICY_EXAMPLES.md § Vocabulary: any IRI in the `vc` namespace `https://w3id.org/fiware/dsc/vc#`,
+    plus `https://w3id.org/dspace/2024/1/membershipType`, `https://w3id.org/dspace/2024/1/scope` and
+    `http://www.w3.org/ns/odrl/2/spatial`. Any other operand counts as resource-side: every `tmf:`
+    operand, a tmf operand the PDP adds later, and an operand this project has never seen.
+  - Expansion. A `leftOperand` is a string or `{"@id": "…"}`. Anything else (a list, a number, a
+    `@value` object) cannot be read and counts as resource-side. An absolute IRI (`http://` or
+    `https://`) is compared as is. A compact IRI is split at the **first** `:` and its prefix is
+    resolved, first through the prefixes that the policy's inline `@context` objects bind (at any
+    depth), then through the defaults `vc`, `dspace` and `odrl` with the namespaces above. So
+    `cred:country` with `"cred": "https://w3id.org/fiware/dsc/vc#"` is subject-side, and
+    `t:catalog` with `"t": "<tmf-ns>"` or a `vc` rebound to the tmf namespace is resource-side. The
+    following cannot be resolved and count as resource-side: a prefix bound to two different IRIs
+    in the same policy, a prefix that is neither bound nor a default, a bare term without `:`, and
+    any compact IRI in a policy whose `@context` holds a remote context other than
+    `http://www.w3.org/ns/odrl.jsonld`, because that context could rebind a prefix this code never
+    sees. Remote contexts are never fetched.
+  - The POLICY_EXAMPLES.md policies on `vc:country` (UC-1), `odrl:spatial` and
+    `dspace:membershipType` (UC-2) have no target and only subject-side operands, so they stay
+    shareable.
 - **Expiry.** The cached value is `CachedDecision(AccessDecision decision, long validUntilEpochMilli)`
   with `validUntil = min(now + decision-ttl, subject.expiresAt)`. `ANONYMOUS` gets `now + ttl`. A hit
   that is past `validUntil` counts as a miss. In YAML, the cache's own `expire-after-write` is
@@ -58,17 +79,26 @@ Pure, bean-free groundwork in `access-policy/src/main/java/org/fiware/tmforum/ac
   and have `Subject` delegate. The fingerprints must stay byte-identical, so the existing
   `SubjectTest` passes unchanged.
 - `ResourceConstraintDetector` (package-private, final). `static boolean constrainsResource(Map<String, Object> policy)`
-  follows the rules in the Overview. Name the operand set and the local names (`target`,
-  `leftOperand`, `@id`) as constants. It never throws, and a `null` or non-map policy returns `true`.
+  follows the allowlist rules in the Overview. Name the subject-side IRI set, the default prefix
+  map, the trusted remote context and the local names (`target`, `rightOperandReference`,
+  `leftOperand`, `@context`, `@id`) as constants. It never throws, and a `null` or non-map policy
+  returns `true`.
 - `DecisionKey` record (`String value`), with `toString()` returning `value` because Redis
   serialises keys through their string form. Add `static DecisionKey of(String policyUid,
   Map<String, Object> policy, String scope, String action, ValidationRequest.Resource resource,
   Subject subject)` built as described in the Overview: the key parts go into a `LinkedHashMap` with
   the fixed names, and a private `resourceMap(Resource)` / `relatedPartyMap(RelatedParty)` turn the
   records into plain maps before `CanonicalJson.digest`.
-- Tests, parameterized. `ResourceConstraintDetectorTest` covers UC-1 compact, an expanded JSON-LD
-  variant, the UC-3 refinement policy, a plain `odrl:target` id, `tmf:relatedParty` in a permission
-  constraint, an unreadable `leftOperand`, and an empty policy. `DecisionKeyTest` checks these cases:
+- Tests, parameterized. `ResourceConstraintDetectorTest` maps each policy to its expected result.
+  - Subject-only (`false`): UC-1 compact, UC-1 expanded, `odrl:spatial`, `dspace:membershipType`,
+    `cred:country` with `cred` bound to the vc namespace, and a policy with no constraint at all.
+  - Resource-constrained (`true`): the UC-3 refinement policy, a plain `odrl:target` id,
+    `tmf:relatedParty` in a permission constraint, an **expanded unknown tmf operand**
+    (`https://<tmf-ns>#productSpecification`), an **aliased prefix** (`t:catalog` with
+    `"t": "<tmf-ns>"`), `vc` rebound to the tmf namespace, a prefix bound twice, an unbound prefix, a
+    bare term, a compact `vc:country` under an unknown remote context, a subject-side operand next
+    to a tmf one inside an `and`, a `rightOperandReference`, an unreadable `leftOperand`, and a
+    `null` policy. `DecisionKeyTest` checks these cases:
   - Different fingerprint, scope, action, identity, policy body or uid each give a different key.
   - A refreshed token with the same claims gives the same key.
   - A different resource gives the same key for a subject-only policy and a different key for a
@@ -199,6 +229,12 @@ Acceptance: `mvn test -pl access-policy` is green and the serializer class name 
     satisfy `AccessPolicyConfigurationGuard`. Copy that setup from `AccessPolicySubjectResolutionIT`.
   - The test injects `DecisionCache` and `CacheManager`. The k3s wiring
     (`-Dmicronaut.environments=${cache},${broker}`) runs it under both cache profiles.
+  - Isolation. Under `-Dcache=redis` an entry outlives its test method and its ApplicationContext
+    until `decision-ttl` runs out, and a persistent `-Pdev` Redis keeps it across runs. The key has
+    no test-specific part, so every test method builds its policy uids and its subject identity with
+    a `UUID.randomUUID()` suffix, set in `@BeforeEach`. The uid goes into the policy body as well, so
+    it reaches the key twice. Resetting the stub alone is not enough. `DecisionCacheTest` (Step 2)
+    does the same, so the Caffeine cases do not depend on test order either.
   - It covers:
     - 100 resources and 6 uids give 6 stub calls.
     - A different credential set gets its own decision.
@@ -220,7 +256,7 @@ Acceptance: `mvn test -pl access-policy` is green and the serializer class name 
     annotation was not used: per-entry expiry `min(token exp, decision-ttl)`, no caching of PDP
     failures, coalescing of concurrent misses.
   - § Caching: two or three lines that document the staleness bound (`decision-ttl`, symmetric for
-    grant and revocation, failures uncached), the key composition, and the fail-safe
+    grant and revocation, failures uncached), the key composition, and the fail-safe allowlist
     resource-constraint rule. That satisfies UC-9's "documented" criterion.
   - The file tree (line ~191): `PolicyDecisionPoint.java` loses `@Cacheable`, and `DecisionCache.java`
     is added with a short description.
