@@ -103,6 +103,9 @@
         <!-- mapping -->
         <version.io.github.wistefan.ngsi-ld-mapping-java>1.6.33</version.io.github.wistefan.ngsi-ld-mapping-java>
 
+        <!-- security -->
+        <version.com.nimbusds.nimbus-jose-jwt>10.10</version.com.nimbusds.nimbus-jose-jwt>
+
 
 
         <!-- rx -->
@@ -211,6 +214,11 @@
                 <groupId>io.minio</groupId>
                 <artifactId>minio</artifactId>
                 <version>${version.io.minio.minio}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${version.com.nimbusds.nimbus-jose-jwt}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

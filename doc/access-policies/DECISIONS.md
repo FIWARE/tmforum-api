@@ -11,6 +11,7 @@ Short records of the decisions behind the design: context, decision, consequence
 | [AP-4](#ap-4--validate-the-token-here-and-require-callers-to-forward-it) | Validate the token here; require callers to forward it | Proposed |
 | [AP-5](#ap-5--a-denied-read-answers-404-a-denied-order-answers-403) | A denied read answers 404, a denied order 403 | Proposed |
 | [AP-6](#ap-6--optional-default-allow-and-bypass-unauthenticated-callers-at-first) | Optional, default allow, bypass unauthenticated callers at first | Proposed |
+| [AP-7](#ap-7--validate-tokens-with-nimbus-jose-jwt-not-micronaut-security) | Validate tokens with `nimbus-jose-jwt`, not `micronaut-security` | Accepted |
 
 ---
 
@@ -165,8 +166,8 @@ user's token.
 * Cost: a new configuration surface and a new failure mode, both standard.
 * Cost: **the feature cannot enforce on a caller that forwards no identity.** The honest response is
   `observe` mode and an audit record, not a pretence of enforcement.
-* Cost: a dependency for JWT validation. Which one is an
-  [open question](./ARCHITECTURE.md#open-questions).
+* Cost: a dependency for JWT validation, `nimbus-jose-jwt` per
+  [AP-7](#ap-7--validate-tokens-with-nimbus-jose-jwt-not-micronaut-security).
 
 **Alternatives.**
 * *Trust a pre-validated header from the gateway.* Rejected: it enforces on exactly the path that is
@@ -229,3 +230,33 @@ Those that do have existing entities with no policies and infrastructure callers
 * *Deny by default.* Safer in the abstract, wrong for every existing deployment.
 * *Require infrastructure tokens from day one.* Rejected as a starting point, retained as the
   destination.
+
+---
+
+## AP-7 — Validate tokens with `nimbus-jose-jwt`, not `micronaut-security`
+
+**Context.** [AP-4](#ap-4--validate-the-token-here-and-require-callers-to-forward-it) makes this
+project validate the bearer token itself, and left the library open. The `access-policy` module is a
+dependency of every service, while [AP-6](#ap-6--optional-default-allow-and-bypass-unauthenticated-callers-at-first)
+requires that a switched-off feature has no beans at all.
+
+**Decision.** The module validates tokens with `com.nimbusds:nimbus-jose-jwt` in a small hand-written
+validator: signature against the configured JWKS, then issuer, audience and expiry. Only asymmetric
+signatures are accepted (the RSA and EC families: `RS*`, `PS*`, `ES*`); a token signed with `none` or
+an HMAC algorithm is invalid. With `access-policy.enabled: true`, `jwt.jwks-uri` (an absolute
+`http`/`https` URI) and `jwt.issuer` are mandatory and their absence fails the startup.
+
+**Consequences.**
+* Switched off, nothing of it runs: the library is passive, and every bean using it is `@Requires`-gated.
+* nimbus has no transitive runtime dependencies, so the 21 services gain one jar and no version
+  conflicts.
+* Restricting to asymmetric algorithms rules out the `alg: none` and the HMAC-with-public-key
+  confusion attacks, and a service never holds a signing secret.
+* Cost: the validator, the JWKS fetch and its caching are code of this project, with tests of its own,
+  instead of a framework's.
+
+**Alternatives.**
+* *`micronaut-security` (with `micronaut-security-jwt`).* Rejected: once on the classpath it installs
+  its `SecurityFilter` chain and its own beans, which conflicts with "off means the beans do not exist"
+  (AP-6), and the dependency would sit in all 21 services whether the feature is used or not.
+* *Trusting the token unvalidated, or a gateway header.* Rejected by AP-4.

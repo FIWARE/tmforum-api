@@ -29,6 +29,9 @@ common/                    shared base code (all modules depend on it)
   .../common/test/         AbstractApiIT, TestServerHostConfigurer, FirstMatchConfigContextBuilder (test helpers in main code)
 storage-api/               backend-neutral storage port (EntityRepository, EntityReadRepository, ReferenceReadRepository, StoredReference);
                            src/test/.../contract/ holds abstract contract tests (AbstractEntityRepositoryContractTest, EntityFixture) that each adapter extends
+access-policy/             optional per-entity access control (doc/access-policies/), below common (enforcer `below-common`:
+                           only storage-api allowed); AccessPolicyProperties (`access-policy.*`), AccessPolicyConfigurationGuard;
+                           every bean gated by `@Requires(property = "access-policy.enabled", value = "true")`
 *-shared-models/           domain classes shared between API modules
 <api-module>/              21 API modules, e.g. product-catalog, party-catalog, customer-management
   src/main/java/.../Application.java   Micronaut.run + @Factory
