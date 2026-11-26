@@ -56,7 +56,8 @@ class SubjectResolutionFilterContextTest {
 				Arguments.of("enabled unset", Map.of(), false),
 				Arguments.of("enabled false", Map.of(AccessPolicyProperties.ENABLED_PROPERTY, "false"), false),
 				Arguments.of("enabled true", Map.of(AccessPolicyProperties.ENABLED_PROPERTY, "true",
-						AccessPolicyProperties.PREFIX + ".jwt.issuer", TestTokens.ISSUER), true));
+						AccessPolicyProperties.PREFIX + ".jwt.issuer", TestTokens.ISSUER,
+						AccessPolicyProperties.PREFIX + ".pdp.url", AccessPolicyPropertiesTest.VALID_PDP_URL), true));
 	}
 
 	@ParameterizedTest(name = "{0}")

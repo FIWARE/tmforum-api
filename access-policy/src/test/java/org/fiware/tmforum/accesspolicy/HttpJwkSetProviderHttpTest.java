@@ -72,7 +72,8 @@ class HttpJwkSetProviderHttpTest {
 				AccessPolicyProperties.ENABLED_PROPERTY, "true",
 				AccessPolicyProperties.PREFIX + ".jwt.jwks-uri", jwksUri,
 				AccessPolicyProperties.PREFIX + ".jwt.issuer", ISSUER,
-				AccessPolicyProperties.PREFIX + ".jwt.audience", TestTokens.AUDIENCE);
+				AccessPolicyProperties.PREFIX + ".jwt.audience", TestTokens.AUDIENCE,
+				AccessPolicyProperties.PREFIX + ".pdp.url", AccessPolicyPropertiesTest.VALID_PDP_URL);
 		try (ApplicationContext context = ApplicationContext.run(config)) {
 			BearerTokenValidator validator = new BearerTokenValidator(context.getBean(AccessPolicyProperties.class),
 					context.getBean(JwkSetProvider.class), TestTokens.CLOCK);
