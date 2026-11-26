@@ -501,6 +501,29 @@ reason.
 
 ---
 
+### #8.5 — `DISCARD_EXPIRED` and `STATISTICS` filter on the owned types
+
+> Rows of a type no longer in `EventTypes` are never discarded or counted.
+
+**Half agreed, fixed in the half that is safe**, in `Report the outbox rows no dispatcher owns`.
+
+The scoping of the sweep itself stays, and deliberately: a module that swept every expired row would delete another
+deployment's events while that deployment is still retrying them, which is worse than the leak. The existing IT
+pins that ("A row of a type the dispatcher does not own should stay"), and that is the right contract.
+
+What was wrong is that such rows were also invisible. A type dropped from `EventTypes` leaves rows no dispatcher
+ever claims, delivers, discards or counts — the table grows and nothing says so. Housekeeping now also counts the
+rows whose type this deployment does not own and publishes them as `tmforum.outbox.unowned`, with one WARN when the
+count first becomes non-zero (it does not change by itself, so repeating the WARN every minute would be noise).
+
+They are then removed deliberately, by whoever knows that no deployment owns the type any more — which is a fact no
+single process can establish on its own.
+
+Tests: `housekeepingDiscardsExpiredOwnedRowsAndReportsTheRest` asserts the new gauge next to the assertions that
+already pinned the scoping.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -508,7 +531,7 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | # | Comment | Verdict |
 |---|---------|---------|
 | #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |
-| #8 | Outbox delivery and housekeeping (5 sub-points) | **8.3's index is fixed** (above). Still open: per-hub delivery state (8.1) and paging past 100 hubs (8.2), which are real but larger; terminal failures (8.4) and un-owned types (8.5), separate small fixes. |
+| #8.1 | A row is delivered to every matching hub and fails unless all acknowledge | The only sub-point still open — see the note below the table. |
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
 | #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |

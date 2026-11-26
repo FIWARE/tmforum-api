@@ -279,6 +279,9 @@ class OutboxDispatcherIT {
                 .counter().count(), "The discarded row should be counted.");
         assertEquals(1.0, meterRegistry.get(OutboxDispatcher.PENDING_METRIC).gauge().value(),
                 "Only the owned pending row should be reported.");
+        // the resource row is nobody's here: it is left alone, but it is reported rather than invisible
+        assertEquals(1.0, meterRegistry.get(OutboxDispatcher.UNOWNED_METRIC).gauge().value(),
+                "A row of a type the dispatcher does not own should be reported as unowned.");
         double oldestAge = meterRegistry.get(OutboxDispatcher.OLDEST_AGE_METRIC).gauge().value();
         long expectedAge = YOUNGER_THAN_RETENTION.toSeconds();
         assertTrue(oldestAge >= expectedAge && oldestAge <= expectedAge + AGE_TOLERANCE_SECONDS,

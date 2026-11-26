@@ -47,6 +47,7 @@ public class OutboxDispatcher {
     static final String REASON_EXPIRED = "expired";
     static final String REASON_UNDELIVERABLE = "undeliverable";
     static final String PENDING_METRIC = "tmforum.outbox.pending";
+    static final String UNOWNED_METRIC = "tmforum.outbox.unowned";
     static final String OLDEST_AGE_METRIC = "tmforum.outbox.oldest.age";
     static final String ENTITY_TYPE_TAG = "entity_type";
     static final String EVENT_KIND_TAG = "event_kind";
@@ -60,6 +61,7 @@ public class OutboxDispatcher {
     private static final String CREATED_AT = "created_at";
     private static final String ATTEMPTS = "attempts";
     private static final String PENDING = "pending";
+    private static final String UNOWNED_COUNT = "unowned";
     private static final String OLDEST_AGE = "oldest_age";
     private static final String MILLISECONDS = " * interval '1 millisecond'";
 
@@ -78,6 +80,9 @@ public class OutboxDispatcher {
     private static final String STATISTICS = "SELECT count(*) AS pending,"
             + " COALESCE(EXTRACT(EPOCH FROM now() - min(created_at)), 0)::double precision AS oldest_age FROM "
             + QUALIFIED_OUTBOX_TABLE + " WHERE entity_type = ANY($1)";
+    // rows no dispatcher of this deployment claims: a type dropped from EventTypes leaves them behind
+    private static final String UNOWNED = "SELECT count(*) AS unowned FROM " + QUALIFIED_OUTBOX_TABLE
+            + " WHERE entity_type <> ALL($1)";
 
     private final ConnectionFactory connectionFactory;
     private final DocumentMapper eventDocuments;
@@ -88,6 +93,7 @@ public class OutboxDispatcher {
     private final OutboxBackoff backoff;
     private final MeterRegistry meterRegistry;
     private final AtomicLong pending = new AtomicLong();
+    private final AtomicLong unowned = new AtomicLong();
     private final AtomicLong oldestAgeSeconds = new AtomicLong();
     private final FailureStreak dispatchFailures = new FailureStreak();
     private final FailureStreak housekeepingFailures = new FailureStreak();
@@ -106,6 +112,7 @@ public class OutboxDispatcher {
         // without metrics enabled, a registry without children drops every measurement
         this.meterRegistry = meterRegistry == null ? new CompositeMeterRegistry() : meterRegistry;
         Gauge.builder(PENDING_METRIC, pending, AtomicLong::get).register(this.meterRegistry);
+        Gauge.builder(UNOWNED_METRIC, unowned, AtomicLong::get).register(this.meterRegistry);
         Gauge.builder(OLDEST_AGE_METRIC, oldestAgeSeconds, AtomicLong::get).baseUnit("seconds")
                 .register(this.meterRegistry);
     }
@@ -160,7 +167,14 @@ public class OutboxDispatcher {
 
     /**
      * Discards the owned rows older than {@code retention} without delivering them (WARN log, counter
-     * {@value #DISCARDED_METRIC}), then refreshes the gauges {@value #PENDING_METRIC} and {@value #OLDEST_AGE_METRIC}.
+     * {@value #DISCARDED_METRIC}), then refreshes the gauges {@value #PENDING_METRIC}, {@value #OLDEST_AGE_METRIC}
+     * and {@value #UNOWNED_METRIC}.
+     * <p>
+     * Only owned rows are discarded: another deployment's rows are its to deliver, and a retention sweep across
+     * types would drop events it is still retrying. Rows of a type <em>no</em> deployment owns any more are
+     * therefore not discarded here either - they are reported through {@value #UNOWNED_METRIC}, with one WARN when
+     * the count first becomes non-zero, so that they are removed deliberately rather than silently.
+     * </p>
      */
     public Mono<Void> housekeeping() {
         return PostgresStatements.execute(connectionFactory, DISCARD_EXPIRED, statement -> statement
@@ -175,7 +189,22 @@ public class OutboxDispatcher {
                                     oldestAgeSeconds.set(Math.round(row.get(OLDEST_AGE, Double.class)));
                                     return row;
                                 }))
+                        .then())
+                .then(PostgresStatements.execute(connectionFactory, UNOWNED,
+                                statement -> statement.bind(0, ownedTypes()),
+                                result -> result.map(row -> row.get(UNOWNED_COUNT, Long.class)))
+                        .doOnNext(this::reportUnowned)
                         .then());
+    }
+
+    // one WARN per transition to non-zero: the count does not change by itself, so repeating it every run is noise
+    private void reportUnowned(long count) {
+        if (count > 0 && unowned.get() == 0) {
+            LOGGER.warn("The outbox holds {} rows of types this deployment does not record events for. They are "
+                    + "never claimed, delivered or discarded; remove them once no deployment owns their type.",
+                    count);
+        }
+        unowned.set(count);
     }
 
     // a failing settle statement must not cancel the other rows of the batch; the lease covers its row
