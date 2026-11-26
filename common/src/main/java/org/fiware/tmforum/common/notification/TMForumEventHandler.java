@@ -42,6 +42,12 @@ public class TMForumEventHandler extends EventHandler {
 
 	public static final int SUBSCRIPTION_PAGE_SIZE = 100;
 
+	/**
+	 * Pages a lookup reads at most, so a backend that keeps answering with a full page cannot spin forever. At the
+	 * page size that is {@value #SUBSCRIPTION_PAGE_SIZE} x {@value #MAX_SUBSCRIPTION_PAGES} hubs of one event.
+	 */
+	static final int MAX_SUBSCRIPTION_PAGES = 100;
+
 	private static final String ENTITIES_ATTRIBUTE = "entities";
 	private static final String EVENT_TYPES_ATTRIBUTE = "eventTypes";
 
@@ -84,15 +90,32 @@ public class TMForumEventHandler extends EventHandler {
 		return findSubscriptions(eventDetails.entityType(), eventDetails.eventType());
 	}
 
-	/** As {@link #findSubscriptions(EventDetails)}, for the two attributes the lookup depends on. */
+	/**
+	 * As {@link #findSubscriptions(EventDetails)}, for the two attributes the lookup depends on.
+	 * <p>
+	 * Reads page after page until one comes back short: a deployment with more than {@value #SUBSCRIPTION_PAGE_SIZE}
+	 * hubs on one event would otherwise never notify the ones past the first page, and the outbox would delete the
+	 * row as delivered.
+	 * </p>
+	 */
 	public Mono<List<TMForumSubscription>> findSubscriptions(String entityType, String eventType) {
+		return subscriptionPage(entityType, eventType, DEFAULT_OFFSET)
+				.expand(page -> page.items().size() < SUBSCRIPTION_PAGE_SIZE
+						? Mono.empty()
+						: subscriptionPage(entityType, eventType, page.offset() + page.items().size()))
+				.take(MAX_SUBSCRIPTION_PAGES)
+				.map(PagedResult::items)
+				.collectList()
+				.map(pages -> pages.stream().flatMap(List::stream).toList());
+	}
+
+	private Mono<PagedResult<TMForumSubscription>> subscriptionPage(String entityType, String eventType, int offset) {
 		return repository.findEntities(
-				DEFAULT_OFFSET,
+				offset,
 				SUBSCRIPTION_PAGE_SIZE,
 				TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 				TMForumSubscription.class,
-				subscriptionsTaking(entityType, eventType)
-		).map(PagedResult::items);
+				subscriptionsTaking(entityType, eventType));
 	}
 
 	private static EntityQuery subscriptionsTaking(String entityType, String eventType) {

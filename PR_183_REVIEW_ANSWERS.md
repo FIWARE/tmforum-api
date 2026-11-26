@@ -454,6 +454,28 @@ sees it.
 
 ---
 
+### #8.2 — `findSubscriptions` reads one page of 100 and never continues
+
+> So the 101st matching hub gets no event and the row is deleted as delivered. Page until the result is exhausted.
+
+**Agreed, fixed** in `Read every page of the hubs taking an event`.
+
+The lookup read offset 0, limit 100, and stopped. Past the hundredth hub on one event the notification was never
+built, and because nothing failed, the outbox settled the row as delivered — the event was lost silently, which is
+the worst shape this can take. It now reads page after page until one comes back short.
+
+`MAX_SUBSCRIPTION_PAGES` (100) bounds the loop, so a backend that keeps answering with a full page cannot spin
+forever; at the page size that is 10 000 hubs on a single event.
+
+The comment in `NgsiLdEventHandler` that recorded the limitation ("findSubscriptions reads only the first page, so a
+hub beyond it loses the DeleteEvent") is gone with the limitation.
+
+Tests: `findSubscriptionsReadsEveryPage`, parameterized over 0, 1, one less than a page, exactly a page, one more
+than a page, and two pages plus three — the exact-page case is the one that makes the loop ask for a page it will
+find empty.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.

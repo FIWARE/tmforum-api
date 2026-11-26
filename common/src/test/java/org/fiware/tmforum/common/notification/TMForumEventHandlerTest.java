@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -231,6 +233,32 @@ class TMForumEventHandlerTest {
 	}
 
 	/**
+	 * A deployment with more hubs on one event than a page holds would otherwise never notify the ones past the
+	 * first page, while the outbox deletes the row as delivered.
+	 */
+	@ParameterizedTest(name = "{0} hubs")
+	@ValueSource(ints = {0, 1, TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE - 1,
+			TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE, TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE + 1,
+			2 * TMForumEventHandler.SUBSCRIPTION_PAGE_SIZE + 3})
+	void findSubscriptionsReadsEveryPage(int hubCount) {
+		List<TMForumSubscription> stored = IntStream.range(0, hubCount)
+				.mapToObj(index -> hub(null, "urn:ngsi-ld:tm-forum-subscription:" + index))
+				.toList();
+		when(repository.findEntities(any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+			int offset = invocation.getArgument(0);
+			int limit = invocation.getArgument(1);
+			List<TMForumSubscription> page = stored.subList(Math.min(offset, stored.size()),
+					Math.min(offset + limit, stored.size()));
+			return Mono.just(new PagedResult<>(page, offset, limit, stored.size()));
+		});
+
+		List<TMForumSubscription> found = eventHandler.findSubscriptions(CharacterizationEntity.TYPE,
+				DELETE_EVENT_TYPE).block();
+
+		assertEquals(stored, found, "Every hub should be found, whatever the page size.");
+	}
+
+	/**
 	 * The cached lookup is keyed on its arguments, so it has to take only what the lookup depends on. Keyed on the
 	 * whole EventDetails it was keyed on the event time as well, which is unique per call, so the cache never hit.
 	 */
@@ -273,7 +301,11 @@ class TMForumEventHandlerTest {
 	}
 
 	private static TMForumSubscription hub(String query) {
-		TMForumSubscription subscription = new TMForumSubscription("urn:ngsi-ld:tm-forum-subscription:hub");
+		return hub(query, "urn:ngsi-ld:tm-forum-subscription:hub");
+	}
+
+	private static TMForumSubscription hub(String query, String id) {
+		TMForumSubscription subscription = new TMForumSubscription(id);
 		subscription.setCallback(CALLBACK);
 		subscription.setQuery(query);
 		return subscription;
