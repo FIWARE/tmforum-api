@@ -340,6 +340,31 @@ that each port has exactly one bean on the broker side.
 
 ---
 
+### #14 — `cleanup-subscriptions` is not all-or-nothing
+
+> After `readHubs` (or the orphan listing) records an error, the loop still deletes the broker subscriptions found so
+> far and `dropSubscriptions` still runs. A broker timeout in the middle of hub paging leaves a partial deletion and
+> drops the PostgreSQL attribute, with a non-zero exit code.
+
+**Agreed, fixed** in `Write nothing when the cleanup could not read what is referenced`, as suggested: the run stops
+after the read phase when the report already holds an error.
+
+The read phase is what establishes which subscriptions are referenced. With an incomplete picture, deleting the ones
+that were found *and* dropping the attribute that records which hub owned which leaves a state the re-run cannot
+reconstruct — the re-run reads the hubs again, but their subscription attribute is gone. The command now records
+one more error saying nothing was written, and returns.
+
+A failure of the deletion or of the drop still lets the other side run, unchanged: by then what is referenced is
+known, so finishing is better than leaving half of it undone. The tests are split along that line
+(`aFailedReadPhaseWritesNothing` and `recordsAWritePhaseFailureAndStillRunsTheOtherSide`), which is also the
+distinction the comment draws.
+
+The hub-shortfall case ("read N distinct hubs, but the broker counts M") is a read-phase error, so it now writes
+nothing either; `countsDistinctHubsAndFailsOnAShortfall` asserts that. Its existing message already told the
+operator to freeze writes and re-run.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -351,7 +376,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
 | #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |
 | #13 | EXTERNAL references now fail on a local id collision | Deliberate per the code comment; needs a unit test pinning the behaviour. |
-| #14 | `cleanup-subscriptions` is not all-or-nothing | Agreed. Skip the deletion and the drop when the report already holds an error after the read phase. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |

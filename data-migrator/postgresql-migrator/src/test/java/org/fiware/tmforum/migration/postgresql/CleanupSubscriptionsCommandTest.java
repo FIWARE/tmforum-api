@@ -96,7 +96,8 @@ class CleanupSubscriptionsCommandTest {
 
 		assertEquals(succeeds, report.succeeded(), printed(report));
 		assertEquals(2, report.hubs, description);
-		assertEquals(List.of(REFERENCED, GONE), subscriptions.deleteCalls, description);
+		// a shortfall means the picture is incomplete, so the run writes nothing at all
+		assertEquals(succeeds ? List.of(REFERENCED, GONE) : List.of(), subscriptions.deleteCalls, description);
 		assertEquals(succeeds, report.errors().stream().noneMatch(error -> error.contains("were skipped")),
 				report.errors().toString());
 	}
@@ -155,20 +156,20 @@ class CleanupSubscriptionsCommandTest {
 		assertTrue(printed(report).contains(CleanupSubscriptionsReport.NO_STORED_SUBSCRIPTION), printed(report));
 	}
 
-	static Stream<Arguments> failures() {
+	static Stream<Arguments> writePhaseFailures() {
 		return Stream.of(
-				Arguments.of("unmappable hub", (Failure) (h, s, p) -> h.unmappable = true, "mapping hub"),
-				Arguments.of("hub paging", (Failure) (h, s, p) -> h.pagingFails = true, "reading the hubs"),
-				Arguments.of("subscription listing", (Failure) (h, s, p) -> s.listingFails = true,
-						"listing the broker's subscriptions"),
 				Arguments.of("deletion", (Failure) (h, s, p) -> s.failing.add(REFERENCED),
 						"deleting subscription " + REFERENCED),
 				Arguments.of("PostgreSQL", (Failure) (h, s, p) -> p.fails = true, "rolled back"));
 	}
 
+	/**
+	 * A failure of the deletion or of the drop is recorded, and the other side of the cleanup still runs: by then
+	 * what is referenced is known, so finishing is better than leaving half of it undone.
+	 */
 	@ParameterizedTest(name = "{0}")
-	@MethodSource("failures")
-	void recordsAFailureAndStillRunsTheOtherSide(String description, Failure failure, String expected) {
+	@MethodSource("writePhaseFailures")
+	void recordsAWritePhaseFailureAndStillRunsTheOtherSide(String description, Failure failure, String expected) {
 		hubs.add(REFERENCED);
 		subscriptions.stored.put(REFERENCED, CALLBACK_ENDPOINT);
 		failure.apply(hubs, subscriptions, storedHubs);
@@ -178,6 +179,34 @@ class CleanupSubscriptionsCommandTest {
 		assertFalse(report.succeeded(), description);
 		assertTrue(report.errors().stream().anyMatch(error -> error.contains(expected)), report.errors().toString());
 		assertEquals(List.of(false), storedHubs.calls, description);
+		assertTrue(printed(report).contains("Subscription cleanup FAILED."), printed(report));
+	}
+
+	static Stream<Arguments> readPhaseFailures() {
+		return Stream.of(
+				Arguments.of("unmappable hub", (Failure) (h, s, p) -> h.unmappable = true, "mapping hub"),
+				Arguments.of("hub paging", (Failure) (h, s, p) -> h.pagingFails = true, "reading the hubs"),
+				Arguments.of("subscription listing", (Failure) (h, s, p) -> s.listingFails = true,
+						"listing the broker's subscriptions"));
+	}
+
+	/**
+	 * With an incomplete picture of what is referenced, deleting some subscriptions and still dropping the attribute
+	 * that says which hub owned which leaves a state a re-run cannot reconstruct. Nothing is written.
+	 */
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("readPhaseFailures")
+	void aFailedReadPhaseWritesNothing(String description, Failure failure, String expected) {
+		hubs.add(REFERENCED);
+		subscriptions.stored.put(REFERENCED, CALLBACK_ENDPOINT);
+		failure.apply(hubs, subscriptions, storedHubs);
+
+		CleanupSubscriptionsReport report = run(false, true);
+
+		assertFalse(report.succeeded(), description);
+		assertTrue(report.errors().stream().anyMatch(error -> error.contains(expected)), report.errors().toString());
+		assertEquals(List.of(), subscriptions.deleteCalls, "No subscription should be deleted.");
+		assertEquals(List.of(), storedHubs.calls, "The stored hubs should be left unchanged.");
 		assertTrue(printed(report).contains("Subscription cleanup FAILED."), printed(report));
 	}
 

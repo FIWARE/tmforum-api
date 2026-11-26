@@ -41,6 +41,9 @@ class CleanupSubscriptionsCommand {
 		}
 	}
 
+	private static final String READ_PHASE_FAILED_MESSAGE = "reading what is referenced failed, so nothing was "
+			+ "deleted and the stored hubs were left unchanged. Fix the cause and re-run.";
+
 	CleanupSubscriptionsCommand(EntitySource hubs, SubscriptionStore subscriptions, StoredHubs storedHubs,
 			Options options) {
 		this.hubs = hubs;
@@ -71,6 +74,12 @@ class CleanupSubscriptionsCommand {
 			} catch (RuntimeException e) {
 				report.error("listing the broker's subscriptions: " + message(e));
 			}
+		}
+		// the deletion and the drop are the destructive half: with an incomplete picture of what is referenced they
+		// would delete some subscriptions and still drop the attribute that says which hub owned which
+		if (!report.succeeded()) {
+			report.error(READ_PHASE_FAILED_MESSAGE);
+			return report;
 		}
 		if (!options.dryRun()) {
 			for (Kind kind : Kind.values()) {
