@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -48,10 +50,14 @@ class PolicyDecisionPointTest {
 	private final HttpClient httpClient = mock(HttpClient.class);
 
 	private PolicyDecisionPoint pdp(String url, boolean failOpen) {
+		return pdp(url, PDP_PATH, failOpen);
+	}
+
+	private PolicyDecisionPoint pdp(String url, String path, boolean failOpen) {
 		AccessPolicyProperties properties = new AccessPolicyProperties();
 		properties.setFailOpen(failOpen);
 		properties.getPdp().setUrl(url);
-		properties.getPdp().setPath(PDP_PATH);
+		properties.getPdp().setPath(path);
 		properties.getPdp().setTimeout(PDP_TIMEOUT);
 		return new PolicyDecisionPoint(properties, httpClient, JSON_MAPPER);
 	}
@@ -68,6 +74,11 @@ class PolicyDecisionPointTest {
 						(Supplier<Publisher<HttpResponse<String>>>) () -> Mono.error(
 								new HttpClientException("Connect Error: Connection refused")),
 						"PDP unreachable: " + HttpClientException.class.getName()),
+				Arguments.of("client throws synchronously",
+						(Supplier<Publisher<HttpResponse<String>>>) () -> {
+							throw new IllegalStateException("client closed");
+						},
+						"PDP unreachable: " + IllegalStateException.class.getName()),
 				Arguments.of("500", errorStatus(HttpStatus.INTERNAL_SERVER_ERROR), "PDP answered 500"),
 				Arguments.of("404", errorStatus(HttpStatus.NOT_FOUND), "PDP answered 404"),
 				Arguments.of("204 without body", status(HttpStatus.NO_CONTENT, null), "PDP answered 204"),
@@ -161,5 +172,13 @@ class PolicyDecisionPointTest {
 				"The request is sent as JSON.");
 		assertEquals(expectedUri, sent.getValue().getUri().toString(), "The request goes to the configured endpoint.");
 		assertSame(REQUEST, sent.getValue().getBody().orElseThrow(), "The validation request is the body.");
+	}
+
+	@DisplayName("A path that is no URI fails the client's creation instead of every call.")
+	@ParameterizedTest(name = "{0}")
+	@ValueSource(strings = {"/val idate", "/{policy}"})
+	void malformedPathFailsCreation(String path) {
+		assertThrows(IllegalArgumentException.class, () -> pdp(null, path, false),
+				"A malformed relative path must not wait for the first call.");
 	}
 }

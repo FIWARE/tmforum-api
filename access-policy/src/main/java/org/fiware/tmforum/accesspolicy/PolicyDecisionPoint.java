@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
@@ -44,7 +45,7 @@ public class PolicyDecisionPoint {
 	private final AccessPolicyProperties properties;
 	private final HttpClient httpClient;
 	private final JsonMapper jsonMapper;
-	private final String endpoint;
+	private final URI endpoint;
 
 	@Inject
 	public PolicyDecisionPoint(AccessPolicyProperties properties, @Client(id = SERVICE_ID) HttpClient httpClient,
@@ -61,9 +62,10 @@ public class PolicyDecisionPoint {
 	 */
 	public Mono<AccessDecision> decide(String policyUid, ValidationRequest request) {
 		Duration timeout = properties.getPdp().getTimeout();
-		HttpRequest<ValidationRequest> pdpRequest = HttpRequest.POST(endpoint, request)
-				.contentType(MediaType.APPLICATION_JSON_TYPE);
-		return Mono.from(httpClient.exchange(pdpRequest, String.class))
+		// deferred, so a synchronous throw from the request factory or the client is tagged like any other failure
+		return Mono.defer(() -> Mono.from(httpClient.exchange(
+						HttpRequest.POST(endpoint.toString(), request).contentType(MediaType.APPLICATION_JSON_TYPE),
+						String.class)))
 				// bounds the call whatever the HTTP client's own timeouts are
 				.timeout(timeout)
 				.map(response -> verdict(policyUid, response))
@@ -115,12 +117,13 @@ public class PolicyDecisionPoint {
 		return String.format(UNREACHABLE, error.getClass().getName());
 	}
 
-	private static String endpoint(AccessPolicyProperties.Pdp pdp) {
+	// parsed once, so a malformed path fails the bean's creation instead of every call
+	private static URI endpoint(AccessPolicyProperties.Pdp pdp) {
 		String url = pdp.getUrl();
 		if (url == null || url.isBlank()) {
-			return pdp.getPath();
+			return URI.create(pdp.getPath());
 		}
-		return UriBuilder.of(url).path(pdp.getPath()).build().toString();
+		return UriBuilder.of(url).path(pdp.getPath()).build();
 	}
 
 	private record PdpResponse(boolean permitted, String reason) {
