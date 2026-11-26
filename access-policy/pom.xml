@@ -77,6 +77,12 @@
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- the HTTP client needs a JsonMapper, which the deployed applications provide -->
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-jackson-databind</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
