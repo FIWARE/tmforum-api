@@ -90,7 +90,9 @@ exactly the comma-separated type string it already lists with, so that is what i
 Tests: `AbstractApiControllerTest.deleteRejectsAnIdOfAnotherType` and
 `deletePassesAnIdOfAnAcceptedTypeToThePublisher` (parameterized, including a polymorphic endpoint with two accepted
 types); `PostgresEntityRepositoryIT.deleteWithEventLeavesAnEntityOfAnotherTypeAlone` and
-`deleteWithEventRemovesAnEntityOfAnAcceptedType` pin the SQL predicate.
+`deleteWithEventRemovesAnEntityOfAnAcceptedType` pin the SQL predicate;
+`OrganizationApiControllerTest.deleteOfAnIdOfAnotherTypeIsNotFound` pins it end to end on the controller the
+comment singled out.
 
 **M3** (`ControllerStorageBoundaryTest` passes with this gap) follows from this change and is listed as still open
 only for the test's own exemption list, which is unrelated to the gap itself.
@@ -313,8 +315,13 @@ update, read, list, delete and the related-entity writes, under both the append 
 The field carried a comment saying it is "not read since the parser stopped splitting on ngsildOrQueryValue; kept so
 the constructor stays stable". Keeping an unread dependency to keep a signature stable is the wrong trade in a
 module that is compiled together: it makes every construction site state a dependency that does not exist. The
-field and the constructor parameter are both gone; the bean is constructed by its implicit no-argument constructor
-and every call site drops the argument.
+field and the constructor parameter were removed and the bean built by its implicit no-argument constructor.
+
+**It came back two commits later, with a reader.** The fix for **V3** moves the not-equals normalization into the
+parser, and that normalization is what `optimizeRegexNotEquals` switches, so `GeneralProperties` is a real
+dependency of `QueryParser` again — `normalizeNotEquals` reads it. The net effect of the two commits is that the
+field is used rather than carried, which is what this comment was about; the intermediate state is visible in the
+history because the two were done as separate fixes.
 
 ---
 
