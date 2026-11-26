@@ -234,9 +234,10 @@ cannot be delegated to the gateway, because the callers that most need enforcing
 one ([C3](./ANALYSIS.md#constraints-that-shape-any-solution)).
 
 **Validation.** Signature, issuer, audience and expiry against a configured JWKS endpoint, with the
-key set cached and refreshed. Whether that is `micronaut-security` or a direct `nimbus-jose-jwt`
-dependency is an [open question](#open-questions): the former is idiomatic and large, the latter is
-small and means hand-writing the validation.
+key set cached and refreshed, with a direct `nimbus-jose-jwt` dependency and a hand-written validator
+([AP-7](./DECISIONS.md#ap-7--validate-tokens-with-nimbus-jose-jwt-not-micronaut-security)). Only
+asymmetric signatures (RSA and EC families) are accepted. While enabled, `jwt.jwks-uri` and
+`jwt.issuer` are mandatory.
 
 **Claims.** The subject's identity is a configured claim (default: the credential issuer). Where the
 deployment's verifier embeds the whole verified credential in the token — which the DSC reference
@@ -482,9 +483,9 @@ Following the project's conventions ([AGENTS.md](../../AGENTS.md)):
 
 ## Open questions
 
-1. **JWT validation dependency.** `micronaut-security` is idiomatic and brings a lot; `nimbus-jose-jwt`
-   is small and means writing the validation by hand. The second looks right for a feature that must
-   be inert when off, but it is a real decision with maintenance consequences.
+1. ~~**JWT validation dependency.**~~ Resolved by
+   [AP-7](./DECISIONS.md#ap-7--validate-tokens-with-nimbus-jose-jwt-not-micronaut-security):
+   `nimbus-jose-jwt` with a hand-written validator, since `micronaut-security` cannot be inert when off.
 2. **How does an entity declare the policies it carries?** The `PolicyCarrier` SPI keeps the
    `access-policy` module free of domain classes, but someone has to implement it for
    `ProductOffering`, the two specification types and the catalog types — and that implementation

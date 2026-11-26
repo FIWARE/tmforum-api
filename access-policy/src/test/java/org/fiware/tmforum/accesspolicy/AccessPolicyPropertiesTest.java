@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -198,6 +199,97 @@ class AccessPolicyPropertiesTest {
 		}, String.format("An invalid %s must fail the startup.", property));
 		assertTrue(guardRejected(thrown, key(property)),
 				String.format("The guard should reject %s, but the failure was: %s", key(property), thrown));
+	}
+
+	private static final String VALID_JWKS_URI = "https://keycloak.example.org/realms/test/protocol/openid-connect/certs";
+	private static final String VALID_ISSUER = "https://keycloak.example.org/realms/test";
+
+	private static Stream<Arguments> incompleteJwtSettings() {
+		return Stream.of(
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "/certs",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "keycloak:8080/certs",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "file:///etc/jwks.json",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "https://in valid",
+						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI), "jwt.issuer"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+						key("jwt.issuer"), " "), "jwt.issuer"));
+	}
+
+	@DisplayName("An enabled access control without a JWKS URI or an issuer fails the startup.")
+	@ParameterizedTest(name = "{1}: {0}")
+	@MethodSource("incompleteJwtSettings")
+	void incompleteJwtSettingsFailStartup(Map<String, Object> configuration, String property) {
+		invalidValuesFailStartup(configuration, property);
+	}
+
+	private static Stream<Arguments> acceptedJwtSettings() {
+		return Stream.of(
+				Arguments.of(Map.of(key("enabled"), "false")),
+				Arguments.of(Map.of(key("mode"), "observe")),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+						key("jwt.issuer"), VALID_ISSUER)),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "http://keycloak:8080/certs",
+						key("jwt.issuer"), VALID_ISSUER)));
+	}
+
+	@DisplayName("A disabled access control needs no token settings, an enabled one starts with both set.")
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("acceptedJwtSettings")
+	void acceptedJwtSettingsStart(Map<String, Object> configuration) {
+		try (ApplicationContext context = ApplicationContext.run(configuration)) {
+			assertTrue(context.containsBean(AccessPolicyConfigurationGuard.class),
+					"The guard should exist and accept the configuration.");
+		}
+	}
+
+	private static Stream<Arguments> nonCanonicalEnabledValues() {
+		return Stream.of(
+				Arguments.of("TRUE"),
+				Arguments.of("True"),
+				Arguments.of("FALSE"),
+				Arguments.of("ture"));
+	}
+
+	@DisplayName("Only lowercase true or false is accepted for enabled, since the bean gate matches the raw string exactly.")
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("nonCanonicalEnabledValues")
+	void nonCanonicalEnabledFailsStartup(String value) {
+		invalidValuesFailStartup(Map.of(key("enabled"), value, key("jwt.jwks-uri"), VALID_JWKS_URI,
+				key("jwt.issuer"), VALID_ISSUER), "enabled");
+	}
+
+	@DisplayName("Micronaut's @Requires(value = \"true\") does not match a differently cased true, which is why the guard rejects it.")
+	@ParameterizedTest(name = "{0} -> {1}")
+	@CsvSource({"true, true", "TRUE, false", "True, false"})
+	void requiresGateMatchesExactly(String value, boolean expected) {
+		try (ApplicationContext context = ApplicationContext.run(Map.of(GateProbes.CASE_PROBE_PROPERTY, value))) {
+			assertEquals(expected, context.containsBean(GateProbes.CaseProbe.class),
+					"If this changes, the guard may accept any casing of enabled.");
+		}
+	}
+
+	private static Stream<Arguments> acceptedEnabledValues() {
+		return Stream.of(
+				Arguments.of(Map.of(key("mode"), "observe")),
+				Arguments.of(Map.of(key("enabled"), "false")),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+						key("jwt.issuer"), VALID_ISSUER)));
+	}
+
+	@DisplayName("Every enabled value the guard accepts is read alike by the bound properties and by the bean gate.")
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("acceptedEnabledValues")
+	void guardAndGateAgreeOnEnabled(Map<String, Object> configuration) {
+		try (ApplicationContext context = ApplicationContext.run(configuration)) {
+			assertEquals(context.getBean(AccessPolicyProperties.class).isEnabled(),
+					context.containsBean(GateProbes.EnabledProbe.class),
+					"A bean gated on enabled must exist exactly when the properties report the feature as enabled.");
+		}
 	}
 
 	private static boolean guardRejected(Throwable thrown, String key) {
