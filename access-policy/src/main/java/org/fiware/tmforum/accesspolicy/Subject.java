@@ -1,19 +1,12 @@
 package org.fiware.tmforum.accesspolicy;
 
-import com.nimbusds.jose.util.JSONObjectUtils;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 
 /**
  * The caller a request is evaluated for. {@code claims} are the token's non-registered claims, i.e. the presented
@@ -21,8 +14,6 @@ import java.util.TreeMap;
  * {@link #ANONYMOUS}; an unresolved subject is never a {@code Subject} but an absent request attribute.
  */
 public record Subject(String identity, Map<String, Object> claims, Instant expiresAt, String credentialFingerprint) {
-
-	private static final String FINGERPRINT_DIGEST_ALGORITHM = "SHA-256";
 
 	public static final Subject ANONYMOUS = new Subject(null, Map.of(), null, null);
 
@@ -69,30 +60,7 @@ public record Subject(String identity, Map<String, Object> claims, Instant expir
 	}
 
 	private static String fingerprint(Map<String, Object> claims) {
-		String canonicalJson = JSONObjectUtils.toJSONString(canonicalMap(claims));
-		try {
-			byte[] digest = MessageDigest.getInstance(FINGERPRINT_DIGEST_ALGORITHM)
-					.digest(canonicalJson.getBytes(StandardCharsets.UTF_8));
-			return HexFormat.of().formatHex(digest);
-		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException("Every Java platform must provide " + FINGERPRINT_DIGEST_ALGORITHM, e);
-		}
-	}
-
-	private static Map<String, Object> canonicalMap(Map<?, ?> map) {
-		Map<String, Object> sorted = new TreeMap<>();
-		map.forEach((key, value) -> sorted.put(String.valueOf(key), canonicalValue(value)));
-		return sorted;
-	}
-
-	private static Object canonicalValue(Object value) {
-		if (value instanceof Map<?, ?> map) {
-			return canonicalMap(map);
-		}
-		if (value instanceof List<?> list) {
-			return list.stream().map(Subject::canonicalValue).toList();
-		}
-		return value;
+		return CanonicalJson.digest(claims);
 	}
 
 	private static Map<String, Object> immutableMap(Map<?, ?> map) {
