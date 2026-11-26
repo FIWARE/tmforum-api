@@ -109,6 +109,24 @@ without `MICRONAUT_ENVIRONMENTS`, while that file now sets `orion-ld`.
 
 ---
 
+### V7 — Broker URL with userinfo reaches an exception message and the startup log
+
+> On the defaulted-to-postgres path this puts the broker URL into a ConfigurationException (and startup logs). If the
+> URL carries userinfo (`http://user:pass@host:1026`) the password gets logged.
+
+**Agreed, fixed** in `Keep a broker url's password out of the startup report`.
+
+Confirmed: `StorageBackendValidator` interpolated `ngsiUrl` raw into `UNNAMED_BROKER_MESSAGE`, which becomes a
+`ConfigurationException` message and therefore also a startup log line. `withoutUserInfo` now replaces the authority's
+userinfo with `***` before the url goes into the message. It works on the string rather than `URI.create`, because a
+url that fails to parse is exactly the kind this path has to report, and parsing it would throw instead.
+
+Tests: `userInfoIsRedactedFromAReportedUrl` (parameterized over `user:pass@`, `user@`, a path, and urls with nothing
+to redact, which stay unchanged) and `userInfoIsRedactedFromTheConfigurationException`, which asserts the password
+is absent from the thrown message.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -137,4 +155,3 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | V4 | `toRegExp` rejects `|,;()"'<>!`, postgres accepts them | Agreed, related to #4. Align or document. |
 | V5 | No index for `type` on `tmforum.entity` | Agreed, same as #9. Verified against `V1__entity.sql`. |
 | V6 | `getSubscriptions` `@Cacheable` key is unique per call | Agreed, verified: the key is the whole `EventDetails`, which carries `eventTime = Instant.now()`, so the cache never hits. Key on `(entityType, eventType)`. |
-| V7 | Broker URL with userinfo logged in a `ConfigurationException` | Agreed, verified: `StorageBackendValidator` interpolates `ngsiUrl` raw into `UNNAMED_BROKER_MESSAGE`. Redact. |

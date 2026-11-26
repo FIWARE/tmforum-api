@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -163,6 +164,41 @@ class StorageBackendValidatorTest {
 			cause = cause.getCause();
 		}
 		return cause;
+	}
+
+	/**
+	 * The defaulted-to-postgresql path reports the configured broker url in the ConfigurationException it throws,
+	 * which also reaches the startup log. A url may carry userinfo, and its password must not travel with it.
+	 */
+	@DisplayName("A reported broker url carries no userinfo.")
+	@ParameterizedTest(name = "{0} -> {1}")
+	@MethodSource("urlsToRedact")
+	void userInfoIsRedactedFromAReportedUrl(String url, String expected) {
+		assertEquals(expected, StorageBackendValidator.withoutUserInfo(url), "The userinfo should be redacted.");
+	}
+
+	static Stream<Arguments> urlsToRedact() {
+		return Stream.of(
+				Arguments.of("http://user:secret@broker:1026", "http://***@broker:1026"),
+				Arguments.of("https://user:secret@broker:1026/ngsi-ld/v1", "https://***@broker:1026/ngsi-ld/v1"),
+				Arguments.of("http://user@broker:1026", "http://***@broker:1026"),
+				// nothing to redact, the url stays as configured
+				Arguments.of("http://broker:1026", "http://broker:1026"),
+				Arguments.of("http://broker:1026/path", "http://broker:1026/path"),
+				Arguments.of("broker:1026", "broker:1026"));
+	}
+
+	@DisplayName("A broker url with a password is reported without it.")
+	@Test
+	void userInfoIsRedactedFromTheConfigurationException() {
+		ConfigurationException exception = assertThrows(ConfigurationException.class,
+				() -> StorageBackendValidator.validate(List.of("postgresql"),
+						resolver(true, "http://user:secret@broker:1026")),
+				"A broker url on the defaulted path should abort the start.");
+
+		assertFalse(exception.getMessage().contains("secret"), "The password should not be in the message.");
+		assertTrue(exception.getMessage().contains(StorageBackendValidator.REDACTED_USER_INFO),
+				"The userinfo should be replaced by the redaction marker.");
 	}
 
 	private static PropertySourcePropertyResolver resolver(boolean defaulted, PropertySource configuration) {

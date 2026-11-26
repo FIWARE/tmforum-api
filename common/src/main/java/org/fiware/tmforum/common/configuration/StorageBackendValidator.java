@@ -58,6 +58,10 @@ public class StorageBackendValidator {
 			+ "A deployment that used an NGSI-LD broker before has to name {} or {} in MICRONAUT_ENVIRONMENTS, "
 			+ "otherwise it starts on an empty database.";
 	private static final String SELECTED_BACKEND_MESSAGE = "{} is selected as storage backend.";
+	/** Stands in for the userinfo of a reported URL, so a password in it never reaches a message or a log. */
+	static final String REDACTED_USER_INFO = "***";
+	private static final String USER_INFO_SEPARATOR = "@";
+	private static final String SCHEME_SEPARATOR = "://";
 
 	public StorageBackendValidator(Environment environment) {
 		validate(environment.getActiveNames(), environment);
@@ -89,7 +93,7 @@ public class StorageBackendValidator {
 			List<String> brokerSettings = new ArrayList<>();
 			String ngsiUrl = propertyResolver.getProperty(NGSI_URL_PROPERTY, String.class, SHIPPED_NGSI_URL);
 			if (!SHIPPED_NGSI_URL.equals(ngsiUrl)) {
-				brokerSettings.add(NGSI_URL_PROPERTY + "=" + ngsiUrl);
+				brokerSettings.add(NGSI_URL_PROPERTY + "=" + withoutUserInfo(ngsiUrl));
 			}
 			brokerSettings.addAll(brokerProperties);
 			if (!brokerSettings.isEmpty()) {
@@ -106,6 +110,28 @@ public class StorageBackendValidator {
 					StorageBackend.SCORPIO.environment());
 		}
 		return brokerProperties;
+	}
+
+	/**
+	 * The url with its userinfo replaced by {@value #REDACTED_USER_INFO}; a url carrying a password
+	 * ({@code http://user:secret@host:1026}) is reported and logged without it. Anything that is not a
+	 * {@code scheme://userinfo@rest} url is returned unchanged.
+	 */
+	static String withoutUserInfo(String url) {
+		int schemeEnd = url.indexOf(SCHEME_SEPARATOR);
+		if (schemeEnd < 0) {
+			return url;
+		}
+		int authorityStart = schemeEnd + SCHEME_SEPARATOR.length();
+		// the last @ of the authority: a userinfo may hold an escaped one, the host may not hold any
+		int userInfoEnd = url.indexOf('/', authorityStart);
+		String authority = userInfoEnd < 0 ? url.substring(authorityStart) : url.substring(authorityStart, userInfoEnd);
+		int separator = authority.lastIndexOf(USER_INFO_SEPARATOR);
+		if (separator < 0) {
+			return url;
+		}
+		return url.substring(0, authorityStart) + REDACTED_USER_INFO + authority.substring(separator)
+				+ (userInfoEnd < 0 ? "" : url.substring(userInfoEnd));
 	}
 
 	// env vars (GENERAL_REPLACE_ON_UPDATE) resolve to the kebab-case key, yaml may use either form
