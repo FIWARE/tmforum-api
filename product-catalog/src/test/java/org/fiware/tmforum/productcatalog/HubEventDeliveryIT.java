@@ -61,6 +61,8 @@ public class HubEventDeliveryIT extends AbstractApiIT {
 	private static final Duration DELIVERY_TIMEOUT = Duration.ofSeconds(20);
 	private static final Duration QUIET_PERIOD = Duration.ofSeconds(5);
 	private static final String CLEAR_OUTBOX = "DELETE FROM " + PostgresStorage.QUALIFIED_OUTBOX_TABLE;
+	// TestEntityCleaner.deleteAll takes several types this way
+	private static final String TYPE_SEPARATOR = ",";
 
 	/**
 	 * The registered hubs, each taking one event type; {@link #OTHER_ENTITY} must never get a catalog event.
@@ -104,9 +106,14 @@ public class HubEventDeliveryIT extends AbstractApiIT {
 		this.connectionFactory = connectionFactory;
 	}
 
+	/**
+	 * Catalogs and hubs: hubs of earlier ITs (e.g. {@link HubLookupIT}) take catalog events too, and one that no
+	 * longer answers fails the delivery of a row this test waits for, which is redelivered to every hub of the
+	 * event, the matching one included.
+	 */
 	@Override
 	protected String getEntityType() {
-		return Catalog.TYPE_CATALOG;
+		return Catalog.TYPE_CATALOG + TYPE_SEPARATOR + TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION;
 	}
 
 	/**
