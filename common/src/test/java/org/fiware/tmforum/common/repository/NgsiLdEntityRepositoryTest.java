@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -49,6 +50,20 @@ class NgsiLdEntityRepositoryTest {
 	public void setUp() {
 		properties = new NgsiLdBrokerProperties();
 		repository = new NgsiLdEntityRepository(new GeneralProperties(), properties, null, null, null, null, null);
+	}
+
+	/**
+	 * The type-segment check throws on a class without {@code @MappingEnabled}. Assembling a chain must not throw,
+	 * or the failure bypasses the error handling of every caller that only subscribes later.
+	 */
+	@Test
+	public void getReportsAnUnmappedClassAsAnErrorSignal() {
+		Mono<Object> read = assertDoesNotThrow(
+				() -> repository.get(URI.create("urn:ngsi-ld:unmapped:1"), Object.class),
+				"Assembling the read should not throw.");
+
+		assertThrows(IllegalArgumentException.class, read::block,
+				"Subscribing should report the unmapped class.");
 	}
 
 	@Test

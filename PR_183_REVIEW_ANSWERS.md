@@ -299,6 +299,26 @@ and every call site drops the argument.
 
 ---
 
+### M5 — `IdHelper.hasTypeSegmentOf` can throw outside a `Mono`
+
+**Agreed, fixed** in `Report an unmapped class on subscription, not on assembly`.
+
+`get` ran the check before building the chain, so a class without `@MappingEnabled` threw
+`IllegalArgumentException` from the call that only assembles the `Mono`. A caller that assembles now and subscribes
+later — which is the normal shape here — never sees it through its own `onErrorMap`/`onErrorResume`, and on the
+PostgreSQL adapter it escaped the `StorageException` wrapping that is supposed to hold for everything leaving the
+adapter.
+
+Both adapters now wrap the check in `Mono.defer`, so it arrives as an error signal. On PostgreSQL it is therefore
+also wrapped as a `StorageException` like every other read failure, which is what
+`PostgresEntityRepositoryTest.classWithoutMappingIsRejectedOnSubscription` now pins — it replaces the test that
+pinned the throw-on-assembly behaviour rather than sitting next to it.
+
+Tests: that one, plus `NgsiLdEntityRepositoryTest.getReportsAnUnmappedClassAsAnErrorSignal` for the broker adapter.
+Both assert that assembling does not throw and that subscribing reports.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -314,7 +334,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | M1 | Broker-only beans carry no `@Requires(notEnv = postgresql)` | Agreed, convention per `AGENTS.md`. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
-| M5 | `IdHelper.hasTypeSegmentOf` throws outside a `Mono` | Agreed, wrap in `Mono.defer`. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
 | V3 | `^(?!X$).*$` → `!=` takes a regex fragment as a string literal | Agreed. Normalize in the shared parser (a model-level `NOT_EQUALS`), not only in the NGSI renderer. |
 | V4 | `toRegExp` rejects `|,;()"'<>!`, postgres accepts them | Agreed, related to #4. Align or document. |

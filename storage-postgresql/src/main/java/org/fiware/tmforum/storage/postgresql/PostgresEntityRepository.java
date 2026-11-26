@@ -105,14 +105,18 @@ public class PostgresEntityRepository implements EntityRepository {
         this.renderer = new JsonbQueryRenderer(new DocumentPathResolver(documents));
     }
 
+    // deferred: hasTypeSegmentOf throws on a class without @MappingEnabled, which has to arrive as an error signal
+    // rather than from the call that only assembles the chain
     @Override
     public <T> Mono<T> get(URI id, Class<T> entityClass) {
-        if (!IdHelper.hasTypeSegmentOf(id, entityClass)) {
-            return Mono.empty();
-        }
-        return execute(SELECT_CURRENT, statement -> statement.bind(0, id.toString()),
-                result -> result.map(row -> row.get(DATA_COLUMN, String.class)))
-                .next()
+        return Mono.defer(() -> {
+            if (!IdHelper.hasTypeSegmentOf(id, entityClass)) {
+                return Mono.<String>empty();
+            }
+            return execute(SELECT_CURRENT, statement -> statement.bind(0, id.toString()),
+                    result -> result.map(row -> row.get(DATA_COLUMN, String.class)))
+                    .next();
+        })
                 .map(document -> documents.fromDocument(document, entityClass, StorageOperation.READ))
                 .onErrorMap(failure -> PostgresFailures.failure(StorageOperation.READ,
                         String.format("Was not able to read %s.", id), failure));

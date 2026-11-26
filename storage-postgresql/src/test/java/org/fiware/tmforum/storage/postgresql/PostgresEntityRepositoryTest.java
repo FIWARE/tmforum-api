@@ -356,10 +356,17 @@ class PostgresEntityRepositoryTest {
         verifyNoInteractions(connectionFactory);
     }
 
+    /**
+     * The type-segment check throws on a class without {@code @MappingEnabled}. Assembling a chain must not throw,
+     * or the failure bypasses the error handling of every caller that only subscribes later; it arrives on
+     * subscription, wrapped like every other failure of the adapter.
+     */
     @Test
-    void classWithoutMappingIsRejected() {
-        assertThrows(IllegalArgumentException.class, () -> repository.get(URI.create(CATALOG_ID), Object.class),
-                "Reading requires a mapping-enabled class.");
+    void classWithoutMappingIsRejectedOnSubscription() {
+        Mono<Object> read = assertDoesNotThrow(() -> repository.get(URI.create(CATALOG_ID), Object.class),
+                "Assembling the read should not throw.");
+
+        assertStorageFailure(read);
     }
 
     private static StorageException assertStorageFailure(Mono<?> call) {

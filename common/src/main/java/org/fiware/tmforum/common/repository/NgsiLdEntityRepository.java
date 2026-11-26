@@ -42,14 +42,18 @@ public class NgsiLdEntityRepository extends NgsiLdBaseRepository implements Enti
         this.queryRenderer = queryRenderer;
     }
 
+    // deferred: hasTypeSegmentOf throws on a class without @MappingEnabled, which has to arrive as an error signal
+    // rather than from the call that only assembles the chain
     @Override
     public <T> Mono<T> get(URI id, Class<T> entityClass) {
-        if (!IdHelper.hasTypeSegmentOf(id, entityClass)) {
-            log.warn("Id {} has no type segment of {}.", id, entityClass.getSimpleName());
-            return Mono.empty();
-        }
-        return retrieveEntityById(id)
-                .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
+        return Mono.defer(() -> {
+            if (!IdHelper.hasTypeSegmentOf(id, entityClass)) {
+                log.warn("Id {} has no type segment of {}.", id, entityClass.getSimpleName());
+                return Mono.<T>empty();
+            }
+            return retrieveEntityById(id)
+                    .flatMap(entityVO -> entityVOMapper.fromEntityVO(entityVO, entityClass));
+        });
     }
 
     @Override
