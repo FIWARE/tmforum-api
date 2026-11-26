@@ -11,3 +11,7 @@ redis:
       expire-after-write: 14d
       expire-after-access: 14d
       value-serializer: io.github.wistefan.mapping.EntityVOSerializer
+    # access-policy PDP verdicts (DecisionCache); entries also carry min(token exp, decision-ttl)
+    decisions:
+      expire-after-write: ${access-policy.decision-ttl:60s}
+      value-serializer: io.micronaut.jackson.serialize.JacksonObjectSerializer
