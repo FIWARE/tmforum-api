@@ -57,7 +57,7 @@ public class ResourceOrderApiController extends AbstractApiController<ResourceOr
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteResourceOrder(@NonNull String id) {
-		return delete(id);
+		return delete(id, ResourceOrder.TYPE_RESOURCE_ORDER);
 	}
 
 	@Override

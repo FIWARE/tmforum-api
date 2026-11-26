@@ -5,6 +5,7 @@ import io.micronaut.http.context.ServerRequestContext;
 import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.TmForumException;
+import org.fiware.tmforum.common.notification.EntityEventPublisher;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
 import org.fiware.tmforum.common.querying.MyPojo;
 import org.fiware.tmforum.common.querying.QueryParser;
@@ -23,6 +24,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -33,6 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class AbstractApiControllerTest {
@@ -140,6 +143,56 @@ class AbstractApiControllerTest {
 		});
 
 		verify(repository).findEntities(eq(10), eq(5), any(), any(), any(), any());
+	}
+
+	/**
+	 * DELETE used to check only that the id is an NGSI-LD id, so an id of another type deleted that other entity
+	 * through this endpoint and answered 204, while GET and PATCH on the same URL answered 404.
+	 */
+	@ParameterizedTest
+	@MethodSource("provideForeignIds")
+	public void deleteRejectsAnIdOfAnotherType(String message, String id) {
+		EntityEventPublisher publisher = mock(EntityEventPublisher.class);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
+				mock(EntityRepository.class));
+		controller.setEventPublisher(publisher);
+
+		TmForumException exception = assertThrows(TmForumException.class,
+				() -> controller.delete(id, LIST_TYPE), message);
+
+		assertEquals(TmForumExceptionReason.NOT_FOUND, exception.getExceptionReason(), message);
+		verifyNoInteractions(publisher);
+	}
+
+	private static Stream<Arguments> provideForeignIds() {
+		return Stream.of(
+				Arguments.of("An id of another type should not be deleted.", "urn:ngsi-ld:category:1"),
+				Arguments.of("A non-ngsi-ld id should not be deleted.", "not-an-id"),
+				Arguments.of("An id without a type segment should not be deleted.", "urn:ngsi-ld"));
+	}
+
+	@ParameterizedTest
+	@MethodSource("provideOwnedIds")
+	public void deletePassesAnIdOfAnAcceptedTypeToThePublisher(String acceptedTypes, String id,
+			List<String> expectedTypes) {
+		EntityEventPublisher publisher = mock(EntityEventPublisher.class);
+		when(publisher.deleteWithEvent(any(), any())).thenReturn(Mono.empty());
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
+				mock(EntityRepository.class));
+		controller.setEventPublisher(publisher);
+
+		controller.delete(id, acceptedTypes).block();
+
+		verify(publisher).deleteWithEvent(URI.create(id), expectedTypes);
+	}
+
+	private static Stream<Arguments> provideOwnedIds() {
+		return Stream.of(
+				Arguments.of(LIST_TYPE, "urn:ngsi-ld:" + LIST_TYPE + ":1", List.of(LIST_TYPE)),
+				// a polymorphic endpoint owns every registered sub-type, so each of them stays deletable
+				Arguments.of(LIST_TYPE + ",sub-pojo", "urn:ngsi-ld:sub-pojo:1", List.of(LIST_TYPE, "sub-pojo")),
+				Arguments.of(LIST_TYPE + ", sub-pojo", "urn:ngsi-ld:" + LIST_TYPE + ":1",
+						List.of(LIST_TYPE, "sub-pojo")));
 	}
 
 	/**

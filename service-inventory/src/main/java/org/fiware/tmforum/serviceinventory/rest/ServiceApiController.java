@@ -171,7 +171,7 @@ public class ServiceApiController extends AbstractApiController<Service> impleme
     }
 
     @Override public Mono<HttpResponse<Object>> deleteService(@NonNull String id) {
-        return delete(id);
+        return delete(id, Service.TYPE_SERVICE);
     }
 
     @Override public Mono<HttpResponse<List<ServiceVO>>> listService(@Nullable String fields, @Nullable Integer offset,

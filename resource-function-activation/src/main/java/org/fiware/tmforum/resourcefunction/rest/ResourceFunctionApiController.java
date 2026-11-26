@@ -144,7 +144,7 @@ public class ResourceFunctionApiController extends AbstractApiController<Resourc
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteResourceFunction(@NonNull String id) {
-		return delete(id);
+		return delete(id, ResourceFunction.TYPE_RESOURCE_FUNCTION);
 	}
 
 	@Override

@@ -258,7 +258,7 @@ class OutboxDispatcherIT {
             }
             case DELETE -> {
                 repository.createDomainEntity(catalog(NAME)).block();
-                publisher.deleteWithEvent(URI.create(CATALOG_ID)).block();
+                publisher.deleteWithEvent(URI.create(CATALOG_ID), List.of(TestCatalog.TYPE)).block();
             }
         }
     }

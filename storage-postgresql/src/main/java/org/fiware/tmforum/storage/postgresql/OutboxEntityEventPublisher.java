@@ -7,6 +7,7 @@ import org.fiware.tmforum.common.notification.EventTypes;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.List;
 
 /**
  * PostgreSQL path: every write and its outbox row commit together; {@link OutboxDispatcher} delivers the event.
@@ -35,7 +36,7 @@ public class OutboxEntityEventPublisher implements EntityEventPublisher {
     }
 
     @Override
-    public Mono<Void> deleteWithEvent(URI id) {
-        return repository.deleteWithEvent(id, eventTypes::contains);
+    public Mono<Void> deleteWithEvent(URI id, List<String> acceptedTypes) {
+        return repository.deleteWithEvent(id, acceptedTypes, eventTypes::contains);
     }
 }

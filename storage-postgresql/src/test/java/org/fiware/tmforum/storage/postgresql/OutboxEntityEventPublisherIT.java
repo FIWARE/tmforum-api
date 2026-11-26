@@ -86,7 +86,7 @@ class OutboxEntityEventPublisherIT {
     void deleteCommitsDeletionAndDeleteRowWithOldState() {
         repository.createDomainEntity(catalog(NAME)).block();
 
-        publisher.deleteWithEvent(URI.create(CATALOG_ID)).block();
+        publisher.deleteWithEvent(URI.create(CATALOG_ID), List.of(TestCatalog.TYPE)).block();
 
         assertNull(stored(), "The entity should be deleted.");
         assertEquals(List.of(new OutboxRow(EventKind.DELETE.name(), TestCatalog.TYPE, null, NAME)), rows(CATALOG_ID),
@@ -134,7 +134,7 @@ class OutboxEntityEventPublisherIT {
         publisher.updateWithEvent(RESOURCE_ID, patch, TestResource.class).block();
         assertEquals(UPDATED_NAME, repository.get(URI.create(RESOURCE_ID), TestResource.class).block().getName(),
                 "The update of an unowned type should still be stored.");
-        publisher.deleteWithEvent(URI.create(RESOURCE_ID)).block();
+        publisher.deleteWithEvent(URI.create(RESOURCE_ID), List.of(TestResource.TYPE)).block();
 
         assertNull(repository.get(URI.create(RESOURCE_ID), TestResource.class).block(),
                 "The delete of an unowned type should still be applied.");
@@ -145,7 +145,7 @@ class OutboxEntityEventPublisherIT {
         return switch (kind) {
             case CREATE -> publisher.createWithEvent(catalog(NAME));
             case UPDATE -> publisher.updateWithEvent(CATALOG_ID, catalog(UPDATED_NAME), TestCatalog.class);
-            case DELETE -> publisher.deleteWithEvent(URI.create(CATALOG_ID));
+            case DELETE -> publisher.deleteWithEvent(URI.create(CATALOG_ID), List.of(TestCatalog.TYPE));
         };
     }
 

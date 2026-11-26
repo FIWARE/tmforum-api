@@ -63,7 +63,7 @@ public class AgreementController extends AbstractApiController<Agreement> implem
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteAgreement(@NonNull String id) {
-		return delete(id);
+		return delete(id, Agreement.TYPE_AGREEMENT);
 	}
 
 	@Override

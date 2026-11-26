@@ -106,7 +106,7 @@ public class ExtendedAppliedCustomerBillingRateApiController extends AbstractApi
 
     @Override
     public Mono<HttpResponse<Object>> deleteAppliedCustomerBill(String id) {
-        return delete(id);
+        return delete(id, AppliedCustomerBillingRate.TYPE_APPLIED_CUSTOMER_BILLING_RATE);
     }
 
     private boolean getNullSafeBoolean(Boolean booleanValue) {

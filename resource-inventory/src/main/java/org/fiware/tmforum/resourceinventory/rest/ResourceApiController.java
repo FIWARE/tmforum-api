@@ -275,7 +275,7 @@ public class ResourceApiController extends AbstractApiController<Resource> imple
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteResource(@NonNull String id) {
-		return delete(id);
+		return delete(id, ResourceTypeRegistry.ALL_RESOURCE_TYPES);
 	}
 
 	@Override

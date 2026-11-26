@@ -272,7 +272,7 @@ public class ServiceSpecificationApiController extends AbstractApiController<Ser
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteServiceSpecification(@NonNull String id) {
-		return delete(id);
+		return delete(id, ServiceSpecification.TYPE_SERVICE_SPECIFICATION);
 	}
 
 	@Override

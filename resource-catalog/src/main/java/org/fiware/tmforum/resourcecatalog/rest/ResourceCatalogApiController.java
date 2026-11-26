@@ -70,7 +70,7 @@ public class ResourceCatalogApiController extends AbstractApiController<Resource
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteResourceCatalog(@NonNull String id) {
-		return delete(id);
+		return delete(id, ResourceCatalog.TYPE_RESOURCE_CATALOG);
 	}
 
 	@Override

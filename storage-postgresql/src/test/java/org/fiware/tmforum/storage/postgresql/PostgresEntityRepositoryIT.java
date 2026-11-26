@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 
 import static org.fiware.tmforum.storage.postgresql.PostgresStorage.QUALIFIED_ENTITY_TABLE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -258,6 +259,36 @@ class PostgresEntityRepositoryIT {
         StorageException failure = assertThrows(StorageException.class,
                 () -> repository.deleteDomainEntity(catalog.getId()).block(), "A second delete should fail.");
         assertEquals(StorageErrorReason.NOT_FOUND, failure.reason(), "A missing entity should not be found.");
+    }
+
+    /**
+     * The delete carries the types the calling endpoint owns, so a matching id of another type leaves its row alone
+     * instead of deleting another endpoint's entity and writing its DELETE event.
+     */
+    @Test
+    void deleteWithEventLeavesAnEntityOfAnotherTypeAlone() {
+        TestCatalog catalog = catalog(1);
+        repository.createDomainEntity(catalog).block();
+
+        StorageException failure = assertThrows(StorageException.class,
+                () -> repository.deleteWithEvent(catalog.getId(), List.of(TestResource.TYPE), type -> false).block(),
+                "A delete of another endpoint's type should not find the entity.");
+
+        assertEquals(StorageErrorReason.NOT_FOUND, failure.reason(),
+                "An entity of a type the caller does not own should read as missing.");
+        assertNotNull(repository.get(catalog.getId(), TestCatalog.class).block(),
+                "The entity should still be stored.");
+    }
+
+    @Test
+    void deleteWithEventRemovesAnEntityOfAnAcceptedType() {
+        TestCatalog catalog = catalog(1);
+        repository.createDomainEntity(catalog).block();
+
+        repository.deleteWithEvent(catalog.getId(), List.of(TestCatalog.TYPE, TestResource.TYPE), type -> false)
+                .block();
+
+        assertNull(repository.get(catalog.getId(), TestCatalog.class).block(), "The entity should be deleted.");
     }
 
     static Stream<Arguments> pages() {

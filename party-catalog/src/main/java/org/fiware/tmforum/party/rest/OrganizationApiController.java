@@ -87,14 +87,7 @@ public class OrganizationApiController extends AbstractPartyApiController<Organi
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteOrganization(String id) {
-
-		if (!IdHelper.isNgsiLdId(id)) {
-			throw new DeletionException("Did not receive a valid id, such organization cannot exist.",
-					DeletionExceptionReason.NOT_FOUND);
-		}
-
-		return eventPublisher.deleteWithEvent(URI.create(id))
-				.then(Mono.just(HttpResponse.noContent()));
+		return delete(id, Organization.TYPE_ORGANIZATION);
 	}
 
 	@Override

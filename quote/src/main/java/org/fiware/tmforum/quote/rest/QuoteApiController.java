@@ -128,7 +128,7 @@ public class QuoteApiController extends AbstractApiController<Quote> implements 
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteQuote(@NonNull String id) {
-		return delete(id);
+		return delete(id, Quote.TYPE_QUOTE);
 	}
 
 	@Override

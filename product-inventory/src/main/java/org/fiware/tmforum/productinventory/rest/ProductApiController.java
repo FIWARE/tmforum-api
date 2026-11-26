@@ -111,7 +111,7 @@ public class ProductApiController extends AbstractApiController<Product> impleme
 	}
 
 	@Override public Mono<HttpResponse<Object>> deleteProduct(@NonNull String id) {
-		return delete(id);
+		return delete(id, Product.TYPE_PRODUCT);
 	}
 
 	@Override public Mono<HttpResponse<List<ProductVO>>> listProduct(@Nullable String fields, @Nullable Integer offset,

@@ -167,14 +167,14 @@ public abstract class AbstractSubscriptionApiController extends AbstractApiContr
 		return tmForumSubscription;
 	}
 
-	@Override
+	/** Deletes the hub, and the NGSI-LD subscription behind it when the broker delivers the notifications. */
 	@CacheInvalidate(value = CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME, all = true)
 	protected Mono<HttpResponse<Object>> delete(String id) {
 		if (!brokerNotifications()) {
-			return super.delete(id);
+			return super.delete(id, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION);
 		}
 		return subscriptionRepository.deleteDomainSubscriptionByTmForumSubscription(URI.create(id))
-				.then(super.delete(id));
+				.then(super.delete(id, TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION));
 	}
 
 	@Post(EventConstants.SUBSCRIPTION_CALLBACK_PATH)

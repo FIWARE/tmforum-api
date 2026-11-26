@@ -49,7 +49,7 @@ public class PartyRoleController extends AbstractApiController<PartyRole> implem
 
 	@Override
 	public Mono<HttpResponse<Object>> deletePartyRole(@NonNull String id) {
-		return delete(id);
+		return delete(id, PartyRole.TYPE_PR);
 	}
 
 	@Override

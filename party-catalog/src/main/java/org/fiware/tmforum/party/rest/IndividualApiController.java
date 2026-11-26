@@ -82,7 +82,7 @@ public class IndividualApiController extends AbstractPartyApiController<Individu
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteIndividual(@NonNull String id) {
-		return delete(id);
+		return delete(id, Individual.TYPE_INDIVIDUAL);
 	}
 
 	@Override

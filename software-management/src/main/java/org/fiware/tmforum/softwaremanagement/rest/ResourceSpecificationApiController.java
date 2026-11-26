@@ -316,7 +316,7 @@ public class ResourceSpecificationApiController extends AbstractApiController<Re
 	 */
 	@Override
 	public Mono<HttpResponse<Object>> deleteResourceSpecification(@NonNull String id) {
-		return delete(id);
+		return delete(id, ResourceTypeRegistry.ALL_SPEC_TYPES);
 	}
 
 	/**

@@ -206,7 +206,7 @@ class AbstractSubscriptionApiControllerTest {
 		when(subscriptionRepository.createSubscription(any(), any())).thenReturn(Mono.empty());
 		when(subscriptionRepository.deleteDomainSubscriptionByTmForumSubscription(any())).thenReturn(Mono.empty());
 		when(publisher.createWithEvent(any())).thenReturn(Mono.empty());
-		when(publisher.deleteWithEvent(any())).thenReturn(Mono.empty());
+		when(publisher.deleteWithEvent(any(), any())).thenReturn(Mono.empty());
 		return new Backend(controller, publisher, subscriptionRepository);
 	}
 
@@ -249,6 +249,7 @@ class AbstractSubscriptionApiControllerTest {
 
 		verify(backend.subscriptionRepository(), broker ? times(1) : never())
 				.deleteDomainSubscriptionByTmForumSubscription(SUBSCRIPTION_ID);
-		verify(backend.publisher()).deleteWithEvent(SUBSCRIPTION_ID);
+		verify(backend.publisher()).deleteWithEvent(SUBSCRIPTION_ID,
+				List.of(TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION));
 	}
 }

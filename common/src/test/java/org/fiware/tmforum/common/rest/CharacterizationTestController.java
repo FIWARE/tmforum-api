@@ -61,7 +61,7 @@ public class CharacterizationTestController extends AbstractApiController<Charac
 
 	@Delete(ENTITIES_PATH + "/{id}")
 	public Mono<HttpResponse<Object>> deleteEntity(@PathVariable String id) {
-		return delete(id);
+		return delete(id, CharacterizationEntity.TYPE);
 	}
 
 	@Get(ENTITIES_PATH)

@@ -58,7 +58,7 @@ public class BillFormatApiController extends AbstractApiController<BillFormat> i
 
     @Override
     public Mono<HttpResponse<Object>> deleteBillFormat(String id) {
-        return delete(id);
+        return delete(id, BillFormat.TYPE_BILLF);
     }
 
     @Override

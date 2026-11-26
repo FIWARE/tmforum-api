@@ -58,7 +58,7 @@ public class BillingCycleSpecificationApiController extends AbstractApiControlle
 
     @Override
     public Mono<HttpResponse<Object>> deleteBillingCycleSpecification(String id) {
-        return delete(id);
+        return delete(id, BillingCycleSpecification.TYPE_BILLCL);
     }
 
     @Override

@@ -65,7 +65,7 @@ public class AgreementSpecController extends AbstractApiController<AgreementSpec
 
         @Override
         public Mono<HttpResponse<Object>> deleteAgreementSpecification(@NonNull String id) {
-                return delete(id);
+                return delete(id, AgreementSpecification.TYPE_AGREEMENT_SPECIFICATION);
         }
 
         @Override

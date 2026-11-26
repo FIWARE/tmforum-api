@@ -8,6 +8,7 @@ import org.mockito.InOrder;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,7 +21,8 @@ import static org.mockito.Mockito.when;
 
 class DirectEntityEventPublisherTest {
 
-	private static final String ENTITY_ID = "urn:ngsi-ld:characterization-entity:1";
+	private static final String ENTITY_TYPE = "characterization-entity";
+	private static final String ENTITY_ID = "urn:ngsi-ld:" + ENTITY_TYPE + ":1";
 	private static final URI ENTITY_URI = URI.create(ENTITY_ID);
 
 	private EntityRepository repository;
@@ -82,7 +84,7 @@ class DirectEntityEventPublisherTest {
 	void deleteFiresNoEventBecauseTheBrokerSubscriptionsDeliverIt() {
 		when(repository.deleteDomainEntity(ENTITY_URI)).thenReturn(Mono.empty());
 
-		publisher.deleteWithEvent(ENTITY_URI).block();
+		publisher.deleteWithEvent(ENTITY_URI, List.of(ENTITY_TYPE)).block();
 
 		verify(repository).deleteDomainEntity(ENTITY_URI);
 		verifyNoMoreInteractions(repository);

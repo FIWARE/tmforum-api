@@ -77,8 +77,9 @@ public class PostgresEntityRepository implements EntityRepository {
     private static final String UPDATE_CURRENT_RETURNING_DATA = "UPDATE " + QUALIFIED_ENTITY_TABLE
             + " SET data = " + MERGED_DATA + ", " + MERGED_VERSION + ", updated_at = now()"
             + " WHERE id = $1 AND is_current RETURNING data::text AS data";
+    // the type predicate keeps an endpoint from deleting an entity of another one through a matching id
     private static final String DELETE_CURRENT_RETURNING = "DELETE FROM " + QUALIFIED_ENTITY_TABLE
-            + " WHERE id = $1 AND is_current RETURNING type, data::text AS data";
+            + " WHERE id = $1 AND is_current AND type = ANY($2) RETURNING type, data::text AS data";
     private static final String INSERT_OUTBOX_ROW = "INSERT INTO " + QUALIFIED_OUTBOX_TABLE
             + " (event_kind, entity_id, entity_type, new_state, old_state) VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)";
     private static final String TYPE_PREDICATE = " WHERE is_current AND type = ANY($1)";
@@ -229,12 +230,18 @@ public class PostgresEntityRepository implements EntityRepository {
     /**
      * Deletes the entity and, if {@code recordsEvents} accepts its type, inserts the DELETE outbox row with the deleted
      * document, in one transaction. A missing entity fails with NOT_FOUND and leaves no row.
+     *
+     * @param id            the id of the entity to delete
+     * @param acceptedTypes the stored types the caller owns; a row of any other type is left untouched and the call
+     *                      fails with NOT_FOUND, as if the id named nothing
+     * @param recordsEvents whether the deleted type gets an outbox row
      */
-    public Mono<Void> deleteWithEvent(URI id, Predicate<String> recordsEvents) {
+    public Mono<Void> deleteWithEvent(URI id, List<String> acceptedTypes, Predicate<String> recordsEvents) {
         String entityId = id.toString();
+        String[] types = acceptedTypes.toArray(String[]::new);
         return PostgresStatements.inTransaction(connectionFactory, connection ->
                         PostgresStatements.execute(connection, DELETE_CURRENT_RETURNING,
-                                        statement -> statement.bind(0, entityId),
+                                        statement -> statement.bind(0, entityId).bind(1, types),
                                         result -> result.map(StoredRow::of))
                                 .next()
                                 .switchIfEmpty(Mono.error(() -> notFound(StorageOperation.DELETE, entityId)))

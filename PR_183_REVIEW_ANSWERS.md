@@ -39,6 +39,43 @@ Tests: `AbstractApiControllerTest.listClampsTheLimitToTheMaximum` and `listRejec
 that the server cancels a statement over it. `storage-postgresql/README.md` documents the option and
 `POSTGRES_STATEMENT_TIMEOUT`.
 
+### #2 — `DELETE` does not check the type segment of the id (blocking)
+
+> `delete()` only checks `IdHelper.isNgsiLdId(id)` […] `DELETE /productOffering/urn:ngsi-ld:category:1` returns 204,
+> deletes the category and writes a DELETE outbox row for that type. `get()` and `patch()` reject the wrong type, so
+> the three operations disagree on the same URL.
+
+**Agreed, fixed** in `Reject a delete of an entity another endpoint owns`.
+
+Closed at both levels the comment names, but not with a single entity class: the polymorphic endpoints
+(`ResourceSpecifcationApiController`, `ResourceApiController`, …) legitimately delete every sub-type of their
+registry, so `hasTypeSegmentOf(id, T.class)` would have turned a valid delete into a 404. What the endpoint owns is
+exactly the comma-separated type string it already lists with, so that is what is passed down:
+
+- `AbstractApiController.delete(String id, String acceptedTypes)` replaces `delete(String id)`. `ownedEntityId`
+  rejects a non-NGSI-LD id and an id whose type segment is none of the accepted types, both with 404, so DELETE now
+  agrees with GET and PATCH on the same URL. Removing the one-argument overload rather than adding a second one is
+  deliberate — no call site can silently keep the unchecked path. All 33 controllers were updated to pass the same
+  type expression they list with; `AbstractSubscriptionApiController` passes
+  `TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION`.
+- `EntityEventPublisher.deleteWithEvent(URI id, List<String> acceptedTypes)` carries the types to the backend.
+  `PostgresEntityRepository.DELETE_CURRENT_RETURNING` now reads
+  `WHERE id = $1 AND is_current AND type = ANY($2)`, so even a caller that bypassed the controller cannot delete
+  another endpoint's row — it gets NOT_FOUND and no outbox row. `DirectEntityEventPublisher` ignores the argument
+  and says so in its Javadoc: the broker deletes by id alone, so the controller check is the only one available
+  there, exactly as before this PR.
+- `OrganizationApiController.deleteOrganization` no longer hand-rolls its own check; it delegates to
+  `delete(id, Organization.TYPE_ORGANIZATION)`. That also closes **M6** — it threw `DeletionException` where every
+  other controller throws `TmForumException` — since the shared method throws the latter.
+
+Tests: `AbstractApiControllerTest.deleteRejectsAnIdOfAnotherType` and
+`deletePassesAnIdOfAnAcceptedTypeToThePublisher` (parameterized, including a polymorphic endpoint with two accepted
+types); `PostgresEntityRepositoryIT.deleteWithEventLeavesAnEntityOfAnotherTypeAlone` and
+`deleteWithEventRemovesAnEntityOfAnAcceptedType` pin the SQL predicate.
+
+**M3** (`ControllerStorageBoundaryTest` passes with this gap) follows from this change and is listed as still open
+only for the test's own exemption list, which is unrelated to the gap itself.
+
 ---
 
 ## Still open
@@ -47,7 +84,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 
 | # | Comment | Verdict |
 |---|---------|---------|
-| #2 | `DELETE` does not check the type segment of the id | Agreed, blocking. Needs care: `delete()` has ~60 call sites, and the polymorphic controllers (`ResourceSpecifcationApiController`, `ResourceApiController`, …) must keep accepting every sub-type of their registry, so the check cannot be a single `hasTypeSegmentOf(id, T.class)`. Plan: pass the accepted types (the same string the controller lists with) into `delete()`, 404 on a mismatch, and add `AND type = ANY($2)` to `DELETE_CURRENT` / `DELETE_CURRENT_RETURNING` as defence in depth. `deleteOrganization` bypasses `delete()` and needs the same check. |
 | #3 | With no backend named the default is now PostgreSQL | Agreed, blocking. A broker deployment at the default URL and without `MICRONAUT_ENVIRONMENTS` silently starts on an empty database. Plan: WARN at startup naming the selected backend, and correct `AGENTS.md` L84, which still says the broker beans are active when no backend env is set. |
 | #4 | Several `regex` filters on one attribute merged into one pattern | Agreed. `combineParts` must not join `REGEX` parts; emit one `Comparison` each and combine with `AnyOf`. |
 | #5 | `encodeValue` does not escape `"` | Agreed. Escape `"` and `\`, or throw `QueryException`; same for the `!=` group. |
@@ -62,10 +98,9 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | #14 | `cleanup-subscriptions` is not all-or-nothing | Agreed. Skip the deletion and the drop when the report already holds an error after the read phase. |
 | M1 | Broker-only beans carry no `@Requires(notEnv = postgresql)` | Agreed, convention per `AGENTS.md`. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
-| M3 | `ControllerStorageBoundaryTest` exemption passes with the #2 gap | Follows from #2. |
+| M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | M4 | `QueryParser.generalProperties` unused | Agreed, remove. |
 | M5 | `IdHelper.hasTypeSegmentOf` throws outside a `Mono` | Agreed, wrap in `Mono.defer`. |
-| M6 | `OrganizationApiController` throws `DeletionException` | Agreed, align with the other controllers. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
 | V2 | No index on `event_outbox` for the CLAIM poll | Agreed, same as #8.3. Verified: `V2__event_outbox.sql` defines only the identity primary key. |
 | V3 | `^(?!X$).*$` → `!=` takes a regex fragment as a string literal | Agreed. Normalize in the shared parser (a model-level `NOT_EQUALS`), not only in the NGSI renderer. |

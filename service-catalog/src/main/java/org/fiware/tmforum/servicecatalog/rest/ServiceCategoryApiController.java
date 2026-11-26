@@ -73,7 +73,7 @@ public class ServiceCategoryApiController extends AbstractApiController<ServiceC
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteServiceCategory(@NonNull String id) {
-		return delete(id);
+		return delete(id, ServiceCategory.TYPE_SERVICE_CATEGORY);
 	}
 
 	@Override

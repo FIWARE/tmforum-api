@@ -70,7 +70,7 @@ public class ServiceCatalogApiController extends AbstractApiController<ServiceCa
 
 	@Override
 	public Mono<HttpResponse<Object>> deleteServiceCatalog(@NonNull String id) {
-		return delete(id);
+		return delete(id, ServiceCatalog.TYPE_SERVICE_CATALOG);
 	}
 
 	@Override

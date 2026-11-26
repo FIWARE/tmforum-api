@@ -43,6 +43,8 @@ import static org.fiware.tmforum.common.CommonConstants.MAX_LIMIT;
 @RequiredArgsConstructor
 public abstract class AbstractApiController<T> {
 
+	private static final String TYPE_SEPARATOR = ",";
+
 	protected final QueryParser queryParser;
 	protected final ReferenceValidationService validationService;
 	protected final EntityRepository repository;
@@ -78,14 +80,51 @@ public abstract class AbstractApiController<T> {
 				.cast(entityClass);
 	}
 
-	protected Mono<HttpResponse<Object>> delete(String id) {
+	/**
+	 * Deletes the entity the id names, if its type is one the endpoint serves.
+	 *
+	 * @param acceptedTypes the comma-separated NGSI-LD types this endpoint owns, the same ones it lists; an id whose
+	 *                      type segment is none of them names an entity of another endpoint and is answered with 404,
+	 *                      so that DELETE, GET and PATCH agree on the same URL
+	 * @param id            the id of the entity to delete
+	 * @return 204, once the entity and its event are committed
+	 * @throws TmForumException if the id is not an NGSI-LD id or carries a type segment of another endpoint
+	 */
+	protected Mono<HttpResponse<Object>> delete(String id, String acceptedTypes) {
+		List<String> types = acceptedTypes(acceptedTypes);
+		return eventPublisher.deleteWithEvent(ownedEntityId(id, types), types)
+				.then(Mono.just(HttpResponse.noContent()));
+	}
+
+	/**
+	 * The id of an entity this endpoint could hold.
+	 *
+	 * @param id    the received id
+	 * @param types the NGSI-LD types this endpoint serves
+	 * @return the id as a URI
+	 * @throws TmForumException if the id is not an NGSI-LD id or its type segment is not one of {@code types}
+	 */
+	protected static URI ownedEntityId(String id, List<String> types) {
 		// non-ngsi-ld ids cannot exist.
 		if (!IdHelper.isNgsiLdId(id)) {
 			throw new TmForumException("Did not receive a valid id, such entity cannot exist.",
 					TmForumExceptionReason.NOT_FOUND);
 		}
-		return eventPublisher.deleteWithEvent(URI.create(id))
-				.then(Mono.just(HttpResponse.noContent()));
+		URI entityId = URI.create(id);
+		// an id of another type names an entity of another endpoint, which this one must not touch
+		if (IdHelper.typeSegment(entityId).filter(types::contains).isEmpty()) {
+			throw new TmForumException("Did not receive a valid id, such entity cannot exist.",
+					TmForumExceptionReason.NOT_FOUND);
+		}
+		return entityId;
+	}
+
+	/** The individual NGSI-LD types of a comma-separated list, as the list endpoints take them. */
+	protected static List<String> acceptedTypes(String commaSeparatedTypes) {
+		return Arrays.stream(Optional.ofNullable(commaSeparatedTypes).orElse("").split(TYPE_SEPARATOR))
+				.map(String::trim)
+				.filter(type -> !type.isEmpty())
+				.toList();
 	}
 
 	/**

@@ -9,6 +9,7 @@ import org.fiware.tmforum.storage.EntityRepository;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -42,8 +43,12 @@ public class DirectEntityEventPublisher implements EntityEventPublisher {
 								fireAndForget(eventHandler.handleUpdateEvent(newState, old), "update"))));
 	}
 
+	/**
+	 * The broker deletes by id alone, so {@code acceptedTypes} cannot be enforced here; the controller has already
+	 * rejected an id of another type.
+	 */
 	@Override
-	public Mono<Void> deleteWithEvent(URI id) {
+	public Mono<Void> deleteWithEvent(URI id, List<String> acceptedTypes) {
 		return repository.deleteDomainEntity(id);
 	}
 
