@@ -19,7 +19,8 @@ import java.util.Set;
 
 /**
  * Fails the startup on an access-policy value that does not convert, since Micronaut binds any unknown boolean
- * string as {@code false} and the default would win silently, and on an enabled feature without the token settings.
+ * string as {@code false} and the default would win silently, and on an enabled feature without the token settings
+ * or without exactly one PDP endpoint.
  */
 @Context
 @Requires(property = AccessPolicyProperties.PREFIX)
@@ -31,7 +32,11 @@ public class AccessPolicyConfigurationGuard {
 	private static final String JWKS_URI_KEY = AccessPolicyProperties.PREFIX + ".jwt.jwks-uri";
 	private static final String ISSUER_KEY = AccessPolicyProperties.PREFIX + ".jwt.issuer";
 	private static final String AUDIENCE_KEY = AccessPolicyProperties.PREFIX + ".jwt.audience";
-	private static final Set<String> JWKS_URI_SCHEMES = Set.of("http", "https");
+	private static final String PDP_URL_KEY = AccessPolicyProperties.PREFIX + ".pdp.url";
+	private static final String PDP_SERVICE_URL_KEY = PolicyDecisionPoint.SERVICE_PREFIX + ".url";
+	private static final String PDP_SERVICE_URLS_KEY = PolicyDecisionPoint.SERVICE_PREFIX + ".urls";
+	private static final String PDP_SERVICE_KEYS = PDP_SERVICE_URL_KEY + " / " + PDP_SERVICE_URLS_KEY;
+	private static final Set<String> HTTP_SCHEMES = Set.of("http", "https");
 
 	private static final Map<String, Class<?>> TYPED_KEYS = Map.ofEntries(
 			typedKey("enabled", Boolean.class),
@@ -56,6 +61,7 @@ public class AccessPolicyConfigurationGuard {
 				.ifPresent(raw -> check(environment, key, raw, type)));
 		if (enabled.filter(TRUE::equals).isPresent()) {
 			checkJwt(environment);
+			checkPdpEndpoint(environment);
 		}
 	}
 
@@ -82,11 +88,27 @@ public class AccessPolicyConfigurationGuard {
 		});
 	}
 
+	// pdp.url is used as an absolute URI that bypasses the service, so setting both would silently ignore one of them
+	private static void checkPdpEndpoint(Environment environment) {
+		String url = environment.getProperty(PDP_URL_KEY, String.class).orElse("");
+		boolean serviceConfigured = environment.containsProperty(PDP_SERVICE_URL_KEY)
+				|| environment.containsProperty(PDP_SERVICE_URLS_KEY);
+		if (url.isBlank() && !serviceConfigured) {
+			throw invalid(PDP_URL_KEY, url, String.format("or %s is required while enabled", PDP_SERVICE_KEYS));
+		}
+		if (!url.isBlank() && serviceConfigured) {
+			throw invalid(PDP_URL_KEY, url, String.format("and %s are mutually exclusive, set only one", PDP_SERVICE_KEYS));
+		}
+		if (!url.isBlank() && !isAbsoluteHttpUri(url)) {
+			throw invalid(PDP_URL_KEY, url, "must be an absolute http(s) URI");
+		}
+	}
+
 	private static boolean isAbsoluteHttpUri(String raw) {
 		try {
 			URI uri = new URI(raw);
 			return uri.isAbsolute() && uri.getHost() != null
-					&& JWKS_URI_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT));
+					&& HTTP_SCHEMES.contains(uri.getScheme().toLowerCase(Locale.ROOT));
 		} catch (URISyntaxException e) {
 			return false;
 		}

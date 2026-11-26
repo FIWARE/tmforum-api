@@ -190,7 +190,8 @@ access-policy/src/main/java/org/fiware/tmforum/accesspolicy/
   PolicyResolver.java                  composition walk + derived visibility, over the *delegate* port
   PolicyDecisionPoint.java             @Client-backed, reactive, @Cacheable
   ValidationRequest.java               the PDP wire model
-  AccessDecision.java                  record AccessDecision(boolean permitted, String reason, String policyUid)
+  AccessDecision.java                  record AccessDecision(boolean permitted, String reason, String policyUid,
+                                              Source source); Source POLICY | PDP_FAILURE
   PolicyEnforcingEntityRepository.java @Primary decorator of EntityRepository
   AccessAuditPublisher.java            one record per decision, best-effort
 ```
@@ -441,6 +442,7 @@ access-policy:
     url: http://odrl-pap:8080
     path: /validate
     timeout: 2s
+    # instead of url, a micronaut.http.services.pdp.url(s) service may be set (path is then relative to it); exactly one
   jwt:
     jwks-uri: http://verifier:3000/.well-known/jwks
     issuer: https://verifier.example.org
