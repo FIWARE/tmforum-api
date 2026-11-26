@@ -3,7 +3,12 @@ package org.fiware.tmforum.common.querying;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.configuration.NgsiLdBrokerProperties;
 import org.fiware.tmforum.common.exception.QueryException;
+import org.fiware.tmforum.storage.query.AttributePath;
+import org.fiware.tmforum.storage.query.ComparisonOperator;
 import org.fiware.tmforum.storage.query.EntityQuery;
+import org.fiware.tmforum.storage.query.QueryFilter;
+import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
+import org.fiware.tmforum.storage.query.ValueType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -446,6 +451,37 @@ class QueryParserTest {
 				// the symbolic form ("*=") must not crash - it is not a valid regex on its own
 				Arguments.of("The symbolic operator form should work as well.", "color*=bl.e",
 						new QueryParams(null, null, "color~=bl.e")));
+	}
+
+	/**
+	 * Two regex filters on one attribute used to be joined into the single pattern {@code ^a,^b}: the broker then
+	 * answered 400 (it reads the comma as syntax) and PostgreSQL matched it as one POSIX regex, so the result was
+	 * silently wrong. Each pattern has to stay its own comparison, OR-ed with the others.
+	 */
+	@ParameterizedTest
+	@MethodSource("regexFiltersOnOneAttribute")
+	public void regexFiltersOnOneAttributeStayApart(String message, String tmForumQuery, QueryFilter expected) {
+		QueryParser queryParser = new QueryParser(new GeneralProperties());
+
+		ParsedQuery parsed = queryParser.parse(MyPojo.class, tmForumQuery);
+
+		assertEquals(expected, parsed.filter(), message);
+	}
+
+	private static Stream<Arguments> regexFiltersOnOneAttribute() {
+		AttributePath color = new AttributePath(List.of("color"), true);
+		Comparison first = new Comparison(color, ComparisonOperator.REGEX, ValueType.STRING, List.of("^a"));
+		Comparison second = new Comparison(color, ComparisonOperator.REGEX, ValueType.STRING, List.of("^b"));
+		return Stream.of(
+				Arguments.of("Two patterns on one attribute should stay two comparisons.",
+						"color.regex=^a;color.regex=^b", new QueryFilter.AnyOf(List.of(first, second))),
+				Arguments.of("A single pattern should stay a single comparison.",
+						"color.regex=^a", first),
+				// an exact-match OR list is still one comparison carrying both literals
+				Arguments.of("Exact matches on one attribute should still be combined.",
+						"color=red;color=blue",
+						new Comparison(color, ComparisonOperator.EQUALS, ValueType.STRING,
+								List.of("red", "blue"))));
 	}
 
 	/**

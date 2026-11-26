@@ -186,13 +186,31 @@ respectively.
 
 ---
 
+### #4 — Several `regex` filters on one attribute are merged into one pattern
+
+> `name.regex=^a;name.regex=^b` becomes the single pattern `^a,^b`. On the broker `toRegExp` rejects the comma (400).
+> On PostgreSQL there is no such check, so the literal `^a,^b` is matched and the result is wrong without an error.
+
+**Agreed, fixed** in `Keep two regex filters on one attribute apart`.
+
+`combineParts` joined the values of every part sharing an attribute and an operator, which is right for exact
+matches — `color=red;color=blue` is one comparison carrying both literals — and wrong for a regex, because
+`toValues` deliberately does not split a pattern on commas. The merge now skips `REGEX` parts: each pattern stays
+its own `QueryPart`, becomes its own `Comparison`, and the OR of the query combines them into an `AnyOf` like any
+other pair of filters. Both backends then see two patterns, which is what was asked for.
+
+Tests: `regexFiltersOnOneAttributeStayApart`, parameterized over two patterns on one attribute (now an `AnyOf` of
+two comparisons), one pattern (unchanged), and an exact-match OR list (still combined, so the fix did not take the
+merge away from the case it is for).
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
 
 | # | Comment | Verdict |
 |---|---------|---------|
-| #4 | Several `regex` filters on one attribute merged into one pattern | Agreed. `combineParts` must not join `REGEX` parts; emit one `Comparison` each and combine with `AnyOf`. |
 | #5 | `encodeValue` does not escape `"` | Agreed. Escape `"` and `\`, or throw `QueryException`; same for the `!=` group. |
 | #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |
 | #7 | Database failures map to wrong statuses and text | Agreed. `UNAVAILABLE` → 503 for every operation with backend-neutral text; `40001`/`40P01` as transient; `57014` (now reachable, see #1) needs its own status. |

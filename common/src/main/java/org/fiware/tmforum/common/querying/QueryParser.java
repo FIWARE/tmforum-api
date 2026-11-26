@@ -502,15 +502,27 @@ public class QueryParser {
         return trimmedValue;
     }
 
+    /**
+     * Joins the OR-ed values of one attribute and operator into the comma-separated value an exact-match comparison
+     * takes, so {@code name=a;name=b} becomes one part with {@code a,b}.
+     * <p>
+     * Regex parts are never joined. A pattern is taken whole ({@link #toValues} does not split it), so a joined
+     * {@code ^a,^b} would be matched as one pattern: a 400 on the broker, which reads the comma as syntax, and a
+     * silently wrong result set on PostgreSQL, which matches it as a POSIX regex. Each regex therefore stays its
+     * own part and becomes its own comparison, OR-ed with the others like any other filter.
+     * </p>
+     */
     private List<QueryPart> combineParts(String attribute, List<QueryPart> uncombinedParts) {
+        List<QueryPart> regexParts = uncombinedParts.stream().filter(QueryParser::isRegex).toList();
         Map<String, List<QueryPart>> collectedParts = uncombinedParts.stream()
+                .filter(queryPart -> !isRegex(queryPart))
                 .collect(
                         Collectors.toMap(QueryPart::operator, qp -> new ArrayList<>(List.of(qp)),
                                 (qp1, qp2) -> {
                                     qp1.addAll(qp2);
                                     return qp1;
                                 }));
-        return collectedParts
+        List<QueryPart> combined = collectedParts
                 .entrySet()
                 .stream()
                 .map(entry -> {
@@ -522,6 +534,12 @@ public class QueryParser {
                     return new QueryPart(attribute, entry.getKey(), value);
                 })
                 .collect(Collectors.toList());
+        combined.addAll(regexParts);
+        return combined;
+    }
+
+    private static boolean isRegex(QueryPart queryPart) {
+        return REGEX.getNgsiLdOperator().equals(queryPart.operator());
     }
 
     private QueryPart paramsToQueryPart(String parameter, Operator operator) {
