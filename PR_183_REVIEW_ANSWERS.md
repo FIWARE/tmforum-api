@@ -127,6 +127,38 @@ is absent from the thrown message.
 
 ---
 
+### #9 / V5 — No indexes on `tmforum.entity`, and #8.3 / V2 — no index on `event_outbox`
+
+> Every list filters by `type = ANY(...)`, orders by `created_at, id` and runs `count(*) OVER ()`, which is a
+> sequential scan plus a sort per request.
+> The CLAIM query runs every poll (~1s) […] but event_outbox has no index, so each poll seq-scans and sorts the whole
+> table.
+
+**Agreed, fixed** in `Index the list filter and the outbox poll`. Both were verified against the migrations:
+`V1__entity.sql` defined only the primary key and the partial unique index on `id`, and `V2__event_outbox.sql` only
+its identity primary key.
+
+A new `V4__list_and_outbox_indexes.sql` rather than an edit of V1 and V2. The two are unreleased, so editing them
+would be defensible, but a database a developer already migrated (the persistent `-Pdev` cluster) would then fail to
+start on a checksum mismatch, which is a confusing failure for no gain.
+
+| Index | Statement it carries |
+|-------|----------------------|
+| `entity_current_type_created_idx (type, created_at, id) WHERE is_current` | every list: the `is_current AND type = ANY($1)` filter and the `created_at, id` order an unsorted list uses, which is the default. `count(*) OVER ()` runs over the same rows, so it is covered too. A sorted list still sorts, but over the rows the index found rather than the table. |
+| `event_outbox_type_due_idx (entity_type, next_attempt_at, id)` | `OutboxDispatcher.CLAIM`, which runs every poll interval (1s by default) and selects the due rows of this deployment's types ordered by `id`. `STATISTICS` filters on `entity_type` alone and uses the same index. |
+| `event_outbox_type_created_idx (entity_type, created_at)` | `DISCARD_EXPIRED`, the retention sweep. |
+
+A GIN index on `data` is deliberately not added: the filters the renderer produces are `EXISTS` over a jsonpath
+selection, which `jsonb_path_ops` would not serve without rewriting the rendered SQL, and that is a larger change
+than this review calls for. The list index plus the `MAX_LIMIT` bound and the `statement_timeout` from #1 bound what
+an unindexed `data` filter can cost.
+
+Tests: `SchemaMigrationIT.entityIndexesAreTheKeysAndTheListIndex`, `listIndexIsPartialOnTheCurrentRows` and
+`outboxIndexesCoverTheClaimAndTheRetentionSweep`. The old `noOtherIndexExists` was the assertion that pinned the
+absence of exactly these indexes; it is replaced rather than deleted, so the set of indexes stays pinned.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -137,8 +169,7 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | #5 | `encodeValue` does not escape `"` | Agreed. Escape `"` and `\`, or throw `QueryException`; same for the `!=` group. |
 | #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |
 | #7 | Database failures map to wrong statuses and text | Agreed. `UNAVAILABLE` → 503 for every operation with backend-neutral text; `40001`/`40P01` as transient; `57014` (now reachable, see #1) needs its own status. |
-| #8 | Outbox delivery and housekeeping (5 sub-points) | Partly agreed. The index (8.3) is the same as **V2** and is cheap. Per-hub delivery state (8.1) and paging past 100 hubs (8.2) are real but larger; terminal failures (8.4) and un-owned types (8.5) are separate small fixes. |
-| #9 | No indexes on `tmforum.entity` | Agreed, same as **V5**. A partial `(type, created_at, id) WHERE is_current` covers the default list. |
+| #8 | Outbox delivery and housekeeping (5 sub-points) | **8.3's index is fixed** (above). Still open: per-hub delivery state (8.1) and paging past 100 hubs (8.2), which are real but larger; terminal failures (8.4) and un-owned types (8.5), separate small fixes. |
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
 | #11 | A broker 400 on list becomes a 500 | Agreed. `listFailure` should map a 400 to `INVALID_DATA` like the write path. |
 | #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |
@@ -150,8 +181,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | M4 | `QueryParser.generalProperties` unused | Agreed, remove. |
 | M5 | `IdHelper.hasTypeSegmentOf` throws outside a `Mono` | Agreed, wrap in `Mono.defer`. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
-| V2 | No index on `event_outbox` for the CLAIM poll | Agreed, same as #8.3. Verified: `V2__event_outbox.sql` defines only the identity primary key. |
 | V3 | `^(?!X$).*$` → `!=` takes a regex fragment as a string literal | Agreed. Normalize in the shared parser (a model-level `NOT_EQUALS`), not only in the NGSI renderer. |
 | V4 | `toRegExp` rejects `|,;()"'<>!`, postgres accepts them | Agreed, related to #4. Align or document. |
-| V5 | No index for `type` on `tmforum.entity` | Agreed, same as #9. Verified against `V1__entity.sql`. |
 | V6 | `getSubscriptions` `@Cacheable` key is unique per call | Agreed, verified: the key is the whole `EventDetails`, which carries `eventTime = Instant.now()`, so the cache never hits. Key on `(entityType, eventType)`. |

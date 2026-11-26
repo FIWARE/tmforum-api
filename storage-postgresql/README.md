@@ -42,9 +42,11 @@ interleave: the last one wins whole.
 
 A list is one `SELECT ... WHERE is_current AND type = ANY(...)` with the TMForum filter rendered by
 `JsonbQueryRenderer`: each comparison is an `EXISTS` over the values a jsonpath selects, with every literal bound
-as a parameter, and `ORDER BY` the sort keys, then `created_at, id`. There are no indexes for filters
-or sorts yet, so a filtered list scans every current row of its types. The page size a list endpoint serves is
-bounded by `CommonConstants.MAX_LIMIT`, so one request can never read and map every stored row.
+as a parameter, and `ORDER BY` the sort keys, then `created_at, id`. The partial index
+`entity_current_type_created_idx (type, created_at, id) WHERE is_current` (V4) carries that filter and the default
+order; a filter on `data` has no index of its own yet, so it is evaluated on the rows the index found. The page
+size a list endpoint serves is bounded by `CommonConstants.MAX_LIMIT`, so one request can never read and map every
+stored row.
 
 ## Configuration
 

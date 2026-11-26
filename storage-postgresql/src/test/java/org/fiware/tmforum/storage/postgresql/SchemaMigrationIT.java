@@ -15,12 +15,17 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.fiware.tmforum.storage.postgresql.PostgresStorage.ENTITY_CURRENT_INDEX;
+import static org.fiware.tmforum.storage.postgresql.PostgresStorage.ENTITY_LIST_INDEX;
+import static org.fiware.tmforum.storage.postgresql.PostgresStorage.OUTBOX_DUE_INDEX;
+import static org.fiware.tmforum.storage.postgresql.PostgresStorage.OUTBOX_RETENTION_INDEX;
+import static org.fiware.tmforum.storage.postgresql.PostgresStorage.OUTBOX_TABLE;
 import static org.fiware.tmforum.storage.postgresql.PostgresStorage.ENTITY_TABLE;
 import static org.fiware.tmforum.storage.postgresql.PostgresStorage.QUALIFIED_ENTITY_TABLE;
 import static org.fiware.tmforum.storage.postgresql.PostgresStorage.SCHEMA;
@@ -36,6 +41,10 @@ class SchemaMigrationIT {
     private static final String FLYWAY_HISTORY_TABLE = SCHEMA + ".flyway_schema_history";
     private static final String INITIAL_VERSION = "1";
     private static final String PRIMARY_KEY_INDEX = ENTITY_TABLE + "_pkey";
+    private static final String OUTBOX_PRIMARY_KEY_INDEX = OUTBOX_TABLE + "_pkey";
+    // the index columns come back in index order; the assertion compares them as a set
+    private static final Comparator<List<Object>> INDEX_COLUMNS =
+            Comparator.comparing(column -> String.valueOf(column.get(1)));
     private static final String NOT_NULL = "NO";
     private static final String BACKFILL_MIGRATION = "/db/migration/tmforum/V3__entity_version_backfill.sql";
     private static final String BACKFILL_LABEL = "backfilled-1.0";
@@ -127,14 +136,46 @@ class SchemaMigrationIT {
     }
 
     @Test
-    void noOtherIndexExists() {
+    void entityIndexesAreTheKeysAndTheListIndex() {
         List<String> indexes = query(
                 "SELECT indexname::text FROM pg_indexes WHERE schemaname = $1 AND tablename = $2",
                 row -> row.get("indexname", String.class),
                 SCHEMA, ENTITY_TABLE);
 
-        assertEquals(List.of(ENTITY_CURRENT_INDEX, PRIMARY_KEY_INDEX), indexes.stream().sorted().toList(),
-                "Only the primary key and " + ENTITY_CURRENT_INDEX + " should exist.");
+        assertEquals(List.of(ENTITY_CURRENT_INDEX, ENTITY_LIST_INDEX, PRIMARY_KEY_INDEX),
+                indexes.stream().sorted().toList(),
+                "The entity table should carry its keys and the list index, and nothing else.");
+    }
+
+    /**
+     * Every list filters on is_current and type, so without this index each one scans the whole table; the outbox
+     * poll selects the due rows of its own types once a second, so without its index each poll scans the outbox.
+     */
+    @Test
+    void listIndexIsPartialOnTheCurrentRows() {
+        List<List<Object>> columns = query(
+                "SELECT pg_get_expr(i.indpred, i.indrelid) AS predicate, a.attname::text FROM pg_index i "
+                        + "JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) "
+                        + "WHERE i.indexrelid = $1::regclass ORDER BY a.attnum",
+                row -> List.of(row.get("predicate", String.class), row.get("attname", String.class)),
+                SCHEMA + "." + ENTITY_LIST_INDEX);
+
+        assertEquals(List.of(List.of("is_current", "created_at"), List.of("is_current", "id"),
+                        List.of("is_current", "type")),
+                columns.stream().sorted(INDEX_COLUMNS).toList(),
+                ENTITY_LIST_INDEX + " should cover type, created_at and id over the current rows.");
+    }
+
+    @Test
+    void outboxIndexesCoverTheClaimAndTheRetentionSweep() {
+        List<String> indexes = query(
+                "SELECT indexname::text FROM pg_indexes WHERE schemaname = $1 AND tablename = $2",
+                row -> row.get("indexname", String.class),
+                SCHEMA, OUTBOX_TABLE);
+
+        assertEquals(List.of(OUTBOX_DUE_INDEX, OUTBOX_PRIMARY_KEY_INDEX, OUTBOX_RETENTION_INDEX),
+                indexes.stream().sorted().toList(),
+                "The outbox should carry its primary key, the claim index and the retention index.");
     }
 
     static Stream<Arguments> backfilledRows() {
