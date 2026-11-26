@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -149,15 +150,21 @@ class DecisionKeyTest {
 	}
 
 	private static Stream<Arguments> keyedRecords() {
+		ValidationRequest.RelatedParty party = RESOURCE.relatedParty().getFirst();
 		return Stream.of(
-				Arguments.of(ValidationRequest.Resource.class, DecisionKey.RESOURCE_FIELDS),
-				Arguments.of(ValidationRequest.RelatedParty.class, DecisionKey.RELATED_PARTY_FIELDS));
+				Arguments.of(RESOURCE, DecisionKey.resourceMap(RESOURCE).keySet()),
+				Arguments.of(party, DecisionKey.relatedPartyMap(party).keySet()));
 	}
 
+	// Asserts on the map the key is really built from, so a field missing in resourceMap/relatedPartyMap fails here.
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("keyedRecords")
-	void everyRecordComponentEntersTheKey(Class<? extends Record> type, Set<String> keyedFields) {
-		Set<String> components = Arrays.stream(type.getRecordComponents())
+	void everyRecordComponentEntersTheKey(Record populated, Set<String> keyedFields) throws ReflectiveOperationException {
+		for (RecordComponent component : populated.getClass().getRecordComponents()) {
+			assertNotNull(component.getAccessor().invoke(populated),
+					"The fixture must set every component, " + component.getName() + " is null.");
+		}
+		Set<String> components = Arrays.stream(populated.getClass().getRecordComponents())
 				.map(RecordComponent::getName)
 				.collect(Collectors.toSet());
 		assertEquals(components, keyedFields, "A new field must be added to the decision key on purpose.");

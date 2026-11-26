@@ -4,7 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * The cache key of one PDP decision: a hex SHA-256 over policy, scope, action and subject, plus the resource only
@@ -27,12 +26,6 @@ public record DecisionKey(String value) {
 	private static final String RESOURCE_RELATED_PARTY = "relatedParty";
 	private static final String PARTY_ROLE = "role";
 	private static final String PARTY_DID = "did";
-
-	/** The {@link ValidationRequest.Resource} components that enter the key. */
-	static final Set<String> RESOURCE_FIELDS = Set.of(RESOURCE_TYPE, RESOURCE_ID, RESOURCE_CATALOG, RESOURCE_CATEGORY,
-			RESOURCE_RELATED_PARTY);
-	/** The {@link ValidationRequest.RelatedParty} components that enter the key. */
-	static final Set<String> RELATED_PARTY_FIELDS = Set.of(PARTY_ROLE, PARTY_DID);
 
 	public DecisionKey {
 		Objects.requireNonNull(value, "value");
@@ -62,7 +55,7 @@ public record DecisionKey(String value) {
 	}
 
 	// Built by hand, so a new Resource field only enters the key deliberately (guarded by DecisionKeyTest).
-	private static Map<String, Object> resourceMap(ValidationRequest.Resource resource) {
+	static Map<String, Object> resourceMap(ValidationRequest.Resource resource) {
 		Map<String, Object> map = new LinkedHashMap<>();
 		putIfPresent(map, RESOURCE_TYPE, resource.type());
 		putIfPresent(map, RESOURCE_ID, resource.id());
@@ -77,7 +70,7 @@ public record DecisionKey(String value) {
 		return map;
 	}
 
-	private static Map<String, Object> relatedPartyMap(ValidationRequest.RelatedParty party) {
+	static Map<String, Object> relatedPartyMap(ValidationRequest.RelatedParty party) {
 		Map<String, Object> map = new LinkedHashMap<>();
 		if (party != null) {
 			putIfPresent(map, PARTY_ROLE, party.role());
