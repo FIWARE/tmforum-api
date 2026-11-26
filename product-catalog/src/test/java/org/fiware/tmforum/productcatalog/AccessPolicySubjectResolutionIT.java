@@ -56,7 +56,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * With access policies enabled, every request gets a subject from its optional bearer token, and no token makes it fail.
+ * With access policies enabled, every request gets a subject from its optional bearer token, and no token, valid,
+ * invalid or missing, fails the request.
  * The {@code bypass-unauthenticated} and {@code mode} dimensions land with AP-09.
  */
 @MicronautTest(packages = {"org.fiware.tmforum.productcatalog"}, contextBuilder = FirstMatchConfigContextBuilder.class)
@@ -147,7 +148,8 @@ public class AccessPolicySubjectResolutionIT extends AbstractApiIT implements Te
 				.retrieve(tokenCase.authorize(HttpRequest.GET(SubjectEchoController.PATH)), SubjectEcho.class);
 
 		assertTrue(echo.resolved(), "Every request must get a subject.");
-		assertTrue(echo.propagated(), "The subject must be reachable through the propagated request context.");
+		assertTrue(echo.propagated(),
+				"The subject must survive a scheduler thread switch through the propagated request context.");
 		assertEquals(tokenCase.identity == null, echo.anonymous(), "Only a valid token may resolve to an identity.");
 		assertEquals(tokenCase.identity, echo.identity(), "The identity must be the token's credential issuer.");
 	}

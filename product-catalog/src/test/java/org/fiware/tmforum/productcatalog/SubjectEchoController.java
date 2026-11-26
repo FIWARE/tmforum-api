@@ -7,12 +7,14 @@ import io.micronaut.http.annotation.Get;
 import org.fiware.tmforum.accesspolicy.Subject;
 import org.fiware.tmforum.accesspolicy.SubjectResolutionFilter;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Optional;
 
 /**
  * Echoes the subject {@link SubjectResolutionFilter} resolved, for the access-policy ITs.
- * {@code propagated} tells whether {@link SubjectResolutionFilter#current()} sees the same subject inside a {@link Mono}.
+ * {@code propagated} tells whether {@link SubjectResolutionFilter#current()} still sees the same subject after a
+ * {@link Mono} hops to another scheduler thread.
  */
 @Controller(SubjectEchoController.PATH)
 @Requires(property = SubjectEchoController.ENABLED_PROPERTY, value = "true")
@@ -24,7 +26,10 @@ public class SubjectEchoController {
 	@Get
 	public Mono<SubjectEcho> echo(HttpRequest<?> request) {
 		Optional<Subject> fromAttribute = SubjectResolutionFilter.subjectOf(request);
-		return Mono.fromSupplier(SubjectResolutionFilter::current)
+		// hop to another thread first, as the AP-08 decorator reads the subject after a storage I/O hop
+		return Mono.just(fromAttribute)
+				.publishOn(Schedulers.boundedElastic())
+				.map(ignored -> SubjectResolutionFilter.current())
 				.map(fromContext -> SubjectEcho.of(fromAttribute,
 						fromAttribute.isPresent() && fromAttribute.equals(fromContext)));
 	}
