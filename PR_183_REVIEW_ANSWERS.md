@@ -429,6 +429,31 @@ the no-collision case, so all four outcomes of an external reference are pinned:
 
 ---
 
+### V4 — `toRegExp` rejects `|,;()"'<>!`, PostgreSQL accepts them
+
+> `toRegExp` rejects any pattern containing `|,;()"'<>!` with a 400, but the postgres backend runs the same pattern
+> fine as POSIX ARE. So `name.regex=(foo|bar)` is a 400 on the broker and a result set on postgres — the same query
+> behaves differently per backend. Worth aligning (reject on both, or document the divergence).
+
+**Documented, not aligned** — in `Document what the two backends do differently`.
+
+Rejecting on both was the alternative, and it is the wrong one here: it would make this backend refuse perfectly
+good POSIX regexes only because NGSI-LD's `q` cannot express them. That is a loss of function in the backend this PR
+adds, traded for a uniformity nobody gains from — a client that sends `(foo|bar)` wants the alternation, and on
+PostgreSQL it can have it.
+
+The divergence was already recorded in `storage-api`'s `KnownDeviation.REGEX_HOLDING_QUERY_SYNTAX_IS_REJECTED`,
+which the contract test cases that hit it are tagged with, so the contract already states per backend what each is
+expected to do. What was missing is a place an operator reading about this backend would find it, so
+`storage-postgresql/README.md` gained a **Divergences from the broker backends** section listing all of them: the
+rejected regex characters, Scorpio's anchored-regex behaviour, the string values #5 now rejects, and the
+`statement_timeout` from #1.
+
+It also says what is *not* a divergence any more: after V3 the not-equals idiom is normalized before either backend
+sees it.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -442,4 +467,3 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
-| V4 | `toRegExp` rejects `|,;()"'<>!`, postgres accepts them | Agreed, related to #4. Align or document. |

@@ -124,6 +124,28 @@ set them only to deviate:
 | `tmforum.outbox.housekeeping-interval`  | `1m`    | delay between two retention and metrics runs               |
 | `endpoints.health.postgresql.timeout`   | `5s`    | time bound of the readiness `SELECT 1`                     |
 
+## Divergences from the broker backends
+
+A query is parsed once into the backend-neutral model, so both backends receive the same comparisons. What they do
+with a `.regex` pattern still differs, because each runs it through its own engine and NGSI-LD's `q` is not a regex
+language:
+
+| Filter | Broker (Orion-LD 1.9.0, Scorpio 5.0.3) | PostgreSQL |
+|--------|----------------------------------------|------------|
+| `.regex` holding one of <code>&#124;,;()"'<>!</code> | 400: `NgsiLdQueryRenderer` rejects it, since `q` reads each one as syntax, quoted or not — `a&#124;b` becomes "matches a, or attribute b exists" | matched as a POSIX regex |
+| `.regex` anchored with `^` or `$` | matches nothing on Scorpio 5.0.3 | matched |
+| a string value holding `"` or `\` | 400: `q` has no escape either broker honours inside a quoted value | bound as a parameter, matched |
+| an unbounded `.regex` | run by the broker | cancelled by `statement_timeout` if it outlives it |
+
+Rejecting those patterns on PostgreSQL too would make this backend refuse perfectly good POSIX regexes only because
+another backend cannot express them, which is a loss of function rather than a gain in portability. They are
+therefore left to work here and recorded as deviations instead: `storage-api`'s `KnownDeviation` names each one, and
+the contract test cases that hit them are tagged with it, so the contract states per backend what is expected.
+
+The not-equals idiom `^(?!X$).*$` is **not** on this list: `QueryParser` normalizes it into a `NOT_EQUALS`
+comparison when X is a literal, so both backends compare rather than run a pattern. With a metacharacter in X it is
+a genuine pattern and falls under the first row.
+
 ## Tests
 
 Every IT run provisions PostgreSQL in the k3s test cluster (`k3s/postgresql-db`, port 5432, database, user and
