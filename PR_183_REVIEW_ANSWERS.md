@@ -7,9 +7,28 @@ Two reviews on [PR #183](https://github.com/FIWARE/tmforum-api/pull/183):
 
 Each entry records the verdict and, where a fix was made, the commit it is in.
 
+## Summary
+
+Every comment of both reviews is answered below.
+
+| Outcome | Comments |
+|---------|----------|
+| Behaviour fixed | #1, #2, #3, #4, #5, #7, #8.2, #8.3, #8.4, #8.5, #9, #11, #12 (the `NullNode` half), #14, M1, M3, M4, M5, V1, V2, V3, V5, V6, V7 |
+| Answered; tests or documentation added, no behaviour change | #10, #13, V4 |
+| Answered; nothing to change | #6, #12 (the PATCH-semantics half), M2 |
+| Agreed, deliberately deferred | #8.1 |
+
+Each entry quotes the comment, says what was decided and why, and names the commit and the tests. Where a comment
+asked a question rather than reporting a defect, the entry answers it; where the answer is "no", it says so and
+gives the reason rather than quietly skipping it.
+
+The entries are in the order the work was done, which is roughly the order of risk: the three blocking comments
+first, then the cheap and the far-reaching fixes, then the questions.
+
+
 ---
 
-## Addressed
+## The comments
 
 ### #1 — Unbounded `limit`, no `statement_timeout` (blocking)
 
@@ -635,12 +654,55 @@ claiming parity, the renderer's Javadoc spells out both cases that diverge and w
 
 ---
 
-## Still open
+### #8.1 — A row is delivered to every matching hub and fails unless all acknowledge
 
-The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
+> With 50 hubs and one down, each retry (backoff up to 1h, retention 7d) resends to the 49 healthy hubs, each time
+> with the same `eventId`. Keep per-row delivery state (for example an `acked_callbacks` column, or one row per
+> subscription).
 
-| # | Comment | Verdict |
-|---|---------|---------|
-| #8.1 | A row is delivered to every matching hub and fails unless all acknowledge | The only sub-point still open — see the note below the table. |
-| M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
-| V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
+**Agreed as a real cost; not fixed here, and I would rather it were taken as its own change.** This is the one
+sub-point of #8 left open.
+
+The mechanics are as described: `deliverNotifications` attempts every callback (`flatMapDelayError`, so one dead
+hub does not stop the others) and the row only settles as delivered when all of them answered 2xx. A single dead hub
+therefore makes every healthy hub receive the event again on each retry.
+
+What keeps it from being a correctness bug is the `eventId`: `outboxEventId` derives it from the row id and the
+event type, so every resend of a row carries the same id and a consumer deduplicates on it. The guarantee the
+outbox advertises is at-least-once, and this is the "at least" being exercised — loudly, but correctly.
+
+Fixing it properly means per-row, per-callback delivery state, and that is a schema and a protocol decision rather
+than a patch:
+
+- an `acked_callbacks` column means the claim, the settle and the retention sweep all have to read and write it, and
+  a hub deleted between two attempts has to stop blocking the row;
+- one row per subscription means the writer has to know the hubs at write time — which it deliberately does not, so
+  that a hub registered after the write still gets the event — or a fan-out step has to materialize them;
+- either way the metrics, the discard path and `OutboxDispatcherIT`'s claim/settle cases change shape.
+
+That is a bigger change than the rest of this review put together, it touches the part of the PR with the strongest
+correctness guarantees, and it is not needed for correctness. The deployment shape it hurts (dozens of hubs on one
+event type, one of them down for hours) also has a cheaper mitigation available today: lowering
+`tmforum.outbox.max-backoff` is the wrong direction, but raising it toward the retention cuts the number of
+resends.
+
+Recommendation: a follow-up ticket, with per-callback state in `V5`.
+
+---
+
+### M2 — `PostgresTestEntityCleaner` runs `DELETE FROM tmforum.entity` and ships in the production jar
+
+**Answered; no change.** The class is in `src/main`, but it cannot run outside a test: it carries
+`@Requires(env = Environment.TEST)`, so Micronaut never creates the bean unless the test environment is active.
+
+It is also where the project puts this kind of helper on purpose. The port it implements, `TestEntityCleaner`, and
+the base class that uses it, `AbstractApiIT`, both live in `common/src/main/java/.../common/test/` — `AGENTS.md`
+records that as the convention ("test helpers in main code"), because the 21 API modules consume them from the
+published `common` artifact. `NgsiLdTestEntityCleaner`, the broker counterpart, sits right next to them with the
+same `@Requires(env = Environment.TEST)` guard. Moving only the PostgreSQL one into a test-jar would make the two
+implementations of one port live in different places and would break every module IT that resolves it.
+
+If the guard is judged too thin for a `DELETE FROM`, the change worth making is to all three classes at once and to
+the convention behind them, not to this one.
+
+---
