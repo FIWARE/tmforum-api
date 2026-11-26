@@ -26,8 +26,24 @@ public record Subject(String identity, Map<String, Object> claims, Instant expir
 
 	public static final Subject ANONYMOUS = new Subject(null, Map.of(), null, null);
 
+	/**
+	 * Admits only the {@link #ANONYMOUS} shape and identified subjects with an expiry and the fingerprint of
+	 * {@code claims}; anything else is an {@link IllegalArgumentException}.
+	 */
 	public Subject {
 		claims = immutableMap(Objects.requireNonNull(claims, "claims"));
+		if (identity == null) {
+			if (!claims.isEmpty() || expiresAt != null || credentialFingerprint != null) {
+				throw new IllegalArgumentException("A subject without identity must carry nothing else.");
+			}
+		} else {
+			if (expiresAt == null) {
+				throw new IllegalArgumentException("An identified subject requires an expiry.");
+			}
+			if (!fingerprint(claims).equals(credentialFingerprint)) {
+				throw new IllegalArgumentException("The credential fingerprint does not match the claims.");
+			}
+		}
 	}
 
 	/**

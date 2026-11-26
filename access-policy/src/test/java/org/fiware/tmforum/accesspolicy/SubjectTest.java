@@ -127,6 +127,35 @@ class SubjectTest {
 		assertNull(Subject.ANONYMOUS.credentialFingerprint());
 	}
 
+	private static Stream<Arguments> invalidShapes() {
+		Map<String, Object> credentials = claims("verifiableCredential", List.of(credential("T", "did:a")));
+		String fingerprint = fingerprint(credentials);
+		return Stream.of(
+				Arguments.of("no identity but claims", null, credentials, null, null),
+				Arguments.of("no identity but expiry", null, Map.of(), EXPIRES_AT, null),
+				Arguments.of("no identity but fingerprint", null, Map.of(), null, fingerprint),
+				Arguments.of("identity without expiry", IDENTITY, credentials, null, fingerprint),
+				Arguments.of("identity without fingerprint", IDENTITY, credentials, EXPIRES_AT, null),
+				Arguments.of("fingerprint of other claims", IDENTITY, credentials, EXPIRES_AT,
+						fingerprint(claims("other", 1))),
+				Arguments.of("arbitrary fingerprint", IDENTITY, credentials, EXPIRES_AT, "arbitrary"));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("invalidShapes")
+	void constructorRejectsInvalidShapes(String description, String identity, Map<String, Object> claims,
+			Instant expiresAt, String credentialFingerprint) {
+		assertThrows(IllegalArgumentException.class,
+				() -> new Subject(identity, claims, expiresAt, credentialFingerprint));
+	}
+
+	@Test
+	void constructorAcceptsTheShapeOfFactory() {
+		Subject subject = Subject.of(IDENTITY, claims("a", 1), EXPIRES_AT);
+		assertEquals(subject, new Subject(IDENTITY, claims("a", 1), EXPIRES_AT, subject.credentialFingerprint()));
+		assertFalse(subject.isAnonymous());
+	}
+
 	@Test
 	void claimsAreDeeplyImmutableCopies() {
 		List<Object> credentials = new ArrayList<>(List.of(new HashMap<>(Map.of("issuer", "did:a"))));
