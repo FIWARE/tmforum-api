@@ -142,6 +142,13 @@ language:
 | a string value holding `"` or `\` | 400: `q` has no escape either broker honours inside a quoted value | bound as a parameter, matched |
 | an unbounded `.regex` | run by the broker | cancelled by `statement_timeout` if it outlives it |
 
+A `DATE_TIME` filter or sort compares the stored strings on this backend, not the instants they denote, so
+`2024-01-01T10:00:00.500Z` orders below `2024-01-01T10:00:00Z` and a value carrying an offset does not compare equal
+to the same instant in UTC. Entities this API writes carry `Instant.toString()`, which is canonical UTC, so only a
+fractional second tells the two orders apart; data written by another writer can use any ISO form. Comparing as
+instants would mean casting the stored string to `timestamptz`, which needs a zone for the forms that carry none
+(`2024-01-01T10:00:00`, `2024-01-01`) and which the query model accepts today.
+
 Rejecting those patterns on PostgreSQL too would make this backend refuse perfectly good POSIX regexes only because
 another backend cannot express them, which is a loss of function rather than a gain in portability. They are
 therefore left to work here and recorded as deviations instead: `storage-api`'s `KnownDeviation` names each one, and

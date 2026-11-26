@@ -604,6 +604,37 @@ port.
 
 ---
 
+### #10 — `DATE_TIME` compares as text
+
+> The Javadoc says this follows the brokers. With mixed offsets or fractional seconds the text order differs from the
+> instant order (`...:00.5Z` sorts before `...:00Z`). Do Orion-LD and Scorpio compare these as text or as instants?
+> […] If they compare text, this can stay, with a test that documents it.
+
+**Kept as text and documented** in `Say what a date-time filter compares on PostgreSQL`, which is the outcome the
+comment allows for — but two things in it need correcting, and one is left as a decision.
+
+**The divergence is not limited to foreign writers.** I checked: a declared date-time field is written as
+`Instant.toString()` (`keysAndDatesIgnoreTheApplicationMapperSettings` pins that), which is canonical UTC. So the
+offset case cannot arise from this API's own writes — but the fractional-second case can, because
+`Instant.toString()` omits the fraction when it is zero and prints it when it is not. `...T10:00:00.500Z` sorts
+below `...T10:00:00Z` in byte order and above it in instant order, for data this API wrote itself.
+
+**The "as on the brokers" claim is unverified.** I could not settle what Orion-LD 1.9.0 and Scorpio 5.0.3 do from
+this repository, and guessing it into a contract expectation would be worse than saying so. The Javadoc no longer
+asserts it.
+
+**Why it stays text for now.** The cast the comment suggests needs a zone for the literal forms the model accepts
+and `DateTimeLiterals` parses today — `2024-01-01T10:00:00` and `2024-01-01` carry none. Picking one (UTC? the
+server's?) is a semantic decision that should be made once for both backends, together with the answer to the
+broker question, rather than taken here as a side effect.
+
+What is in place instead: `dateTimes()` in `JsonbQueryRendererTest` already covered every literal form
+(`Z`, a fractional second, an offset, no offset, date-only) — its comment now states the consequence rather than
+claiming parity, the renderer's Javadoc spells out both cases that diverge and what fixing it would take, and
+`storage-postgresql/README.md` says it where an operator will read it.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -611,6 +642,5 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | # | Comment | Verdict |
 |---|---------|---------|
 | #8.1 | A row is delivered to every matching hub and fails unless all acknowledge | The only sub-point still open — see the note below the table. |
-| #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |

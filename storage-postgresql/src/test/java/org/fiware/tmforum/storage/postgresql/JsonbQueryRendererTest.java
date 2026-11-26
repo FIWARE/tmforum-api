@@ -138,7 +138,8 @@ class JsonbQueryRendererTest {
                         List.of("$.\"a\\u000ab\"[*]", List.of("x"))));
     }
 
-    // string parity with the brokers: every literal form is bound as written and compared in byte order
+    // every literal form is bound as written and compared in byte order, so the comparison is on the strings and
+    // not on the instants: ...00.500Z is below ...00Z here, and ...T11:00:00+01:00 is not equal to ...T10:00:00Z
     static Stream<Arguments> dateTimes() {
         return Stream.of("2024-01-01T10:00:00Z", "2024-01-01T10:00:00.500Z", "2024-01-01T11:00:00+01:00",
                         "2024-01-01T10:00:00", "2024-01-01")

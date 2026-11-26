@@ -16,7 +16,16 @@ import java.util.stream.Collectors;
 /**
  * Renders an {@link EntityQuery} into SQL over the {@code data} document of {@code tmforum.entity}. Every user value
  * and every jsonpath is a bound parameter. A value of the wrong JSON type at a path matches nothing and sorts as NULL,
- * so mixed or migrated data can not abort a list. {@code DATE_TIME} compares as the stored strings, as on the brokers.
+ * so mixed or migrated data can not abort a list.
+ * <p>
+ * {@code DATE_TIME} compares and sorts as the stored strings. That is not the order of the instants they denote:
+ * {@code 2024-01-01T10:00:00.500Z} sorts before {@code 2024-01-01T10:00:00Z} in byte order, and a value written
+ * with an offset ({@code ...T11:00:00+01:00}) sorts away from the equal instant in UTC. Entities this API writes
+ * carry {@code Instant.toString()}, so only a fractional second tells the two orders apart; a value written by
+ * another writer, or a literal a client sends, can use any ISO form. Comparing them as instants would mean casting
+ * the stored string to {@code timestamptz}, which needs a zone for the forms that carry none
+ * ({@code 2024-01-01T10:00:00}, {@code 2024-01-01}) that the model accepts today.
+ * </p>
  */
 final class JsonbQueryRenderer {
 
