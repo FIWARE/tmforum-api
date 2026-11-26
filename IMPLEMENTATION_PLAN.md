@@ -18,8 +18,8 @@ Decisions this plan settles (record them in the PR descriptions):
 2. **Hard bound.** `access-policy.pdp.timeout` is always applied as a Reactor `.timeout(...)` on the call, whatever the HTTP client's own timeouts are. That makes "a tagged failure within `pdp.timeout`" true by construction.
 3. **The failure tag** is a field of `AccessDecision`, not just a reason text: `enum Source { POLICY, PDP_FAILURE }`. Later tickets (AP-09 bypass, AP-18 audit) may add constants. `fail-open` flips `permitted` and keeps `Source.PDP_FAILURE`.
 4. **`subject.claims.vc`** is the list of credentials presented in the token's `verifiableCredential` claim, used as is:
-   - an object becomes a singleton list;
    - a list is kept;
+   - any other value (an object, or a string such as a JWT-encoded credential) becomes a singleton list;
    - a missing claim gives an empty list.
 
    The client never interprets a credential (AP-1).
@@ -44,13 +44,15 @@ Add the request and response model, with no client yet.
   - `claims` is `{"vc": [...]}` (decision 4), with named constants `VERIFIABLE_CREDENTIAL_CLAIM = "verifiableCredential"` and `VC_CLAIMS_KEY = "vc"`.
 
   `Subject.ANONYMOUS` gives no identity and an empty `vc` list.
-- Absent values (`catalog`, `category`, `relatedParty`, an anonymous `identity`) are omitted, not written as `null`. Use `@JsonInclude(JsonInclude.Include.NON_NULL)` from `com.fasterxml.jackson.annotation`. Add `com.fasterxml.jackson.core:jackson-annotations` (BOM-managed, no version) at compile scope to `access-policy/pom.xml` if it is not already on the compile classpath. No `BeanCreatedEventListener`, and no custom `JacksonModule` unless one turns out to be strictly needed.
+- Absent values (`catalog`, `category`, `relatedParty`, an anonymous `identity`) are omitted, not written as `null`. Empty lists are written as `[]`, so an anonymous subject sends `"claims": {"vc": []}`. Put `@JsonInclude(JsonInclude.Include.NON_NULL)` from `com.fasterxml.jackson.annotation` on every record of the `ValidationRequest` tree, not only on those with optional fields. A class-level annotation overrides the mapper's global inclusion, so the wire shape does not depend on the deploying app's `jackson.serialization-inclusion`. Add `com.fasterxml.jackson.core:jackson-annotations` (BOM-managed, no version) at compile scope to `access-policy/pom.xml` if it is not already on the compile classpath. No `BeanCreatedEventListener`, and no custom `JacksonModule` unless one turns out to be strictly needed.
 - `AccessDecision.java` is `record AccessDecision(boolean permitted, String reason, String policyUid, Source source)` with nested `enum Source { POLICY, PDP_FAILURE }`. It gets a one-line Javadoc stating that `source` tells a policy denial from a failed PDP call, and that `fail-open` flips `permitted` but never `source`. Give it static factories `policy(...)` and `failure(uid, reason, failOpen)`. It must round-trip through Jackson (AP-06 caches it in Redis), so it gets no constructor logic beyond null checks.
 - Fixtures go in `access-policy/src/test/resources/pdp/`:
   - `validation-request-full.json`: the document's example with a concrete policy and one credential;
-  - `validation-request-anonymous.json`: no catalog, category or relatedParty, and an anonymous subject.
-- `ValidationRequestSerializationTest` is a `@ParameterizedTest` over (fixture, request built through `ValidationRequest.of`). It serialises with the `io.micronaut.json.JsonMapper` bean of an `ApplicationContext.run()`, which is the mapper the deployed HTTP client uses. It compares JSON trees parsed from both sides, so key order does not matter, against the committed fixture and never against the builder. One more case asserts that `protocol` is `"tmf"`.
-- `AccessDecisionTest` is parameterized over `(failOpen, expectedPermitted)` for `failure(...)` and asserts that `source` stays `PDP_FAILURE`. It also round-trips an `AccessDecision` through the `JsonMapper`.
+  - `validation-request-anonymous.json`: no catalog, category or relatedParty, and an anonymous subject;
+  - `validation-request-empty-lists.json`: empty `category` and `relatedParty` lists, which must appear as `[]`;
+  - `validation-request-jwt-credential.json`: a `verifiableCredential` claim that is a plain JWT string, which must appear as a one-element `vc` list holding that string unchanged.
+- `ValidationRequestSerializationTest` is a `@ParameterizedTest` over (fixture, request built through `ValidationRequest.of`). It serialises with the `io.micronaut.json.JsonMapper` bean of an `ApplicationContext.run(Map.of("jackson.serialization-inclusion", "non_null"))`, the setting every deployed module uses (Micronaut's default is `NON_EMPTY`), so the test sees the mapper the deployed HTTP client uses. Keep that property in a named constant. It compares JSON trees parsed from both sides, so key order does not matter, against the committed fixture and never against the builder. One more case asserts that `protocol` is `"tmf"`.
+- `AccessDecisionTest` is parameterized over `(failOpen, expectedPermitted)` for `failure(...)` and asserts that `source` stays `PDP_FAILURE`. It also round-trips an `AccessDecision` through the same configured `JsonMapper`.
 
 Acceptance: `mvn test -pl access-policy` is green, and the enforcer still passes (`mvn verify -pl access-policy -DskipTests`).
 
@@ -99,7 +101,7 @@ Acceptance: `mvn test -pl access-policy` is green, and `grep -rn "block()" acces
   - `reset()`
   - `close()`
 
-  It serves `POST` on `AccessPolicyProperties.DEFAULT_PDP_PATH` and answers `200 {"permitted":…,"reason":…}`. It parses and writes JSON with nimbus `JSONObjectUtils`, which is already a compile dependency, so consumers of the test-jar need nothing extra. The policy uid is read from the request's `policy` under the first present key among named constants `odrl:uid`, `uid`, `@id`. Thread-safe: concurrent maps and atomics.
+  It serves `POST` on `AccessPolicyProperties.DEFAULT_PDP_PATH` and answers `200 {"permitted":…,"reason":…}`. It parses and writes JSON with nimbus `JSONObjectUtils`, which is already a compile dependency, so consumers of the test-jar need nothing extra. The policy uid is read from the request's `policy` under the first present key among named constants `http://www.w3.org/ns/odrl/2/uid` (expanded JSON-LD), `odrl:uid`, `uid`, `@id`. The value is unwrapped to a string: a string is used as is, an object yields its `@id`, and an array yields its first element, unwrapped the same way. So `[{"@id": "urn:p"}]`, `{"@id": "urn:p"}` and `"urn:p"` all give `urn:p`. A request with no uid that unwraps to a string is answered with a deny under its own named reason (e.g. `NO_POLICY_UID_REASON`), not the default answer, so a mis-shaped policy shows up in the failing assertion. Thread-safe: concurrent maps and atomics.
 - `access-policy/pom.xml`: add a `maven-jar-plugin` `test-jar` execution, as in `storage-api/pom.xml` (execution id e.g. `pdp-stub`). Restrict it with `<includes>` to `org/fiware/tmforum/accesspolicy/StubPolicyDecisionPoint*.class`. Otherwise the test bean definitions (`GateProbes` and its `META-INF/micronaut` references), fixtures and logback config would leak into every consumer. No consumer is added in this ticket.
 - `PolicyDecisionPointHttpTest` uses the real `PolicyDecisionPoint` from an `ApplicationContext.run(...)` with the feature enabled (JWT keys as in `HttpJwkSetProviderHttpTest`) against the stub. Parameterized where the cases differ only in data:
   - permit and deny by `(uid, identity)` → `Source.POLICY`, with `requestCount()` incremented once per call;
@@ -108,7 +110,7 @@ Acceptance: `mvn test -pl access-policy` is green, and `grep -rn "block()" acces
   - an unreachable PDP: a closed loopback port (bind and close a socket to obtain a free port) → `PDP_FAILURE` within the same bound, never hanging;
   - both endpoint configurations from decision 1 (`access-policy.pdp.url` alone, and `micronaut.http.services.pdp.url` alone) reach the stub;
   - the body the stub received equals the request fixture from step 1, which shows the serialisation on the wire, not only in the mapper.
-- `StubPolicyDecisionPointTest`: a short self-test of the rule lookup (exact match, the anonymous rule, the default answer), `reset()` and counting. It talks to the stub through the JDK `java.net.http.HttpClient` so it does not depend on the client under test.
+- `StubPolicyDecisionPointTest`: a short self-test of the rule lookup (exact match, the anonymous rule, the default answer), `reset()` and counting. A `@ParameterizedTest` covers the uid shapes: expanded IRI key with `[{"@id": …}]`, `odrl:uid` as `{"@id": …}`, `odrl:uid` as a string, plain `uid`, top-level `@id`, and a policy without a uid (→ `NO_POLICY_UID_REASON`). It talks to the stub through the JDK `java.net.http.HttpClient` so it does not depend on the client under test.
 - `mvn install -pl access-policy -DskipITs` produces `access-policy-0.1-tests.jar` containing only the stub classes. Check with `jar tf`.
 
 Acceptance: `mvn verify -pl access-policy -DskipITs` is green, and `mvn install -pl common -am -DskipTests -DskipITs` still builds.
