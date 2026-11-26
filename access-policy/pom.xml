@@ -56,6 +56,12 @@
             <artifactId>reactor-core</artifactId>
             <scope>compile</scope>
         </dependency>
+        <!-- pins the PDP request's wire shape regardless of the deploying app's serialization inclusion -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>

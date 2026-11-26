@@ -1,0 +1,22 @@
+{
+  "policy": {
+    "@context": "http://www.w3.org/ns/odrl.jsonld",
+    "@type": "Policy",
+    "uid": "urn:uuid:0f1e2d3c-4b5a-4968-8776-655443322110",
+    "permission": [ { "action": "read" } ]
+  },
+  "jsonInput": {
+    "payload": {
+      "scope": "catalog",
+      "protocol": "tmf",
+      "action": "read",
+      "resource": {
+        "type": "Category",
+        "id": "urn:ngsi-ld:Category:compute"
+      }
+    },
+    "subject": {
+      "claims": { "vc": [] }
+    }
+  }
+}
