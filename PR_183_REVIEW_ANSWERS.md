@@ -319,6 +319,27 @@ Both assert that assembling does not throw and that subscribing reports.
 
 ---
 
+### M1 — Broker-only beans carry no `@Requires(notEnv = postgresql)`
+
+> `NgsiLdEntityRepository` and the other broker-only beans carry no `@Requires(notEnv = postgresql)`; only
+> `@Primary` on `PostgresEntityRepository` decides which one is injected. `AGENTS.md` lists this as the convention.
+
+**Agreed, fixed** in `Gate the broker adapters on the broker backends`.
+
+`NgsiLdSubscriptionRepository` already had the gate; `NgsiLdEntityRepository` and
+`BrokerBackedReferencesRepository` did not, so on PostgreSQL they stayed wired, held their NGSI-LD client, and were
+one forgotten `@Primary` away from being the injected bean. Both carry the gate now.
+
+`@Primary` stays on the PostgreSQL adapters. With the gate there is only one bean to resolve, so it is redundant —
+but it is also the thing that keeps a future broker-only bean that forgets its gate from silently winning, and it
+costs nothing.
+
+Tests: `StoragePortWiringTest.brokerAdapterAbsentOnPostgresql`, parameterized over all three broker adapters,
+asserts they have no bean definition in a PostgreSQL context. The existing `portResolvesToSingleAdapter` still pins
+that each port has exactly one bean on the broker side.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -331,7 +352,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |
 | #13 | EXTERNAL references now fail on a local id collision | Deliberate per the code comment; needs a unit test pinning the behaviour. |
 | #14 | `cleanup-subscriptions` is not all-or-nothing | Agreed. Skip the deletion and the drop when the report already holds an error after the read phase. |
-| M1 | Broker-only beans carry no `@Requires(notEnv = postgresql)` | Agreed, convention per `AGENTS.md`. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |

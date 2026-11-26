@@ -61,4 +61,19 @@ class StoragePortWiringTest {
 					"The broker-only port should not be wired on PostgreSQL.");
 		}
 	}
+
+	/**
+	 * The PostgreSQL adapters are @Primary, which would resolve the ambiguity, but the convention is that a bean the
+	 * other backend replaces excludes that backend's environment itself - otherwise the broker beans stay wired on
+	 * PostgreSQL, open their client and are one forgotten @Primary away from being injected.
+	 */
+	@ParameterizedTest(name = "{0} is not wired on postgresql")
+	@ValueSource(classes = {NgsiLdEntityRepository.class, BrokerBackedReferencesRepository.class,
+			NgsiLdSubscriptionRepository.class})
+	void brokerAdapterAbsentOnPostgresql(Class<?> adapter) {
+		try (ApplicationContext postgresqlContext = ApplicationContext.run(CommonConstants.POSTGRESQL_ENVIRONMENT)) {
+			assertTrue(postgresqlContext.getBeanDefinitions(adapter).isEmpty(),
+					"The broker adapter should not be wired on PostgreSQL.");
+		}
+	}
 }
