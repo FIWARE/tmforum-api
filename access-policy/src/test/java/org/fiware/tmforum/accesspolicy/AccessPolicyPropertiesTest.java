@@ -217,10 +217,12 @@ class AccessPolicyPropertiesTest {
 						key("jwt.issuer"), VALID_ISSUER), "jwt.jwks-uri"),
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI), "jwt.issuer"),
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
-						key("jwt.issuer"), " "), "jwt.issuer"));
+						key("jwt.issuer"), " "), "jwt.issuer"),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+						key("jwt.issuer"), VALID_ISSUER, key("jwt.audience"), " "), "jwt.audience"));
 	}
 
-	@DisplayName("An enabled access control without a JWKS URI or an issuer fails the startup.")
+	@DisplayName("An enabled access control without a JWKS URI or an issuer, or with a blank audience, fails the startup.")
 	@ParameterizedTest(name = "{1}: {0}")
 	@MethodSource("incompleteJwtSettings")
 	void incompleteJwtSettingsFailStartup(Map<String, Object> configuration, String property) {
@@ -234,7 +236,9 @@ class AccessPolicyPropertiesTest {
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
 						key("jwt.issuer"), VALID_ISSUER)),
 				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), "http://keycloak:8080/certs",
-						key("jwt.issuer"), VALID_ISSUER)));
+						key("jwt.issuer"), VALID_ISSUER)),
+				Arguments.of(Map.of(key("enabled"), "true", key("jwt.jwks-uri"), VALID_JWKS_URI,
+						key("jwt.issuer"), VALID_ISSUER, key("jwt.audience"), "tmforum-api")));
 	}
 
 	@DisplayName("A disabled access control needs no token settings, an enabled one starts with both set.")

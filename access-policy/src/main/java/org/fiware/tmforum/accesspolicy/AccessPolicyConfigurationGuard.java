@@ -30,6 +30,7 @@ public class AccessPolicyConfigurationGuard {
 
 	private static final String JWKS_URI_KEY = AccessPolicyProperties.PREFIX + ".jwt.jwks-uri";
 	private static final String ISSUER_KEY = AccessPolicyProperties.PREFIX + ".jwt.issuer";
+	private static final String AUDIENCE_KEY = AccessPolicyProperties.PREFIX + ".jwt.audience";
 	private static final Set<String> JWKS_URI_SCHEMES = Set.of("http", "https");
 
 	private static final Map<String, Class<?>> TYPED_KEYS = Map.ofEntries(
@@ -75,6 +76,10 @@ public class AccessPolicyConfigurationGuard {
 		if (issuer.isBlank()) {
 			throw invalid(ISSUER_KEY, issuer, "is required while enabled");
 		}
+		// a blank audience is never in a token's aud, so every token would degrade to anonymous
+		environment.getProperty(AUDIENCE_KEY, String.class).filter(String::isBlank).ifPresent(audience -> {
+			throw invalid(AUDIENCE_KEY, audience, "must not be blank, leave it unset to skip the audience check");
+		});
 	}
 
 	private static boolean isAbsoluteHttpUri(String raw) {

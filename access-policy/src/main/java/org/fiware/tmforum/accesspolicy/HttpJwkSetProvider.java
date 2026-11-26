@@ -62,16 +62,17 @@ public class HttpJwkSetProvider implements JwkSetProvider {
 
 	@Override
 	public Mono<JWKSet> refresh() {
-		Mono<JWKSet> seen = cache.get();
 		long last = lastFetch.get();
-		if (last != NEVER_FETCHED && now() - last < JWKS_MIN_REFRESH_INTERVAL.toMillis()) {
-			return seen;
-		}
-		Mono<JWKSet> fresh = newCache();
-		if (!cache.compareAndSet(seen, fresh)) {
+		long now = now();
+		if (last != NEVER_FETCHED && now - last < JWKS_MIN_REFRESH_INTERVAL.toMillis()) {
 			return cache.get();
 		}
-		lastFetch.set(now());
+		// claim the slot before swapping, so a burst of unknown-kid tokens cannot pass the check together
+		if (!lastFetch.compareAndSet(last, now)) {
+			return cache.get();
+		}
+		Mono<JWKSet> fresh = newCache();
+		cache.set(fresh);
 		return fresh;
 	}
 
@@ -94,6 +95,7 @@ public class HttpJwkSetProvider implements JwkSetProvider {
 				})
 				.doOnNext(lastGood::set)
 				.map(keys -> new Fetched(keys, JWKS_REFRESH_INTERVAL))
+				.switchIfEmpty(Mono.error(() -> new IllegalStateException("The JWKS response is empty.")))
 				.onErrorResume(this::fallback);
 	}
 

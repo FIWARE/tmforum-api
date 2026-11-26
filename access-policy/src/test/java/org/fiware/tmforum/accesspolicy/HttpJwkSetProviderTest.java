@@ -4,6 +4,9 @@ import com.nimbusds.jose.jwk.JWKSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import reactor.test.scheduler.VirtualTimeScheduler;
@@ -13,8 +16,11 @@ import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.fiware.tmforum.accesspolicy.HttpJwkSetProvider.JWKS_MIN_REFRESH_INTERVAL;
 import static org.fiware.tmforum.accesspolicy.HttpJwkSetProvider.JWKS_REFRESH_INTERVAL;
@@ -33,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class HttpJwkSetProviderTest {
 
+	private static final int CONCURRENT_REFRESHES = 32;
 	private static final Duration PAST_MIN_REFRESH = JWKS_MIN_REFRESH_INTERVAL.plusSeconds(1);
 	private static final Duration PAST_REFRESH = JWKS_REFRESH_INTERVAL.plusSeconds(1);
 	private static final String RSA_SET = publicSet(RSA_KEY).toString();
@@ -129,9 +136,17 @@ class HttpJwkSetProviderTest {
 		assertEquals(2, fetch.fetches());
 	}
 
-	@Test
-	void keepsTheLastGoodSetWhenARefreshFails() {
-		ScriptedFetch fetch = new ScriptedFetch(Mono.just(RSA_SET), Mono.just("not a JWK set"));
+	private static Stream<Arguments> failedRefetches() {
+		return Stream.of(
+				Arguments.of("unparsable body", Mono.just("not a JWK set")),
+				Arguments.of("empty response", Mono.<String>empty()),
+				Arguments.of("endpoint down", down()));
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("failedRefetches")
+	void keepsTheLastGoodSetWhenARefreshFails(String failure, Mono<String> refetch) {
+		ScriptedFetch fetch = new ScriptedFetch(Mono.just(RSA_SET), refetch);
 		HttpJwkSetProvider provider = new HttpJwkSetProvider(fetch);
 
 		StepVerifier.create(provider.current()).expectNextCount(1).verifyComplete();
@@ -140,6 +155,32 @@ class HttpJwkSetProviderTest {
 		StepVerifier.create(provider.refresh().map(HttpJwkSetProviderTest::keyIdOf))
 				.expectNext(RSA_KEY.getKeyID()).verifyComplete();
 		assertEquals(2, fetch.fetches());
+	}
+
+	@Test
+	void concurrentRefreshesFetchOnce() throws InterruptedException {
+		ScriptedFetch fetch = new ScriptedFetch(Mono.just(RSA_SET), Mono.just(EC_SET), Mono.just(EC_SET));
+		HttpJwkSetProvider provider = new HttpJwkSetProvider(fetch);
+		StepVerifier.create(provider.current()).expectNextCount(1).verifyComplete();
+		virtualTime.advanceTimeBy(PAST_MIN_REFRESH);
+
+		CountDownLatch start = new CountDownLatch(1);
+		List<Thread> callers = IntStream.range(0, CONCURRENT_REFRESHES)
+				.mapToObj(i -> Thread.ofPlatform().start(() -> {
+					try {
+						start.await();
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+					provider.refresh().subscribe();
+				}))
+				.toList();
+		start.countDown();
+		for (Thread caller : callers) {
+			caller.join();
+		}
+
+		assertEquals(2, fetch.fetches(), "only one refresh may pass the rate limit");
 	}
 
 	@Test
