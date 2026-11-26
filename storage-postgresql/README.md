@@ -43,7 +43,8 @@ interleave: the last one wins whole.
 A list is one `SELECT ... WHERE is_current AND type = ANY(...)` with the TMForum filter rendered by
 `JsonbQueryRenderer`: each comparison is an `EXISTS` over the values a jsonpath selects, with every literal bound
 as a parameter, and `ORDER BY` the sort keys, then `created_at, id`. There are no indexes for filters
-or sorts yet, so a filtered list scans every current row of its types.
+or sorts yet, so a filtered list scans every current row of its types. The page size a list endpoint serves is
+bounded by `CommonConstants.MAX_LIMIT`, so one request can never read and map every stored row.
 
 ## Configuration
 
@@ -56,7 +57,11 @@ module's own file.
 micronaut-r2dbc turns the kebab-case `options` keys into r2dbc-pool's camelCase options (`initial-size` becomes
 `initialSize`). r2dbc-pool reads durations with `Duration.parse`, so they must be ISO-8601 (`PT10S`, not `10s`).
 r2dbc-pool has no acquire or create timeout by default, so both are bounded here: when every connection is busy or
-the database cannot be reached, a request fails after `max-acquire-time` with UNAVAILABLE (503) instead of hanging:
+the database cannot be reached, a request fails after `max-acquire-time` with UNAVAILABLE (503) instead of hanging.
+
+The nested `options` key is the driver's own `options` option: its `name=value` pairs are sent as PostgreSQL
+startup parameters, so every session of the pool carries a `statement_timeout`. A filter, sort or regex that would
+otherwise run on unbounded is cancelled by the server, and its connection goes back to the pool:
 
 ```yaml
 r2dbc:
@@ -70,6 +75,7 @@ r2dbc:
         max-size: ${POSTGRES_POOL_MAX_SIZE:10}
         max-acquire-time: ${POSTGRES_POOL_MAX_ACQUIRE_TIME:PT10S}
         max-create-connection-time: ${POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME:PT10S}
+        options: statement_timeout=${POSTGRES_STATEMENT_TIMEOUT:30000}
 
 flyway:
   datasources:
@@ -100,6 +106,7 @@ endpoints:
 | `POSTGRES_POOL_MAX_SIZE`                   | `10`        |
 | `POSTGRES_POOL_MAX_ACQUIRE_TIME`           | `PT10S`     |
 | `POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME` | `PT10S`     |
+| `POSTGRES_STATEMENT_TIMEOUT` (milliseconds)| `30000`     |
 
 The modules leave the following properties at their code defaults (`OutboxProperties`, `PostgresReadinessIndicator`);
 set them only to deviate:

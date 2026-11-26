@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 
 import static org.fiware.tmforum.common.CommonConstants.DEFAULT_LIMIT;
 import static org.fiware.tmforum.common.CommonConstants.DEFAULT_OFFSET;
+import static org.fiware.tmforum.common.CommonConstants.MAX_LIMIT;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -144,17 +145,48 @@ public abstract class AbstractApiController<T> {
 		return new ListRequest(query, parsedQuery.ids(), Optional.ofNullable(parsedQuery.types()).orElse(defaultTypes));
 	}
 
+
+	/**
+	 * Applies the default and the upper bound to a requested page size.
+	 * <p>
+	 * An unbounded limit would make the storage read, count and map every stored entity of the requested types in
+	 * one request, so a larger value is clamped to {@link org.fiware.tmforum.common.CommonConstants#MAX_LIMIT}
+	 * instead of being served. The applied value is reported back through the pagination headers.
+	 * </p>
+	 *
+	 * @param limit the requested limit, null when the request carries none
+	 * @return the limit to query the storage with
+	 * @throws TmForumException if the requested limit is below one
+	 */
+	private static int boundedLimit(Integer limit) {
+		int requestedLimit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+		if (requestedLimit < 1) {
+			throw new TmForumException(String.format("Invalid limit %s.", requestedLimit),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+		if (requestedLimit > MAX_LIMIT) {
+			log.debug("The requested limit {} exceeds the maximum of {}, the page is limited to it.", requestedLimit,
+					MAX_LIMIT);
+			return MAX_LIMIT;
+		}
+		return requestedLimit;
+	}
+
+	private static int validOffset(Integer offset) {
+		int requestedOffset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
+		if (requestedOffset < 0) {
+			throw new TmForumException(String.format("Invalid offset %s.", requestedOffset),
+					TmForumExceptionReason.INVALID_DATA);
+		}
+		return requestedOffset;
+	}
+
 	protected <R> Mono<Stream<R>> list(Integer offset, Integer limit, String type, Class<R> entityClass) {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
 		ListRequest listRequest = toListRequest(optionalHttpRequest, entityClass, type);
-		offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
-		limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
-
-		if (offset < 0 || limit < 1) {
-			throw new TmForumException(String.format("Invalid offset %s or limit %s.", offset, limit),
-					TmForumExceptionReason.INVALID_DATA);
-		}
+		offset = validOffset(offset);
+		limit = boundedLimit(limit);
 
 		return repository
 				.findEntities(offset, limit, entityClass, listRequest.query(), listRequest.ids(), listRequest.types())
@@ -187,13 +219,8 @@ public abstract class AbstractApiController<T> {
 
 		Optional<HttpRequest<Object>> optionalHttpRequest = ServerRequestContext.currentRequest();
 		ListRequest listRequest = toListRequest(optionalHttpRequest, queryClass, types);
-		offset = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
-		limit = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
-
-		if (offset < 0 || limit < 1) {
-			throw new TmForumException(String.format("Invalid offset %s or limit %s.", offset, limit),
-					TmForumExceptionReason.INVALID_DATA);
-		}
+		offset = validOffset(offset);
+		limit = boundedLimit(limit);
 
 		return repository
 				.findEntitiesPolymorphic(offset, limit, listRequest.types(), listRequest.query(), listRequest.ids(),

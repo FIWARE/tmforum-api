@@ -11,6 +11,9 @@ r2dbc:
         max-size: ${POSTGRES_POOL_MAX_SIZE:10}
         max-acquire-time: ${POSTGRES_POOL_MAX_ACQUIRE_TIME:PT10S}
         max-create-connection-time: ${POSTGRES_POOL_MAX_CREATE_CONNECTION_TIME:PT10S}
+        # startup options of every session: an expensive filter, sort or regex is cancelled by the server
+        # instead of holding its connection for the whole request
+        options: statement_timeout=${POSTGRES_STATEMENT_TIMEOUT:30000}
 
 # migrates the schema over JDBC at startup; the data path is R2DBC only
 flyway:

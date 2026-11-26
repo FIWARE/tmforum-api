@@ -10,6 +10,8 @@ r2dbc:
         max-size: 4
         max-acquire-time: PT10S
         max-create-connection-time: PT10S
+        # startup options of every session, asserted by StatementTimeoutIT
+        options: statement_timeout=${POSTGRES_STATEMENT_TIMEOUT:30000}
 
 flyway:
   datasources:

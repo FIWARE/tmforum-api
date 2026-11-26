@@ -4,6 +4,8 @@ r2dbc:
       url: r2dbc:pool:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:tmforum}
       username: ${POSTGRES_USER:tmforum}
       password: ${POSTGRES_PASSWORD:tmforum}
+      options:
+        options: statement_timeout=${POSTGRES_STATEMENT_TIMEOUT:30000}
 
 flyway:
   datasources:

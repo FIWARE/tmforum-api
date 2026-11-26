@@ -2,6 +2,7 @@ package org.fiware.tmforum.common.rest;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.context.ServerRequestContext;
+import org.fiware.tmforum.common.CommonConstants;
 import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.TmForumException;
 import org.fiware.tmforum.common.exception.TmForumExceptionReason;
@@ -139,6 +140,59 @@ class AbstractApiControllerTest {
 		});
 
 		verify(repository).findEntities(eq(10), eq(5), any(), any(), any(), any());
+	}
+
+	/**
+	 * An unbounded limit would make the storage read, count and map every stored entity of the requested types in
+	 * one request, so anything above the maximum is clamped to it instead of being served.
+	 */
+	@ParameterizedTest
+	@MethodSource("provideLimits")
+	public void listClampsTheLimitToTheMaximum(Integer requestedLimit, int expectedLimit) {
+		EntityRepository repository = mock(EntityRepository.class);
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()), repository);
+		when(repository.findEntities(any(), any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, expectedLimit, null)));
+		when(repository.findEntitiesPolymorphic(any(), any(), any(), any(), any(), any()))
+				.thenReturn(Mono.just(new PagedResult<>(List.of(), 0, expectedLimit, null)));
+
+		ServerRequestContext.with(HttpRequest.GET("/resource"), () -> {
+			controller.list(0, requestedLimit, LIST_TYPE, MyPojo.class).block();
+			controller.listPolymorphic(0, requestedLimit, LIST_TYPE, MyPojo.class, type -> MyPojo.class).block();
+		});
+
+		verify(repository).findEntities(any(), eq(expectedLimit), any(), any(), any(), any());
+		verify(repository).findEntitiesPolymorphic(any(), eq(expectedLimit), any(), any(), any(), any());
+	}
+
+	private static Stream<Arguments> provideLimits() {
+		return Stream.of(
+				Arguments.of(null, CommonConstants.DEFAULT_LIMIT),
+				Arguments.of(1, 1),
+				Arguments.of(CommonConstants.MAX_LIMIT - 1, CommonConstants.MAX_LIMIT - 1),
+				Arguments.of(CommonConstants.MAX_LIMIT, CommonConstants.MAX_LIMIT),
+				Arguments.of(CommonConstants.MAX_LIMIT + 1, CommonConstants.MAX_LIMIT),
+				Arguments.of(Integer.MAX_VALUE, CommonConstants.MAX_LIMIT));
+	}
+
+	@ParameterizedTest
+	@MethodSource("provideInvalidPagination")
+	public void listRejectsAnOutOfRangePaginationParameter(String message, Integer offset, Integer limit) {
+		TestController controller = new TestController(new QueryParser(new GeneralProperties()),
+				mock(EntityRepository.class));
+
+		Supplier<TmForumException> assertion = () -> assertThrows(TmForumException.class,
+				() -> controller.list(offset, limit, LIST_TYPE, MyPojo.class), message);
+		TmForumException exception = ServerRequestContext.with(HttpRequest.GET("/resource"), assertion);
+
+		assertEquals(TmForumExceptionReason.INVALID_DATA, exception.getExceptionReason(), message);
+	}
+
+	private static Stream<Arguments> provideInvalidPagination() {
+		return Stream.of(
+				Arguments.of("A limit below one should be rejected.", 0, 0),
+				Arguments.of("A negative limit should be rejected.", 0, -1),
+				Arguments.of("A negative offset should be rejected.", -1, 10));
 	}
 
 	@ParameterizedTest

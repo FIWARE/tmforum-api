@@ -15,6 +15,12 @@ public class CommonConstants {
 	public static final int DEFAULT_LIMIT = 10;
 
 	/**
+	 * Upper bound of the page size a list endpoint serves. A larger requested limit is clamped to it, so that a
+	 * single request can never make the storage read and map an unbounded number of entities.
+	 */
+	public static final int MAX_LIMIT = 1000;
+
+	/**
 	 * String template for an NGSI-LD compatible id
 	 */
 	public static final String ID_TEMPLATE = "urn:ngsi-ld:%s:%s";
