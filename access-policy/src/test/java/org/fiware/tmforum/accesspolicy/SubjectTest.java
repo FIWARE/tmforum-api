@@ -127,6 +127,18 @@ class SubjectTest {
 		assertNull(Subject.ANONYMOUS.credentialFingerprint());
 	}
 
+	@Test
+	void toStringOmitsClaims() {
+		String secretClaimValue = "eyJhbGciOiJFUzI1NiJ9.embedded-credential.signature";
+		Subject subject = Subject.of(IDENTITY, claims("verifiableCredential", List.of(secretClaimValue)), EXPIRES_AT);
+
+		String rendered = subject.toString();
+
+		assertFalse(rendered.contains(secretClaimValue));
+		assertTrue(rendered.contains(IDENTITY));
+		assertTrue(rendered.contains(subject.credentialFingerprint()));
+	}
+
 	private static Stream<Arguments> invalidShapes() {
 		Map<String, Object> credentials = claims("verifiableCredential", List.of(credential("T", "did:a")));
 		String fingerprint = fingerprint(credentials);

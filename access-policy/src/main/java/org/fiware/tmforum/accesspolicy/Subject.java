@@ -61,6 +61,13 @@ public record Subject(String identity, Map<String, Object> claims, Instant expir
 		return identity == null;
 	}
 
+	/** Leaves out {@code claims}, which may hold PII and embedded credential JWTs, so a subject is safe to log. */
+	@Override
+	public String toString() {
+		return "Subject[identity=" + identity + ", expiresAt=" + expiresAt
+				+ ", credentialFingerprint=" + credentialFingerprint + "]";
+	}
+
 	private static String fingerprint(Map<String, Object> claims) {
 		String canonicalJson = JSONObjectUtils.toJSONString(canonicalMap(claims));
 		try {
