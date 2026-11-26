@@ -12,6 +12,7 @@ import org.fiware.tmforum.storage.query.QueryFilter.AnyOf;
 import org.fiware.tmforum.storage.query.QueryFilter.Comparison;
 import org.fiware.tmforum.storage.query.SortKey;
 import org.fiware.tmforum.storage.query.ValueType;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -174,6 +175,41 @@ class NgsiLdQueryRendererTest {
 				Arguments.of("a!b", DEFAULTS, GENERAL_DEFAULTS),
 				Arguments.of(ALL_SEPARATORS, ENCLOSED, GENERAL_DEFAULTS),
 				Arguments.of("^(?!a$).*$", DEFAULTS, withoutRegexOptimization()));
+	}
+
+	/**
+	 * A string value is wrapped in quotes without an escape NGSI-LD's q honours, so a value holding one would close
+	 * the string and add a condition: {@code name=a"|description=="x} rendered as an OR with an extra comparison,
+	 * and the broker answered a query nobody asked for. Such a value is rejected, as the regex path rejects its own
+	 * syntax characters.
+	 */
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("valuesHoldingQuerySyntax")
+	void testStringValueHoldingQuerySyntaxIsRejected(String value, ValueType valueType) {
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, DEFAULTS);
+		EntityQuery query = new EntityQuery(MyPojo.class,
+				declared(EQUALS, valueType, List.of(value), "color"), List.of());
+		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
+	}
+
+	private static Stream<Arguments> valuesHoldingQuerySyntax() {
+		return Stream.of(
+				Arguments.of("a\"", ValueType.STRING),
+				Arguments.of("a\"|description==\"x", ValueType.STRING),
+				// a DATE_TIME literal is validated by the model, so only a string can carry these
+				Arguments.of("a\\\\b", ValueType.STRING));
+	}
+
+	/**
+	 * The not-equals idiom takes its value out of the pattern and renders it as a string, so the same characters
+	 * have to be rejected there.
+	 */
+	@Test
+	void testNotEqualsValueHoldingQuerySyntaxIsRejected() {
+		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(GENERAL_DEFAULTS, DEFAULTS);
+		EntityQuery query = new EntityQuery(MyPojo.class,
+				declared(REGEX, ValueType.STRING, List.of("^(?!a\"b$).*$"), "color"), List.of());
+		assertThrows(QueryException.class, () -> renderer.renderFilter(query));
 	}
 
 	/**

@@ -61,6 +61,12 @@ public class NgsiLdQueryRenderer {
 	private static final Pattern REGEX_QUERY_SYNTAX = Pattern.compile("[|,;()\"'<>!]");
 
 	/**
+	 * Characters that end or escape a quoted value in NGSI-LD's {@code q}. Neither Orion-LD 1.9.0 nor Scorpio 5.0.3
+	 * honours an escape inside the string, so a value holding one cannot be rendered, only rejected.
+	 */
+	private static final Pattern STRING_QUERY_SYNTAX = Pattern.compile("[\"\\\\]");
+
+	/**
 	 * A pattern Orion-LD 1.9.0 may lex as a DateTime instead of a RegExp: only {@code 0-9.+-:TZ} and spaces, with a
 	 * {@code -}. A valid date then fails the query, an invalid one ({@code 2024-01}) crashes the broker.
 	 */
@@ -186,12 +192,27 @@ public class NgsiLdQueryRenderer {
 	/**
 	 * Only string values are quoted: boolean and number values are literals in the NGSI-LD query language, which
 	 * the model has already validated. A date-time is rendered like a string, as the brokers store it.
+	 * <p>
+	 * A value holding a quote or a backslash is rejected rather than escaped. NGSI-LD's {@code q} has no escape
+	 * Orion-LD 1.9.0 and Scorpio 5.0.3 both honour inside a quoted string, so {@code name=a"|description=="x} would
+	 * close the string and add a condition of its own, and the broker would answer a query nobody asked for. The
+	 * regex path rejects the same characters through {@link #REGEX_QUERY_SYNTAX}; this keeps the two consistent.
+	 * </p>
 	 */
 	private static String encodeValue(String value, ValueType valueType) {
 		return switch (valueType) {
-			case STRING, DATE_TIME -> "\"" + value + "\"";
+			case STRING, DATE_TIME -> "\"" + quotable(value) + "\"";
 			case NUMBER, BOOLEAN -> value;
 		};
+	}
+
+	private static String quotable(String value) {
+		if (STRING_QUERY_SYNTAX.matcher(value).find()) {
+			throw new QueryException(String.format(
+					"The value %s cannot be sent to the NGSI-LD broker: it holds a quote or a backslash, which its query language reads as syntax.",
+					value));
+		}
+		return value;
 	}
 
 	/**

@@ -205,13 +205,37 @@ merge away from the case it is for).
 
 ---
 
+### #5 — `encodeValue` does not escape `"`
+
+> String values are wrapped in `"` without escaping. `name=a"|description=="x` renders `name=="a"|description=="x"`,
+> which the broker reads as an OR with an extra condition. The regex path already rejects these characters […] so
+> the equality path is inconsistent with it.
+
+**Agreed, fixed** in `Reject a value NGSI-LD's q would read as syntax`, taking the comment's second option.
+
+Rejecting rather than escaping, because escaping has nowhere to go: neither Orion-LD 1.9.0 nor Scorpio 5.0.3
+honours a backslash escape inside a quoted `q` value, so an escaped quote would be forwarded as a quote and end the
+string anyway. The comment names rejection as the alternative, and it is what keeps the equality path consistent
+with the regex path it is measured against — `REGEX_QUERY_SYNTAX` already rejects `"` for the same reason.
+
+`encodeValue` now runs a string value through `quotable`, which throws `QueryException` (400) when it holds `"` or
+`\`. The `!=` rewrite feeds its extracted value through the same path, so the idiom is covered, as asked.
+
+This is renderer-local and therefore broker-only: on PostgreSQL the value is a bound parameter and a quote in it has
+never been a problem, so the backends do not diverge further — the broker simply reports what it cannot express.
+
+Tests: `testStringValueHoldingQuerySyntaxIsRejected` (a bare quote, the comment's own
+`a"|description=="x`, and a backslash) and `testNotEqualsValueHoldingQuerySyntaxIsRejected` for the `!=` group. A
+`DATE_TIME` literal is validated by the model before it reaches the renderer, so only a string can carry these.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
 
 | # | Comment | Verdict |
 |---|---------|---------|
-| #5 | `encodeValue` does not escape `"` | Agreed. Escape `"` and `\`, or throw `QueryException`; same for the `!=` group. |
 | #6 | `RELATIONSHIP` → `PROPERTY` in two getters | Needs an answer, not necessarily a fix: confirm the mapping library reads a stored Relationship through a `PROPERTY` setter, add an IT with such an entity, or document the migration. |
 | #7 | Database failures map to wrong statuses and text | Agreed. `UNAVAILABLE` → 503 for every operation with backend-neutral text; `40001`/`40P01` as transient; `57014` (now reachable, see #1) needs its own status. |
 | #8 | Outbox delivery and housekeeping (5 sub-points) | **8.3's index is fixed** (above). Still open: per-hub delivery state (8.1) and paging past 100 hubs (8.2), which are real but larger; terminal failures (8.4) and un-owned types (8.5), separate small fixes. |
