@@ -67,6 +67,11 @@ class OutboxDispatcherIT {
     private static final String CURRENCY = "EUR";
     private static final float AMOUNT = 1.5f;
     private static final Set<String> CATALOGS = Set.of(TestCatalog.TYPE);
+    // owned by the dispatcher, but EVENT_MAPPER knows no class for it
+    private static final String UNMAPPED_TYPE = "unmapped-type";
+    private static final String STORABLE_DOCUMENT = "{}";
+    // a catalog's keywords are a list of strings, so an object there cannot read back
+    private static final String UNREADABLE_DOCUMENT = "{\"keywords\": {\"not\": \"a list\"}}";
     private static final Set<String> HOLDERS = Set.of(TestNotStoredHolder.TYPE);
     private static final Set<String> ALL_TYPES = Set.of(TestCatalog.TYPE, TestNotStoredHolder.TYPE);
     private static final EventMapper EVENT_MAPPER = OutboxTestSupport.eventMapper(Map.of(
@@ -225,6 +230,36 @@ class OutboxDispatcherIT {
                 "A row should be claimed by another instance only once its lease expired.");
     }
 
+    static Stream<Arguments> undeliverableRows() {
+        // a type with no event mapping, and a document that does not read back as its class
+        return Stream.of(
+                Arguments.of("type without an event mapping", UNMAPPED_TYPE, STORABLE_DOCUMENT),
+                Arguments.of("document that does not read back", TestCatalog.TYPE, UNREADABLE_DOCUMENT));
+    }
+
+    /**
+     * Neither a missing event mapping nor a document that does not read back changes with another attempt, so the
+     * row is dropped with a WARN instead of being retried until the retention.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("undeliverableRows")
+    void anUndeliverableRowIsDroppedInsteadOfRetried(String description, String entityType, String document) {
+        insertRow(CATALOG_ID, entityType, Duration.ZERO, document);
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        Set<String> owned = Set.of(TestCatalog.TYPE, UNMAPPED_TYPE);
+
+        assertEquals(1, dispatcher(owned, eventHandler, OutboxTestSupport.PROPERTIES, meterRegistry)
+                .dispatchOnce().block(), "The row should be claimed.");
+
+        verifyNoInteractions(eventHandler);
+        assertEquals(0, outboxRows(CATALOG_ID), description + " should be dropped.");
+        assertEquals(1.0, meterRegistry.get(OutboxDispatcher.DISCARDED_METRIC)
+                .tag(OutboxDispatcher.ENTITY_TYPE_TAG, entityType)
+                .tag(OutboxDispatcher.EVENT_KIND_TAG, EventKind.CREATE.name())
+                .tag(OutboxDispatcher.DISCARD_REASON_TAG, OutboxDispatcher.REASON_UNDELIVERABLE)
+                .counter().count(), "The dropped row should be counted as undeliverable.");
+    }
+
     @Test
     void housekeepingDiscardsExpiredOwnedRowsAndReportsTheRest() {
         insertRow(CATALOG_ID, TestCatalog.TYPE, RETENTION.plusDays(1));
@@ -240,6 +275,7 @@ class OutboxDispatcherIT {
         assertEquals(1.0, meterRegistry.get(OutboxDispatcher.DISCARDED_METRIC)
                 .tag(OutboxDispatcher.ENTITY_TYPE_TAG, TestCatalog.TYPE)
                 .tag(OutboxDispatcher.EVENT_KIND_TAG, EventKind.CREATE.name())
+                .tag(OutboxDispatcher.DISCARD_REASON_TAG, OutboxDispatcher.REASON_EXPIRED)
                 .counter().count(), "The discarded row should be counted.");
         assertEquals(1.0, meterRegistry.get(OutboxDispatcher.PENDING_METRIC).gauge().value(),
                 "Only the owned pending row should be reported.");
@@ -312,10 +348,14 @@ class OutboxDispatcherIT {
     }
 
     private void insertRow(String entityId, String entityType, Duration age) {
+        insertRow(entityId, entityType, age, STORABLE_DOCUMENT);
+    }
+
+    private void insertRow(String entityId, String entityType, Duration age, String newState) {
         OutboxTestSupport.query(connectionFactory, "INSERT INTO " + QUALIFIED_OUTBOX_TABLE
                         + " (event_kind, entity_id, entity_type, new_state, created_at)"
-                        + " VALUES ($1, $2, $3, '{}'::jsonb, $4)", row -> row,
-                EventKind.CREATE.name(), entityId, entityType, OffsetDateTime.now().minus(age));
+                        + " VALUES ($1, $2, $3, $5::jsonb, $4)", row -> row,
+                EventKind.CREATE.name(), entityId, entityType, OffsetDateTime.now().minus(age), newState);
     }
 
     private long outboxRows(String entityId) {

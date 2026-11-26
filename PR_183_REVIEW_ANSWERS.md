@@ -476,6 +476,31 @@ find empty.
 
 ---
 
+### #8.4 — a row nothing can deliver is retried until the retention
+
+> A type without a mapping, a document that cannot be read, or a hub that always answers 404/410 is retried until
+> retention. Treat mapping and deserialization failures as terminal and drop the row with a WARN.
+
+**Agreed for the two the comment names**, in `Drop an outbox row no retry can deliver`.
+
+A missing event mapping and a document that does not read back as its type both change only with a deployment, so
+every one of the attempts up to the retention does the same work and fails the same way, while the row sits in the
+table and in the pending gauge. Both now raise an `UndeliverableRow`, and the dispatcher settles such a row by
+deleting it with a WARN naming the cause, counted as `tmforum.outbox.discarded{reason=undeliverable}` — the
+retention sweep is now tagged `reason=expired`, so the two are told apart on the same counter.
+
+**Not the hub answering 404/410.** That is a remote system's answer, and a hub that is being redeployed or
+reconfigured answers 404 for a while; dropping its events on the first one would lose them for a transient
+condition. Retrying with the backoff until the retention is the right behaviour there, and the retention is the
+bound. The two cases this fixes are different in kind: they are facts about *this* deployment, which no amount of
+waiting changes.
+
+Tests: `anUndeliverableRowIsDroppedInsteadOfRetried`, parameterized over a type with no event mapping and a document
+whose shape does not match its class, asserts the row is gone, the hub was never called, and the counter carries the
+reason.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.

@@ -122,6 +122,11 @@ set them only to deviate:
 | `tmforum.outbox.max-backoff`            | `1h`    | upper bound of the retry delay                             |
 | `tmforum.outbox.retention`              | `7d`    | age after which an undelivered row is discarded            |
 | `tmforum.outbox.housekeeping-interval`  | `1m`    | delay between two retention and metrics runs               |
+
+A row is dropped before the retention when no retry could deliver it — its type has no event mapping, or its stored
+document does not read back as that type. Both change only with a deployment, so retrying would just hold the row
+until the retention. `tmforum.outbox.discarded` counts both cases, tagged `reason=undeliverable` for these and
+`reason=expired` for the retention sweep.
 | `endpoints.health.postgresql.timeout`   | `5s`    | time bound of the readiness `SELECT 1`                     |
 
 ## Divergences from the broker backends

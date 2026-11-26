@@ -43,6 +43,9 @@ public class OutboxDispatcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(OutboxDispatcher.class);
 
     static final String DISCARDED_METRIC = "tmforum.outbox.discarded";
+    static final String DISCARD_REASON_TAG = "reason";
+    static final String REASON_EXPIRED = "expired";
+    static final String REASON_UNDELIVERABLE = "undeliverable";
     static final String PENDING_METRIC = "tmforum.outbox.pending";
     static final String OLDEST_AGE_METRIC = "tmforum.outbox.oldest.age";
     static final String ENTITY_TYPE_TAG = "entity_type";
@@ -178,15 +181,19 @@ public class OutboxDispatcher {
     // a failing settle statement must not cancel the other rows of the batch; the lease covers its row
     private Mono<Void> deliverAndSettle(ClaimedRow row) {
         return deliver(row)
-                .then(Mono.just(true))
+                .thenReturn(Settlement.DELIVERED)
                 .onErrorResume(failure -> {
+                    if (isUndeliverable(failure)) {
+                        reportUndeliverable(row, failure);
+                        return Mono.just(Settlement.UNDELIVERABLE);
+                    }
                     reportFailedDelivery(row, failure);
-                    return Mono.just(false);
+                    return Mono.just(Settlement.RETRY);
                 })
-                .flatMap(delivered -> delivered
-                        ? settle(SETTLE_DELIVERED, statement -> statement.bind(0, row.id()))
-                        : settle(SETTLE_FAILED, statement -> statement.bind(0, row.id())
-                                .bind(1, (double) backoff.delay(row.attempts()).toMillis())))
+                .flatMap(settlement -> settlement == Settlement.RETRY
+                        ? settle(SETTLE_FAILED, statement -> statement.bind(0, row.id())
+                                .bind(1, (double) backoff.delay(row.attempts()).toMillis()))
+                        : settle(SETTLE_DELIVERED, statement -> statement.bind(0, row.id())))
                 .onErrorResume(failure -> {
                     LOGGER.warn("Was not able to settle outbox row {}, it is due again once its lease of {} expired.",
                             row.id(), properties.lease(), failure);
@@ -210,13 +217,27 @@ public class OutboxDispatcher {
     private Class<?> rawClass(String entityType) {
         EventMapping eventMapping = eventMapper.getEntityClassMapping().get(entityType);
         if (eventMapping == null) {
-            throw new IllegalStateException(String.format("No event mapping for type %s.", entityType));
+            throw new UndeliverableRow(String.format("no event mapping for type %s", entityType), null);
         }
         return eventMapping.rawClass();
     }
 
     private Object read(String document, Class<?> rawClass) {
-        return eventDocuments.fromDocument(document, rawClass, StorageOperation.READ);
+        try {
+            return eventDocuments.fromDocument(document, rawClass, StorageOperation.READ);
+        } catch (RuntimeException e) {
+            throw new UndeliverableRow(String.format("the stored document does not read as %s",
+                    rawClass.getSimpleName()), e);
+        }
+    }
+
+    private static boolean isUndeliverable(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof UndeliverableRow) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Mono<Void> settle(String sql, Function<Statement, Statement> binder) {
@@ -235,18 +256,57 @@ public class OutboxDispatcher {
         }
     }
 
+    // no retry can change the outcome, so the row is dropped instead of being retried until the retention
+    private void reportUndeliverable(ClaimedRow row, Throwable failure) {
+        LOGGER.warn("Dropped outbox row {} ({} of {}): {}. No retry can deliver it.", row.id(), row.kind(),
+                row.entityType(), rootMessage(failure), failure);
+        countDiscarded(row.entityType(), row.kind().name(), REASON_UNDELIVERABLE);
+    }
+
+    private static String rootMessage(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof UndeliverableRow) {
+                return cause.getMessage();
+            }
+        }
+        return failure.getMessage();
+    }
+
     private void reportDiscarded(DiscardedRow row) {
         LOGGER.warn("Discarded outbox row {} ({} of {} {}) after {} attempts, it is older than the retention of {}.",
                 row.id(), row.kind(), row.entityType(), row.entityId(), row.attempts(), properties.retention());
+        countDiscarded(row.entityType(), row.kind(), REASON_EXPIRED);
+    }
+
+    private void countDiscarded(String entityType, String eventKind, String reason) {
         Counter.builder(DISCARDED_METRIC)
-                .tag(ENTITY_TYPE_TAG, row.entityType())
-                .tag(EVENT_KIND_TAG, row.kind())
+                .tag(ENTITY_TYPE_TAG, entityType)
+                .tag(EVENT_KIND_TAG, eventKind)
+                .tag(DISCARD_REASON_TAG, reason)
                 .register(meterRegistry)
                 .increment();
     }
 
     private String[] ownedTypes() {
         return eventTypes.types().toArray(String[]::new);
+    }
+
+    /** How a claimed row ends: delivered, dropped undelivered, or due again after the backoff. */
+    private enum Settlement {
+        DELIVERED,
+        UNDELIVERABLE,
+        RETRY
+    }
+
+    /**
+     * A row no retry can deliver: its type has no event mapping, or its stored document does not read back.
+     * Both only change with a deployment, never with another attempt.
+     */
+    private static final class UndeliverableRow extends RuntimeException {
+
+        private UndeliverableRow(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     private record ClaimedRow(long id, EventKind kind, String entityType, String newState, String oldState,
