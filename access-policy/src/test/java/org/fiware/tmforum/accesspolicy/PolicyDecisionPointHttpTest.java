@@ -70,6 +70,7 @@ class PolicyDecisionPointHttpTest {
 
 	private static ApplicationContext context(Map<String, Object> endpoint, Duration timeout) {
 		Map<String, Object> config = new HashMap<>(ValidationRequestSerializationTest.DEPLOYED_JACKSON_CONFIGURATION);
+		config.putAll(TestCaches.DECISIONS);
 		config.put(AccessPolicyProperties.ENABLED_PROPERTY, "true");
 		config.put(AccessPolicyProperties.PREFIX + ".jwt.jwks-uri", JWKS_URI);
 		config.put(AccessPolicyProperties.PREFIX + ".jwt.issuer", TestTokens.ISSUER);

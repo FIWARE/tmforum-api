@@ -31,7 +31,10 @@ storage-api/               backend-neutral storage port (EntityRepository, Entit
                            src/test/.../contract/ holds abstract contract tests (AbstractEntityRepositoryContractTest, EntityFixture) that each adapter extends
 access-policy/             optional per-entity access control (doc/access-policies/), below common (enforcer `below-common`:
                            only storage-api allowed); AccessPolicyProperties (`access-policy.*`), AccessPolicyConfigurationGuard;
-                           every bean gated by `@Requires(property = "access-policy.enabled", value = "true")`
+                           every bean gated by `@Requires(property = "access-policy.enabled", value = "true")`;
+                           Subject (identity, claims, expiresAt, credentialFingerprint), PolicyDecisionPoint (never errors),
+                           AccessDecision; test-jar exports StubPolicyDecisionPoint (request counter, per uid+identity rules);
+                           common depends on access-policy, so every module has it on the classpath
 *-shared-models/           domain classes shared between API modules
 <api-module>/              21 API modules, e.g. product-catalog, party-catalog, customer-management
   src/main/java/.../Application.java   Micronaut.run + @Factory

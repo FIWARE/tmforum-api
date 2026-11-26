@@ -10,3 +10,7 @@ micronaut:
       maximumSize: 1000
       expire-after-write: 14d
       expire-after-access: 14d
+    # access-policy PDP verdicts (DecisionCache); entries also carry min(token exp, decision-ttl)
+    decisions:
+      maximumSize: 10000
+      expire-after-write: ${access-policy.decision-ttl:60s}

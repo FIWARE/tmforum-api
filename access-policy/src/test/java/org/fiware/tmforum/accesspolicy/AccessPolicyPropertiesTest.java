@@ -109,9 +109,9 @@ class AccessPolicyPropertiesTest {
 		}
 	}
 
-	@DisplayName("Without any access-policy key, neither the guard nor the PDP client exists.")
+	@DisplayName("Without any access-policy key, neither the guard, the PDP client nor the decision cache exists.")
 	@ParameterizedTest(name = "{0}")
-	@ValueSource(classes = {AccessPolicyConfigurationGuard.class, PolicyDecisionPoint.class})
+	@ValueSource(classes = {AccessPolicyConfigurationGuard.class, PolicyDecisionPoint.class, DecisionCache.class})
 	void featureBeansAreAbsentWhenUnconfigured(Class<?> bean) {
 		try (ApplicationContext context = ApplicationContext.run()) {
 			assertFalse(context.containsBean(bean), "Without configuration, the module must not create any bean.");
@@ -203,7 +203,7 @@ class AccessPolicyPropertiesTest {
 
 	private static void assertGuardRejects(Map<String, Object> configuration, String rejectedKey) {
 		Throwable thrown = assertThrows(Throwable.class, () -> {
-			try (ApplicationContext context = ApplicationContext.run(configuration)) {
+			try (ApplicationContext context = withDecisionCache(configuration)) {
 				context.getBean(AccessPolicyProperties.class);
 			}
 		}, String.format("An invalid %s must fail the startup.", rejectedKey));
@@ -255,7 +255,7 @@ class AccessPolicyPropertiesTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("acceptedJwtSettings")
 	void acceptedJwtSettingsStart(Map<String, Object> configuration) {
-		try (ApplicationContext context = ApplicationContext.run(configuration)) {
+		try (ApplicationContext context = withDecisionCache(configuration)) {
 			assertTrue(context.containsBean(AccessPolicyConfigurationGuard.class),
 					"The guard should exist and accept the configuration.");
 		}
@@ -324,7 +324,7 @@ class AccessPolicyPropertiesTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("acceptedPdpEndpoints")
 	void acceptedPdpEndpointStarts(String name, Map<String, Object> configuration) {
-		try (ApplicationContext context = ApplicationContext.run(configuration)) {
+		try (ApplicationContext context = withDecisionCache(configuration)) {
 			assertNotNull(context.getBean(PolicyDecisionPoint.class), "The PDP client should exist once enabled.");
 		}
 	}
@@ -367,11 +367,18 @@ class AccessPolicyPropertiesTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("acceptedEnabledValues")
 	void guardAndGateAgreeOnEnabled(Map<String, Object> configuration) {
-		try (ApplicationContext context = ApplicationContext.run(configuration)) {
+		try (ApplicationContext context = withDecisionCache(configuration)) {
 			assertEquals(context.getBean(AccessPolicyProperties.class).isEnabled(),
 					context.containsBean(GateProbes.EnabledProbe.class),
 					"A bean gated on enabled must exist exactly when the properties report the feature as enabled.");
 		}
+	}
+
+	// an enabled context also starts the eager DecisionCache, which needs its cache configured
+	private static ApplicationContext withDecisionCache(Map<String, Object> configuration) {
+		Map<String, Object> merged = new HashMap<>(TestCaches.DECISIONS);
+		merged.putAll(configuration);
+		return ApplicationContext.run(merged);
 	}
 
 	private static boolean guardRejected(Throwable thrown, String key) {
