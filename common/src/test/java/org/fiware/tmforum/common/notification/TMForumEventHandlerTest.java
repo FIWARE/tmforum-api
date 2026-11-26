@@ -222,12 +222,28 @@ class TMForumEventHandlerTest {
 
 	@Test
 	void brokerDeliveryLooksUpTheHubsThroughTheCache() {
-		doReturn(Mono.just(List.of())).when(eventHandler).findSubscriptions(any());
+		doReturn(Mono.just(List.of())).when(eventHandler).findSubscriptions(any(), any());
 		when(notificationSender.sendNotifications(anyList())).thenReturn(Mono.empty());
 
 		eventHandler.handleCreateEvent(oldState()).block();
 
 		verify(eventHandler).getSubscriptions(any());
+	}
+
+	/**
+	 * The cached lookup is keyed on its arguments, so it has to take only what the lookup depends on. Keyed on the
+	 * whole EventDetails it was keyed on the event time as well, which is unique per call, so the cache never hit.
+	 */
+	@Test
+	void theCachedLookupTakesOnlyTheEntityTypeAndTheEventType() {
+		doReturn(Mono.just(List.of())).when(eventHandler).findSubscriptions(any(), any());
+		EventDetails eventDetails = new EventDetails(CharacterizationEntity.TYPE, DELETE_EVENT_TYPE, Instant.now(),
+				PAYLOAD_NAME);
+
+		eventHandler.getSubscriptions(eventDetails).block();
+
+		verify(eventHandler).getSubscriptions(CharacterizationEntity.TYPE, DELETE_EVENT_TYPE);
+		verify(eventHandler).findSubscriptions(CharacterizationEntity.TYPE, DELETE_EVENT_TYPE);
 	}
 
 	@Test

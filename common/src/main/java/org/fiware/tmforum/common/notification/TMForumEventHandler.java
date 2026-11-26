@@ -56,9 +56,24 @@ public class TMForumEventHandler extends EventHandler {
 		this.repository = repository;
 	}
 
-	@Cacheable(CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME)
+	/**
+	 * The hubs taking the event, from the cache when the same kind of event was looked up before.
+	 * <p>
+	 * The lookup only depends on the event's entity type and event type, so only those are the cache key. Keying on
+	 * the whole {@link EventDetails} made every call a miss, since it carries the event time.
+	 * </p>
+	 */
 	public Mono<List<TMForumSubscription>> getSubscriptions(EventDetails eventDetails) {
-		return findSubscriptions(eventDetails);
+		return getSubscriptions(eventDetails.entityType(), eventDetails.eventType());
+	}
+
+	/**
+	 * Cached lookup of the hubs taking an event of {@code entityType} and {@code eventType}; invalidated whole
+	 * whenever a hub is written or deleted.
+	 */
+	@Cacheable(CommonConstants.TMFORUM_SUBSCRIPTIONS_CACHE_NAME)
+	public Mono<List<TMForumSubscription>> getSubscriptions(String entityType, String eventType) {
+		return findSubscriptions(entityType, eventType);
 	}
 
 	/**
@@ -66,19 +81,24 @@ public class TMForumEventHandler extends EventHandler {
 	 * event time, so a cached list would outlive hubs registered or deleted since the row's first attempt.
 	 */
 	public Mono<List<TMForumSubscription>> findSubscriptions(EventDetails eventDetails) {
+		return findSubscriptions(eventDetails.entityType(), eventDetails.eventType());
+	}
+
+	/** As {@link #findSubscriptions(EventDetails)}, for the two attributes the lookup depends on. */
+	public Mono<List<TMForumSubscription>> findSubscriptions(String entityType, String eventType) {
 		return repository.findEntities(
 				DEFAULT_OFFSET,
 				SUBSCRIPTION_PAGE_SIZE,
 				TMForumSubscription.TYPE_TM_FORUM_SUBSCRIPTION,
 				TMForumSubscription.class,
-				subscriptionsTaking(eventDetails)
+				subscriptionsTaking(entityType, eventType)
 		).map(PagedResult::items);
 	}
 
-	private static EntityQuery subscriptionsTaking(EventDetails eventDetails) {
+	private static EntityQuery subscriptionsTaking(String entityType, String eventType) {
 		QueryFilter filter = new QueryFilter.AllOf(List.of(
-				listContains(ENTITIES_ATTRIBUTE, eventDetails.entityType()),
-				listContains(EVENT_TYPES_ATTRIBUTE, eventDetails.eventType())));
+				listContains(ENTITIES_ATTRIBUTE, entityType),
+				listContains(EVENT_TYPES_ATTRIBUTE, eventType)));
 		return new EntityQuery(TMForumSubscription.class, filter, List.of());
 	}
 

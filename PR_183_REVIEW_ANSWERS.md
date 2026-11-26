@@ -159,6 +159,33 @@ absence of exactly these indexes; it is replaced rather than deleted, so the set
 
 ---
 
+### V6 — `getSubscriptions` is `@Cacheable` on a key that is unique per call
+
+> `getSubscriptions` is `@Cacheable` keyed on the whole `EventDetails`, which carries `eventTime = Instant.now()`, so
+> the key is unique per call and the cache never hits — it only adds overhead.
+
+**Agreed, fixed** in `Key the hub cache on what the lookup depends on`.
+
+Confirmed: the annotation sat on a method whose single parameter is the whole `EventDetails`, so the generated key
+included the event time and no two calls ever shared one. The lookup itself only reads `entityType` and `eventType`
+— `subscriptionsTaking` used nothing else — so those two are now the method's parameters and therefore the key:
+
+- `getSubscriptions(String entityType, String eventType)` carries the `@Cacheable`.
+- `getSubscriptions(EventDetails)` stays as the entry point the broker path uses and just unpacks the two values.
+  Micronaut's AOP is compile-time, so this self-call still goes through the interceptor, unlike a proxy-based one.
+- `findSubscriptions` gained the same two-argument form, with the `EventDetails` overload kept for the outbox path
+  and `NgsiLdEventHandler`.
+
+The comment notes this is pre-existing but that the new `findSubscriptions` split assumes the cached one caches —
+which is why it is fixed here rather than deferred.
+
+Tests: `theCachedLookupTakesOnlyTheEntityTypeAndTheEventType` pins the arguments the cached method is called with,
+which is what the cache key is derived from. `brokerDeliveryLooksUpTheHubsThroughTheCache` and
+`outboxDeliveryLooksUpTheHubsUncached` keep pinning that the two paths use the cached and the uncached lookup
+respectively.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -183,4 +210,3 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
 | V3 | `^(?!X$).*$` → `!=` takes a regex fragment as a string literal | Agreed. Normalize in the shared parser (a model-level `NOT_EQUALS`), not only in the NGSI renderer. |
 | V4 | `toRegExp` rejects `|,;()"'<>!`, postgres accepts them | Agreed, related to #4. Align or document. |
-| V6 | `getSubscriptions` `@Cacheable` key is unique per call | Agreed, verified: the key is the whole `EventDetails`, which carries `eventTime = Instant.now()`, so the cache never hits. Key on `(entityType, eventType)`. |
