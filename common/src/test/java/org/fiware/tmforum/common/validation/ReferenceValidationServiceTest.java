@@ -73,6 +73,12 @@ class ReferenceValidationServiceTest {
 	private static final URI VERSIONED_ID = URI.create("urn:ngsi-ld:category:versioned");
 	private static final URI CASE_VERSIONED_ID = URI.create("urn:ngsi-ld:category:case-versioned");
 	// the versioned category with that version stored, unversioned ones store NO_VERSION
+	// external by their href, but their id names a local entity whose version decides the outcome
+	private static final TestRef EXTERNAL_PINNED_TO_ANOTHER_VERSION =
+			externalPinnedRef(VERSIONED_ID, OTHER_VERSION);
+	private static final TestRef EXTERNAL_PINNED_TO_THE_STORED_VERSION =
+			externalPinnedRef(VERSIONED_ID, CURRENT_VERSION);
+
 	private static final Map<String, String> STORED_VERSIONS = Map.of(
 			VERSIONED_ID.toString(), CURRENT_VERSION,
 			CASE_VERSIONED_ID.toString(), CASE_DIFFERENT_CURRENT);
@@ -171,7 +177,15 @@ class ReferenceValidationServiceTest {
 				Arguments.of("external with local entity of accepted type", List.of(EXTERNAL_ACCEPTED), true, 0, 0,
 						1, 0, 0),
 				Arguments.of("external with local entity of another type", List.of(EXTERNAL_WRONG_TYPE), false, 0,
-						0, 0, 1, 0));
+						0, 0, 1, 0),
+				// the id names a local entity of the right type but another version, so the reference is wrong
+				// whatever its href says - an external scope does not make a local id mean something else
+				Arguments.of("external with local entity of another version",
+						List.of(EXTERNAL_PINNED_TO_ANOTHER_VERSION), false, 0, 0, 0, 1, 0),
+				Arguments.of("external with local entity of the pinned version",
+						List.of(EXTERNAL_PINNED_TO_THE_STORED_VERSION), true, 0, 0, 1, 0, 0),
+				// no local entity carries the id, so the external reference is not checked at all
+				Arguments.of("external without a local entity of the id", List.of(EXTERNAL_1), true, 0, 0, 0, 0, 1));
 	}
 
 	@ParameterizedTest(name = "{0}")
@@ -376,6 +390,10 @@ class ReferenceValidationServiceTest {
 
 	private static TestRef externalRef(URI id) {
 		return new TestRef(id, List.of(CATEGORY_TYPE), EXTERNAL_HREF, null);
+	}
+
+	private static TestRef externalPinnedRef(URI id, String version) {
+		return new TestRef(id, List.of(CATEGORY_TYPE), EXTERNAL_HREF, version);
 	}
 
 	private static TestRef pinnedRef(URI id, String version) {

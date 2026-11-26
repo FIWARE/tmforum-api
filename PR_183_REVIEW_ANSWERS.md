@@ -401,6 +401,34 @@ renderings of the new operator.
 
 ---
 
+### #13 — EXTERNAL references now fail on a local id collision
+
+> An EXTERNAL-scope reference whose id matches a local entity of another type or version now fails with MISSING or
+> VERSION_MISMATCH (400). Before it was skipped. The comment says this is deliberate, but it changes the contract
+> for federated hrefs that reuse a local-looking urn. A unit test should pin the behaviour.
+
+**Deliberate; kept, and now pinned by tests** in `Pin what an external reference colliding with a local id does`.
+
+The behaviour stands. An external scope says where the entity is served from, not what its id means: an id that
+names a local entity of another type or another version is a reference to *that* entity, and accepting it because
+the href points elsewhere would let a caller point a `categoryRef` at a stored product-offering simply by adding an
+external href. A federated href that reuses a local-looking urn and collides with a real local entity is a genuine
+ambiguity, and the 400 says so rather than silently resolving to the wrong thing. Note the scope is narrow: when no
+local entity carries the id, the external reference is still skipped as before.
+
+The test table already covered the type collision. It now also covers the two version cases the comment names and
+the no-collision case, so all four outcomes of an external reference are pinned:
+
+| External reference | Outcome |
+|--------------------|---------|
+| id names no local entity | skipped, accepted |
+| id names a local entity of an accepted type | resolved, accepted |
+| id names a local entity of another type | unresolved, 400 |
+| id names a local entity of the accepted type, another version | unresolved, 400 |
+| id names a local entity of the accepted type and the pinned version | resolved, accepted |
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -411,7 +439,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | #8 | Outbox delivery and housekeeping (5 sub-points) | **8.3's index is fixed** (above). Still open: per-hub delivery state (8.1) and paging past 100 hubs (8.2), which are real but larger; terminal failures (8.4) and un-owned types (8.5), separate small fixes. |
 | #10 | `DATE_TIME` compares as text | Open question to answer first: do Orion-LD and Scorpio compare these as instants or as text? |
 | #12 | Shallow PATCH and `NullNode` in extensions | Question + likely fix. Confirm per-attribute replace is the intended PATCH semantics on both backends; add a `NullNode` extension-value test and drop such values in full-document mode if it reproduces. |
-| #13 | EXTERNAL references now fail on a local id collision | Deliberate per the code comment; needs a unit test pinning the behaviour. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
