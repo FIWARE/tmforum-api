@@ -219,7 +219,7 @@ class NgsiLdQueryRendererTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orValueSeparatorQueries")
 	void testOrValueSeparatorInsideValue(String expected, NgsiLdBrokerProperties properties, String tmForumQuery) {
-		QueryFilter filter = new QueryParser(GENERAL_DEFAULTS).parse(MyPojo.class, tmForumQuery).filter();
+		QueryFilter filter = new QueryParser().parse(MyPojo.class, tmForumQuery).filter();
 		assertEquals(expected, new NgsiLdQueryRenderer(GENERAL_DEFAULTS, properties)
 				.renderFilter(new EntityQuery(MyPojo.class, filter, List.of())));
 	}

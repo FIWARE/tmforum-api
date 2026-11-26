@@ -39,7 +39,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("filterQueries")
 	void testParse(String tmForumQuery, Class<?> queryClass, ParsedQuery expected) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		QueryParser qp = new QueryParser();
 		assertEquals(expected, qp.parse(queryClass, tmForumQuery));
 	}
 
@@ -141,7 +141,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("orValueSeparatorQueries")
 	void testParseSplitsOnlyOnTmForumOrValue(String tmForumQuery, ParsedQuery expected) {
-		assertEquals(expected, new QueryParser(new GeneralProperties()).parse(MyPojo.class, tmForumQuery));
+		assertEquals(expected, new QueryParser().parse(MyPojo.class, tmForumQuery));
 	}
 
 	private static Stream<Arguments> orValueSeparatorQueries() {
@@ -156,7 +156,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("sortQueries")
 	void testParseSort(String sort, Class<?> queryClass, List<SortKey> expected) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		QueryParser qp = new QueryParser();
 		assertEquals(expected, qp.parseSort(queryClass, Map.of(QueryParser.SORT_KEY, List.of(sort))));
 	}
 
@@ -190,13 +190,13 @@ class QueryParserModelTest {
 
 	@Test
 	void testParseSortWithoutSort() {
-		assertEquals(List.of(), new QueryParser(new GeneralProperties()).parseSort(MyPojo.class, Map.of()));
+		assertEquals(List.of(), new QueryParser().parseSort(MyPojo.class, Map.of()));
 	}
 
 	@ParameterizedTest(name = "{0}")
 	@ValueSource(strings = {"-", "sub..status"})
 	void testParseSortRejectsBlankSegments(String sort) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		QueryParser qp = new QueryParser();
 		assertThrows(QueryException.class,
 				() -> qp.parseSort(MyPojo.class, Map.of(QueryParser.SORT_KEY, List.of(sort))));
 	}
@@ -204,7 +204,7 @@ class QueryParserModelTest {
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("invalidQueries")
 	void testParseRejectsInvalidQueries(String tmForumQuery) {
-		QueryParser qp = new QueryParser(new GeneralProperties());
+		QueryParser qp = new QueryParser();
 		assertThrows(QueryException.class, () -> qp.parse(MyPojo.class, tmForumQuery));
 	}
 

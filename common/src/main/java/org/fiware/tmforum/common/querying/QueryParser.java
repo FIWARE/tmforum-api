@@ -12,7 +12,6 @@ import io.github.wistefan.mapping.annotations.RelationshipObject;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.core.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-import org.fiware.tmforum.common.configuration.GeneralProperties;
 import org.fiware.tmforum.common.exception.QueryException;
 import org.fiware.tmforum.storage.query.AttributePath;
 import org.fiware.tmforum.storage.query.DateTimeLiterals;
@@ -87,9 +86,6 @@ public class QueryParser {
                 .toList();
     }
 
-    // not read since the parser stopped splitting on ngsildOrQueryValue; kept so the constructor stays stable
-    protected final GeneralProperties generalProperties;
-
     // Keys for the "well-known" fields
     public static final String OFFSET_KEY = "offset";
     public static final String LIMIT_KEY = "limit";
@@ -122,10 +118,6 @@ public class QueryParser {
 
     private static final Set<Class<?>> DATE_TIME_CLASSES = Set.of(
             Instant.class, OffsetDateTime.class, ZonedDateTime.class, Date.class);
-
-    public QueryParser(GeneralProperties generalProperties) {
-        this.generalProperties = generalProperties;
-    }
 
     /**
      * Parses the TMForum {@code sort} parameter (comma-separated properties, each optionally prefixed with "-" for

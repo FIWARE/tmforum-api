@@ -287,6 +287,18 @@ update, read, list, delete and the related-entity writes, under both the append 
 
 ---
 
+### M4 — `QueryParser.generalProperties` is unused
+
+**Agreed, fixed** in `Drop the query parser's unread properties`.
+
+The field carried a comment saying it is "not read since the parser stopped splitting on ngsildOrQueryValue; kept so
+the constructor stays stable". Keeping an unread dependency to keep a signature stable is the wrong trade in a
+module that is compiled together: it makes every construction site state a dependency that does not exist. The
+field and the constructor parameter are both gone; the bean is constructed by its implicit no-argument constructor
+and every call site drops the argument.
+
+---
+
 ## Still open
 
 The remaining comments are triaged but not yet worked. Nothing below has been changed in the branch.
@@ -302,7 +314,6 @@ The remaining comments are triaged but not yet worked. Nothing below has been ch
 | M1 | Broker-only beans carry no `@Requires(notEnv = postgresql)` | Agreed, convention per `AGENTS.md`. |
 | M2 | `PostgresTestEntityCleaner` ships in the production jar | Agreed. |
 | M3 | `ControllerStorageBoundaryTest` exempts `relatedEntityHandlingMono` and inspects only three methods | The #2 gap it used to pass over is closed; the exemption list itself is still worth tightening. |
-| M4 | `QueryParser.generalProperties` unused | Agreed, remove. |
 | M5 | `IdHelper.hasTypeSegmentOf` throws outside a `Mono` | Agreed, wrap in `Mono.defer`. |
 | V1 | ReDoS through a client `.regex` filter | **Closed by #1** — the `statement_timeout` cancels a backtracking pattern server-side. Bounding pattern length is still possible on top, but the unbounded-CPU failure mode is gone. |
 | V3 | `^(?!X$).*$` → `!=` takes a regex fragment as a string literal | Agreed. Normalize in the shared parser (a model-level `NOT_EQUALS`), not only in the NGSI renderer. |

@@ -149,7 +149,7 @@ class TMForumEventHandlerTest {
 		GeneralProperties properties = new GeneralProperties();
 		NgsiLdQueryRenderer renderer = new NgsiLdQueryRenderer(properties, new NgsiLdBrokerProperties());
 		// the hub lookup built this filter through the parser before the port took the model
-		QueryFilter parsed = new QueryParser(properties).parse(TMForumSubscription.class,
+		QueryFilter parsed = new QueryParser().parse(TMForumSubscription.class,
 				String.format("entities=%s&eventTypes=%s", CharacterizationEntity.TYPE, DELETE_EVENT_TYPE)).filter();
 		String rendered = renderer.renderFilter(query.getValue());
 		assertEquals(String.format("entities==\"%s\";eventTypes==\"%s\"", CharacterizationEntity.TYPE, DELETE_EVENT_TYPE),
