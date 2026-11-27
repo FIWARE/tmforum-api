@@ -262,6 +262,16 @@ both kinds of rule without ambiguity:
 A permission with no scope therefore keeps exactly the meaning it has today, and this project
 ignores it. That is what makes the feature additive rather than a migration.
 
+Only the rules at the asked scope are sent: the resolved policy keeps its policy-level keys
+(`@context`, `@type`, `odrl:uid`, …), but each of `permission`, `prohibition` and `obligation` keeps
+only the rules that declare that scope, and a rule key left empty is dropped.
+
+The uid is read from a key that expands to `odrl:uid`, else from `@id`, or from a bare `uid` under
+the `odrl.jsonld` context, as a string, `{"@id": …}` or a one-element list. The scope is read only
+from a key directly on a top-level rule that expands to exactly `https://w3id.org/dspace/2024/1/scope`
+(`dspace:scope` or the full IRI), as a string, `{"@value": …}` or a one-element list. A scope anywhere
+else, under another IRI or as a `leftOperand` makes the policy unreadable, and `fail-open` decides.
+
 ## What the PDP receives
 
 For reference when writing or debugging policy rules — this project sends the same request shape the
