@@ -22,8 +22,10 @@ final class JsonLdKeys {
 			"vc", VC_NAMESPACE,
 			"dspace", DSPACE_NAMESPACE,
 			"odrl", ODRL_NAMESPACE);
-	// Checked by hand: both bind only odrl/dspace (to the namespaces above), set no @vocab and alias none of the
-	// resource keys.
+	// Checked by hand: both bind odrl/dspace to the namespaces above, set no @vocab and alias none of the detector's
+	// resource keys. odrl.jsonld also binds bare ODRL terms and aliases uid/type to @id/@type: the resolver reads them
+	// through ScopedPolicyResolution.ODRL_CONTEXT_TERMS, and the DSP context's terms are not interpreted. A new entry
+	// must be checked against both readers.
 	static final Set<String> TRUSTED_REMOTE_CONTEXTS = Set.of(ODRL_CONTEXT, DSPACE_CONTEXT);
 
 	static final String CONTEXT = "@context";
@@ -233,7 +235,7 @@ final class JsonLdKeys {
 			return vocab;
 		}
 
-		/** Every trusted remote context the policy names; their terms are not in {@link #definition}. */
+		/** True when the policy names this trusted remote context; its terms are not in {@link #definition}. */
 		boolean namesContext(String remoteContext) {
 			return trustedRemoteContexts.contains(remoteContext);
 		}
