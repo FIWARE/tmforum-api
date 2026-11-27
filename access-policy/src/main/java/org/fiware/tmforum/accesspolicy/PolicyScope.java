@@ -1,6 +1,6 @@
 package org.fiware.tmforum.accesspolicy;
 
-/** The {@code dspace:scope} values this project evaluates; a rule at any other scope or none is ignored. */
+/** The {@code dspace:scope} values this project evaluates; a scope-less or {@code transfer.process} rule is ignored. */
 public enum PolicyScope {
 	CATALOG("catalog"),
 	CONTRACT_NEGOTIATION("contract.negotiation");

@@ -47,6 +47,8 @@ class ScopedPolicyResolutionTest {
 			{"action": "read", "dspace:scope": "catalog", "constraint": %s}""".formatted(COUNTRY_CONSTRAINT);
 	private static final String CONTRACT_RULE = """
 			{"action": "use", "dspace:scope": "contract.negotiation", "constraint": %s}""".formatted(COUNTRY_CONSTRAINT);
+	private static final String TRANSFER_RULE = """
+			{"action": "use", "dspace:scope": "transfer.process", "constraint": %s}""".formatted(COUNTRY_CONSTRAINT);
 	private static final String SCOPELESS_RULE = """
 			{"action": "use", "constraint": %s}""".formatted(COUNTRY_CONSTRAINT);
 
@@ -103,6 +105,9 @@ class ScopedPolicyResolutionTest {
 						CONTRACT_NEGOTIATION, null),
 				Arguments.of("UC-6 scope-less at catalog", uc6(""), CATALOG, null),
 				Arguments.of("UC-6 scope-less at contract", uc6(""), CONTRACT_NEGOTIATION, null),
+				Arguments.of("transfer.process is ignored at catalog", uc1Permissions(TRANSFER_RULE), CATALOG, null),
+				Arguments.of("transfer.process is ignored at contract", uc1Permissions(TRANSFER_RULE),
+						CONTRACT_NEGOTIATION, null),
 				Arguments.of("scope-less at catalog", uc1Permissions(SCOPELESS_RULE), CATALOG, null),
 				Arguments.of("scope-less at contract", uc1Permissions(SCOPELESS_RULE), CONTRACT_NEGOTIATION, null),
 				Arguments.of("mixed keeps only the scoped rule", mixed, CATALOG, uc1Permissions(CATALOG_RULE)),
@@ -190,6 +195,12 @@ class ScopedPolicyResolutionTest {
 						"{\"action\": \"read\", \"dspace:scope\": [\"catalog\", \"contract.negotiation\"]}")),
 				Arguments.of("a scope as @id", uc1Permissions(
 						"{\"action\": \"read\", \"dspace:scope\": {\"@id\": \"catalog\"}}")),
+				Arguments.of("a capitalised scope value",
+						uc1Permissions(CATALOG_RULE.replace("\"catalog\"", "\"Catalog\""))),
+				Arguments.of("a misspelt scope value",
+						uc1Permissions(CATALOG_RULE.replace("\"catalog\"", "\"catalogue\""))),
+				Arguments.of("an unknown scope value at the other scope", uc1Permissions(CATALOG_RULE,
+						CONTRACT_RULE.replace("\"contract.negotiation\"", "\"contract-negotiation\""))),
 				Arguments.of("a numeric scope at the other scope",
 						uc1Permissions(CATALOG_RULE, CONTRACT_RULE.replace("\"contract.negotiation\"", "42"))),
 				// contexts and keys

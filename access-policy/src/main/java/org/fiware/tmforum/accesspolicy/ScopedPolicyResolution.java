@@ -43,6 +43,12 @@ final class ScopedPolicyResolution {
 			ODRL_NAMESPACE + "obligation");
 	private static final String DSPACE_SCOPE = DSPACE_NAMESPACE + "scope";
 	private static final String SCOPE = "scope";
+	// A DSP scope the EDC connector evaluates and this project deliberately ignores (POLICY_EXAMPLES.md § Scoping).
+	private static final String TRANSFER_PROCESS_SCOPE = "transfer.process";
+	// Any other value is a typo whose rule would silently drop and leave the entity public.
+	private static final Set<String> KNOWN_SCOPES = Stream.concat(
+					Stream.of(PolicyScope.values()).map(PolicyScope::value), Stream.of(TRANSFER_PROCESS_SCOPE))
+			.collect(Collectors.toUnmodifiableSet());
 	private static final String LEFT_OPERAND = "leftOperand";
 	private static final Set<String> POLICY_KEYWORDS = Set.of(CONTEXT, ID, TYPE);
 	private static final Set<String> RULE_KEYWORDS = Set.of(ID, TYPE);
@@ -82,6 +88,7 @@ final class ScopedPolicyResolution {
 	private static final String WRONG_SCOPE_IRI = "a rule's scope key '%s' is not " + DSPACE_SCOPE;
 	private static final String SCOPE_GIVEN_TWICE = "a rule declares its scope twice";
 	private static final String UNREADABLE_SCOPE = "a rule's scope is not a single string";
+	private static final String UNKNOWN_SCOPE = "unknown scope value '%s'";
 	private static final String MISPLACED_SCOPE = "scope key '%s' outside a top-level rule";
 	private static final String UNREADABLE_LEFT_OPERAND = "a leftOperand is not a single IRI";
 	private static final String SCOPE_LEFT_OPERAND = "scope used as a leftOperand";
@@ -238,6 +245,9 @@ final class ScopedPolicyResolution {
 			}
 			scoped = true;
 			scope = scopeValue(entry.getValue());
+			if (!KNOWN_SCOPES.contains(scope)) {
+				throw new Unreadable(UNKNOWN_SCOPE.formatted(scope));
+			}
 		}
 		// A bare node reference like {"@id": "urn:rule:1"} keeps its scope elsewhere.
 		if (!holdsTerm) {

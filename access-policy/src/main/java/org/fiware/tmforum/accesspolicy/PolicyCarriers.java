@@ -1,16 +1,16 @@
 package org.fiware.tmforum.accesspolicy;
 
+import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 
 /**
  * The registry of every {@link PolicyCarrier} bean. Answers per class whether it is governed, so an ungoverned entity
- * is never read; fails at startup when two carriers' types are equal or related by inheritance.
+ * is never read; eager ({@code @Context}) so two carriers whose types are equal or related fail the boot.
  */
-@Singleton
+@Context
 @Requires(property = AccessPolicyProperties.ENABLED_PROPERTY, value = "true")
 public class PolicyCarriers {
 
