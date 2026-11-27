@@ -35,7 +35,7 @@ and use the accessor paths from `doc/access-policies/AP-01_FINDINGS.md` § "The 
   new `AccessDecision.Source.UNREADABLE_POLICY`, whose `permitted` follows `fail-open`, like
   `PDP_FAILURE`. A separate source lets audit (AP-18) tell bad authoring from a PDP outage.
   A policy the resolver cannot positively interpret (an untrusted remote context, an `@vocab`, a key
-  it cannot expand, a keyword such as `@nest` it does not walk) is unreadable too, never "no rule at
+  it cannot expand, a keyword such as `@nest` it does not walk, a `dspace:scope` outside a rule object) is unreadable too, never "no rule at
   this scope". Otherwise a misread policy would make the entity public whatever `fail-open` says.
 
 ## Steps
@@ -60,7 +60,10 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - `Class<T> carriedType()`.
   - `List<CarriedPolicy> carriedPolicies(T entity)`.
   - Default `ResolvedPolicies resolve(T entity, PolicyScope scope)`, which delegates to the
-    resolution below.
+    resolution below. "Resolution never throws" holds here, at the SPI: a `RuntimeException` from
+    `carriedPolicies` (or a `null` it returns) becomes a result with one `UnreadablePolicy` whose
+    location is `carriedType().getName()`. Carriers implement `carriedPolicies` only and do not
+    override `resolve`.
 
 **`AccessDecision`:**
 - Add `Source.UNREADABLE_POLICY` and the factory `unreadable(policyUid, reason, failOpen)`.
@@ -112,6 +115,20 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
     is therefore unreadable too, since its object holds a keyword outside the rule allow-list.
   - A rule object that holds nothing but keywords (for example the bare node reference
     `{"@id": "urn:rule:1"}`) is unreadable, never scope-less. Its scope would live elsewhere.
+  - The scope is read in one place only: as a key directly on a top-level rule object (a value of
+    the policy's `permission`/`prohibition`/`obligation` key). A scope written anywhere else would
+    be understood by the author and ignored by the resolver, so the policy is unreadable. The check
+    walks the whole policy tree (every nested object and list, skipping `@context` values):
+    - a key whose expansion has the local name `scope` anywhere except directly on a top-level rule
+      object. This covers a policy-level `dspace:scope` next to the rules (ODRL's compact form puts
+      rule properties at policy level), a scope on a `duty`, and one inside a constraint;
+    - a `leftOperand` whose value (a string, `{"@id": …}` or a single-element list, read with the
+      detector's `operandIri` and `expand`) has the local name `scope`, for example
+      `{"leftOperand": "dspace:scope", "operator": "eq", "rightOperand": "catalog"}`.
+      POLICY_EXAMPLES.md lists `dspace:scope` as an operand, so this is a plausible way to write it.
+    Matching on the local name, not only on the dspace IRI, also catches a bare `scope` key or
+    operand in nested objects whose keys are not checked for interpretation. A false match fails
+    closed.
 - **What makes a policy unreadable** (tagged result, never an exception). Validation covers the
   whole policy, every rule at every scope, before any narrowing:
   - the value is not a JSON object;
@@ -119,6 +136,7 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - an untrusted remote context, an `@vocab`, or a key in a rule position that is not interpreted
     (see above);
   - a keyword outside the allow-list of its position, or a keyword-only rule object;
+  - a scope key anywhere but directly on a top-level rule object, or a `scope` `leftOperand`;
   - a rule value is neither an object nor a list of objects;
   - a scope value has an unexpected shape;
   - any `RuntimeException` during the walk (catch it around each policy).
@@ -143,8 +161,8 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - Lookup goes through a `ClassValue<PolicyCarrier<?>>`. It is computed once per class, walks
     `isAssignableFrom` for subclasses and caches a miss.
   - A null or ungoverned entity returns `ResolvedPolicies.NONE` and calls no method on the entity.
-  - An exception thrown by a carrier's `carriedPolicies` becomes one `UnreadablePolicy` with the
-    entity's type name as its location.
+  - A governed entity is passed to the matched carrier's `resolve`, so the exception handling of the
+    default method applies and is not repeated here.
 - Javadoc: one line per public type and method, matching the module's density.
 
 **ArchUnit:**
@@ -172,6 +190,10 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - Keyword cases, each `UnreadablePolicy` at both scopes: rules under `@nest`, under `@graph`, a
     rule value wrapped as `{"@set": [...]}`, and an `@id`-only rule. A rule object carrying `@id` and
     `@type` next to its scope stays well-formed.
+  - Misplaced-scope cases, each `UnreadablePolicy` at both scopes: a policy-level
+    `"dspace:scope": "catalog"` next to the rules, a constraint with `"leftOperand": "dspace:scope"`
+    (also as `{"@id": "dspace:scope"}`), a `dspace:scope` on a `duty`, and one inside a constraint
+    object.
   - Duplicate uids, equal and conflicting. One conflict case has the two policies' rules at
     different scopes, and expects `UnreadablePolicy` at both scopes.
   - `isEmpty()` is false for a result that holds only an `UnreadablePolicy`.
@@ -181,7 +203,10 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - Two carriers for one type fail construction, and so do carriers for a type and its subclass.
   - A class implementing two unrelated carrier interfaces is governed and resolves to one
     `UnreadablePolicy`.
-  - A throwing carrier gives an unreadable result.
+  - A throwing carrier resolved through `PolicyCarriers` gives an unreadable result (delegation).
+- `PolicyCarrierTest` (the default method): a carrier whose `carriedPolicies` throws, and one that
+  returns `null`, each give one `UnreadablePolicy` located at the carried type's name from
+  `carrier.resolve(entity, scope)`, without throwing.
 - `AccessDecisionTest`: add a case for `unreadable(...)` under both `failOpen` values.
 - `DecisionCacheTest`: an `UNREADABLE_POLICY` decision is not cached.
 
@@ -192,8 +217,9 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
 - A scope-less permission resolves to nothing.
 - Malformed JSON yields a tagged `UnreadablePolicy`.
 - A policy the resolver cannot positively interpret (untrusted context, `@vocab`, unknown bare key,
-  a keyword outside the allow-list, a keyword-only rule) yields `UnreadablePolicy`, never an empty
-  result.
+  a keyword outside the allow-list, a keyword-only rule, a scope outside a top-level rule object or
+  given as a `leftOperand`) yields `UnreadablePolicy`, never an empty result.
+- `PolicyCarrier.resolve` never throws, even when `carriedPolicies` does.
 
 ### Step 2: Policy value conversion in `common` and the `ServiceSpecification` carrier in `service-shared-models`
 **`common`:**
