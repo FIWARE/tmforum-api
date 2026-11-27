@@ -247,7 +247,16 @@ class ScopedPolicyResolutionTest {
 				Arguments.of("odrl:scope", uc1Permissions("{\"action\": \"read\", \"odrl:scope\": \"catalog\"}")),
 				Arguments.of("a dspace prefix bound to 2025/1", dspace2025),
 				Arguments.of("dspace:scope next to its full IRI", uc1Permissions("{\"action\": \"read\", "
-						+ "\"dspace:scope\": \"catalog\", \"https://w3id.org/dspace/2024/1/scope\": \"catalog\"}")));
+						+ "\"dspace:scope\": \"catalog\", \"https://w3id.org/dspace/2024/1/scope\": \"catalog\"}")),
+				// inherited rules live in the parent policy
+				Arguments.of("a bare inheritFrom with own rules",
+						uc1("\"inheritFrom\": \"urn:p:parent\", \"permission\": [%s]".formatted(SCOPELESS_RULE))),
+				Arguments.of("a bare inheritFrom without own rules", uc1("\"inheritFrom\": \"urn:p:parent\"")),
+				Arguments.of("an odrl:inheritFrom in the UC-6 shape",
+						uc6("").replace("\"odrl:permission\"", "\"odrl:inheritFrom\": {\"@id\": \"urn:p:parent\"}, "
+								+ "\"odrl:permission\"")),
+				Arguments.of("inheritFrom under its full IRI",
+						uc1("\"http://www.w3.org/ns/odrl/2/inheritFrom\": \"urn:p:parent\"")));
 	}
 
 	private static String scopeConstraint(String leftOperandKey, String leftOperand) {

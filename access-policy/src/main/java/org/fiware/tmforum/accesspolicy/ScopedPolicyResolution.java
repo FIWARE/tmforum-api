@@ -41,6 +41,8 @@ final class ScopedPolicyResolution {
 			ODRL_NAMESPACE + "permission",
 			ODRL_NAMESPACE + "prohibition",
 			ODRL_NAMESPACE + "obligation");
+	// ODRL 2.2 § 2.7: the parent's rules, and their scopes, belong to this policy but are never seen here.
+	private static final String ODRL_INHERIT_FROM = ODRL_NAMESPACE + "inheritFrom";
 	private static final String DSPACE_SCOPE = DSPACE_NAMESPACE + "scope";
 	private static final String SCOPE = "scope";
 	// A DSP scope the EDC connector evaluates and this project deliberately ignores (POLICY_EXAMPLES.md § Scoping).
@@ -86,6 +88,7 @@ final class ScopedPolicyResolution {
 	private static final String RULE_NOT_OBJECT = "a rule is neither an object nor a list of objects";
 	private static final String KEYWORD_ONLY_RULE = "a rule holds nothing but keywords";
 	private static final String WRONG_SCOPE_IRI = "a rule's scope key '%s' is not " + DSPACE_SCOPE;
+	private static final String INHERITED_RULES = "the policy inherits rules through odrl:inheritFrom";
 	private static final String SCOPE_GIVEN_TWICE = "a rule declares its scope twice";
 	private static final String UNREADABLE_SCOPE = "a rule's scope is not a single string";
 	private static final String UNKNOWN_SCOPE = "unknown scope value '%s'";
@@ -197,6 +200,8 @@ final class ScopedPolicyResolution {
 				requireAllowed(iri, POLICY_KEYWORDS);
 			} else if (RULE_IRIS.contains(iri)) {
 				rules.put(key, ruleKey(entry.getValue(), bindings));
+			} else if (ODRL_INHERIT_FROM.equals(iri)) {
+				throw new Unreadable(INHERITED_RULES);
 			} else {
 				checkNested(key, entry.getValue(), bindings);
 			}
