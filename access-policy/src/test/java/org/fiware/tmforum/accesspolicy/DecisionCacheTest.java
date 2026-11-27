@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -40,6 +41,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -262,6 +265,22 @@ class DecisionCacheTest {
 			stub.permit(POLICY_UID, IDENTITY);
 			assertEquals(AccessDecision.policy(true, null, POLICY_UID), decide(cache, policy, 0, subject));
 		}
+	}
+
+	@Test
+	void anUnreadableDecisionIsNotCached() {
+		Map<String, Object> policy = subjectOnlyPolicy(POLICY_UID);
+		PolicyDecisionPoint pdp = mock(PolicyDecisionPoint.class);
+		when(pdp.decide(eq(POLICY_UID), any()))
+				.thenReturn(Mono.just(AccessDecision.unreadable(POLICY_UID, DENY_REASON, false)));
+		try (ApplicationContext context = context(false)) {
+			DecisionCache cache = new DecisionCache(context.getBean(AccessPolicyProperties.class), pdp,
+					context.getBean(CacheManager.class), clock);
+			for (int round = 0; round < ROUNDS; round++) {
+				assertEquals(Source.UNREADABLE_POLICY, decide(cache, policy, 0, subject()).source());
+			}
+		}
+		verify(pdp, times(ROUNDS)).decide(eq(POLICY_UID), any());
 	}
 
 	@Test

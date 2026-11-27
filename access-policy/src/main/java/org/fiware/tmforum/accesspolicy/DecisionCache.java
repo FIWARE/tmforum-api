@@ -62,7 +62,7 @@ public class DecisionCache {
 
 	/**
 	 * The PDP verdict, served from the cache for {@code min(token exp, decision-ttl)} after the call that produced it.
-	 * Never errors or completes empty, like the PDP client: a PDP failure is never cached and a failing cache is a miss.
+	 * Never errors or completes empty, like the PDP client: only a policy verdict is cached and a failing cache is a miss.
 	 */
 	public Mono<AccessDecision> decide(String policyUid, Map<String, Object> policy, String scope, String action,
 			ValidationRequest.Resource resource, Subject subject) {
@@ -108,10 +108,10 @@ public class DecisionCache {
 				});
 	}
 
-	// under fail-open a cached failure would be a grant that outlives a revocation
+	// only a PDP verdict is cached: under fail-open a cached failure would be a grant that outlives a revocation
 	private Mono<Void> store(DecisionKey key, AccessDecision decision, Instant asked, Subject subject) {
 		Instant validUntil = validUntil(asked, subject);
-		if (decision.source() == Source.PDP_FAILURE || !validUntil.isAfter(asked)) {
+		if (decision.source() != Source.POLICY || !validUntil.isAfter(asked)) {
 			return Mono.empty();
 		}
 		CachedDecision entry = new CachedDecision(decision, validUntil.toEpochMilli());
