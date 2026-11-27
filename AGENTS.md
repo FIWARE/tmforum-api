@@ -89,4 +89,6 @@ Use `-pl common -am` or `-pl <module> -am` to build just the parts you need.
 - `storage-postgresql/src/main/resources/db/migration/tmforum/V1__entity.sql`: `tmforum.entity` with the versioning columns (`version`, `revision`, `is_current`, PK `(id, version)`, `entity_current_idx`); ticket 93 fills `version` and checks `*Ref` versions in `ReferenceValidationService`, but superseded versions are never kept (`revision` 1, `is_current` true).
 - `PostgresEntityRepository.importDomainEntity(entity, createdAt, updatedAt)`: migration insert, keeps broker timestamps, writes no outbox row. `VersionedEntity.VERSIONED_TYPES` lists 25 stored types (18 classes plus subclasses).
 - Relationship setters that resolved on read before ticket 88 (83, `fromProperties = false`): `git grep "@AttributeSetter.*RELATIONSHIP" 9570e548`.
+- `doc/access-policies/`: the access-policy epic's design (ARCHITECTURE, TICKETS AP-01..AP-23, POLICY_EXAMPLES, AP-01_FINDINGS with the policy accessor paths).
+- Module graph for shared models: `service-shared-models` and `product-shared-models` depend on `common` (provided), and product on service. `customer-bill-management` is the only `product-shared-models` consumer without `service-shared-models`.
 - `IMPLEMENTATION_PLAN.md`: the current ticket's plan, when one exists.
