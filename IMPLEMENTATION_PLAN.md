@@ -16,8 +16,19 @@ and use the accessor paths from `doc/access-policies/AP-01_FINDINGS.md` § "The 
   - `service-shared-models` gets the shared `authorizationPolicy` characteristic walk and the
     `ServiceSpecification` carrier.
   - `product-shared-models` gets the `ProductOffering` and `ProductSpecification` carriers.
-  - `customer-bill-management` is the only consumer of `product-shared-models` that does not also
-    depend on `service-shared-models`. Step 3 adds that dependency so the carrier classes load there.
+  - Rule: every module that has a carrier bean on its classpath also has the carried type's full
+    class closure at runtime. The carried types import `org.fiware.tmforum.resource.*`, and the
+    shared-models modules take `resource-shared-models` (and `product-shared-models` takes
+    `service-shared-models`) only as `provided`. Today no shared-models class is a bean, so a
+    consumer that never serves these types loads none of them. The carriers are the first beans
+    there: with `access-policy.enabled=true`, `PolicyCarriers` calls `carriedType()` and loads
+    `ProductOffering`/`ServiceSpecification` in every consumer, which could fail with
+    `NoClassDefFoundError` only when the feature is on. Relying on lazy loading is not provable
+    across bean introspection and generic resolution, so Step 3 adds the missing dependencies:
+    - `resource-shared-models` to `agreement`, `party-role`, `usage-management`,
+      `document-management` and `customer-bill-management`;
+    - `service-shared-models` to `customer-bill-management`, the only `product-shared-models`
+      consumer without it.
 - **Split of responsibilities.** A carrier only walks its domain object to raw policy values
   (`carriedPolicies(entity)`). Scope filtering, uid keying, de-duplication and malformed handling are
   implemented once, in `access-policy`. The SPI still offers `resolve(entity, scope)` as a default
@@ -162,8 +173,11 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   scope narrowing. So two policies that share a uid conflict even when only one of them has rules
   at the asked scope.
   - With equal raw content they collapse to one entry.
-  - When the content differs, drop both and add one `UnreadablePolicy(uid, "conflicting policies
-    share odrl:uid")`, at every scope. POLICY_EXAMPLES.md says such a conflict fails resolution.
+  - When the content differs, drop all of them and add one `UnreadablePolicy(location, uid,
+    "conflicting policies share odrl:uid")`, at every scope. Its `location` joins the locations of
+    every carried policy with that uid, in carried order, separated by `, ` (e.g.
+    `productOfferingTerm[0].accessPolicy, productOfferingTerm[1].contractPolicy`), so audit (AP-18)
+    can point at each source. POLICY_EXAMPLES.md says such a conflict fails resolution.
 - **Order.** Read and validate each carried policy, then de-duplicate by uid, then narrow the
   survivors to the asked scope.
 
@@ -307,9 +321,11 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
 **Build:**
 - Add the test dependencies to `product-shared-models/pom.xml`: `junit-jupiter-api`, `-engine` and
   `-params`, the same as `service-shared-models`.
-- Add `service-shared-models` (compile scope, like its `product-shared-models` entry) to
-  `customer-bill-management/pom.xml`, so the `ProductSpecification` carrier loads there when the
-  feature is on.
+- Apply the classpath rule from Decisions, each with the same scope as the module's existing
+  shared-models entries:
+  - `resource-shared-models` to `agreement`, `party-role`, `usage-management`,
+    `document-management` and `customer-bill-management`;
+  - `service-shared-models` to `customer-bill-management`.
 
 **Tests:**
 - `ProductOfferingPolicyCarrierTest`, parameterized over:
@@ -324,16 +340,26 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   policy in a product characteristic, scope-less, malformed, wrong `valueType`, null containers).
 - Build the domain objects directly. `UnmappedProperty` comes from ngsi-ld-java-mapping through
   `common`.
+- `PolicyCarriersStartupTest` (unit test, no broker) in `party-role` and in
+  `customer-bill-management`, the two consumers that lacked the most dependencies:
+  - `ApplicationContext.run(...)` with `access-policy.enabled=true` and the keys
+    `AccessPolicyConfigurationGuard` requires (JWKS URI, issuer, PDP URL), as in
+    `SubjectResolutionFilterContextTest`;
+  - get `PolicyCarriers`, assert `isGoverned` for `ProductOffering`, `ProductSpecification` and
+    `ServiceSpecification`, and resolve a minimal instance of each at `CATALOG`, so every carrier's
+    code runs against the module's real classpath.
 
 **Acceptance:**
 - `mvn test -pl product-shared-models -am` is green.
+- `mvn test -pl party-role,customer-bill-management -am` is green, so both contexts start with the
+  feature on.
 - `mvn clean install -DskipTests -DskipITs` builds the whole reactor, including
   `customer-bill-management` and `all-in-one`.
 
 ### Step 4: Document the SPI in the design docs
 - `doc/access-policies/ARCHITECTURE.md`:
-  - Close open question 2, recording where the carriers live and why (module graph,
-    `customer-bill-management`).
+  - Close open question 2, recording where the carriers live and why (module graph, and the
+    classpath rule with the dependencies added in Step 3).
   - Update the `access-policy` component listing with `PolicyCarriers`, `PolicyScope`,
     `ResolvedPolicies` and the `UNREADABLE_POLICY` source.
 - `doc/access-policies/TICKETS.md`:
@@ -343,5 +369,9 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
     policies nor unreadable entries.
 - `POLICY_EXAMPLES.md` § Scoping: one sentence each on rule narrowing (only the rules at the asked
   scope are sent) and the accepted uid and scope key forms.
-- `AGENTS.md`: add the carrier locations to the `access-policy` line.
+- `AGENTS.md`:
+  - Add the carrier locations to the `access-policy` line.
+  - Rewrite the "Module graph for shared models" line: every consumer of a shared-models module
+    now also declares `resource-shared-models` (and `service-shared-models` for
+    `product-shared-models`), because the carrier beans need the carried types' full closure.
 - No code changes.
