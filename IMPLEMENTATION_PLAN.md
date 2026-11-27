@@ -34,6 +34,9 @@ and use the accessor paths from `doc/access-policies/AP-01_FINDINGS.md` § "The 
   `UnreadablePolicy(location, policyUid?, reason)` in the result. It turns into a decision through a
   new `AccessDecision.Source.UNREADABLE_POLICY`, whose `permitted` follows `fail-open`, like
   `PDP_FAILURE`. A separate source lets audit (AP-18) tell bad authoring from a PDP outage.
+  A policy the resolver cannot positively interpret (an untrusted remote context, an `@vocab`, a key
+  it cannot expand) is unreadable too, never "no rule at this scope". Otherwise a misread policy
+  would make the entity public whatever `fail-open` says.
 
 ## Steps
 
@@ -50,7 +53,9 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
 - `ResolvedPolicies` (record):
   - `Map<String, Map<String, Object>> policies`: unmodifiable, in insertion order, keyed by uid.
   - `List<UnreadablePolicy> unreadable`.
-  - A shared `NONE` constant and `isEmpty()`.
+  - A shared `NONE` constant and `isEmpty()`, defined as `policies.isEmpty() && unreadable.isEmpty()`.
+    An entity whose only policy is unreadable is therefore not empty, and AP-08 must map the
+    unreadable entry through `fail-open` instead of serving the entity unchecked.
 - `PolicyCarrier<T>` (interface):
   - `Class<T> carriedType()`.
   - `List<CarriedPolicy> carriedPolicies(T entity)`.
@@ -67,11 +72,15 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
 - **JSON-LD key handling.** Reuse the key expansion in `ResourceConstraintDetector`: `Bindings`,
   `expandKey`, `collectContexts` and `DEFAULT_PREFIXES`.
   - Extract them into a package-private `JsonLdKeys` helper that both classes use.
+  - During the extraction, `Bindings` gains a `Set<String> trustedRemoteContexts` field, filled in
+    `readContext` with every trusted remote context the policy names. The detector never reads it, so
+    the extraction stays behaviour-neutral.
   - Do not change the detector's behaviour. `ResourceConstraintDetectorTest` must stay green
     unchanged.
 - **Key recognition:**
   - The uid is the key that expands to `http://www.w3.org/ns/odrl/2/uid`. If there is none, use
-    `@id`. It accepts a string, `{"@id": …}` or a single-element list.
+    `@id`, or a bare `uid` when `odrl.jsonld` is among the trusted contexts (that context aliases
+    `uid` to `@id`, the canonical ODRL form). It accepts a string, `{"@id": …}` or a single-element list.
   - The rules are the keys that expand to the ODRL `permission`/`prohibition`/`obligation` IRIs. A
     bare term (`permission`) counts only when the policy's `@context` includes the trusted
     `http://www.w3.org/ns/odrl.jsonld`, as in UC-1.
@@ -79,16 +88,39 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
     string, `{"@value": …}` or a single-element list of either.
   - Put every IRI and keyword in a named constant. Reuse the namespace constants the detector
     already defines.
-- **What makes a policy unreadable** (tagged result, never an exception):
+- **Positive interpretation.** A scope-less policy restricts nothing, so the resolver must never
+  read "no rule at scope S" out of keys it could not interpret. It mirrors the detector's conservative
+  stance:
+  - If the policy's `Bindings` have `untrustedRemoteContext` (any remote context outside
+    `TRUSTED_REMOTE_CONTEXTS`) or `vocab`, the policy is unreadable. Such a context could alias any
+    key, even a bare one, to a rule or to `dspace:scope`.
+  - Every non-keyword key in a rule position (the keys of the policy object and of each rule object)
+    must be interpreted. A key is interpreted when `expandKey` gives an absolute IRI, or when it is
+    a bare term listed for a trusted context the policy names.
+  - The term table for `http://www.w3.org/ns/odrl.jsonld` is a constant `ODRL_CONTEXT_TERMS`. It
+    holds the ODRL core vocabulary terms that context defines (`uid`, `permission`, `prohibition`,
+    `obligation`, `action`, `assigner`, `assignee`, `target`, `constraint`, `duty`, `profile`, …),
+    copied from the context document. `https://w3id.org/dspace/2024/1/context.json` has no term
+    table, so a bare `scope` under it alone is not interpreted.
+  - Anything else (a null expansion, a bare unknown term) makes the policy unreadable instead of
+    being skipped.
+- **What makes a policy unreadable** (tagged result, never an exception). Validation covers the
+  whole policy, every rule at every scope, before any narrowing:
   - the value is not a JSON object;
   - it has no uid;
+  - an untrusted remote context, an `@vocab`, or a key in a rule position that is not interpreted
+    (see above);
   - a rule value is neither an object nor a list of objects;
   - a scope value has an unexpected shape;
-  - a relevant key does not expand (`expandKey` returns null);
   - any `RuntimeException` during the walk (catch it around each policy).
-- **Duplicates.** Two carried policies with the same uid and equal content collapse to one entry.
-  When the content differs, drop both and add one `UnreadablePolicy(uid, "conflicting policies share
-  odrl:uid")`. POLICY_EXAMPLES.md says such a conflict fails resolution.
+- **Duplicates.** The uid conflict check runs over the raw values of *all* carried policies, before
+  scope narrowing. So two policies that share a uid conflict even when only one of them has rules
+  at the asked scope.
+  - With equal raw content they collapse to one entry.
+  - When the content differs, drop both and add one `UnreadablePolicy(uid, "conflicting policies
+    share odrl:uid")`, at every scope. POLICY_EXAMPLES.md says such a conflict fails resolution.
+- **Order.** Read and validate each carried policy, then de-duplicate by uid, then narrow the
+  survivors to the asked scope.
 
 **`PolicyCarriers` (`@Singleton`, `@Requires(property = AccessPolicyProperties.ENABLED_PROPERTY, value = "true")`):**
 - Takes `List<PolicyCarrier<?>>` in its constructor and fails at startup if two carriers claim the
@@ -120,8 +152,13 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - A mixed policy (one `catalog` permission and one scope-less permission) keeps only the
     `catalog` rule.
   - A scope given as `@value` or as a list.
-  - Every malformed case above yields `UnreadablePolicy` and never throws.
-  - Duplicate uids, equal and conflicting.
+  - A bare `uid` under `odrl.jsonld` is a well-formed uid.
+  - Every malformed case above yields `UnreadablePolicy` and never throws. This includes an
+    untrusted remote `@context`, an `@vocab` context, a bare `scope` under only the DSP context, and
+    a malformed rule at a scope other than the one asked for.
+  - Duplicate uids, equal and conflicting. One conflict case has the two policies' rules at
+    different scopes, and expects `UnreadablePolicy` at both scopes.
+  - `isEmpty()` is false for a result that holds only an `UnreadablePolicy`.
 - `PolicyCarriersTest`:
   - Mock an ungoverned entity, then `verifyNoInteractions(entity)` and verify no carrier is called.
   - A subclass of a governed type resolves through the parent's carrier.
@@ -136,6 +173,8 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
 - An ungoverned type resolves to `NONE` without touching a field.
 - A scope-less permission resolves to nothing.
 - Malformed JSON yields a tagged `UnreadablePolicy`.
+- A policy the resolver cannot positively interpret (untrusted context, `@vocab`, unknown bare key)
+  yields `UnreadablePolicy`, never an empty result.
 
 ### Step 2: Policy value conversion in `common` and the `ServiceSpecification` carrier in `service-shared-models`
 **`common`:**
@@ -232,7 +271,8 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
 - `doc/access-policies/TICKETS.md`:
   - Mark AP-07 resolved.
   - Note for AP-08: use `PolicyCarriers.isGoverned` before reading, and map `UnreadablePolicy`
-    through `decision(failOpen)`.
+    through `decision(failOpen)`. `ResolvedPolicies.isEmpty()` is true only when there are neither
+    policies nor unreadable entries.
 - `POLICY_EXAMPLES.md` § Scoping: one sentence each on rule narrowing (only the rules at the asked
   scope are sent) and the accepted uid and scope key forms.
 - `AGENTS.md`: add the carrier locations to the `access-policy` line.
