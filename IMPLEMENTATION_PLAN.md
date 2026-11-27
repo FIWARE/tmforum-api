@@ -35,8 +35,8 @@ and use the accessor paths from `doc/access-policies/AP-01_FINDINGS.md` § "The 
   new `AccessDecision.Source.UNREADABLE_POLICY`, whose `permitted` follows `fail-open`, like
   `PDP_FAILURE`. A separate source lets audit (AP-18) tell bad authoring from a PDP outage.
   A policy the resolver cannot positively interpret (an untrusted remote context, an `@vocab`, a key
-  it cannot expand, a keyword such as `@nest` it does not walk, a `dspace:scope` outside a rule object) is unreadable too, never "no rule at
-  this scope". Otherwise a misread policy would make the entity public whatever `fail-open` says.
+  it cannot expand, a keyword such as `@nest` it does not walk, a scope outside a rule object or
+  under an IRI other than dspace 2024/1) is unreadable too, never "no rule at this scope". Otherwise a misread policy would make the entity public whatever `fail-open` says.
 
 ## Steps
 
@@ -87,8 +87,10 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - The rules are the keys that expand to the ODRL `permission`/`prohibition`/`obligation` IRIs. A
     bare term (`permission`) counts only when the policy's `@context` includes the trusted
     `http://www.w3.org/ns/odrl.jsonld`, as in UC-1.
-  - The scope is the key that expands to `https://w3id.org/dspace/2024/1/scope`. It accepts a
-    string, `{"@value": …}` or a single-element list of either.
+  - The scope is the key that expands to exactly `https://w3id.org/dspace/2024/1/scope`. It accepts a
+    string, `{"@value": …}` or a single-element list of either. A rule object may hold only one such
+    key: two keys that both expand to the scope IRI (`dspace:scope` next to the full IRI) form a
+    multi-valued scope after JSON-LD expansion, so they are unreadable like a multi-element list.
   - Put every IRI and keyword in a named constant. Reuse the namespace constants the detector
     already defines.
 - **Positive interpretation.** A scope-less policy restricts nothing, so the resolver must never
@@ -115,17 +117,31 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
     is therefore unreadable too, since its object holds a keyword outside the rule allow-list.
   - A rule object that holds nothing but keywords (for example the bare node reference
     `{"@id": "urn:rule:1"}`) is unreadable, never scope-less. Its scope would live elsewhere.
+  - **Local name.** A helper `localName(raw, expanded)` takes the expanded IRI when there is one,
+    else the raw string, and returns the part after its last `/`, `#` or `:`. A string that does
+    not expand (`expand` gives `null` for any string without a colon) still has a local name, taken
+    from the raw string. So a bare `scope` has the local name `scope`.
   - The scope is read in one place only: as a key directly on a top-level rule object (a value of
-    the policy's `permission`/`prohibition`/`obligation` key). A scope written anywhere else would
-    be understood by the author and ignored by the resolver, so the policy is unreadable. The check
-    walks the whole policy tree (every nested object and list, skipping `@context` values):
-    - a key whose expansion has the local name `scope` anywhere except directly on a top-level rule
-      object. This covers a policy-level `dspace:scope` next to the rules (ODRL's compact form puts
-      rule properties at policy level), a scope on a `duty`, and one inside a constraint;
-    - a `leftOperand` whose value (a string, `{"@id": …}` or a single-element list, read with the
-      detector's `operandIri` and `expand`) has the local name `scope`, for example
-      `{"leftOperand": "dspace:scope", "operator": "eq", "rightOperand": "catalog"}`.
-      POLICY_EXAMPLES.md lists `dspace:scope` as an operand, so this is a plausible way to write it.
+    the policy's `permission`/`prohibition`/`obligation` key), and only under the exact dspace
+    2024/1 IRI. A scope written anywhere else, or under another IRI, would be understood by the
+    author and ignored by the resolver, so the policy is unreadable. The check walks the whole
+    policy tree (every nested object and list, skipping `@context` values):
+    - on a top-level rule object, a key whose local name is `scope` but whose expansion is not
+      `https://w3id.org/dspace/2024/1/scope`. This covers a `dspace` prefix bound to another DSP
+      version (`https://w3id.org/dspace/2025/1/` gives `.../2025/1/scope`), a typo such as
+      `odrl:scope`, and a bare `scope` that a trusted context's term table would map to some other
+      IRI;
+    - a key whose local name is `scope` anywhere except directly on a top-level rule object, whatever
+      it expands to. This covers a policy-level `dspace:scope` next to the rules (ODRL's compact form
+      puts rule properties at policy level), a scope on a `duty`, and one inside a constraint;
+    - a `leftOperand` whose value has the local name `scope`. The key is recognised by its local
+      name, so `leftOperand`, `odrl:leftOperand` and the full ODRL IRI all count. The value is read
+      with the detector's `operandIri` (a string, `{"@id": …}` or a single-element list) and
+      `expand`, then passed to `localName`. Examples: `{"leftOperand": "dspace:scope", "operator":
+      "eq", "rightOperand": "catalog"}`, a bare `"leftOperand": "scope"`, and
+      `"odrl:leftOperand": "dspace:scope"` in the UC-6 style. POLICY_EXAMPLES.md lists
+      `dspace:scope` as an operand, so this is a plausible way to write it. A `leftOperand` value
+      that `operandIri` cannot read (any other shape) is unreadable too.
     Matching on the local name, not only on the dspace IRI, also catches a bare `scope` key or
     operand in nested objects whose keys are not checked for interpretation. A false match fails
     closed.
@@ -136,7 +152,9 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
   - an untrusted remote context, an `@vocab`, or a key in a rule position that is not interpreted
     (see above);
   - a keyword outside the allow-list of its position, or a keyword-only rule object;
-  - a scope key anywhere but directly on a top-level rule object, or a `scope` `leftOperand`;
+  - a key with the local name `scope` anywhere but directly on a top-level rule object, one there
+    that is not the dspace 2024/1 IRI, two scope keys on one rule, or a `scope` `leftOperand`
+    (bare, prefixed or full IRI, under any `leftOperand` key form);
   - a rule value is neither an object nor a list of objects;
   - a scope value has an unexpected shape;
   - any `RuntimeException` during the walk (catch it around each policy).
@@ -192,8 +210,12 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
     `@type` next to its scope stays well-formed.
   - Misplaced-scope cases, each `UnreadablePolicy` at both scopes: a policy-level
     `"dspace:scope": "catalog"` next to the rules, a constraint with `"leftOperand": "dspace:scope"`
-    (also as `{"@id": "dspace:scope"}`), a `dspace:scope` on a `duty`, and one inside a constraint
+    (also as `{"@id": "dspace:scope"}`, as a bare `"leftOperand": "scope"`, and as
+    `"odrl:leftOperand": "dspace:scope"`), a `dspace:scope` on a `duty`, and one inside a constraint
     object.
+  - Wrong-IRI scope cases on a top-level rule, each `UnreadablePolicy` at both scopes:
+    `"odrl:scope": "catalog"`, a `dspace` prefix bound to `https://w3id.org/dspace/2025/1/`, and a
+    rule holding both `dspace:scope` and `https://w3id.org/dspace/2024/1/scope`.
   - Duplicate uids, equal and conflicting. One conflict case has the two policies' rules at
     different scopes, and expects `UnreadablePolicy` at both scopes.
   - `isEmpty()` is false for a result that holds only an `UnreadablePolicy`.
@@ -217,8 +239,9 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
 - A scope-less permission resolves to nothing.
 - Malformed JSON yields a tagged `UnreadablePolicy`.
 - A policy the resolver cannot positively interpret (untrusted context, `@vocab`, unknown bare key,
-  a keyword outside the allow-list, a keyword-only rule, a scope outside a top-level rule object or
-  given as a `leftOperand`) yields `UnreadablePolicy`, never an empty result.
+  a keyword outside the allow-list, a keyword-only rule, a scope outside a top-level rule object,
+  under an IRI other than dspace 2024/1, given twice on one rule, or given as a `leftOperand`)
+  yields `UnreadablePolicy`, never an empty result.
 - `PolicyCarrier.resolve` never throws, even when `carriedPolicies` does.
 
 ### Step 2: Policy value conversion in `common` and the `ServiceSpecification` carrier in `service-shared-models`
