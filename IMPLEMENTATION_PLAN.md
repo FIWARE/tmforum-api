@@ -369,7 +369,8 @@ All files are under `access-policy/src/main/java/org/fiware/tmforum/accesspolicy
     policies nor unreadable entries.
 - `POLICY_EXAMPLES.md` § Scoping: one sentence each on rule narrowing (only the rules at the asked
   scope are sent) and the accepted uid and scope key forms.
-- `AGENTS.md`:
+- `AGENTS.md` (deferred to a plan-mode agent: step agents must not edit `AGENTS.md`, so the step-4
+  PR leaves it untouched and asks for these two edits through a `[plan-update]` comment):
   - Add the carrier locations to the `access-policy` line.
   - Rewrite the "Module graph for shared models" line: every consumer of a shared-models module
     now also declares `resource-shared-models` (and `service-shared-models` for

@@ -186,12 +186,21 @@ access-policy/src/main/java/org/fiware/tmforum/accesspolicy/
   Subject.java                         record Subject(String identity, Map<String,Object> claims, Instant expiresAt,
                                               String credentialFingerprint); ANONYMOUS
   SubjectResolutionFilter.java         @Filter(MATCH_ALL_PATTERN), HttpServerFilter, Ordered
-  PolicyCarrier.java                   SPI: the policies an entity carries, and at which scope
+  PolicyCarrier.java                   SPI: carriedType() + carriedPolicies(entity); default resolve(entity, scope)
+  PolicyCarriers.java                  registry of the carrier beans; isGoverned(type) short-circuits ungoverned
+                                              types, resolve(entity, scope) never throws
+  PolicyScope.java                     enum CATALOG | CONTRACT_NEGOTIATION, the dspace:scope values evaluated here
+  CarriedPolicy.java                   record CarriedPolicy(String location, Object value): one raw policy
+  ResolvedPolicies.java                record ResolvedPolicies(Map<uid, policy> policies, List<UnreadablePolicy>
+                                              unreadable); NONE; isEmpty() only when both are empty
+  UnreadablePolicy.java                record UnreadablePolicy(String location, String policyUid, String reason);
+                                              decision(failOpen)
+  ScopedPolicyResolution.java          validation, uid de-duplication and narrowing to the rules at one scope
   PolicyResolver.java                  composition walk + derived visibility, over the *delegate* port
   PolicyDecisionPoint.java             @Client-backed, reactive, @Cacheable
   ValidationRequest.java               the PDP wire model
   AccessDecision.java                  record AccessDecision(boolean permitted, String reason, String policyUid,
-                                              Source source); Source POLICY | PDP_FAILURE
+                                              Source source); Source POLICY | PDP_FAILURE | UNREADABLE_POLICY
   PolicyEnforcingEntityRepository.java @Primary decorator of EntityRepository
   AccessAuditPublisher.java            one record per decision, best-effort
 ```
@@ -490,11 +499,26 @@ Following the project's conventions ([AGENTS.md](../../AGENTS.md)):
 1. ~~**JWT validation dependency.**~~ Resolved by
    [AP-7](./DECISIONS.md#ap-7--validate-tokens-with-nimbus-jose-jwt-not-micronaut-security):
    `nimbus-jose-jwt` with a hand-written validator, since `micronaut-security` cannot be inert when off.
-2. **How does an entity declare the policies it carries?** The `PolicyCarrier` SPI keeps the
-   `access-policy` module free of domain classes, but someone has to implement it for
-   `ProductOffering`, the two specification types and the catalog types — and that implementation
-   has to live somewhere that can see both. Probably `product-shared-models`; it needs checking that
-   this does not drag the module graph the wrong way.
+2. ~~**How does an entity declare the policies it carries?**~~ Resolved by AP-07. The carriers live
+   where the module graph (`access-policy` ← `common` ← `service-shared-models` ←
+   `product-shared-models`) lets them see both the SPI and the domain classes, so nothing is dragged
+   the wrong way:
+   - `common`: `PolicyValues`, the domain-free conversion of a stored value to a JSON map through the
+     app's `ObjectMapper`;
+   - `service-shared-models`: `CharacteristicPolicyValues` (the shared `authorizationPolicy`
+     characteristic walk) and `ServiceSpecificationPolicyCarrier`;
+   - `product-shared-models`: `ProductOfferingPolicyCarrier` (the `productOfferingTerm`
+     `accessPolicy`/`contractPolicy` pair) and `ProductSpecificationPolicyCarrier`.
+
+   The carriers are the first beans in the shared-models modules. With the feature on,
+   `PolicyCarriers` loads every carried type in every consumer, so each consumer needs the carried
+   types' full class closure at runtime. The shared-models modules take `resource-shared-models` (and
+   `product-shared-models` takes `service-shared-models`) only as `provided`, so `agreement`, `party-role`, `usage-management`, `document-management` and
+   `customer-bill-management` therefore declare `resource-shared-models`, and
+   `customer-bill-management` also declares `service-shared-models`. Without them the context fails
+   with `NoClassDefFoundError`, only when the feature is on. `PolicyCarriersStartupTest` in
+   `party-role` and `customer-bill-management` guards this. The catalog types have no carrier yet;
+   see question 3.
 3. **Catalog and category policies** have no carrier in TMF620. Matching a PDP-registered policy by
    target id avoids a schema change; whether that is enough is what
    [UC-3](./USE_CASES.md#uc-3--a-private-catalog-for-a-named-partner) tests.
