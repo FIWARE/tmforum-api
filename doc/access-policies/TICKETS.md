@@ -87,7 +87,7 @@ unchanged and AP-07 is not blocked. The one authoring rule is that the offering 
 | [AP-04](#ap-04--subject-resolution-from-a-bearer-token) | Subject resolution from a bearer token | 1 | AP-03 | M |
 | [AP-05](#ap-05--the-policy-decision-point-client) | The Policy Decision Point client | 1 | AP-03 | M |
 | [AP-06](#ap-06--the-decision-cache) | The decision cache | 1 | AP-05 | M |
-| [AP-07](#ap-07--the-policycarrier-spi-and-direct-policy-resolution) | The `PolicyCarrier` SPI and direct policy resolution | 2 | AP-01, AP-03 | M |
+| [AP-07](#ap-07--the-policycarrier-spi-and-direct-policy-resolution) | The `PolicyCarrier` SPI and direct policy resolution (resolved) | 2 | AP-01, AP-03 | M |
 | [AP-08](#ap-08--the-decorator-get-only) | The decorator, `get` only | 2 | AP-04, AP-05, AP-07 | M |
 | [AP-09](#ap-09--bypass-owner-exemption-and-observe-mode) | Bypass, owner exemption and `observe` mode | 2 | AP-08 | M |
 | [AP-23](#ap-23--deny-writes-to-entities-the-subject-cannot-read) | Deny writes to entities the subject cannot read | 2 | AP-08 | M |
@@ -404,6 +404,13 @@ checked rather than assumed — `service-shared-models` carries `CharacteristicV
 **Tests.** `PolicyCarrierTest` per carrier, parameterized over well-formed, scope-less and malformed
 policies.
 
+**Resolved** (ticket 186). `PolicyCarrier`, `PolicyCarriers`, `PolicyScope`, `ResolvedPolicies` and
+`AccessDecision.Source.UNREADABLE_POLICY` are in `access-policy`. The carriers live in
+`service-shared-models` and `product-shared-models`, which closes
+[open question 2](./ARCHITECTURE.md#open-questions). A policy resolves at a scope when one of its
+rules declares that `dspace:scope`. Anything the resolver cannot positively interpret is an
+`UnreadablePolicy`, never "no rule at this scope".
+
 ---
 
 ### AP-08 — The decorator, `get` only
@@ -432,6 +439,12 @@ exist. Lists are untouched by this ticket.
 * Reaching the subject through `ServerRequestContext.currentRequest()`, with the no-request case
   (the data-migrator, notification handling, anything off the request path) handled explicitly and
   documented.
+* Using [AP-07](#ap-07--the-policycarrier-spi-and-direct-policy-resolution)'s result:
+  * call `PolicyCarriers.isGoverned(type)` before reading, so an ungoverned `get` delegates without
+    resolving anything;
+  * map every `UnreadablePolicy` through `decision(failOpen)`, never skip it;
+  * `ResolvedPolicies.isEmpty()` is true only when there are neither policies nor unreadable
+    entries. An entity whose only policy is unreadable is not empty and must not be served unchecked.
 
 **Acceptance criteria.**
 * A denied `GET /{id}` and a `GET` of a nonexistent id produce identical status, headers and body.
